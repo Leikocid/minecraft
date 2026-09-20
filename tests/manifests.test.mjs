@@ -14,6 +14,12 @@ const rpManifestPath = join(projectRoot, 'packs', 'resource', 'manifest.json');
 const bpManifest = JSON.parse(readFileSync(bpManifestPath, 'utf-8'));
 const rpManifest = JSON.parse(readFileSync(rpManifestPath, 'utf-8'));
 
+// Single source of the add-on version: package.json "version" ("0.2.0" -> [0, 2, 0]).
+// Both pack headers and the BP -> RP dependency must carry exactly this value,
+// otherwise the iPad treats a new build as "already imported".
+const pkg = JSON.parse(readFileSync(join(projectRoot, 'package.json'), 'utf-8'));
+const PACK_VERSION = pkg.version.split('.').map(Number);
+
 // UUID v4 validation regex
 const uuidV4Regex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -35,7 +41,7 @@ test('Behavior Pack Manifest', async (t) => {
     assert.strictEqual(bpManifest.header.name, 'Andrew BP', 'BP header name must be "Andrew BP"');
     assert.ok(bpManifest.header.uuid, 'BP header must have uuid');
     assert.ok(bpManifest.header.version, 'BP header must have version');
-    assert.deepStrictEqual(bpManifest.header.version, [0, 1, 0], 'BP version must be [0, 1, 0]');
+    assert.deepStrictEqual(bpManifest.header.version, PACK_VERSION, `BP version must equal package.json version ${pkg.version}`);
     assert.ok(bpManifest.header.min_engine_version, 'BP header must have min_engine_version');
   });
 
@@ -77,7 +83,7 @@ test('Behavior Pack Manifest', async (t) => {
       rpManifest.header.uuid,
       'BP resource pack dependency uuid must match RP header uuid'
     );
-    assert.deepStrictEqual(rpDep.version, [0, 1, 0], 'BP resource pack dependency version must be [0, 1, 0]');
+    assert.deepStrictEqual(rpDep.version, PACK_VERSION, `BP resource pack dependency version must equal package.json version ${pkg.version}`);
   });
 });
 
@@ -95,7 +101,7 @@ test('Resource Pack Manifest', async (t) => {
     assert.strictEqual(rpManifest.header.name, 'Andrew RP', 'RP header name must be "Andrew RP"');
     assert.ok(rpManifest.header.uuid, 'RP header must have uuid');
     assert.ok(rpManifest.header.version, 'RP header must have version');
-    assert.deepStrictEqual(rpManifest.header.version, [0, 1, 0], 'RP version must be [0, 1, 0]');
+    assert.deepStrictEqual(rpManifest.header.version, PACK_VERSION, `RP version must equal package.json version ${pkg.version}`);
     assert.ok(rpManifest.header.min_engine_version, 'RP header must have min_engine_version');
   });
 
