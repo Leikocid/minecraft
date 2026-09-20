@@ -1,3 +1,9 @@
+# Bedrock add-on project
+node_modules/
+dist/
+packs/behavior/scripts/
+docker/bds/data/
+
 # ai-kit — tool-specific configs (do not commit)
 .mcp.json
 .claude/
