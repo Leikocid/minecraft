@@ -13,6 +13,7 @@
     "validate": "node scripts/validate.mjs",
     "build:clean-clone": "bash scripts/build-clean-clone.sh",
     "bds:check": "node scripts/bds-check.mjs",
+    "bds:gametest": "node scripts/bds-gametest.mjs",
     "bds:up": "bash scripts/bds.sh up",
     "bds:down": "bash scripts/bds.sh down",
     "bds:logs": "bash scripts/bds.sh logs"
@@ -21,6 +22,7 @@
     "@minecraft/server": "2.10.0"
   },
   "devDependencies": {
+    "@minecraft/server-gametest": "1.0.0-beta.1.26.51-stable",
     "esbuild": "^0.28.2",
     "typescript": "^7.0.2"
   }

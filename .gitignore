@@ -3,6 +3,8 @@ node_modules/
 dist/
 packs/behavior/scripts/
 packs/selftest/scripts/
+packs/gametest/scripts/
+packs/gametest/structures/
 docker/bds/data/
 
 # ai-kit — tool-specific configs (do not commit)
