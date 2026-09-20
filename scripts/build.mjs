@@ -1,25 +1,60 @@
 // npm run build:
 //   1. esbuild bundles src/main.ts -> packs/behavior/scripts/main.js
 //      (format esm, platform neutral, @minecraft/* stays external — not bundled)
-//   2. validate both packs (structural + version-target checks)
-//   3. zip packs/behavior and packs/resource into dist/andrew.mcaddon
+//   2. esbuild bundles src/selftest/main.ts -> packs/selftest/scripts/main.js
+//   3. validate both release packs and the selftest pack
+//   4. zip packs/behavior and packs/resource into dist/andrew.mcaddon
+//
+// packs/selftest is built but deliberately NOT zipped: it is a dev-only
+// behavior pack that scripts/bds-check.mjs installs on the server alongside the
+// release packs. The archive names its two directories explicitly, so the
+// selftest pack cannot leak into a release by accident; tests/selftest-pack.
+// test.mjs asserts that property on the produced archive.
 
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, rmSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, join } from 'node:path';
-import { validatePacks } from './validate.mjs';
+import { validatePacks, validateSelfTestPack } from './validate.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, '..');
 
 const behaviorDir = join(root, 'packs', 'behavior');
 const resourceDir = join(root, 'packs', 'resource');
+const selftestDir = join(root, 'packs', 'selftest');
 const packsDir = join(root, 'packs');
 const distDir = join(root, 'dist');
 const archivePath = join(distDir, 'andrew.mcaddon');
 
 const esbuildBin = join(root, 'node_modules', '.bin', 'esbuild');
+
+/**
+ * Bundle the self-check script into packs/selftest/scripts/main.js.
+ *
+ * Exported so that scripts/bds-check.mjs can rebuild it with the fixture flag
+ * on, rather than duplicating the esbuild flags: a fixture run must exercise
+ * the *same* bundle as a normal run, or it proves nothing about the real one.
+ *
+ * @param {object} [opts]
+ * @param {boolean} [opts.fixture] - compile in the deliberately-failing check
+ * @param {string} [opts.outFile] - override the output path
+ */
+export function bundleSelfTest({ fixture = false, outFile } = {}) {
+  execFileSync(
+    esbuildBin,
+    [
+      join('src', 'selftest', 'main.ts'),
+      '--bundle',
+      '--format=esm',
+      '--platform=neutral',
+      '--external:@minecraft/*',
+      `--define:__SELFTEST_FIXTURE__=${fixture ? 'true' : 'false'}`,
+      `--outfile=${outFile ?? join('packs', 'selftest', 'scripts', 'main.js')}`,
+    ],
+    { stdio: 'inherit', cwd: root }
+  );
+}
 
 function step(label, fn) {
   process.stdout.write(`▶ ${label}\n`);
@@ -27,41 +62,59 @@ function step(label, fn) {
   process.stdout.write(`✓ ${label}\n`);
 }
 
-step('bundle scripts (esbuild)', () => {
-  execFileSync(
-    esbuildBin,
-    [
-      join('src', 'main.ts'),
-      '--bundle',
-      '--format=esm',
-      '--platform=neutral',
-      '--external:@minecraft/*',
-      `--outfile=${join('packs', 'behavior', 'scripts', 'main.js')}`,
-    ],
-    { stdio: 'inherit', cwd: root }
-  );
-});
+function build() {
+  step('bundle scripts (esbuild)', () => {
+    execFileSync(
+      esbuildBin,
+      [
+        join('src', 'main.ts'),
+        '--bundle',
+        '--format=esm',
+        '--platform=neutral',
+        '--external:@minecraft/*',
+        `--outfile=${join('packs', 'behavior', 'scripts', 'main.js')}`,
+      ],
+      { stdio: 'inherit', cwd: root }
+    );
+  });
 
-step('validate packs', () => {
-  const errors = validatePacks({ behaviorDir, resourceDir, requireScriptEntry: true });
-  if (errors.length > 0) {
-    for (const err of errors) {
-      process.stderr.write(`✗ ${err.message}\n`);
+  step('bundle selftest script (esbuild)', () => {
+    bundleSelfTest();
+  });
+
+  step('validate packs', () => {
+    const errors = [
+      ...validatePacks({ behaviorDir, resourceDir, requireScriptEntry: true }),
+      ...validateSelfTestPack({ selftestDir, behaviorDir, resourceDir, requireScriptEntry: true }),
+    ];
+    if (errors.length > 0) {
+      for (const err of errors) {
+        process.stderr.write(`✗ ${err.message}\n`);
+      }
+      throw new Error(`validate: ${errors.length} error(s)`);
     }
-    throw new Error(`validate: ${errors.length} error(s)`);
-  }
-});
+  });
 
-step('package .mcaddon', () => {
-  mkdirSync(distDir, { recursive: true });
-  if (existsSync(archivePath)) {
-    rmSync(archivePath);
-  }
-  execFileSync(
-    'zip',
-    ['-r', '-X', archivePath, 'behavior', 'resource', '-x', '*.DS_Store'],
-    { stdio: 'inherit', cwd: packsDir }
-  );
-});
+  step('package .mcaddon', () => {
+    mkdirSync(distDir, { recursive: true });
+    if (existsSync(archivePath)) {
+      rmSync(archivePath);
+    }
+    // Only "behavior" and "resource" — "selftest" is dev-only and never ships.
+    execFileSync(
+      'zip',
+      ['-r', '-X', archivePath, 'behavior', 'resource', '-x', '*.DS_Store'],
+      { stdio: 'inherit', cwd: packsDir }
+    );
+  });
 
-process.stdout.write(`Built ${archivePath}\n`);
+  process.stdout.write(`Built ${archivePath}\n`);
+}
+
+function isMain() {
+  return process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+}
+
+if (isMain()) {
+  build();
+}

@@ -197,6 +197,173 @@ export function validatePacks({ behaviorDir, resourceDir, requireScriptEntry = f
   return errors;
 }
 
+/**
+ * Validate the dev-only self-check pack (packs/selftest).
+ *
+ * It is not part of the shipped add-on, so it is validated separately: its
+ * uuids must not collide with the release packs (the engine would refuse one of
+ * them), and its dependency on the behavior pack must name the BP's *current*
+ * uuid and version — that dependency is what orders the self-check script after
+ * the items it checks.
+ *
+ * @param {object} opts
+ * @param {string} opts.selftestDir - path to packs/selftest
+ * @param {string} opts.behaviorDir - path to packs/behavior
+ * @param {string} opts.resourceDir - path to packs/resource
+ * @param {boolean} [opts.requireScriptEntry] - also check the bundled entry exists
+ * @returns {ValidationError[]} empty array when everything is valid
+ */
+export function validateSelfTestPack({
+  selftestDir,
+  behaviorDir,
+  resourceDir,
+  requireScriptEntry = false,
+}) {
+  const errors = [];
+  const manifestPath = join(selftestDir, 'manifest.json');
+
+  let st;
+  try {
+    st = readJson(manifestPath);
+  } catch (err) {
+    errors.push(new ValidationError(manifestPath, '<root>', `invalid JSON: ${err.message}`));
+    return errors;
+  }
+
+  checkEqual(manifestPath, 'format_version', st.format_version, 2, errors);
+
+  if (!st.header) {
+    errors.push(new ValidationError(manifestPath, 'header', 'missing header'));
+    return errors;
+  }
+
+  checkUuidV4(manifestPath, 'header.uuid', st.header.uuid, errors);
+  checkEqual(
+    manifestPath,
+    'header.min_engine_version',
+    st.header.min_engine_version,
+    MIN_ENGINE_VERSION,
+    errors
+  );
+
+  // Collect this pack's own uuids, checking each is a v4 and unique here.
+  const selfIds = [['header.uuid', st.header.uuid]];
+  for (const [i, mod] of (st.modules ?? []).entries()) {
+    checkUuidV4(manifestPath, `modules[${i}].uuid`, mod.uuid, errors);
+    selfIds.push([`modules[${i}].uuid`, mod.uuid]);
+  }
+  const ownUuids = new Map();
+  for (const [field, uuid] of selfIds) {
+    if (typeof uuid !== 'string') continue;
+    const norm = uuid.toLowerCase();
+    if (ownUuids.has(norm)) {
+      errors.push(new ValidationError(manifestPath, field, `uuid ${uuid} duplicates ${ownUuids.get(norm)}`));
+    } else {
+      ownUuids.set(norm, field);
+    }
+  }
+
+  // No uuid may collide with the release packs — the engine would refuse one
+  // of the two packs and the self-check would silently test nothing.
+  const releaseUuids = new Map();
+  for (const dir of [behaviorDir, resourceDir]) {
+    const p = join(dir, 'manifest.json');
+    let m;
+    try {
+      m = readJson(p);
+    } catch {
+      continue; // validatePacks reports a broken release manifest.
+    }
+    if (m.header?.uuid) releaseUuids.set(String(m.header.uuid).toLowerCase(), `${p}:header.uuid`);
+    for (const [i, mod] of (m.modules ?? []).entries()) {
+      if (mod.uuid) releaseUuids.set(String(mod.uuid).toLowerCase(), `${p}:modules[${i}].uuid`);
+    }
+  }
+  for (const [field, uuid] of selfIds) {
+    if (typeof uuid !== 'string') continue;
+    const where = releaseUuids.get(uuid.toLowerCase());
+    if (where) {
+      errors.push(
+        new ValidationError(manifestPath, field, `uuid ${uuid} collides with the release pack at ${where}`)
+      );
+    }
+  }
+
+  const deps = st.dependencies ?? [];
+
+  const serverDep = deps.find((d) => d.module_name === '@minecraft/server');
+  if (!serverDep) {
+    errors.push(
+      new ValidationError(manifestPath, 'dependencies[@minecraft/server]', 'missing dependency on @minecraft/server')
+    );
+  } else {
+    checkEqual(manifestPath, 'dependencies[@minecraft/server].version', serverDep.version, SERVER_API_VERSION, errors);
+  }
+
+  // No beta/preview module may reach the real engine. [src: concept-constraint C-2]
+  for (const dep of deps) {
+    if (typeof dep.module_name === 'string' && /-(beta|preview|rc)\b/i.test(dep.module_name)) {
+      errors.push(
+        new ValidationError(manifestPath, 'dependencies', `beta/preview module "${dep.module_name}" is not allowed`)
+      );
+    }
+  }
+
+  // The dependency that orders this pack after the behavior pack.
+  let bp = null;
+  try {
+    bp = readJson(join(behaviorDir, 'manifest.json'));
+  } catch {
+    // validatePacks reports it.
+  }
+  const bpDep = deps.find((d) => d.uuid && !d.module_name);
+  if (!bpDep) {
+    errors.push(
+      new ValidationError(
+        manifestPath,
+        'dependencies[behavior-pack]',
+        'missing dependency on the behavior pack — the self-check would not be ordered after it'
+      )
+    );
+  } else if (bp?.header) {
+    if (String(bpDep.uuid).toLowerCase() !== String(bp.header.uuid).toLowerCase()) {
+      errors.push(
+        new ValidationError(
+          manifestPath,
+          'dependencies[behavior-pack].uuid',
+          `must equal behavior pack header.uuid ${JSON.stringify(bp.header.uuid)}, got ${JSON.stringify(bpDep.uuid)}`
+        )
+      );
+    }
+    if (JSON.stringify(bpDep.version) !== JSON.stringify(bp.header.version)) {
+      errors.push(
+        new ValidationError(
+          manifestPath,
+          'dependencies[behavior-pack].version',
+          `must equal behavior pack header.version ${JSON.stringify(bp.header.version)}, got ${JSON.stringify(bpDep.version)}`
+        )
+      );
+    }
+  }
+
+  if (requireScriptEntry) {
+    const scriptModule = (st.modules ?? []).find((m) => m.type === 'script');
+    if (!scriptModule?.entry) {
+      errors.push(new ValidationError(manifestPath, 'modules[script].entry', 'missing script module entry'));
+    } else if (!existsSync(join(selftestDir, scriptModule.entry))) {
+      errors.push(
+        new ValidationError(
+          manifestPath,
+          'modules[script].entry',
+          `script entry "${scriptModule.entry}" not found — run the build first`
+        )
+      );
+    }
+  }
+
+  return errors;
+}
+
 function isMain() {
   return process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
 }
@@ -205,8 +372,12 @@ if (isMain()) {
   const root = join(__dirname, '..');
   const behaviorDir = join(root, 'packs', 'behavior');
   const resourceDir = join(root, 'packs', 'resource');
+  const selftestDir = join(root, 'packs', 'selftest');
 
-  const errors = validatePacks({ behaviorDir, resourceDir, requireScriptEntry: true });
+  const errors = [
+    ...validatePacks({ behaviorDir, resourceDir, requireScriptEntry: true }),
+    ...validateSelfTestPack({ selftestDir, behaviorDir, resourceDir, requireScriptEntry: true }),
+  ];
 
   if (errors.length > 0) {
     for (const err of errors) {
