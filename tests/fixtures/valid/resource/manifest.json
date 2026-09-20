@@ -1,0 +1,17 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "Fixture RP",
+    "description": "Valid fixture resource pack",
+    "uuid": "44444444-4444-4444-8444-444444444444",
+    "version": [0, 1, 0],
+    "min_engine_version": [1, 26, 50]
+  },
+  "modules": [
+    {
+      "type": "resources",
+      "uuid": "55555555-5555-4555-8555-555555555555",
+      "version": [0, 1, 0]
+    }
+  ]
+}
