@@ -4,6 +4,9 @@
   "texture_data": {
     "andrew_test_item": {
       "textures": "textures/items/andrew_test_item"
+    },
+    "andrew_miners_pickaxe": {
+      "textures": "textures/items/andrew_miners_pickaxe"
     }
   }
 }
