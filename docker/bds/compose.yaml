@@ -25,6 +25,14 @@ services:
       # experiments-enabled GameTest world is a separate world and the
       # everyday "andrew" world is never touched by it.
       LEVEL_NAME: "${BDS_LEVEL_NAME:-andrew}"
+      # bds:check and bds:up want an ordinary world. scripts/bds-gametest.mjs
+      # starts the container with BDS_LEVEL_TYPE=FLAT: GameTest places its
+      # platform at the console's own position, and in a default world that
+      # lands wherever the generator put the origin — measured at y=53 in an
+      # ocean, i.e. under water, where mining is five times slower and the
+      # simulated player drowns inside the test's tick budget. A superflat
+      # world puts the same platform on dry land every time.
+      LEVEL_TYPE: "${BDS_LEVEL_TYPE:-DEFAULT}"
       SERVER_NAME: "Andrew BDS"
       # bds-check leaves this at the default (creative); bds:up starts the
       # container with BDS_GAMEMODE=survival in its environment so this

@@ -66,14 +66,25 @@ const EXPERIMENT_ACTIVE = 'Experiment(s) active:';
  * Tests registered by src/gametest/main.ts, run one at a time.
  *
  * Not `/gametest runset`: that starts every test in the batch at once and lays
- * their structures out side by side, and on a server with nobody logged in only
- * the spawn chunks tick. The second structure loaded but its blocks were out of
- * reach — "onTestFailed: … - Could not setBlock 'stone'". Run singly, each test
- * is placed at the console's own origin, which is inside the ticking area.
+ * their structures out side by side, so only the first sits at the console's
+ * own origin. Run singly (with a `clearall` between), every test gets that same
+ * origin, which keeps placement identical from test to test and from run to run.
+ *
+ * An earlier note here blamed runset for "Could not setBlock 'stone'", on the
+ * theory that the off-origin structures fell outside the ticking area. That was
+ * wrong: the real cause was setBlockType failing when the call would not change
+ * the block — see placeBlock() in src/gametest/main.ts.
  */
-const EXPECTED_TESTS = ['andrew:probe_blocks', 'andrew:pickaxe_autosmelt', 'andrew:pickaxe_keeps_vanilla_drops'];
+const EXPECTED_TESTS = ['andrew:pickaxe_autosmelt', 'andrew:pickaxe_keeps_vanilla_drops'];
 
-const env = { ...process.env, BDS_LEVEL_NAME: LEVEL_NAME, BDS_GAMEMODE: 'survival' };
+// FLAT is not cosmetic: see the LEVEL_TYPE comment in docker/bds/compose.yaml.
+// A default world put the platform under an ocean and the run was intermittent.
+const env = {
+  ...process.env,
+  BDS_LEVEL_NAME: LEVEL_NAME,
+  BDS_GAMEMODE: 'survival',
+  BDS_LEVEL_TYPE: 'FLAT',
+};
 
 // ---------------------------------------------------------------- arguments
 
@@ -425,7 +436,14 @@ function waitFor(label, done, deadline) {
     if (Date.now() > deadline) throw new Error(`timed out waiting for ${label}`);
     const ps = compose(['ps', '-q', '--status', 'running']);
     if ((ps.stdout ?? '').trim() === '') {
-      throw new Error(`the BDS container exited while waiting for ${label}`);
+      // The reason is in the container's own log and nowhere else — the
+      // container is removed moments later by the `finally` block, taking the
+      // log with it. Observed on a clean clone, where the image downloads BDS
+      // on first start: without these lines the run only said "exited".
+      const tail = text.split('\n').filter((l) => l.trim() !== '').slice(-15).join('\n');
+      throw new Error(
+        `the BDS container exited while waiting for ${label}. Last lines of its log:\n${tail}`
+      );
     }
     sleep(2000);
   }
