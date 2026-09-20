@@ -1,0 +1,4 @@
+repos:
+  - name: self
+    path: .
+knowledge_repo: self

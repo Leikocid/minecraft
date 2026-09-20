@@ -1,0 +1,13 @@
+# ai-kit — tool-specific configs (do not commit)
+.mcp.json
+.claude/
+.cursor/
+.cursorrules
+.gemini/
+.chatgpt/
+.codex/
+.serena/
+.agents/
+.obsidian/
+.github/copilot-instructions.md
+.DS_Store

@@ -1,0 +1,6 @@
+{
+  "foam.files.ignore": [
+    "**/.work/**",
+    "**/.ai/temp/**"
+  ]
+}

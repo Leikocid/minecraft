@@ -1,0 +1,33 @@
+# Local data — do not commit
+inbox/
+temp/
+logs/
+docker/
+chronicle/
+orchestrator/
+state/*
+!state/analyst-state.md
+!chronicle/digests/
+!chronicle/digests/**
+
+chronicle.pid
+chronicle.lock
+watch.pid
+processed.json
+index/
+
+# Generated/managed by ai-kit
+config.yaml
+structure.json
+skills/
+!project-skills/
+tasks/
+verify/
+trailers/
+README.md
+
+# Help system (deployed by ai-kit, not committed)
+help/
+help.db
+
+.DS_Store

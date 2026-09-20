@@ -1,0 +1,11 @@
+# What stays out of the Knowledge Vault.
+#
+# Same syntax as .gitignore: a directory (docs/_archive/), a glob
+# (*.generated.md), `!` to re-include, last matching rule wins.
+# Paths are relative to the project root. Applies both to live watching
+# and to imports (ai-kit watch add / add-doc).
+#
+# Typical entries on an inherited codebase:
+#   docs/_archive/        someone else's archived documentation
+#   docs/**/plans/        execution plans — a record of the past, not knowledge
+#   **/node_modules/      vendored trees
