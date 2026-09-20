@@ -1,0 +1,41 @@
+# Bedrock Dedicated Server for the andrew add-on.
+#
+# Two ways in:
+#   npm run bds:check  — one-shot automated check (starts, reads the log, stops)
+#   npm run bds:up     — manual LAN server to join from the iPad
+#
+# VERSION must stay equal to BDS_VERSION in scripts/targets.mjs —
+# scripts/bds-check.mjs asserts this and fails the run on drift.
+# [src: decision-tselevaya-versiya-bedrock-1-26-51-asm-001-q-001]
+
+services:
+  bds:
+    image: itzg/minecraft-bedrock-server:latest
+    # BDS ships x86_64 only; on Apple Silicon this runs through Rosetta.
+    # [src: concept-constraint C-5]
+    platform: linux/amd64
+    container_name: andrew-bds
+    environment:
+      EULA: "TRUE"
+      VERSION: "1.26.51.1"
+      # The world the packs are attached to; scripts/bds-check.mjs writes
+      # worlds/$LEVEL_NAME/world_{behavior,resource}_packs.json.
+      LEVEL_NAME: "andrew"
+      SERVER_NAME: "Andrew BDS"
+      GAMEMODE: "creative"
+      DIFFICULTY: "peaceful"
+      ALLOW_CHEATS: "true"
+      # LAN-only dev server: the iPad joins without Xbox Live auth.
+      ONLINE_MODE: "false"
+      # Without console output the script's console.warn never reaches
+      # `docker logs`, and the check has nothing to assert on.
+      CONTENT_LOG_FILE_ENABLED: "true"
+      CONTENT_LOG_CONSOLE_OUTPUT_ENABLED: "true"
+    # UDP, so the iPad can find the server over LAN.
+    ports:
+      - "19132:19132/udp"
+    volumes:
+      # Server binary, world and installed packs. Gitignored.
+      - ./data:/data
+    stdin_open: true
+    tty: true
