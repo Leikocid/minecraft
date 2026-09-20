@@ -11,9 +11,7 @@
       "minecraft:display_name": {
         "value": "item.andrew:test_item.name"
       },
-      "minecraft:icon": {
-        "texture": "andrew_test_item"
-      },
+      "minecraft:icon": "andrew_test_item",
       "minecraft:max_stack_size": 64
     }
   }
