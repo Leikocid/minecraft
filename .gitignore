@@ -17,3 +17,6 @@ docker/bds/data/
 .obsidian/
 .github/copilot-instructions.md
 .DS_Store
+
+# Interactive-session worktrees (see CLAUDE.md, Working Tree)
+.work/
