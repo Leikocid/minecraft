@@ -22,7 +22,13 @@ services:
       # worlds/$LEVEL_NAME/world_{behavior,resource}_packs.json.
       LEVEL_NAME: "andrew"
       SERVER_NAME: "Andrew BDS"
-      GAMEMODE: "creative"
+      # bds-check leaves this at the default (creative); bds:up starts the
+      # container with BDS_GAMEMODE=survival in its environment so this
+      # resolves to survival there. The image reapplies GAMEMODE from this
+      # env var into server.properties on every container start (via
+      # set-property --bulk), so writing "survival" into the properties file
+      # directly does not stick — this is the only override that works.
+      GAMEMODE: "${BDS_GAMEMODE:-creative}"
       DIFFICULTY: "peaceful"
       ALLOW_CHEATS: "true"
       # LAN-only dev server: the iPad joins without Xbox Live auth.
