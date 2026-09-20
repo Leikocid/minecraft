@@ -2,6 +2,7 @@
 node_modules/
 dist/
 packs/behavior/scripts/
+packs/selftest/scripts/
 docker/bds/data/
 
 # ai-kit — tool-specific configs (do not commit)
