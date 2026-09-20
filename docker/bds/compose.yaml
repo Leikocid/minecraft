@@ -20,7 +20,11 @@ services:
       VERSION: "1.26.51.1"
       # The world the packs are attached to; scripts/bds-check.mjs writes
       # worlds/$LEVEL_NAME/world_{behavior,resource}_packs.json.
-      LEVEL_NAME: "andrew"
+      # bds:check and bds:up leave this at "andrew"; scripts/bds-gametest.mjs
+      # starts the container with BDS_LEVEL_NAME=gametest so that the
+      # experiments-enabled GameTest world is a separate world and the
+      # everyday "andrew" world is never touched by it.
+      LEVEL_NAME: "${BDS_LEVEL_NAME:-andrew}"
       SERVER_NAME: "Andrew BDS"
       # bds-check leaves this at the default (creative); bds:up starts the
       # container with BDS_GAMEMODE=survival in its environment so this
