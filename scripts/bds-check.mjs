@@ -10,38 +10,41 @@
 // The self-check pack contributes its own verdict: it runs inside the engine
 // and prints "[selftest] PASS/FAIL …" plus a final "[selftest] DONE" line.
 //
+// Staging (build, unpack, install, world config) is shared with
+// `npm run bds:up` via scripts/bds-lib.mjs — this file owns only the
+// creative one-shot flow, the self-check pack and the log analysis.
+//
 //   npm run bds:check
 //   npm run bds:check -- --overlay tests/fixtures/bds/broken-dependency
 //   npm run bds:check -- --no-build --timeout 120
 //   npm run bds:check -- --break-selftest   # negative test: must exit non-zero
 
-import { execFileSync, spawnSync } from 'node:child_process';
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { readdirSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { BDS_VERSION } from './targets.mjs';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import {
+  addonPath,
+  assertComposePinsVersion,
+  assertDockerRunning,
+  buildAddon,
+  compose,
+  log,
+  root,
+  runServer,
+  SCRIPT_LOADED,
+  stageDataDir,
+  unpackAddon,
+} from './bds-lib.mjs';
 import { bundleSelfTest } from './build.mjs';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const root = join(__dirname, '..');
-
-const composeDir = join(root, 'docker', 'bds');
-const composeFile = join(composeDir, 'compose.yaml');
-const seedProperties = join(composeDir, 'server.properties');
-const dataDir = join(composeDir, 'data');
-const addonPath = join(root, 'dist', 'andrew.mcaddon');
 const logPath = join(root, 'dist', 'bds-check.log');
+
 // The self-check pack lives in the working tree, not in the archive — it is
 // deliberately excluded from dist/andrew.mcaddon.
 const selftestDir = join(root, 'packs', 'selftest');
-
-// Fixed install names, so a run never depends on leftovers from the last one.
-const BP_DIR_NAME = 'andrew_bp';
-const RP_DIR_NAME = 'andrew_rp';
 const ST_DIR_NAME = 'andrew_selftest';
-const LEVEL_NAME = 'andrew';
+
+const SELFTEST_TAG = '[selftest]';
+const SELFTEST_DONE = '[selftest] DONE';
 
 // ---------------------------------------------------------------- arguments
 
@@ -61,87 +64,7 @@ function parseArgs(argv) {
   return opts;
 }
 
-function log(msg) {
-  process.stdout.write(`${msg}\n`);
-}
-
-function compose(args, opts = {}) {
-  return spawnSync('docker', ['compose', '-f', composeFile, ...args], {
-    cwd: composeDir,
-    encoding: 'utf-8',
-    ...opts,
-  });
-}
-
-// ------------------------------------------------------------ preconditions
-
-function assertComposePinsVersion() {
-  const text = readFileSync(composeFile, 'utf-8');
-  const match = text.match(/^\s*VERSION:\s*"?([0-9.]+)"?\s*$/m);
-  if (!match) {
-    throw new Error(`${composeFile}: no VERSION found — cannot confirm the BDS version`);
-  }
-  if (match[1] !== BDS_VERSION) {
-    throw new Error(
-      `${composeFile}: VERSION is ${match[1]} but scripts/targets.mjs pins BDS_VERSION ${BDS_VERSION} — ` +
-        'the docker config and the version targets have drifted apart'
-    );
-  }
-  log(`✓ compose pins BDS ${BDS_VERSION}`);
-}
-
-function assertDockerRunning() {
-  const res = spawnSync('docker', ['info'], { encoding: 'utf-8', stdio: 'pipe' });
-  if (res.status !== 0) {
-    throw new Error(
-      'the Docker daemon is not reachable — start Docker Desktop and retry.\n' +
-        `docker info said: ${(res.stderr || '').trim().split('\n')[0]}`
-    );
-  }
-}
-
-// --------------------------------------------------------------- pack setup
-
-/** Classify an unpacked pack directory as behavior or resource from its manifest. */
-function classifyPack(manifest) {
-  const types = (manifest.modules ?? []).map((m) => m.type);
-  if (types.includes('data') || types.includes('script')) return 'behavior';
-  if (types.includes('resources')) return 'resource';
-  return null;
-}
-
-/**
- * Unpack dist/andrew.mcaddon into a temp dir, apply the overlay on top of it,
- * and report where the behavior and resource packs ended up.
- *
- * The overlay is applied *before* the manifests are read, so that a fixture
- * which rewrites a manifest is reflected in world_*_packs.json as well.
- */
-function unpackAddon(overlayDir) {
-  const tmp = mkdtempSync(join(tmpdir(), 'andrew-bds-'));
-  execFileSync('unzip', ['-q', '-o', addonPath, '-d', tmp]);
-
-  if (overlayDir) {
-    const abs = join(root, overlayDir);
-    if (!existsSync(abs)) throw new Error(`--overlay directory not found: ${abs}`);
-    log(`▶ applying overlay ${overlayDir}`);
-    cpSync(abs, tmp, { recursive: true, force: true });
-  }
-
-  const found = {};
-  for (const entry of readdirSync(tmp, { withFileTypes: true })) {
-    if (!entry.isDirectory()) continue;
-    const manifestPath = join(tmp, entry.name, 'manifest.json');
-    if (!existsSync(manifestPath)) continue;
-    const manifest = JSON.parse(readFileSync(manifestPath, 'utf-8'));
-    const kind = classifyPack(manifest);
-    if (kind) found[kind] = { dir: join(tmp, entry.name), manifest };
-  }
-
-  if (!found.behavior) throw new Error(`${addonPath}: no behavior pack found inside the archive`);
-  if (!found.resource) throw new Error(`${addonPath}: no resource pack found inside the archive`);
-  return { tmp, ...found };
-}
+// ------------------------------------------------------------ self-check pack
 
 /**
  * Load the dev-only self-check pack straight from the working tree.
@@ -167,116 +90,7 @@ function loadSelfTestPack({ breakSelfTest }) {
     throw new Error(`${entryPath} not found — run "npm run build" first`);
   }
 
-  return { dir: selftestDir, manifest: JSON.parse(readFileSync(manifestPath, 'utf-8')) };
-}
-
-/**
- * Install the release packs plus the self-check pack, and attach them to the
- * world.
- *
- * The world directory is recreated on every run: world_*_packs.json is written
- * once at world creation, so a stale world would silently keep the previous
- * run's packs and make the check lie.
- */
-function stageDataDir({ behavior, resource, selftest }) {
-  mkdirSync(dataDir, { recursive: true });
-
-  // The BDS archive is unpacked with `unzip -n`, so this file is never
-  // overwritten by the server; the image applies compose env on top of it.
-  cpSync(seedProperties, join(dataDir, 'server.properties'), { force: true });
-
-  const bpDest = join(dataDir, 'behavior_packs', BP_DIR_NAME);
-  const rpDest = join(dataDir, 'resource_packs', RP_DIR_NAME);
-  const stDest = join(dataDir, 'behavior_packs', ST_DIR_NAME);
-  rmSync(bpDest, { recursive: true, force: true });
-  rmSync(rpDest, { recursive: true, force: true });
-  rmSync(stDest, { recursive: true, force: true });
-  mkdirSync(join(dataDir, 'behavior_packs'), { recursive: true });
-  mkdirSync(join(dataDir, 'resource_packs'), { recursive: true });
-  cpSync(behavior.dir, bpDest, { recursive: true });
-  cpSync(resource.dir, rpDest, { recursive: true });
-  cpSync(selftest.dir, stDest, { recursive: true });
-
-  const worldDir = join(dataDir, 'worlds', LEVEL_NAME);
-  rmSync(worldDir, { recursive: true, force: true });
-  mkdirSync(worldDir, { recursive: true });
-
-  const entry = (m) => ({ pack_id: m.header.uuid, version: m.header.version });
-  // The behavior pack is listed first; the self-check pack also declares a
-  // manifest dependency on it, so its script runs after the items exist.
-  writeFileSync(
-    join(worldDir, 'world_behavior_packs.json'),
-    JSON.stringify([entry(behavior.manifest), entry(selftest.manifest)])
-  );
-  writeFileSync(join(worldDir, 'world_resource_packs.json'), JSON.stringify([entry(resource.manifest)]));
-
-  // Old content logs would otherwise be mistaken for this run's output.
-  for (const f of readdirSync(dataDir)) {
-    if (f.startsWith('ContentLog')) rmSync(join(dataDir, f), { force: true });
-  }
-
-  log(`✓ installed ${behavior.manifest.header.name} -> behavior_packs/${BP_DIR_NAME}`);
-  log(`✓ installed ${resource.manifest.header.name} -> resource_packs/${RP_DIR_NAME}`);
-  log(`✓ installed ${selftest.manifest.header.name} -> behavior_packs/${ST_DIR_NAME}`);
-}
-
-// ------------------------------------------------------------------ running
-
-function readLog() {
-  const res = compose(['logs', '--no-color', '--no-log-prefix']);
-  return `${res.stdout ?? ''}${res.stderr ?? ''}`;
-}
-
-const SERVER_STARTED = /^\[.*INFO\] Server started\.$/m;
-const SCRIPT_LOADED = '[andrew] script loaded';
-const SELFTEST_TAG = '[selftest]';
-const SELFTEST_DONE = '[selftest] DONE';
-
-/**
- * Start the server and wait until it either reports a successful start or
- * dies. Returns the captured log.
- */
-function runServer(timeoutSec) {
-  const deadline = Date.now() + timeoutSec * 1000;
-
-  log('▶ starting BDS (first run downloads the server — be patient)');
-  const up = compose(['up', '-d'], { stdio: 'inherit' });
-  if (up.status !== 0) throw new Error('docker compose up failed');
-
-  let text = '';
-  let started = false;
-  while (Date.now() < deadline) {
-    text = readLog();
-    if (SERVER_STARTED.test(text)) {
-      started = true;
-      break;
-    }
-    const ps = compose(['ps', '-q', '--status', 'running']);
-    if ((ps.stdout ?? '').trim() === '') {
-      // Container exited before reporting a start — the log holds the reason.
-      return { text: readLog(), started: false, exited: true };
-    }
-    sleep(3000);
-  }
-
-  if (started) {
-    // Scripts are evaluated just after the start line; give them a moment so
-    // that a missing "script loaded" means "did not run", not "not yet".
-    // The self-check runs at worldLoad and prints DONE last, so waiting for
-    // both is what makes "absent" mean "never happened".
-    const scriptDeadline = Math.min(Date.now() + 60_000, deadline);
-    while (Date.now() < scriptDeadline) {
-      text = readLog();
-      if (text.includes(SCRIPT_LOADED) && text.includes(SELFTEST_DONE)) break;
-      sleep(2000);
-    }
-  }
-
-  return { text, started, exited: false };
-}
-
-function sleep(ms) {
-  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+  return { dir: selftestDir, manifest: JSON.parse(readFileSync(manifestPath, 'utf-8')), dirName: ST_DIR_NAME };
 }
 
 // ----------------------------------------------------------------- analysis
@@ -284,8 +98,8 @@ function sleep(ms) {
 /**
  * Decide PASS/FAIL from the server log.
  *
- * Behavior pack — proven positively: BDS prints a "Pack Stack" line naming the
- * pack and its uuid.
+ * Behavior packs — proven positively: BDS prints a "Pack Stack" line naming
+ * each pack and its uuid.
  *
  * Resource pack — proven negatively, because BDS does not print a stack line
  * for resource packs at world load. It does, however, validate every pack id
@@ -294,6 +108,9 @@ function sleep(ms) {
  * verified by deliberately breaking the resource pack uuid: the warning
  * appears when the pack is missing and is absent when it resolves. So a
  * configured id with no such warning means the engine accepted the pack.
+ *
+ * Self-check — its own PASS/FAIL lines plus the DONE counters; the counters
+ * win over the lines, so a FAIL lost to log truncation cannot turn a run green.
  */
 function analyzeLog(text, { behavior, resource, selftest }) {
   const bpUuid = behavior.manifest.header.uuid;
@@ -316,7 +133,7 @@ function analyzeLog(text, { behavior, resource, selftest }) {
     else problems.push(`${label} ${uuid} never appeared in a "Pack Stack" line — it was not loaded`);
   }
 
-  // --- neither pack was rejected by the engine (negative signal)
+  // --- no pack was rejected by the engine (negative signal)
   const ignored = lines.filter((l) => /Configured pack .*was not found and was ignored/i.test(l));
   for (const line of ignored) {
     const lower = line.toLowerCase();
@@ -341,12 +158,13 @@ function analyzeLog(text, { behavior, resource, selftest }) {
 
     if (/Configured pack .*was not found and was ignored/i.test(line)) continue; // handled above
 
-    // Anything the engine complains about that names our namespace or either
-    // pack uuid — manifest, dependency and item-schema errors all land here.
+    // Anything the engine complains about that names our namespace or any of
+    // our pack uuids — manifest, dependency and item-schema errors all land here.
     const mentionsOurs =
       /andrew/i.test(line) ||
       line.toLowerCase().includes(bpUuid.toLowerCase()) ||
-      line.toLowerCase().includes(rpUuid.toLowerCase());
+      line.toLowerCase().includes(rpUuid.toLowerCase()) ||
+      line.toLowerCase().includes(stUuid.toLowerCase());
 
     // A script engine failure is ours even when the message names no pack.
     const scriptFailure =
@@ -355,7 +173,7 @@ function analyzeLog(text, { behavior, resource, selftest }) {
     if (mentionsOurs || scriptFailure) problems.push(line.trim());
   }
 
-  // --- the script actually ran
+  // --- the release script actually ran
   const scriptLine = lines.find((l) => l.includes(SCRIPT_LOADED));
   if (scriptLine) evidence.push(scriptLine.trim());
   else problems.push(`"${SCRIPT_LOADED}" is absent from the log — the pack script did not execute`);
@@ -376,8 +194,6 @@ function analyzeLog(text, { behavior, resource, selftest }) {
         '(it never ran, or it threw before reporting)'
     );
   } else {
-    // Trust the counters over the lines: a FAIL line lost to log truncation
-    // would otherwise turn a failed run green.
     const failed = Number(doneLine.match(/failed=(\d+)/)?.[1] ?? NaN);
     const passed = Number(doneLine.match(/passed=(\d+)/)?.[1] ?? NaN);
     if (!Number.isFinite(failed) || !Number.isFinite(passed)) {
@@ -401,8 +217,7 @@ function main() {
   assertDockerRunning();
 
   if (opts.build) {
-    log('▶ npm run build');
-    execFileSync(process.execPath, [join(root, 'scripts', 'build.mjs')], { stdio: 'inherit', cwd: root });
+    buildAddon();
   }
   if (!existsSync(addonPath)) {
     throw new Error(`${addonPath} not found — run "npm run build" first`);
@@ -414,10 +229,12 @@ function main() {
   };
   let result;
   try {
-    stageDataDir(packs);
+    stageDataDir({ ...packs, extraBehaviorPacks: [packs.selftest] });
     // A previous container would otherwise keep serving its own old log.
     compose(['down']);
-    result = runServer(opts.timeoutSec);
+    // The self-check runs at worldLoad and prints DONE last, so waiting for
+    // both markers is what makes "absent" mean "never happened".
+    result = runServer(opts.timeoutSec, {}, { waitFor: [SCRIPT_LOADED, SELFTEST_DONE], markerWaitMs: 60_000 });
   } finally {
     rmSync(packs.tmp, { recursive: true, force: true });
     if (opts.breakSelfTest) {
