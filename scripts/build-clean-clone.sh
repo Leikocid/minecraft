@@ -6,6 +6,13 @@
 # compares the resulting archive's file list against a local build.
 set -euo pipefail
 
+# This script may run inside a git worktree whose environment pins
+# GIT_DIR/GIT_WORK_TREE (e.g. an agent sandbox). Those env vars take
+# priority over -C/cwd and would redirect `git clone` into the shared
+# repository instead of the destination directory below — unset them so
+# git commands in this script (and any it spawns) resolve normally.
+unset GIT_DIR GIT_WORK_TREE
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
