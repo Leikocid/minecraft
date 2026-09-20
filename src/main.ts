@@ -1,4 +1,7 @@
 import { world } from "@minecraft/server";
+import { registerAutoSmelt } from "./autosmelt";
+
+registerAutoSmelt();
 
 world.afterEvents.worldLoad.subscribe(() => {
   console.warn("[andrew] script loaded");
