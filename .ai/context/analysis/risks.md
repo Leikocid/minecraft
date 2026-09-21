@@ -1,12 +1,12 @@
 ---
 title: Risks
 type: analysis
-generated_at: "2026-09-20T16:22:35.865Z"
+generated_at: "2026-09-21T21:27:44.655Z"
 source_channel: rollout
 node_id: rollout-risks
 aliases: ["rollout-risks","risks"]
 is_a: ["rollout","risks"]
-priority: 120
+priority: 510
 ---
 
 # Risks

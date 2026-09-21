@@ -7,68 +7,79 @@ aliases: ["L0"]
 part_of: ["L0"]
 is_a: ["constraint"]
 relates_to: ["L0"]
-analysis_version: 1
-priority: 120
-size_chars: 4579
-tags: ["constraint","nfr","policy","compatibility","L0"]
+analysis_version: 2
 level: 0
+priority: 510
+size_chars: 6201
+tags: ["constraint","nfr","policy","compatibility","web-sword","L0"]
 ---
 
 # Constraints
 
-## C-1 — Platform: Bedrock Edition only
+**Links** — `title: Constraints` · `aliases: ["L0-constraint", "Constraints"]` · `part_of: ["L0"]` · `is_a: ["constraint"]` · `relates_to: ["L0"]` · `see_also: ["webswordspecv1ruen-part-2", "stage-0-infrastructure"]` · `governs_files: ["packs/behavior/manifest.json", "packs/resource/manifest.json", "package.json"]` · `supersedes: ["L0"]`
 
-Minecraft **Bedrock Edition**. Java Edition is excluded outright because the target play device is an iPad. This is a root constraint: it fixes the add-on format (`.mcaddon`, behavior pack + resource pack + JSON manifests), the scripting surface (`@minecraft/server`), and the fact that no macOS client exists.
+## C-1 — Stable API only (governing policy)
 
-## C-2 — Stable Script API only (policy)
+*«Предпочтение: stable Bedrock APIs. Не использовать Preview/Beta API, если механика реализуема стабильным способом.»* (§11) · *«Нет обязательной зависимости от Experiments/Preview.»* (§14)
 
-Only the **stable** `@minecraft/server` API may be used: **2.9.0**, or 2.10.0 if required (described in Stage 0 as the current stable on npm). **Beta/Preview APIs must not be enabled.**
+Inherited unbroken from Stage 0. This is the project's strongest policy and it **binds design, not just dependencies**: if a mechanic is only expressible via a Beta API, the mechanic changes — the channel does not. `@minecraft/server` **2.10.0**; `min_engine_version` **[1, 26, 50]**; target game **Bedrock 1.26.51**.
 
-This is a *policy* constraint, not merely a technical preference — it exists because the whole point of Stage 1 is to probe compatibility with the retail game. Preview APIs would require a Preview client and would hide exactly the failure the probe is designed to find.
+The `@minecraft/server-gametest` dependency (`1.0.0-beta.…`) is a **devDependency used by `packs/gametest`** and must never become a runtime dependency of `packs/behavior`. Any change that makes the shipped behavior pack require it violates §14.
 
-## C-3 — Retargeting discipline (policy)
+## C-2 — Retarget the pack to the game, never the reverse
 
-> *"If the installed game reports a dependency or format error, use the exact error text to retarget the pack rather than enabling Preview/Beta APIs by default."*
+Stage 1's rule, still governing: *"If the installed game reports a dependency or format error, use the exact error text to retarget the pack rather than enabling Preview/Beta APIs by default."* Version failures are diagnosed from log text, not worked around by loosening the channel.
 
-The prescribed failure response is **read the error, change the declared versions to match**. The forbidden response is **loosen the API channel until the error disappears**. Any troubleshooting that reaches for `"beta"` module versions, Preview builds, or experimental toggles violates this constraint and must be escalated instead.
+## C-3 — Server-authoritative execution
 
-## C-4 — Version targets (currently unverified)
+*«Способность должна вычисляться серверной логикой, чтобы все игроки видели одинаковый результат.»* (§9) · *«Targeting и размещение 3×3×3 должны выполняться серверно.»* (§11)
 
-| Setting | Declared value | Confidence |
-|---|---|---|
-| `@minecraft/server` | 2.9.0 (2.10.0 permitted) | Declared in both sources |
-| `min_engine_version` | 1.26.0 | Declared in Stage 1 spec only |
-| Compatibility target | "current Bedrock 26.x" | Declared in Stage 1 spec only |
+No client-side prediction, no per-client divergence. Two clients observing the same activation must see the same 27 cells resolve identically. This forbids any design where block placement is derived from client-supplied state that the server does not re-validate.
 
-Stage 0 states that the true values **depend on an unanswered question** — the exact version reported by the iPad. Until Q-001 is answered, these values are targets, not facts. See `concept-contradiction` CTR-001.
+## C-4 — No per-tick global world scan (performance)
 
-## C-5 — Hardware and architecture
+*«Не делать постоянный глобальный скан мира каждый tick.»* (§11)
 
-- **Mac mini, Apple M4 Pro (arm64).** Build, static analysis, packaging.
-- **BDS Docker image is `linux/amd64`** and therefore runs **under Rosetta emulation**. Expect slower startup and the class of bugs specific to emulated x86 workloads; a platform flag will be required when pulling/running the image.
-- **iPad** runs retail Bedrock from the App Store — the version there is whatever the App Store shipped and cannot be freely chosen. The iPad's version constrains the project, not the other way round.
-- **No macOS Bedrock client exists.** There is no way to shorten the loop by testing the client on the Mac.
+The only explicit performance requirement in the spec, and it is phrased as a prohibition. Ability logic must be **event-driven** (activation events, death events, craft events), not polling. Cooldown display is the one place a recurring tick is defensible, and it must be scoped to players actually holding the sword — not to the world.
 
-## C-6 — Verification split (structural)
+## C-5 — Dedicated-multiplayer safety
 
-No single machine can verify a build. Behavior-pack loading, manifest/dependency errors and script execution are only diagnosable from the **Docker BDS log**. Resource-pack rendering, item icons, Creative inventory placement and RU/EN localization are only observable on the **iPad GUI**. Any acceptance procedure must touch both.
+*«Любая реализация должна быть безопасной для dedicated multiplayer server.»* (§11)
 
-## C-7 — Build reproducibility
+Concretely: concurrent crafts by two players must not both succeed (§9); concurrent activations must each resolve independently (§9); no global mutable state may assume a single player. The Docker BDS rig is the test surface for this, not the single-player world.
 
-`npm run build` must produce `dist/<name>.mcaddon` **from a clean clone**, with TypeScript compiling without errors against the `@minecraft/server` types. Manifest and item JSON must pass validation. This rules out manual packaging steps, uncommitted local files, and machine-specific paths.
+## C-6 — Durable world-level state
 
-## C-8 — Localization is mandatory, both stages
+*«Persistent one-per-world state хранить в устойчивом world-level состоянии, доступном после рестартов.»* (§11) · *«Флаг успешного крафта должен сохраняться после выхода игроков, сохранения мира и рестарта сервера.»* (§3)
 
-Every custom item must carry **both Russian and English** names — the trivial Stage 0 item as well as Кирка шахтёра / Miner's Pickaxe. Localization is not a finishing touch here; it is one of the things being *tested* (it proves the resource pack's `.lang` files are being read).
+State must survive three distinct events — player logout, world save, server restart — and §13 makes restart survival an explicit acceptance test. Per-player or in-memory state does not satisfy this.
 
-## C-9 — Survival-observable behavior
+## C-7 — No duplication paths (security/integrity invariant)
 
-The auto-smelt acceptance criterion is explicitly *"Supported ores produce smelted drops **in Survival**"*. Creative-mode verification is insufficient for drop behavior, since Creative suppresses normal block drops. The test procedure must include a Survival world.
+*«Нет известных способов дюпа через крафт, смерть или reconnect.»* (§14) · *«Реализация обязана предотвращать появление дополнительной копии при смерти, disconnect/reconnect и рестарте.»* (§4) · *«Смерть во время cooldown не должна создавать копию меча или сбрасывать persistent one-per-world flag.»* (§12)
 
-## C-10 — Language and tooling (proposed, not settled)
+This is stated as an absolute. It is the single most demanding non-functional requirement in the spec and it constrains `L0-once` and `L0-keep` jointly — a fix on one side can open a hole on the other.
 
-TypeScript is **proposed** as the scripting language, with plain JavaScript as the open alternative (Q-003). Until resolved, avoid build-pipeline work that is expensive to reverse in either direction.
+## C-8 — Non-destructive world mutation
 
-## C-11 — Staging gate (process)
+*«Не удалять и не заменять сущности… Не заменять контейнеры и функциональные блоки с важным содержимым/данными… Не заменять bedrock и другие явно защищённые/неразрушаемые специальные блоки.»* (§6)
 
-*«Прототип из `Miners_Pickaxe_Test_Spec` начинается только после закрытия этого этапа.»* Stage 1 work must not begin until every Stage 0 pass criterion is met. This is a sequencing constraint with teeth: starting the pickaxe early would reintroduce exactly the ambiguity (pipeline failure vs. content failure) that Stage 0 exists to eliminate.
+The ability writes to shared world state that other players own. The default posture is **deny**: a cell whose safety cannot be established must be skipped, not filled. Note that the spec names only *examples* of protected blocks — the closed list is an assumption (see ASM-007).
+
+## C-9 — Localization is structural, not cosmetic
+
+*«Использовать стандартную систему локализации Resource Pack, а не жёстко вшивать только один язык в скрипт.»* (§10)
+
+Stated as a prohibition on implementation technique. Scripts must emit translate keys (rawtext), never literal strings — and this covers **runtime messages**, not only the item name: the first-craft announcement and the cooldown readout are both explicitly in scope. Existing catalogues: `packs/resource/texts/ru_RU.lang`, `en_US.lang`.
+
+## C-10 — Preserve the delivered platform
+
+Stages 0 and 1 are shipped at v0.2.1. The Web Sword extends the same BP/RP. `andrew:miners_pickaxe`, the auto-smelt behaviour, the build/validate pipeline and the 7 existing test suites must continue to pass. Version bumps go through `npm run version:set` (the established one-command path), which keeps `package.json` and all four manifests in step.
+
+## C-11 — Three-hop verification loop (environmental)
+
+No Bedrock client exists for macOS. Verification is necessarily split: **Docker BDS** answers *"did it load and run?"* (greppable logs, GameTest, multiplayer), **iPad** answers *"does it look right?"* (Creative visibility, icon, RU/EN rendering, actionbar). Neither can substitute for the other. §14's two-player requirement strains this environment — see ASM-010.
+
+## C-12 — Effort envelope (planning constraint)
+
+§15 budgets **2–5 h** to a first working prototype and **4–10 h** to a properly tested standalone module, *conditional on the AI agent being able to launch Bedrock and read runtime/content logs quickly*. That precondition is satisfied (`bds:check`, `bds:gametest`). The estimate explicitly attributes most of the cost to one-per-world persistence, death-retention/anti-dup and multiplayer edge cases — the same three areas C-6 and C-7 govern.

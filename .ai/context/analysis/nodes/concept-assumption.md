@@ -7,83 +7,97 @@ aliases: ["L0"]
 part_of: ["L0"]
 is_a: ["assumption"]
 relates_to: ["L0"]
-analysis_version: 1
-priority: 120
-size_chars: 5536
-tags: ["assumption","gap","L0"]
+analysis_version: 2
 level: 0
+priority: 510
+size_chars: 7115
+tags: ["assumption","gap","web-sword","L0"]
 ---
 
 # Assumptions
 
-Gaps filled with defaults during this analysis. Each is classified **MUST_ASK** (blocks work; do not proceed on the assumption) or **CAN_ASSUME** (safe default; revisit if contradicted).
+**Links** — `title: Assumptions` · `aliases: ["L0-assumption", "Assumptions"]` · `part_of: ["L0"]` · `is_a: ["assumption"]` · `relates_to: ["L0"]` · `see_also: ["webswordspecv1ruen-part-1", "webswordspecv1ruen-part-2"]` · `supersedes: ["L0"]`
+
+ASM-001 (Bedrock version), ASM-002 (namespace) and ASM-003 (TypeScript) were **closed by decisions on 2026-09-20** and are no longer assumptions. ASM-004 is carried forward below as ASM-005. All entries here are `CAN_ASSUME` unless marked `MUST_ASK`.
 
 ---
 
-## ASM-001 — Declared version targets match the installed iPad game — **MUST_ASK**
+## ASM-005 — Infinite durability and enchantability coexist on a sword `MUST_ASK` *(carried forward from ASM-004)*
 
-- **Assumed:** `min_engine_version 1.26.0` and `@minecraft/server 2.9.0` are correct for the iPad's actual build.
-- **Basis:** Asserted by the Stage 1 spec ("current Bedrock 26.x").
-- **Why it's an assumption:** Stage 0 lists the iPad's exact version as an *open question* and states that `min_engine_version` and the BDS version both depend on it. Nobody has read the number off the device.
-- **Impact if wrong:** The `.mcaddon` fails to import, or imports and silently disables scripts. This is the **single highest-value unknown in the project** — it is the exact failure mode both stages exist to detect. Every hour spent building against a wrong target is wasted.
-- **Action:** Answer Q-001 before writing manifests. This is a five-minute check on the device (Settings → version number at the bottom of the main menu).
+**Assumed.** An item with **no** `minecraft:durability` component still accepts enchantments through `minecraft:enchantable` — for `slot: "sword"` exactly as for `slot: "pickaxe"`.
 
----
+**Basis.** §1 requires both *«Прочность: бесконечная; предмет не должен ломаться»* and *«Совместимые ванильные зачарования меча разрешены»*; §13 tests *«Меч не теряет прочность после длительного использования.»* The shipped `packs/behavior/items/miners_pickaxe.json` already encodes this shape — `minecraft:enchantable` present, `minecraft:durability` absent — so the project has committed to the hypothesis in code.
 
-## ASM-002 — Namespace / add-on name — **MUST_ASK (cheap now, expensive later)**
+**Status.** Decision `decision-zacharovanie-bez-durability-proverit-pervoy-zada` resolved only the *method* ("verify empirically as the first Stage 1 task"), not the outcome. **This analysis cannot confirm the outcome from the repository.** Confirm before building the sword.
 
-- **Assumed:** namespace `andrew`, per the source's own example *«например `andrew`»* and consistent with the working directory name.
-- **Impact if wrong:** Item identifiers (`andrew:miners_pickaxe`), `.lang` keys, recipe IDs, manifest names and directory layout all carry the namespace. Renaming is trivial before the first build and increasingly painful afterwards — **item IDs are persisted inside saved worlds**, so a rename after any test world exists orphans the items in that world.
-- **Action:** Settle before the first commit. Near-zero cost now.
+**Impact if wrong.** §1's two clauses become mutually exclusive and the spec must change — add `minecraft:durability` plus break-protection, or drop enchantability. Affects `L0-item` directly and invalidates two §13 acceptance tests. It would also retroactively invalidate the pickaxe's enchantability claim.
 
 ---
 
-## ASM-003 — TypeScript is the scripting language — **CAN_ASSUME**
+## ASM-006 — "Standard use" is the item-use event, and melee swings do not raise it
 
-- **Assumed:** TypeScript, per ADR-005.
-- **Basis:** Proposed in the source, and already baked into pass criterion AC-S0-1.
-- **Impact if wrong:** Build pipeline and AC-S0-1 need rework. Contained — this is a Stage 0 -local concern and the scripts involved are a few lines long.
-- **Action:** Keep the build step thin so reversal stays cheap. Confirm via Q-003.
+**Assumed.** §5's *«стандартное использование предмета (Use / right click / long press)»* maps to the stable item-use event, and a left-click/tap **attack** with the same sword does not raise it.
 
----
+**Basis.** §7 is emphatic that a normal hit creates no cobweb and starts no cooldown. The two requirements are only compatible if attack and use are distinct engine events.
 
-## ASM-004 — An item with no durability component can still be enchanted — **MUST_ASK / verify empirically**
-
-- **Assumed:** The pickaxe can be infinitely durable (durability component omitted) *and* accept pickaxe enchantments, as the spec asserts in both Gameplay and Pass Criteria.
-- **Why it's an assumption:** On Bedrock, enchantability is generally tied to an item having durability/enchantable components; an item with no durability may be rejected by the enchanting table and anvil. The spec asserts both properties without reconciling them. **This analysis cannot verify Bedrock engine semantics from the available sources**, so it is recorded as an assumption rather than filed as a contradiction.
-- **Impact if wrong:** AC-S1-5 is **unsatisfiable as written**, and the entity design must change — either give the pickaxe a durability component plus an `unbreakable`-style behavior, or drop the enchantability requirement. Either way it is a spec change, not a bug fix.
-- **Action:** Test early in Stage 1 — it is cheap to check and it invalidates a pass criterion if false. Do not leave it to final acceptance.
+**Impact if wrong.** The ability fires on every melee swing — §7 violated, cooldown burned constantly, and the trap becomes an accidental self-encasement. Affects `L0-trap` and `L0-cool`. Cheap to falsify early with a GameTest; do so before building the placement logic.
 
 ---
 
-## ASM-005 — Auto-smelt is implemented in script, not via loot tables — **CAN_ASSUME**
+## ASM-007 — The protected-block set is a deny-list of block entities plus indestructibles
 
-- **Assumed:** Drop replacement is done in the Script API (intercepting block-break and substituting the drop), not by overriding vanilla loot tables.
-- **Basis:** The spec calls it an "auto-smelt **prototype**" and the whole stage is a *Script API* probe; a loot-table implementation would prove nothing about scripting.
-- **Impact if wrong:** Different interaction surface with Fortune and Silk Touch (both deferred), and different failure modes for the "non-listed blocks keep vanilla behavior" boundary.
-- **Action:** Prefer the script implementation — it matches the stage's diagnostic purpose.
+**Assumed.** "Replaceable ordinary blocks" ≈ air, fluids, grass/plants and other soft vanilla blocks. **Protected** ≈ anything with a block entity (chests, shulkers, furnaces, hoppers, barrels, signs, spawners, …) plus bedrock, barrier, command block, end portal frame and similar indestructibles.
 
----
+**Basis.** §6 names only examples — *«например, сундуки и аналогичные block entities»*, *«bedrock и другие явно защищённые»* — and never closes the list.
 
-## ASM-006 — "Diamond-like mining speed" means matching the diamond tier, tuned later — **CAN_ASSUME**
-
-- **Assumed:** Approximate diamond-tier speed values; exact per-block tag parity postponed.
-- **Basis:** The spec explicitly defers *"Exact parity with every diamond-pickaxe mining tag … until the user confirms the pack loads and scripts execute."*
-- **Impact if wrong:** Gameplay feel only. No pass criterion depends on it.
+**Impact if wrong (both directions).** Too permissive → the trap destroys player storage and builds, breaching C-8 and losing player data irrecoverably. Too restrictive → the cube barely forms and the weapon is useless. Affects `L0-trap`. The asymmetry matters: **data loss is unrecoverable, a weak trap is a tuning bug**, so the deny-list should start broad and be narrowed on evidence.
 
 ---
 
-## ASM-007 — Stage 2 will reuse the Stage 0/1 toolchain and API surface — **CAN_ASSUME**
+## ASM-008 — The 3×3×3 cube is the target cell ±1 on every axis
 
-- **Assumed:** The PvP add-on will be built with the same stable `@minecraft/server` version, the same build pipeline, and the same three-machine loop.
-- **Basis:** The entire rationale for Stages 0–1 is to de-risk Stage 2; the effort only pays off under this assumption.
-- **Impact if wrong:** If the PvP add-on turns out to need beta-only APIs, the Stage 1 probe validated the wrong surface and ADR-002 would have to be revisited wholesale.
-- **Action:** When Stage 2 requirements are gathered, **check the required capabilities against the 2.9.0 stable surface first**, before designing.
+**Assumed.** 27 cells centred on the resolved target position, including the centre cell itself.
+
+**Basis.** §5 says *«куб … размером 3×3×3, центрированный на целевой позиции»* and nothing more. It does not state whether the centre is filled, whether the cube sits on the targeted block's face, or how a target that is a *block* (not a point) resolves to a cell.
+
+**Impact if wrong.** Off-by-one geometry: the cube floats, sinks into terrain, or entombs the caster when targeting adjacent ground. §13's *«приблизительно полный 3×3×3 куб Cobweb вокруг центра»* is loose enough to pass either reading, so **the acceptance test will not catch this** — it needs an explicit answer. Affects `L0-trap`.
 
 ---
 
-## ASM-008 — The Stage 0 placeholder item is disposable — **CAN_ASSUME**
+## ASM-009 — Cooldown is keyed per player + ability, not per item instance
 
-- **Assumed:** The trivial Stage 0 item is scaffolding and will be removed or replaced once Stage 0 closes; it is not a product item.
-- **Basis:** Described only as *«любой пустой предмет»* with no attributes beyond a name and icon.
-- **Impact if wrong:** Negligible. Worst case a stray item ID lingers in the pack.
+**Assumed.** One 30-second timer per player per ability, regardless of how many Web Swords that player holds.
+
+**Basis.** §8 does not say. §9's *«каждый успешный вызов обрабатывается независимо»* is about concurrency between *different* players, not about one player's copies.
+
+**Impact if wrong.** Per-instance keying lets a player carrying two copies (legitimately possible for admins per §4, and via off-hand per §8) alternate them and bypass the 30-second limiter entirely — the weapon's secondary balance mechanism. Per-player keying is the safer default and is adopted in ADR-007.
+
+---
+
+## ASM-010 — The two-player DoD test runs against Docker BDS with two clients `MUST_ASK`
+
+**Assumed.** §14's *«минимум в тесте с двумя игроками»* is satisfiable by the Docker BDS LAN server with two connected clients.
+
+**Basis.** The documented environment lists exactly **one iPad** and no second Bedrock client; macOS has none. Stage 1's `bds:gametest` proved a *simulated* player is available in GameTest, which covers scripted multiplayer logic but not two genuine sessions.
+
+**Impact if wrong.** §14's Definition of Done is unachievable as written and the release gate stalls. Either a second client device is needed, or the requirement is amended to accept a simulated-player GameTest as the multiplayer evidence. Affects `L0-qatg`. **Ask the owner which.**
+
+---
+
+## ASM-011 — "Blocked without losing ingredients" degrades to detect-and-refund
+
+**Assumed.** The stable API offers no pre-craft veto, so the second survival craft is detected on completion and the ingredients are returned, rather than the craft being prevented outright.
+
+**Basis.** §3 hedges the requirement itself — *«насколько это позволяет стабильный API»* — which reads as the author anticipating exactly this limitation.
+
+**Impact if wrong (in the good direction).** If a true pre-craft veto exists on the stable surface, prefer it — it is simpler and has no refund edge cases. If neither veto nor reliable refund is available, the fallback is "blocked, ingredients consumed", which satisfies §13 but not §3's ideal. Affects `L0-once`; filed as `concept-contradiction` CTR-003.
+
+---
+
+## ASM-012 — The first-craft announcement goes to every player on the server
+
+**Assumed.** *«отправить всем игрокам»* (§3) means all players currently online at craft time, with no replay for players who join later.
+
+**Basis.** The spec says "all players" without qualifying online/offline or persistence of the announcement.
+
+**Impact if wrong.** Minor and cosmetic — a late-joining player misses the reveal. Recorded because the announcement is the *only* signal that the world's one craft has been spent, and a player who misses it may waste a Diamond Sword and 4 Cobweb attempting a second craft. Affects `L0-once`.

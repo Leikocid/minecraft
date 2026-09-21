@@ -1,13 +1,13 @@
 ---
 title: Intent
 type: project-knowledge
-generated_at: "2026-09-20T16:22:35.851Z"
+generated_at: "2026-09-21T21:24:41.653Z"
 source_channel: rollout
 node_id: rollout-intent
 aliases: ["rollout-intent","intent","project-knowledge/intent"]
 is_a: ["rollout","intent"]
 relates_to: ["L0"]
-priority: 120
+priority: 510
 ---
 
 # Intent
@@ -18,50 +18,51 @@ _node: L0_
 
 # Project Intent
 
-## Ultimate goal (Stage 2)
+**Links** — `title: Project Intent` · `aliases: ["L0-intent", "Intent"]` · `part_of: ["L0"]` · `is_a: ["intent"]` · `relates_to: ["L0"]` · `see_also: ["webswordspecv1ruen-part-1", "webswordspecv1ruen-part-2", "stage-0-infrastructure"]` · `supersedes: ["L0"]`
 
-Ship a custom **PvP Add-On for Minecraft Bedrock Edition**, playable on the owner's **iPad**.
+## Primary goal
 
-This goal is named in both sources but **specified in neither**. `stage-0-infrastructure` records it as *«**2** — основной PvP-аддон (требования ещё не сформулированы)»*. Everything currently written down exists to de-risk this goal, not to deliver it.
+Ship a **Minecraft Bedrock PvP Add-On** playable on the owner's iPad, built around a set of **legendary weapons** — custom items with unique, script-driven active abilities that go beyond vanilla combat.
 
-## Why the project does not start with the goal
+The Web Sword is **weapon #1**. Its spec states the goal in one line: *«отдельная спецификация первого легендарного оружия для Minecraft Bedrock PvP Add-On»*.
 
-The owner faces two independent unknowns, and has chosen to retire them one at a time before writing product code:
+## Goal hierarchy
 
-1. **Does the toolchain work at all on this hardware?** The Mac cannot run Bedrock; the iPad cannot produce logs; the only server image is amd64 on an arm64 host. None of this is proven. → **Stage 0**.
-2. **Does the add-on stack work on *this* installed game version?** Bedrock's Script API is version-sensitive, and manifest/dependency mismatches fail opaquely at import time. → **Stage 1**.
+| # | Goal | Status | Source |
+|---|---|---|---|
+| G-1 | Prove the build → deploy → verify loop works on the available hardware | **Achieved** (Stage 0) | stage-0 |
+| G-2 | Prove custom items, recipes, enchantment slots and script-driven behaviour work on the *installed* game version | **Achieved** (Stage 1, v0.2.1) | pickaxe-spec |
+| G-3 | Deliver the first legendary weapon as a self-contained, fully tested module | **Active** | websword §14 |
+| G-4 | Repeat G-3 per weapon until the PvP add-on is complete | Future | websword §14 |
+| G-5 | Ship the assembled PvP add-on | Future, unspecified | stage-0 |
 
-This is a deliberate *proof-before-product* strategy: each stage produces a throwaway or near-throwaway artifact whose only job is to convert an unknown into a known.
+G-3's completion condition is explicit and is the operative definition of "done" for this analysis cycle: *«После прохождения тестов Web Sword можно считать самостоятельным готовым модулем и переходить к следующему оружию.»*
 
-## Stage-level intents
+## The intent behind the intent — why "standalone module"
 
-### Stage 0 — infrastructure
-> *«до прототипа "Кирки шахтёра" доказать, что процесс разработки работает end-to-end на имеющемся железе (Mac mini + iPad), выкатив минимальный "полупустой" аддон»*
+The Web Sword spec is not merely a feature request; it is a **process template**. It deliberately scopes one weapon to independent development and testing *before* integration, so that each subsequent weapon can follow the same path. The project's real product is therefore twofold:
 
-Prove the **loop**, not the content. The deliverable is intentionally minimal — one chat message on player spawn (proves scripts execute), one trivial localized item (proves the resource pack and `.lang` files are picked up). The item is explicitly **not** a pickaxe; content is held back so that a failure can only be a *pipeline* failure.
+1. the weapons themselves, and
+2. a **repeatable per-weapon pipeline** — spec → BP item + recipe → Script API behaviour → RU/EN strings → GameTest coverage → BDS load check → iPad visual confirmation.
 
-### Stage 1 — Miner's Pickaxe
-> *"validate the core Minecraft Bedrock Add-On stack on the user's installed version before implementing the full PvP Add-On"*
+Stage 1 built that pipeline's machinery (`npm run build`, `bds:check`, `bds:gametest`, selftest pack, validation suite). The Web Sword is its first production use. Design choices that make the second weapon cheaper are therefore *on*-intent, even where the spec only asks for the first — this is the justification for extracting shared cooldown and localization services rather than inlining them (see `concept-architecture-decision` ADR-007, ADR-009).
 
-Prove the **stack**, not the game design. The pickaxe is a compatibility probe dressed as a feature: it exercises custom item registration, Creative inventory grouping, Creative search, `/give`, crafting recipes, bilingual naming, enchantment slots, mining-speed tuning and script-driven drop replacement — i.e. most of the surfaces the PvP add-on will eventually need — in a single item.
+## Gameplay intent — what the Web Sword is *for*
 
-Tellingly, the spec explicitly defers the parts that would be about *balance* rather than *capability*: Fortune multiplication, Silk Touch override, and exact diamond-parity mining tags are all pushed out until "after the user confirms the pack loads and scripts execute".
+A **trap weapon**, not a damage weapon. Its melee profile is deliberately unremarkable (Diamond Sword parity, §7: *«У обычного melee-удара нет дополнительного эффекта»*). All of its value sits in one ability: entombing a target position in a 3×3×3 Cobweb cube on a 30-second cycle — area denial and escape prevention in PvP.
 
-### Stage 2 — PvP add-on
-Out of scope for this analysis. Requirements must be gathered before any decomposition of Stage 2 is meaningful.
+Three design commitments follow from that and should govern every implementation trade-off:
 
-## Success, restated in one line per stage
+- **The cobweb is real and it persists.** *«Созданная паутина является настоящими обычными cobweb blocks и остаётся в мире, пока игроки не уберут её обычным способом.»* The ability permanently alters shared world state. It is not a timed effect, and the spec asks for no cleanup.
+- **Scarcity is the balance mechanism.** One successful survival craft per world, forever (§3), combined with death retention (§4) so the single instance cannot be farmed or lost. The 30-second cooldown is the secondary limiter.
+- **Fairness is enforced server-side.** *«Способность должна вычисляться серверной логикой, чтобы все игроки видели одинаковый результат»* (§9). Two players must see identical world state; no client may be authoritative.
 
-| Stage | Done when… |
-|---|---|
-| 0 | A clean clone builds a `.mcaddon` with one command, BDS loads it without manifest errors and runs the script, and the iPad shows the item in Creative with both RU and EN names. |
-| 1 | The pickaxe imports, appears in Creative and `/give`, crafts from its recipe, auto-smelts the supported ores in Survival, accepts pickaxe enchantments, and never breaks. |
-| 2 | Undefined — requirements not yet gathered. |
+## Non-goals
 
-## What the intent implies for how to build
+- **Not** a general-purpose building or terraforming tool — the block-replacement rules exist to make a trap, and destroying player property is explicitly guarded against (§6).
+- **Not** a damage-tuning exercise — vanilla Diamond Sword numbers, unchanged.
+- **Not** a showcase for new Bedrock APIs — the project prefers stable APIs and treats Preview/Beta as a failure mode (§11), a policy inherited unbroken from Stage 0.
 
-Because the intent is *de-risking*, the correct engineering bias for Stages 0–1 is the opposite of normal product work:
+## Success criteria at project level
 
-- **Prefer the smallest artifact that produces a signal.** Extra content dilutes the diagnostic value of a failure.
-- **Treat error messages as deliverables.** The compatibility-target policy says to retarget from *exact error text* — so capturing and preserving BDS log output is part of the job, not incidental.
-- **Do not paper over incompatibility.** Enabling Beta/Preview APIs to make an error go away would defeat the entire purpose of the stage (see `concept-architecture-decision` ADR-002).
+Web Sword is done when all twelve §13 acceptance tests pass **in a single-player world and in a two-player multiplayer test**, the pack imports with no content or dependency errors on Bedrock 1.26.51, there is **no known duplication path via craft, death or reconnect**, and nothing depends on Experiments or Preview (§14).

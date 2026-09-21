@@ -3,19 +3,19 @@ type: "decision"
 node_id: "decision-resolve-l0"
 source_channel: "cli"
 analysis_version: null
-title: "Resolved L0: CTR-001: версия зафиксирована по устрой…"
+title: "Resolved L0: Реестр: CTR-005 закрыт решением Q-006 (…"
 aliases: ["decision-resolve-l0"]
 is_a: ["decision"]
 relates_to: ["L0"]
 refs: ["L0"]
 priority: 500
-statement: "CTR-001: версия зафиксирована по устройству — на iPad Minecraft Bedrock 1.26.51, целимся в min_engine_version [1,26,50], @minecraft/server 2.10.0, BDS 1.26.51.1; спека кирки (2.9.0 / 1.26.0) подгоняется под эти значения, направление подгонки — пакет под игру, не Beta API под пакет. CTR-002: этап 0 — единственная проба стека (импорт, скрипты, предмет в креативе, ru/en названия); спека кирки (этап 1) сужается до остаточной области — рецепт, зачарование, скорость добычи, авто-переплавка скриптом; её критерии AC-S1-1 (импорт без ошибок) и AC-S1-2 (видно в креативе, /give) считаются покрытыми AC-S0-4 и в этапе 1 не повторяются. Документ stage-0-infrastructure имеет приоритет над minerspickaxetestspec там, где они расходятся."
+statement: "Реестр: CTR-005 закрыт решением Q-006 (метка экземпляра), CTR-003 — Q-008, CTR-006 — Q-014, CTR-008 — Q-017; CTR-007/009/010 приняты по ADR-016/017/018"
 resolves_contradiction: "L0"
 outcome: "changed"
-evidence: "Оператор прочитал версию 1.26.51 с iPad 2026-09-20; Mojang download API отдаёт bedrock-server-1.26.51.1; npm dist-tag latest @minecraft/server = 2.10.0 (2026-09-15); решение оператора о разделении этапов 0/1 в сессии 2026-09-20."
-decided_at: "2026-09-20"
+evidence: "decision-q-006-web-sword-provenance-yes-metka-ekzemplyara; decision-q-008-blocked-craft-refund-a-obnaruzhit-i-vernut; decision-q-014-budget-after-destruction-pravo-ostaetsya-p; decision-q-017-zero-cells-proval-s-lokalizovannym-soobsch"
+decided_at: "2026-09-21"
 tags: ["refine","resolution"]
-size_chars: 729
+size_chars: 151
 ---
 
-CTR-001: версия зафиксирована по устройству — на iPad Minecraft Bedrock 1.26.51, целимся в min_engine_version [1,26,50], @minecraft/server 2.10.0, BDS 1.26.51.1; спека кирки (2.9.0 / 1.26.0) подгоняется под эти значения, направление подгонки — пакет под игру, не Beta API под пакет. CTR-002: этап 0 — единственная проба стека (импорт, скрипты, предмет в креативе, ru/en названия); спека кирки (этап 1) сужается до остаточной области — рецепт, зачарование, скорость добычи, авто-переплавка скриптом; её критерии AC-S1-1 (импорт без ошибок) и AC-S1-2 (видно в креативе, /give) считаются покрытыми AC-S0-4 и в этапе 1 не повторяются. Документ stage-0-infrastructure имеет приоритет над minerspickaxetestspec там, где они расходятся.
+Реестр: CTR-005 закрыт решением Q-006 (метка экземпляра), CTR-003 — Q-008, CTR-006 — Q-014, CTR-008 — Q-017; CTR-007/009/010 приняты по ADR-016/017/018

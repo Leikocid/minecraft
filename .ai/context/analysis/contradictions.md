@@ -1,12 +1,12 @@
 ---
 title: Contradictions
 type: analysis
-generated_at: "2026-09-20T16:22:35.856Z"
+generated_at: "2026-09-21T21:27:44.645Z"
 source_channel: rollout
 node_id: rollout-contradictions
 aliases: ["rollout-contradictions","contradictions"]
 is_a: ["rollout","contradictions"]
-priority: 120
+priority: 510
 ---
 
 # Contradictions

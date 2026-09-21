@@ -1,21 +1,27 @@
 ---
-current_analysis_version: 1
+current_analysis_version: 2
 current_versions_by_node:
-  L0: 1
+  L0: 2
+  L0-item: 2
+  L0-once: 2
+  L0-keep: 2
+  L0-trap: 2
+  L0-cool: 2
+  L0-qatg: 2
 pending_revisions: []
 last_run:
-  started_at: '2026-09-20T15:42:01.243Z'
-  completed_at: '2026-09-20T15:48:00.916Z'
-  duration_seconds: 360
-  total_artifacts_current: 10
-  total_size_kb: 49
-  open_contradictions: 1
-  llm_calls: 1
-  llm_budget_used_pct: 1
-  input_hash: 764ad71857f400d79112920ff10963c514343dccd4ca8ebad64aaf51fa2a15bf
-  run_priority: 120
+  started_at: '2026-09-21T20:48:27.223Z'
+  completed_at: '2026-09-21T21:24:41.597Z'
+  duration_seconds: 2174
+  total_artifacts_current: 199
+  total_size_kb: 485
+  open_contradictions: 9
+  llm_calls: 8
+  llm_budget_used_pct: 4
+  input_hash: eec4aba6aeb627ea0cf498ee63e82aa21e72b3a9b3e659793356a8729460d537
+  run_priority: 510
   run_scope:
-    recorded_at: '2026-09-20T15:42:01.257Z'
+    recorded_at: '2026-09-21T20:48:27.244Z'
     rule: 'full: every node the decomposition plans name, from L0 down.'
     nodes:
       - L0
@@ -27,20 +33,33 @@ last_run:
       done: 1
     - stage: rollout
       entered_at: '2026-09-20T15:48:00.925Z'
+    - stage: collect-decisions
+      entered_at: '2026-09-21T20:47:25.055Z'
+    - stage: load-model
+      entered_at: '2026-09-21T20:47:25.073Z'
+    - stage: audit
+      entered_at: '2026-09-21T20:47:25.079Z'
+    - stage: delta 1/1
+      entered_at: '2026-09-21T20:47:25.084Z'
+    - stage: nodes
+      entered_at: '2026-09-21T20:48:27.251Z'
+      done: 7
+    - stage: rollout
+      entered_at: '2026-09-21T21:24:41.615Z'
 last_rollout_hashes:
-  project-knowledge/glossary.md: 37e04951d08b2cb6
-  project-knowledge/business-rules.md: 2049afc8de99f8ce
-  project-knowledge/boundaries.md: d09adcfae87550bf
-  project-knowledge/intent.md: db64ef8cc9b3b710
-  project-knowledge/domain-model.md: 1a6b9304a72db36f
-  project-knowledge/architecture.md: 37bd25c82ba6ec41
-  assumptions.md: f671a7c9d23884de
+  project-knowledge/glossary.md: 61cfffffd25abbf6
+  project-knowledge/business-rules.md: 4354fe2a0d9ac495
+  project-knowledge/boundaries.md: 359ec22dfb6ab9d4
+  project-knowledge/intent.md: f29a3baea2d5175f
+  project-knowledge/domain-model.md: cb65060b6e91b767
+  project-knowledge/architecture.md: 6fc6063136f063f8
+  assumptions.md: a6d3b3d7406f8b94
   contradictions.md: 046bc083c999792e
-  client-questions.md: 596e3913172c75f5
-  summary.md: 7baddba8c7c0af30
-  scope.md: 47b1a51986af6538
+  client-questions.md: 1a9854bbc14cb0c7
+  summary.md: 6a4e4faf7b2a78cf
+  scope.md: d558feaa53d08d93
   risks.md: 3d57d6e55e31f021
-  decisions.md: d798fbeffd0ba0b0
+  decisions.md: 3d7877faed3fc399
 runtime_vocabulary:
   concept-acceptance-criterion:
     description: Seen at runtime
@@ -82,6 +101,33 @@ runtime_vocabulary:
     description: Seen at runtime
     parent_type: concept
     invented_at: '2026-09-20T15:48:00.916Z'
+  concept-decomposition-plan:
+    description: Seen at runtime
+    parent_type: concept
+    invented_at: '2026-09-21T21:24:41.597Z'
+  concept-glossary-term:
+    description: Seen at runtime
+    parent_type: concept
+    invented_at: '2026-09-21T21:24:41.597Z'
+  concept-rule:
+    description: Seen at runtime
+    parent_type: concept
+    invented_at: '2026-09-21T21:24:41.597Z'
+  concept-component:
+    description: Seen at runtime
+    parent_type: concept
+    invented_at: '2026-09-21T21:24:41.597Z'
+  concept-process:
+    description: Seen at runtime
+    parent_type: concept
+    invented_at: '2026-09-21T21:24:41.597Z'
+slug_mappings:
+  Item Definition, Recipe & Localization: L0-item
+  One-per-World Craft Gate: L0-once
+  Death Retention & Anti-Duplication: L0-keep
+  Active Ability — Targeting & Cobweb Placement: L0-trap
+  Cooldown & Actionbar UI: L0-cool
+  Verification, Acceptance & Definition of Done: L0-qatg
 tags:
   - analysis
   - registry
@@ -96,16 +142,22 @@ Runtime state for the analyst pipeline (analyse runs, vocabulary, slug map, roll
 
 | Node | Version |
 |------|---------|
-| L0 | 1 |
+| L0 | 2 |
+| L0-cool | 2 |
+| L0-item | 2 |
+| L0-keep | 2 |
+| L0-once | 2 |
+| L0-qatg | 2 |
+| L0-trap | 2 |
 
 ## Last Run
 
-- Started: 2026-09-20T15:42:01.243Z
-- Completed: 2026-09-20T15:48:00.916Z
-- Duration: 360s
-- Current artifacts: 10 (49 KB total)
-- LLM calls: 1 (1% budget)
-- Open contradictions: 1
+- Started: 2026-09-21T20:48:27.223Z
+- Completed: 2026-09-21T21:24:41.597Z
+- Duration: 2174s
+- Current artifacts: 199 (485 KB total)
+- LLM calls: 8 (4% budget)
+- Open contradictions: 9
 
 ## Changelog
 

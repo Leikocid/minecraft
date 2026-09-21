@@ -7,71 +7,78 @@ aliases: ["L0"]
 part_of: ["L0"]
 is_a: ["boundary"]
 relates_to: ["L0"]
-analysis_version: 1
-priority: 120
-size_chars: 4387
-tags: ["boundary","scope","L0"]
+analysis_version: 2
 level: 0
+priority: 510
+size_chars: 6491
+tags: ["boundary","scope","web-sword","L0"]
+needs_rebuild_marked_at: 2026-09-21T21:27:45.354Z
 ---
 
 # System Boundaries
 
-## In scope — Stage 0 (development infrastructure)
+**Links** — `title: System Boundaries` · `aliases: ["L0-boundary", "Boundaries"]` · `part_of: ["L0"]` · `is_a: ["boundary"]` · `relates_to: ["L0"]` · `see_also: ["webswordspecv1ruen-part-1", "webswordspecv1ruen-part-2"]` · `supersedes: ["L0"]`
 
-| # | Item | Source |
-|---|---|---|
-| S0-1 | Behavior pack + resource pack, one manifest each, with a dependency on `@minecraft/server` | stage-0 |
-| S0-2 | Exactly one script: writes a chat message on player entry (`world.afterEvents.playerSpawn`, `initialSpawn`) — proof that scripts execute | stage-0 |
-| S0-3 | Exactly one trivial item with RU + EN names and its own icon — proof that the resource pack and localization are picked up. **Explicitly not a pickaxe**; "любой пустой предмет" | stage-0 |
-| S0-4 | Single-command build: `npm run build` → `dist/<name>.mcaddon` | stage-0 |
-| S0-5 | README describing the cycle "собрать → сервер в Docker → iPad" | stage-0 |
-| S0-6 | Project in git with a first commit | stage-0 |
-| S0-7 | Docker BDS (`itzg/minecraft-bedrock-server`, linux/amd64 via Rosetta) as load/log rig and LAN server for the iPad | stage-0 |
+> Supersedes the v1 boundary. Stages 0 and 1 have moved from *in scope* to *delivered*; Stage 2, previously *«outside this analysis entirely»*, is now partially in scope via the Web Sword spec.
 
-## In scope — Stage 1 (Miner's Pickaxe probe)
+## In scope — Web Sword v1 (the active envelope)
 
-| # | Item | Source |
-|---|---|---|
-| S1-1 | **One** custom item only: Кирка шахтёра / Miner's Pickaxe | pickaxe-spec |
-| S1-2 | Behavior Pack + Resource Pack + stable Script API | pickaxe-spec |
-| S1-3 | Visibility in Creative Inventory (Equipment/pickaxe group), Creative search, and `/give` | pickaxe-spec |
-| S1-4 | Russian and English item names | pickaxe-spec |
-| S1-5 | Crafting recipe (3×3, see `concept-entity`) | pickaxe-spec |
-| S1-6 | Infinite durability (achieved by omitting the durability component) | pickaxe-spec |
-| S1-7 | Enchantable via the pickaxe enchantment slot | pickaxe-spec |
-| S1-8 | Diamond-*like* mining speed for common pickaxe blocks | pickaxe-spec |
-| S1-9 | Auto-smelt prototype for the listed ore set (iron, gold, copper, their deepslate variants, ancient debris) | pickaxe-spec |
+| # | Item | Spec | L1 owner |
+|---|---|---|---|
+| WS-1 | Legendary custom sword `andrew:web_sword`, based on Diamond Sword, infinite durability, vanilla sword enchantments allowed | §1 | `L0-item` |
+| WS-2 | Discoverable in Creative → Equipment/«Снаряжение», the «Все» catalogue, Creative Search, and via `/give` | §1 | `L0-item` |
+| WS-3 | Recipe: 4× Cobweb in a plus-pattern around 1× Diamond Sword → 1× Web Sword | §2 | `L0-item` |
+| WS-4 | RU «Паутинный меч» / EN "Web Sword" plus RU/EN variants of **every** user-facing message, via the Resource Pack localization system | §10 | `L0-item` |
+| WS-5 | One successful survival craft per world/server, flag persisted across logout, save and restart | §3 | `L0-once` |
+| WS-6 | First-craft broadcast to all players, localized, naming the weapon and its creator | §3 | `L0-once` |
+| WS-7 | Second survival craft blocked, ideally without consuming ingredients | §3 | `L0-once` |
+| WS-8 | Creative and `/give` exempt from the one-per-world budget (admin/test copies permitted) | §3, §4 | `L0-once` |
+| WS-9 | No drop on death; item returns to the same owner on respawn | §4 | `L0-keep` |
+| WS-10 | No duplicate copy via death, disconnect/reconnect, or server restart | §4, §12 | `L0-keep` |
+| WS-11 | Ability on standard Use (right click / long press), reach-bounded targeting, no artificial long-range ray | §5 | `L0-trap` |
+| WS-12 | 3×3×3 Cobweb cube of real vanilla cobweb centred on the target position, persisting until players clear it | §5 | `L0-trap` |
+| WS-13 | Placement safety: skip entities, containers/block entities, bedrock and protected blocks; fill the remaining valid cells anyway; never write into unloaded chunks | §6, §12 | `L0-trap` |
+| WS-14 | Exactly 30 s cooldown, started **only** on successful activation | §8 | `L0-cool` |
+| WS-15 | Remaining cooldown shown on the actionbar (or nearest stable equivalent) while the sword is held | §8 | `L0-cool` |
+| WS-16 | Main-hand ability takes priority; off-hand may fire if main-hand is on cooldown | §8 | `L0-cool` |
+| WS-17 | Server-authoritative computation; identical result for all clients; concurrent activations handled independently; concurrent crafts cannot bypass the one-per-world gate | §9 | `L0-trap`, `L0-once` |
+| WS-18 | Twelve acceptance tests + Definition of Done, in single-player and a ≥2-player test | §13, §14 | `L0-qatg` |
 
 ## Explicitly out of scope
 
-### Excluded by decision (will not be done)
+### Excluded by decision — will not be done
 
-| Item | Reason given |
+| Item | Reason |
 |---|---|
-| **Minecraft Java Edition** | Target device is an iPad; Java does not run there. Hard exclusion. |
-| **Beta / Preview Script APIs** | Stable API only. Enabling them would invalidate the compatibility probe. |
-| **Windows PC** | *«не требуется»* — not part of the environment. Parallels/Windows listed as optional fallback only. |
-| **macOS Bedrock client** | Does not exist. The Mac is build/static-check/server only. |
+| **Minecraft Java Edition** | Target device is an iPad. Hard exclusion, inherited from Stage 0. |
+| **Preview / Beta Script APIs and Experiments** | §11 and §14: *«Нет обязательной зависимости от Experiments/Preview.»* Stable `@minecraft/server` 2.10.0 only. The GameTest module is a dev-only test dependency and must not become a runtime requirement. |
+| **Windows PC / macOS Bedrock client** | Not in the environment; the macOS client does not exist. |
+| **Artificial long-range targeting** | §5: *«без искусственного дальнего луча»* — normal survival interaction/melee reach only. |
+| **Per-tick global world scanning** | §11: *«Не делать постоянный глобальный скан мира каждый tick.»* A performance boundary, stated as a prohibition. |
+| **Cobweb cleanup / expiry** | The trap is permanent world state by design. No despawn timer was requested; adding one would change the balance. |
+| **Modifying melee behaviour** | §7: normal attacks get no extra effect, create no cobweb and start no cooldown. |
 
-### Deferred (may be done later, not now)
+### Deferred — later weapons, not now
 
-| Item | Deferred until | Source |
-|---|---|---|
-| **Fortune multiplication** behavior | Not part of the compatibility test | pickaxe-spec |
-| **Silk Touch override** behavior | Not part of the compatibility test | pickaxe-spec |
-| **Exact parity with every diamond-pickaxe mining tag** | "after the user confirms the pack loads and scripts execute" | pickaxe-spec |
-| **Durability component** | Prototype deliberately omits it | pickaxe-spec |
+| Item | Deferred until |
+|---|---|
+| Remaining legendary weapons | After Web Sword closes its DoD (§14) |
+| The **shared cross-item cooldown framework** | Referenced by §8 (two-hand priority) and §12 (*«общая система cooldown проекта»*) but never specified. Web Sword must ship a single-item implementation with a seam for it. See `concept-contradiction` CTR-004. |
+| Integration of Web Sword with other items | Preamble: *«до интеграции с остальными предметами»* |
+| Stage 2 as a whole — modes, maps, balance, progression | No requirements exist beyond weapon #1 |
 
-### Outside this analysis entirely
+### Delivered — no longer in scope
 
-- **Stage 2 — the main PvP Add-On.** Requirements *«ещё не сформулированы»*. No scope, no entities, no criteria exist. Any L1 decomposition of Stage 2 would be invention, not analysis.
+Stage 0 (build/deploy/verify infrastructure) and Stage 1 (Miner's Pickaxe: item, recipe, auto-smelt, enchantability, icon, RU/EN names) are **complete at v0.2.1**. They are now *platform*: the Web Sword extends them and must not regress them. Any change that breaks `andrew:miners_pickaxe` or the existing 7 test suites is out of bounds.
 
 ## Boundary notes and edge cases
 
-**Non-listed blocks keep vanilla behavior.** The spec is explicit: *"Normal non-smelting blocks keep vanilla breaking behavior."* The auto-smelt override is a closed allow-list, not a general transformation. Anything not in the ore table must be left strictly alone — this is a boundary, not an omission.
+**"One per world" is scoped to survival crafting, not to item instances.** §4 is explicit: *«Creative/test copies могут существовать у администратора; one-per-world относится к survival crafting, а не к количеству dev/test copies.»* The persistent flag counts *craft events*, not swords in the world. This distinction is load-bearing and also the source of a real invariant tension — see `concept-contradiction` CTR-005.
 
-**Stage 0's item vs Stage 1's item are different items.** Stage 0 mandates a trivial non-pickaxe placeholder. Stage 1 mandates the pickaxe. These are not the same deliverable and the Stage 0 item is expected to be discarded or replaced.
+**Reach is the boundary of the ability, and failing it is free.** §5 and §12 agree: out-of-reach target → nothing happens **and no cooldown is consumed**. The cooldown is a cost of success only. This makes "did the ability succeed?" a gate that must be evaluated *before* any state is written.
 
-**Stage 0 and Stage 1 verification overlap.** Both stages independently require: `.mcaddon` imports cleanly, item visible in Creative, RU + EN names render. Stage 1 re-tests what Stage 0 already proved. See `concept-contradiction` CTR-002 — this redundancy is real and should be resolved by trimming Stage 1's criteria rather than by re-running the same checks.
+**Protection is per-cell, not per-cube.** §6: *«Если часть куба защищена, пропустить только эти клетки; остальные допустимые клетки всё равно заполнить паутиной.»* A partially-blocked cube is a success, not a failure — it still consumes the cooldown. The all-or-nothing reading is wrong.
 
-**The BDS server cannot validate half the Stage 0 criteria.** A dedicated server loads behavior packs and runs scripts, but renders nothing. Creative inventory visibility, the item icon, and RU/EN localization are only observable on the iPad. The environment table's split of duties already reflects this and must be preserved: Docker answers *"did it load and run?"*, iPad answers *"does it look right?"*
+**Chunk loading is a hard edge, not a best effort.** §6 and §12: never attempt cobweb outside the loaded/accessible area, and never force a write into unloaded chunks at the edge of the loaded region. Cells outside loaded chunks are skipped like protected cells.
+
+**The spec is bilingual and both halves are normative.** Section headings carry RU/EN pairs and a few requirements appear only in the Russian prose. Implementation must read the Russian text, not just the English headings.
