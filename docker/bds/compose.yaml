@@ -49,9 +49,18 @@ services:
       # `docker logs`, and the check has nothing to assert on.
       CONTENT_LOG_FILE_ENABLED: "true"
       CONTENT_LOG_CONSOLE_OUTPUT_ENABLED: "true"
-    # UDP, so the iPad can find the server over LAN.
+    # NetherNet (BDS 1.26 default transport, bedrock_server_how_to.html §Transport):
+    #   - the handshake is HTTP over TCP on server-port, so 19132/tcp must be
+    #     published — with udp alone the iPad got "Connection refused" (2026-09-21);
+    #   - gameplay then runs over UDP on ports the server allocates; they are
+    #     pinned to 19140-19149 via server-udp-ports and published 1:1 below.
+    #   - 7551/udp is NetherNet LAN discovery, so the server shows up in the
+    #     iPad's LAN list as well as by address.
     ports:
+      - "19132:19132/tcp"
       - "19132:19132/udp"
+      - "19140-19149:19140-19149/udp"
+      - "7551:7551/udp"
     volumes:
       # Server binary, world and installed packs. Gitignored.
       - ./data:/data

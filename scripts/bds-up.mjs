@@ -40,6 +40,9 @@ function parseArgs(argv) {
   return opts;
 }
 
+// Gameplay UDP range NetherNet may use; published 1:1 in docker/bds/compose.yaml.
+const UDP_PORT_RANGE = '19140-19149';
+
 /** LAN IP of the Mac, from the active interface. macOS-only, by design (C-4/S0-7 rig is Mac-only). */
 function detectLanIp() {
   for (const iface of ['en0', 'en1']) {
@@ -62,15 +65,30 @@ function main() {
 
   const packs = unpackAddon(null);
   let result;
+  let lanIpForReport = null;
   try {
     stageDataDir(packs);
     // texturepack-required forces the iPad to pull the resource pack (icons,
     // names) from the server rather than joining with it disabled. The image
     // does not manage this key from an env var, so writing it into the
     // staged file is enough (unlike gamemode — see runServer below).
+    // NetherNet negotiates the gameplay UDP connection out of band: the server
+    // advertises addresses to the client, and inside Docker its own address is
+    // 172.x — unreachable from the iPad. server-udp-ports in the mapping form
+    // "ip:external:internal" (bedrock_server_how_to.html §UDP port
+    // configuration for NetherNet) makes it advertise the Mac's LAN IP and the
+    // 1:1 published range instead.
+    const lanIp = detectLanIp();
+    lanIpForReport = lanIp;
     applyPropertyOverrides({
       'texturepack-required': 'true',
+      'server-udp-ports': lanIp
+        ? `${lanIp}:${UDP_PORT_RANGE}:${UDP_PORT_RANGE}`
+        : UDP_PORT_RANGE,
     });
+    if (!lanIp) {
+      log('⚠ LAN IP not detected — clients will be offered the container address; joining from the iPad may fail');
+    }
 
     // A previous container would otherwise keep serving its own old log.
     compose(['down']);
@@ -106,7 +124,7 @@ function main() {
 
   log('▶ server up: Survival, cheats on, texture pack required');
 
-  const ip = detectLanIp();
+  const ip = lanIpForReport;
   const address = ip ? `${ip}:19132` : 'IP не определён — посмотрите в Настройках macOS → Сеть';
   log(`Сервер поднят: ${address} — на iPad: Играть → Серверы → Добавить сервер`);
 }
