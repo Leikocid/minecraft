@@ -1,2 +1,11 @@
 item.andrew:test_item.name=Andrew Test Item
 item.andrew:miners_pickaxe.name=Miner's Pickaxe
+item.andrew:web_sword.name=Web Sword
+andrew.web_sword.first_craft=§e%s§r forged the legendary §b%s§r!
+andrew.web_sword.craft_blocked=The world's only Web Sword already exists — ingredients returned
+andrew.web_sword.cooldown=Web Sword: %s s
+andrew.web_sword.ready=Web Sword: ready
+andrew.web_sword.no_room=No room for cobweb
+andrew.web_sword.returned=Your Web Sword has returned to you
+andrew.web_sword.admin_given=Test Web Sword given to %s
+andrew.web_sword.reset=Web Sword craft budget reset

@@ -34,6 +34,7 @@ import { smeltedDropFor } from "../autosmelt";
 declare const __SELFTEST_FIXTURE__: boolean;
 
 const PICKAXE_ID = "andrew:miners_pickaxe";
+const WEB_SWORD_ID = "andrew:web_sword";
 const TEST_ITEM_ID = "andrew:test_item";
 
 /**
@@ -95,6 +96,18 @@ function unbreakingType(): EnchantmentType {
   return type;
 }
 
+/** Resolve the Sharpness enchantment type — same bare/namespaced fallback as unbreakingType(). */
+function sharpnessType(): EnchantmentType {
+  const type =
+    EnchantmentTypes.get("sharpness") ?? EnchantmentTypes.get("minecraft:sharpness");
+  assert(
+    type !== undefined,
+    'EnchantmentTypes.get returned undefined for both "sharpness" and "minecraft:sharpness" — ' +
+      "the enchantment id is wrong for this engine version, so the probe is inconclusive"
+  );
+  return type;
+}
+
 function run(): void {
   // 1. The pickaxe exists as an item and stacks to one.
   check("pickaxe-item-stack", () => {
@@ -133,6 +146,41 @@ function run(): void {
     assert(
       !pickaxe.hasComponent("minecraft:durability"),
       "minecraft:durability is present — the pickaxe is no longer unbreakable by omission"
+    );
+  });
+
+  // Web Sword: same three shape-only checks as the pickaxe. Damage is not
+  // checked here — the stable @minecraft/server 2.10.0 API has no
+  // ItemDamageComponent, so that value is proven in tests/web-sword-item.test.mjs
+  // against the raw JSON instead. [src: decision-web-sword-item-values]
+
+  check("web-sword-item-stack", () => {
+    const sword = new ItemStack(WEB_SWORD_ID);
+    assert(sword.typeId === WEB_SWORD_ID, `expected typeId ${WEB_SWORD_ID}, got ${sword.typeId}`);
+    assert(sword.maxAmount === 1, `expected maxAmount 1, got ${sword.maxAmount}`);
+  });
+
+  // Q-007, confirmed empirically for the pickaxe (slot "pickaxe"); the sword
+  // repeats the same shape (slot "sword", no durability component).
+  // [src: decision-q-007-enchantable-without-durability-podtverzhde]
+  check("web-sword-enchantable", () => {
+    const sword = new ItemStack(WEB_SWORD_ID);
+    const enchantable = sword.getComponent("minecraft:enchantable");
+    assert(enchantable !== undefined, "minecraft:enchantable component is absent from the item");
+    const slots = enchantable.slots;
+    assert(
+      slots.includes(EnchantmentSlot.Sword),
+      `enchantable slots ${JSON.stringify(slots)} do not include ${EnchantmentSlot.Sword}`
+    );
+    const canAdd = enchantable.canAddEnchantment({ type: sharpnessType(), level: 1 });
+    assert(canAdd, "предмет без durability не зачаровывается (sharpness 1)");
+  });
+
+  check("web-sword-no-durability", () => {
+    const sword = new ItemStack(WEB_SWORD_ID);
+    assert(
+      !sword.hasComponent("minecraft:durability"),
+      "minecraft:durability is present — the web sword is no longer unbreakable by omission"
     );
   });
 

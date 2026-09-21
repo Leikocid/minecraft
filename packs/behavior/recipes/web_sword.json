@@ -1,0 +1,31 @@
+{
+  "format_version": "1.21.0",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "andrew:web_sword"
+    },
+    "tags": ["crafting_table"],
+    "pattern": [
+      " W ",
+      "WSW",
+      " W "
+    ],
+    "key": {
+      "W": {
+        "item": "minecraft:web"
+      },
+      "S": {
+        "item": "minecraft:diamond_sword"
+      }
+    },
+    "result": {
+      "item": "andrew:web_sword",
+      "count": 1
+    },
+    "unlock": [
+      {
+        "item": "minecraft:web"
+      }
+    ]
+  }
+}

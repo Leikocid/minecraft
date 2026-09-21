@@ -1,2 +1,11 @@
 item.andrew:test_item.name=Тестовый предмет Andrew
 item.andrew:miners_pickaxe.name=Кирка шахтёра
+item.andrew:web_sword.name=Паутинный меч
+andrew.web_sword.first_craft=§e%s§r выковал легендарный §b%s§r!
+andrew.web_sword.craft_blocked=Единственный Паутинный меч в этом мире уже существует — ингредиенты возвращены
+andrew.web_sword.cooldown=Паутинный меч: %s с
+andrew.web_sword.ready=Паутинный меч: готов
+andrew.web_sword.no_room=Нет места для паутины
+andrew.web_sword.returned=Паутинный меч вернулся к вам
+andrew.web_sword.admin_given=Тестовый Паутинный меч выдан %s
+andrew.web_sword.reset=Право крафта Паутинного меча сброшено
