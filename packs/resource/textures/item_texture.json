@@ -7,6 +7,9 @@
     },
     "andrew_miners_pickaxe": {
       "textures": "textures/items/andrew_miners_pickaxe"
+    },
+    "andrew_web_sword": {
+      "textures": "textures/items/andrew_web_sword"
     }
   }
 }
