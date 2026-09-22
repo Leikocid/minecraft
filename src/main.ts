@@ -1,12 +1,14 @@
 import { type Player, world } from "@minecraft/server";
 import { registerAutoSmelt } from "./autosmelt";
 import { registerWebSwordCommand } from "./websword/commands";
+import { registerCooldownHud } from "./websword/cooldown";
 import { registerCraftGate } from "./websword/craftgate";
 import { registerRetention } from "./websword/retention";
 
 registerAutoSmelt();
 registerCraftGate();
 registerRetention();
+registerCooldownHud();
 // Must run at script load: custom commands can only be registered during the
 // engine's startup phase, which is over by the time the world exists.
 registerWebSwordCommand();
