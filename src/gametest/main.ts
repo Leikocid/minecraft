@@ -18,9 +18,12 @@
 // reading dist/bds-gametest.log.
 
 import { Container, Dimension, Entity, GameMode, ItemStack, Player, Vector3, world } from "@minecraft/server";
-import { Test, register } from "@minecraft/server-gametest";
+import { type SimulatedPlayer, Test, register } from "@minecraft/server-gametest";
+import { isReady } from "../websword/cooldown";
 import { registerCraftGate } from "../websword/craftgate";
+import { WEB_BLOCK_ID } from "../websword/cube";
 import { registerRetention } from "../websword/retention";
+import { registerTrap } from "../websword/trap";
 import {
   WEB_SWORD_ID,
   findMarkedSword,
@@ -54,6 +57,32 @@ registerCraftGate();
 // death scenarios drive the production module end to end — the same
 // subscriptions, the same pending mark, the same restore a human gets.
 registerRetention();
+
+// Same binding problem again, so the trap is armed here too: the release pack's
+// itemUse handler cannot read a SimulatedPlayer, and the scenarios at the
+// bottom of this file drive the production module's real chain — the two
+// subscriptions, the same-tick dedup, the two rays, the cube and the cooldown.
+registerTrap();
+
+// Which use-event a press actually produces on BDS 1.26.51.1 is an engine fact,
+// not a documented one, and src/websword/trap.ts subscribes to both. This
+// witness answers the question in the server log independently of whether a
+// cube was placed, so a run says what fired even when a scenario fails.
+// [src: task WS-TRAP-01 AC#4]
+world.afterEvents.itemUse.subscribe((event) => {
+  const source: Player | undefined = event.source;
+  console.warn(
+    `[gametest] probe itemUse: item=${event.itemStack.typeId} source=${source === undefined ? "undefined" : source.name}`
+  );
+});
+world.afterEvents.playerInteractWithBlock.subscribe((event) => {
+  const player: Player | undefined = event.player;
+  console.warn(
+    `[gametest] probe playerInteractWithBlock: item=${event.itemStack?.typeId ?? "none"} ` +
+      `block=${event.block.typeId} face=${event.blockFace} first=${event.isFirstEvent} ` +
+      `player=${player === undefined ? "undefined" : player.name}`
+  );
+});
 
 const PICKAXE_ID = "andrew:miners_pickaxe";
 
@@ -483,4 +512,259 @@ register("andrew", "websword_unmarked_drops", (test: Test): void => {
   .maxTicks(400)
   .tag("andrew");
 
-console.warn("[gametest] registered 7 test(s) under tag 'andrew'");
+// ----------------------------------------------- Web Sword: the trap ability
+//
+// The sword handed out below is marked "admin", for the same two reasons the
+// retention scenarios use that stamp: it does not spend the world's single
+// craft, and it walks past the craft gate, which would otherwise treat an
+// unmarked sword appearing in a Survival inventory as a craft and confiscate
+// it mid-scenario.
+//
+// Coordinates: test.getBlock/setBlockType take structure-relative locations,
+// while SimulatedPlayer's own methods (lookAtBlock, useItemInSlot...) are
+// ordinary Player methods and take world locations. Everything below is
+// relative, and worldBlockLocation() converts at the call site — so the
+// scenarios do not depend on where the console happens to place the structure.
+
+/** The structure written by scripts/bds-gametest.mjs: 7 x 5 x 7, floor at y=1. */
+const PLATFORM = { sx: 7, sy: 5, sz: 7 } as const;
+
+/** Where the second activation of the cooldown scenario aims — clear of the first cube. */
+const SECOND_TARGET: Vector3 = { x: 1, y: 1, z: 3 };
+
+/** Cells of the 3x3x3 cube the scenarios expect around `center`, relative. */
+function cubeCells(center: Vector3): Vector3[] {
+  const cells: Vector3[] = [];
+  for (let dx = -1; dx <= 1; dx++) {
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dz = -1; dz <= 1; dz++) {
+        cells.push({ x: center.x + dx, y: center.y + dy, z: center.z + dz });
+      }
+    }
+  }
+  return cells;
+}
+
+/**
+ * Cobweb blocks anywhere on the platform.
+ *
+ * A whole-platform count rather than a per-cell assertion: it is what makes
+ * "the second activation added nothing" a claim about the world instead of a
+ * claim about one cell that may never have been in the second cube.
+ */
+function countWebs(test: Test): number {
+  let found = 0;
+  for (let x = 0; x < PLATFORM.sx; x++) {
+    for (let y = 0; y <= PLATFORM.sy; y++) {
+      for (let z = 0; z < PLATFORM.sz; z++) {
+        try {
+          if (test.getBlock({ x, y, z }).typeId === WEB_BLOCK_ID) found++;
+        } catch {
+          // y=0 and y=sy sit just outside the structure; whether they are
+          // readable depends on the console's origin, and a cell that is not
+          // readable simply does not count.
+        }
+      }
+    }
+  }
+  return found;
+}
+
+/**
+ * Give `player` a marked Web Sword in the slot they are holding, and return
+ * that slot so the activation can go through it.
+ */
+function armSword(player: SimulatedPlayer): number {
+  const slot = player.selectedSlotIndex;
+  inventoryOf(player).setItem(slot, markSword(new ItemStack(WEB_SWORD_ID, 1), makeMark("admin", player)));
+  return slot;
+}
+
+register("andrew", "websword_cube_placed", (test: Test): void => {
+  const player = test.spawnSimulatedPlayer(STAND, "andrew_trapper", GameMode.Survival);
+
+  // The whole floor is plain stone and every cell above it is air, so nothing
+  // in the cube is protected — the expected result is the full 27.
+  // [src: webswordspecv1ruen §13 — 'Use по валидной цели создаёт
+  // приблизительно полный 3×3×3 куб']
+  const center: Vector3 = { x: TARGET.x, y: TARGET.y + 1, z: TARGET.z };
+  let used = false;
+
+  test.runAfterDelay(4, () => {
+    const slot = armSword(player);
+    test.runAfterDelay(4, () => {
+      player.lookAtBlock(test.worldBlockLocation(TARGET));
+      test.runAfterDelay(4, () => {
+        player.useItemInSlot(slot);
+        used = true;
+      });
+    });
+  });
+
+  test.succeedWhen(() => {
+    test.assert(used, "the sword has not been used yet");
+
+    for (const cell of cubeCells(center)) {
+      const actual = test.getBlock(cell).typeId;
+      test.assert(
+        actual === WEB_BLOCK_ID,
+        `cell ${cell.x},${cell.y},${cell.z} holds ${actual} instead of ${WEB_BLOCK_ID}`
+      );
+    }
+
+    // The half that proves the ability was *spent*: a cube placed without
+    // arming the cooldown would be a free trap every tick.
+    test.assert(!isReady(player), "the cooldown is still ready right after a successful activation");
+  });
+})
+  .structureName(STRUCTURE)
+  .maxTicks(400)
+  .tag("andrew");
+
+register("andrew", "websword_protected_skipped", (test: Test): void => {
+  const center: Vector3 = { x: TARGET.x, y: TARGET.y + 1, z: TARGET.z };
+
+  // Both sit inside the cube and outside the line of sight from STAND to
+  // TARGET, so they are in the volume without being what the ray hits.
+  const chestAt: Vector3 = { x: center.x - 1, y: center.y, z: center.z - 1 };
+  const bedrockAt: Vector3 = { x: center.x + 1, y: center.y, z: center.z + 1 };
+  placeBlock(test, "minecraft:chest", chestAt);
+  placeBlock(test, "minecraft:bedrock", bedrockAt);
+
+  const player = test.spawnSimulatedPlayer(STAND, "andrew_respecter", GameMode.Survival);
+  let used = false;
+
+  test.runAfterDelay(4, () => {
+    const slot = armSword(player);
+    test.runAfterDelay(4, () => {
+      player.lookAtBlock(test.worldBlockLocation(TARGET));
+      test.runAfterDelay(4, () => {
+        player.useItemInSlot(slot);
+        used = true;
+      });
+    });
+  });
+
+  test.succeedWhen(() => {
+    test.assert(used, "the sword has not been used yet");
+
+    // The neighbours first: without them "the chest survived" would also be
+    // true of an ability that did nothing at all.
+    // [src: webswordspecv1ruen §6 — 'остальные допустимые клетки всё равно
+    // заполнить паутиной']
+    for (const cell of cubeCells(center)) {
+      const isProtectedCell =
+        (cell.x === chestAt.x && cell.y === chestAt.y && cell.z === chestAt.z) ||
+        (cell.x === bedrockAt.x && cell.y === bedrockAt.y && cell.z === bedrockAt.z);
+      if (isProtectedCell) continue;
+
+      const actual = test.getBlock(cell).typeId;
+      test.assert(
+        actual === WEB_BLOCK_ID,
+        `unprotected cell ${cell.x},${cell.y},${cell.z} holds ${actual} instead of ${WEB_BLOCK_ID}`
+      );
+    }
+
+    const chest = test.getBlock(chestAt).typeId;
+    test.assert(chest === "minecraft:chest", `the chest was replaced by ${chest}`);
+
+    const bedrock = test.getBlock(bedrockAt).typeId;
+    test.assert(bedrock === "minecraft:bedrock", `the bedrock was replaced by ${bedrock}`);
+  });
+})
+  .structureName(STRUCTURE)
+  .maxTicks(400)
+  .tag("andrew");
+
+// A negative claim, so it is checked once and late rather than by succeedWhen:
+// "no cobweb anywhere" is trivially true on the first tick, before the player
+// has even been given a sword.
+// [src: webswordspecv1ruen §13 — 'Use вне reach ничего не создаёт и не
+// запускает cooldown']
+register("andrew", "websword_out_of_reach_noop", (test: Test): void => {
+  const player = test.spawnSimulatedPlayer(STAND, "andrew_skywatcher", GameMode.Survival);
+
+  test.runAfterDelay(4, () => {
+    const slot = armSword(player);
+    test.runAfterDelay(4, () => {
+      // Straight up into open sky: no block within the 5-block block reach and
+      // no entity within the 3-block entity reach, so there is no target.
+      player.lookAtLocation(test.worldLocation({ x: STAND.x + 0.5, y: STAND.y + 30, z: STAND.z + 0.5 }));
+
+      test.runAfterDelay(8, () => {
+        player.useItemInSlot(slot);
+
+        test.runAfterDelay(30, () => {
+          const webs = countWebs(test);
+          test.assert(webs === 0, `${webs} cobweb block(s) appeared for an activation with no target`);
+          test.assert(isReady(player), "a failed activation spent the cooldown");
+          test.succeed();
+        });
+      });
+    });
+  });
+})
+  .structureName(STRUCTURE)
+  .maxTicks(400)
+  .tag("andrew");
+
+register("andrew", "websword_cooldown_blocks_reuse", (test: Test): void => {
+  const player = test.spawnSimulatedPlayer(STAND, "andrew_repeater", GameMode.Survival);
+
+  const center: Vector3 = { x: TARGET.x, y: TARGET.y + 1, z: TARGET.z };
+  let afterFirst = -1;
+
+  test.runAfterDelay(4, () => {
+    const slot = armSword(player);
+
+    test.runAfterDelay(4, () => {
+      player.lookAtBlock(test.worldBlockLocation(TARGET));
+
+      test.runAfterDelay(4, () => {
+        player.useItemInSlot(slot);
+
+        // Ten ticks is long enough for the cube to be in the world and short
+        // enough to be nowhere near the 600-tick cooldown.
+        test.runAfterDelay(10, () => {
+          afterFirst = countWebs(test);
+
+          // A *different* target: aiming at the same one would place nothing
+          // even with the cooldown ready, because every cell is already
+          // cobweb — the retry has to be able to succeed for its failure to
+          // mean anything.
+          player.lookAtBlock(test.worldBlockLocation(SECOND_TARGET));
+
+          test.runAfterDelay(10, () => {
+            player.useItemInSlot(slot); // 20 ticks into a 600-tick cooldown
+
+            test.runAfterDelay(20, () => {
+              const afterSecond = countWebs(test);
+              test.assert(
+                afterFirst > 0,
+                "the first activation placed no cobweb, so the blocked retry proves nothing"
+              );
+              test.assert(
+                afterSecond === afterFirst,
+                `the retry added ${afterSecond - afterFirst} cobweb block(s) while the cooldown was running`
+              );
+              test.assert(!isReady(player), "the cooldown reported ready 30 ticks after being armed");
+
+              // 30s from the activation. The waits above add up to 50 ticks
+              // since the cube was placed, so 570 more clears 600 with a
+              // margin — and maxTicks below leaves room for all of it.
+              test.runAfterDelay(580, () => {
+                test.assert(isReady(player), "the cooldown had not expired 30 seconds after activation");
+                test.succeed();
+              });
+            });
+          });
+        });
+      });
+    });
+  });
+})
+  .structureName(STRUCTURE)
+  .maxTicks(900)
+  .tag("andrew");
+
+console.warn("[gametest] registered 11 test(s) under tag 'andrew'");

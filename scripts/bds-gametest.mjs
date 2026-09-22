@@ -83,6 +83,10 @@ const EXPECTED_TESTS = [
   'andrew:websword_creative_ignored',
   'andrew:websword_death_returns',
   'andrew:websword_unmarked_drops',
+  'andrew:websword_cube_placed',
+  'andrew:websword_protected_skipped',
+  'andrew:websword_out_of_reach_noop',
+  'andrew:websword_cooldown_blocks_reuse',
 ];
 
 // FLAT is not cosmetic: see the LEVEL_TYPE comment in docker/bds/compose.yaml.
@@ -618,8 +622,8 @@ function main() {
   }
 
   log(
-    'PASS — simulated players proved the pickaxe, the Web Sword craft gate and death retention on BDS, ' +
-      'with no human involved:'
+    'PASS — simulated players proved the pickaxe, the Web Sword craft gate, death retention and the ' +
+      'trap ability on BDS, with no human involved:'
   );
   for (const e of evidence) log(`  ✓ ${e}`);
   log('');
