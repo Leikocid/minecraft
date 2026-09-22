@@ -17,9 +17,19 @@
 // server console. The [gametest] console.warn lines below are for a human
 // reading dist/bds-gametest.log.
 
-import { Container, Dimension, Entity, GameMode, ItemStack, Player, Vector3, world } from "@minecraft/server";
+import {
+  Container,
+  Dimension,
+  Entity,
+  GameMode,
+  ItemStack,
+  Player,
+  Vector3,
+  system,
+  world,
+} from "@minecraft/server";
 import { type SimulatedPlayer, Test, register } from "@minecraft/server-gametest";
-import { isReady } from "../websword/cooldown";
+import { isReady, remainingTicks } from "../websword/cooldown";
 import { registerCraftGate } from "../websword/craftgate";
 import { WEB_BLOCK_ID } from "../websword/cube";
 import { registerRetention } from "../websword/retention";
@@ -520,11 +530,18 @@ register("andrew", "websword_unmarked_drops", (test: Test): void => {
 // unmarked sword appearing in a Survival inventory as a craft and confiscate
 // it mid-scenario.
 //
-// Coordinates: test.getBlock/setBlockType take structure-relative locations,
-// while SimulatedPlayer's own methods (lookAtBlock, useItemInSlot...) are
-// ordinary Player methods and take world locations. Everything below is
-// relative, and worldBlockLocation() converts at the call site — so the
-// scenarios do not depend on where the console happens to place the structure.
+// Coordinates: everything below is structure-relative, including the arguments
+// to lookAtBlock/lookAtLocation.
+//
+// SimulatedPlayer inherits those methods from Player, so a world location looks
+// like the obvious reading — and it is wrong. Measured on BDS 1.26.51.1: with
+// the structure at origin (0, -60, 3), `lookAtBlock(test.worldBlockLocation(
+// {3,1,3}))` aimed the player at world {3,-119,9}, i.e. the engine subtracted
+// the origin a second time. Every scenario then reported the same centre —
+// `[andrew] web sword trap via itemUse: centre 3,-58,8` — the cell under the
+// player's own feet, because aiming that steeply down made the floor the first
+// block the ray hit. Passing the relative location directly is what aims them,
+// which is also what the pickaxe scenario above has always done.
 
 /** The structure written by scripts/bds-gametest.mjs: 7 x 5 x 7, floor at y=1. */
 const PLATFORM = { sx: 7, sy: 5, sz: 7 } as const;
@@ -593,7 +610,7 @@ register("andrew", "websword_cube_placed", (test: Test): void => {
   test.runAfterDelay(4, () => {
     const slot = armSword(player);
     test.runAfterDelay(4, () => {
-      player.lookAtBlock(test.worldBlockLocation(TARGET));
+      player.lookAtBlock(TARGET);
       test.runAfterDelay(4, () => {
         player.useItemInSlot(slot);
         used = true;
@@ -637,7 +654,7 @@ register("andrew", "websword_protected_skipped", (test: Test): void => {
   test.runAfterDelay(4, () => {
     const slot = armSword(player);
     test.runAfterDelay(4, () => {
-      player.lookAtBlock(test.worldBlockLocation(TARGET));
+      player.lookAtBlock(TARGET);
       test.runAfterDelay(4, () => {
         player.useItemInSlot(slot);
         used = true;
@@ -689,7 +706,7 @@ register("andrew", "websword_out_of_reach_noop", (test: Test): void => {
     test.runAfterDelay(4, () => {
       // Straight up into open sky: no block within the 5-block block reach and
       // no entity within the 3-block entity reach, so there is no target.
-      player.lookAtLocation(test.worldLocation({ x: STAND.x + 0.5, y: STAND.y + 30, z: STAND.z + 0.5 }));
+      player.lookAtLocation({ x: STAND.x + 0.5, y: STAND.y + 30, z: STAND.z + 0.5 });
 
       test.runAfterDelay(8, () => {
         player.useItemInSlot(slot);
@@ -714,14 +731,26 @@ register("andrew", "websword_cooldown_blocks_reuse", (test: Test): void => {
   const center: Vector3 = { x: TARGET.x, y: TARGET.y + 1, z: TARGET.z };
   let afterFirst = -1;
 
+  // The cooldown's clock is world.getAbsoluteTime(), not system.currentTick,
+  // so "600 ticks have passed" is a claim about the first and only the first.
+  // Both are logged at every step: if the two ever diverge, the log says which
+  // one stalled rather than leaving a bare "had not expired" to guess from.
+  const clock = (label: string): void => {
+    console.warn(
+      `[gametest] cooldown ${label}: absoluteTime=${world.getAbsoluteTime()} ` +
+        `currentTick=${system.currentTick} remaining=${remainingTicks(player)}`
+    );
+  };
+
   test.runAfterDelay(4, () => {
     const slot = armSword(player);
 
     test.runAfterDelay(4, () => {
-      player.lookAtBlock(test.worldBlockLocation(TARGET));
+      player.lookAtBlock(TARGET);
 
       test.runAfterDelay(4, () => {
         player.useItemInSlot(slot);
+        clock("armed");
 
         // Ten ticks is long enough for the cube to be in the world and short
         // enough to be nowhere near the 600-tick cooldown.
@@ -732,10 +761,11 @@ register("andrew", "websword_cooldown_blocks_reuse", (test: Test): void => {
           // even with the cooldown ready, because every cell is already
           // cobweb — the retry has to be able to succeed for its failure to
           // mean anything.
-          player.lookAtBlock(test.worldBlockLocation(SECOND_TARGET));
+          player.lookAtBlock(SECOND_TARGET);
 
           test.runAfterDelay(10, () => {
             player.useItemInSlot(slot); // 20 ticks into a 600-tick cooldown
+            clock("retried");
 
             test.runAfterDelay(20, () => {
               const afterSecond = countWebs(test);
@@ -749,12 +779,14 @@ register("andrew", "websword_cooldown_blocks_reuse", (test: Test): void => {
               );
               test.assert(!isReady(player), "the cooldown reported ready 30 ticks after being armed");
 
-              // 30s from the activation. The waits above add up to 50 ticks
-              // since the cube was placed, so 570 more clears 600 with a
-              // margin — and maxTicks below leaves room for all of it.
-              test.runAfterDelay(580, () => {
-                test.assert(isReady(player), "the cooldown had not expired 30 seconds after activation");
-                test.succeed();
+              // Poll to the end of the cooldown instead of asserting once at a
+              // fixed delay: the waits above are 50 ticks, so anything up to
+              // maxTicks is available to absorb a clock that does not run at
+              // exactly one tick per tick — and the log line says how long it
+              // actually took.
+              test.succeedWhen(() => {
+                test.assert(isReady(player), `cooldown still running: ${remainingTicks(player)} tick(s) left`);
+                clock("expired");
               });
             });
           });
@@ -764,7 +796,7 @@ register("andrew", "websword_cooldown_blocks_reuse", (test: Test): void => {
   });
 })
   .structureName(STRUCTURE)
-  .maxTicks(900)
+  .maxTicks(1200)
   .tag("andrew");
 
 console.warn("[gametest] registered 11 test(s) under tag 'andrew'");

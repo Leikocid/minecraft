@@ -70,7 +70,17 @@ const TICKS_PER_SECOND = 20;
  */
 export function registerCooldownHud(): void {
   system.runInterval(() => {
-    for (const player of world.getAllPlayers()) {
+    for (const entry of world.getAllPlayers()) {
+      // Typed non-nullable, and for a real player it is. A SimulatedPlayer
+      // arrives as undefined in a pack that does not load the beta gametest
+      // module: getAllPlayers() returns the right *count* and no readable
+      // entries. Without the guard every gametest run buries the log under one
+      // TypeError per player per HUD interval — 162 of them in the WS-TRAP-01
+      // run that found this. [src: concept-constraint C-2]
+      const player: Player | undefined = entry;
+      if (player === undefined) {
+        continue;
+      }
       renderFor(player);
     }
   }, HUD_INTERVAL_TICKS);
