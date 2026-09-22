@@ -46,6 +46,12 @@ const ST_DIR_NAME = 'andrew_selftest';
 const SELFTEST_TAG = '[selftest]';
 const SELFTEST_DONE = '[selftest] DONE';
 
+// The prefix every console.warn from the add-on's own script carries in the
+// server log: "[Scripting] [andrew] …". BDS logs all script output at WARN,
+// so without this marker each new diagnostic line the add-on prints would be
+// read as an engine complaint about our packs.
+const ANDREW_DIAGNOSTIC = '[Scripting] [andrew] ';
+
 // ---------------------------------------------------------------- arguments
 
 function parseArgs(argv) {
@@ -149,22 +155,29 @@ function analyzeLog(text, { behavior, resource, selftest }) {
   for (const line of lines) {
     if (!/\b(ERROR|WARN)\]/.test(line)) continue;
 
-    // Our own console.warn output is not a problem. Self-check lines reach the
-    // log as warnings too and are judged separately below — leaving them here
-    // would double-report a FAIL and, worse, make a PASS line mentioning
-    // "andrew:…" look like an engine complaint.
-    if (line.includes(SCRIPT_LOADED)) continue;
+    // Self-check lines reach the log as warnings too and are judged separately
+    // below — leaving them here would double-report a FAIL and, worse, make a
+    // PASS line mentioning "andrew:…" look like an engine complaint.
     if (line.includes(SELFTEST_TAG)) continue;
 
     if (/Configured pack .*was not found and was ignored/i.test(line)) continue; // handled above
 
+    // Our own console.warn output is not an engine complaint. Keyed on the
+    // marker rather than on one known line: the add-on prints several
+    // diagnostics now, and each of them names "andrew" by construction. This
+    // only suppresses the *mentionsOurs* half — a line of ours that reports a
+    // failure still trips the scriptFailure test below, and engine errors
+    // about our namespace never carry the "[Scripting] [andrew] " prefix.
+    const ourDiagnostic = line.includes(ANDREW_DIAGNOSTIC);
+
     // Anything the engine complains about that names our namespace or any of
     // our pack uuids — manifest, dependency and item-schema errors all land here.
     const mentionsOurs =
-      /andrew/i.test(line) ||
-      line.toLowerCase().includes(bpUuid.toLowerCase()) ||
-      line.toLowerCase().includes(rpUuid.toLowerCase()) ||
-      line.toLowerCase().includes(stUuid.toLowerCase());
+      !ourDiagnostic &&
+      (/andrew/i.test(line) ||
+        line.toLowerCase().includes(bpUuid.toLowerCase()) ||
+        line.toLowerCase().includes(rpUuid.toLowerCase()) ||
+        line.toLowerCase().includes(stUuid.toLowerCase()));
 
     // A script engine failure is ours even when the message names no pack.
     const scriptFailure =
