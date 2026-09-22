@@ -24,6 +24,7 @@ import {
   world,
 } from "@minecraft/server";
 import { smeltedDropFor } from "../autosmelt";
+import { COOLDOWN_TICKS, cooldownRemaining } from "../websword/rules";
 
 /**
  * Build-time flag, injected by esbuild `--define`. Always false in a normal
@@ -181,6 +182,26 @@ function run(): void {
     assert(
       !sword.hasComponent("minecraft:durability"),
       "minecraft:durability is present — the web sword is no longer unbreakable by omission"
+    );
+  });
+
+  // WS-COOL-01: the cooldown module's pure surface is reachable and the timer
+  // length matches spec §8's 30 seconds. The engine-dependent half (a player's
+  // dynamic property) cannot be probed without a player — that is closed by
+  // GameTest WS-TRAP-01 (isReady=false right after activation, true again 600
+  // ticks later). [src: webswordspecv1ruen §8]
+  check("web-sword-cooldown-ticks", () => {
+    assert(
+      COOLDOWN_TICKS === 600,
+      `COOLDOWN_TICKS is ${COOLDOWN_TICKS}, expected 600 (30s at 20 ticks/s)`
+    );
+    assert(
+      typeof cooldownRemaining === "function",
+      "cooldownRemaining is not exported as a function from websword/rules"
+    );
+    assert(
+      cooldownRemaining(0, COOLDOWN_TICKS) === COOLDOWN_TICKS,
+      "cooldownRemaining(0, COOLDOWN_TICKS) did not return the full timer length"
     );
   });
 
