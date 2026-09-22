@@ -75,7 +75,19 @@ const EXPERIMENT_ACTIVE = 'Experiment(s) active:';
  * wrong: the real cause was setBlockType failing when the call would not change
  * the block — see placeBlock() in src/gametest/main.ts.
  */
-const EXPECTED_TESTS = ['andrew:pickaxe_autosmelt', 'andrew:pickaxe_keeps_vanilla_drops'];
+const EXPECTED_TESTS = [
+  'andrew:pickaxe_autosmelt',
+  'andrew:pickaxe_keeps_vanilla_drops',
+  'andrew:websword_first_claim',
+  'andrew:websword_second_refund',
+  'andrew:websword_creative_ignored',
+  'andrew:websword_death_returns',
+  'andrew:websword_unmarked_drops',
+  'andrew:websword_cube_placed',
+  'andrew:websword_protected_skipped',
+  'andrew:websword_out_of_reach_noop',
+  'andrew:websword_cooldown_blocks_reuse',
+];
 
 // FLAT is not cosmetic: see the LEVEL_TYPE comment in docker/bds/compose.yaml.
 // A default world put the platform under an ocean and the run was intermittent.
@@ -602,14 +614,17 @@ function main() {
 
   log('');
   if (problems.length > 0) {
-    log('FAIL — the pickaxe scenarios did not pass on BDS:');
+    log('FAIL — the simulated-player scenarios did not pass on BDS:');
     for (const p of problems) log(`  ✗ ${p}`);
     log('');
     log(`Full server log: ${logPath}`);
     process.exit(1);
   }
 
-  log('PASS — a simulated player proved the pickaxe on BDS, with no human involved:');
+  log(
+    'PASS — simulated players proved the pickaxe, the Web Sword craft gate, death retention and the ' +
+      'trap ability on BDS, with no human involved:'
+  );
   for (const e of evidence) log(`  ✓ ${e}`);
   log('');
   log(`Full server log: ${logPath}`);
