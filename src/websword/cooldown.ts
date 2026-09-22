@@ -36,6 +36,37 @@ export function isReady(player: Player, abilityKey: string = DEFAULT_ABILITY_KEY
   return remainingTicks(player, abilityKey) === 0;
 }
 
+/** 20 ticks per second — the same constant `COOLDOWN_TICKS` is built from. */
+const TICKS_PER_SECOND = 20;
+
+const MS_PER_TICK = 1000 / TICKS_PER_SECOND;
+
+/** The cooldown's length in the unit the clock below measures. */
+const COOLDOWN_MS = COOLDOWN_TICKS * MS_PER_TICK;
+
+/**
+ * The clock the cooldown is measured against: real milliseconds.
+ *
+ * Not `world.getAbsoluteTime()`, which was the first implementation and is
+ * broken. That function returns the world's *time-of-day* counter, which stops
+ * whenever the day cycle does — with `dodaylightcycle false` (routine on a PvP
+ * server) or simply with nobody online, it never advances, and a cooldown armed
+ * against it never expires. Measured on BDS 1.26.51.1 while running the
+ * WS-TRAP-01 gametest: `absoluteTime` stayed at 385 across 20 server ticks
+ * (`currentTick` 1445 -> 1465) and `remainingTicks` sat at 600 forever.
+ *
+ * Not `system.currentTick` either: it restarts at zero with the script engine,
+ * so a stored deadline would outlive its own clock and read as a cooldown of up
+ * to its full length after every server restart.
+ *
+ * Real time is also what the spec's "30 seconds" means, and it is the only one
+ * of the three that survives a reconnect and a restart unchanged (spec §8;
+ * Q-009).
+ */
+function nowMs(): number {
+  return Date.now();
+}
+
 /**
  * Arms the cooldown: `abilityKey` becomes ready again exactly COOLDOWN_TICKS
  * (30s) from now. Caller's responsibility (WS-TRAP-01) to call this only after
@@ -46,19 +77,24 @@ export function startCooldown(player: Player, _abilityKey: string = DEFAULT_ABIL
   // _abilityKey is accepted for the seam above but not yet threaded into
   // storage — there is exactly one registered ability, so a per-key argument
   // would exercise a path no caller can reach.
-  setCooldownUntil(player, world.getAbsoluteTime() + COOLDOWN_TICKS);
+  setCooldownUntil(player, nowMs() + COOLDOWN_MS);
 }
 
-/** Ticks remaining until `player`'s cooldown for `abilityKey` ends, clamped to zero. */
+/**
+ * Ticks remaining until `player`'s cooldown for `abilityKey` ends, clamped to
+ * zero.
+ *
+ * Ticks, not milliseconds, because that is the unit the spec states the
+ * cooldown in and the unit callers compare against COOLDOWN_TICKS. Rounded up,
+ * so a cooldown with any time left on it never reports zero.
+ */
 export function remainingTicks(player: Player, _abilityKey: string = DEFAULT_ABILITY_KEY): number {
-  return cooldownRemaining(world.getAbsoluteTime(), getCooldownUntil(player));
+  const remaining = cooldownRemaining(nowMs(), getCooldownUntil(player));
+  return Math.ceil(remaining / MS_PER_TICK);
 }
 
 /** How often the HUD recomputes and (re)renders the actionbar. */
 const HUD_INTERVAL_TICKS = 10;
-
-/** 20 ticks per second — the same constant `COOLDOWN_TICKS` is built from. */
-const TICKS_PER_SECOND = 20;
 
 /**
  * Renders the cooldown countdown to the actionbar of every player currently
@@ -99,9 +135,9 @@ function renderFor(player: Player): void {
     return;
   }
 
-  const now = world.getAbsoluteTime();
+  const now = nowMs();
   const until = getCooldownUntil(player);
-  const remaining = cooldownRemaining(now, until);
+  const remaining = remainingTicks(player);
 
   if (remaining > 0) {
     const seconds = Math.ceil(remaining / TICKS_PER_SECOND);
@@ -116,7 +152,7 @@ function renderFor(player: Player): void {
   // pass after it actually ended — `until` is durable and stays in the past
   // forever afterward, so without this window every later tick would repeat
   // the message for as long as the sword stays in hand.
-  if (until > 0 && now - until < HUD_INTERVAL_TICKS) {
+  if (until > 0 && now - until < HUD_INTERVAL_TICKS * MS_PER_TICK) {
     player.onScreenDisplay.setActionBar({ translate: "andrew.web_sword.ready" });
   }
 }

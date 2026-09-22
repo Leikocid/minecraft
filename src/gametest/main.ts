@@ -546,8 +546,31 @@ register("andrew", "websword_unmarked_drops", (test: Test): void => {
 /** The structure written by scripts/bds-gametest.mjs: 7 x 5 x 7, floor at y=1. */
 const PLATFORM = { sx: 7, sy: 5, sz: 7 } as const;
 
-/** Where the second activation of the cooldown scenario aims — clear of the first cube. */
-const SECOND_TARGET: Vector3 = { x: 1, y: 1, z: 3 };
+// The scenarios below aim at a purpose-placed block at eye level rather than at
+// the stone floor, because a floor aim is not deterministic. Aiming from STAND
+// {3,2,5} at the floor cell {3,1,3} sends the ray across the top of {3,1,4} and
+// into {3,1,3} within ~0.01 of the boundary between them — which of the two the
+// engine calls the hit is a coin toss, and on BDS 1.26.51.1 it was the nearer
+// one, putting the cube one cell off what the scenario asserted.
+//
+// A block at eye level removes the guess. The ray from the head (y ~3.6) to the
+// centre of AIM_BLOCK (y 3.5) stays inside the y=3 layer for its whole length
+// and keeps x at 3.5, dead centre of its column, so the only solid block it can
+// meet is AIM_BLOCK itself and it can only enter through the face pointing at
+// the player. That makes the cube's centre a fact of the geometry:
+// AIM_BLOCK + South.
+
+/** Aimed at by the block-ray scenarios: eye level, three blocks north of STAND. */
+const AIM_BLOCK: Vector3 = { x: 3, y: 3, z: 2 };
+
+/** The cube the engine must build for an aim at AIM_BLOCK — one step back along +Z. */
+const AIM_CENTER: Vector3 = { x: 3, y: 3, z: 3 };
+
+/** A second aim, due west instead of north, for the cooldown scenario's retry. */
+const SECOND_AIM: Vector3 = { x: 0, y: 3, z: 5 };
+
+/** The cube for an aim at SECOND_AIM — one step back along +X. */
+const SECOND_CENTER: Vector3 = { x: 1, y: 3, z: 5 };
 
 /** Cells of the 3x3x3 cube the scenarios expect around `center`, relative. */
 function cubeCells(center: Vector3): Vector3[] {
@@ -598,19 +621,20 @@ function armSword(player: SimulatedPlayer): number {
 }
 
 register("andrew", "websword_cube_placed", (test: Test): void => {
+  placeBlock(test, "minecraft:stone", AIM_BLOCK);
   const player = test.spawnSimulatedPlayer(STAND, "andrew_trapper", GameMode.Survival);
 
-  // The whole floor is plain stone and every cell above it is air, so nothing
-  // in the cube is protected — the expected result is the full 27.
+  // Everything in the cube is either air or the stone block aimed at, so
+  // nothing in it is protected — the expected result is the full 27.
   // [src: webswordspecv1ruen §13 — 'Use по валидной цели создаёт
   // приблизительно полный 3×3×3 куб']
-  const center: Vector3 = { x: TARGET.x, y: TARGET.y + 1, z: TARGET.z };
+  const center = AIM_CENTER;
   let used = false;
 
   test.runAfterDelay(4, () => {
     const slot = armSword(player);
     test.runAfterDelay(4, () => {
-      player.lookAtBlock(TARGET);
+      player.lookAtBlock(AIM_BLOCK);
       test.runAfterDelay(4, () => {
         player.useItemInSlot(slot);
         used = true;
@@ -639,10 +663,12 @@ register("andrew", "websword_cube_placed", (test: Test): void => {
   .tag("andrew");
 
 register("andrew", "websword_protected_skipped", (test: Test): void => {
-  const center: Vector3 = { x: TARGET.x, y: TARGET.y + 1, z: TARGET.z };
+  const center = AIM_CENTER;
+  placeBlock(test, "minecraft:stone", AIM_BLOCK);
 
-  // Both sit inside the cube and outside the line of sight from STAND to
-  // TARGET, so they are in the volume without being what the ray hits.
+  // Both sit inside the cube and off the line of sight, which runs straight
+  // down the x=3 column: they are in the volume without being what the ray
+  // hits.
   const chestAt: Vector3 = { x: center.x - 1, y: center.y, z: center.z - 1 };
   const bedrockAt: Vector3 = { x: center.x + 1, y: center.y, z: center.z + 1 };
   placeBlock(test, "minecraft:chest", chestAt);
@@ -654,7 +680,7 @@ register("andrew", "websword_protected_skipped", (test: Test): void => {
   test.runAfterDelay(4, () => {
     const slot = armSword(player);
     test.runAfterDelay(4, () => {
-      player.lookAtBlock(TARGET);
+      player.lookAtBlock(AIM_BLOCK);
       test.runAfterDelay(4, () => {
         player.useItemInSlot(slot);
         used = true;
@@ -726,45 +752,86 @@ register("andrew", "websword_out_of_reach_noop", (test: Test): void => {
   .tag("andrew");
 
 register("andrew", "websword_cooldown_blocks_reuse", (test: Test): void => {
-  const player = test.spawnSimulatedPlayer(STAND, "andrew_repeater", GameMode.Survival);
+  placeBlock(test, "minecraft:stone", AIM_BLOCK);
+  placeBlock(test, "minecraft:stone", SECOND_AIM);
 
-  const center: Vector3 = { x: TARGET.x, y: TARGET.y + 1, z: TARGET.z };
+  const player = test.spawnSimulatedPlayer(STAND, "andrew_repeater", GameMode.Survival);
   let afterFirst = -1;
 
-  // The cooldown's clock is world.getAbsoluteTime(), not system.currentTick,
-  // so "600 ticks have passed" is a claim about the first and only the first.
-  // Both are logged at every step: if the two ever diverge, the log says which
-  // one stalled rather than leaving a bare "had not expired" to guess from.
+  // Both clocks at every step. The cooldown is measured in real milliseconds
+  // (see src/websword/cooldown.ts for why neither of these two can be it), and
+  // logging them is what turned a bare "had not expired" into the reason: the
+  // world's day clock stood still while the server ticked on.
   const clock = (label: string): void => {
     console.warn(
-      `[gametest] cooldown ${label}: absoluteTime=${world.getAbsoluteTime()} ` +
+      `[gametest] cooldown ${label}: dateNow=${Date.now()} absoluteTime=${world.getAbsoluteTime()} ` +
         `currentTick=${system.currentTick} remaining=${remainingTicks(player)}`
     );
+  };
+
+  /**
+   * The activation the cooldown was blocking, replayed once it has expired.
+   *
+   * Without it the scenario would only show that the retry placed nothing,
+   * which is also what a mis-aimed retry looks like. Running the same aim
+   * again and watching cobweb appear is what makes the cooldown the reason.
+   */
+  const replayBlockedActivation = (slot: number): void => {
+    player.lookAtBlock(SECOND_AIM);
+    test.runAfterDelay(4, () => {
+      player.useItemInSlot(slot);
+      test.runAfterDelay(10, () => {
+        for (const cell of cubeCells(SECOND_CENTER)) {
+          const actual = test.getBlock(cell).typeId;
+          test.assert(
+            actual === WEB_BLOCK_ID,
+            `after the cooldown expired, cell ${cell.x},${cell.y},${cell.z} holds ${actual} ` +
+              `instead of ${WEB_BLOCK_ID} — the blocked retry was not blocked by the cooldown`
+          );
+        }
+        test.succeed();
+      });
+    });
+  };
+
+  /**
+   * Waits for the cooldown, rather than asserting once at a fixed delay: the
+   * scenario's own waits are ~50 ticks and the cooldown is 30 seconds of real
+   * time, so how many ticks that is depends on the server keeping 20 TPS.
+   */
+  const waitForReady = (slot: number, attemptsLeft: number): void => {
+    if (isReady(player)) {
+      clock("expired");
+      replayBlockedActivation(slot);
+      return;
+    }
+    test.assert(attemptsLeft > 0, `cooldown still running: ${remainingTicks(player)} tick(s) left`);
+    test.runAfterDelay(20, () => waitForReady(slot, attemptsLeft - 1));
   };
 
   test.runAfterDelay(4, () => {
     const slot = armSword(player);
 
     test.runAfterDelay(4, () => {
-      player.lookAtBlock(TARGET);
+      player.lookAtBlock(AIM_BLOCK);
 
       test.runAfterDelay(4, () => {
         player.useItemInSlot(slot);
-        clock("armed");
 
         // Ten ticks is long enough for the cube to be in the world and short
         // enough to be nowhere near the 600-tick cooldown.
         test.runAfterDelay(10, () => {
+          clock("armed");
           afterFirst = countWebs(test);
 
-          // A *different* target: aiming at the same one would place nothing
-          // even with the cooldown ready, because every cell is already
+          // A *different* aim: repeating the first one would place nothing even
+          // with the cooldown ready, because every cell there is already
           // cobweb — the retry has to be able to succeed for its failure to
           // mean anything.
-          player.lookAtBlock(SECOND_TARGET);
+          player.lookAtBlock(SECOND_AIM);
 
           test.runAfterDelay(10, () => {
-            player.useItemInSlot(slot); // 20 ticks into a 600-tick cooldown
+            player.useItemInSlot(slot); // 20 ticks into a 30-second cooldown
             clock("retried");
 
             test.runAfterDelay(20, () => {
@@ -779,15 +846,7 @@ register("andrew", "websword_cooldown_blocks_reuse", (test: Test): void => {
               );
               test.assert(!isReady(player), "the cooldown reported ready 30 ticks after being armed");
 
-              // Poll to the end of the cooldown instead of asserting once at a
-              // fixed delay: the waits above are 50 ticks, so anything up to
-              // maxTicks is available to absorb a clock that does not run at
-              // exactly one tick per tick — and the log line says how long it
-              // actually took.
-              test.succeedWhen(() => {
-                test.assert(isReady(player), `cooldown still running: ${remainingTicks(player)} tick(s) left`);
-                clock("expired");
-              });
+              waitForReady(slot, 45);
             });
           });
         });
@@ -796,7 +855,7 @@ register("andrew", "websword_cooldown_blocks_reuse", (test: Test): void => {
   });
 })
   .structureName(STRUCTURE)
-  .maxTicks(1200)
+  .maxTicks(1400)
   .tag("andrew");
 
 console.warn("[gametest] registered 11 test(s) under tag 'andrew'");
