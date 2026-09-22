@@ -3,9 +3,14 @@
 // src/websword/cooldown.ts imports @minecraft/server values (world, system,
 // EntityComponentTypes, EquipmentSlot) directly, and pulls in state.ts (which
 // also imports @minecraft/server) and rules.ts — so the bundle below stubs
-// @minecraft/server the same way tests/autosmelt.test.mjs does, and the stub's
-// `world.getAbsoluteTime()` reads a global the test can rewind and fast-forward
-// (contrast tests/web-sword-rules.test.mjs, which needs no stub at all).
+// @minecraft/server the same way tests/autosmelt.test.mjs does (contrast
+// tests/web-sword-rules.test.mjs, which needs no stub at all).
+//
+// The clock is `Date.now()`, patched below so the test can fast-forward it.
+// The stub's `world.getAbsoluteTime()` is a tripwire that throws: it was the
+// original clock and it does not advance when the world's day cycle is stopped,
+// which made a cooldown armed against it last forever. If an edit brings it
+// back, this file says so instead of the bug reaching a server again.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -26,7 +31,9 @@ const minecraftServerStub = {
     pluginBuild.onLoad({ filter: /.*/, namespace: 'mc-stub' }, () => ({
       contents: [
         'export const world = {',
-        '  getAbsoluteTime() { return globalThis.__mcTime ?? 0; },',
+        '  getAbsoluteTime() {',
+        '    throw new Error("the cooldown must not be measured against world time-of-day");',
+        '  },',
         '  getAllPlayers() { return globalThis.__mcPlayers ?? []; },',
         '};',
         'export const system = {',
@@ -58,6 +65,18 @@ const moduleUrl =
 
 const { isReady, startCooldown, remainingTicks, registerCooldownHud, DEFAULT_ABILITY_KEY } =
   await import(moduleUrl);
+
+const MS_PER_TICK = 50;
+
+/**
+ * The module under test reads the clock through `Date.now()`, so that is what
+ * the test drives. The cases below are still written in ticks, the unit the
+ * spec and `COOLDOWN_TICKS` are stated in.
+ */
+Date.now = () => globalThis.__mcNowMs ?? 0;
+const atTick = (tick) => {
+  globalThis.__mcNowMs = tick * MS_PER_TICK;
+};
 
 /** A stub player with a real dynamic-property store, the way state.ts reads/writes it. */
 function makePlayer(name = 'player') {
@@ -105,14 +124,14 @@ function makeHolder(heldTypeId, name = 'holder') {
 
 test('isReady / startCooldown / remainingTicks — 30s = 600 ticks, per-player dynamic property', async (t) => {
   await t.test('a player who never armed the ability is ready with zero remaining', () => {
-    globalThis.__mcTime = 12345;
+    atTick(12345);
     const player = makePlayer();
     assert.strictEqual(isReady(player), true);
     assert.strictEqual(remainingTicks(player), 0);
   });
 
   await t.test('immediately after start: not ready, 600 ticks remaining', () => {
-    globalThis.__mcTime = 1000;
+    atTick(1000);
     const player = makePlayer();
     startCooldown(player);
     assert.strictEqual(isReady(player), false);
@@ -120,25 +139,25 @@ test('isReady / startCooldown / remainingTicks — 30s = 600 ticks, per-player d
   });
 
   await t.test('599 ticks later: still not ready, 1 tick remaining', () => {
-    globalThis.__mcTime = 1000;
+    atTick(1000);
     const player = makePlayer();
     startCooldown(player);
-    globalThis.__mcTime = 1000 + 599;
+    atTick(1000 + 599);
     assert.strictEqual(isReady(player), false);
     assert.strictEqual(remainingTicks(player), 1);
   });
 
   await t.test('exactly 600 ticks later: ready, zero remaining', () => {
-    globalThis.__mcTime = 1000;
+    atTick(1000);
     const player = makePlayer();
     startCooldown(player);
-    globalThis.__mcTime = 1000 + 600;
+    atTick(1000 + 600);
     assert.strictEqual(isReady(player), true);
     assert.strictEqual(remainingTicks(player), 0);
   });
 
   await t.test('cooldown is keyed per player — arming one leaves another untouched', () => {
-    globalThis.__mcTime = 500;
+    atTick(500);
     const a = makePlayer('a');
     const b = makePlayer('b');
     startCooldown(a);
@@ -154,10 +173,10 @@ test('isReady / startCooldown / remainingTicks — 30s = 600 ticks, per-player d
 
 test('registerCooldownHud — actionbar for sword holders only', async (t) => {
   await t.test('seconds are rounded up, not down or truncated', () => {
-    globalThis.__mcTime = 1000;
+    atTick(1000);
     const holder = makeHolder('andrew:web_sword');
     startCooldown(holder); // until = 1600
-    globalThis.__mcTime = 1000 + 581; // 19 ticks left -> 0.95s -> ceil 1
+    atTick(1000 + 581); // 19 ticks left -> 0.95s -> ceil 1
     globalThis.__mcPlayers = [holder];
     registerCooldownHud();
     globalThis.__mcInterval.fn();
@@ -168,7 +187,7 @@ test('registerCooldownHud — actionbar for sword holders only', async (t) => {
   });
 
   await t.test('a fresh 600-tick cooldown reads as exactly 30', () => {
-    globalThis.__mcTime = 0;
+    atTick(0);
     const holder = makeHolder('andrew:web_sword');
     startCooldown(holder); // until = 600
     globalThis.__mcPlayers = [holder];
@@ -181,10 +200,10 @@ test('registerCooldownHud — actionbar for sword holders only', async (t) => {
   });
 
   await t.test('within 10 ticks of expiry: "ready" is shown once', () => {
-    globalThis.__mcTime = 0;
+    atTick(0);
     const holder = makeHolder('andrew:web_sword');
     startCooldown(holder); // until = 600
-    globalThis.__mcTime = 605;
+    atTick(605);
     globalThis.__mcPlayers = [holder];
     registerCooldownHud();
     globalThis.__mcInterval.fn();
@@ -192,10 +211,10 @@ test('registerCooldownHud — actionbar for sword holders only', async (t) => {
   });
 
   await t.test('long after expiry: no further actionbar write', () => {
-    globalThis.__mcTime = 0;
+    atTick(0);
     const holder = makeHolder('andrew:web_sword');
     startCooldown(holder); // until = 600
-    globalThis.__mcTime = 700; // 100 ticks past the 10-tick "just became ready" window
+    atTick(700); // 100 ticks past the 10-tick "just became ready" window
     globalThis.__mcPlayers = [holder];
     registerCooldownHud();
     globalThis.__mcInterval.fn();
@@ -203,10 +222,10 @@ test('registerCooldownHud — actionbar for sword holders only', async (t) => {
   });
 
   await t.test('a player without the sword in the main hand gets no message', () => {
-    globalThis.__mcTime = 0;
+    atTick(0);
     const bystander = makeHolder(undefined);
     startCooldown(bystander); // should have no observable effect on the HUD
-    globalThis.__mcTime = 10;
+    atTick(10);
     globalThis.__mcPlayers = [bystander];
     registerCooldownHud();
     globalThis.__mcInterval.fn();
@@ -214,7 +233,7 @@ test('registerCooldownHud — actionbar for sword holders only', async (t) => {
   });
 
   await t.test('a sword holder who never armed the ability gets no message', () => {
-    globalThis.__mcTime = 5;
+    atTick(5);
     const holder = makeHolder('andrew:web_sword');
     globalThis.__mcPlayers = [holder];
     registerCooldownHud();

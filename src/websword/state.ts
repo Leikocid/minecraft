@@ -103,15 +103,21 @@ export function clearPending(player: Player): void {
   player.setDynamicProperty(DP_PENDING, undefined);
 }
 
-/** The world tick at which `player`'s cooldown ends, or 0 if none is set. */
+/**
+ * The epoch millisecond at which `player`'s cooldown ends, or 0 if none is set.
+ *
+ * Milliseconds rather than world ticks: cooldown.ts explains why the world's
+ * own clock cannot be used. A value left over from the tick-based scheme is a
+ * small number and so reads as long expired, which is the harmless direction.
+ */
 export function getCooldownUntil(player: Player): number {
   const raw = player.getDynamicProperty(DP_COOLDOWN_UNTIL);
   return typeof raw === "number" ? raw : 0;
 }
 
-/** Persists the world tick at which `player`'s cooldown ends. */
-export function setCooldownUntil(player: Player, tick: number): void {
-  player.setDynamicProperty(DP_COOLDOWN_UNTIL, tick);
+/** Persists the epoch millisecond at which `player`'s cooldown ends. */
+export function setCooldownUntil(player: Player, atMs: number): void {
+  player.setDynamicProperty(DP_COOLDOWN_UNTIL, atMs);
 }
 
 export interface MarkedSlot {
