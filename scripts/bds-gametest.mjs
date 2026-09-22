@@ -81,6 +81,8 @@ const EXPECTED_TESTS = [
   'andrew:websword_first_claim',
   'andrew:websword_second_refund',
   'andrew:websword_creative_ignored',
+  'andrew:websword_death_returns',
+  'andrew:websword_unmarked_drops',
 ];
 
 // FLAT is not cosmetic: see the LEVEL_TYPE comment in docker/bds/compose.yaml.
@@ -615,7 +617,10 @@ function main() {
     process.exit(1);
   }
 
-  log('PASS — simulated players proved the pickaxe and the Web Sword craft gate on BDS, with no human involved:');
+  log(
+    'PASS — simulated players proved the pickaxe, the Web Sword craft gate and death retention on BDS, ' +
+      'with no human involved:'
+  );
   for (const e of evidence) log(`  ✓ ${e}`);
   log('');
   log(`Full server log: ${logPath}`);

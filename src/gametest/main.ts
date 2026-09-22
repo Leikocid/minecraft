@@ -17,10 +17,22 @@
 // server console. The [gametest] console.warn lines below are for a human
 // reading dist/bds-gametest.log.
 
-import { Container, GameMode, ItemStack, Player, Vector3 } from "@minecraft/server";
+import { Container, Dimension, Entity, GameMode, ItemStack, Player, Vector3, world } from "@minecraft/server";
 import { Test, register } from "@minecraft/server-gametest";
 import { registerCraftGate } from "../websword/craftgate";
-import { WEB_SWORD_ID, findMarkedSword, isCrafted, resetCrafted } from "../websword/state";
+import { registerRetention } from "../websword/retention";
+import {
+  WEB_SWORD_ID,
+  findMarkedSword,
+  getMark,
+  getPending,
+  isCrafted,
+  isWebSword,
+  makeMark,
+  markSword,
+  resetCrafted,
+  setCrafted,
+} from "../websword/state";
 
 console.warn("[gametest] script loaded");
 
@@ -36,6 +48,12 @@ console.warn("[gametest] script loaded");
 // the scenarios drive the real chain end to end — the same subscription, queue,
 // once-per-tick flush and settle logic the release pack runs for a human.
 registerCraftGate();
+
+// Same binding problem, same answer: the release pack's entityDie handler
+// cannot read a SimulatedPlayer either. Arming retention here is what lets the
+// death scenarios drive the production module end to end — the same
+// subscriptions, the same pending mark, the same restore a human gets.
+registerRetention();
 
 const PICKAXE_ID = "andrew:miners_pickaxe";
 
@@ -290,4 +308,179 @@ register("andrew", "websword_creative_ignored", (test: Test): void => {
   .maxTicks(400)
   .tag("andrew");
 
-console.warn("[gametest] registered 5 test(s) under tag 'andrew'");
+// ------------------------------------------------ Web Sword: death retention
+//
+// The sword handed out here is marked with origin "admin", the same stamp
+// /andrew:websword give writes. That is deliberate: it is retained on death
+// exactly like a crafted one, but it does not spend the world's single craft,
+// so these scenarios cannot interfere with the gate ones above — and it also
+// walks straight past the gate, which would otherwise treat an *unmarked*
+// sword handed to a Survival player as a craft.
+// [src: decision-q-006-web-sword-provenance-yes-metka-ekzemplyara]
+
+/** Must agree with DROP_SEARCH_RADIUS in src/websword/retention.ts. */
+const RETENTION_RADIUS = 8;
+
+/** How many Web Swords in `container` carry instance id `id`. */
+function countInstance(container: Container, id: string): number {
+  let found = 0;
+  for (let slot = 0; slot < container.size; slot++) {
+    const stack = container.getItem(slot);
+    if (isWebSword(stack) && getMark(stack)?.id === id) {
+      found++;
+    }
+  }
+  return found;
+}
+
+/** Web Sword item entities lying within the retention radius of `location`. */
+function swordsOnGround(dimension: Dimension, location: Vector3): number {
+  let found = 0;
+  for (const entity of dimension.getEntities({
+    type: "minecraft:item",
+    location,
+    maxDistance: RETENTION_RADIUS,
+  })) {
+    if (isWebSword(entity.getComponent("minecraft:item")?.itemStack)) {
+      found++;
+    }
+  }
+  return found;
+}
+
+register("andrew", "websword_death_returns", (test: Test): void => {
+  const player = test.spawnSimulatedPlayer(STAND_A, "andrew_keeper", GameMode.Survival);
+
+  // succeedWhen re-runs its body every tick from the start of the test, and
+  // the *pre-death* state satisfies every assertion below — one marked sword
+  // in hand, nothing on the ground, no pending mark. Without this gate the
+  // scenario would go green on tick one having proven nothing at all.
+  let stage: "setup" | "killed" | "respawned" = "setup";
+  let instanceId = "";
+  let deathLocation: Vector3 = STAND_A;
+  let deathDimension: Dimension | undefined;
+
+  test.runAfterDelay(4, () => {
+    const mark = makeMark("admin", player);
+    instanceId = mark.id;
+    inventoryOf(player).addItem(markSword(new ItemStack(WEB_SWORD_ID, 1), mark));
+
+    test.runAfterDelay(4, () => {
+      deathLocation = player.location;
+      deathDimension = player.dimension;
+      stage = "killed";
+      player.kill();
+
+      // Long enough for the engine to finish the death (and for retention's
+      // next-tick sweep to run) before the respawn is asked for.
+      test.runAfterDelay(10, () => {
+        player.respawn();
+        stage = "respawned";
+      });
+    });
+  });
+
+  test.succeedWhen(() => {
+    test.assert(stage === "respawned", `the player has not died and respawned yet (stage: ${stage})`);
+
+    const held = countInstance(inventoryOf(player), instanceId);
+    test.assert(
+      held === 1,
+      `the player carries ${held} Web Sword(s) with ws_id ${instanceId} after respawn, expected exactly 1`
+    );
+
+    const dropped = swordsOnGround(deathDimension ?? player.dimension, deathLocation);
+    test.assert(dropped === 0, `${dropped} Web Sword(s) are lying at the death spot`);
+
+    // The token that makes the whole thing idempotent: left set, the next
+    // respawn — or the next reconnect — would hand out a second sword.
+    test.assert(
+      getPending(player) === undefined,
+      "the pending return survived the restore, so a further respawn would issue a duplicate"
+    );
+  });
+})
+  .structureName(STRUCTURE)
+  .maxTicks(400)
+  .tag("andrew");
+
+// The control. An unmarked sword — a Creative copy — is an ordinary item, and
+// retention must not latch onto it: no pending mark, and nothing handed back.
+// [src: decision-q-006-web-sword-provenance-yes-metka-ekzemplyara]
+//
+// The player starts in Creative and dies in Survival, and both halves are
+// load-bearing:
+//
+//   Creative when the sword arrives, because that is the one game mode the
+//   craft gate exempts — in Survival an unmarked sword is by definition a
+//   craft, and the gate would mark it or take it back before it could be the
+//   control for anything;
+//
+//   Survival when the killing happens, because a Creative player cannot be
+//   killed. Measured on BDS 1.26.51.1: the first version of this scenario
+//   stayed Creative throughout, went green, and proved nothing — kill() raised
+//   no entityDie at all, so retention was never asked the question. The death
+//   witness below is what makes the negative claim mean something.
+register("andrew", "websword_unmarked_drops", (test: Test): void => {
+  // Pin the gate into its refund branch for the whole scenario. After
+  // respawning, the player may well walk back over their own drop; with the
+  // world's craft budget spent the gate takes the sword back rather than
+  // stamping a mark on it, so the assertions below cannot be tripped by the
+  // gate doing its own job.
+  // [src: decision-q-008-blocked-craft-refund-a-obnaruzhit-i-vernut]
+  setCrafted("andrew_control");
+
+  const player = test.spawnSimulatedPlayer(STAND_B, "andrew_bystander", GameMode.Creative);
+
+  let died = false;
+  const witness = world.afterEvents.entityDie.subscribe((event) => {
+    const dead: Entity | undefined = event.deadEntity;
+    if (player.isValid && dead?.id === player.id) {
+      died = true;
+    }
+  });
+
+  test.runAfterDelay(4, () => {
+    inventoryOf(player).addItem(new ItemStack(WEB_SWORD_ID, 1));
+
+    // The gate settles on the next tick; ten is comfortably past that, so the
+    // switch below cannot be seen by the flush that decides this sword's fate.
+    test.runAfterDelay(10, () => {
+      player.setGameMode(GameMode.Survival);
+
+      test.runAfterDelay(4, () => {
+        player.kill();
+        test.runAfterDelay(10, () => {
+          player.respawn();
+
+          // A negative claim, so it is checked once, late — long after
+          // retention would have acted (retain is immediate, restore is one
+          // tick later) rather than on the first tick, when "nothing happened"
+          // is trivially true because nothing has happened yet.
+          test.runAfterDelay(20, () => {
+            world.afterEvents.entityDie.unsubscribe(witness);
+
+            test.assert(
+              died,
+              "the control player never died, so retention was never offered an unmarked sword to ignore"
+            );
+            test.assert(
+              getPending(player) === undefined,
+              "retention latched an unmarked Web Sword and owes the player a marked one"
+            );
+            test.assert(
+              findMarkedSword(inventoryOf(player)) === undefined,
+              "retention handed out a marked Web Sword in place of an unmarked copy"
+            );
+            test.succeed();
+          });
+        });
+      });
+    });
+  });
+})
+  .structureName(STRUCTURE)
+  .maxTicks(400)
+  .tag("andrew");
+
+console.warn("[gametest] registered 7 test(s) under tag 'andrew'");
