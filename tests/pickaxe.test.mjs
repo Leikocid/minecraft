@@ -159,3 +159,30 @@ test('Miner\'s Pickaxe texture', async (t) => {
     assert.strictEqual(height, 16, 'PNG height must be 16');
   });
 });
+
+// The digger's tag query is what makes the pickaxe dig at diamond speed, and a
+// block the query misses is mined at speed 1 — bare hand, not some tier
+// default. Measured on BDS 1.26.51.1: the earlier query named 'stone' and the
+// '*_pick_diggable' tags, which copper ore (stone_pick_diggable only), ancient
+// debris (no *_pick_diggable at all) and plain deepslate do not carry, so they
+// took 302 ticks instead of 13. Every pickaxe-mineable vanilla block carries
+// minecraft:is_pickaxe_item_destructible, so that one tag is the whole query.
+test('digger asks for the tag every pickaxe-mineable block carries, at diamond speed', () => {
+  const digger = itemJson['minecraft:item'].components['minecraft:digger'];
+  assert.ok(digger, 'minecraft:digger component is missing');
+  assert.equal(digger.use_efficiency, true, 'Efficiency must be able to speed the pickaxe up');
+
+  const entries = digger.destroy_speeds;
+  assert.ok(Array.isArray(entries) && entries.length > 0, 'destroy_speeds is empty');
+
+  const universal = entries.find((entry) =>
+    String(entry?.block?.tags ?? '').includes('minecraft:is_pickaxe_item_destructible')
+  );
+  assert.ok(
+    universal,
+    'no destroy_speeds entry matches minecraft:is_pickaxe_item_destructible — ' +
+      'blocks outside the query fall back to bare-hand speed'
+  );
+  // 8 is the vanilla diamond tier; the spec asks for diamond-pickaxe feel.
+  assert.equal(universal.speed, 8, 'the pickaxe must dig at diamond speed (8)');
+});

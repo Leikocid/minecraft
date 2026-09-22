@@ -76,6 +76,7 @@ const EXPERIMENT_ACTIVE = 'Experiment(s) active:';
  * the block — see placeBlock() in src/gametest/main.ts.
  */
 const EXPECTED_TESTS = [
+  'andrew:pickaxe_digs_at_diamond_speed',
   'andrew:pickaxe_autosmelt',
   'andrew:pickaxe_keeps_vanilla_drops',
   'andrew:websword_first_claim',

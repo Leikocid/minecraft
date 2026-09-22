@@ -96,6 +96,9 @@ world.afterEvents.playerInteractWithBlock.subscribe((event) => {
 
 const PICKAXE_ID = "andrew:miners_pickaxe";
 
+/** The yardstick for mining speed: the pickaxe must match it block for block. */
+const VANILLA_PICKAXE_ID = "minecraft:diamond_pickaxe";
+
 /** Must match the structure written by scripts/bds-gametest.mjs. */
 const STRUCTURE = "andrew:platform";
 
@@ -858,4 +861,116 @@ register("andrew", "websword_cooldown_blocks_reuse", (test: Test): void => {
   .maxTicks(1400)
   .tag("andrew");
 
-console.warn("[gametest] registered 11 test(s) under tag 'andrew'");
+// ---------------------------------------------------------------- dig speed
+//
+// The pickaxe must dig like a diamond one. minecraft:digger picks its speed by
+// a molang tag query, and a block the query misses does not fall back to some
+// tier default — it falls back to speed 1, bare hand. That is how the shipped
+// 0.3.0 pickaxe took 15.1s on copper ore (302 ticks, measured) against 0.65s
+// for a vanilla diamond pickaxe, and never finished ancient debris at all.
+//
+// The three blocks below are the three tag families that query must cover, one
+// representative each — measured on BDS 1.26.51.1 with getTags():
+//   copper_ore      stone_pick_diggable only       (no *_pick_diggable for iron/diamond)
+//   deepslate       is_pickaxe_item_destructible only
+//   ancient_debris  diamond_tier_destructible only (no *_pick_diggable at all)
+//
+// The assertion calibrates itself: each block is broken twice in the same run,
+// once with our pickaxe and once with a vanilla diamond one, and the two times
+// are compared. No hardcoded tick counts to drift when Mojang retunes hardness.
+
+/** Blocks whose tags exercise a different branch of the digger query. */
+const SPEED_BLOCKS: ReadonlyArray<string> = [
+  "minecraft:copper_ore",
+  "minecraft:deepslate",
+  "minecraft:ancient_debris",
+];
+
+/** Ours may be this many ticks slower than vanilla before the test fails. */
+const SPEED_TOLERANCE_TICKS = 4;
+
+/** Long enough for the slowest block here at diamond speed, far short of hand speed. */
+const BREAK_LIMIT_TICKS = 300;
+
+/**
+ * Breaks the block at `loc` with whatever the player has selected and reports
+ * how many ticks it took, or -1 if it was still standing at `limit`.
+ */
+function timeBreak(
+  test: Test,
+  player: SimulatedPlayer,
+  loc: Vector3,
+  label: string,
+  done: (ticks: number) => void
+): void {
+  player.lookAtBlock(loc);
+  player.breakBlock(loc);
+
+  let ticks = 0;
+  const step = (): void => {
+    ticks++;
+    if (test.getBlock(loc).isAir) {
+      console.warn(`[gametest] ${label}: ${ticks} ticks (${(ticks / 20).toFixed(2)}s)`);
+      done(ticks);
+      return;
+    }
+    if (ticks >= BREAK_LIMIT_TICKS) {
+      console.warn(`[gametest] ${label}: still standing after ${BREAK_LIMIT_TICKS} ticks`);
+      done(-1);
+      return;
+    }
+    test.runAfterDelay(1, step);
+  };
+  test.runAfterDelay(1, step);
+}
+
+register("andrew", "pickaxe_digs_at_diamond_speed", (test: Test) => {
+  const player = test.spawnSimulatedPlayer(STAND, "andrew_digger", GameMode.Survival);
+  let index = 0;
+
+  const nextBlock = (): void => {
+    if (index >= SPEED_BLOCKS.length) {
+      test.succeed();
+      return;
+    }
+    const id = SPEED_BLOCKS[index++];
+
+    placeBlock(test, id, TARGET);
+    player.giveItem(new ItemStack(PICKAXE_ID, 1), true);
+
+    test.runAfterDelay(4, () => {
+      timeBreak(test, player, TARGET, `${PICKAXE_ID} on ${id}`, (ours) => {
+        // A fresh copy of the same block, so the two runs are comparable.
+        placeBlock(test, id, TARGET);
+        player.giveItem(new ItemStack(VANILLA_PICKAXE_ID, 1), true);
+
+        test.runAfterDelay(4, () => {
+          timeBreak(test, player, TARGET, `${VANILLA_PICKAXE_ID} on ${id}`, (vanilla) => {
+            test.assert(
+              vanilla > 0,
+              `the vanilla diamond pickaxe did not break ${id} either — the probe itself is broken`
+            );
+            test.assert(
+              ours > 0,
+              `${PICKAXE_ID} did not break ${id} within ${BREAK_LIMIT_TICKS} ticks ` +
+                `while a vanilla diamond pickaxe took ${vanilla}`
+            );
+            test.assert(
+              ours <= vanilla + SPEED_TOLERANCE_TICKS,
+              `${PICKAXE_ID} took ${ours} ticks on ${id} against ${vanilla} for a vanilla ` +
+                `diamond pickaxe — the digger tag query does not cover this block`
+            );
+            test.runAfterDelay(4, nextBlock);
+          });
+        });
+      });
+    });
+  };
+
+  test.runAfterDelay(4, nextBlock);
+})
+  .structureName(STRUCTURE)
+  .maxTicks(1000)
+  .tag("andrew");
+
+console.warn("[gametest] registered 12 test(s) under tag 'andrew'");
