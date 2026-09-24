@@ -3,12 +3,14 @@ import { registerAutoSmelt } from "./autosmelt";
 import { registerLegendaryCommands } from "./legendary/commands";
 import { registerCraftGate } from "./legendary/craftgate";
 import { registerLegendaryHud } from "./legendary/hud";
+import { registerRecovery } from "./legendary/recovery";
 import { registerRetention } from "./legendary/retention";
 import { registerTrap } from "./websword/trap";
 
 registerAutoSmelt();
 registerCraftGate();
 registerRetention();
+registerRecovery();
 registerLegendaryHud();
 registerTrap();
 // Must run at script load: custom commands can only be registered during the

@@ -39,6 +39,7 @@ import {
   system,
   world,
 } from "@minecraft/server";
+import { forgetWatched } from "./recovery";
 import { LEGENDARIES, type LegendaryDef, defForStack } from "./registry";
 import { clearPending, findMarked, getMark, getPending, isItemOf, markItem, setPending } from "./state";
 
@@ -158,6 +159,9 @@ function sweep(player: Player, dimension: Dimension, location: Vector3): void {
     if (getPending(def, player) === undefined) {
       setPending(def, player, mark);
     }
+    // Order: unwatched before removal, or recovery reads this removal as a
+    // loss and owes the mark a second time.
+    forgetWatched(entity.id);
     entity.remove();
     reclaimed++;
   }
@@ -171,9 +175,18 @@ function sweep(player: Player, dimension: Dimension, location: Vector3): void {
   );
 }
 
-/** Respawn (or the next join after one): hand the owed item back, once. */
-function restore(def: LegendaryDef, player: Player): void {
+/**
+ * Hand the owed item back, once. Called on respawn/join, and by recovery for a
+ * live player; `messageKey` is what the owner is told.
+ */
+export function restore(def: LegendaryDef, player: Player, messageKey = `${def.textPrefix}.returned`): void {
   if (!player.isValid) {
+    return;
+  }
+  // A dead player's inventory is emptied by the engine; the pending mark waits
+  // for the respawn handler instead.
+  const health = player.getComponent("minecraft:health");
+  if (health !== undefined && health.currentValue <= 0) {
     return;
   }
 
@@ -207,7 +220,7 @@ function restore(def: LegendaryDef, player: Player): void {
     player.dimension.spawnItem(leftover, player.location);
   }
   clearPending(def, player);
-  player.sendMessage({ translate: `${def.textPrefix}.returned` });
+  player.sendMessage({ translate: messageKey });
   console.warn(
     `[andrew] legendary retention: returned ${def.itemId} id ${mark.id} to ${player.name}` +
       (leftover === undefined ? "" : " (inventory full — dropped at their feet)")
