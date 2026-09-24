@@ -21,6 +21,7 @@ import {
   Container,
   Dimension,
   Entity,
+  EquipmentSlot,
   GameMode,
   ItemStack,
   Player,
@@ -38,6 +39,15 @@ import { SCYTHE_OF_CALAMITY, WEB_SWORD } from "../legendary/registry";
 import { registerRetention } from "../legendary/retention";
 import * as state from "../legendary/state";
 import { registerScytheTargeting } from "../scythe/targeting";
+import {
+  LAUNCH_STRENGTH,
+  PROJECTILE_PARTICLE,
+  activeProjectileCount,
+  activeVolleyCount,
+  launchVolley,
+  volleyTickErrors,
+} from "../scythe/volley";
+import { PROJECTILE_SPEED } from "../scythe/volley-rules";
 import { WEB_BLOCK_ID } from "../websword/cube";
 import { registerTrap } from "../websword/trap";
 
@@ -1407,18 +1417,48 @@ register("andrew", "legendary_pickup_no_duplicate", (test: Test): void => {
 
 // ------------------------------------------------------ Scythe: targeting
 //
-// SC-TGT-01-AA, spec §8 acceptance tests 1–3. The volley does not exist yet, so
-// "who was chosen" is read from the listener the production module calls with
-// its choice, not from projectiles; a miss is also proven by the cooldown
-// staying ready.
+// SC-TGT-01-AA, spec §8 acceptance tests 1–3. "Who was chosen" is read from
+// the listener the production module calls with its choice; a miss is also
+// proven by the cooldown staying ready.
 
 /** Owner id -> chosen target's name, or null for "no target". Absent: no activation yet. */
 const scytheChoice = new Map<string, string | null>();
 
+/** What a volley scenario sees of its volley, and the hooks it drives it with. */
+interface VolleyWatch {
+  onLaunch?(target: Player): void;
+  onHit?(hitNumber: number, target: Player): void;
+  hits: number;
+  hpAfter: number[];
+  endReason?: string;
+  launched: boolean;
+}
+
+/** Owner id -> the scenario's watch. Registered before the Use. */
+const volleyWatch = new Map<string, VolleyWatch>();
+
 // Same binding problem as the trap: the release pack cannot see a
-// SimulatedPlayer, so the production targeting is armed here as well.
+// SimulatedPlayer, so the production targeting and volley are armed here as
+// well — the same chain registerScytheVolley() wires in src/main.ts, with an
+// observer added.
 registerScytheTargeting((owner, target) => {
   scytheChoice.set(owner.id, target === undefined ? null : target.name);
+  if (target === undefined) {
+    return;
+  }
+  const watch = volleyWatch.get(owner.id) ?? { hits: 0, hpAfter: [], launched: false };
+  volleyWatch.set(owner.id, watch);
+  watch.launched = launchVolley(owner, target, {
+    onHit(n, hp) {
+      watch.hits = n;
+      watch.hpAfter.push(hp);
+      watch.onHit?.(n, target);
+    },
+    onEnd(reason) {
+      watch.endReason = reason;
+    },
+  });
+  watch.onLaunch?.(target);
 });
 
 const scytheReady = (player: Player) => cooldown.isReady(player, SCYTHE_OF_CALAMITY.abilityKey);
@@ -1495,4 +1535,306 @@ register("andrew", "scythe_skips_hidden", (test: Test): void => {
   .maxTicks(200)
   .tag("andrew");
 
-console.warn("[gametest] registered 20 test(s) under tag 'andrew'");
+// ------------------------------------------------------- Scythe: the volley
+//
+// SC-VOLLEY-01-AA, spec §8 acceptance tests 5–10, plus the lethal branch of
+// decision-scythe-true-damage. Two simulated players face each other across
+// the platform; the owner uses the Scythe looking at the sky, so no block is
+// tapped and the Use is an itemUse.
+
+const DUEL_OWNER: Vector3 = { x: 1, y: 2, z: 3 };
+const DUEL_TARGET: Vector3 = { x: 5, y: 2, z: 3 };
+
+/** Far enough from DUEL_OWNER to be outside the 20-block pursuit radius. */
+const FAR_AWAY: Vector3 = { x: DUEL_TARGET.x + 25, y: 2, z: DUEL_TARGET.z };
+
+const scytheBusy = (player: Player) => cooldown.isBusy(player, SCYTHE_OF_CALAMITY.abilityKey);
+
+function newWatch(): VolleyWatch {
+  return { hits: 0, hpAfter: [], launched: false };
+}
+
+/** Owner id -> the killer's id of that owner's target, recorded by entityDie. */
+const scytheKills = new Map<string, string | null>();
+world.afterEvents.entityDie.subscribe((event) => {
+  const dead = event.deadEntity;
+  if (dead.typeId !== "minecraft:player") {
+    return;
+  }
+  const killer = event.damageSource.damagingEntity;
+  scytheKills.set(dead.id, killer === undefined ? null : killer.id);
+  console.warn(
+    `[gametest] probe entityDie: ${dead.id} cause=${event.damageSource.cause} killer=${killer?.id ?? "none"}`
+  );
+});
+
+/** Spawns owner and target, registers `watch`, then hands the owner a Scythe and uses it. */
+function scytheDuel(
+  test: Test,
+  ownerName: string,
+  targetName: string,
+  watch: VolleyWatch,
+  ownerAt: Vector3 = DUEL_OWNER,
+  targetAt: Vector3 = DUEL_TARGET
+): { owner: SimulatedPlayer; target: SimulatedPlayer } {
+  const owner = test.spawnSimulatedPlayer(ownerAt, ownerName, GameMode.Survival);
+  const target = test.spawnSimulatedPlayer(targetAt, targetName, GameMode.Survival);
+  volleyWatch.set(owner.id, watch);
+  test.runAfterDelay(4, () => {
+    giveMarkedScythe(owner);
+    test.runAfterDelay(4, () => {
+      owner.lookAtLocation({ x: ownerAt.x + 0.5, y: ownerAt.y + 30, z: ownerAt.z + 0.5 });
+      test.runAfterDelay(4, () => owner.useItemInSlot(owner.selectedSlotIndex));
+    });
+  });
+  return { owner, target };
+}
+
+function assertLaunched(test: Test, watch: VolleyWatch): void {
+  test.assert(watch.launched, "the Scythe Use did not launch a volley");
+}
+
+function assertNothingInFlight(test: Test): void {
+  test.assert(activeVolleyCount() === 0, `${activeVolleyCount()} volley interval(s) still running`);
+  test.assert(activeProjectileCount() === 0, `${activeProjectileCount()} projectile(s) still in flight`);
+  test.assert(volleyTickErrors() === 0, `${volleyTickErrors()} exception(s) were caught inside volley ticks`);
+}
+
+register("andrew", "scythe_three_hits_true_damage", (test: Test): void => {
+  const watch = newWatch();
+  const { target } = scytheDuel(test, "andrew_scy_owner_dmg", "andrew_scy_armored", watch);
+  let hpBefore = -1;
+
+  test.runAfterDelay(2, () => {
+    const equippable = target.getComponent("minecraft:equippable");
+    test.assert(equippable !== undefined, "the target has no equippable component");
+    equippable?.setEquipment(EquipmentSlot.Head, new ItemStack("minecraft:diamond_helmet"));
+    equippable?.setEquipment(EquipmentSlot.Chest, new ItemStack("minecraft:diamond_chestplate"));
+    equippable?.setEquipment(EquipmentSlot.Legs, new ItemStack("minecraft:diamond_leggings"));
+    equippable?.setEquipment(EquipmentSlot.Feet, new ItemStack("minecraft:diamond_boots"));
+    // Only the volley may move the health bar: no fall damage, no regeneration.
+    target.addEffect("slow_falling", 1200, { showParticles: false });
+    world.gameRules.naturalRegeneration = false;
+  });
+  watch.onLaunch = () => {
+    hpBefore = entityHealth(target);
+    const chest = target.getComponent("minecraft:equippable")?.getEquipment(EquipmentSlot.Chest)?.typeId;
+    console.warn(`[gametest] scythe damage: target hp ${hpBefore} at launch, chest=${chest ?? "none"}`);
+  };
+
+  test.succeedWhen(() => {
+    assertLaunched(test, watch);
+    test.assert(watch.endReason !== undefined, "the volley is still in flight");
+    world.gameRules.naturalRegeneration = true;
+    const hpAfter = entityHealth(target);
+    console.warn(
+      `[gametest] scythe damage: ${watch.hits} hit(s), hp ${hpBefore} -> ${hpAfter} ` +
+        `(after each hit: ${watch.hpAfter.join(", ")}), end=${watch.endReason}`
+    );
+    test.assert(
+      target.getComponent("minecraft:equippable")?.getEquipment(EquipmentSlot.Chest)?.typeId ===
+        "minecraft:diamond_chestplate",
+      "the target lost its diamond chestplate"
+    );
+    test.assert(watch.hits === 3, `${watch.hits} of 3 projectiles hit (end=${watch.endReason})`);
+    test.assert(hpBefore - hpAfter === 9, `the volley took ${hpBefore - hpAfter} HP through diamond armour, expected exactly 9`);
+  });
+})
+  .structureName(STRUCTURE)
+  .maxTicks(400)
+  .tag("andrew");
+
+register("andrew", "scythe_launches_target", (test: Test): void => {
+  const watch = newWatch();
+  const { target } = scytheDuel(test, "andrew_scy_owner_up", "andrew_scy_flier", watch);
+  let launchedAt = -1;
+  let startY: number | undefined;
+  let peak = -Infinity;
+  let apex = false;
+
+  watch.onLaunch = () => {
+    launchedAt = system.currentTick;
+  };
+  watch.onHit = (n, hit) => {
+    if (n === 1) {
+      startY = hit.location.y;
+      peak = startY;
+      console.warn(
+        `[gametest] scythe speed: first hit ${system.currentTick - launchedAt} ticks after launch over ` +
+          `${DUEL_TARGET.x - DUEL_OWNER.x} blocks at ${PROJECTILE_SPEED} b/t, particle ${PROJECTILE_PARTICLE}`
+      );
+    }
+  };
+
+  test.succeedWhen(() => {
+    assertLaunched(test, watch);
+    test.assert(startY !== undefined, "no projectile has hit yet");
+    const y = target.location.y;
+    if (!apex) {
+      if (y > peak) {
+        peak = y;
+      } else if (peak > (startY as number) + 0.5 && y < peak - 0.05) {
+        apex = true;
+        console.warn(
+          `[gametest] scythe launch: strength ${LAUNCH_STRENGTH} -> peak +${(peak - (startY as number)).toFixed(2)} ` +
+            `blocks (start y=${(startY as number).toFixed(2)}, peak y=${peak.toFixed(2)}, hits so far ${watch.hits})`
+        );
+      }
+    }
+    test.assert(apex, "the target is still rising");
+    const rise = peak - (startY as number);
+    test.assert(rise >= 8 && rise <= 12, `the first hit launched the target ${rise.toFixed(2)} blocks, expected 8–12`);
+  });
+})
+  .structureName(STRUCTURE)
+  .maxTicks(400)
+  .tag("andrew");
+
+const WALL_X = 3;
+
+register("andrew", "scythe_through_walls", (test: Test): void => {
+  const watch = newWatch();
+  const wall: Vector3[] = [];
+  for (let y = 2; y <= 4; y++) {
+    for (let z = 0; z <= 6; z++) {
+      wall.push({ x: WALL_X, y, z });
+    }
+  }
+  scytheDuel(test, "andrew_scy_owner_wall", "andrew_scy_walled", watch, { x: 0, y: 2, z: 3 }, { x: 6, y: 2, z: 3 });
+
+  // Built after the target is chosen: targeting itself needs line of sight.
+  watch.onLaunch = () => {
+    for (const cell of wall) {
+      test.setBlockType("minecraft:obsidian", cell);
+    }
+    console.warn(`[gametest] scythe walls: ${wall.length} obsidian blocks between owner and target`);
+  };
+
+  test.succeedWhen(() => {
+    assertLaunched(test, watch);
+    test.assert(watch.endReason !== undefined, "the volley is still in flight");
+    test.assert(watch.hits >= 1, `no projectile passed the wall (end=${watch.endReason})`);
+    const broken = wall.filter((cell) => test.getBlock(cell).typeId !== "minecraft:obsidian");
+    console.warn(
+      `[gametest] scythe walls: ${watch.hits} hit(s) through the wall, ${wall.length - broken.length}/${wall.length} ` +
+        `obsidian intact, end=${watch.endReason}`
+    );
+    test.assert(broken.length === 0, `${broken.length} wall block(s) are no longer obsidian`);
+  });
+})
+  .structureName(STRUCTURE)
+  .maxTicks(400)
+  .tag("andrew");
+
+register("andrew", "scythe_out_of_radius_no_cooldown", (test: Test): void => {
+  const watch = newWatch();
+  const { owner, target } = scytheDuel(test, "andrew_scy_owner_miss", "andrew_scy_runner", watch);
+  watch.onLaunch = () => {
+    target.teleport(test.worldLocation(FAR_AWAY));
+  };
+
+  test.succeedWhen(() => {
+    assertLaunched(test, watch);
+    test.assert(watch.endReason !== undefined, "the volley is still in flight");
+    console.warn(
+      `[gametest] scythe radius before hit: end=${watch.endReason} hits=${watch.hits} ready=${scytheReady(owner)} busy=${scytheBusy(owner)}`
+    );
+    test.assert(watch.endReason === "out_of_radius", `the volley ended with ${watch.endReason}, not out_of_radius`);
+    test.assert(watch.hits === 0, `${watch.hits} projectile(s) hit a target that had left`);
+    test.assert(scytheReady(owner), "a volley with no hit started the cooldown");
+    test.assert(!scytheBusy(owner), "the owner is still busy after the volley ended");
+    assertNothingInFlight(test);
+  });
+})
+  .structureName(STRUCTURE)
+  .maxTicks(400)
+  .tag("andrew");
+
+register("andrew", "scythe_out_of_radius_after_hit_cooldown", (test: Test): void => {
+  const watch = newWatch();
+  const { owner } = scytheDuel(test, "andrew_scy_owner_late", "andrew_scy_escapee", watch);
+  watch.onHit = (n, hit) => {
+    if (n === 1) {
+      hit.teleport(test.worldLocation(FAR_AWAY));
+    }
+  };
+
+  test.succeedWhen(() => {
+    assertLaunched(test, watch);
+    test.assert(watch.endReason !== undefined, "the volley is still in flight");
+    console.warn(
+      `[gametest] scythe radius after hit: end=${watch.endReason} hits=${watch.hits} ready=${scytheReady(owner)} ` +
+        `remaining=${cooldown.remainingTicks(owner, SCYTHE_OF_CALAMITY.abilityKey)} ticks`
+    );
+    test.assert(watch.endReason === "out_of_radius", `the volley ended with ${watch.endReason}, not out_of_radius`);
+    test.assert(watch.hits === 1, `${watch.hits} hit(s), expected exactly the one before the escape`);
+    test.assert(!scytheReady(owner), "a volley that landed a hit left the Scythe ready");
+    assertNothingInFlight(test);
+  });
+})
+  .structureName(STRUCTURE)
+  .maxTicks(400)
+  .tag("andrew");
+
+/** Acceptance test 10 asks for "2 s" after the death. */
+const CLEANUP_WAIT_TICKS = 40;
+
+register("andrew", "scythe_cleanup_on_target_death", (test: Test): void => {
+  const watch = newWatch();
+  const { owner } = scytheDuel(test, "andrew_scy_owner_kill", "andrew_scy_doomed", watch);
+  let killedAt = -1;
+  watch.onHit = (n, hit) => {
+    if (n === 1) {
+      hit.kill();
+      killedAt = system.currentTick;
+    }
+  };
+
+  test.succeedWhen(() => {
+    assertLaunched(test, watch);
+    test.assert(killedAt >= 0, "the target has not been killed yet");
+    test.assert(system.currentTick - killedAt >= CLEANUP_WAIT_TICKS, "waiting 2 s after the death");
+    console.warn(
+      `[gametest] scythe cleanup: end=${watch.endReason} hits=${watch.hits} volleys=${activeVolleyCount()} ` +
+        `projectiles=${activeProjectileCount()} tickErrors=${volleyTickErrors()} ready=${scytheReady(owner)}`
+    );
+    test.assert(watch.endReason === "target_invalid", `the volley ended with ${watch.endReason ?? "nothing"}`);
+    test.assert(!scytheReady(owner), "a volley that landed a hit left the Scythe ready");
+    assertNothingInFlight(test);
+  });
+})
+  .structureName(STRUCTURE)
+  .maxTicks(400)
+  .tag("andrew");
+
+register("andrew", "scythe_lethal_hit_kills", (test: Test): void => {
+  const watch = newWatch();
+  const { owner, target } = scytheDuel(test, "andrew_scy_owner_lethal", "andrew_scy_frail", watch);
+  test.runAfterDelay(2, () => {
+    world.gameRules.naturalRegeneration = false;
+  });
+  // 4 -> 1 by direct write, then 1 -> dead through applyDamage.
+  watch.onLaunch = () => {
+    target.getComponent("minecraft:health")?.setCurrentValue(4);
+  };
+
+  test.succeedWhen(() => {
+    assertLaunched(test, watch);
+    test.assert(watch.endReason !== undefined, "the volley is still in flight");
+    world.gameRules.naturalRegeneration = true;
+    const killer = scytheKills.get(target.id);
+    console.warn(
+      `[gametest] scythe lethal: end=${watch.endReason} hits=${watch.hits} hp after each: ${watch.hpAfter.join(", ")} ` +
+        `killer=${killer ?? "none"} owner=${owner.id}`
+    );
+    test.assert(watch.hits === 2, `${watch.hits} hit(s), expected 2 (3 HP, then the kill)`);
+    test.assert(watch.endReason === "target_invalid", `the volley ended with ${watch.endReason}, not target_invalid`);
+    test.assert(killer === owner.id, `the kill was credited to ${killer ?? "nobody"}, not the owner`);
+    assertNothingInFlight(test);
+  });
+})
+  .structureName(STRUCTURE)
+  .maxTicks(400)
+  .tag("andrew");
+
+console.warn("[gametest] registered 27 test(s) under tag 'andrew'");
