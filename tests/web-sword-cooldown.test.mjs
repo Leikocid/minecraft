@@ -1,10 +1,6 @@
-// Exercises the Web Sword cooldown service without the game.
-//
-// src/websword/cooldown.ts imports @minecraft/server values (world, system,
-// EntityComponentTypes, EquipmentSlot) directly, and pulls in state.ts (which
-// also imports @minecraft/server) and rules.ts — so the bundle below stubs
-// @minecraft/server the same way tests/autosmelt.test.mjs does (contrast
-// tests/web-sword-rules.test.mjs, which needs no stub at all).
+// Exercises the legendary cooldown service and the Action Bar HUD with the
+// Web Sword registered, without the game. src/legendary/hud.ts imports
+// @minecraft/server values, so the bundle below stubs that module.
 //
 // The clock is `Date.now()`, patched below so the test can fast-forward it.
 // The stub's `world.getAbsoluteTime()` is a tripwire that throws: it was the
@@ -51,7 +47,11 @@ const minecraftServerStub = {
 };
 
 const bundle = await build({
-  entryPoints: [join(projectRoot, 'src', 'websword', 'cooldown.ts')],
+  stdin: {
+    contents: "export * from './src/legendary/cooldown.ts'; export * from './src/legendary/hud.ts';",
+    resolveDir: projectRoot,
+    loader: 'ts',
+  },
   bundle: true,
   format: 'esm',
   platform: 'neutral',
@@ -63,8 +63,14 @@ const moduleUrl =
   'data:text/javascript;base64,' +
   Buffer.from(bundle.outputFiles[0].text, 'utf-8').toString('base64');
 
-const { isReady, startCooldown, remainingTicks, registerCooldownHud, DEFAULT_ABILITY_KEY } =
+const { isReady: isReadyFor, startCooldown: startFor, remainingTicks: remainingFor, registerLegendaryHud } =
   await import(moduleUrl);
+
+const KEY = 'web_sword';
+const isReady = (p) => isReadyFor(p, KEY);
+const startCooldown = (p) => startFor(p, KEY);
+const remainingTicks = (p) => remainingFor(p, KEY);
+
 
 const MS_PER_TICK = 50;
 
@@ -97,8 +103,8 @@ function makePlayer(name = 'player') {
   };
 }
 
-/** A player stub that also answers the HUD's main-hand equipment query. */
-function makeHolder(heldTypeId, name = 'holder') {
+/** A player stub that also answers the HUD's equipment query for one hand. */
+function makeHolder(heldTypeId, name = 'holder', hand = 'Mainhand') {
   const player = makePlayer(name);
   player.actionBarCalls = [];
   player.onScreenDisplay = {
@@ -112,7 +118,7 @@ function makeHolder(heldTypeId, name = 'holder') {
     }
     return {
       getEquipment(slot) {
-        if (slot !== 'Mainhand') {
+        if (slot !== hand) {
           return undefined;
         }
         return heldTypeId === undefined ? undefined : { typeId: heldTypeId };
@@ -166,83 +172,97 @@ test('isReady / startCooldown / remainingTicks — 30s = 600 ticks, per-player d
     assert.strictEqual(remainingTicks(b), 0);
   });
 
-  await t.test('the ability-key seam defaults to "web_sword"', () => {
-    assert.strictEqual(DEFAULT_ABILITY_KEY, 'web_sword');
+  await t.test('stored as andrew:cd_<abilityKey>, an epoch-ms deadline', () => {
+    atTick(1000);
+    const player = makePlayer();
+    startCooldown(player);
+    assert.strictEqual(player.getDynamicProperty('andrew:cd_web_sword'), (1000 + 600) * MS_PER_TICK);
   });
 });
 
-test('registerCooldownHud — actionbar for sword holders only', async (t) => {
+const cooldownOf = (seconds) => ({
+  rawtext: [
+    {
+      translate: 'andrew.legendary.cooldown',
+      with: { rawtext: [{ translate: 'item.andrew:web_sword.name' }, { text: seconds }] },
+    },
+  ],
+});
+const READY = {
+  rawtext: [{ translate: 'andrew.legendary.ready', with: { rawtext: [{ translate: 'item.andrew:web_sword.name' }] } }],
+};
+
+function tickHud(players) {
+  globalThis.__mcPlayers = players;
+  registerLegendaryHud();
+  globalThis.__mcInterval.fn();
+}
+
+test('registerLegendaryHud — actionbar for legendary holders only', async (t) => {
   await t.test('seconds are rounded up, not down or truncated', () => {
     atTick(1000);
     const holder = makeHolder('andrew:web_sword');
-    startCooldown(holder); // until = 1600
+    startCooldown(holder);
     atTick(1000 + 581); // 19 ticks left -> 0.95s -> ceil 1
-    globalThis.__mcPlayers = [holder];
-    registerCooldownHud();
-    globalThis.__mcInterval.fn();
-    assert.deepStrictEqual(holder.actionBarCalls.at(-1), {
-      translate: 'andrew.web_sword.cooldown',
-      with: ['1'],
-    });
+    tickHud([holder]);
+    assert.deepStrictEqual(holder.actionBarCalls.at(-1), cooldownOf('1'));
   });
 
   await t.test('a fresh 600-tick cooldown reads as exactly 30', () => {
     atTick(0);
     const holder = makeHolder('andrew:web_sword');
-    startCooldown(holder); // until = 600
-    globalThis.__mcPlayers = [holder];
-    registerCooldownHud();
-    globalThis.__mcInterval.fn();
-    assert.deepStrictEqual(holder.actionBarCalls.at(-1), {
-      translate: 'andrew.web_sword.cooldown',
-      with: ['30'],
-    });
+    startCooldown(holder);
+    tickHud([holder]);
+    assert.deepStrictEqual(holder.actionBarCalls.at(-1), cooldownOf('30'));
   });
 
-  await t.test('within 10 ticks of expiry: "ready" is shown once', () => {
+  await t.test('"ready" right after expiry', () => {
     atTick(0);
     const holder = makeHolder('andrew:web_sword');
-    startCooldown(holder); // until = 600
+    startCooldown(holder);
     atTick(605);
-    globalThis.__mcPlayers = [holder];
-    registerCooldownHud();
-    globalThis.__mcInterval.fn();
-    assert.deepStrictEqual(holder.actionBarCalls.at(-1), { translate: 'andrew.web_sword.ready' });
+    tickHud([holder]);
+    assert.deepStrictEqual(holder.actionBarCalls.at(-1), READY);
   });
 
-  await t.test('long after expiry: no further actionbar write', () => {
+  await t.test('"ready" keeps showing long after expiry', () => {
     atTick(0);
     const holder = makeHolder('andrew:web_sword');
-    startCooldown(holder); // until = 600
-    atTick(700); // 100 ticks past the 10-tick "just became ready" window
-    globalThis.__mcPlayers = [holder];
-    registerCooldownHud();
-    globalThis.__mcInterval.fn();
-    assert.strictEqual(holder.actionBarCalls.length, 0);
+    startCooldown(holder);
+    atTick(700);
+    tickHud([holder]);
+    assert.deepStrictEqual(holder.actionBarCalls.at(-1), READY);
   });
 
-  await t.test('a player without the sword in the main hand gets no message', () => {
+  await t.test('a holder who never armed the ability sees "ready"', () => {
+    atTick(5);
+    const holder = makeHolder('andrew:web_sword');
+    tickHud([holder]);
+    assert.deepStrictEqual(holder.actionBarCalls.at(-1), READY);
+  });
+
+  await t.test('the off hand counts as holding', () => {
+    atTick(5);
+    const holder = makeHolder('andrew:web_sword', 'offhander', 'Offhand');
+    tickHud([holder]);
+    assert.deepStrictEqual(holder.actionBarCalls.at(-1), READY);
+  });
+
+  await t.test('a player without a legendary in either hand gets no message', () => {
     atTick(0);
     const bystander = makeHolder(undefined);
-    startCooldown(bystander); // should have no observable effect on the HUD
+    startCooldown(bystander);
     atTick(10);
-    globalThis.__mcPlayers = [bystander];
-    registerCooldownHud();
-    globalThis.__mcInterval.fn();
+    tickHud([bystander]);
     assert.strictEqual(bystander.actionBarCalls.length, 0);
   });
 
-  await t.test('a sword holder who never armed the ability gets no message', () => {
-    atTick(5);
-    const holder = makeHolder('andrew:web_sword');
-    globalThis.__mcPlayers = [holder];
-    registerCooldownHud();
-    globalThis.__mcInterval.fn();
-    assert.strictEqual(holder.actionBarCalls.length, 0);
+  await t.test('an undefined entry (SimulatedPlayer seen from the release pack) is skipped', () => {
+    tickHud([undefined]);
   });
 
   await t.test('registers the interval at a 10-tick cadence', () => {
-    registerCooldownHud();
+    registerLegendaryHud();
     assert.strictEqual(globalThis.__mcInterval.interval, 10);
   });
 });

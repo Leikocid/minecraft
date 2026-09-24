@@ -1,17 +1,17 @@
-// Pure decision logic for the Web Sword — no engine calls, values in and
-// values out. Kept apart from state.ts so node tests can bundle this file
+// Pure decision logic shared by every legendary item — no engine calls, values
+// in and values out. Kept apart from state.ts so node tests can bundle this file
 // with esbuild without stubbing @minecraft/server: the only reference to that
 // module below is the GameMode *type*, which import-type erases at compile
 // time and leaves no runtime import for esbuild to resolve.
 
 import type { GameMode } from "@minecraft/server";
 
-/** 30 seconds at 20 ticks/second (spec §8). */
+/** The standard legendary cooldown: 30 seconds at 20 ticks/second (spec §8). */
 export const COOLDOWN_TICKS = 600;
 
 export type MarkOrigin = "craft" | "admin";
 
-/** The durable instance mark carried by a Web Sword ItemStack (Q-006). */
+/** The durable instance mark carried by a legendary ItemStack (Q-006). */
 export interface Mark {
   origin: MarkOrigin;
   owner: string;

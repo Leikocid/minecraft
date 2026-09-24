@@ -1,6 +1,6 @@
 // Exercises the pure Web Sword rules without the game.
 //
-// src/websword/rules.ts only ever imports @minecraft/server as a type
+// src/legendary/rules.ts only ever imports @minecraft/server as a type
 // (`import type { GameMode }`), which TypeScript erases at compile time —
 // esbuild's bundle below therefore carries no reference to that module at
 // all, and no stub plugin is needed (contrast tests/autosmelt.test.mjs,
@@ -16,7 +16,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = join(__dirname, '..');
 
 const bundle = await build({
-  entryPoints: [join(projectRoot, 'src', 'websword', 'rules.ts')],
+  entryPoints: [join(projectRoot, 'src', 'legendary', 'rules.ts')],
   bundle: true,
   format: 'esm',
   platform: 'neutral',

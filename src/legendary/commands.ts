@@ -1,5 +1,5 @@
-// Operator tools for the Web Sword: /andrew:websword give [player] and
-// /andrew:websword reset.
+// Operator tools, one command per legendary: `<def.command> give [player]`
+// and `<def.command> reset` (for the Web Sword: /andrew:websword).
 //
 // Both exist because the one-per-world gate is deliberately irreversible.
 // `give` hands out a marked admin copy — retained on death like a crafted one,
@@ -21,32 +21,34 @@ import {
   system,
   world,
 } from "@minecraft/server";
-import { WEB_SWORD_ID, makeMark, markSword, resetCrafted } from "./state";
+import { LEGENDARIES, type LegendaryDef } from "./registry";
+import { makeMark, markItem, resetCrafted } from "./state";
 
-const COMMAND_NAME = "andrew:websword";
-const ACTION_ENUM = "andrew:websword_action";
 const GIVE = "give";
 const RESET = "reset";
 
-export function registerWebSwordCommand(): void {
+export function registerLegendaryCommands(): void {
   // Custom commands may only be registered during startup, before the world
   // exists — hence a before-event and a subscription taken at script load.
   system.beforeEvents.startup.subscribe((event) => {
     const registry = event.customCommandRegistry;
 
-    registry.registerEnum(ACTION_ENUM, [GIVE, RESET]);
-    registry.registerCommand(
-      {
-        name: COMMAND_NAME,
-        description: "Web Sword operator tools: give a marked test copy, or reset the one-per-world craft budget.",
-        permissionLevel: CommandPermissionLevel.GameDirectors,
-        mandatoryParameters: [{ name: ACTION_ENUM, type: CustomCommandParamType.Enum }],
-        optionalParameters: [{ name: "target", type: CustomCommandParamType.PlayerSelector }],
-      },
-      run
-    );
+    for (const def of LEGENDARIES) {
+      const actionEnum = `${def.command}_action`;
+      registry.registerEnum(actionEnum, [GIVE, RESET]);
+      registry.registerCommand(
+        {
+          name: def.command,
+          description: `${def.itemId} operator tools: give a marked test copy, or reset the one-per-world craft budget.`,
+          permissionLevel: CommandPermissionLevel.GameDirectors,
+          mandatoryParameters: [{ name: actionEnum, type: CustomCommandParamType.Enum }],
+          optionalParameters: [{ name: "target", type: CustomCommandParamType.PlayerSelector }],
+        },
+        (origin, action: string, target?: unknown) => run(def, origin, action, target)
+      );
 
-    console.warn(`[andrew] registered /${COMMAND_NAME} <${GIVE}|${RESET}> [target] — one command, enum parameter`);
+      console.warn(`[andrew] registered /${def.command} <${GIVE}|${RESET}> [target] — one command, enum parameter`);
+    }
   });
 }
 
@@ -55,17 +57,17 @@ export function registerWebSwordCommand(): void {
  * arguments is allowed, changing the world is not. So every branch below
  * decides synchronously and defers the mutation to the next tick.
  */
-function run(origin: CustomCommandOrigin, action: string, target?: unknown): CustomCommandResult {
+function run(def: LegendaryDef, origin: CustomCommandOrigin, action: string, target?: unknown): CustomCommandResult {
   const caller = origin.sourceEntity instanceof Player ? origin.sourceEntity : undefined;
 
   if (action === RESET) {
     system.run(() => {
-      resetCrafted();
+      resetCrafted(def);
       // Deliberately to the server log as well as to chat: re-opening the
       // craft budget is the one operator action that changes world state
       // nobody can otherwise audit.
-      console.warn(`[andrew] web sword craft budget reset by ${caller?.name ?? "the server console"}`);
-      world.sendMessage({ translate: "andrew.web_sword.reset" });
+      console.warn(`[andrew] ${def.itemId} craft budget reset by ${caller?.name ?? "the server console"}`);
+      world.sendMessage({ translate: `${def.textPrefix}.reset` });
     });
     return { status: CustomCommandStatus.Success };
   }
@@ -74,14 +76,14 @@ function run(origin: CustomCommandOrigin, action: string, target?: unknown): Cus
   if (targets.length === 0) {
     return {
       status: CustomCommandStatus.Failure,
-      message: `${COMMAND_NAME} ${GIVE}: no target — run it as a player, or name one`,
+      message: `${def.command} ${GIVE}: no target — run it as a player, or name one`,
     };
   }
 
   system.run(() => {
     for (const player of targets) {
-      giveAdminCopy(player);
-      const note: RawMessage = { translate: "andrew.web_sword.admin_given", with: [player.name] };
+      giveAdminCopy(def, player);
+      const note: RawMessage = { translate: `${def.textPrefix}.admin_given`, with: [player.name] };
       player.sendMessage(note);
       if (caller !== undefined && caller.id !== player.id) {
         caller.sendMessage(note);
@@ -95,14 +97,14 @@ function run(origin: CustomCommandOrigin, action: string, target?: unknown): Cus
  * A marked copy with origin "admin": the craft gate ignores every marked sword,
  * so this neither claims nor spends the world's single survival craft.
  */
-function giveAdminCopy(player: Player): void {
+function giveAdminCopy(def: LegendaryDef, player: Player): void {
   const container = player.getComponent("minecraft:inventory")?.container;
   if (container === undefined) {
     return;
   }
 
-  const sword = markSword(new ItemStack(WEB_SWORD_ID, 1), makeMark("admin", player));
-  const leftover = container.addItem(sword);
+  const copy = markItem(def, new ItemStack(def.itemId, 1), makeMark("admin", player));
+  const leftover = container.addItem(copy);
   if (leftover !== undefined) {
     player.dimension.spawnItem(leftover, player.location);
   }

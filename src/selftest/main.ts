@@ -24,7 +24,7 @@ import {
   world,
 } from "@minecraft/server";
 import { smeltedDropFor } from "../autosmelt";
-import { COOLDOWN_TICKS, cooldownRemaining } from "../websword/rules";
+import { COOLDOWN_TICKS, cooldownRemaining } from "../legendary/rules";
 
 /**
  * Build-time flag, injected by esbuild `--define`. Always false in a normal
@@ -197,7 +197,7 @@ function run(): void {
     );
     assert(
       typeof cooldownRemaining === "function",
-      "cooldownRemaining is not exported as a function from websword/rules"
+      "cooldownRemaining is not exported as a function from legendary/rules"
     );
     assert(
       cooldownRemaining(0, COOLDOWN_TICKS) === COOLDOWN_TICKS,
