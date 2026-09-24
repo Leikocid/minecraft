@@ -11,3 +11,4 @@ andrew.web_sword.admin_given=Test Web Sword given to %s
 andrew.web_sword.reset=Web Sword craft budget reset
 andrew.legendary.cooldown=%s: %s s
 andrew.legendary.ready=%s: Ready
+andrew.legendary.recovered=Your legendary weapon has returned to you
