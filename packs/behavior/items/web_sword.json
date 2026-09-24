@@ -22,6 +22,17 @@
       "minecraft:damage": {
         "value": 7
       },
+      "minecraft:digger": {
+        "use_efficiency": true,
+        "destroy_speeds": [
+          {
+            "block": {
+              "tags": "query.any_tag('minecraft:is_sword_item_destructible')"
+            },
+            "speed": 15
+          }
+        ]
+      },
       "minecraft:tags": {
         "tags": ["minecraft:is_sword", "minecraft:is_tool"]
       }

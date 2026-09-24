@@ -4,20 +4,20 @@
     "name": "Andrew GameTest BP",
     "description": "Dev-only behavior pack: GameTest scenarios driven by a SimulatedPlayer. Requires the Beta APIs experiment. Never shipped in andrew.mcaddon.",
     "uuid": "b1958c0d-1533-441c-af3b-da9310f792ca",
-    "version": [0, 3, 1],
+    "version": [0, 3, 2],
     "min_engine_version": [1, 26, 50]
   },
   "modules": [
     {
       "type": "data",
       "uuid": "f0fe3fcc-b422-4afb-b4e2-dfa717f97ed8",
-      "version": [0, 3, 1]
+      "version": [0, 3, 2]
     },
     {
       "type": "script",
       "language": "javascript",
       "uuid": "e2c3dd59-25c2-4f37-8dd0-bed37f095fbe",
-      "version": [0, 3, 1],
+      "version": [0, 3, 2],
       "entry": "scripts/main.js"
     }
   ],
@@ -32,7 +32,7 @@
     },
     {
       "uuid": "059934a3-e3d0-4cbb-a4c9-e11fda9bf905",
-      "version": [0, 3, 1]
+      "version": [0, 3, 2]
     }
   ]
 }

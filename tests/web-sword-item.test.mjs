@@ -251,3 +251,28 @@ test('Web Sword localization catalogue: RU/EN key parity', async (t) => {
     );
   });
 });
+
+// The ability fills 27 cells with cobweb, so the sword must be able to cut it.
+// An item with no destroy_speeds entry for a block breaks it at speed 1 — bare
+// hand — and shipped 0.3.1 had no minecraft:digger at all: 401 ticks per
+// cobweb block against 9 for a vanilla diamond sword, measured on BDS
+// 1.26.51.1. Cobweb carries minecraft:is_sword_item_destructible, so one entry
+// at the vanilla sword's cobweb speed of 15 restores parity.
+test('digger covers sword-destructible blocks at the vanilla cobweb speed', () => {
+  const digger = itemJson['minecraft:item'].components['minecraft:digger'];
+  assert.ok(digger, 'minecraft:digger component is missing — cobweb would be cut by hand');
+  assert.equal(digger.use_efficiency, true, 'Efficiency must be able to speed the sword up');
+
+  const entries = digger.destroy_speeds;
+  assert.ok(Array.isArray(entries) && entries.length > 0, 'destroy_speeds is empty');
+
+  const swordBlocks = entries.find((entry) =>
+    String(entry?.block?.tags ?? '').includes('minecraft:is_sword_item_destructible')
+  );
+  assert.ok(
+    swordBlocks,
+    'no destroy_speeds entry matches minecraft:is_sword_item_destructible — ' +
+      'the sword would cut its own cobweb at bare-hand speed'
+  );
+  assert.equal(swordBlocks.speed, 15, 'cobweb speed must match a vanilla sword (15)');
+});

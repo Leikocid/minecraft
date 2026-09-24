@@ -901,7 +901,8 @@ function timeBreak(
   player: SimulatedPlayer,
   loc: Vector3,
   label: string,
-  done: (ticks: number) => void
+  done: (ticks: number) => void,
+  limit: number = BREAK_LIMIT_TICKS
 ): void {
   player.lookAtBlock(loc);
   player.breakBlock(loc);
@@ -914,8 +915,8 @@ function timeBreak(
       done(ticks);
       return;
     }
-    if (ticks >= BREAK_LIMIT_TICKS) {
-      console.warn(`[gametest] ${label}: still standing after ${BREAK_LIMIT_TICKS} ticks`);
+    if (ticks >= limit) {
+      console.warn(`[gametest] ${label}: still standing after ${limit} ticks`);
       done(-1);
       return;
     }
@@ -973,4 +974,103 @@ register("andrew", "pickaxe_digs_at_diamond_speed", (test: Test) => {
   .maxTicks(1000)
   .tag("andrew");
 
-console.warn("[gametest] registered 12 test(s) under tag 'andrew'");
+// ------------------------------------------------------- sword cuts its web
+//
+// The sword's own ability fills 27 cells with cobweb, so a Web Sword that
+// cannot cut cobweb works against itself. Shipped 0.3.1 had no
+// minecraft:digger at all, and an item with no destroy_speeds entry for a
+// block breaks it at speed 1 — bare hand. Measured on BDS 1.26.51.1:
+// 401 ticks (20.05s) per cobweb block against 9 for a vanilla diamond sword.
+//
+// Block.getTags() says cobweb carries minecraft:is_sword_item_destructible —
+// the sword-side twin of the pickaxe's tag — so one entry covers it.
+//
+// Calibrated in-run against a vanilla diamond sword, like the pickaxe test:
+// no hardcoded tick counts to drift when Mojang retunes hardness.
+
+const SWORD_ID = "andrew:web_sword";
+const VANILLA_SWORD_ID = "minecraft:diamond_sword";
+
+/** Item typeIds lying within SEARCH_RADIUS of `loc`, sorted, for comparison. */
+function dropsNear(test: Test, loc: Vector3): string[] {
+  return test
+    .getDimension()
+    .getEntities({
+      type: "minecraft:item",
+      location: test.worldBlockLocation(loc),
+      maxDistance: SEARCH_RADIUS,
+    })
+    .map((e) => e.getComponent("minecraft:item")?.itemStack?.typeId ?? "?")
+    .sort();
+}
+
+/** Clears those drops, so the next break is measured on an empty floor. */
+function clearDrops(test: Test, loc: Vector3): void {
+  for (const entity of test.getDimension().getEntities({
+    type: "minecraft:item",
+    location: test.worldBlockLocation(loc),
+    maxDistance: SEARCH_RADIUS,
+  })) {
+    entity.remove();
+  }
+}
+
+register("andrew", "web_sword_cuts_its_own_web", (test: Test) => {
+  const player = test.spawnSimulatedPlayer(STAND, "andrew_swordsman", GameMode.Survival);
+
+  placeBlock(test, WEB_BLOCK_ID, AIM_BLOCK);
+  player.giveItem(new ItemStack(SWORD_ID, 1), true);
+
+  test.runAfterDelay(4, () => {
+    timeBreak(test, player, AIM_BLOCK, `${SWORD_ID} on cobweb`, (ours) => {
+      // What the cut leaves on the ground is also calibrated against vanilla
+      // rather than assumed: a sword does not drop the cobweb itself, and the
+      // point is that ours drops whatever the vanilla one does.
+      test.runAfterDelay(6, () => {
+        const oursDrops = dropsNear(test, AIM_BLOCK);
+        clearDrops(test, AIM_BLOCK);
+
+        placeBlock(test, WEB_BLOCK_ID, AIM_BLOCK);
+        player.giveItem(new ItemStack(VANILLA_SWORD_ID, 1), true);
+
+        test.runAfterDelay(4, () => {
+        timeBreak(test, player, AIM_BLOCK, `${VANILLA_SWORD_ID} on cobweb`, (vanilla) => {
+          test.assert(
+            vanilla > 0,
+            "the vanilla diamond sword did not cut cobweb either — the probe itself is broken"
+          );
+          test.assert(
+            ours > 0,
+            `${SWORD_ID} did not cut cobweb within ${BREAK_LIMIT_TICKS} ticks ` +
+              `while a vanilla diamond sword took ${vanilla}`
+          );
+          test.assert(
+            ours <= vanilla + SPEED_TOLERANCE_TICKS,
+            `${SWORD_ID} took ${ours} ticks on cobweb against ${vanilla} for a vanilla ` +
+              `diamond sword — the digger does not cover minecraft:is_sword_item_destructible`
+          );
+
+          test.runAfterDelay(6, () => {
+            const vanillaDrops = dropsNear(test, AIM_BLOCK);
+            console.warn(
+              `[gametest] cobweb drops — ours: ${oursDrops.join(",") || "(none)"} · ` +
+                `vanilla: ${vanillaDrops.join(",") || "(none)"}`
+            );
+            test.assert(
+              oursDrops.join(",") === vanillaDrops.join(","),
+              `cutting cobweb dropped [${oursDrops.join(",")}] for ${SWORD_ID} but ` +
+                `[${vanillaDrops.join(",")}] for a vanilla diamond sword`
+            );
+            test.succeed();
+          });
+        });
+        });
+      });
+    });
+  });
+})
+  .structureName(STRUCTURE)
+  .maxTicks(1200)
+  .tag("andrew");
+
+console.warn("[gametest] registered 13 test(s) under tag 'andrew'");
