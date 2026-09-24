@@ -23,11 +23,13 @@ import {
 } from "./volley-rules";
 
 /**
- * Vertical strength handed to applyKnockback on each hit. Measured by the
- * GameTest andrew:scythe_launches_target on BDS 1.26.51.1 (peak height is
- * logged as "[gametest] scythe launch: peak +N"); the spec asks for ~10 blocks.
+ * Vertical strength handed to applyKnockback on each hit; the spec asks for
+ * ~10 blocks. The engine takes it as the initial vertical velocity in blocks
+ * per tick (gravity 0.08, drag 0.98): on BDS 1.26.51.1 the GameTest
+ * andrew:scythe_launches_target measured 2.5 -> +29.29 blocks, exactly what
+ * that model predicts, and the model puts 1.35 at +10.1.
  */
-export const LAUNCH_STRENGTH = 2.5;
+export const LAUNCH_STRENGTH = 1.35;
 
 /** End-rod sparks: a white homing trail close to a Shulker Bullet's. Rendering is client-side only. */
 export const PROJECTILE_PARTICLE = "minecraft:endrod";

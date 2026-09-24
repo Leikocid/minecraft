@@ -96,6 +96,13 @@ const EXPECTED_TESTS = [
   'andrew:scythe_no_target_no_cooldown',
   'andrew:scythe_picks_player_not_mob',
   'andrew:scythe_skips_hidden',
+  'andrew:scythe_three_hits_true_damage',
+  'andrew:scythe_launches_target',
+  'andrew:scythe_through_walls',
+  'andrew:scythe_out_of_radius_no_cooldown',
+  'andrew:scythe_out_of_radius_after_hit_cooldown',
+  'andrew:scythe_cleanup_on_target_death',
+  'andrew:scythe_lethal_hit_kills',
 ];
 
 // FLAT is not cosmetic: see the LEVEL_TYPE comment in docker/bds/compose.yaml.
