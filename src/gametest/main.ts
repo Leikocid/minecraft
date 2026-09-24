@@ -33,7 +33,7 @@ import * as cooldown from "../legendary/cooldown";
 import { registerCraftGate } from "../legendary/craftgate";
 import { registerLegendaryHud } from "../legendary/hud";
 import { registerRecovery } from "../legendary/recovery";
-import { WEB_SWORD } from "../legendary/registry";
+import { SCYTHE_OF_CALAMITY, WEB_SWORD } from "../legendary/registry";
 import { registerRetention } from "../legendary/retention";
 import * as state from "../legendary/state";
 import { WEB_BLOCK_ID } from "../websword/cube";
@@ -1020,7 +1020,18 @@ const COW_ID = "minecraft:cow";
 
 // Hay Bale: vanilla hoes break it near-instantly, the hoe-tier counterpart of
 // the pickaxe test's ore blocks and the sword test's cobweb.
-const HOE_BLOCK_ID = "minecraft:hay_block";
+/**
+ * The block the hoe-speed assertion uses. Measured on BDS 1.26.51.1 with
+ * Block.getTags(): oak_leaves carries minecraft:is_hoe_item_destructible, the
+ * tag the Scythe's digger names, so parity here is reachable from data.
+ *
+ * NOT hay_block: it carries no hoe tag at all, yet a vanilla diamond hoe still
+ * clears it in 3 ticks against our 16 — the same engine-hardcoded tool/block
+ * pair as "a vanilla sword cuts bamboo instantly", which no destroy_speeds
+ * entry reaches. It is measured below for the record, without an assertion.
+ */
+const HOE_BLOCK_ID = "minecraft:oak_leaves";
+const HARDCODED_HOE_BLOCK_ID = "minecraft:hay_block";
 
 const COW_SPOT: Vector3 = { x: 3, y: 2, z: 2 };
 
@@ -1061,6 +1072,27 @@ function meleeHit(
   });
 }
 
+
+/**
+ * A Scythe the craft gate will leave alone.
+ *
+ * The Scythe is a registered legendary, so an *unmarked* one appearing in a
+ * Survival player's inventory is a craft: the first is claimed and marked, and
+ * every later one is confiscated and refunded — which is what silently emptied
+ * this test's hand and made every dig measurement read bare-hand speed
+ * (16 ticks on hay, 7 on leaves, both exactly hand). Handing over an
+ * admin-marked instance is the same thing `/andrew:websword give` does.
+ */
+function giveMarkedScythe(player: SimulatedPlayer): void {
+  const stack = state.markItem(
+    SCYTHE_OF_CALAMITY,
+    new ItemStack(SCYTHE_ID, 1),
+    state.makeMark("admin", player)
+  );
+  inventoryOf(player).addItem(stack);
+  player.selectedSlotIndex = 0;
+}
+
 register("andrew", "scythe_melee_matches_netherite", (test: Test): void => {
   const player = test.spawnSimulatedPlayer(STAND, "andrew_reaper", GameMode.Survival);
 
@@ -1093,7 +1125,7 @@ register("andrew", "scythe_melee_matches_netherite", (test: Test): void => {
           // Second half: dig speed on a hoe-destructible block, calibrated
           // the same way as pickaxe_digs_at_diamond_speed above.
           placeBlock(test, HOE_BLOCK_ID, TARGET);
-          player.giveItem(new ItemStack(SCYTHE_ID, 1), true);
+          giveMarkedScythe(player);
 
           test.runAfterDelay(4, () => {
             timeBreak(test, player, TARGET, `${SCYTHE_ID} on ${HOE_BLOCK_ID}`, (ours) => {
