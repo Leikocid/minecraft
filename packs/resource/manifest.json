@@ -4,14 +4,14 @@
     "name": "Andrew RP",
     "description": "Resource pack for Andrew Minecraft Bedrock add-on",
     "uuid": "6b947d56-b595-49b1-bf46-04c1830fa452",
-    "version": [0, 3, 2],
+    "version": [0, 4, 0],
     "min_engine_version": [1, 26, 50]
   },
   "modules": [
     {
       "type": "resources",
       "uuid": "5b31d479-55fa-4d94-b4b3-821678bf0c05",
-      "version": [0, 3, 2]
+      "version": [0, 4, 0]
     }
   ]
 }
