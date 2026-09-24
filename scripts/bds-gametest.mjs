@@ -93,6 +93,9 @@ const EXPECTED_TESTS = [
   'andrew:legendary_survives_lava',
   'andrew:legendary_pickup_no_duplicate',
   'andrew:scythe_melee_matches_netherite',
+  'andrew:scythe_no_target_no_cooldown',
+  'andrew:scythe_picks_player_not_mob',
+  'andrew:scythe_skips_hidden',
 ];
 
 // FLAT is not cosmetic: see the LEVEL_TYPE comment in docker/bds/compose.yaml.

@@ -31,11 +31,13 @@ import {
 import { type SimulatedPlayer, Test, register } from "@minecraft/server-gametest";
 import * as cooldown from "../legendary/cooldown";
 import { registerCraftGate } from "../legendary/craftgate";
+import { hideFromTargeting } from "../legendary/hidden";
 import { registerLegendaryHud } from "../legendary/hud";
 import { registerRecovery } from "../legendary/recovery";
 import { SCYTHE_OF_CALAMITY, WEB_SWORD } from "../legendary/registry";
 import { registerRetention } from "../legendary/retention";
 import * as state from "../legendary/state";
+import { registerScytheTargeting } from "../scythe/targeting";
 import { WEB_BLOCK_ID } from "../websword/cube";
 import { registerTrap } from "../websword/trap";
 
@@ -1402,4 +1404,95 @@ register("andrew", "legendary_pickup_no_duplicate", (test: Test): void => {
   .maxTicks(400)
   .tag("andrew");
 
-console.warn("[gametest] registered 17 test(s) under tag 'andrew'");
+
+// ------------------------------------------------------ Scythe: targeting
+//
+// SC-TGT-01-AA, spec §8 acceptance tests 1–3. The volley does not exist yet, so
+// "who was chosen" is read from the listener the production module calls with
+// its choice, not from projectiles; a miss is also proven by the cooldown
+// staying ready.
+
+/** Owner id -> chosen target's name, or null for "no target". Absent: no activation yet. */
+const scytheChoice = new Map<string, string | null>();
+
+// Same binding problem as the trap: the release pack cannot see a
+// SimulatedPlayer, so the production targeting is armed here as well.
+registerScytheTargeting((owner, target) => {
+  scytheChoice.set(owner.id, target === undefined ? null : target.name);
+});
+
+const scytheReady = (player: Player) => cooldown.isReady(player, SCYTHE_OF_CALAMITY.abilityKey);
+
+/** Arms `owner` with a marked Scythe and uses it facing the open sky, so no block is tapped. */
+function useScythe(test: Test, owner: SimulatedPlayer, then: () => void): void {
+  test.runAfterDelay(4, () => {
+    giveMarkedScythe(owner);
+    test.runAfterDelay(4, () => {
+      owner.lookAtLocation({ x: STAND_A.x + 0.5, y: STAND_A.y + 30, z: STAND_A.z + 0.5 });
+      test.runAfterDelay(4, () => {
+        owner.useItemInSlot(owner.selectedSlotIndex);
+        test.runAfterDelay(10, then);
+      });
+    });
+  });
+}
+
+function choiceOf(test: Test, owner: Player): string | null {
+  const choice = scytheChoice.get(owner.id);
+  test.assert(choice !== undefined, "the Scythe use never reached the targeting module");
+  console.warn(
+    `[gametest] scythe choice for ${owner.name}: ${choice ?? "no target"} ` +
+      `(players online: ${world.getAllPlayers().length})`
+  );
+  return choice as string | null;
+}
+
+register("andrew", "scythe_no_target_no_cooldown", (test: Test): void => {
+  const owner = test.spawnSimulatedPlayer(STAND_A, "andrew_lonely", GameMode.Survival);
+  useScythe(test, owner, () => {
+    test.assert(choiceOf(test, owner) === null, "a target was chosen with nobody else in range");
+    test.assert(scytheReady(owner), "a Use with no target started the cooldown");
+    test.succeed();
+  });
+})
+  .structureName(STRUCTURE)
+  .maxTicks(200)
+  .tag("andrew");
+
+register("andrew", "scythe_picks_player_not_mob", (test: Test): void => {
+  const owner = test.spawnSimulatedPlayer(STAND_A, "andrew_reaper_owner", GameMode.Survival);
+  const victim = test.spawnSimulatedPlayer({ x: 5, y: 2, z: 1 }, "andrew_victim", GameMode.Survival);
+  // The cow stands a block from the owner, far nearer than the player: a
+  // targeting that looked at entities at all would pick it.
+  mustSpawn(test, COW_ID, { x: 2, y: 2, z: 4 }, "could not spawn the decoy cow");
+
+  useScythe(test, owner, () => {
+    const choice = choiceOf(test, owner);
+    test.assert(choice === victim.name, `the Scythe chose ${choice ?? "nobody"} instead of ${victim.name}`);
+    test.succeed();
+  });
+})
+  .structureName(STRUCTURE)
+  .maxTicks(200)
+  .tag("andrew");
+
+register("andrew", "scythe_skips_hidden", (test: Test): void => {
+  const owner = test.spawnSimulatedPlayer(STAND_A, "andrew_seeker", GameMode.Survival);
+  const hidden = test.spawnSimulatedPlayer(STAND_B, "andrew_shadow", GameMode.Survival);
+
+  // The function behind `/andrew:hide 10`: the command itself lives in the
+  // release pack, which can neither resolve a SimulatedPlayer nor write a
+  // property this pack can read.
+  test.runAfterDelay(2, () => hideFromTargeting(hidden, 10));
+
+  useScythe(test, owner, () => {
+    test.assert(choiceOf(test, owner) === null, `the hidden ${hidden.name} was chosen`);
+    test.assert(scytheReady(owner), "a Use whose only candidate was hidden started the cooldown");
+    test.succeed();
+  });
+})
+  .structureName(STRUCTURE)
+  .maxTicks(200)
+  .tag("andrew");
+
+console.warn("[gametest] registered 20 test(s) under tag 'andrew'");
