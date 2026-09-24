@@ -1,0 +1,41 @@
+{
+  "format_version": "1.21.0",
+  "minecraft:item": {
+    "description": {
+      "identifier": "andrew:scythe_of_calamity",
+      "menu_category": {
+        "category": "equipment",
+        "group": "itemGroup.name.hoe"
+      }
+    },
+    "components": {
+      "minecraft:display_name": {
+        "value": "item.andrew:scythe_of_calamity.name"
+      },
+      "minecraft:icon": "andrew_scythe_of_calamity",
+      "minecraft:max_stack_size": 1,
+      "minecraft:hand_equipped": true,
+      "minecraft:enchantable": {
+        "slot": "sword",
+        "value": 10
+      },
+      "minecraft:damage": {
+        "value": 8
+      },
+      "minecraft:digger": {
+        "use_efficiency": true,
+        "destroy_speeds": [
+          {
+            "block": {
+              "tags": "query.any_tag('minecraft:is_hoe_item_destructible')"
+            },
+            "speed": 8
+          }
+        ]
+      },
+      "minecraft:tags": {
+        "tags": ["minecraft:is_tool", "minecraft:is_hoe"]
+      }
+    }
+  }
+}

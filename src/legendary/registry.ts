@@ -37,7 +37,23 @@ export const WEB_SWORD: LegendaryDef = {
   command: "andrew:websword",
 };
 
-export const LEGENDARIES: ReadonlyArray<LegendaryDef> = [WEB_SWORD];
+export const SCYTHE_OF_CALAMITY: LegendaryDef = {
+  itemId: "andrew:scythe_of_calamity",
+  keyPrefix: "sc",
+  abilityKey: "scythe_of_calamity",
+  nameKey: "item.andrew:scythe_of_calamity",
+  cooldownTicks: 600,
+  craftGate: true,
+  refund: [
+    ["minecraft:golden_apple", 2],
+    ["minecraft:obsidian", 2],
+    ["minecraft:diamond_hoe", 1],
+  ],
+  textPrefix: "andrew.scythe",
+  command: "andrew:scythe",
+};
+
+export const LEGENDARIES: ReadonlyArray<LegendaryDef> = [WEB_SWORD, SCYTHE_OF_CALAMITY];
 
 export function defFor(itemId: string): LegendaryDef | undefined {
   return LEGENDARIES.find((def) => def.itemId === itemId);
