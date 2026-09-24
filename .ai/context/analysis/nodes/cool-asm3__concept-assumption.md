@@ -1,22 +1,21 @@
 ---
 type: "concept-assumption"
-node_id: "L0-cool-asm3"
+node_id: "cool-asm3"
 source_channel: "rollout"
-aliases: ["L0-cool-asm3"]
-part_of: ["L0-cool"]
+analysis_version: 1
+title: "A-3 · \"Общие правила легендарных оружий\" = union of Web Sword + Scythe rules, applied to every legendary"
+aliases: ["cool-asm3"]
 is_a: ["assumption"]
-relates_to: ["L0-cool"]
-analysis_version: 2
-priority: 510
-size_chars: 672
-tags: ["assumption","actionbar","scope","L0-cool"]
-level: 2
+part_of: ["L0"]
+relates_to: ["L0"]
+priority: 520
+size_chars: 1140
+tags: ["CAN_ASSUME", "legendary", "title:Common legendary rules apply to all weapons"]
 ---
+# A-3 · "Общие правила легендарных оружий" = union of Web Sword + Scythe rules, applied to every legendary
 
-## ASM-cool-3 — "Holding" means main-hand or off-hand `CAN_ASSUME`
+**Gap.** No standalone document defines the shared legendary rules. The Scythe spec references them (incl. void return and "не должно уничтожаться обычными способами"); the Web Sword spec re-states most of them but has no void/indestructibility rule.
 
-**Assumed.** A player equipping `andrew:web_sword` in either the main-hand or the off-hand slot counts as a "holder" for R-cool-004's actionbar visibility rule.
+**Assumption (CAN_ASSUME).** The shared rule set = one Survival craft per world (persistent, race-safe, refund on blocked craft), first-craft global RU/EN announcement, Creative/`/give` exempt, keep on death + return to owner without dup, return to last owner on void fall / destruction (lava, fire, cactus, despawn), infinite durability, 30 s cooldown with Action Bar, main-hand priority. It applies retroactively to the Web Sword.
 
-**Basis.** §8's *«При удержании Web Sword»* does not restrict to a specific hand slot; only the deferred (Q-010) priority clause distinguishes hands, and that clause is explicitly out of v1's scope.
-
-**Impact if wrong.** If the owner intends main-hand-only visibility, `L0-cool-proc2` step 2's holder filter narrows by one condition — an isolated, low-cost change. Does not affect the cooldown record or timing logic, only render eligibility.
+**Impact if wrong.** If void return / indestructibility is Scythe-only, the `lgnd` framework adds unneeded behaviour to Web Sword; if it applies but isn't implemented, the already-shipped Web Sword (v0.3.x) can be lost permanently — and with the one-per-world rule, never re-crafted in Survival (see decision q-014 "право остаётся потраченным").

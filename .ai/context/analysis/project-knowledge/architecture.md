@@ -1,13 +1,13 @@
 ---
 title: Architecture
 type: project-knowledge
-generated_at: "2026-09-21T21:24:41.660Z"
+generated_at: "2026-09-24T19:42:02.849Z"
 source_channel: rollout
 node_id: rollout-architecture
 aliases: ["rollout-architecture","architecture","project-knowledge/architecture"]
 is_a: ["rollout","architecture"]
-relates_to: ["L0","L0-cool","L0-item","L0-keep","L0-once","L0-once","L0-qatg","L0-trap"]
-priority: 510
+relates_to: ["L0-adr-cast","L0-adr-lgnd","L0-adr-scope","L0-adr-scyt","L0-infr","L0-lgnd","L0-pick","L0-scyt","L0-webs"]
+priority: 520
 ---
 
 # Architecture
@@ -16,71 +16,119 @@ priority: 510
 
 ## Components
 
-### Cooldown & Actionbar UI (L0-cool)
+### Component: Build & verification infrastructure (Stage 0) (L0-infr)
 
-# Cooldown & Actionbar UI
+# Component: Build & verification infrastructure (Stage 0)
 
-**Links** — `part_of: ["L0"]` · `is_a: ["component"]` · `relates_to: ["L0-item", "L0-trap", "L0-qatg"]` · `see_also: ["webswordspecv1ruen-part-1", "webswordspecv1ruen-part-2"]`
+**Links:** `part_of: ["L0"]` · `is_a: ["component"]` · `relates_to: ["L0-lgnd"]`
 
 ## Responsibility
+Turns the TypeScript source and the two static packs (`packs/behavior`, `packs/resource`) into a shippable `.mcaddon`, and proves — without a human, wherever the engine allows it — that the result actually loads and runs on real Bedrock: static (TS + JSON), a Bedrock Dedicated Server in Docker, an optional beta-only GameTest lane with SimulatedPlayer, and a LAN cycle that gets the same build onto the iPad for the checks only a human eye can make (rendering, icons, Creative placement, RU/EN names).
 
-Own the Web Sword ability's per-player cooldown and its player-visible countdown: the exact-30-second timer keyed by **player + ability** (not by item instance), the rule that only a *confirmed successful* activation starts the clock, the actionbar readout of remaining time while the sword is held, and the ability-key seam ADR-007 reserves for a future cross-item cooldown framework that does not exist yet. Spec sections owned: §8 in full, §12's *«cooldown должен сохраняться настолько, насколько это требуется общей системой cooldown проекта»*, and the cooldown half of §9's per-activation independence.
-
-## Why this is its own component
-
-Every sibling deals with a one-shot event (craft, death, cobweb placement). This component is the only one with **standing timed state and a recurring render loop** — the failure modes are different in kind: a timer that doesn't persist is a logout-abuse exploit (C-7's spirit), a render loop that isn't scoped is a C-4 violation, and a timer keyed wrong (per item instead of per player) is a balance bypass (ASM-009). None of `L0-item`, `L0-once`, `L0-keep` or `L0-trap` share this shape.
+This is Stage 0 of the project: nothing in Stage 1 (Miner's Pickaxe) or Stage 2 (legendary weapons) starts until this component's own 5 closing criteria are green [src: stage-0-infrastructure, C-11].
 
 ## Inputs
-
-| Input | Origin | Notes |
-|---|---|---|
-| "Activation succeeded" signal for the Web Sword ability | `L0-trap`, after cell placement completes | This component never decides success; it only reacts to it — decomposition plan: *"Success is decided by L0-trap; the cooldown is consumed by L0-cool"* |
-| "Is this ability ready?" query, before placement | `L0-trap`, step 2 of ADR-006's forced ordering | Must answer before any world state is written |
-| Held-item state per online player, each render tick | Bedrock stable equipment surface | Drives which players get an actionbar update |
-| Translate keys for the countdown string | `L0-item`'s `.lang` catalogue | Consumed only, never authored here (C-9, ADR-009) |
+- `src/**/*.ts` — behavior-pack script sources (single entry `src/main.ts`), plus dev-only sources under `src/selftest/`
+- `packs/behavior/`, `packs/resource/` (static manifests, textures, lang files) — hand-authored, not generated
+- `packs/gametest/`, `packs/selftest/` — dev-only packs, never shipped
+- `scripts/targets.mjs` — the single source of truth for version targets
+- Operator-supplied facts: the iPad's installed Bedrock version (read manually from Settings)
 
 ## Outputs
+- `dist/andrew.mcaddon` — the release archive (behavior + resource only)
+- `dist/bds-check.log`, `dist/bds-gametest.log` — saved server logs, the evidence artifacts `/verify` attaches to run-check
+- Process exit code 0/1 from every `npm run bds:*` / `npm run validate` / `npm run build` command — this is what ai-kit's autopilot reads to close build/bds-typed acceptance criteria without an operator [src: decision-verification-approach-automatic]
+- A running LAN server (`npm run bds:up`) and a printed `ip:19132` address for the iPad
 
-| Output | Consumer | Notes |
+## Sub-systems (see child processes for detail)
+1. **Build & package** (`npm run build`) — esbuild → validate → zip
+2. **Structural validation** (`npm run validate`, also called from build) — manifests + every JSON under `packs/**`
+3. **BDS one-shot check** (`npm run bds:check`) — creative world, in-engine selftest pack, log-verdict
+4. **GameTest harness** (`npm run bds:gametest`) — beta-only, SimulatedPlayer, separate world
+5. **LAN dev server** (`npm run bds:up` / `bds:down` / `bds:logs`) — Survival+cheats, iPad joins over the network
+6. **Version targeting** (`scripts/targets.mjs`, `scripts/set-version.mjs`) — one file, two scripts, keeps every manifest, `compose.yaml` and `package.json` in agreement
+
+## Three verification channels
+- **build** — `tsc --noEmit` + `npm run validate`: proves the TS compiles against `@minecraft/server` 2.10.0 types and every JSON is structurally valid. Mac only, no Docker.
+- **bds** — `npm run bds:check` (creative, one-shot, self-terminating) and `npm run bds:gametest` (beta, SimulatedPlayer): proves the packs actually load on the real engine, the script executes, and — for GameTest — that specific gameplay behaves as specified, all from a log or exit code alone.
+- **ipad** — human-eyes-only: rendering, icons, Creative inventory placement, RU/EN names. A green `bds` run never closes an `ipad` criterion [C-6]; these criteria are typed `manual` and don't block merge/autopilot [decision-verification-approach-automatic].
+
+## Known open issue
+CTR-4 (open, target `L0-infr`): the raw specs (`minerspickaxetestspec`, `stage-0-infrastructure`) still quote `@minecraft/server` 2.9.0 / engine 1.26.0 — superseded by `decision-tselevaya-versiya-bedrock-1-26-51-asm-001-q-001` and the code (`scripts/targets.mjs`: 2.10.0 / [1,26,50] / BDS 1.26.51.1). No code fix needed; the raw docs just haven't been annotated. Not re-filed here.
+
+## Boundary
+Owns: build tooling, packaging, JSON/manifest validation, the Docker BDS harness (both the one-shot check and the GameTest lane), the iPad delivery mechanics (import + LAN), and the version-target single source of truth.
+Does not own: the gameplay logic that BDS/GameTest exercise (Miner's Pickaxe, Web Sword, Scythe, the `lgnd` legendary-weapon framework) — those are separate components that *consume* this one's verification channels.
+
+
+
+
+
+
+
+### Legendary weapon framework (craft gate + refund, announcement, death retention/anti-dup, void return, cooldown + Action Bar, hand priority, localization) (L0-lgnd)
+
+---
+is_a: ["component"]
+part_of: ["L0"]
+relates_to: ["L0-sitm", "L0-stgt", "L0-sprj", "L0-sqat"]
+governs_files: ["src/legendary/", "src/websword/", "src/main.ts", "src/gametest/main.ts"]
+see_also: ["webswordspecv1ruen-part-1", "webswordspecv1ruen-part-2", "scytheofcalamityspecv1ruen-part-1", "scytheofcalamityspecv1ruen-part-2"]
+---
+# Legendary weapon framework (craft gate + refund, announcement, death retention/anti-dup, void return, cooldown + Action Bar, hand priority, localization)
+
+**Responsibility.** Implement each "general rule for legendary weapons" (*общие правила легендарных оружий*: Scythe §1, §6; Web Sword §3, §4, §8, §9, §10) exactly once, in a new `src/legendary/`. The shipped Web Sword (0.3.0, `src/websword/*`) becomes the first registered `LegendaryDef`, and the Scythe of Calamity the second. No weapon module keeps a private copy of an anti-dup invariant (C-7).
+
+## Current state (verified in code, 2026-09-24)
+`src/legendary/` does not exist yet. Everything is hard-wired to the Web Sword:
+| File | Concern | Web-Sword-only detail |
 |---|---|---|
-| **Cooldown record** (`L0-cool-ent1`) — per player, per ability-key ready-at time | This component, read on every check/render | Keyed by player + `abilityKey`, never by item stack (ASM-009, ADR-007) |
-| `isReady(player, abilityKey)` query result | `L0-trap`, gate before cell placement | Pure read; never mutates state |
-| `start(player, abilityKey)` mutation | Called by `L0-trap`, only after a confirmed successful activation | The only write path that arms the timer |
-| Actionbar countdown text | The holding player's client | Localized rawtext, `L0-item` keys + seconds substitution |
-| Ability-key registration seam (`L0-cool-ent1`) | Future weapons (deferred) | Web Sword registers one key now; the API accepts more without redesign |
+| `state.ts` | key names, mark, world flag, pending, cooldown deadline | `andrew:ws_*`; `ws_pending` holds a single mark |
+| `craftgate.ts` | after-the-fact gate, refund, broadcast | `REFUND = web×4 + diamond_sword×1` |
+| `retention.ts` | death retention (inventory path + drop sweep), restore on spawn | `findMarkedSword` returns the first sword only; off hand not scanned |
+| `cooldown.ts` | `isReady/startCooldown/remainingTicks`, 10-tick HUD | `_abilityKey` ignored (one slot per player); main hand only |
+| `commands.ts` | `/andrew:websword <give\|reset> [target]` | command name, item id |
+| `rules.ts` | pure `craftDecision`, `cooldownRemaining`, mark (de)serialisation | `COOLDOWN_TICKS` |
 
-## Explicitly not owned
+## Owns
+- Registry `registerLegendary(def)` — `L0-lgnd-ent1`, `L0-lgnd-p006`.
+- Instance mark with `gen` + `holder` — `L0-lgnd-ent2`.
+- Per-weapon one-per-world craft gate, refund, broadcast, Creative/admin exemption — `L0-lgnd-p001`, `L0-lgnd-r002`.
+- Death retention for every legendary carried, both hands — `L0-lgnd-p002`, `L0-lgnd-r008`.
+- Loss (Void/ordinary destruction) return to the last holder — `L0-lgnd-p003`, `L0-lgnd-r005`, `L0-lgnd-r011`.
+- Cooldown per (player, abilityKey) + in-memory busy — `L0-lgnd-ent3`, `L0-lgnd-r003`, `L0-lgnd-r009`.
+- Hand-priority Use dispatch — `L0-lgnd-p004`, `L0-lgnd-r004`.
+- The only Action Bar HUD for legendaries — `L0-lgnd-p005`, `L0-lgnd-r007`.
+- Operator commands — `L0-lgnd-p007`.
+- Read-only `isHiddenFromTargeting(player)` — `L0-lgnd-r010`.
+- Localization plumbing: every player-facing string is a rawtext `translate` key; the RU/EN strings themselves are owned by `L0-sitm` (C-4).
 
-- **Whether an activation succeeds** — reach validation, targeting and cell placement are `L0-trap`. This component answers "ready?" and starts the clock; it never evaluates reach or targets.
-- **The `.lang` catalogue** — `L0-item` owns every translate key this component consumes, including the countdown string itself.
-- **The general cross-item cooldown framework** referenced by §12 — it does not exist anywhere in the KV. This component ships a single-item implementation with the ability-key seam (ADR-007) and must not invent the framework.
-- **Main-hand/off-hand priority arbitration** (§8) — cannot be tested or meaningfully implemented with one legendary item. Provisionally deferred in `concept-boundary` (Q-010); this component keeps only the ability-key indirection a future rule would need.
+## Published contracts (change only by ADR)
+- `LegendaryDef` shape (`L0-lgnd-ent1`).
+- `cooldown.isReady / isBusy / setBusy / start / remaining (player, abilityKey)`.
+- `isHiddenFromTargeting(player): boolean`.
+- Ability handler `(player, hand) → "cast" | "refused" | "busy"`; the framework never infers success.
 
-## Architecture in one paragraph
+## Inputs / outputs
+**In:** stable `@minecraft/server` 2.10.0 events (C-2): `playerInventoryItemChange`, `entityDie`, `playerSpawn`, `playerLeave`, `itemUse`, `playerInteractWithBlock`, `entitySpawn`, `beforeEvents.entityRemove`, `system.beforeEvents.startup`. Weapon modules supply defs and ability handlers; `L0-sprj` calls `setBusy`/`start` on volley resolution.
+**Out:** durable world/player/item dynamic properties per weapon prefix (`L0-lgnd-ad01`); a chat broadcast on first craft; private blocked/returned/voided/admin messages; Action Bar rawtext for holders only.
 
-The cooldown is a small **per-player, per-ability-key service** (ADR-007), not sword-local state. A successful activation writes one **cooldown record** — this component's proposal is a player-scoped dynamic property keyed by ability id, so the record travels with the player and survives disconnect/reconnect without extra plumbing (`L0-cool-adr1`; recommended default for open question Q-009). A single recurring interval, scoped **only to players currently holding a tracked ability's item** (never all online players, never a world scan), recomputes remaining time each cadence tick and renders the actionbar or clears it (also `L0-cool-adr1`). `L0-trap` is the sole caller of the service's mutating and gating entry points; this component never listens for the use-event itself.
+## Does NOT own
+What an ability does (cobweb cube in `trap.ts`/`cube.ts`; target search `L0-stgt`; volley `L0-sprj`), item JSON, recipes and lang strings (`L0-sitm`; the Web Sword JSON gains only `minecraft:allow_off_hand`), Shadow Blade itself.
 
-## Constraint bindings
+## Key decisions
+`L0-lgnd-ad01` frozen per-weapon prefixes · `ad02` loss recovery by generation · `ad03` transient loss watcher · `ad04` fall-through dispatch on "not ready" only · `ad05` busy is memory-only · `ad06` compatibility shims for shipped paths and command.
 
-| Constraint | How it binds here |
-|---|---|
-| **C-1** stable API only | Dynamic properties and `onScreenDisplay.setActionBar` are both stable-surface; no Beta dependency |
-| **C-3** server-authoritative | Remaining time is computed from the server's own record and tick clock, never trusted from a client |
-| **C-4** no per-tick global scan | The **only** child permitted a recurring tick, and only because it is scoped to sword holders — not the world (R-cool-004) |
-| **C-6** durable world state | Extended here to *durable per-player* state — the cooldown record must outlive logout, in line with Q-009's recommended answer |
-| **C-7** no duplication / no-advantage paths | A cooldown that resets on reconnect is a logout-abuse path; persisting it closes that door |
-| **C-9** localization is structural | The countdown string is a translate key with a `with` substitution, never a literal (R-cool-005) |
+## Open items
+- Parent-level: CTR-1 (`cool-ctr1`, Void return for Web Sword; running on `L0-lgnd-as01`), CTR-3 (`cool-ctr3`, off-hand priority; running on Q-019 default a). Not re-raised here.
+- This dive: `L0-lgnd-cx01` (Ready display differs), `L0-lgnd-cx02` (non-player pickup leaves a stale melee-capable copy), `L0-lgnd-cx06` (loss watcher vs the letter of C-5).
+- Withdrawn after checking: cx04 (no test asserts the `ws_pending` format, so "tests unchanged" and the array change do not collide), cx05 (`/andrew:websword` stays as an alias, so README remains correct). cx03 became assumption `L0-lgnd-as09`.
 
-## Open items carried
+## Constraint-number crosswalk
+Artifacts `L0-lgnd-*` written before this revision cite an older C-numbering. Read them as: old C-1 → **C-2** (stable API); old C-4 "no global scans" → **C-5**; old C-9 "translate keys" → **C-4**; old C-13 "bounded tick work" → **C-5** (second sentence); old C-6, C-7 unchanged. Old C-10 (shipped tests stay green), C-14 (volleys do not survive restart) and C-17 (one implementation per rule) have no entry in the current `concept-constraint`; they are carried as `L0-lgnd-ac11`, `L0-lgnd-r009` and `L0-lgnd-r001` respectively.
 
-- **CTR-004** (inherited, root-level, not re-filed) — the framework §12 assumes doesn't exist; this component resolves it locally via ADR-007's seam rather than waiting for it.
-- **Q-009** (persistence across logout) — treated as **provisionally answered "persist"** for design purposes (`L0-cool-asm1`, `MUST_ASK`); confirm before implementation.
-- **Q-010** (hand-priority scope) — treated as **provisionally deferred**; only the seam ships in v1 (see "Explicitly not owned" above).
-- **ASM-009** (inherited) — cooldown keyed per player + ability; this component's entity model enforces it structurally (R-cool-003).
-
-## Risk note
-
-The two failure modes that matter most are silent: a record that resets on reconnect looks correct in every single-session test and only shows up as a logout-abuse exploit under adversarial play; a render loop that iterates all online players instead of sword-holders looks correct at one player and only shows up as a performance regression at server scale — exactly the shape C-4 warns about.
+## Risk
+Highest regression risk of the Stage-2 Scythe work: it rewrites code under a shipped weapon. Web Sword unit tests, the `andrew:websword_*` GameTests and the pickaxe suites must stay green (`L0-lgnd-ac11`).
 
 
 
@@ -88,361 +136,123 @@ The two failure modes that matter most are silent: a record that resets on recon
 
 
 
-### Item Definition, Recipe & Localization (L0-item)
+### Miner's Pickaxe probe (Stage 1: item, recipe, dig speed, enchantability, auto-smelt) (L0-pick)
 
-# Item Definition, Recipe & Localization
+# Miner's Pickaxe probe (Stage 1: item, recipe, dig speed, enchantability, auto-smelt)
 
-**Links** — `title: Item Definition, Recipe & Localization` · `aliases: ["L0-item"]` · `part_of: ["L0"]` · `is_a: ["component"]` · `relates_to: ["L0-once", "L0-keep", "L0-trap", "L0-cool", "L0-qatg"]` · `see_also: ["webswordspecv1ruen-part-1", "webswordspecv1ruen-part-2"]`
+**Links:** `part_of: ["L0"]` · `is_a: ["component"]` · `relates_to: ["L0-infr"]`
+
+**Responsibility:** One custom item, `andrew:miners_pickaxe`, that serves as the compatibility probe for the whole add-on stack (Behavior Pack + Resource Pack + stable `@minecraft/server` Script API) before Stage 2's PvP add-on is built. It proves a custom tool item can be crafted, enchanted, and given non-vanilla dig/drop behavior on the operator's actual installed Bedrock version, with nothing else in scope. [src: minerspickaxetestspec]
+
+**Inputs:**
+- Crafting-table recipe consuming 3× Iron Ingot, 2× Raw Gold, 2× Stick (see `L0-pick-r005`, `L0-pick-ent1`).
+- `world.beforeEvents.playerBreakBlock` on any block, filtered to when the pickaxe is the held tool (`src/autosmelt.ts`).
+
+**Outputs:**
+- One `andrew:miners_pickaxe` item, visible in Creative (Equipment → pickaxe group) and via `/give`, RU+EN localized name.
+- Diamond-pickaxe-speed breaking of any `is_pickaxe_item_destructible` block (`L0-pick-r001`).
+- Pickaxe-slot enchantability without a durability component — infinite use by omission (`L0-pick-r002`).
+- Auto-smelt: 7 ore/debris block ids drop their smelted product directly instead of the raw material (`L0-pick-r003`).
+
+**Deliberately out of scope for Stage 1** (per raw spec, confirmed unchanged by the implementation): durability, Fortune multiplication of auto-smelt yield, Silk Touch override, exact parity with every diamond-pickaxe mining tag beyond the three representative tag families actually tested.
+
+**Dependency:** gated behind Stage 0 (infrastructure) closing every criterion first — ai-kit rejects cross-epic dependencies, which is the enforcement mechanism, not a process rule anyone has to remember [src: concept-constraint C-11, `L0-infr`].
+
+**Known open issue inherited from raw sources (not re-filed here):** contradiction CTR-4 already covers this component — the raw spec's compatibility target (`@minecraft/server` 2.9.0 / `min_engine_version` 1.26.0) is superseded by `decision-tselevaya-versiya-bedrock-1-26-51-asm-001-q-001` (2.10.0 / [1,26,50]) and matches the live implementation. CTR-4 targets `L0-infr` and stays open only so nobody retargets back to 2.9.0 from the stale raw doc; no new filing needed from this component.
+
+**Verification split** (inherited from parent, applies here): craft/digger/auto-smelt logic is proven on BDS in Docker; Creative placement, icon and RU/EN name rendering are proven only on iPad [src: concept-constraint C-6, C-9]. Both channels are green for Stage 1 — DEMO-S1, operator-accepted 2026-09-21 (see `decision-q-007-enchantable-without-durability-podtverzhde`).
+
+**Evidence base for this deep-dive:** raw spec `minerspickaxetestspec` (`docs/Miners_Pickaxe_Test_Spec.docx`); live source `packs/behavior/items/miners_pickaxe.json`, `packs/behavior/recipes/miners_pickaxe.json`, `src/autosmelt.ts`; test coverage `src/gametest/main.ts` (`pickaxe_digs_at_diamond_speed`, `pickaxe_autosmelt`, `pickaxe_keeps_vanilla_drops`) and `src/selftest/main.ts` (`pickaxe-item-stack`, `pickaxe-enchantable`, `pickaxe-no-durability`).
+
+**Children:** rules `L0-pick-r001`..`r005`; entities `L0-pick-ent1`, `ent2`; acceptance criteria `L0-pick-ac01`..`ac07`; glossary `L0-pick-gl01`..`gl05`; assumptions `L0-pick-asm1`..`asm3`; ADR `L0-pick-ad01`.
+
+
+
+
+
+
+
+### Scythe of Calamity (`andrew:scythe_of_calamity`) (L0-scyt)
+
+# Scythe of Calamity (`andrew:scythe_of_calamity`)
+
+**Links:** `part_of: ["L0"]` · `is_a: ["component"]` · `relates_to: ["L0-lgnd", "L0-sprj", "L0-sitm", "L0-infr", "L0-webs"]` · sources: `scytheofcalamityspecv1ruen-part-1`, `scytheofcalamityspecv1ruen-part-2` (docs/Scythe_of_Calamity_Spec_v1_RU_EN.docx).
+
+**Status:** no code yet. Checked 2026-09-24: `src/` has only `websword/`, `autosmelt.ts` and the test harnesses, and nothing in `packs/` mentions the Scythe. This deep-dive seeds Stage-2 planning.
 
 ## Responsibility
+This is the second legendary weapon. It is a PvP ability: on Use, the Scythe locks the **nearest visible player** within 20 blocks and fires **3 homing projectiles** that pass through blocks. Each hit deals **exactly 3 HP true damage** and launches the target about **10 blocks** up. The attack ends early if the target leaves a **20-block leash** centred on the launch point. The cooldown outcome depends on whether any hit landed. All temporary state is cleaned up.
 
-Owns everything about `andrew:web_sword` that exists **before any Script API logic runs**: the static item component definition, the crafting recipe, the Resource Pack presence (icon, display name), and the full RU/EN translate-key catalogue that this item — and every sibling component that emits a runtime message — draws from. Spec sections owned: §1 (Core), §2 (Recipe), §7 (Passive Behavior), §10 (Localization), and the Resource Pack half of §11 (Technical Architecture).
+## Sub-scopes (the live KV holds partial children under other prefixes)
+| Sub-scope | Owner node | What it holds |
+|---|---|---|
+| Item JSON, recipe, melee, enchant slot, RP assets | `L0-sitm` (ADRs `sitm-adr1/2`, `sitm-asm3`) | slot = sword, no digger or tool tags |
+| Activation + target acquisition | **this node** (`L0-scyt-p001`, `r001`–`r003`). The earlier `L0-stgt`/`L0-sctg` have no live artifacts. | candidate filter, tie-break, no-target path |
+| Volley flight, hits, true damage, launch, leash, outcome FSM, tick loop | `L0-sprj` (`r005`–`r008`, `ad01`–`ad03`, `ac05`–`ac14`) | this node restates only the contract (`r004`–`r008`) |
+| Craft gate, announcement, retention, Void return, cooldown store, HUD, hand priority | `L0-lgnd` | the Scythe registers a `LegendaryDef` |
 
 ## Inputs
-
-- Web Sword spec §1, §2, §7, §10, §11 (`webswordspecv1ruen-part-1`, `-part-2`)
-- Shipped platform precedent this component extends, not reinvents (C-10): `packs/behavior/items/miners_pickaxe.json`, `packs/behavior/recipes/miners_pickaxe.json`, `packs/resource/texts/{en_US,ru_RU}.lang`, `packs/resource/textures/item_texture.json`
-- Vanilla Diamond Sword's documented component shape (damage, enchant slot, tags) — not present anywhere in this repo, so treated as an assumption (`L0-item-asm2`), not a copyable source
-
-## Outputs
-
-- `packs/behavior/items/web_sword.json` — item definition
-- `packs/behavior/recipes/web_sword.json` — shaped recipe
-- `packs/resource/textures/items/andrew_web_sword.png` + an `item_texture.json` entry — icon
-- `packs/resource/texts/ru_RU.lang` / `en_US.lang` — the `item.andrew:web_sword.name` pair **plus every other key any sibling component needs** (first-craft announcement, cooldown readout)
-
-## What this component does NOT own
-
-- The one-per-world craft gate, its persistent flag, and the broadcast trigger (`L0-once`) — this component defines the recipe's *shape*; whether a craft is *allowed to complete* is decided elsewhere.
-- Any dynamic property, ownership marker, or death-retention logic (`L0-keep`).
-- The active-ability handler, targeting, and cobweb placement (`L0-trap`) — this component only guarantees that a **plain melee hit** does nothing beyond vanilla Diamond Sword damage (§7).
-- The cooldown timer and actionbar readout (`L0-cool`).
-
-## Ownership rule inherited from the decomposition plan
-
-Per `concept-decomposition-plan`: *"Localization ownership is central, use is distributed."* This component is the **sole writer** of `.lang` entries; `L0-once` and `L0-cool` are consumers that must request keys from here rather than hardcoding literals (C-9, ADR-009). This component must reconcile the sibling key list, not merely publish its own item name.
-
-## Key open risk
-
-Q-007 / ASM-005 (parent, `MUST_ASK`): does `minecraft:enchantable` actually function on an item with **no** `minecraft:durability` component on this Bedrock build? The pickaxe (`slot: "pickaxe"`) encodes the identical hypothesis, but Stage 1 never recorded the empirical outcome. The sword repeats the shape with `slot: "sword"`. Verify before or alongside implementation — see `L0-item-asm1`.
-
-## Relation to siblings
-
-`L0-once`, `L0-keep`, `L0-cool` and `L0-trap` all attach behavior/state to the **same entity** this component defines (`andrew:web_sword`) — per the decomposition plan's reduce pass: *"`andrew:web_sword` is the single shared entity — `L0-item` defines it, the others attach state to it."* Any attribute conflict between this component's static definition and a sibling's runtime expectation must be reconciled at L0, not silently overridden here.
-
-
-
-
-
-
-
-### Death Retention & Anti-Duplication (L0-keep)
-
-# Death Retention & Anti-Duplication
-
-**Links** — `title: Death Retention & Anti-Duplication` · `aliases: ["L0-keep", "Death Retention"]` · `part_of: ["L0"]` · `is_a: ["component"]` · `relates_to: ["L0-once", "L0-cool", "L0-item", "L0-qatg"]` · `see_also: ["webswordspecv1ruen-part-1", "webswordspecv1ruen-part-2"]` · `governed_by: ["C-1", "C-5", "C-6", "C-7", "C-10"]` · `implements: ["WS-9", "WS-10"]`
-
-> **STATUS: analysis complete, implementation blocked on Q-006 / CTR-005.** Everything below that depends on telling one Web Sword instance from another is written *conditionally*. Do not build the ledger before the owner answers.
-
-## Responsibility
-
-Own the lifecycle of a Web Sword across **player death** and **session/world discontinuity**, such that the item is neither *lost* nor *multiplied*. Spec §4 and §12.
-
-Two obligations that pull in opposite directions:
-
-- **Retention (WS-9).** The owner's sword must not appear as a death drop, and must be back in the owner's hands after respawn.
-- **Anti-duplication (WS-10, C-7).** Death, disconnect/reconnect and server restart must not — alone or in combination — yield a second copy. C-7 states this absolutely: *«Нет известных способов дюпа через смерть или reconnect.»*
-
-Retention is implemented by *removing* an item from the world and *re-granting* it later. Every such pair is a dup primitive if the two halves can ever both run, or run twice. The entire component is therefore an **idempotency problem**, not an inventory problem.
-
-## In scope
-
-| Ref | Obligation | Spec |
-|---|---|---|
-| K-1 | Web Sword is excluded from the death drop — it never lands on the ground | §4 |
-| K-2 | On respawn the same owner receives exactly one instance back | §4 |
-| K-3 | The retain→restore pair is idempotent across death, disconnect/reconnect and server restart | §4, §12 |
-| K-4 | Death during ability cooldown creates no copy | §12 |
-| K-5 | Death never resets the one-per-world craft flag | §12 |
-| K-6 | Retention state is durable world-level state, surviving logout/save/restart | §11, C-6 |
-
-## Out of scope — belongs to siblings
-
-- **The craft flag itself** (`L0-once`). K-5 is a *read-only invariant this component must not breach*; the flag's storage and semantics are `L0-once`'s. Per the parent ownership rule, neither child writes the other's state.
-- **Cooldown persistence across death** (`L0-cool`). K-4 only forbids *item* duplication during the cooldown window; whether the timer itself survives is Q-009.
-- **The item definition and its `.lang` keys** (`L0-item`). If retention emits any player-visible message, the key is consumed from `L0-item`'s catalogue (C-9, ADR-009); this component adds no literal strings.
-- **Non-Web-Sword inventory.** Everything else follows vanilla death rules untouched — ADR-008 rejects `keepInventory` precisely to avoid this blast radius.
-
-## Interfaces
-
-**Consumes**
-- Death / drop-path event on the stable `@minecraft/server` surface (ASM-013).
-- Respawn event for the same player.
-- Player join event (for reconnect reconciliation).
-- Instance **provenance marker** written at craft time — *pending Q-006*, and written by `L0-once`'s handler (see CTR-009, resolved at L0 by ADR-016).
-
-**Produces**
-- A durable **Retention Ledger** entry per bonded owner (`L0-keep-ent1`).
-- Exactly one restored `andrew:web_sword` instance per redeemed entry.
-
-**Touches nothing else.** No world blocks, no other players' inventories, no craft flag.
-
-## Core design (ADR-008, refined here)
-
-Intercept the drop rather than change the gamerule. Concretely, the retain and restore halves are separated by a **durable ledger entry that acts as the idempotency token**:
-
-1. **Retain** — on death, remove the bonded sword from the drop set and write a ledger entry `owner → pending`. Writing the entry and removing the item must be observably atomic (`L0-keep-r002`).
-2. **Restore** — on respawn *or* on next join if respawn was missed, grant one instance **only if** an entry is `pending`, then flip it to `redeemed` in the same operation. A second event finds nothing pending and is a no-op.
-
-The ledger is what makes restart safety free: an entry written before the crash is still `pending` after it, so a player who died and immediately crashed the server is made whole on next join — exactly once. This is `L0-keep-p003`.
-
-**Why not "give if missing" at respawn** — rejected in ADR-008 and reconfirmed here: it cannot distinguish "died and lost it" from "an admin took it" or "the player is legitimately carrying an admin copy", so it dupes on the third case. The ledger replaces inference with a record.
-
-## The blocking problem (CTR-005 / Q-006)
-
-The restore predicate is *"does this player still have **their** sword?"* The spec permits unlimited Creative/`/give` copies (§3, §4) while specifying **no way to distinguish instances**. Without provenance, retention and anti-dup are not simultaneously satisfiable — see CTR-005's three-way case analysis.
-
-This component's position: **adopt option three** — retention applies only to instances carrying a durable provenance marker set at survival craft. It is the only branch that satisfies §4 and §14 together. It requires a spec addition the owner must approve (Q-006).
-
-Everything downstream is shaped by the answer:
-- **Yes (recommended)** → the ledger binds `player → marked instance`, admin copies drop normally on death like any other item, and §14 holds without qualification.
-- **No** → retention must be narrowed to "the first Web Sword a player ever acquires" or to nothing at all, and §14's absolute no-dup claim must be relaxed in writing to exclude admin copies. Two acceptance criteria (`L0-keep-ac05`, `L0-keep-ac06`) change meaning.
-
-## Risk profile
-
-§15 names death-retention/anti-dup as one of the three top cost drivers, alongside one-per-world persistence and multiplayer edge cases — and all three are governed by C-6 and C-7. The distinguishing risk here is that **failures are silent and permanent**: a dup path produces a second legendary item that persists in the world indefinitely, cannot be detected after the fact without auditing every inventory, and directly defeats the one-per-world design that `L0-once` exists to enforce. Test the failure modes (`L0-keep-ac03`, `ac04`) before the happy path.
-
-
-
-
-
-
-
-### One-per-World Craft Gate (L0-once)
-
-# One-per-World Craft Gate
-
-**Links** — `title: One-per-World Craft Gate` · `aliases: ["L0-once", "One-per-World Craft Gate", "craft gate"]` · `part_of: ["L0"]` · `is_a: ["component"]` · `relates_to: ["L0-item", "L0-keep", "L0-qatg"]` · `see_also: ["webswordspecv1ruen-part-1", "webswordspecv1ruen-part-2"]` · `governs_files: ["src/main.ts", "packs/resource/texts/ru_RU.lang", "packs/resource/texts/en_US.lang"]`
-
-## Responsibility
-
-Enforce the spec's scarcity rule: **in Survival, `andrew:web_sword` may be successfully crafted exactly once per world/server, forever.** This component owns the durable world-level flag that records that the craft budget has been spent, the enforcement of the block on every subsequent survival craft, the localized broadcast that announces the first craft and names its creator, and the exemption that keeps Creative crafting and `/give` outside the budget entirely.
-
-Source: §3 in full, §9's craft-race clause, §12's *«смерть … не должна … сбрасывать persistent one-per-world flag»*, and the three §13 tests that exercise first craft, second craft and post-restart second craft.
-
-## Why this is its own component
-
-The gate is not a feature of the item — it is a piece of **durable global state with a concurrency contract**. §15 names one-per-world persistence as one of the three top cost drivers. The failure modes here are unlike every sibling's: a lost flag silently un-spends the world's budget, a double-write silently mints a second sword, and both are invisible until a player exploits them. That earns isolation from `L0-item` (which owns the item and recipe as static definitions) and from `L0-keep` (which owns per-instance ownership).
-
-## Inputs
-
-| Input | Origin | Notes |
-|---|---|---|
-| Craft-completion signal for `andrew:web_sword` | Bedrock stable script event surface | The enforcement point; see ADR-011 |
-| Crafting player's game mode | `Player.getGameMode()` at craft time | Discriminates survival craft from Creative craft (R-003) |
-| Crafting player's name | The same player object | Substituted into the announcement (`with`) |
-| `andrew:web_sword` item identity and recipe | `L0-item` | The gate does not define either |
-| Translate keys for announcement and denial text | `L0-item`'s `.lang` catalogue | Consumed, never authored here (C-9, ADR-009) |
+- `world.afterEvents.itemUse` where `itemStack.typeId === "andrew:scythe_of_calamity"` and the source is a `Player` (`L0-scyt-ad03`). The event goes through the `L0-lgnd` dispatcher, which applies hand priority, busy and cooldown.
+- The owner's location, view direction and dimension. The players in that dimension within 20 blocks (`L0-scyt-ad01`).
+- The `isHiddenByShadowBlade(player)` predicate. It is a stub that returns `false` until Shadow Blade exists (ASM-024, CTR-014).
 
 ## Outputs
+- Either a localized no-target message (`andrew.scythe_of_calamity.no_target`) with no cooldown and no busy state,
+- or one **Volley** handed to `L0-sprj` (`launchVolley(owner, target, launchPoint)`), which returns exactly one outcome and possibly one `cooldown.start(owner, "scythe")` through `L0-lgnd`.
+- Effects on the target only: health minus 3 per hit, and upward knockback.
+- **Never**: block writes, engine projectile entities, or damage to mobs or other players.
 
-| Output | Consumer | Notes |
-|---|---|---|
-| **World craft flag** (`L0-once-ecft`) — durable record that the budget is spent | This component, on every subsequent craft | Sole authority (R-007). No sibling may write it |
-| First-craft broadcast (`L0-once-ebrd`) | All online players | Localized rawtext, names weapon + creator |
-| Blocked-craft denial outcome | The crafting player | Ingredients returned where the API permits (R-005, CTR-003) |
-| Craft-event acceptance criteria | `L0-qatg` | Maps to §13 tests 3, 4 and part of 12 |
+## Key rules (this node)
+`r001` candidate filter · `r002` nearest plus view-angle tie-break · `r003` no target means no cost · `r004` blocks untouched · `r005` exact 3 HP true damage · `r006` launch about 10 blocks, fall damage kept · `r007` leash centred on the launch point · `r008` only the locked target can be hit · `r009` item stats and recipe.
 
-## Explicitly not owned
+## Dependencies and ordering
+1. `L0-lgnd` must first be generalised from `src/websword/*` into a registry. That includes per-weapon cooldown keys (CTR-013), the steady HUD in both hands (CTR-017) and busy (ASM-017). The Scythe cannot ship on the current Web-Sword-only store.
+2. `L0-infr`: GameTest and BDS on 1.26.51.1 cover the ACs in channel `bds`. The icon, names and particle look are covered on channel `ipad` (C-9).
+3. C-11: Stage 2 Web Sword is closed (commit `f22896a`), so Scythe work may start.
 
-- **The item, the recipe, the icon, the `.lang` catalogue** — `L0-item`. This gate consumes keys and reconciles its list with that owner.
-- **Which sword instance belongs to which player, and death/respawn restoration** — `L0-keep`. Per the decomposition plan's ownership rule, `L0-once` owns the *craft flag*; `L0-keep` owns the *item ledger*. Neither writes the other's state. §12's "death must not reset the flag" is an invariant `L0-keep` must respect, expressed here as R-002.
-- **Counting swords in the world.** The flag counts *craft events*, not instances (`L0-once-gcrd`). Deriving the gate by scanning for existing swords is forbidden — it violates C-4 and contradicts §4's admin copies (R-007, ADR-005 rejected alternative).
-- **Cooldown of any kind.** `L0-cool`. The craft gate has no timer; it is one-shot and permanent.
+## Open issues affecting this component
+- CTR-014 / Q-020: AC-3 (Shadow Blade) cannot be verified end to end.
+- `cool-ctr2`: the enchant slot. Resolved in design by `L0-sitm-adr1` (sword).
+- CTR-015: the hoe base versus the Use trigger. Resolved in design by `L0-sitm-adr2` (no hoe tag).
+- `L0-sprj-cx01/cx02`: when the cooldown is committed, and the lethal branch of true damage.
+- `L0-scyt-cx01`: missing component nodes and targeting nodes in the graph.
+- `L0-scyt-cx02`: the tuning numbers for projectile speed and lifetime disagree.
+- Q-022: does the `pvp` gamerule affect candidates? The default is no.
 
-## Architecture in one paragraph
+## Constraints honoured
+C-2 (stable 2.10.0 only), C-4 (`andrew:` ids, RU and EN), C-5 (targeting only at activation, and a tick loop only while volleys exist), C-7 (no orphans), C-10 (no world mutation in before-events).
 
-The flag is a **world-scoped dynamic property** on the stable `@minecraft/server` surface (ADR-005), holding a small versioned record rather than a bare boolean (ADR-012). Enforcement hooks the craft-completion event server-side (C-3) and performs a synchronous **read-check-write** inside a single handler invocation; because the Bedrock script host runs one handler to completion before the next, that sequence is the atomic claim that makes the §9 craft race safe (ASM-015, R-004). The first caller to observe an unset flag sets it, emits the broadcast, and keeps the sword. Every later caller observes a set flag, removes the crafted result and — where the stable API permits — returns the ingredients (ASM-011, R-005). Nothing polls; the component is entirely event-driven, which satisfies C-4 by construction.
 
-## Constraint bindings
 
-| Constraint | How it binds here |
-|---|---|
-| **C-1** stable API only | The flag must be a stable-surface dynamic property. If only a Beta API can express pre-craft veto, the *mechanic* degrades to detect-and-refund — the channel does not change |
-| **C-3** server-authoritative | Game mode and flag state are read server-side; no client input gates the craft |
-| **C-4** no per-tick scan | The gate is event-driven only; it adds no recurring tick |
-| **C-5** dedicated-multiplayer safety | Two simultaneous crafts must yield exactly one success (R-004). BDS is the test surface, not single-player |
-| **C-6** durable world state | The flag must survive logout, world save and restart — the last is an explicit §13 test (R-002, `L0-once-accp3`) |
-| **C-7** no duplication paths | A gate that can be re-opened *is* a craft dup path. R-002 and R-004 exist to close it |
-| **C-9** localization is structural | The announcement and any denial message are translate keys, never literals (R-006) |
-| **C-10** preserve the platform | Lands in the existing BP/RP alongside `andrew:miners_pickaxe` (ADR-010); the 7 existing suites must stay green |
 
-## Open items carried by this component
 
-- **CTR-003** (inherited) — "blocked without losing ingredients" is required, hedged by *«насколько это позволяет стабильный API»*, and has no §13 test. Refined here as `L0-once-accp7`, which is written as **conditional** on the owner's answer. Not self-resolved.
-- **CTR-006** (new, raised here) — the craft budget is spent irreversibly, but the spec guarantees the sword against death only; it is silent on the sword being destroyed by lava/void/`/clear`, which leaves a world permanently with zero obtainable Web Swords.
-- **ASM-011, ASM-012** (inherited from L0) plus **ASM-013…015** (new): non-survival game modes, craft-event granularity, and script-host atomicity.
-- **Q-008** refinement — see `L0-once__concept-client-question`.
 
-## Risk note
 
-The two highest-consequence failures are both silent. A flag that fails to persist (wrong scope, written after a throw, lost on an unclean shutdown) re-opens the craft budget and mints swords — that is a C-7 dup path discovered only by a player. A flag written *before* the craft is confirmed spends the budget on a craft that never completed, permanently denying the world its sword with no recovery path (CTR-006). The ordering **confirm craft → claim flag → announce** is therefore load-bearing, and both directions need their own acceptance test.
+### Web Sword: Targeting & 3×3×3 Cobweb Trap (L0-webs)
 
+---
+is_a: ["component"]
+part_of: ["L0"]
+relates_to: ["L0-lgnd", "L0-lgnd-ad06", "L0-lgnd-cx04", "L0-lgnd-p004", "L0-lgnd-ent1", "L0-sprj"]
+---
 
+# Web Sword: Targeting & 3×3×3 Cobweb Trap
 
+**Responsibility.** This component owns only what is unique to the Web Sword as a weapon: its item/recipe identity, and its active-ability body — resolving a melee-reach target and stamping a 3×3×3 (27-cell) cobweb trap around it, skipping protected and unloaded cells. It is the Web Sword's counterpart to `L0-sprj` (Scythe's homing-projectile body): both are per-weapon "cast" implementations plugged into the shared `L0-lgnd` legendary framework.
 
+**Explicitly NOT owned here** (see `L0-lgnd` instead): one-per-world craft gate + refund + first-craft broadcast (`L0-lgnd-p001`), death retention (`L0-lgnd-p002`), Void/lava/despawn loss return (`L0-lgnd-p003`), main/off-hand dispatch (`L0-lgnd-p004`), cooldown timer + busy flag + Action Bar HUD (`L0-lgnd-p005`, `L0-lgnd-ent3`), instance marking/anti-dup (`L0-lgnd-ent2`), operator commands (`L0-lgnd-p007`), localization plumbing. Raw spec §§3,4,8,9,10,14 (one-per-world, death retention, cooldown UI, multiplayer determinism, localization, DoD) are all satisfied by the shared framework already deep-dived as `L0-lgnd`; a scope-overlap contradiction (`L0-webs-cx01`) documents this so the two aren't independently re-implemented or re-decided.
 
+**Inputs.** A ready, dispatched cast from `L0-lgnd-p004` (`onCast(player)`), the player's current melee-interaction ray/reach, and world block/entity state around the resolved target.
 
+**Outputs.** Up to 27 placed `minecraft:web` blocks; a filled-cell count; the ability wrapper starts the cooldown itself on `filled > 0` and returns `"cast"`/`"refused"` to `L0-lgnd` (`L0-webs-r005`, `L0-adr-cast`).
 
-### Verification, Acceptance & Definition of Done (L0-qatg)
+**Core flow** (detail in `L0-webs-p001`): resolve target cell (block-face-adjacent or entity-foot, entity wins ties, no hit ⇒ no target) → enumerate the 27-cell cube centered there → classify each cell (fillable / protected / unloaded / entity-occupied) → replace fillable cells with cobweb → report count.
 
-# Verification, Acceptance & Definition of Done
+**Item identity** (`L0-webs-ent1`, `L0-webs-r001`): Diamond-Sword-equivalent melee damage, infinite durability, `minecraft:enchantable` slot `sword`, shaped recipe (4× Cobweb + 1× Diamond Sword, any durability/enchantment, none carried over). This is currently documented only in the rollup decision `web-sword-item-values`; this component gives it a durable home.
 
-**Links** — `title: Verification, Acceptance & Definition of Done` · `aliases: ["L0-qatg", "QATG", "Verification & DoD"]` · `part_of: ["L0"]` · `is_a: ["component"]` · `relates_to: ["L0-item", "L0-once", "L0-keep", "L0-trap", "L0-cool"]` · `see_also: ["webswordspecv1ruen-part-2", "webswordspecv1ruen-part-3"]` · `governed_by: ["C-1", "C-5", "C-9", "C-10", "C-11", "C-12"]` · `implements: ["WS-18"]`
+**Why this scope now.** `L0-lgnd`'s migration (`ADR-021`, `L0-lgnd-ad06`) explicitly stopped short of the cast body: `L0-lgnd-cx04` notes the shipped `registerTrap()` (in `src/websword/trap.ts`, called from `src/gametest/main.ts`) "no longer subscribes to `itemUse` itself" under the new framework — i.e. `registerTrap`/the trap module is exactly this component's code counterpart, and it never received its own deep-dive. Decisions Q-011 (cube geometry), Q-013 (protected-block list) and Q-017 (zero-cells outcome) already resolved the hard questions operator-side; this deep-dive gives them rule/process/entity homes and adds the acceptance criteria, glossary and assumptions the rollups don't carry.
 
-## Responsibility
-
-Own §13 (Acceptance Tests), §14 (Definition of Done) and §15 (Estimate) of the Web Sword spec: turn the twelve acceptance tests into an executable matrix, map each onto the existing verification harness (`tests/`, `packs/gametest`, `packs/selftest`, `bds:check`, `bds:gametest`, the iPad visual pass), gate the "no Preview/Experiments dependency" rule, and protect the shipped platform (pickaxe + Stage 0/1 infra) from regression under C-10.
-
-This component **invents no acceptance criteria of its own on the feature side**. Per the decomposition plan: *"`L0-qatg` does not invent criteria. It aggregates and makes executable what the other five define. If it finds a §13 test with no owner, that is a gap to report upward, not to absorb."* Its own criteria are the five §14 Definition-of-Done conditions, which are genuinely gate-level and belong to no single sibling.
-
-## Inputs
-
-- Web Sword spec §13, §14, §15 (`webswordspecv1ruen-part-2`, `-part-3`)
-- Every sibling's `concept-acceptance-criterion` artifacts (`L0-item-ac*`, `L0-once-accp*`, `L0-keep-ac*`, and — pending at analysis time — `L0-trap-*`, `L0-cool-*`)
-- The live harness: `tests/*.test.mjs` (7 suites), `packs/gametest` + `src/gametest/main.ts`, `packs/selftest` + `src/selftest/main.ts`, `scripts/bds-check.mjs`, `scripts/bds-gametest.mjs`, `package.json` scripts (`test`, `bds:check`, `bds:gametest`)
-- C-1…C-12 (`concept-constraint`, node `L0`), inherited unchanged
-
-## Outputs
-
-- The **Acceptance Matrix** (`L0-qatg-ent2`): one row per §13 test, mapped to owner component, harness mechanism, and environment
-- The **Definition-of-Done Gate** (`L0-qatg-ent3`): the five §14 conditions as an aggregate go/no-go
-- A **gap report** naming any §13 test with zero or more-than-one claimed owner
-- No new files in `packs/` or `src/` — this component governs process, not product code
-
-## In scope
-
-| Ref | Obligation | Spec |
-|---|---|---|
-| Q-1 | Every §13 test has exactly one owning sibling and at least one harness mechanism | §13 |
-| Q-2 | Import/load correctness on the stable Bedrock target, no content/dependency errors | §14 |
-| Q-3 | All twelve tests pass in a single-player world, and the DoD is corroborated by a ≥2-player test | §14, §9 |
-| Q-4 | No known duplication path — across craft, death, disconnect/reconnect, **and restart** (C-7's four-vector reading; see `L0-qatg-ctr1`) | §14, C-7 |
-| Q-5 | No mandatory Experiments/Preview dependency in the shipped packs | §14, C-1 |
-| Q-6 | The 7 existing pickaxe-era `npm test` suites, `bds:check`, and `bds:gametest` stay green | C-10 |
-| Q-7 | The iPad visual pass covers what BDS logs structurally cannot (Creative visibility, icon, RU/EN rendering, actionbar) | C-11 |
-
-## Out of scope — belongs to siblings
-
-- **Defining what "correct" looks like for any single mechanic.** `L0-item` through `L0-cool` each own their own rules, entities and edge cases; this component only aggregates their `concept-acceptance-criterion` output into one matrix.
-- **Fixing a failing test.** This component reports gate status; it does not own the code paths under test.
-- **The cross-item cooldown framework, or any Stage-2 weapon beyond the Web Sword** — both explicitly deferred at `L0` (`concept-boundary`).
-
-## The harness, as it exists today
-
-Verification is **not one thing** — it is five mechanisms with disjoint blind spots, matching C-11's three-hop loop:
-
-| Mechanism | Runs | Proves | Blind to |
-|---|---|---|---|
-| `npm test` (`tests/*.test.mjs`, 7 suites) | Node, no engine | Build output, manifests, static item/recipe shape | Anything requiring a live world |
-| `bds:check` (`packs/selftest`, stable API) | Docker BDS | In-engine static claims (item exists, is enchantable, recipe resolves) — the machine-checkable half of what used to need an iPad | Player-driven behaviour, multiplayer, death |
-| `bds:gametest` (`packs/gametest`, **Beta** API, dev-only) | Docker BDS, `Beta APIs` experiment on a throwaway world | Scripted `SimulatedPlayer` behaviour: targeting, death, respawn, multi-player-in-one-tick races | Anything the Beta channel would make a **runtime** dependency if it leaked into `packs/behavior` (forbidden, C-1) |
-| iPad visual pass | Real device, one iPad | Creative Equipment placement, icon, RU/EN text rendering, actionbar readout | Anything requiring two simultaneous clients (only one device exists — ASM-010) |
-| Genuine 2-client BDS LAN | Docker BDS + ≥2 real clients, if borrowable | The literal §14 "two players" requirement | Not guaranteed available — see `L0-qatg-asm1` |
-
-Nothing in this table is new infrastructure. `L0-qatg`'s job is to say, for each of the twelve tests, **which row(s) of this table produce its evidence** — not to build a sixth mechanism.
-
-## Relation to siblings
-
-Every sibling emits `concept-acceptance-criterion` artifacts for its own slice; per the decomposition plan's reduce pass #2, those "funnel into `L0-qatg`". This component does not fill gaps by writing siblings' criteria itself; it reports them and re-checks when the siblings publish.
-
-> **Corrected at reduce (analysis_version 2).** This section originally reported that `L0-trap` had no acceptance criteria and `L0-cool` had not been deep-dived, leaving five §13 tests with a declared owner and no artifact. That was already false when written: `L0-trap-ac01`…`ac09` and `L0-cool-ac01`…`ac05` were on disk. **All twelve §13 tests have a published owning artifact**; `pending_artifact_count = 0`. Three rows are declared *split-claims* (AT-9, AT-12, and the melee row) rather than double-claim defects — see `L0-qatg-ent2` invariant 1 as amended and L0's ADR-018.
-
-## Risk profile
-
-§15 does not name verification itself as a cost driver, but three of its named drivers — persistence, dup-safety, multiplayer — are exactly the things this component's harness struggles hardest to prove, per C-11. The single largest risk owned here is **a false green**: a gate that reports DoD-satisfied while restart-dup safety (C-7's fourth vector) or the genuine two-player check (§14) was never actually exercised, only assumed. Both are captured as open items (`L0-qatg-ctr1`, `L0-qatg-asm1`) precisely so the gate cannot close silently around them.
-
-
-
-
-
-
-
-### Active Ability — Targeting & Cobweb Placement (L0-trap)
-
-# Active Ability — Targeting & Cobweb Placement
-
-**Links** — `title: Active Ability — Targeting & Cobweb Placement` · `aliases: ["L0-trap", "Active Ability", "trap", "cobweb placement"]` · `part_of: ["L0"]` · `is_a: ["component"]` · `relates_to: ["L0-cool", "L0-item", "L0-once", "L0-qatg"]` · `see_also: ["webswordspecv1ruen-part-1", "webswordspecv1ruen-part-2"]` · `governs_files: ["src/main.ts", "packs/behavior/scripts/main.js", "src/gametest", "src/selftest"]`
-
-## Responsibility
-
-Own everything between **the player using a held `andrew:web_sword`** and **the world containing (or deliberately not containing) a new cobweb trap**. Concretely: hooking the item-use activation, resolving a target server-side inside normal survival reach, deciding whether the activation *succeeded*, and writing up to 27 real vanilla Cobweb blocks through a deny-by-default per-cell safety filter.
-
-Source: §5 in full, §6 in full, §9's determinism and concurrent-activation clauses, §11's server-side/no-per-tick-scan clauses, and §12's four ability edge cases (out of reach, wall-blocking, protected cells, chunk edge, logout-after-activation).
-
-This component owns the **success predicate**. Everything that happens *after* success — starting the 30 s timer, rendering the actionbar — belongs to `L0-cool` (decomposition plan, ownership rule 3).
-
-## Why this is its own component
-
-It is the only child that performs **destructive-capable mutation of shared world state that other players own**. Its failure mode is unlike any sibling's: a mis-tuned safety filter silently and irrecoverably deletes a player's chest, and no acceptance test in §13 is precise enough to catch a subtly wrong cube geometry (§13's *«приблизительно полный 3×3×3 куб»* passes either reading — see ASM-008/Q-011). It is also the largest child by requirement count, and the one place where **C-3** (server authority), **C-4** (no per-tick scan) and **C-8** (non-destructive mutation) all bind simultaneously.
-
-## Inputs
-
-| Input | Origin | Notes |
-|---|---|---|
-| Item-use activation event for `andrew:web_sword` | Bedrock stable script event surface | The sole trigger. A melee swing must **not** raise it (R-001, ASM-006) |
-| Activating player: position, view direction, dimension, reach | `Player` at activation time | All read server-side; no client-supplied coordinates (C-3, R-008) |
-| Block and entity state along the view ray | `Dimension` raycast on the stable surface | Ray stops at the first solid block — no through-wall targeting (R-003) |
-| Chunk-loaded / accessible state per cell | `Dimension` block lookup | An unreadable cell is an unloaded cell and is skipped (R-007) |
-| **Cooldown readiness for (player, `web_sword` ability)** | `L0-cool` — *read only* | Part of the success predicate; this component never writes it (CTR-007) |
-| `andrew:web_sword` item identity | `L0-item` | Not defined here |
-
-## Outputs
-
-| Output | Consumer | Notes |
-|---|---|---|
-| **Placement plan** (`L0-trap-ecub`) — 27 cell verdicts | This component, then discarded | Computed in full before the first write (ADR-015) |
-| Up to 27 vanilla `minecraft:web` blocks in the world | All players, permanently | Real ordinary cobweb; no despawn timer (R-005, boundary: cleanup out of scope) |
-| **Success / failure signal** for the activation | `L0-cool` | The only thing that may start the cooldown (R-004) |
-| Target-resolution result (`L0-trap-etgt`) | Internal; surfaced in GameTest assertions | The seam `L0-qatg` asserts against |
-| Ability acceptance criteria | `L0-qatg` | §13 tests 6 (negative half), 7, 8, 10, 12 |
-
-## Explicitly not owned
-
-- **The 30-second timer, its persistence, and the actionbar readout** — `L0-cool` (§8, §12). This component reports *success*; it does not measure time. The ordering it must respect is ADR-006's: validate reach → check cooldown → place cells → **hand off** → start cooldown.
-- **The item, recipe, icon and `.lang` catalogue** — `L0-item`. The ability emits no user-facing text in v1; a failed activation is silent per §5 (*«способность не срабатывает»* — no message is specified). If a message is later added it must be a translate key from `L0-item` (C-9, ADR-009).
-- **Melee damage parity** — `L0-item` owns §7's damage clause. This component owns only §7's *negative* half: a normal hit creates no cobweb and starts no cooldown (R-001).
-- **The craft gate and the ownership ledger** — `L0-once`, `L0-keep`. The ability does not care how the sword was obtained; an admin `/give` copy has the identical ability.
-- **Multiplayer determinism as a component.** Per the decomposition plan §9 was deliberately *not* made a node; it binds here as C-3/C-5 (R-008) and separately in `L0-once`.
-
-## Architecture in one paragraph
-
-The ability is **entirely event-driven** (ADR-006): the stable item-use event is the only entry point, so C-4 is satisfied by construction — nothing polls, nothing scans. On activation the handler resolves a target server-side by casting a single ray from the player's eye along the view vector, bounded by vanilla interaction reach and stopped by the first solid block (ADR-014); entity hits, block hits and a bounded near-player fallback all collapse into one `TargetResolution`. If no target resolves inside reach the handler returns **before touching any state** — failure is free (R-004). Otherwise it expands the resolved cell to the 27-cell cube (target ±1 on each axis, ASM-008) and evaluates each cell against a **deny-by-default classifier** (ADR-013): unloaded, occupied by an entity, carrying a block entity, or indestructible ⇒ skip; unknown ⇒ skip. All 27 verdicts are computed **before** the first block is written (ADR-015), then the permitted cells are set to `minecraft:web` inside the same synchronous handler invocation, which is what makes two concurrent activations resolve independently and identically on every client (C-3, C-5, R-008).
-
-## Constraint bindings
-
-| Constraint | How it binds here |
-|---|---|
-| **C-1** stable API only | Raycast, block get/set and the use event must all exist on `@minecraft/server` 2.10.0. If targeting is only expressible on a Beta surface, the *mechanic* degrades (e.g. a simpler front-of-player cell) — the channel does not change. Escalate rather than decide locally |
-| **C-3** server-authoritative | Target is computed from server-read player state only. No client coordinate is trusted, and no cell verdict may depend on who is looking (R-008) |
-| **C-4** no per-tick global scan | The component adds **zero** recurring ticks. Targeting happens once per activation. The one permitted tick in the whole add-on belongs to `L0-cool`'s actionbar writer |
-| **C-5** dedicated-multiplayer safety | Concurrent activations by different players must each resolve independently (§9). No shared mutable targeting state may exist between handler invocations |
-| **C-8** non-destructive world mutation | The governing constraint. Default posture is **deny**: a cell whose safety cannot be established is skipped, not filled (R-006). Asymmetry is deliberate — a weak trap is a tuning bug, destroyed storage is unrecoverable |
-| **C-10** preserve the platform | Lands in the existing BP script module alongside the pickaxe's auto-smelt (ADR-010); the 7 shipped suites must stay green |
-| **C-11** three-hop verification | Placement correctness is provable in GameTest on Docker BDS; only "does the trap look right / does Use work by long-press on touch" needs the iPad |
-
-## Open items carried by this component
-
-- **Q-011** (inherited, ASM-008) — exact cube geometry relative to the target, and whether self-entombment when targeting adjacent ground is intended. Refined in `L0-trap__concept-client-question`. **Not self-resolved.**
-- **Q-013** (inherited, ASM-007) — the closed protected-block deny-list. Refined with a concrete proposed list. **Not self-resolved.**
-- **ASM-006** (inherited) — use and attack are distinct engine events. Cheap to falsify; do it first.
-- **ASM-017…020** (new) — reach value, no-hit fallback, entity→cell mapping, chunk-loaded probe.
-- **CTR-007** (new) — the success predicate spans the `L0-trap` / `L0-cool` ownership line.
-- **CTR-008** (new) — §5 and §6 disagree about the **zero-permitted-cells** activation.
-
-## Risk note
-
-Two failures dominate. The first is **over-permissive classification**: one missing block-entity check and the weapon becomes a storage-deletion tool, breaching C-8 with no undo and no test that would have caught it. The second is **wrong geometry** (ASM-008): §13's acceptance test is written loosely enough to pass a cube that is off by one on every axis, so the gate gives false assurance — this needs an explicit owner answer plus a GameTest that asserts the exact 27 coordinates, not an approximate count. A distant third: activating the cooldown before placement succeeds, which §5 and §12 both forbid and which is only visible as a player complaint.
+**NFRs.** Server-authoritative, deterministic across clients (spec §9); no permanent per-tick world scan (spec §11, project C-4/C-5) — target resolution and cube fill are one-shot, triggered only by a cast; never write into unloaded/inaccessible chunks (spec §6/§12).
 
 
 
@@ -452,191 +262,70 @@ Two failures dominate. The first is **over-permissive classification**: one miss
 
 ## Architecture Decisions
 
-### Architecture Decisions (L0)
-
-# Architecture Decisions
-
-**Links** — `title: Architecture Decisions` · `aliases: ["L0-adr", "Architecture Decisions"]` · `part_of: ["L0"]` · `is_a: ["architecture-decision"]` · `relates_to: ["L0-item", "L0-once", "L0-keep", "L0-trap", "L0-cool", "L0-qatg"]` · `see_also: ["webswordspecv1ruen-part-1", "webswordspecv1ruen-part-2"]` · `supersedes: ["L0"]`
-
-ADR-001…004 (Bedrock over Java; stable API only; three-hop verification loop; TypeScript + namespace `andrew`) were recorded at v1 and remain in force — now evidenced by shipped code rather than by intent.
-
-**Numbering across the tree.** ADR-005…010 are L0's, forced by the spec at decompose time. ADR-011/012 belong to `L0-once`, ADR-013/014/015 to `L0-trap`; `L0-keep`, `L0-cool` and `L0-qatg` used local prefixes (`ADR-K*`, `L0-cool-adr1`, `ADR-Q*`). **ADR-016…020 are new at reduce** — each one is a decision no single child could take, because it settles something visible only across two or more of them.
+### ADR-L0-cast · One ability-handler contract for every legendary weapon (L0-adr-cast)
 
 ---
+is_a: ["architecture-decision"]
+part_of: ["L0"]
+relates_to: ["L0-lgnd", "L0-webs", "L0-scyt", "L0-lgnd-r001", "L0-lgnd-r003", "L0-lgnd-r007", "L0-lgnd-p004", "L0-webs-r005", "L0-webs-ad02", "L0-scyt-ad03", "L0-scyt-r003", "L0-sprj-ad01", "L0-xcx1", "L0-xcx2"]
+requires: ["L0-lgnd"]
+status: accepted
+---
+# ADR-L0-cast · One ability-handler contract for every legendary weapon
 
-## ADR-005 — One-per-world state lives in world-level dynamic properties
+**Context.** After the deep-dive, the three children describe the boundary between framework and weapon in three different ways:
+- `L0-lgnd` (`r001`, `r003`, `p004`): the handler is `(player, hand) → "cast" | "refused" | "busy"`, and **only the ability owner** calls `cooldown.start`. The dispatcher alone subscribes to `itemUse` and `playerInteractWithBlock`. No weapon calls `setActionBar`.
+- `L0-webs` (`r005`, `ad02`): the callback returns `{filled}`, and "`L0-lgnd` decides whether to start the cooldown". → `L0-xcx1`.
+- `L0-scyt` (`ad03`, `r003`): "listens to `afterEvents.itemUse` alone" and shows its no-target text through a `hud.hold` that the `lgnd` contract does not publish. → `L0-xcx2`.
 
-**Context.** §3 requires a craft flag surviving logout, world save and restart; §11 requires *«устойчивое world-level состояние»*; C-1 forbids Beta APIs; §13 makes restart survival an acceptance test.
+**Decision.**
+1. **The handler contract is `lgnd`'s.** Each weapon registers `ability(player, hand): "cast" | "refused" | "busy"`. The weapon calls `cooldown.start(player, key)` itself, and only on success:
+   - Web Sword: when `filled > 0`.
+   - Scythe: at the first hit and again at resolution (`L0-sprj-ad01`).
 
-**Decision.** Persist the flag as a **world-scoped dynamic property** on the stable `@minecraft/server` surface, written inside the craft-completion handler, read before any craft is allowed. Treat the property as the single source of truth; nothing else may gate the craft.
+   The framework never infers success. The Web Sword's pure `resolveAndPlaceTrap → {filled}` stays as an internal function inside the Web Sword handler.
+2. **Trigger events belong to the dispatcher.** `L0-lgnd-p004` subscribes to both events and de-duplicates them for every weapon. `L0-scyt-ad03` reads as *"the Scythe ability ignores block context"*. It does not mean the Scythe keeps its own subscription. Its GameTest (one press on a block → one activation) still applies, now against the dispatcher.
+3. **Transient messages are added to the published contract:** `hud.notify(player, translateKey, holdMs ≈ 2000)`.
+   - Only the HUD module writes it.
+   - The steady HUD pass skips a player whose hold has not expired.
+   - It covers the Web Sword's no-room and no-target texts (`L0-webs-r005`) and the Scythe's `no_target` (`L0-scyt-r003`, CTR-017).
 
-**Rejected alternatives.** *Scoreboard objective* — operator-visible, trivially reset, semantically a score. *Marker entity* — despawnable, killable, lost with a chunk. *State file outside the world* — not portable with the world, unreachable from the sandbox. *Deriving the flag by scanning for existing swords* — violates C-4 and contradicts §4's admin copies.
+   Weapons still never call `setActionBar` (`L0-lgnd-r001`, `r007`).
+4. **Item JSON ownership.** The Web Sword's `minecraft:allow_off_hand` change belongs to `L0-webs` (item identity, `L0-webs-r001`). The Scythe's belongs to `L0-sitm`. This corrects the wording in `L0-lgnd-r004`.
 
-**Consequence.** World-scoped, therefore correctly shared by all players on a dedicated server (C-5), and correctly *per world*: copying the world copies the spent budget, matching *«один раз на весь мир/сервер»*.
+**Consequences.** One rule, one owner: C-17 in `lgnd`'s crosswalk, carried as `L0-lgnd-r001`. `L0-webs-r005`, `L0-webs-ad02` and the `L0-webs` component text were reconciled in place during reduce to point here. `hud.notify` must be part of the `lgnd` generalisation task, before either weapon migrates.
+
+
+
+
+
+
+
+### ADR-L0-lgnd · L0 rulings on the framework's open contradictions (L0-adr-lgnd)
 
 ---
-
-## ADR-006 — Ability executes event-driven and server-side, on a reach-bounded raycast
-
-**Context.** §5 (Use-activated, normal reach, no artificial long ray), §6 (per-cell safety), §9 + §11 (server-authoritative), C-4 (no per-tick global scan), §12 (*«Луч упирается в ближайший доступный блок»*).
-
-**Decision.** Hook the stable item-use event. Resolve the target **server-side** by raycasting from the player, bounded by vanilla interaction reach, stopping at the first solid block; accept a block point, an entity, or a nearby point within reach. Validate reach **before** writing any state, then iterate the 27 cells applying the safety filter per cell.
-
-**Rejected alternatives.** *Per-tick proximity scan* — prohibited by §11. *Client-supplied coordinates* — violates C-3. *Custom extended-range ray* — prohibited by §5. *Structure/fill in one call* — cannot express per-cell skipping (§6) and risks writing into unloaded chunks (§12).
-
-**Consequence.** Ordering is forced: **validate reach → check cooldown → place cells → start cooldown.** Any other order can consume the cooldown on a failed activation. *The cooldown-check step straddles a child boundary; see ADR-017.*
-
+is_a: ["architecture-decision"]
+part_of: ["L0"]
+relates_to: ["L0-lgnd", "L0-webs", "L0-scyt", "L0-sprj", "L0-infr", "L0-lgnd-cx02", "L0-lgnd-cx03", "L0-lgnd-cx04", "L0-lgnd-cx06", "L0-lgnd-ad02", "L0-lgnd-ad03", "L0-lgnd-ad06", "L0-lgnd-ac11", "L0-lgnd-as03", "L0-xasm1", "cool-ctr1"]
+status: accepted
 ---
+# ADR-L0-lgnd · L0 rulings on the framework's open contradictions
 
-## ADR-007 — Cooldown is a shared per-player ability service, not sword-local state
+These contradictions were filed inside `L0-lgnd`. Each one needs an L0 reading because it changes a global constraint, a global assumption or a shipped weapon.
 
-**Context.** §8 requires exactly 30 s, an actionbar readout of *remaining* time, and a main-hand-over-off-hand priority rule presupposing multiple legendary items. §12 defers persistence to an *«общая система cooldown проекта»* that does not exist. More weapons are coming.
-
-**Decision.** Implement cooldown as a small **per-player, per-ability-key service** owned by the add-on, with the Web Sword registering one ability into it. Ship a single-item implementation now, with the ability-key indirection already in place — the seam the future framework plugs into.
-
-**Rejected alternatives.** *`minecraft:cooldown` component alone* — gates re-use but exposes no remaining-time value, so §8's UI requirement cannot be met from it. *Ad-hoc inline timer* — makes hand-priority unimplementable, guarantees a rewrite at weapon #2. *Per-item-instance cooldown* — lets a player alternate two copies to bypass the gate (ASM-009).
-
-**Consequence.** Keying by **player + ability** is a deliberate anti-abuse choice. The actionbar writer is the one permitted recurring tick under C-4, scoped to players currently holding the sword.
-
----
-
-## ADR-008 — Death retention intercepts the drop; it does not rely on `keepInventory`
-
-**Context.** §4: no drop on death, return to the same owner on respawn, no extra copy across death/disconnect/restart. §12: death during cooldown must neither dupe the sword nor reset the craft flag. C-7 states anti-dup absolutely.
-
-**Decision.** Handle the sword specifically on the death/drop path — remove it from the death drop and restore exactly one instance to the same player on respawn, guarded by an idempotency check so a repeated or late event cannot restore a second copy.
-
-**Rejected alternatives.** *`keepInventory` gamerule* — server-wide, retains everything, materially changes PvP stakes for every other item. *Soulbound-style enchantment* — no such vanilla Bedrock mechanic. *Respawn-time "give if missing" with no ledger* — cannot distinguish "died and lost it" from "admin took it" or "legitimately holding an admin copy", so it dupes.
-
-**Consequence.** The restore path needs a notion of *which* sword instance belongs to the player. This collides with §3's allowance of admin copies — CTR-005, and now ADR-016.
-
----
-
-## ADR-009 — All user-facing text is a translate key resolved by the Resource Pack
-
-**Context.** §10 mandates RU/EN for the item name *and* every runtime message, and forbids hardcoding one language in the script (C-9).
-
-**Decision.** Scripts emit **rawtext with `translate` keys plus `with` substitutions**; the strings live in `packs/resource/texts/ru_RU.lang` and `en_US.lang` alongside the pickaxe entries. `L0-item` owns the catalogue; `L0-once` and `L0-cool` consume keys and add no literals.
-
-**Rejected alternatives.** *Literal Russian strings in `sendMessage`* — prohibited by §10, leaves EN players unserved. *Script-side language dictionary* — reimplements the engine's own system.
-
-**Consequence.** Every message-emitting feature lands a `.lang` pair in the same change. *When the catalogue may be frozen is itself a cross-component question; see ADR-019.*
-
----
-
-## ADR-010 — Web Sword ships inside the existing `andrew` packs, not as a separate add-on
-
-**Context.** §14 calls the weapon a *«самостоятельный готовый модуль»*, which invites a separate pack. But Stages 0–1 delivered one BP + one RP at a fixed version target with a working build/validate/GameTest/BDS pipeline (C-10).
-
-**Decision.** Add `andrew:web_sword` as a new item, recipe and script module **within** `packs/behavior` / `packs/resource`, reusing manifests, version scheme, test suites and BDS harness. "Standalone module" is honoured as **code and test isolation**, not pack isolation.
-
-**Rejected alternatives.** *Separate BP/RP pair per weapon* — multiplies manifests and UUIDs, forces N installs, re-opens the import-compatibility risk Stage 0 closed once. *Core pack + per-weapon packs* — right at ten weapons, premature at one.
-
-**Consequence.** Pickaxe regression protection is mandatory (C-10). If the weapon count later justifies splitting, this is the ADR to revisit.
-
----
----
-
-# Cross-component decisions (reduce phase)
-
-## ADR-016 — The provenance marker is a third piece of durable state, with a declared producer/consumer split
-
-**Resolves:** CTR-009 (`L0-keep`). **Relates to:** `L0-once`, `L0-keep`, and CTR-005 / CTR-006. **Conditional on:** Q-006 — if the owner refuses the marker, this ADR is void and `L0-keep` narrows instead.
-
-**Context.** The decomposition plan partitioned durable state cleanly in two: *"`L0-once` owns the craft flag; `L0-keep` owns the item ledger. These are different pieces of state and neither may write the other's."* CTR-005's recommended resolution introduces a **third** piece — a per-instance provenance marker distinguishing a survival-crafted sword from an admin copy. It can only be *written* at craft completion, which is `L0-once`'s handler, and it is *read* exclusively by `L0-keep`. The two-way partition has no slot for it, and under the rule as written either child breaches it.
-
-**Decision.** Name the marker explicitly as a third piece of state with **split producer/consumer ownership**:
-
-- **Producer:** `L0-once`, at craft completion, in the same synchronous handler that claims the craft flag (ADR-011).
-- **Consumer:** `L0-keep`, exclusively. No other child reads or writes it.
-- **Definition:** a single shared constant/helper module whose shape, durability contract and semantics are **specified by `L0-keep`** (`L0-keep-ent2`) and *called* by `L0-once`. The write site belongs to `L0-once`; the definition is not duplicated.
-
-This mirrors the pattern the plan already established for localization — *"ownership is central, use is distributed"* — so it extends an existing rule rather than inventing one.
-
-**Rejected alternatives.** *Extend `L0-once`'s ownership to cover the marker* — `L0-once` would own state whose invariants and impact-if-wrong are entirely `L0-keep`'s, with no contract between them. *Let `L0-keep` hook the craft event* — two children mutating state inside one handler is the concrete form of the overlap the rule exists to prevent, and it would collide at integration as a merge conflict in the craft handler. *Leave it unstated* — the observed failure mode is the worst one: a marker one child assumes is written and the other never writes, which silently stops retaining swords with no error anywhere.
-
-**Consequence.** The decomposition plan's ownership rule 2 is **amended** to read: *`L0-once` owns the craft flag, `L0-keep` owns the retention ledger and defines the provenance marker, and `L0-once` writes the marker through `L0-keep`'s helper at craft completion.* This must be settled **before the craft handler is written** — it is the one place the two children meet in code.
-
----
-
-## ADR-017 — `L0-cool` exposes a read-only readiness query; `L0-trap` calls it and never writes the timer
-
-**Resolves:** CTR-007 (`L0-trap`). **Relates to:** `L0-trap`, `L0-cool`, `L0-qatg`.
-
-**Context.** The decomposition plan's ownership rule 3 draws the boundary at the moment of success: *"`L0-trap` owns the success predicate; `L0-cool` owns everything after it."* But ADR-006's forced ordering places a **cooldown check inside** that predicate — an activation while the timer runs is not a success. "Everything after success" and "check cooldown before placing" cannot describe the same line. Both children noticed independently and both provisionally implemented the same answer, which is the strongest available evidence that it is the right one.
-
-**Decision.** `L0-cool` exposes exactly two entry points and `L0-trap` is their only caller:
-
-- `isReady(player, abilityKey)` — **pure read, never mutates.** Called by `L0-trap` as step 2 of ADR-006's ordering, before any world state is written.
-- `start(player, abilityKey)` — **the sole write path that arms the timer.** Called by `L0-trap` only after placement has confirmed success.
-
-`L0-cool` does **not** listen for the use event. The event hook stays with the component that owns §5.
-
-**Rejected alternatives.** *`L0-cool` wraps the activation*, intercepting the use event and calling into `L0-trap` when ready — this moves the §5 event hook out of `L0-trap`, contradicting its ownership of activation, and forces targeting knowledge into a component that should have none. *Leave it unstated* — the concrete predicted failure is that both children implement a gate and the sword checks the cooldown twice, harmless until one of them also starts it.
-
-**Consequence.** Ownership rule 3 is **amended**: *`L0-cool` owns all mutation of the timer and exposes a read-only readiness query; `L0-trap` calls it as part of the success predicate and never writes cooldown state.* §13 test 9 is consequently claimed from **both** sides by design (`L0-trap-ac08` asserts the gate, `L0-cool-ac01` asserts the duration) — see ADR-018, which stops `L0-qatg` flagging it as a defect.
-
----
-
-## ADR-018 — The acceptance matrix admits declared split-claim rows, and the DoD gate uses the four-vector dup reading
-
-**Resolves:** CTR-010 (`L0-qatg`), and the double-claim ambiguity left by ADR-017. **Relates to:** `L0-qatg`, `L0-trap`, `L0-cool`, `L0-item`, `L0-once`.
-
-**Context.** Two things about the gate only resolve above the children. First, `L0-qatg`'s matrix invariant demanded exactly one owning artifact per §13 row, with a single hand-carved exception for AT-12 — but three rows legitimately have two owners, because three §13 lines each bundle two claims. Second, §14's DoD sentence names **three** dup vectors (*«крафт, смерть или reconnect»*) while §4, §12 and C-7 name **four**, adding restart. A gate implemented literally from §14 would report green without ever requiring restart-dup evidence.
-
-**Decision.** Two rulings, both on the side of the stricter reading.
-
-1. **Split-claim rows are legitimate and enumerated.** Exactly three §13 rows have two owners, and no others may:
-   - **AT-9** — `L0-trap` (the re-use gate) + `L0-cool` (the 30 s duration), per ADR-017.
-   - **AT-12** — `L0-trap` (identical cobweb on both clients) + `L0-once` (the craft race), per the plan's deliberate refusal to make multiplayer determinism its own node.
-   - **The melee row** — `L0-item` (damage parity with Diamond Sword) + `L0-trap` (a normal swing creates no cobweb and starts no cooldown).
-
-   Outside this list, two owners remains a defect to report upward.
-2. **The DoD gate adopts the four-vector reading.** §14's sentence is treated as **elliptical** — dropping "and restart" because §12 covers it two paragraphs earlier — not as a deliberate narrowing. Restart-dup evidence is required before the gate can close.
-
-**Rejected alternatives.** *Force each §13 line onto one owner* — would push either damage parity into `L0-trap` or the cooldown duration into `L0-trap`, in both cases relocating a criterion away from the component that owns the code it tests. *Follow §14 literally on three vectors* — there is no scenario where honouring C-7 over §14's text produces a worse outcome, and the failure it permits ("false green") is exactly the risk `L0-qatg` names as its largest.
-
-**Consequence.** `L0-qatg-ent2`'s invariant 1 and its snapshot were amended in place at reduce. The matrix now stands at `unclaimed_count = 0`, `duplicate_claim_count = 0`, `pending_artifact_count = 0`, `overall_status = complete-pending-execution`. Neither ruling requires the owner's input; both are recorded so the gap between the two texts stays visible rather than being silently absorbed into rule text.
-
----
-
-## ADR-019 — The `.lang` catalogue is frozen last, not first
-
-**Relates to:** `L0-item`, `L0-once`, `L0-trap`, `L0-cool`. **Blocked by:** Q-008, Q-017, and conditionally Q-006.
-
-**Context.** The decomposition plan's build order opens with `item`, and ADR-009 makes `L0-item` the sole writer of the catalogue. Read together, that invites publishing the `.lang` pairs first and moving on. Looking across all six children shows the opposite dependency: the **set of keys is not knowable** until questions owned by other children are answered.
-
-| Key | Needed by | Blocked on |
+| Child item | L0 ruling | Why it is L0's call |
 |---|---|---|
-| `item.andrew:web_sword.name` | `L0-item` | nothing — publishable today |
-| First-craft announcement (+ creator `with`) | `L0-once` | nothing — publishable today |
-| Cooldown remaining-time readout (+ seconds `with`) | `L0-cool` | nothing — publishable today |
-| Blocked-craft denial message | `L0-once` | **Q-008** — exists only if the owner picks "block and consume with an explanation" |
-| "No valid space" on a zero-cell activation | `L0-trap` | **Q-017** — exists only under CTR-008 option (c) |
-| Any retention-related message | `L0-keep` | **Q-006** — the component emits none today, but its shape is unsettled |
+| `L0-lgnd-cx02`: a stale copy after a hopper or allay pickup | **(a) Accept.** A stale generation cannot cast. It is deleted on its first `playerInventoryItemChange` in any player inventory (`L0-lgnd-r005`). No heuristic proximity query is added. | C-7 is about *usable* duplicates. A melee-only stale copy that disappears on first player contact does not break it. The heuristic (b) would add a local query on every removal (C-5), and (c) would undo the CTR-1 default. |
+| `L0-lgnd-cx03`: `hidden_until` in ticks | **Epoch ms.** ASM-020 is amended by `L0-xasm1`. | The same clock problem affects the cooldown store, which `webs` ships and `scyt` will use. |
+| `L0-lgnd-cx04`: "tests unchanged" | ADR-021 reads as **"no edits to assertions"**. Harness wiring in `src/gametest/main.ts` (calling `registerLegendaryFramework()` in place of the self-subscribing `registerTrap()`) is allowed. `L0-lgnd-ac11` is the gate. | The GameTest harness belongs to `L0-infr`. The code it calls belongs to `L0-webs`. |
+| `L0-lgnd-cx06`: the loss watcher vs C-5 | **The wording of C-5 is widened:** *"short-lived tick loops are allowed only while temporary objects exist: Scythe volleys, or marked legendary item entities on the ground. Each such loop iterates only those objects."* Before `L0-lgnd-ad03` ships, `L0-lgnd-as03` must be measured on BDS 1.26.51.1. If `beforeEvents.entityRemove` reliably fires on a Void kill, the watcher is dropped. | C-5 is an L0 constraint. `webs` and `scyt` also cite it. |
 
-**Decision.** `L0-item` publishes the three unblocked pairs immediately so nothing waits on it, and **holds the catalogue open** until Q-008 and Q-017 are answered. "Catalogue frozen" becomes an explicit `L0-item` milestone that `L0-qatg` checks, not an implicit consequence of `L0-item` finishing first.
+**Not re-ruled here:** CTR-1 (Void/lava return for the Web Sword) and CTR-3 (off-hand priority). Both stay open at L0 and run on their autopilot defaults (Q-020 a, Q-019 a), which `lgnd` implements. The operator may still reverse them at DEMO acceptance.
 
-**Rejected alternatives.** *Freeze the catalogue at `L0-item` completion and amend later* — guarantees a second RP pass and a second iPad verification hop for what is otherwise a one-line change, and the iPad hop is the expensive one (C-11). *Let the blocked children author their own literals provisionally* — directly violates C-9/ADR-009, and provisional literals are exactly the kind of thing that ships.
-
-**Consequence.** The build order in the decomposition plan stays as written — `L0-item` still goes **first** — but its *definition of done* now has a tail that closes after `L0-once` and `L0-trap`. Two of the three blocking questions are cheap for the owner to answer, so this is a scheduling note rather than a risk.
-
----
-
-## ADR-020 — One persistence mechanism, one recurring tick, for the whole add-on
-
-**Relates to:** all six children. **Records convergence rather than forcing it.**
-
-**Context.** No child was told how to persist state or whether it might poll. Four of them independently reached for **dynamic properties on the stable `@minecraft/server` surface** — at three different scopes — and five of them independently concluded they must add **zero** recurring ticks. That is convergence worth freezing before a second weapon erodes it by precedent.
-
-**Decision.** Two standing rules for the add-on, not just the Web Sword:
-
-1. **All durable add-on state is a dynamic property on the stable surface.** No scoreboards, no marker entities, no files outside the world, no structure abuse. Scope is chosen to match the state's lifetime: world for the craft flag and retention ledger, player for the cooldown record, item-instance for the provenance marker (ADR-016).
-2. **The add-on spends exactly one recurring interval, and `L0-cool`'s actionbar writer holds it** — scoped to players currently holding a tracked ability's item, never all online players, never a world scan. A child that believes it needs a second tick escalates to L0 rather than adding one; per C-1's precedent the *mechanic* degrades before the budget grows.
-
-**Rejected alternatives.** *Leave both implicit* — they are currently true only by coincidence, and the failure is gradual: the second weapon adds "just one more" interval, and C-4 erodes into a per-tick scan nobody decided on. *Mandate a single persistence facade module now* — premature at one weapon; four call sites with three different scopes do not yet justify an abstraction, and the constraint above gets the safety without the indirection.
-
-**Consequence.** C-4 acquires a concrete, countable form — *the add-on has one interval; grep for it* — which `L0-qatg` can assert cheaply in the existing `npm test` layer without a live engine. It also means any future cross-item cooldown framework (ADR-007's seam, CTR-004) inherits the tick budget rather than being free to add its own.
+**Consequences.**
+- `lgnd-cx02`, `cx03`, `cx04` and `cx06` are resolved by this ADR. `cx05` is resolved by `L0-adr-scope` §5.
+- `lgnd-cx01` is escalated separately (`L0-xcx3`), because it needs the client.
+- The `lgnd` generalisation task gets one extra acceptance step: the BDS probe for `as03`.
 
 
 
@@ -644,46 +333,73 @@ This mirrors the pattern the plan already established for localization — *"own
 
 
 
-### Architecture Decisions — One-per-World Craft Gate (L0-once)
-
-# Architecture Decisions — One-per-World Craft Gate
-
-**Links** — `part_of: ["L0-once"]` · `is_a: ["architecture-decision"]` · `relates_to: ["L0", "L0-keep", "L0-item"]`
-
-**Inherited and binding:** **ADR-005** (one-per-world state lives in world-level dynamic properties), **ADR-009** (all user-facing text is a translate key), **ADR-010** (ships inside the existing `andrew` packs). This node does not revisit them. Two further decisions are forced at component depth.
+### ADR-L0-scope · Final component scopes after the deep-dive (L0-adr-scope)
 
 ---
+is_a: ["architecture-decision"]
+part_of: ["L0"]
+relates_to: ["L0-webs", "L0-lgnd", "L0-scyt", "L0-sitm", "L0-sprj", "L0-stgt", "L0-webs-cx01", "L0-scyt-cx01", "L0-sprj-cx03", "L0-lgnd-cx05"]
+status: accepted
+---
+# ADR-L0-scope · Final component scopes after the deep-dive
 
-## ADR-011 — The enforcement point is craft completion, with a synchronous read-check-write claim
+**Context.** Two children found that their scope overlapped a sibling's, or that part of the graph was missing:
+- `L0-webs-cx01`: `webs` overlaps `lgnd`.
+- `L0-scyt-cx01`: `sitm` and `sprj` have no component nodes, and no targeting node exists.
 
-**Context.** §3 requires the second survival craft to be *«заблокирован без потери ингредиентов, насколько это позволяет стабильный API»*, and §9 requires that two simultaneous crafts cannot bypass the gate. C-1 forbids Beta APIs; C-5 makes dedicated-server concurrency a first-class concern. ASM-011 anticipates that the stable surface offers no pre-craft veto.
+Both did the sensible interim thing and scoped themselves down, or acted as the umbrella. `L0-sprj-cx03` adds that stale rollup ids (`L0-scpr`, `L0-sctg`, `L0-scit`) collide with the current numbering.
 
-**Decision.** Hook the **craft-completion** event server-side. Inside a single synchronous handler invocation, in this order: confirm the craft produced a result → read the crafting player's game mode → read the world craft flag → if unset, write it → then announce. If set, remove the result and attempt the ingredient refund. **No `await`, no `system.run`, no queued callback may appear between the flag read and the flag write** — that uninterrupted window *is* the atomic claim (ASM-015).
+**Decision.**
+1. **L0 has exactly five components:** `infr`, `pick`, `lgnd`, `webs`, `scyt`.
+2. **`L0-webs`** is scoped to the Web Sword's cast body (targeting, the 27-cell cube, the protected/unloaded filter, the outcome report) plus the **static** item/recipe definition. Craft gate, retention, loss return, cooldown/busy, dispatch, HUD, commands and localization plumbing belong to `L0-lgnd`. `webs` references them by id and does not restate them. This resolves `L0-webs-cx01`.
+3. **`L0-scyt`** is the umbrella for the Scythe:
+   - `L0-sitm` (item JSON, recipe, enchant slot, assets) and `L0-sprj` (volley engine) are its **sub-scopes**. Logically they are `part_of L0-scyt`. Their node ids are kept so their links stay valid.
+   - Targeting belongs to `L0-scyt` (`p001`, `r001`–`r003`, `ac01`–`ac04`). `L0-stgt` is **not** reopened, and references to `L0-stgt` in `lgnd`/`sprj` read as `L0-scyt-p001`.
 
-**Rejected alternatives.**
-- *Pre-craft veto / recipe-unlock gating* — preferred if it exists on the stable surface (ASM-011's "good direction": simpler, no refund edge cases). Rejected as the **planned** design only because the analysis cannot confirm it exists. If implementation finds it, revisit this ADR rather than working around it.
-- *Deferring the flag write to a follow-up tick* (`system.run`) — the single most likely way to introduce the §9 race. It passes every single-player test and fails only under real concurrency.
-- *A per-player "has crafted" record* — fails §3 outright: a second player would get their own sword. Also fails AC-ONCE-2's cross-player half.
-- *A lock/mutex around the craft* — no such primitive exists on the stable surface, and the single-threaded handler model makes it unnecessary if the ordering rule is obeyed.
-- *Announcing before the flag write* — a throw between the two announces a craft that was never recorded, silently re-opening the budget.
+   This resolves `L0-scyt-cx01` and item 2 of `L0-sprj-cx03`.
+4. **Rollups.** `project-knowledge/*.md` are regenerated from the live KV after this run commits. The `L0-scpr`/`L0-sctg`/`L0-scit` text and their ADR/C/ASM numbering are retired. When an id means one thing in a rollup and another in a live artifact, the **live** artifact wins. This covers item 1 of `L0-sprj-cx03`. Whether the regeneration happened can be checked after commit. It is not claimed here.
+5. **Operator command.** `/andrew:legendary <id> …` is the framework command. `/andrew:websword` stays as a permanent alias, so README, Q-006, Q-008 and Q-014 remain correct. This closes `L0-lgnd-cx05`, which the child had already withdrawn.
 
-**Consequence.** The ordering is a **reviewable rule**, not just a runtime behaviour: a code reviewer can verify race safety by reading for asynchrony between read and write. That matters because AC-ONCE-5 is timing-dependent and can pass by luck. The review gate is recorded in R-004 and in AC-ONCE-5's "review gate, not just a test" clause.
+**Consequences.** Future deep-dives use the five slugs above. Each shared legendary concern has one owner (`lgnd`), and each weapon keeps only what is unique to it.
+
+
+
+
+
+
+
+### ADR-L0-scyt · Scythe tuning, when its cooldown is committed, and Stage-2 ordering (L0-adr-scyt)
 
 ---
+is_a: ["architecture-decision"]
+part_of: ["L0"]
+relates_to: ["L0-scyt", "L0-sprj", "L0-lgnd", "L0-infr", "L0-sitm", "L0-scyt-cx02", "L0-sprj-ad02", "L0-sprj-ad01", "L0-sprj-cx01", "L0-lgnd-r009", "L0-lgnd-r003", "cool-asm5"]
+requires: ["L0-lgnd", "L0-infr"]
+status: accepted
+---
+# ADR-L0-scyt · Scythe tuning, when its cooldown is committed, and Stage-2 ordering
 
-## ADR-012 — The flag stores a versioned record, not a bare boolean
+**1. Projectile tuning (`L0-scyt-cx02`).**
+- Follow the live `L0-sprj-ad02`: **0.5 block/tick, pure pursuit, no turn limit**.
+- Where `sprj` says nothing, adopt from the retired rollup design: a hit radius of 1.0, a 5-tick stagger and a 200-tick lifetime.
+- Keep every value in one exported `SCYTHE_TUNING` constant, and have the GameTest timing windows read them from there.
+- ASM-018 is kept. The rollup's ASM-029 (0.6 plus a turn limit) is retired together with `L0-scpr` (`L0-adr-scope` §4). This agrees with L0's `cool-asm5` (finite lifetime, staggered launch).
 
-**Context.** ADR-005 fixed the *storage mechanism* (world dynamic property) but not the *payload*. §3 requires the announcement to name the creator; §13 requires the block to persist across restart; G-4 will add more legendary weapons, each presumably with its own gate.
+**2. Cooldown commit (`L0-sprj-cx01`).** Accept `L0-sprj-ad01` as an amendment to ADR-025: commit at the first hit and re-stamp at resolution. It is checked against the framework:
+- `L0-lgnd-r003`: the ability owner calls `start`. ✔
+- `L0-lgnd-r009`: busy wins over cooldown while the volley flies, and at resolution busy clears and `start` runs in one turn. ✔ The early write is invisible because busy hides it.
+- `cooldown.start` must be an idempotent overwrite. `lgnd` guarantees that.
 
-**Decision.** Store a single serialized JSON record under `andrew:web_sword_craft_gate` carrying `{ v, crafted, crafterName, crafterId, at }` (entity `L0-once-ecft`). One property, written atomically as one value.
+**3. Ordering, as the reduce invariant requires.** The Scythe **depends on the `lgnd` generalisation**. Today the framework is specific to the Web Sword: one cooldown slot per player, one pending mark, main hand only, `ws_*` ids hard-coded, and no busy or `hud.notify`. The Stage-2 Scythe plan is:
+1. `lgnd` generalisation + Web Sword migration (`L0-lgnd-p006`, gate `L0-lgnd-ac11`), including `hud.notify` (`L0-adr-cast`) and the `as03` probe (`L0-adr-lgnd`).
+2. `L0-sitm` item/recipe/assets, including the Scythe's `allow_off_hand`.
+3. `L0-scyt` targeting (`p001`) on `isHiddenFromTargeting`.
+4. The `L0-sprj` volley engine.
+5. DEMO: GameTest on the `bds` channel through `L0-infr`, then the iPad pass.
 
-**Rejected alternatives.**
-- *A bare boolean property* — cannot name the crafter in the blocked-craft denial message, and offers no migration path when the cross-weapon framework arrives. The information is free to store and impossible to recover later.
-- *Several independent properties* (`…_crafted`, `…_crafter`, `…_at`) — a torn multi-write can leave `crafted: true` with no crafter name, producing a broken announcement and an unattributable gate. A single serialized value makes the write all-or-nothing.
-- *Recording the crafted item instance in the record* — deliberately rejected. It would pull CTR-005's provenance question into this component, which owns the craft flag and explicitly **not** the item ledger. If the owner grants a provenance marker, it belongs to `L0-keep`.
-- *`crafterName` alone, without `crafterId`* — a display name is mutable; the id is not. The denial message must still attribute the craft years later.
+C-11 is met: the Web Sword part of Stage 2 closed at `f22896a`. Steps 2–4 cannot be merged before step 1.
 
-**Consequence.** `v` is the migration seam: when weapon #2 lands and a shared gate registry becomes worthwhile, existing worlds can be read forward without re-opening any budget. This is the same "ship single-item, keep the seam" posture ADR-007 takes for cooldown, applied to persistence.
+**Not resolved here:** `L0-sprj-cx02` (the lethal branch under Resistance V). It keeps its interim option (a) as a documented exception to C-15, and it does not block.
 
 
 

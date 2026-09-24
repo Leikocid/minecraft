@@ -1,22 +1,21 @@
 ---
 type: "concept-assumption"
-node_id: "L0-cool-asm2"
+node_id: "cool-asm2"
 source_channel: "rollout"
-aliases: ["L0-cool-asm2"]
-part_of: ["L0-cool"]
+analysis_version: 1
+title: "A-2 · \"Ближайший видимый игрок\" means unobstructed line of sight within 20 blocks"
+aliases: ["cool-asm2"]
 is_a: ["assumption"]
-relates_to: ["L0-cool"]
-analysis_version: 2
-priority: 510
-size_chars: 604
-tags: ["assumption","actionbar","tuning","L0-cool"]
-level: 2
+part_of: ["L0"]
+relates_to: ["L0"]
+priority: 520
+size_chars: 706
+tags: ["CAN_ASSUME", "scythe", "title:Visible = line of sight"]
 ---
+# A-2 · "Ближайший видимый игрок" means unobstructed line of sight within 20 blocks
 
-## ASM-cool-2 — 20-tick (≈1 s) actionbar update cadence `CAN_ASSUME`
+**Gap.** Scythe §3 says "nearest visible PLAYER in 20 blocks" while projectiles pass through all blocks; "visible" is not defined.
 
-**Assumed.** The render loop (`L0-cool-proc2`) fires once per second (every 20 ticks), not every tick.
+**Assumption (CAN_ASSUME).** Visible = a block raycast from the owner's head to the candidate's head is not blocked by a solid block, and the candidate is not hidden per A-1; same dimension; not the owner; alive; Survival/Adventure (spectators and creative players excluded).
 
-**Basis.** §8 specifies no granularity, only that remaining time must be visible while holding. A 1 s cadence is finer than a human reads a 30 s countdown, and keeps the one permitted recurring tick (C-4) as cheap as the requirement allows.
-
-**Impact if wrong.** Purely a tuning value — a smoother or coarser countdown is a one-line change to `L0-cool-adr1`'s cadence parameter with no structural consequence. Low risk either way.
+**Impact if wrong.** If "visible" only means "not invisible", players behind walls would be valid targets (the projectiles can reach them); line-of-sight filtering would wrongly report "There is no player here".

@@ -1,13 +1,13 @@
 ---
 title: Decisions
 type: analysis
-generated_at: "2026-09-21T21:27:44.659Z"
+generated_at: "2026-09-24T19:44:23.906Z"
 source_channel: rollout
 node_id: rollout-decisions
 aliases: ["rollout-decisions","decisions"]
 is_a: ["rollout","decisions"]
-relates_to: ["decision-completion-flow-quick","decision-merge-policy-autopilot","decision-namespace-addona-andrew-asm-002-q-002","decision-tselevaya-versiya-bedrock-1-26-51-asm-001-q-001","decision-verification-approach-automatic","decision-windows-pk-ne-nuzhen-q-004","decision-yazyk-skriptov-typescript-asm-003-q-003","decision-zacharovanie-bez-durability-proverit-pervoy-zada","decision-q-006-web-sword-provenance-yes-metka-ekzemplyara","decision-q-007-enchantable-without-durability-podtverzhde","decision-q-008-blocked-craft-refund-a-obnaruzhit-i-vernut","decision-q-009-cooldown-persistence-sohranyat-mezhdu-vyho","decision-q-010-main-hand-off-hand-priority-otlozheno","decision-q-011-cube-geometry-27-kletok-tsentr-sosednyaya-","decision-q-012-two-player-dod-gametest-s-dvumya-simulated","decision-q-013-protected-blocks-zakrytyy-spisok-posture-s","decision-q-014-budget-after-destruction-pravo-ostaetsya-p","decision-q-015-gate-game-modes-survival-i-adventure","decision-q-016-sword-unlootable-podtverzhdeno-kak-zaduman","decision-q-017-zero-cells-proval-s-lokalizovannym-soobsch","decision-resolve-l0","decision-web-sword-item-values-uron-kak-u-vanilnogo-almaz"]
-priority: 510
+relates_to: ["decision-completion-flow-quick","decision-merge-policy-autopilot","decision-namespace-addona-andrew-asm-002-q-002","decision-tselevaya-versiya-bedrock-1-26-51-asm-001-q-001","decision-verification-approach-automatic","decision-windows-pk-ne-nuzhen-q-004","decision-yazyk-skriptov-typescript-asm-003-q-003","decision-zacharovanie-bez-durability-proverit-pervoy-zada","decision-q-006-web-sword-provenance-yes-metka-ekzemplyara","decision-q-007-enchantable-without-durability-podtverzhde","decision-q-008-blocked-craft-refund-a-obnaruzhit-i-vernut","decision-q-009-cooldown-persistence-sohranyat-mezhdu-vyho","decision-q-010-main-hand-off-hand-priority-otlozheno","decision-q-011-cube-geometry-27-kletok-tsentr-sosednyaya-","decision-q-012-two-player-dod-gametest-s-dvumya-simulated","decision-q-013-protected-blocks-zakrytyy-spisok-posture-s","decision-q-014-budget-after-destruction-pravo-ostaetsya-p","decision-q-015-gate-game-modes-survival-i-adventure","decision-q-016-sword-unlootable-podtverzhdeno-kak-zaduman","decision-q-017-zero-cells-proval-s-lokalizovannym-soobsch","decision-resolve-l0","decision-resolve-l0-keep-ctr006","decision-resolve-l0-once","decision-resolve-l0-qatg-ctr1","decision-resolve-l0-trap-ct07","decision-resolve-l0-trap-ct08","decision-web-sword-item-values-uron-kak-u-vanilnogo-almaz","decision-legendary-hand-priority-realizuem-seychas-osnovn","decision-legendary-ready-hud-gotovo-pokazyvaetsya-postoya","decision-legendary-rules-obschie-dlya-vseh-legendarnyh-vk","decision-scythe-enchantments-slot-sword","decision-scythe-hidden-target-dynamic-property-andrew-hid","decision-scythe-launch-applyknockback-s-kalibrovannoy-ver","decision-scythe-melee-damage-8-proveryaetsya-zamerom-prot","decision-scythe-projectiles-virtualnye-bez-suschnostey-ri","decision-scythe-true-damage-pryamoe-umenshenie-zdorovya-d"]
+priority: 520
 ---
 
 # Decisions
@@ -236,12 +236,67 @@ _Decided: 2026-09-21_
 
 
 
-## Resolved L0: CTR-001: версия зафиксирована по устрой… (decision-resolve-l0)
+## Resolved L0: Реестр: CTR-005 закрыт решением Q-006 (… (decision-resolve-l0)
 
 _Decided: 2026-09-21_
 
 
 Реестр: CTR-005 закрыт решением Q-006 (метка экземпляра), CTR-003 — Q-008, CTR-006 — Q-014, CTR-008 — Q-017; CTR-007/009/010 приняты по ADR-016/017/018
+
+
+
+
+
+## Resolved L0-keep-ctr006: CTR-009: принят ADR-016 — метка экземпл… (decision-resolve-l0-keep-ctr006)
+
+_Decided: 2026-09-21_
+
+
+CTR-009: принят ADR-016 — метка экземпляра: производитель L0-once (обработчик крафта), потребитель и владелец определения L0-keep (общий модуль)
+
+
+
+
+
+## Resolved L0-once: CTR-003: вернуть ингредиенты при заблок… (decision-resolve-l0-once)
+
+_Decided: 2026-09-21_
+
+
+CTR-003: вернуть ингредиенты при заблокированном крафте (вариант a) + сообщение; CTR-006: право после уничтожения меча не возвращается, сброс только операторской командой /andrew:websword reset
+
+
+
+
+
+## Resolved L0-qatg-ctr1: CTR-010: принято четырёхвекторное чтени… (decision-resolve-l0-qatg-ctr1)
+
+_Decided: 2026-09-21_
+
+
+CTR-010: принято четырёхвекторное чтение DoD — крафт, смерть, reconnect и рестарт
+
+
+
+
+
+## Resolved L0-trap-ct07: CTR-007: принят ADR-017 — L0-cool даёт … (decision-resolve-l0-trap-ct07)
+
+_Decided: 2026-09-21_
+
+
+CTR-007: принят ADR-017 — L0-cool даёт read-only isReady(), L0-trap вызывает его в предикате успеха и таймер не пишет
+
+
+
+
+
+## Resolved L0-trap-ct08: CTR-008: ноль заменённых клеток = прова… (decision-resolve-l0-trap-ct08)
+
+_Decided: 2026-09-21_
+
+
+CTR-008: ноль заменённых клеток = провал, cooldown не тратится, локализованное сообщение в actionbar
 
 
 
@@ -253,6 +308,105 @@ _Decided: 2026-09-21_
 
 
 Решение (автопилот): minecraft:damage берётся из ванильного определения diamond_sword текущей версии BDS (проверить в пакете сервера при реализации, не гадать); прочности нет; enchantable slot=sword; menu_category equipment, группа мечей. Рецепт shaped: [ ,web, ] / [web,diamond_sword,web] / [ ,web, ] — меч-ингредиент любой прочности/чар, чары не переносятся. Объявление первого крафта: ключ RU/EN с именем оружия и ником игрока (player.name).
+
+
+
+
+
+## legendary-hand-priority = реализуем сейчас, основная рука в приоритете (decision-legendary-hand-priority-realizuem-seychas-osnovn)
+
+_Decided: 2026-09-24_
+
+
+Решение (автопилот): правило приоритета рук из спеки Косы §6 реализуется в каркасе и отменяет отсрочку decision-q-010 (она принималась, когда легендарное оружие было одно). Если оба легендарных предмета готовы — срабатывает предмет основной руки; если основная рука на кулдауне ИЛИ занята (например, летит залп Косы) — может сработать готовая способность второй руки.
+
+
+
+
+
+## legendary-ready-hud = «Готово» показывается постоянно, пока предмет в руке, у обоих оружий (decision-legendary-ready-hud-gotovo-pokazyvaetsya-postoya)
+
+_Decided: 2026-09-24_
+
+
+Решение (автопилот, вариант (a) из Q-L0-1): пока легендарный предмет в основной или второй руке, Action Bar показывает либо остаток кулдауна, либо «Готово» / «Ready» — непрерывно, а не один раз. Паутинный меч меняет поведение с версии 0.3.x ради единообразия: два оружия с разной индикацией путают игрока сильнее, чем изменение привычки.
+
+
+
+
+
+## legendary-rules = общие для всех легендарных, включая возврат из Бездны, применяются и к Паутинному мечу (decision-legendary-rules-obschie-dlya-vseh-legendarnyh-vk)
+
+_Decided: 2026-09-24_
+
+
+Решение (автопилот, вариант (a) из ASM-lgnd-01): общий свод правил легендарного оружия — один survival-крафт на мир, объявление, освобождение креатива и /give, сохранение при смерти, бесконечная прочность, кулдаун 30 с с Action Bar, приоритет основной руки — плюс новое: предмет не теряется безвозвратно. Физической неуязвимости стабильный API не даёт, поэтому реализация такая: при уничтожении (Бездна, лава, огонь, кактус, деспаун) предмет выдаётся обратно последнему владельцу по тем же правилам, что и после смерти. Право крафта при этом НЕ открывается заново (см. decision-q-014). Применяется ретроактивно к Паутинному мечу: иначе единственный в мире меч можно уронить в Бездну навсегда.
+
+
+
+
+
+## scythe-enchantments = слот sword (decision-scythe-enchantments-slot-sword)
+
+_Decided: 2026-09-24_
+
+
+Решение (автопилот): minecraft:enchantable slot=sword, хотя база предмета — алмазная мотыга. Обоснование: спека §1 требует урона как у незеритового меча и разрешает совместимые чары базового предмета «если они не конфликтуют с механикой»; боевое назначение делает осмысленными именно мечевые чары (Sharpness, Unbreaking), а мотыжные к бою отношения не имеют. Закрывает CTR-2.
+
+
+
+
+
+## scythe-hidden-target = dynamic property andrew:hidden_until, ваниль-невидимость целью остаётся (decision-scythe-hidden-target-dynamic-property-andrew-hid)
+
+_Decided: 2026-09-24_
+
+
+Решение (автопилот): предикат isHiddenFromTargeting(player) читает dynamic property игрока andrew:hidden_until (метка времени Date.now(), тот же часовой механизм, что у кулдауна). Пока Теневого клинка нет, свойство никто не ставит, кроме тестовой команды. Обычная ванильная невидимость (зелье) цель НЕ исключает — иначе дешёвое зелье становится контрой легендарному оружию, чего спека не просит. Когда появится спека Теневого клинка, меняется только тело предиката.
+
+
+
+
+
+## scythe-launch = applyKnockback с калиброванной вертикальной силой (decision-scythe-launch-applyknockback-s-kalibrovannoy-ver)
+
+_Decided: 2026-09-24_
+
+
+Решение (автопилот): подброс примерно на 10 блоков (допуск 8–12 на ровной земле) делается одним player.applyKnockback({x:0,z:0}, V). Константу V подобрать замером на BDS 1.26.51.1 — GameTest логирует пиковый location.y симулированного игрока, старт от 2.5. Сопротивление отбрасыванию (незеритовая броня) не компенсируем: бронированная цель летит ниже, это честно. Урон от падения — ванильный.
+
+
+
+
+
+## scythe-melee-damage = 8, проверяется замером против настоящего незеритового меча (decision-scythe-melee-damage-8-proveryaetsya-zamerom-prot)
+
+_Decided: 2026-09-24_
+
+
+Решение (автопилот): minecraft:damage 8 (на один выше алмазного меча, у которого 7 и который замером даёт ровно 8 итогового урона). Значение не принимается на веру: GameTest бьёт корову нашей Косой и ванильным незеритовым мечом в одном прогоне и сравнивает — как сделано для Паутинного меча.
+
+
+
+
+
+## scythe-projectiles = виртуальные, без сущностей, рисуются частицами (decision-scythe-projectiles-virtualnye-bez-suschnostey-ri)
+
+_Decided: 2026-09-24_
+
+
+Решение (автопилот): три снаряда не являются сущностями. Позиция каждого ведётся в скрипте, каждый тик рисуется частицами (визуал в духе Shulker Bullet), попадание определяется по расстоянию до цели. Отсюда бесплатно получаются требования спеки: проход сквозь любые блоки без их разрушения и отсутствие зависших сущностей при выходе игрока, смерти или смене измерения. Запуск с интервалом ~0.5 с, скорость выше бега, время жизни ~10 с; истечение при >=1 попадании — полный кулдаун, при 0 попаданий — как выход из радиуса, кулдаун не тратится.
+
+
+
+
+
+## scythe-true-damage = прямое уменьшение здоровья, добивание через applyDamage (decision-scythe-true-damage-pryamoe-umenshenie-zdorovya-d)
+
+_Decided: 2026-09-24_
+
+
+Решение оператора (автопилот, 2026-09-24): каждое попадание снаряда Косы снимает ровно 3 HP в обход брони и защитных чар. Механизм: hp = health.currentValue; если hp - 3 > 0 — health.setCurrentValue(hp - 3) (броня и Protection на прямую запись не влияют); если hp - 3 <= 0 — добивание через entity.applyDamage(hp + 100, { cause: EntityDamageCause.entityAttack, damagingEntity: владелец }), чтобы сработали сообщение о смерти, засчёт убийства владельцу и тотем бессмертия — броня такой перебор не погасит. Закрывает CX-sprj-02 (ADR-022 lethal branch).
 
 
 
