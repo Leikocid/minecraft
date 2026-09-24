@@ -9,3 +9,5 @@ andrew.web_sword.no_room=Нет места для паутины
 andrew.web_sword.returned=Паутинный меч вернулся к вам
 andrew.web_sword.admin_given=Тестовый Паутинный меч выдан %s
 andrew.web_sword.reset=Право крафта Паутинного меча сброшено
+andrew.legendary.cooldown=%s: %s с
+andrew.legendary.ready=%s: Готово

@@ -1,8 +1,8 @@
-// One Web Sword per world (spec §3).
+// One survival craft per world for every legendary with `craftGate` (spec §3).
 //
 // The stable @minecraft/server 2.10.0 surface has no "before craft" event, so
 // the gate cannot veto the recipe. It works the only way the stable API allows:
-// by noticing an *unmarked* andrew:web_sword appearing in a player's inventory
+// by noticing an *unmarked* legendary item appearing in a player's inventory
 // and deciding after the fact — keep it and claim the world's single craft, or
 // take it back and return the ingredients.
 // [src: decision-q-008-blocked-craft-refund-a-obnaruzhit-i-vernut]
@@ -13,22 +13,14 @@
 // and messages out.
 
 import { type Container, ItemStack, type Player, type RawMessage, system, world } from "@minecraft/server";
+import { type LegendaryDef, defForStack } from "./registry";
 import { craftDecision } from "./rules";
-import { getMark, isCrafted, isWebSword, makeMark, markSword, setCrafted } from "./state";
+import { getMark, isCrafted, isItemOf, makeMark, markItem, setCrafted } from "./state";
 
-/**
- * What the recipe consumed, handed back when the craft is blocked (Q-008).
- *
- * Known limitation, and it is not fixable on this surface: the Diamond Sword
- * returned here is a *new* one. The gate never sees the sword that went into
- * the grid — by the time an unmarked Web Sword exists the ingredients are
- * already gone — so enchantments and remaining durability are not restored.
- * [src: decision-q-008-blocked-craft-refund-a-obnaruzhit-i-vernut]
- */
-const REFUND: ReadonlyArray<readonly [string, number]> = [
-  ["minecraft:web", 4],
-  ["minecraft:diamond_sword", 1],
-];
+// Known limitation, not fixable on this surface: refund items (def.refund) are
+// *new* stacks. By the time an unmarked result exists the ingredients are gone,
+// so their enchantments and durability are not restored.
+// [src: decision-q-008-blocked-craft-refund-a-obnaruzhit-i-vernut]
 
 /**
  * Players with an unmarked sword seen this tick, in the order the engine
@@ -44,7 +36,8 @@ let flushScheduled = false;
 export function registerCraftGate(): void {
   world.afterEvents.playerInventoryItemChange.subscribe((event) => {
     const stack = event.itemStack;
-    if (!isWebSword(stack) || getMark(stack) !== undefined) {
+    const def = defForStack(stack);
+    if (def === undefined || !def.craftGate || stack === undefined || getMark(def, stack) !== undefined) {
       return;
     }
 
@@ -60,7 +53,7 @@ export function registerCraftGate(): void {
     // this gate instead; see src/gametest/main.ts.
     const holder: Player | undefined = event.player;
     if (holder === undefined) {
-      console.warn("[andrew] web sword gate: an unmarked sword was reported with no readable holder");
+      console.warn(`[andrew] legendary gate: an unmarked ${def.itemId} was reported with no readable holder`);
       return;
     }
     queued.set(holder.id, holder);
@@ -72,7 +65,7 @@ export function registerCraftGate(): void {
     system.run(flush);
   });
 
-  console.warn("[andrew] web sword craft gate armed");
+  console.warn("[andrew] legendary craft gate armed");
 }
 
 /**
@@ -101,7 +94,7 @@ function flush(): void {
       // silent throw here would leave an unmarked sword in the world, which is
       // the one outcome the gate exists to prevent.
       const why = err instanceof Error ? err.message : String(err);
-      console.warn(`[andrew] web sword craft gate failed for ${player.name}: ${why}`);
+      console.warn(`[andrew] legendary craft gate failed for ${player.name}: ${why}`);
     }
   }
 }
@@ -117,18 +110,19 @@ function gate(player: Player): void {
   // This runs only when an unmarked sword was reported, never per tick (C-4).
   for (let slot = 0; slot < container.size; slot++) {
     const stack = container.getItem(slot);
-    if (!isWebSword(stack) || getMark(stack) !== undefined) {
+    const def = defForStack(stack);
+    if (def === undefined || !def.craftGate || !isItemOf(def, stack) || getMark(def, stack) !== undefined) {
       continue;
     }
 
-    switch (craftDecision({ crafted: isCrafted(), gameMode: player.getGameMode(), marked: false })) {
+    switch (craftDecision({ crafted: isCrafted(def), gameMode: player.getGameMode(), marked: false })) {
       case "ignore":
         break;
       case "claim":
-        claim(player, container, slot, stack);
+        claim(def, player, container, slot, stack);
         break;
       case "refund":
-        refund(player, container, slot);
+        refund(def, player, container, slot);
         break;
     }
   }
@@ -141,10 +135,10 @@ function gate(player: Player): void {
  * flag is claimed, so a throw in the middle leaves the budget unspent rather
  * than spent on a sword that never reached the player.
  */
-function claim(player: Player, container: Container, slot: number, stack: ItemStack): void {
-  container.setItem(slot, markSword(stack, makeMark("craft", player)));
-  setCrafted(player.name);
-  announce(player);
+function claim(def: LegendaryDef, player: Player, container: Container, slot: number, stack: ItemStack): void {
+  container.setItem(slot, markItem(def, stack, makeMark("craft", player)));
+  setCrafted(def, player.name);
+  announce(def, player);
 }
 
 /**
@@ -156,35 +150,36 @@ function claim(player: Player, container: Container, slot: number, stack: ItemSt
  * not a type question. The fallback keeps the announcement readable if it does
  * not, and the log line says which of the two ran.
  */
-function announce(player: Player): void {
+function announce(def: LegendaryDef, player: Player): void {
+  const key = `${def.textPrefix}.first_craft`;
   const nested: RawMessage = {
-    translate: "andrew.web_sword.first_craft",
-    with: { rawtext: [{ text: player.name }, { translate: "item.andrew:web_sword" }] },
+    translate: key,
+    with: { rawtext: [{ text: player.name }, { translate: def.nameKey }] },
   };
 
   try {
     world.sendMessage(nested);
     console.warn(
-      `[andrew] web sword first craft by ${player.name} — announced with a nested translate in "with"`
+      `[andrew] ${def.itemId} first craft by ${player.name} — announced with a nested translate in "with"`
     );
   } catch (err) {
     const why = err instanceof Error ? err.message : String(err);
-    world.sendMessage({ translate: "andrew.web_sword.first_craft", with: [player.name, "Web Sword"] });
+    world.sendMessage({ translate: key, with: [player.name, def.itemId] });
     console.warn(
-      `[andrew] web sword first craft by ${player.name} — nested translate in "with" rejected (${why}), ` +
+      `[andrew] ${def.itemId} first craft by ${player.name} — nested translate in "with" rejected (${why}), ` +
         "announced with a plain weapon name instead"
     );
   }
 }
 
-/** The budget is already spent: take the sword back, hand the ingredients over. */
-function refund(player: Player, container: Container, slot: number): void {
+/** The budget is already spent: take the item back, hand the ingredients over. */
+function refund(def: LegendaryDef, player: Player, container: Container, slot: number): void {
   container.setItem(slot, undefined);
-  for (const [itemId, count] of REFUND) {
+  for (const [itemId, count] of def.refund) {
     returnToPlayer(player, container, new ItemStack(itemId, count));
   }
-  player.sendMessage({ translate: "andrew.web_sword.craft_blocked" });
-  console.warn(`[andrew] web sword craft blocked for ${player.name} — ingredients returned`);
+  player.sendMessage({ translate: `${def.textPrefix}.craft_blocked` });
+  console.warn(`[andrew] ${def.itemId} craft blocked for ${player.name} — ingredients returned`);
 }
 
 /** Into the inventory, or at the player's feet when there is no room for it. */

@@ -29,23 +29,27 @@ import {
   world,
 } from "@minecraft/server";
 import { type SimulatedPlayer, Test, register } from "@minecraft/server-gametest";
-import { isReady, remainingTicks } from "../websword/cooldown";
-import { registerCraftGate } from "../websword/craftgate";
+import * as cooldown from "../legendary/cooldown";
+import { registerCraftGate } from "../legendary/craftgate";
+import { registerLegendaryHud } from "../legendary/hud";
+import { WEB_SWORD } from "../legendary/registry";
+import { registerRetention } from "../legendary/retention";
+import * as state from "../legendary/state";
 import { WEB_BLOCK_ID } from "../websword/cube";
-import { registerRetention } from "../websword/retention";
 import { registerTrap } from "../websword/trap";
-import {
-  WEB_SWORD_ID,
-  findMarkedSword,
-  getMark,
-  getPending,
-  isCrafted,
-  isWebSword,
-  makeMark,
-  markSword,
-  resetCrafted,
-  setCrafted,
-} from "../websword/state";
+
+const WEB_SWORD_ID = WEB_SWORD.itemId;
+const isWebSword = (stack: ItemStack | undefined): stack is ItemStack => state.isItemOf(WEB_SWORD, stack);
+const getMark = (stack: ItemStack) => state.getMark(WEB_SWORD, stack);
+const markSword = (stack: ItemStack, mark: ReturnType<typeof state.makeMark>) => state.markItem(WEB_SWORD, stack, mark);
+const makeMark = state.makeMark;
+const findMarkedSword = (container: Container) => state.findMarked(WEB_SWORD, container);
+const getPending = (player: Player) => state.getPending(WEB_SWORD, player);
+const isCrafted = () => state.isCrafted(WEB_SWORD);
+const setCrafted = (byName: string) => state.setCrafted(WEB_SWORD, byName);
+const resetCrafted = () => state.resetCrafted(WEB_SWORD);
+const isReady = (player: Player) => cooldown.isReady(player, WEB_SWORD.abilityKey);
+const remainingTicks = (player: Player) => cooldown.remainingTicks(player, WEB_SWORD.abilityKey);
 
 console.warn("[gametest] script loaded");
 
@@ -73,6 +77,10 @@ registerRetention();
 // bottom of this file drive the production module's real chain — the two
 // subscriptions, the same-tick dedup, the two rays, the cube and the cooldown.
 registerTrap();
+
+// Same binding problem: armed here so a SimulatedPlayer holding a legendary
+// drives the real Action Bar path, and a rejected message reaches the log.
+registerLegendaryHud();
 
 // Which use-event a press actually produces on BDS 1.26.51.1 is an engine fact,
 // not a documented one, and src/websword/trap.ts subscribes to both. This
@@ -216,7 +224,7 @@ register(
 // [src: decision-q-008-blocked-craft-refund-a-obnaruzhit-i-vernut]
 //
 // The gate itself lives in the *release* behavior pack, which this world loads
-// alongside the gametest pack; only src/websword/state.ts is bundled in here,
+// alongside the gametest pack; only src/legendary/state.ts is bundled in here,
 // to read the world flag and the instance marks the gate writes.
 
 function inventoryOf(player: Player): Container {
@@ -360,7 +368,7 @@ register("andrew", "websword_creative_ignored", (test: Test): void => {
 // sword handed to a Survival player as a craft.
 // [src: decision-q-006-web-sword-provenance-yes-metka-ekzemplyara]
 
-/** Must agree with DROP_SEARCH_RADIUS in src/websword/retention.ts. */
+/** Must agree with DROP_SEARCH_RADIUS in src/legendary/retention.ts. */
 const RETENTION_RADIUS = 8;
 
 /** How many Web Swords in `container` carry instance id `id`. */
@@ -762,7 +770,7 @@ register("andrew", "websword_cooldown_blocks_reuse", (test: Test): void => {
   let afterFirst = -1;
 
   // Both clocks at every step. The cooldown is measured in real milliseconds
-  // (see src/websword/cooldown.ts for why neither of these two can be it), and
+  // (see src/legendary/cooldown.ts for why neither of these two can be it), and
   // logging them is what turned a bare "had not expired" into the reason: the
   // world's day clock stood still while the server ticked on.
   const clock = (label: string): void => {
