@@ -32,6 +32,7 @@ import { type SimulatedPlayer, Test, register } from "@minecraft/server-gametest
 import * as cooldown from "../legendary/cooldown";
 import { registerCraftGate } from "../legendary/craftgate";
 import { registerLegendaryHud } from "../legendary/hud";
+import { registerRecovery } from "../legendary/recovery";
 import { WEB_SWORD } from "../legendary/registry";
 import { registerRetention } from "../legendary/retention";
 import * as state from "../legendary/state";
@@ -71,6 +72,27 @@ registerCraftGate();
 // death scenarios drive the production module end to end — the same
 // subscriptions, the same pending mark, the same restore a human gets.
 registerRetention();
+
+// Same binding problem: the release pack sees the item entity vanish but cannot
+// find a SimulatedPlayer owner to hand it back to.
+registerRecovery();
+
+// Engine witness for AC#4 of LG-KEEP-02: which event reports a dropped item.
+world.afterEvents.entitySpawn.subscribe((event) => {
+  if (event.entity.typeId === "minecraft:item") {
+    const stack = event.entity.getComponent("minecraft:item")?.itemStack;
+    console.warn(`[gametest] probe entitySpawn: minecraft:item ${stack?.typeId ?? "?"} cause=${event.cause}`);
+  }
+});
+world.afterEvents.playerInventoryItemChange.subscribe((event) => {
+  if (isWebSword(event.itemStack) || isWebSword(event.beforeItemStack)) {
+    console.warn(
+      `[gametest] probe playerInventoryItemChange: ${WEB_SWORD_ID} slot=${event.slot} ` +
+        `before=${event.beforeItemStack?.typeId ?? "empty"} after=${event.itemStack?.typeId ?? "empty"} ` +
+        `player=${event.player === undefined ? "undefined" : event.player.name}`
+    );
+  }
+});
 
 // Same binding problem again, so the trap is armed here too: the release pack's
 // itemUse handler cannot read a SimulatedPlayer, and the scenarios at the
@@ -1081,4 +1103,145 @@ register("andrew", "web_sword_cuts_its_own_web", (test: Test) => {
   .maxTicks(1200)
   .tag("andrew");
 
-console.warn("[gametest] registered 13 test(s) under tag 'andrew'");
+// ------------------------------------------ Legendary: loss recovery
+//
+// Marked "admin" for the reasons the retention scenarios give. The claim is on
+// the product, not the timing of the check: within 3 s of the item entity
+// vanishing, the owner holds exactly one instance with that id and nothing of
+// it lies on the ground.
+
+/** Scythe spec §1 / task wording: "ждём ≤3 с". */
+const RECOVERY_DEADLINE_TICKS = 60;
+
+/** The marked Web Sword item entity carrying `id`, if one is lying near `location`. */
+function droppedInstance(dimension: Dimension, location: Vector3, id: string): Entity | undefined {
+  return dimension
+    .getEntities({ type: "minecraft:item", location, maxDistance: RETENTION_RADIUS })
+    .find((entity) => {
+      const stack = entity.getComponent("minecraft:item")?.itemStack;
+      return isWebSword(stack) && getMark(stack)?.id === id;
+    });
+}
+
+/**
+ * Drives one loss: arm the player, put the sword on the ground via `drop`, let
+ * `destroy` make the entity vanish, then check the owner got exactly one back.
+ */
+function lossScenario(
+  name: string,
+  drop: (test: Test, player: SimulatedPlayer, stack: ItemStack) => void,
+  destroy: (test: Test, entity: Entity) => void
+) {
+  return (test: Test): void => {
+    const player = test.spawnSimulatedPlayer(STAND_A, name, GameMode.Survival);
+    let instanceId = "";
+
+    test.runAfterDelay(4, () => {
+      const stack = inventoryOf(player).getItem(armSword(player));
+      const mark = stack === undefined ? undefined : getMark(stack);
+      test.assert(stack !== undefined && mark !== undefined, "the marked sword did not reach the player's hand");
+      instanceId = (mark as NonNullable<typeof mark>).id;
+      drop(test, player, stack as ItemStack);
+
+      test.runAfterDelay(3, () => {
+        test.assert(
+          countInstance(inventoryOf(player), instanceId) === 0,
+          "the sword is still in the inventory after the drop, so there is nothing to lose"
+        );
+        const entity = droppedInstance(player.dimension, player.location, instanceId);
+        test.assert(entity !== undefined, `no item entity with ws_id ${instanceId} is lying near the player`);
+        destroy(test, entity as Entity);
+
+        test.runAfterDelay(RECOVERY_DEADLINE_TICKS, () => {
+          const held = countInstance(inventoryOf(player), instanceId);
+          test.assert(
+            held === 1,
+            `the owner carries ${held} Web Sword(s) with ws_id ${instanceId} ${RECOVERY_DEADLINE_TICKS} ticks after the loss, expected exactly 1`
+          );
+          const dropped = swordsOnGround(player.dimension, player.location);
+          test.assert(dropped === 0, `${dropped} Web Sword(s) are still lying on the ground`);
+          test.assert(getPending(player) === undefined, "the pending return survived the restore");
+          test.succeed();
+        });
+      });
+    });
+  };
+}
+
+function throwHeld(test: Test, player: SimulatedPlayer): void {
+  test.assert(player.dropSelectedItem(), "dropSelectedItem refused to drop the held sword");
+}
+
+register(
+  "andrew",
+  "legendary_returns_from_void",
+  lossScenario("andrew_voider", throwHeld, (_test, entity) => {
+    const floor = entity.dimension.heightRange.min;
+    const at = entity.location;
+    entity.teleport({ x: at.x, y: floor - 8, z: at.z });
+    console.warn(`[gametest] void: teleported the dropped sword to y=${floor - 8}`);
+  })
+)
+  .structureName(STRUCTURE)
+  .maxTicks(200)
+  .tag("andrew");
+
+/** Lava far from the player, where the sword is dropped instead of thrown. */
+const LAVA_CELL: Vector3 = { x: 5, y: 2, z: 1 };
+
+register(
+  "andrew",
+  "legendary_survives_lava",
+  lossScenario(
+    "andrew_burner",
+    (test, player, stack) => {
+      inventoryOf(player).setItem(player.selectedSlotIndex, undefined);
+      const at = test.worldLocation({ x: LAVA_CELL.x + 0.5, y: LAVA_CELL.y + 0.2, z: LAVA_CELL.z + 0.5 });
+      player.dimension.spawnItem(stack, at);
+    },
+    (test, entity) => {
+      test.setBlockType("minecraft:lava", LAVA_CELL);
+      test.runAfterDelay(20, () => {
+        const burned = !entity.isValid;
+        console.warn(`[gametest] lava: sword entity ${burned ? "burned in real lava" : "survived 20 ticks, removed"}`);
+        if (!burned) entity.remove();
+        test.setBlockType("minecraft:air", LAVA_CELL);
+      });
+    }
+  )
+)
+  .structureName(STRUCTURE)
+  .maxTicks(200)
+  .tag("andrew");
+
+// The control: a pickup also makes the entity vanish, and must not be read as
+// a loss — that would hand the owner a second copy.
+register("andrew", "legendary_pickup_no_duplicate", (test: Test): void => {
+  const player = test.spawnSimulatedPlayer(STAND_B, "andrew_picker", GameMode.Survival);
+  let instanceId = "";
+  let pickedAt = -1;
+
+  test.runAfterDelay(4, () => {
+    const mark = makeMark("admin", player);
+    instanceId = mark.id;
+    player.dimension.spawnItem(markSword(new ItemStack(WEB_SWORD_ID, 1), mark), player.location);
+  });
+
+  test.succeedWhen(() => {
+    test.assert(instanceId !== "", "the sword has not been dropped yet");
+    const held = countInstance(inventoryOf(player), instanceId);
+    if (pickedAt < 0) {
+      test.assert(held === 1, "the player has not picked the sword up yet");
+      pickedAt = system.currentTick;
+    }
+    // Past two recovery checks, so a misread pickup has had time to re-issue.
+    test.assert(system.currentTick - pickedAt >= 2 * RECOVERY_DEADLINE_TICKS, "waiting out the recovery checks");
+    test.assert(held === 1, `the player carries ${held} Web Sword(s) with ws_id ${instanceId}, expected exactly 1`);
+    test.assert(getPending(player) === undefined, "recovery owes the player a sword they picked up themselves");
+  });
+})
+  .structureName(STRUCTURE)
+  .maxTicks(400)
+  .tag("andrew");
+
+console.warn("[gametest] registered 16 test(s) under tag 'andrew'");

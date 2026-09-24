@@ -89,6 +89,9 @@ const EXPECTED_TESTS = [
   'andrew:websword_protected_skipped',
   'andrew:websword_out_of_reach_noop',
   'andrew:websword_cooldown_blocks_reuse',
+  'andrew:legendary_returns_from_void',
+  'andrew:legendary_survives_lava',
+  'andrew:legendary_pickup_no_duplicate',
 ];
 
 // FLAT is not cosmetic: see the LEVEL_TYPE comment in docker/bds/compose.yaml.

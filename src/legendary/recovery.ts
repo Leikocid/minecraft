@@ -73,7 +73,14 @@ export function registerRecovery(): void {
       return;
     }
     const id = getMark(def, stack)?.id;
-    if (id !== undefined && [...watched.values()].some((w) => w.mark.id === id)) {
+    if (id === undefined || ![...watched.values()].some((w) => w.mark.id === id)) {
+      return;
+    }
+    // The event also fires for the drop that created the entity, still
+    // naming the stack; only a slot that holds the instance now is a pickup.
+    const player: Player | undefined = event.player;
+    const now = player?.getComponent("minecraft:inventory")?.container?.getItem(event.slot);
+    if (isItemOf(def, now) && getMark(def, now)?.id === id) {
       seenInInventory.add(id);
     }
   });
