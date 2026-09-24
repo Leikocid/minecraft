@@ -36,6 +36,7 @@ declare const __SELFTEST_FIXTURE__: boolean;
 
 const PICKAXE_ID = "andrew:miners_pickaxe";
 const WEB_SWORD_ID = "andrew:web_sword";
+const SCYTHE_ID = "andrew:scythe_of_calamity";
 const TEST_ITEM_ID = "andrew:test_item";
 
 /**
@@ -182,6 +183,41 @@ function run(): void {
     assert(
       !sword.hasComponent("minecraft:durability"),
       "minecraft:durability is present — the web sword is no longer unbreakable by omission"
+    );
+  });
+
+  // Scythe of Calamity: same three shape-only checks as the pickaxe and the
+  // web sword. Melee damage parity and dig speed are engine facts that need a
+  // second entity/block to compare against, so they are proven by GameTest
+  // (andrew:scythe_melee_matches_netherite), not here.
+
+  check("scythe-item-stack", () => {
+    const scythe = new ItemStack(SCYTHE_ID);
+    assert(scythe.typeId === SCYTHE_ID, `expected typeId ${SCYTHE_ID}, got ${scythe.typeId}`);
+    assert(scythe.maxAmount === 1, `expected maxAmount 1, got ${scythe.maxAmount}`);
+  });
+
+  // Enchant slot is "sword" although the base item is a hoe (spec §1 wants
+  // Netherite-sword-parity combat, and mattock chants have nothing to do with
+  // combat). [src: decision-scythe-enchantments-slot-sword]
+  check("scythe-enchantable", () => {
+    const scythe = new ItemStack(SCYTHE_ID);
+    const enchantable = scythe.getComponent("minecraft:enchantable");
+    assert(enchantable !== undefined, "minecraft:enchantable component is absent from the item");
+    const slots = enchantable.slots;
+    assert(
+      slots.includes(EnchantmentSlot.Sword),
+      `enchantable slots ${JSON.stringify(slots)} do not include ${EnchantmentSlot.Sword}`
+    );
+    const canAdd = enchantable.canAddEnchantment({ type: sharpnessType(), level: 1 });
+    assert(canAdd, "предмет без durability не зачаровывается (sharpness 1)");
+  });
+
+  check("scythe-no-durability", () => {
+    const scythe = new ItemStack(SCYTHE_ID);
+    assert(
+      !scythe.hasComponent("minecraft:durability"),
+      "minecraft:durability is present — the scythe is no longer unbreakable by omission"
     );
   });
 

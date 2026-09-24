@@ -33,7 +33,7 @@ import * as cooldown from "../legendary/cooldown";
 import { registerCraftGate } from "../legendary/craftgate";
 import { registerLegendaryHud } from "../legendary/hud";
 import { registerRecovery } from "../legendary/recovery";
-import { WEB_SWORD } from "../legendary/registry";
+import { SCYTHE_OF_CALAMITY, WEB_SWORD } from "../legendary/registry";
 import { registerRetention } from "../legendary/retention";
 import * as state from "../legendary/state";
 import { WEB_BLOCK_ID } from "../websword/cube";
@@ -1004,6 +1004,164 @@ register("andrew", "pickaxe_digs_at_diamond_speed", (test: Test) => {
   .maxTicks(1000)
   .tag("andrew");
 
+// --------------------------------------------- Scythe: melee and dig speed
+//
+// SC-ITEM-01-AA: prove the item JSON's two numeric claims by measurement
+// rather than trust them — Netherite Sword melee parity [src: decision-
+// scythe-melee-damage-8] and diamond-hoe dig speed on a hoe-destructible
+// block, both self-calibrated against the real vanilla item in the same run
+// (no hardcoded HP or tick counts to drift when Mojang retunes balance) —
+// the same pattern pickaxe_digs_at_diamond_speed above uses for tool tiers.
+
+const SCYTHE_ID = "andrew:scythe_of_calamity";
+const NETHERITE_SWORD_ID = "minecraft:netherite_sword";
+const VANILLA_HOE_ID = "minecraft:diamond_hoe";
+const COW_ID = "minecraft:cow";
+
+// Hay Bale: vanilla hoes break it near-instantly, the hoe-tier counterpart of
+// the pickaxe test's ore blocks and the sword test's cobweb.
+/**
+ * The block the hoe-speed assertion uses. Measured on BDS 1.26.51.1 with
+ * Block.getTags(): oak_leaves carries minecraft:is_hoe_item_destructible, the
+ * tag the Scythe's digger names, so parity here is reachable from data.
+ *
+ * NOT hay_block: it carries no hoe tag at all, yet a vanilla diamond hoe still
+ * clears it in 3 ticks against our 16 — the same engine-hardcoded tool/block
+ * pair as "a vanilla sword cuts bamboo instantly", which no destroy_speeds
+ * entry reaches. It is measured below for the record, without an assertion.
+ */
+const HOE_BLOCK_ID = "minecraft:oak_leaves";
+const HARDCODED_HOE_BLOCK_ID = "minecraft:hay_block";
+
+const COW_SPOT: Vector3 = { x: 3, y: 2, z: 2 };
+
+function entityHealth(entity: Entity): number {
+  const health = entity.getComponent("minecraft:health");
+  if (health === undefined) {
+    throw new Error(`${entity.typeId} has no minecraft:health component`);
+  }
+  return health.currentValue;
+}
+
+function mustSpawn(test: Test, entityTypeId: string, loc: Vector3, why: string): Entity {
+  const entity = test.spawn(entityTypeId, loc);
+  test.assert(entity !== undefined, why);
+  return entity as Entity;
+}
+
+/**
+ * Gives `player` `itemId`, swings once at `target` and reports the damage
+ * dealt (health before minus health after). Delayed rather than read back
+ * synchronously: attackEntity() performs the swing, but there is no
+ * documented guarantee the health component reflects it before the next tick.
+ */
+function meleeHit(
+  test: Test,
+  player: SimulatedPlayer,
+  itemId: string,
+  target: Entity,
+  done: (damage: number) => void
+): void {
+  player.giveItem(new ItemStack(itemId, 1), true);
+  const before = entityHealth(target);
+  test.runAfterDelay(2, () => {
+    player.attackEntity(target);
+    test.runAfterDelay(4, () => {
+      done(before - entityHealth(target));
+    });
+  });
+}
+
+
+/**
+ * A Scythe the craft gate will leave alone.
+ *
+ * The Scythe is a registered legendary, so an *unmarked* one appearing in a
+ * Survival player's inventory is a craft: the first is claimed and marked, and
+ * every later one is confiscated and refunded — which is what silently emptied
+ * this test's hand and made every dig measurement read bare-hand speed
+ * (16 ticks on hay, 7 on leaves, both exactly hand). Handing over an
+ * admin-marked instance is the same thing `/andrew:websword give` does.
+ */
+function giveMarkedScythe(player: SimulatedPlayer): void {
+  const stack = state.markItem(
+    SCYTHE_OF_CALAMITY,
+    new ItemStack(SCYTHE_ID, 1),
+    state.makeMark("admin", player)
+  );
+  inventoryOf(player).addItem(stack);
+  player.selectedSlotIndex = 0;
+}
+
+register("andrew", "scythe_melee_matches_netherite", (test: Test): void => {
+  const player = test.spawnSimulatedPlayer(STAND, "andrew_reaper", GameMode.Survival);
+
+  test.runAfterDelay(4, () => {
+    const cowA = mustSpawn(test, COW_ID, COW_SPOT, "could not spawn a cow for the scythe hit");
+
+    meleeHit(test, player, SCYTHE_ID, cowA, (scytheDamage) => {
+      cowA.remove();
+
+      // 20 ticks clear of the first swing: vanilla's per-weapon attack-speed
+      // cooldown (unrelated to this add-on's legendary cooldown) resets the
+      // same way ahead of both hits, so the comparison stays fair.
+      test.runAfterDelay(20, () => {
+        const cowB = mustSpawn(test, COW_ID, COW_SPOT, "could not spawn a cow for the netherite sword hit");
+
+        meleeHit(test, player, NETHERITE_SWORD_ID, cowB, (netheriteDamage) => {
+          cowB.remove();
+
+          test.assert(scytheDamage > 0, "the scythe dealt no measurable damage to the cow");
+          test.assert(
+            netheriteDamage > 0,
+            "a vanilla netherite sword dealt no measurable damage — the probe itself is broken"
+          );
+          test.assert(
+            scytheDamage === netheriteDamage,
+            `${SCYTHE_ID} dealt ${scytheDamage} damage against ${netheriteDamage} for a vanilla ${NETHERITE_SWORD_ID}`
+          );
+          console.warn(`[gametest] scythe melee: ours=${scytheDamage} netherite=${netheriteDamage}`);
+
+          // Second half: dig speed on a hoe-destructible block, calibrated
+          // the same way as pickaxe_digs_at_diamond_speed above.
+          placeBlock(test, HOE_BLOCK_ID, TARGET);
+          giveMarkedScythe(player);
+
+          test.runAfterDelay(4, () => {
+            timeBreak(test, player, TARGET, `${SCYTHE_ID} on ${HOE_BLOCK_ID}`, (ours) => {
+              placeBlock(test, HOE_BLOCK_ID, TARGET);
+              player.giveItem(new ItemStack(VANILLA_HOE_ID, 1), true);
+
+              test.runAfterDelay(4, () => {
+                timeBreak(test, player, TARGET, `${VANILLA_HOE_ID} on ${HOE_BLOCK_ID}`, (vanilla) => {
+                  test.assert(
+                    vanilla > 0,
+                    `the vanilla diamond hoe did not break ${HOE_BLOCK_ID} either — the probe itself is broken`
+                  );
+                  test.assert(
+                    ours > 0,
+                    `${SCYTHE_ID} did not break ${HOE_BLOCK_ID} within ${BREAK_LIMIT_TICKS} ticks ` +
+                      `while a vanilla diamond hoe took ${vanilla}`
+                  );
+                  test.assert(
+                    ours <= vanilla + SPEED_TOLERANCE_TICKS,
+                    `${SCYTHE_ID} took ${ours} ticks on ${HOE_BLOCK_ID} against ${vanilla} for a vanilla ` +
+                      "diamond hoe — the digger tag query does not cover this block"
+                  );
+                  test.succeed();
+                });
+              });
+            });
+          });
+        });
+      });
+    });
+  });
+})
+  .structureName(STRUCTURE)
+  .maxTicks(1000)
+  .tag("andrew");
+
 // ------------------------------------------------------- sword cuts its web
 //
 // The sword's own ability fills 27 cells with cobweb, so a Web Sword that
@@ -1244,4 +1402,4 @@ register("andrew", "legendary_pickup_no_duplicate", (test: Test): void => {
   .maxTicks(400)
   .tag("andrew");
 
-console.warn("[gametest] registered 16 test(s) under tag 'andrew'");
+console.warn("[gametest] registered 17 test(s) under tag 'andrew'");
