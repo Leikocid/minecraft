@@ -89,6 +89,20 @@ const EXPECTED_TESTS = [
   'andrew:websword_protected_skipped',
   'andrew:websword_out_of_reach_noop',
   'andrew:websword_cooldown_blocks_reuse',
+  'andrew:legendary_returns_from_void',
+  'andrew:legendary_survives_lava',
+  'andrew:legendary_pickup_no_duplicate',
+  'andrew:scythe_melee_matches_netherite',
+  'andrew:scythe_no_target_no_cooldown',
+  'andrew:scythe_picks_player_not_mob',
+  'andrew:scythe_skips_hidden',
+  'andrew:scythe_three_hits_true_damage',
+  'andrew:scythe_launches_target',
+  'andrew:scythe_through_walls',
+  'andrew:scythe_out_of_radius_no_cooldown',
+  'andrew:scythe_out_of_radius_after_hit_cooldown',
+  'andrew:scythe_cleanup_on_target_death',
+  'andrew:scythe_lethal_hit_kills',
 ];
 
 // FLAT is not cosmetic: see the LEVEL_TYPE comment in docker/bds/compose.yaml.

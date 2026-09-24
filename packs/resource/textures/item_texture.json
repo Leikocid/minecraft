@@ -10,6 +10,9 @@
     },
     "andrew_web_sword": {
       "textures": "textures/items/andrew_web_sword"
+    },
+    "andrew_scythe_of_calamity": {
+      "textures": "textures/items/andrew_scythe_of_calamity"
     }
   }
 }

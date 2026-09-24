@@ -1,6 +1,6 @@
-// Death retention for the Web Sword (spec §4, §12).
+// Death retention for every legendary item (spec §4, §12).
 //
-// A marked sword must not stay on the ground when its owner dies, and must be
+// A marked instance must not stay on the ground when its owner dies, and must be
 // back in that same owner's hands after respawn — without ever producing a
 // second copy, through death, disconnect/reconnect or a server restart.
 // [src: webswordspecv1ruen §4, §12; decision-q-016-sword-unlootable]
@@ -14,20 +14,20 @@
 // fires, or whether the engine has already spat the contents out as item
 // entities — and the answer is an engine fact, not a type. So both are handled:
 //
-//   path A — the sword is still in the inventory: stash the mark and blank the
+//   path A — the item is still in the inventory: stash the mark and blank the
 //            slot, so there is nothing left for the engine to drop;
 //   path B — next tick, sweep the death spot for dropped item entities carrying
-//            a marked sword, stash the mark and delete them.
+//            a marked item, stash the mark and delete them.
 //
 // Whichever fired says so in the server log, so a run tells you which one this
 // engine actually uses.
 //
 // The restore half is guarded by the pending mark, which is a durable dynamic
-// property on the player: it is the idempotency token. A sword is handed back
+// property on the player: it is the idempotency token. An item is handed back
 // only when a pending mark exists, the mark is cleared the moment it is, and a
-// player who somehow already carries that exact ws_id gets nothing and has the
+// player who somehow already carries that exact instance id gets nothing and has the
 // pending cleared instead. That is what makes a doubled event, a reconnect and
-// a restart all converge on exactly one sword.
+// a restart all converge on exactly one item.
 
 import {
   type Container,
@@ -39,19 +39,12 @@ import {
   system,
   world,
 } from "@minecraft/server";
-import {
-  WEB_SWORD_ID,
-  clearPending,
-  findMarkedSword,
-  getMark,
-  getPending,
-  isWebSword,
-  markSword,
-  setPending,
-} from "./state";
+import { forgetWatched } from "./recovery";
+import { LEGENDARIES, type LegendaryDef, defForStack } from "./registry";
+import { clearPending, findMarked, getMark, getPending, isItemOf, markItem, setPending } from "./state";
 
 /**
- * How far from the death spot to sweep for dropped swords.
+ * How far from the death spot to sweep for dropped items.
  *
  * Wider than the pickaxe scenarios' 4: those look for the drop of a single
  * known block, while a death scatters the whole inventory, and the engine
@@ -71,7 +64,7 @@ export function registerRetention(): void {
       return;
     }
     if (!(dead instanceof Player)) {
-      console.warn("[andrew] web sword retention: a player died with no readable entity binding, skipping");
+      console.warn("[andrew] legendary retention: a player died with no readable entity binding, skipping");
       return;
     }
     retain(dead);
@@ -83,20 +76,22 @@ export function registerRetention(): void {
   // both, so the handler simply asks whether one is owed.
   world.afterEvents.playerSpawn.subscribe((event) => {
     const player: Player | undefined = event.player;
-    if (player === undefined || getPending(player) === undefined) {
+    if (player === undefined || !LEGENDARIES.some((def) => getPending(def, player) !== undefined)) {
       return;
     }
     // Deferred a tick: at spawn time the inventory is not reliably writable
     // yet, and the pending mark is durable, so nothing is lost by waiting.
     system.run(() => {
-      restore(player);
+      for (const def of LEGENDARIES) {
+        restore(def, player);
+      }
     });
   });
 
-  console.warn("[andrew] web sword death retention armed");
+  console.warn("[andrew] legendary death retention armed");
 }
 
-/** Death: take the marked sword out of the world and record who is owed it. */
+/** Death: take the marked item out of the world and record who is owed it. */
 function retain(player: Player): void {
   // Read before deferring — the dead entity's location and dimension are what
   // the next-tick sweep needs, and by then the player may have respawned.
@@ -105,18 +100,20 @@ function retain(player: Player): void {
 
   const container = player.getComponent("minecraft:inventory")?.container;
   if (container !== undefined) {
-    const found = findMarkedSword(container);
-    if (found === undefined) {
-      console.warn(
-        `[andrew] web sword retention: path A — ${player.name} had no marked sword in inventory at entityDie`
-      );
-    } else {
+    for (const def of LEGENDARIES) {
+      const found = findMarked(def, container);
+      if (found === undefined) {
+        console.warn(
+          `[andrew] legendary retention: path A — ${player.name} had no marked ${def.itemId} in inventory at entityDie`
+        );
+        continue;
+      }
       // Order: the mark is durable before the slot is blanked, so a throw in
-      // between loses the sword to the drop rather than to nothing at all.
-      setPending(player, found.mark);
+      // between loses the item to the drop rather than to nothing at all.
+      setPending(def, player, found.mark);
       container.setItem(found.slot, undefined);
       console.warn(
-        `[andrew] web sword retention: path A — ${player.name} still held ws_id ${found.mark.id} ` +
+        `[andrew] legendary retention: path A — ${player.name} still held ${def.itemId} id ${found.mark.id} ` +
           `in slot ${found.slot} at entityDie; slot blanked before the engine could drop it`
       );
     }
@@ -130,16 +127,16 @@ function retain(player: Player): void {
 /**
  * Path B: the engine had already turned the inventory into item entities.
  *
- * A marked sword lying on the ground is by construction something that should
+ * A marked legendary lying on the ground is by construction something that should
  * not exist, so any found at the death spot are reclaimed for the player who
- * died there — that is also what keeps the sword from changing hands in PvP
+ * died there — that is also what keeps the item from changing hands in PvP
  * [src: decision-q-016-sword-unlootable].
  */
 function sweep(player: Player, dimension: Dimension, location: Vector3): void {
   if (!player.isValid) {
     // Left the server within the tick. Deleting the drops now would destroy
-    // the sword with nobody holding a pending mark for it.
-    console.warn("[andrew] web sword retention: path B — the dead player left, drops untouched");
+    // the item with nobody holding a pending mark for it.
+    console.warn("[andrew] legendary retention: path B — the dead player left, drops untouched");
     return;
   }
 
@@ -150,40 +147,53 @@ function sweep(player: Player, dimension: Dimension, location: Vector3): void {
     maxDistance: DROP_SEARCH_RADIUS,
   })) {
     const stack = entity.getComponent("minecraft:item")?.itemStack;
-    if (!isWebSword(stack)) {
+    const def = defForStack(stack);
+    if (def === undefined || stack === undefined) {
       continue;
     }
-    const mark = getMark(stack);
+    const mark = getMark(def, stack);
     if (mark === undefined) {
       // An unmarked copy is an ordinary item — vanilla rules, leave it lying.
       continue;
     }
-    if (getPending(player) === undefined) {
-      setPending(player, mark);
+    if (getPending(def, player) === undefined) {
+      setPending(def, player, mark);
     }
+    // Order: unwatched before removal, or recovery reads this removal as a
+    // loss and owes the mark a second time.
+    forgetWatched(entity.id);
     entity.remove();
     reclaimed++;
   }
 
   console.warn(
     reclaimed > 0
-      ? `[andrew] web sword retention: path B — reclaimed ${reclaimed} dropped marked sword(s) ` +
+      ? `[andrew] legendary retention: path B — reclaimed ${reclaimed} dropped marked item(s) ` +
           `within ${DROP_SEARCH_RADIUS} blocks of ${player.name}'s death`
-      : `[andrew] web sword retention: path B — no marked sword on the ground within ` +
+      : `[andrew] legendary retention: path B — no marked legendary on the ground within ` +
           `${DROP_SEARCH_RADIUS} blocks of ${player.name}'s death`
   );
 }
 
-/** Respawn (or the next join after one): hand the owed sword back, once. */
-function restore(player: Player): void {
+/**
+ * Hand the owed item back, once. Called on respawn/join, and by recovery for a
+ * live player; `messageKey` is what the owner is told.
+ */
+export function restore(def: LegendaryDef, player: Player, messageKey = `${def.textPrefix}.returned`): void {
   if (!player.isValid) {
+    return;
+  }
+  // A dead player's inventory is emptied by the engine; the pending mark waits
+  // for the respawn handler instead.
+  const health = player.getComponent("minecraft:health");
+  if (health !== undefined && health.currentValue <= 0) {
     return;
   }
 
   // Re-read rather than trusting the value the subscriber saw: the release
   // pack and the GameTest pack both arm this module in the same world, and
   // whichever gets there first clears the mark for the other.
-  const mark = getPending(player);
+  const mark = getPending(def, player);
   if (mark === undefined) {
     return;
   }
@@ -194,34 +204,34 @@ function restore(player: Player): void {
     return;
   }
 
-  if (carriesInstance(container, mark.id)) {
-    clearPending(player);
+  if (carriesInstance(def, container, mark.id)) {
+    clearPending(def, player);
     console.warn(
-      `[andrew] web sword retention: ${player.name} already carries ws_id ${mark.id}, ` +
+      `[andrew] legendary retention: ${player.name} already carries ${def.itemId} id ${mark.id}, ` +
         "pending cleared without issuing a second copy"
     );
     return;
   }
 
-  const leftover = container.addItem(markSword(new ItemStack(WEB_SWORD_ID, 1), mark));
+  const leftover = container.addItem(markItem(def, new ItemStack(def.itemId, 1), mark));
   if (leftover !== undefined) {
     // Nowhere in the inventory to put it. At their feet is still "returned to
-    // the owner", and it beats destroying the world's only sword.
+    // the owner", and it beats destroying the world's only copy.
     player.dimension.spawnItem(leftover, player.location);
   }
-  clearPending(player);
-  player.sendMessage({ translate: "andrew.web_sword.returned" });
+  clearPending(def, player);
+  player.sendMessage({ translate: messageKey });
   console.warn(
-    `[andrew] web sword retention: returned ws_id ${mark.id} to ${player.name}` +
+    `[andrew] legendary retention: returned ${def.itemId} id ${mark.id} to ${player.name}` +
       (leftover === undefined ? "" : " (inventory full — dropped at their feet)")
   );
 }
 
-/** Whether `container` already holds the Web Sword instance `id`. */
-function carriesInstance(container: Container, id: string): boolean {
+/** Whether `container` already holds the instance `id` of `def`. */
+function carriesInstance(def: LegendaryDef, container: Container, id: string): boolean {
   for (let slot = 0; slot < container.size; slot++) {
     const stack = container.getItem(slot);
-    if (isWebSword(stack) && getMark(stack)?.id === id) {
+    if (isItemOf(def, stack) && getMark(def, stack)?.id === id) {
       return true;
     }
   }

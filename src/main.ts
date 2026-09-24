@@ -1,19 +1,25 @@
 import { type Player, world } from "@minecraft/server";
 import { registerAutoSmelt } from "./autosmelt";
-import { registerWebSwordCommand } from "./websword/commands";
-import { registerCooldownHud } from "./websword/cooldown";
-import { registerCraftGate } from "./websword/craftgate";
-import { registerRetention } from "./websword/retention";
+import { registerLegendaryCommands } from "./legendary/commands";
+import { registerCraftGate } from "./legendary/craftgate";
+import { registerHideCommand } from "./legendary/hidden";
+import { registerLegendaryHud } from "./legendary/hud";
+import { registerRecovery } from "./legendary/recovery";
+import { registerRetention } from "./legendary/retention";
+import { registerScytheVolley } from "./scythe/volley";
 import { registerTrap } from "./websword/trap";
 
 registerAutoSmelt();
 registerCraftGate();
 registerRetention();
-registerCooldownHud();
+registerRecovery();
+registerLegendaryHud();
 registerTrap();
+registerScytheVolley();
 // Must run at script load: custom commands can only be registered during the
 // engine's startup phase, which is over by the time the world exists.
-registerWebSwordCommand();
+registerLegendaryCommands();
+registerHideCommand();
 
 world.afterEvents.worldLoad.subscribe(() => {
   console.warn("[andrew] script loaded");

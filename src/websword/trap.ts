@@ -7,9 +7,9 @@
 // need the engine: listen for the use, cast the two rays, write the blocks,
 // and arm the cooldown.
 //
-// Cooldown is read and written exclusively through cooldown.ts's isReady() /
-// startCooldown() — this module never touches the timer's storage, and never
-// arms it for an activation that placed nothing.
+// Which held legendary a press activates is decided by legendary/hands.ts;
+// the cooldown is written only through startCooldown(), and never for an
+// activation that placed nothing.
 // [src: KV L0 ADR-017]
 //
 // No polling: the only subscriptions are use-events, so there is no per-tick
@@ -25,9 +25,10 @@ import {
   system,
   world,
 } from "@minecraft/server";
-import { isReady, startCooldown } from "./cooldown";
+import { startCooldown } from "../legendary/cooldown";
+import { resolveActivation } from "../legendary/hands";
+import { WEB_SWORD, defForStack } from "../legendary/registry";
 import { WEB_BLOCK_ID, adjacentCell, classify, planCells, toCell } from "./cube";
-import { isWebSword } from "./state";
 
 /** Survival interaction reach for blocks — no artificial long ray (spec §5). */
 const BLOCK_REACH = 5;
@@ -112,7 +113,7 @@ export function registerTrap(): void {
  * ability costs nothing when it does nothing (spec §5, §12).
  */
 function activate(player: Player, stack: ItemStack, via: string): void {
-  if (!isWebSword(stack)) {
+  if (defForStack(stack) === undefined) {
     return;
   }
 
@@ -120,9 +121,9 @@ function activate(player: Player, stack: ItemStack, via: string): void {
     return;
   }
 
-  if (!isReady(player)) {
-    // The HUD is already counting the timer down on the actionbar; a second
-    // message here would only fight it for the bar (spec §8).
+  // Undefined also when every held legendary is on cooldown: the HUD is
+  // already counting it down, and a message here would fight it for the bar.
+  if (resolveActivation(player)?.def !== WEB_SWORD) {
     return;
   }
 
@@ -147,7 +148,7 @@ function activate(player: Player, stack: ItemStack, via: string): void {
     return;
   }
 
-  startCooldown(player);
+  startCooldown(player, WEB_SWORD.abilityKey);
 }
 
 /**
