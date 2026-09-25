@@ -4,20 +4,20 @@
     "name": "Andrew BP",
     "description": "Behavior pack for Andrew Minecraft Bedrock add-on",
     "uuid": "059934a3-e3d0-4cbb-a4c9-e11fda9bf905",
-    "version": [0, 4, 0],
+    "version": [0, 4, 1],
     "min_engine_version": [1, 26, 50]
   },
   "modules": [
     {
       "type": "data",
       "uuid": "6de5080c-367b-41fe-8418-3a2c2cdb25f1",
-      "version": [0, 4, 0]
+      "version": [0, 4, 1]
     },
     {
       "type": "script",
       "language": "javascript",
       "uuid": "946227e1-2d58-46cc-ab04-8ff5ae13d1fc",
-      "version": [0, 4, 0],
+      "version": [0, 4, 1],
       "entry": "scripts/main.js"
     }
   ],
@@ -28,7 +28,7 @@
     },
     {
       "uuid": "6b947d56-b595-49b1-bf46-04c1830fa452",
-      "version": [0, 4, 0]
+      "version": [0, 4, 1]
     }
   ]
 }

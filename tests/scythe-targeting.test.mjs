@@ -44,7 +44,17 @@ const OW = 'minecraft:overworld';
 /** Owner at the origin looking along +Z. */
 const owner = { id: 'owner', location: { x: 0, y: 64, z: 0 }, dimensionId: OW, viewDirection: { x: 0, y: 0, z: 1 } };
 
-const player = (id, x, z, extra = {}) => ({ id, location: { x, y: 64, z }, dimensionId: OW, hidden: false, ...extra });
+const player = (id, x, z, extra = {}) => ({
+  id,
+  location: { x, y: 64, z },
+  dimensionId: OW,
+  hidden: false,
+  isPlayer: true,
+  ...extra,
+});
+
+/** A mob candidate: same shape, but it loses every tie with a player. */
+const mob = (id, x, z, extra = {}) => player(id, x, z, { isPlayer: false, ...extra });
 
 const cases = [
   { name: 'nobody at all', candidates: [], expect: undefined },
@@ -81,14 +91,46 @@ const cases = [
   { name: 'beyond 20 blocks is not selected', candidates: [player('far', 0, 20.01)], expect: undefined },
   {
     name: 'distance is 3D',
-    candidates: [{ id: 'high', location: { x: 12, y: 64 + 17, z: 0 }, dimensionId: OW, hidden: false }],
+    candidates: [{ id: 'high', location: { x: 12, y: 64 + 17, z: 0 }, dimensionId: OW, hidden: false, isPlayer: true }],
     expect: undefined,
+  },
+
+  // Mobs became targets on 2026-09-25 (operator). A player still outranks
+  // every mob in range, however close the mob and however far the player.
+  { name: 'a lone mob is a target', candidates: [mob('cow', 4, 0)], expect: 'cow' },
+  {
+    name: 'a player beats a nearer mob',
+    candidates: [mob('cow', 1, 0), player('rival', 0, 18)],
+    expect: 'rival',
+  },
+  {
+    name: 'two mobs, the nearer wins',
+    candidates: [mob('far', 0, 15), mob('near', 6, 0)],
+    expect: 'near',
+  },
+  {
+    name: 'mobs are picked when the only player is hidden',
+    candidates: [player('ghost', 2, 0, { hidden: true }), mob('cow', 9, 0)],
+    expect: 'cow',
+  },
+  {
+    name: 'a mob out of range is no target',
+    candidates: [mob('far', 0, 20.01)],
+    expect: undefined,
+  },
+  {
+    name: 'an invisible player behind a wall does not shield a mob',
+    candidates: [player('walled', 1, 0), mob('cow', 7, 0)],
+    invisible: ['walled'],
+    expect: 'cow',
   },
 ];
 
 for (const c of cases) {
   test(`pickTarget: ${c.name}`, () => {
-    assert.equal(pickTarget(owner, c.candidates)?.id, c.expect);
+    // `invisible` lists ids the line of sight rejects; the default sees all.
+    const blocked = new Set(c.invisible ?? []);
+    assert.equal(pickTarget(owner, c.candidates, (cand) => !blocked.has(cand.id))?.id, c.expect);
   });
 }
 

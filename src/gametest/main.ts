@@ -47,7 +47,7 @@ import {
   launchVolley,
   volleyTickErrors,
 } from "../scythe/volley";
-import { PROJECTILE_SPEED } from "../scythe/volley-rules";
+import { PROJECTILE_SPEED, TRUE_DAMAGE } from "../scythe/volley-rules";
 import { WEB_BLOCK_ID } from "../websword/cube";
 import { registerTrap } from "../websword/trap";
 
@@ -1421,13 +1421,13 @@ register("andrew", "legendary_pickup_no_duplicate", (test: Test): void => {
 // the listener the production module calls with its choice; a miss is also
 // proven by the cooldown staying ready.
 
-/** Owner id -> chosen target's name, or null for "no target". Absent: no activation yet. */
+/** Owner id -> chosen target's name or type id, or null for "no target". Absent: no activation yet. */
 const scytheChoice = new Map<string, string | null>();
 
 /** What a volley scenario sees of its volley, and the hooks it drives it with. */
 interface VolleyWatch {
-  onLaunch?(target: Player): void;
-  onHit?(hitNumber: number, target: Player): void;
+  onLaunch?(target: Entity): void;
+  onHit?(hitNumber: number, target: Entity): void;
   hits: number;
   hpAfter: number[];
   endReason?: string;
@@ -1442,7 +1442,10 @@ const volleyWatch = new Map<string, VolleyWatch>();
 // well — the same chain registerScytheVolley() wires in src/main.ts, with an
 // observer added.
 registerScytheTargeting((owner, target) => {
-  scytheChoice.set(owner.id, target === undefined ? null : target.name);
+  scytheChoice.set(
+    owner.id,
+    target === undefined ? null : target.typeId === "minecraft:player" ? (target as Player).name : target.typeId
+  );
   if (target === undefined) {
     return;
   }
@@ -1499,11 +1502,13 @@ register("andrew", "scythe_no_target_no_cooldown", (test: Test): void => {
   .maxTicks(200)
   .tag("andrew");
 
-register("andrew", "scythe_picks_player_not_mob", (test: Test): void => {
+// Mobs became targets on 2026-09-25 (operator: "способность должна действовать
+// на мобов тоже"). A player still outranks every mob in range — otherwise a cow
+// wandering past would swallow the volley meant for an enemy — so the decoy cow
+// here stands nearer than the player and must still lose.
+register("andrew", "scythe_prefers_player_over_mob", (test: Test): void => {
   const owner = test.spawnSimulatedPlayer(STAND_A, "andrew_reaper_owner", GameMode.Survival);
   const victim = test.spawnSimulatedPlayer({ x: 5, y: 2, z: 1 }, "andrew_victim", GameMode.Survival);
-  // The cow stands a block from the owner, far nearer than the player: a
-  // targeting that looked at entities at all would pick it.
   mustSpawn(test, COW_ID, { x: 2, y: 2, z: 4 }, "could not spawn the decoy cow");
 
   useScythe(test, owner, () => {
@@ -1514,6 +1519,36 @@ register("andrew", "scythe_picks_player_not_mob", (test: Test): void => {
 })
   .structureName(STRUCTURE)
   .maxTicks(200)
+  .tag("andrew");
+
+// The other half of the same change: with no player around, the mob is the
+// target and takes a real volley — 3 HP of true damage per hit.
+register("andrew", "scythe_hits_mob_when_alone", (test: Test): void => {
+  const owner = test.spawnSimulatedPlayer(STAND_A, "andrew_herdsman", GameMode.Survival);
+  const cow = mustSpawn(test, COW_ID, { x: 3, y: 2, z: 4 }, "could not spawn the target cow");
+  const before = cow.getComponent("minecraft:health")?.currentValue ?? -1;
+
+  useScythe(test, owner, () => {
+    const choice = choiceOf(test, owner);
+    test.assert(choice === COW_ID, `the Scythe chose ${choice ?? "nobody"} instead of the cow`);
+
+    test.succeedWhen(() => {
+      const alive = cow.isValid;
+      const after = alive ? (cow.getComponent("minecraft:health")?.currentValue ?? -1) : 0;
+      console.warn(`[gametest] scythe on cow: hp ${before} -> ${after} (alive ${alive})`);
+      test.assert(
+        before > 0,
+        "the cow had no readable health before the volley — the probe itself is broken"
+      );
+      test.assert(
+        after <= before - TRUE_DAMAGE,
+        `the cow lost ${before - after} hp, less than the ${TRUE_DAMAGE} one hit must take`
+      );
+    });
+  });
+})
+  .structureName(STRUCTURE)
+  .maxTicks(400)
   .tag("andrew");
 
 register("andrew", "scythe_skips_hidden", (test: Test): void => {

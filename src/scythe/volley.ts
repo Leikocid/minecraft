@@ -4,7 +4,12 @@
 // the target dies, leaves or changes dimension. Decisions live in
 // volley-rules.ts; this file moves, draws, hits and keeps the clocks.
 
-import { EntityDamageCause, type Player, type Vector3, system } from "@minecraft/server";
+import { EntityDamageCause, type Entity, type Player, type Vector3, system } from "@minecraft/server";
+
+/** A name for the log that works for a player and for a cow alike. */
+function label(entity: Entity): string {
+  return entity.nameTag !== "" ? entity.nameTag : entity.typeId;
+}
 import { clearBusy, setBusy, startCooldown } from "../legendary/cooldown";
 import { SCYTHE_OF_CALAMITY } from "../legendary/registry";
 import { registerScytheTargeting } from "./targeting";
@@ -51,7 +56,7 @@ interface Projectile {
 interface Volley {
   owner: Player;
   ownerId: string;
-  target: Player;
+  target: Entity;
   dimensionId: string;
   launchPoint: Vector3;
   age: number;
@@ -125,7 +130,7 @@ function strike(volley: Volley, hp: number): void {
   }
   const after = volley.target.isValid ? (target.getComponent("minecraft:health")?.currentValue ?? 0) : 0;
   console.warn(
-    `[andrew] scythe volley: hit ${volley.hits} on ${target.name} hp ${hp} -> ${after} (true ${TRUE_DAMAGE}) at ${at(target.location)}`
+    `[andrew] scythe volley: hit ${volley.hits} on ${label(target)} hp ${hp} -> ${after} (true ${TRUE_DAMAGE}) at ${at(target.location)}`
   );
   volley.observer?.onHit?.(volley.hits, after);
 }
@@ -203,7 +208,7 @@ function step(volley: Volley): EndReason | undefined {
  * ends, except that the first hit arms it at once: an owner who logs out
  * mid-flight must not escape a cooldown they already earned (Q-009).
  */
-export function launchVolley(owner: Player, target: Player, observer?: VolleyObserver): boolean {
+export function launchVolley(owner: Player, target: Entity, observer?: VolleyObserver): boolean {
   if (active.has(owner.id)) {
     return false;
   }
@@ -245,7 +250,7 @@ export function launchVolley(owner: Player, target: Player, observer?: VolleyObs
   }, 1);
   active.set(owner.id, volley);
   setBusy(owner, SCYTHE_OF_CALAMITY.abilityKey, BUSY_MS);
-  console.warn(`[andrew] scythe volley: ${owner.name} -> ${target.name}, launch point ${at(launchPoint)}`);
+  console.warn(`[andrew] scythe volley: ${owner.name} -> ${label(target)}, launch point ${at(launchPoint)}`);
   return true;
 }
 

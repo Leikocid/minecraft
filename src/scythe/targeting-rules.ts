@@ -14,6 +14,13 @@ export interface TargetCandidate {
   location: Vec3;
   dimensionId: string;
   hidden: boolean;
+  /**
+   * A player outranks any mob in range (operator, 2026-09-25: the ability works
+   * on mobs *too*). Without the tier a zombie two steps away would swallow a
+   * volley aimed at an enemy fifteen blocks off, which is the opposite of what
+   * a PvP legendary is for.
+   */
+  isPlayer: boolean;
 }
 
 export interface TargetOwner {
@@ -44,7 +51,7 @@ export function gazeAlignment(owner: TargetOwner, to: Vec3): number {
   return (d.x * view.x + d.y * view.y + d.z * view.z) / (len * viewLen);
 }
 
-/** Everyone the rules allow before line of sight, nearest first. */
+/** Everyone the rules allow before line of sight: players first, then nearest. */
 export function eligibleCandidates(owner: TargetOwner, candidates: ReadonlyArray<TargetCandidate>): TargetCandidate[] {
   return candidates
     .filter(
@@ -54,7 +61,12 @@ export function eligibleCandidates(owner: TargetOwner, candidates: ReadonlyArray
         !c.hidden &&
         distance(owner.location, c.location) <= TARGET_RADIUS
     )
-    .sort((a, b) => distance(owner.location, a.location) - distance(owner.location, b.location));
+    .sort((a, b) => {
+      if (a.isPlayer !== b.isPlayer) {
+        return a.isPlayer ? -1 : 1;
+      }
+      return distance(owner.location, a.location) - distance(owner.location, b.location);
+    });
 }
 
 /**
@@ -73,9 +85,15 @@ export function pickTarget(
   let nearest: number | undefined;
   let best: TargetCandidate | undefined;
   let bestAlignment = -Infinity;
+  let bestTier: boolean | undefined;
 
   for (const c of eligibleCandidates(owner, candidates)) {
     const d = distance(owner.location, c.location);
+    // The window closes only within one tier: the sort put every player ahead
+    // of every mob, so a visible player found late still beats a near mob.
+    if (bestTier !== undefined && bestTier !== c.isPlayer) {
+      break;
+    }
     if (nearest !== undefined && d > nearest + TIE_EPSILON) {
       break;
     }
@@ -83,6 +101,7 @@ export function pickTarget(
       continue;
     }
     nearest ??= d;
+    bestTier ??= c.isPlayer;
     const alignment = gazeAlignment(owner, c.location);
     if (best === undefined || alignment > bestAlignment) {
       best = c;
