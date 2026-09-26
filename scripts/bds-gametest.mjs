@@ -32,6 +32,8 @@
 import { execFileSync, spawnSync } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { buildMcstructure } from './lib/mcstructure.mjs';
+import { TAG_BYTE, readNbt, writeNbt } from './lib/nbt.mjs';
 import {
   addonPath,
   assertComposePinsVersion,
@@ -44,7 +46,6 @@ import {
   seedProperties,
   unpackAddon,
 } from './bds-lib.mjs';
-import { MIN_ENGINE_VERSION } from './targets.mjs';
 
 // A world of its own: the everyday "andrew" world must never carry the
 // experiment flag, and this one is wiped on every run.
@@ -136,131 +137,6 @@ function sleep(ms) {
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
 }
 
-// -------------------------------------------------------- little-endian NBT
-//
-// Bedrock writes NBT little-endian. Both files this script has to produce are
-// NBT: level.dat (with an 8-byte header: format version, payload length) and
-// .mcstructure (bare, no header).
-//
-// Tags are kept as { type, name, value } rather than plain objects so that a
-// parse -> edit -> serialise round trip preserves types exactly. level.dat is
-// written by the engine and read back by it; guessing a type would corrupt a
-// field this script never meant to touch.
-
-const TAG_END = 0;
-const TAG_BYTE = 1;
-const TAG_INT = 3;
-const TAG_STRING = 8;
-const TAG_LIST = 9;
-const TAG_COMPOUND = 10;
-
-function readNbt(buf, start) {
-  let off = start;
-
-  const readString = () => {
-    const len = buf.readUInt16LE(off);
-    off += 2;
-    const s = buf.toString('utf8', off, off + len);
-    off += len;
-    return s;
-  };
-
-  const readPayload = (type) => {
-    switch (type) {
-      case TAG_BYTE: return buf.readInt8(off++);
-      case 2: { const v = buf.readInt16LE(off); off += 2; return v; }
-      case TAG_INT: { const v = buf.readInt32LE(off); off += 4; return v; }
-      case 4: { const v = buf.readBigInt64LE(off); off += 8; return v; }
-      case 5: { const v = buf.readFloatLE(off); off += 4; return v; }
-      case 6: { const v = buf.readDoubleLE(off); off += 8; return v; }
-      case 7: { const n = buf.readInt32LE(off); off += 4; const v = Buffer.from(buf.subarray(off, off + n)); off += n; return v; }
-      case TAG_STRING: return readString();
-      case TAG_LIST: {
-        const elementType = buf.readUInt8(off++);
-        const n = buf.readInt32LE(off);
-        off += 4;
-        const items = [];
-        for (let i = 0; i < n; i++) items.push(readPayload(elementType));
-        return { elementType, items };
-      }
-      case TAG_COMPOUND: {
-        const entries = [];
-        for (;;) {
-          const type2 = buf.readUInt8(off++);
-          if (type2 === TAG_END) break;
-          entries.push({ type: type2, name: readString(), value: readPayload(type2) });
-        }
-        return entries;
-      }
-      case 11: {
-        const n = buf.readInt32LE(off);
-        off += 4;
-        const items = [];
-        for (let i = 0; i < n; i++) { items.push(buf.readInt32LE(off)); off += 4; }
-        return items;
-      }
-      default: throw new Error(`unsupported NBT tag ${type} at offset ${off}`);
-    }
-  };
-
-  const type = buf.readUInt8(off++);
-  const name = readString();
-  const value = readPayload(type);
-  return { tag: { type, name, value }, end: off };
-}
-
-function writeNbt(tag) {
-  const chunks = [];
-
-  const writeString = (s) => {
-    const b = Buffer.from(s, 'utf8');
-    const h = Buffer.alloc(2);
-    h.writeUInt16LE(b.length);
-    chunks.push(h, b);
-  };
-
-  const writePayload = (type, value) => {
-    switch (type) {
-      case TAG_BYTE: { const b = Buffer.alloc(1); b.writeInt8(value); chunks.push(b); break; }
-      case 2: { const b = Buffer.alloc(2); b.writeInt16LE(value); chunks.push(b); break; }
-      case TAG_INT: { const b = Buffer.alloc(4); b.writeInt32LE(value); chunks.push(b); break; }
-      case 4: { const b = Buffer.alloc(8); b.writeBigInt64LE(value); chunks.push(b); break; }
-      case 5: { const b = Buffer.alloc(4); b.writeFloatLE(value); chunks.push(b); break; }
-      case 6: { const b = Buffer.alloc(8); b.writeDoubleLE(value); chunks.push(b); break; }
-      case 7: { const h = Buffer.alloc(4); h.writeInt32LE(value.length); chunks.push(h, value); break; }
-      case TAG_STRING: writeString(value); break;
-      case TAG_LIST: {
-        const h = Buffer.alloc(5);
-        h.writeUInt8(value.elementType, 0);
-        h.writeInt32LE(value.items.length, 1);
-        chunks.push(h);
-        for (const item of value.items) writePayload(value.elementType, item);
-        break;
-      }
-      case TAG_COMPOUND: {
-        for (const entry of value) {
-          chunks.push(Buffer.from([entry.type]));
-          writeString(entry.name);
-          writePayload(entry.type, entry.value);
-        }
-        chunks.push(Buffer.from([TAG_END]));
-        break;
-      }
-      case 11: {
-        const h = Buffer.alloc(4); h.writeInt32LE(value.length); chunks.push(h);
-        for (const v of value) { const b = Buffer.alloc(4); b.writeInt32LE(v); chunks.push(b); }
-        break;
-      }
-      default: throw new Error(`unsupported NBT tag ${type}`);
-    }
-  };
-
-  chunks.push(Buffer.from([tag.type]));
-  writeString(tag.name);
-  writePayload(tag.type, tag.value);
-  return Buffer.concat(chunks);
-}
-
 // ------------------------------------------------------- experiments toggle
 
 /**
@@ -313,16 +189,6 @@ function enableBetaApis() {
  * design — the tests build what they need with setBlockType.
  */
 function writeStructure({ sx, sy, sz }) {
-  // Block "version" is the game version packed one byte per component.
-  const [major, minor, patch] = MIN_ENGINE_VERSION;
-  const blockVersion = (major << 24) | (minor << 16) | (patch << 8);
-
-  const paletteEntry = (name) => [
-    { type: TAG_STRING, name: 'name', value: name },
-    { type: TAG_COMPOUND, name: 'states', value: [] },
-    { type: TAG_INT, name: 'version', value: blockVersion },
-  ];
-
   const AIR = 0;
   const STONE = 1;
   const primary = [];
@@ -333,61 +199,11 @@ function writeStructure({ sx, sy, sz }) {
       }
     }
   }
-  // -1 means "no block" in the second layer; it exists only for waterlogging.
-  const secondary = new Array(primary.length).fill(-1);
-
-  const tag = {
-    type: TAG_COMPOUND,
-    name: '',
-    value: [
-      { type: TAG_INT, name: 'format_version', value: 1 },
-      { type: TAG_LIST, name: 'size', value: { elementType: TAG_INT, items: [sx, sy, sz] } },
-      {
-        type: TAG_COMPOUND,
-        name: 'structure',
-        value: [
-          {
-            type: TAG_LIST,
-            name: 'block_indices',
-            value: {
-              elementType: TAG_LIST,
-              items: [
-                { elementType: TAG_INT, items: primary },
-                { elementType: TAG_INT, items: secondary },
-              ],
-            },
-          },
-          { type: TAG_LIST, name: 'entities', value: { elementType: TAG_COMPOUND, items: [] } },
-          {
-            type: TAG_COMPOUND,
-            name: 'palette',
-            value: [
-              {
-                type: TAG_COMPOUND,
-                name: 'default',
-                value: [
-                  {
-                    type: TAG_LIST,
-                    name: 'block_palette',
-                    value: {
-                      elementType: TAG_COMPOUND,
-                      items: [paletteEntry('minecraft:air'), paletteEntry('minecraft:stone')],
-                    },
-                  },
-                  { type: TAG_COMPOUND, name: 'block_position_data', value: [] },
-                ],
-              },
-            ],
-          },
-        ],
-      },
-      {
-        type: TAG_LIST,
-        name: 'structure_world_origin',
-        value: { elementType: TAG_INT, items: [0, 0, 0] },
-      },
-    ],
-  };
+  const tag = buildMcstructure({
+    size: [sx, sy, sz],
+    palette: [{ name: 'minecraft:air' }, { name: 'minecraft:stone' }],
+    primary,
+  });
 
   const dir = join(gametestDir, 'structures', 'andrew');
   mkdirSync(dir, { recursive: true });

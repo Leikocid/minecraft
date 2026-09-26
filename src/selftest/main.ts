@@ -268,6 +268,26 @@ function run(): void {
     }
   });
 
+  // 6. The engine parses the .mcstructure our own NBT writer produced
+  //    (src/structures/templates/probe.json): size, block states the Script
+  //    API cannot set at runtime, and the waterlogging second layer.
+  check("structure-probe", () => {
+    const s = world.structureManager.get("andrew:probe");
+    assert(s !== undefined, "andrew:probe is not a pack structure");
+    assert(
+      s.size.x === 5 && s.size.y === 3 && s.size.z === 5,
+      `size is ${s.size.x}x${s.size.y}x${s.size.z}, expected 5x3x5`
+    );
+    const at = (x: number, y: number, z: number) => s.getBlockPermutation({ x, y, z });
+    assert(at(0, 1, 0)?.type.id === "minecraft:chest", `(0,1,0) is ${at(0, 1, 0)?.type.id}`);
+    assert(at(2, 1, 0)?.type.id === "minecraft:mob_spawner", `(2,1,0) is ${at(2, 1, 0)?.type.id}`);
+    const shrieker = at(4, 1, 0);
+    assert(shrieker?.type.id === "minecraft:sculk_shrieker", `(4,1,0) is ${shrieker?.type.id}`);
+    assert(shrieker.getState("can_summon") === true, "shrieker can_summon is not true");
+    assert(at(2, 1, 2)?.getState("growth") === 7, "wheat growth is not 7");
+    assert(s.getIsWaterlogged({ x: 0, y: 1, z: 2 }), "stairs at (0,1,2) are not waterlogged");
+  });
+
   if (__SELFTEST_FIXTURE__) {
     // Only reachable under --break-selftest. Deliberately expects an item that
     // does not exist, so the FAIL path and the non-zero exit of bds:check are

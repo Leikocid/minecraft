@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "node --test tests/**/*.test.mjs",
     "build": "node scripts/build.mjs",
+    "build:structures": "node scripts/build-structures.mjs",
     "validate": "node scripts/validate.mjs",
     "build:clean-clone": "bash scripts/build-clean-clone.sh",
     "bds:check": "node scripts/bds-check.mjs",
