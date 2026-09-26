@@ -450,6 +450,15 @@ function main() {
   if (results.size === 0) log('  (no onTestPassed/onTestFailed lines in the log)');
   for (const [name, result] of results) log(`  ${result.ok ? '✓' : '✗'} ${name}`);
 
+  // Probe tests report engine answers, not pass/fail of the product; their
+  // verdict lines are the deliverable, so they go into the summary too.
+  const probeResults = text.split('\n').filter((l) => / \[probe\] .*RESULT /.test(l));
+  if (probeResults.length > 0) {
+    log('');
+    log('Engine probe answers:');
+    for (const l of probeResults) log(`  ${l.slice(l.indexOf('[probe]'))}`);
+  }
+
   log('');
   if (problems.length > 0) {
     log('FAIL — the simulated-player scenarios did not pass on BDS:');
