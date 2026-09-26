@@ -142,3 +142,15 @@ test('buildStructures writes one verified file per template', () => {
     rmSync(out, { recursive: true, force: true });
   }
 });
+
+test('structure_void compiles to index -1 with no palette entry, so placing it keeps the terrain', () => {
+  const { buffer, counts } = templateToBuffer({
+    size: [2, 1, 1],
+    blocks: { v: 'minecraft:structure_void', s: 'minecraft:stone' },
+    layers: { 0: ['vs'] },
+  });
+  const s = parseMcstructure(buffer);
+  assert.deepStrictEqual(s.primary, [-1, 0]);
+  assert.deepStrictEqual(s.palette.map((p) => p.name), ['minecraft:stone']);
+  assert.deepStrictEqual(counts, { 'minecraft:structure_void': 1, 'minecraft:stone': 1 });
+});
