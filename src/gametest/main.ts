@@ -60,6 +60,7 @@ import "./structures-site";
 import "./structures-place";
 import "./structures-loot";
 import "./structures-commands";
+import "./windmill";
 
 const WEB_SWORD_ID = WEB_SWORD.itemId;
 const isWebSword = (stack: ItemStack | undefined): stack is ItemStack => state.isItemOf(WEB_SWORD, stack);

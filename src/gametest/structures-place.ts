@@ -72,7 +72,7 @@ function fillBox(dim: Dimension, box: Box, block: string): void {
 }
 
 /** One ticking area over every chunk under the box plus margin; resolves once all are loaded, returns its remover. */
-async function loadBox(test: Test, dim: Dimension, name: string, box: Box): Promise<() => void> {
+export async function loadBox(test: Test, dim: Dimension, name: string, box: Box): Promise<() => void> {
   const chunks = coveredChunks(box.min[0], box.min[2], box.max[0] - box.min[0] + 1, box.max[2] - box.min[2] + 1);
   const xs = chunks.map(([x]) => x);
   const zs = chunks.map(([, z]) => z);
