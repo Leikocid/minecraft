@@ -110,6 +110,10 @@ const EXPECTED_TESTS = [
   'andrew:probe_place_rotation',
   'andrew:probe_place_timing',
   'andrew:probe_fill_air_limits',
+  // strf-p006 questions 9, 11, 8 — src/gametest/probe-chunk.ts
+  'andrew:probe_chunk_loaded',
+  'andrew:probe_tickingarea_load',
+  'andrew:probe_dynamic_property_budget',
 ];
 
 // FLAT is not cosmetic: see the LEVEL_TYPE comment in docker/bds/compose.yaml.
@@ -457,6 +461,17 @@ function main() {
     log('');
     log('Engine probe answers:');
     for (const l of probeResults) log(`  ${l.slice(l.indexOf('[probe]'))}`);
+  }
+
+  // Q8's other half: whatever the engine itself says about the size of the
+  // dynamic-property store is not a script line, so it is echoed verbatim.
+  const dpWarnings = text.split('\n').filter((l) => /dynamic.?propert/i.test(l) && !l.includes('[probe]') && !/onTest\w+:/.test(l));
+  if (dpWarnings.length > 0) {
+    log('');
+    log('Engine lines about dynamic properties (Q8):');
+    for (const l of dpWarnings) log(`  ${l.trim()}`);
+  } else if (probeResults.some((l) => l.includes('Q8 RESULT'))) {
+    log('  (Q8: the engine printed no line about dynamic properties)');
   }
 
   log('');
