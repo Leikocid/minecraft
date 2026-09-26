@@ -18,6 +18,7 @@ import {
 } from "@minecraft/server";
 import { Test, registerAsync } from "@minecraft/server-gametest";
 import { GUARD_COUNT, guardTag } from "../structures/bodies/windmill";
+import { ROLL_DEFS } from "../structures/config";
 import { type Box, FILL_CELL_LIMIT, boxOf, sliceBox } from "../structures/clear";
 import { VOID_DEPTH, applyPrep, enginePrepWorld, largestStep, planPrep, precheck } from "../structures/prepare";
 import { COLLISION_MARGIN, SALT_KEY, type Vec3, clearTestHook, installTestHook } from "../structures/registry";
@@ -194,7 +195,13 @@ registerAsync("andrew", "windmill_spawn_holds_discovery", async (test: Test): Pr
   };
   const cx = near[0] * CHUNK + 8;
   const unload = await loadBox(test, dim, "andrew_gt_ws_hold", { min: [cx - 24, 0, near[1] * CHUNK - 16], max: [cx + 24, 0, near[1] * CHUNK + 32] });
-  installTestHook({ outcomes: [["windmill", "o", near[0], near[1], true], ["windmill", "o", far[0], far[1], false]] });
+  // Every other Overworld def is pinned to a miss: the salt is fresh each run, and a
+  // natural airship/warden_city hit leaves the far chunk pending or adds a second record.
+  const others = ROLL_DEFS.filter((d) => d.dim === "o" && d.id !== "windmill").flatMap((d): [string, "o", number, number, boolean][] => [
+    [d.id, "o", near[0], near[1], false],
+    [d.id, "o", far[0], far[1], false],
+  ]);
+  installTestHook({ outcomes: [["windmill", "o", near[0], near[1], true], ["windmill", "o", far[0], far[1], false], ...others] });
   try {
     const running = s.run();
     // Synchronously after run(): the record is written and the hold is on, the search waits out its start delay.
