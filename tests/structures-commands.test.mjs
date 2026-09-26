@@ -120,8 +120,8 @@ function runtime({ store = new MemoryStore(), events = [] } = {}) {
     }),
     hooks: () => ({ fillChest: (ctx) => events.push(`chest ${ctx.index} ${ctx.table}`, ctx) }),
   };
-  // The command is tested over the probe box: every type, the Windmill included, stands in.
-  rt = new StrfRuntime(store, engine, { bodies: { ...BODIES, windmill: standIn([CUSTOM_TABLE, CUSTOM_TABLE]) } });
+  // The command is tested over the probe box: every type, the Windmill and the Airship included, stands in.
+  rt = new StrfRuntime(store, engine, { bodies: { ...BODIES, windmill: standIn([CUSTOM_TABLE, CUSTOM_TABLE]), airship: standIn([CUSTOM_TABLE, CUSTOM_TABLE]) } });
   return rt;
 }
 

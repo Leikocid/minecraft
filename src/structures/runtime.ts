@@ -13,24 +13,30 @@ import type {
   StructureRotation,
   World,
 } from "@minecraft/server";
-import { type TypeBody, BODIES, naturalDefs } from "./bodies";
+import { LinkedAirships } from "./bodies/airship";
+import { type TypeBody, BODIES, naturalDefs, withLinks } from "./bodies";
 import type { RollDef, StructureId } from "./config";
 import { Discovery, type PlayerPos, type SiteVerdict } from "./discovery";
 import { Loot } from "./loot";
 import { type PlaceHooks, type PlaceWorld, Placer, engineSpawnGuard, engineWorld } from "./place";
 import { type DimShort, type Instance, type Rotation, type Vec3, Registry } from "./registry";
 import { type Candidate, effectiveChance, rotatedSize } from "./roll";
+import { type RingLoader, type RingSystem, engineRingLoader } from "./search-ring";
 import { type BlockView, SiteChecker, SiteGate, dimensionView } from "./site";
 import type { KeyValueStore } from "./store";
 
 const CHUNK = 16;
 /** Queued natural placements run per pump; each is a template place plus its chests. */
 const PLACE_PER_PUMP = 1;
+/** Pending linked attempts are retried every this many discovery rounds (~30 s at 20 ticks). */
+const LINKED_RETRY_ROUNDS = 30;
 
 export interface StrfEngine {
   view(dim: DimShort): BlockView | undefined;
   placeWorld(dim: DimShort): PlaceWorld | undefined;
   hooks(dim: DimShort): PlaceHooks;
+  /** Temporary chunk loading for ring searches; without it a linked attempt waits as pending. */
+  ringLoader?(dim: DimShort): RingLoader | undefined;
 }
 
 export type PlaceOutcome =
@@ -58,7 +64,10 @@ export class StrfRuntime {
   readonly gate: SiteGate;
   readonly discovery: Discovery;
   readonly defs: readonly RollDef[];
+  readonly linked: LinkedAirships;
   private readonly bodies: Readonly<Record<string, TypeBody>>;
+  private readonly placerBodies: Readonly<Record<string, TypeBody>>;
+  private rounds = 0;
   private readonly log: (msg: string) => void;
   private readonly placers = new Map<DimShort, Placer>();
   private readonly queue = new Map<string, Queued>();
@@ -75,6 +84,19 @@ export class StrfRuntime {
     this.gate = new SiteGate(this.checker, this.registry, () => this.discovery.stats.slices, this.log);
     this.defs = naturalDefs(this.bodies);
     this.discovery = new Discovery(this.registry, this.site, { defs: this.defs, log: this.log });
+    this.linked = new LinkedAirships({
+      registry: this.registry,
+      gate: this.gate,
+      defs: this.defs,
+      salt: () => this.registry.salt(),
+      run: (inst) => {
+        const placer = this.placer(inst.dim);
+        return placer === undefined ? "pending" : placer.run(inst, this.gate).state;
+      },
+      loader: (dim) => engine.ringLoader?.(dim),
+      log: this.log,
+    });
+    this.placerBodies = withLinks(this.bodies, (parent) => this.linked.start(parent));
   }
 
   /** The Site handed to discovery: the gate's check, plus a note of what to place once reserved. */
@@ -90,19 +112,26 @@ export class StrfRuntime {
   }
 
   discover(players: Iterable<PlayerPos>, runJob: (job: Generator<void, void, void>) => unknown): void {
+    if (++this.rounds % LINKED_RETRY_ROUNDS === 0 && this.linked.pendingCount > 0) this.linked.retryPending();
     if (!this.generating()) return;
     this.discovery.discover(players);
     this.discovery.pump(runJob);
   }
 
-  /** Records a restart left between `planned` and `done` are queued again. */
+  /**
+   * Records a restart left between `planned` and `done` are queued again;
+   * linked attempts left open are relaunched, and not counted here.
+   */
   resumeUnfinished(): number {
     let n = 0;
-    for (const inst of this.registry.allInstances()) {
+    const all = this.registry.allInstances();
+    for (const inst of all) {
       if (inst.state === "done" || inst.state === "failed") continue;
       this.queue.set(inst.id, { id: inst.id, dim: inst.dim, origin: inst.origin });
       n++;
     }
+    const linked = this.linked.resume(all.filter((i) => i.state !== "failed"));
+    if (linked > 0) this.log(`strf runtime: ${linked} open linked attempt(s) resumed`);
     return n;
   }
 
@@ -138,7 +167,7 @@ export class StrfRuntime {
     if (hit !== undefined) return hit;
     const world = this.engine.placeWorld(dim);
     if (world === undefined) return undefined;
-    const p = new Placer(this.registry, world, this.bodies, this.engine.hooks(dim), this.log);
+    const p = new Placer(this.registry, world, this.placerBodies, this.engine.hooks(dim), this.log);
     this.placers.set(dim, p);
     return p;
   }
@@ -218,7 +247,13 @@ export interface StrfEngineApi {
   StructureRotation: typeof StructureRotation;
   ItemStack: typeof ItemStack;
   EnchantmentType: typeof EnchantmentType;
+  /** With it, ring searches load their chunks through temporary ticking areas named `${ringAreaPrefix}_<n>`. */
+  system?: RingSystem;
+  ringAreaPrefix?: string;
 }
+
+/** Named areas the ring loader may hold; RING_PARALLEL of them are in use at once. */
+const RING_AREA_POOL = 4;
 
 const DIMENSION_ID: Readonly<Record<DimShort, string>> = { o: "minecraft:overworld", n: "minecraft:nether" };
 
@@ -234,6 +269,7 @@ export function engineStrf(api: StrfEngineApi): StrfEngine {
     return dim;
   };
   const views = new Map<DimShort, BlockView>();
+  const loaders = new Map<DimShort, RingLoader>();
   return {
     view(d) {
       let v = views.get(d);
@@ -245,5 +281,14 @@ export function engineStrf(api: StrfEngineApi): StrfEngine {
     },
     placeWorld: (d) => engineWorld(dimension(d), { structureManager: api.world.structureManager, BlockVolume: api.BlockVolume, StructureRotation: api.StructureRotation }),
     hooks: (d) => ({ ...new Loot(dimension(d), api).hooks, spawnGuard: engineSpawnGuard(dimension(d)) }),
+    ringLoader(d) {
+      if (api.system === undefined) return undefined;
+      let l = loaders.get(d);
+      if (l === undefined) {
+        l = engineRingLoader(dimension(d), api.system, `${api.ringAreaPrefix ?? "andrew_ring"}_${d}`, RING_AREA_POOL);
+        loaders.set(d, l);
+      }
+      return l;
+    },
   };
 }

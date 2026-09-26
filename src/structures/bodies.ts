@@ -4,11 +4,12 @@
 // natural chance is 0 until `/andrew:structure chance` lifts it for the
 // session, so an operator's world is not littered with probe boxes.
 
+import { AIRSHIP_BODY } from "./bodies/airship";
 import { WINDMILL_BODY } from "./bodies/windmill";
 import { type RollDef, ROLL_DEFS, type StructureId } from "./config";
-import { ANCIENT_CITY, BASTION_OTHER, BASTION_TREASURE, CUSTOM_TABLE } from "./loot";
-import type { StructureBody } from "./place";
-import type { Vec3 } from "./registry";
+import { ANCIENT_CITY, BASTION_OTHER, BASTION_TREASURE } from "./loot";
+import type { InitCtx, StructureBody } from "./place";
+import type { Instance, Vec3 } from "./registry";
 
 export interface TypeBody extends StructureBody {
   /** True while the type has no real template and places the probe box instead. */
@@ -40,7 +41,7 @@ export const standIn = (tables: readonly [string, string]): TypeBody => ({
 
 export const BODIES: Readonly<Record<StructureId, TypeBody>> = {
   windmill: WINDMILL_BODY,
-  airship: standIn([CUSTOM_TABLE, CUSTOM_TABLE]),
+  airship: AIRSHIP_BODY,
   warden_city: standIn([ANCIENT_CITY, ANCIENT_CITY]),
   bastion: standIn([BASTION_TREASURE, BASTION_OTHER]),
 };
@@ -54,3 +55,21 @@ export const naturalDefs = (bodies: Readonly<Record<string, TypeBody>> = BODIES)
     const b = bodies[d.id];
     return { ...d, chance: b?.standIn === false ? d.chance : 0, size: b?.size ?? d.size };
   });
+
+/** Parent type → the type it makes one linked attempt for (§5.6). */
+export const LINKS: Readonly<Partial<Record<StructureId, StructureId>>> = { windmill: "airship" };
+
+/**
+ * The bodies the Placer runs: a parent gets its `linked` hook only while both
+ * it and its child are real bodies, so a stand-in never triggers a search.
+ */
+export function withLinks(bodies: Readonly<Record<string, TypeBody>>, start: (parent: Instance) => void): Record<string, TypeBody> {
+  const out: Record<string, TypeBody> = { ...bodies };
+  for (const [parent, child] of Object.entries(LINKS)) {
+    const p = bodies[parent];
+    const c = child === undefined ? undefined : bodies[child];
+    if (p === undefined || c === undefined || p.standIn || c.standIn) continue;
+    out[parent] = { ...p, linked: (ctx: InitCtx) => start(ctx.instance) };
+  }
+  return out;
+}
