@@ -3,8 +3,9 @@
 //
 // Builds dist/andrew.mcaddon, installs both release packs plus the dev-only
 // packs/selftest behavior pack into the BDS data directory, attaches them to
-// the world, starts the server, reads the log and stops — twice over the same
-// world, so the self-check can measure what survives a restart (strf-p006 Q5).
+// the world, starts the server, reads the log and stops — three times over the
+// same world, so the self-check can measure what survives a restart (strf-p006
+// Q5) and that two restarts add no second spawn Windmill (L0-wind-r011).
 //
 // The verdict is derived from the log only — see analyzeLog() for the exact
 // rules and for why the resource pack is proven by the absence of a warning.
@@ -57,7 +58,7 @@ const ANDREW_DIAGNOSTIC = '[Scripting] [andrew] ';
 // ---------------------------------------------------------------- arguments
 
 function parseArgs(argv) {
-  const opts = { build: true, overlay: null, timeoutSec: 300, breakSelfTest: false };
+  const opts = { build: true, overlay: null, timeoutSec: 600, breakSelfTest: false };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === '--no-build') opts.build = false;
@@ -257,15 +258,17 @@ function main() {
     stageDataDir({ ...packs, extraBehaviorPacks: [packs.selftest] });
     // A previous container would otherwise keep serving its own old log.
     compose(['down']);
-    // Two runs over one world: strf-p006 Q5/Q6 spawn mobs in run 1 and count
-    // them in run 2 (src/selftest/mob-probe.ts). The self-check runs at
+    // Three runs over one world: strf-p006 Q5/Q6 spawn mobs in run 1 and count
+    // them in run 2 (src/selftest/mob-probe.ts); the spawn Windmill found in
+    // run 1 must be the only one after two restarts. The self-check runs at
     // worldLoad and prints DONE last, so waiting for both markers is what makes
-    // "absent" mean "never happened". The probes wait ~60 s of ticks before DONE.
-    for (const n of [1, 2]) {
+    // "absent" mean "never happened". Run 1 includes the spawn search itself,
+    // which on a rough seed samples up to 500 blocks around spawn.
+    for (const n of [1, 2, 3]) {
       if (n === 2) {
         log('▶ restart: stopping BDS (the world is saved on stop) and starting it again on the same world');
       }
-      const result = runServer(opts.timeoutSec, {}, { waitFor: [SCRIPT_LOADED, SELFTEST_DONE], markerWaitMs: 180_000 });
+      const result = runServer(opts.timeoutSec, {}, { waitFor: [SCRIPT_LOADED, SELFTEST_DONE], markerWaitMs: 420_000 });
       // `stop` makes BDS save the world; the stopped container still holds the log.
       compose(['stop', '-t', '60'], { stdio: 'inherit' });
       runs.push({ ...result, text: readLog() });
@@ -282,7 +285,7 @@ function main() {
   }
 
   mkdirSync(join(root, 'dist'), { recursive: true });
-  writeFileSync(logPath, runs.map((r, i) => `======== run ${i + 1} of 2 ========\n${r.text}`).join('\n'));
+  writeFileSync(logPath, runs.map((r, i) => `======== run ${i + 1} of ${runs.length} ========\n${r.text}`).join('\n'));
   log(`▶ log saved to ${logPath}`);
 
   const problems = [];
@@ -304,13 +307,14 @@ function main() {
     }
     // Which phase ran is decided by a marker in the saved world: a run 2 that
     // reran phase 1 means the world did not survive the restart.
-    for (const phase of [`probe-mobs-restart-run${i + 1}`, `strf-registry-restart-run${i + 1}`, `windmill-restart-run${i + 1}`]) {
+    const phases = i < 2 ? [`probe-mobs-restart-run${i + 1}`, `strf-registry-restart-run${i + 1}`, `windmill-restart-run${i + 1}`] : [];
+    for (const phase of [...phases, `spawn-windmill-run${i + 1}`]) {
       if (result.started && !analysis.selftestLines.some((l) => l.includes(phase))) {
         problems.push(`${run}: the self-check never reported ${phase} — the restart check ran the wrong phase or not at all`);
       }
     }
   });
-  if (runs.length < 2) problems.push('the restart run never happened — run 1 did not start');
+  if (runs.length < 3) problems.push(`only ${runs.length} of 3 runs happened — a restart never started`);
 
   // Every self-check line, verbatim, on both verdicts — this is the part a
   // human reads to see what the engine actually said about the content.

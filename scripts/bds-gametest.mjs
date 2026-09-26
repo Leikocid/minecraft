@@ -63,6 +63,9 @@ const logPath = join(root, 'dist', 'bds-gametest.log');
 const SERVER_STARTED = /^\[.*INFO\] Server started\.$/m;
 const SCRIPT_LOADED = '[gametest] script loaded';
 const EXPERIMENT_ACTIVE = 'Experiment(s) active:';
+// The release pack's spawn-Windmill search must stand down in this world:
+// every test runs at its spawn (src/gametest/main.ts sends the skip).
+const SPAWN_SEARCH_SKIPPED = '[andrew] spawn windmill: search finished: skipped';
 
 /**
  * Tests registered by src/gametest/main.ts, run one at a time.
@@ -160,6 +163,12 @@ const EXPECTED_TESTS = [
   'andrew:windmill_body_init',
   'andrew:windmill_guard_noon',
   'andrew:windmill_guard_cured',
+  // WIND-SPAWN-01 — src/gametest/windmill-spawn.ts
+  'andrew:windmill_spawn_once',
+  'andrew:windmill_spawn_holds_discovery',
+  'andrew:windmill_spawn_prep_smooth',
+  'andrew:windmill_spawn_prep_aborts',
+  'andrew:windmill_spawn_no_dry_land',
 ];
 
 // FLAT is not cosmetic: see the LEVEL_TYPE comment in docker/bds/compose.yaml.
@@ -405,6 +414,10 @@ function analyzeLog(text, expected) {
 
   if (lines.some((l) => l.includes(SCRIPT_LOADED))) evidence.push(SCRIPT_LOADED);
   else problems.push(`"${SCRIPT_LOADED}" is absent — the gametest pack script did not execute`);
+
+  const skipped = lines.find((l) => l.includes(SPAWN_SEARCH_SKIPPED));
+  if (skipped) evidence.push(skipped.trim());
+  else problems.push(`"${SPAWN_SEARCH_SKIPPED}" is absent — the release pack may have built its spawn Windmill where the tests run`);
 
   for (const line of lines) {
     const passed = line.match(/onTestPassed:\s*(\S+)/);
