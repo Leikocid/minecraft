@@ -2,7 +2,7 @@
 type: "concept-acceptance-criterion"
 node_id: "L0-scyt-ac11"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 2
 title: "AC-scyt-11 — One Survival craft per world, kept across restart (§8 test 11)"
 aliases: ["L0-scyt-ac11"]
 is_a: ["acceptance-criterion"]

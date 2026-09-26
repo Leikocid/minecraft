@@ -2,7 +2,7 @@
 type: "concept-process"
 node_id: "L0-lgnd-p003"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 2
 title: "P-lgnd-003: Loss return (Void, lava, fire, cactus, explosion, despawn)"
 aliases: ["L0-lgnd-p003"]
 is_a: ["process"]

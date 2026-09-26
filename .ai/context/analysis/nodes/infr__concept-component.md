@@ -2,55 +2,56 @@
 type: "concept-component"
 node_id: "L0-infr"
 source_channel: "rollout"
-analysis_version: 1
-title: "Component: Build & verification infrastructure (Stage 0)"
+analysis_version: 2
+title: "Component: Build & verification infrastructure (Stage 0 closed; v2 delta: structure-template pipeline)"
 aliases: ["L0-infr"]
 is_a: ["component"]
 part_of: ["L0"]
 relates_to: ["L0"]
-priority: 520
-size_chars: 4222
-tags: ["is_a:component", "relates_to:L0-lgnd", "devops"]
+priority: 530
+size_chars: 4924
+tags: ["devops", "is_a:component", "relates_to:L0-lgnd", "relates_to:L0-strf", "relates_to:L0-wind", "relates_to:L0-airs", "relates_to:L0-wrdn", "relates_to:L0-bast", "relates_to:L0-adr-tmpl", "relates_to:L0-adr-strc", "relates_to:L0-adr-strs", "v2-delta"]
 level: 1
 ---
-# Component: Build & verification infrastructure (Stage 0)
+# Component: Build & verification infrastructure (Stage 0 closed; v2 delta: structure-template pipeline)
 
-**Links:** `part_of: ["L0"]` · `is_a: ["component"]` · `relates_to: ["L0-lgnd"]`
+**Links:** `part_of: ["L0"]` · `is_a: ["component"]` · `relates_to: ["L0-lgnd", "L0-strf", "L0-wind", "L0-airs", "L0-wrdn", "L0-bast", "L0-adr-tmpl", "L0-adr-strc", "L0-adr-strs"]`
 
 ## Responsibility
-Turns the TypeScript source and the two static packs (`packs/behavior`, `packs/resource`) into a shippable `.mcaddon`, and proves — without a human, wherever the engine allows it — that the result actually loads and runs on real Bedrock: static (TS + JSON), a Bedrock Dedicated Server in Docker, an optional beta-only GameTest lane with SimulatedPlayer, and a LAN cycle that gets the same build onto the iPad for the checks only a human eye can make (rendering, icons, Creative placement, RU/EN names).
+Turns the TypeScript source and the two static packs (`packs/behavior`, `packs/resource`) into a shippable `.mcaddon`, and proves — without a human, wherever the engine allows it — that the result actually loads and runs on real Bedrock: static (TS + JSON), a Bedrock Dedicated Server in Docker, a beta-only GameTest lane with SimulatedPlayer, and a LAN cycle that gets the same build onto the iPad for the checks only a human eye can make.
 
-This is Stage 0 of the project: nothing in Stage 1 (Miner's Pickaxe) or Stage 2 (legendary weapons) starts until this component's own 5 closing criteria are green [src: stage-0-infrastructure, C-11].
+Stage 0's own 5 closing criteria are unchanged and already green [src: stage-0-infrastructure, C-11]. **v2 delta** (Four Structures spec, `L0-adr-tmpl`): infra also owns the toolchain that compiles the four structure templates into shippable `.mcstructure` files, packs them into the behavior pack, and extends the BDS/GameTest verification lanes to prove — structurally, statistically, and across a restart — that structure generation and its one-time init behave as `L0-strf`/`L0-wind`/`L0-airs`/`L0-wrdn`/`L0-bast` specify. Infra builds and runs these checks; it does **not** own the roll algorithm, placement heuristic, or instance registry themselves (owned by `L0-strf`, decided in `L0-adr-strc`/`L0-adr-strs`).
 
 ## Inputs
-- `src/**/*.ts` — behavior-pack script sources (single entry `src/main.ts`), plus dev-only sources under `src/selftest/`
-- `packs/behavior/`, `packs/resource/` (static manifests, textures, lang files) — hand-authored, not generated
-- `packs/gametest/`, `packs/selftest/` — dev-only packs, never shipped
-- `scripts/targets.mjs` — the single source of truth for version targets
-- Operator-supplied facts: the iPad's installed Bedrock version (read manually from Settings)
+- `src/**/*.ts`, `packs/behavior/`, `packs/resource/`, `packs/gametest/`, `packs/selftest/`, `scripts/targets.mjs` — unchanged from Stage 0.
+- **New**: structure template layout sources (per-structure TS/JSON builder definitions), consumed by `scripts/build-structures.mjs`; exact repo path not yet fixed by any ADR (`L0-infr-as05`).
+- Operator-supplied facts: the iPad's installed Bedrock version.
 
 ## Outputs
-- `dist/andrew.mcaddon` — the release archive (behavior + resource only)
-- `dist/bds-check.log`, `dist/bds-gametest.log` — saved server logs, the evidence artifacts `/verify` attaches to run-check
-- Process exit code 0/1 from every `npm run bds:*` / `npm run validate` / `npm run build` command — this is what ai-kit's autopilot reads to close build/bds-typed acceptance criteria without an operator [src: decision-verification-approach-automatic]
-- A running LAN server (`npm run bds:up`) and a printed `ip:19132` address for the iPad
+- `dist/andrew.mcaddon`, `dist/bds-check.log`, `dist/bds-gametest.log`, exit codes — unchanged.
+- **New**: `packs/behavior/structures/andrew/*.mcstructure` (generated, gitignored build output — `L0-infr-r007`), a structure round-trip unit-test result, a statistical chunk-roll PASS/FAIL verdict, a restart/idempotency PASS/FAIL verdict — all consumed the same automatic way as existing `bds` evidence [decision-verification-approach-automatic].
 
 ## Sub-systems (see child processes for detail)
-1. **Build & package** (`npm run build`) — esbuild → validate → zip
-2. **Structural validation** (`npm run validate`, also called from build) — manifests + every JSON under `packs/**`
-3. **BDS one-shot check** (`npm run bds:check`) — creative world, in-engine selftest pack, log-verdict
-4. **GameTest harness** (`npm run bds:gametest`) — beta-only, SimulatedPlayer, separate world
-5. **LAN dev server** (`npm run bds:up` / `bds:down` / `bds:logs`) — Survival+cheats, iPad joins over the network
-6. **Version targeting** (`scripts/targets.mjs`, `scripts/set-version.mjs`) — one file, two scripts, keeps every manifest, `compose.yaml` and `package.json` in agreement
+1. **Build & package** (`npm run build`) — esbuild → **compile structure templates (new)** → validate → zip (`L0-infr-p001`).
+2. **Structural validation** (`npm run validate`).
+3. **BDS one-shot check** (`npm run bds:check`, `L0-infr-p002`).
+4. **GameTest harness** (`npm run bds:gametest`) — the existing Miner's Pickaxe lane (`L0-infr-p003`) **and** the new worldgen/placement + statistical chunk-roll lane (`L0-infr-p006`).
+5. **LAN dev server** (`npm run bds:up` / `bds:down` / `bds:logs`, `L0-infr-p004`).
+6. **Version targeting** (`scripts/targets.mjs`).
+7. **New — structure template pipeline** (`scripts/build-structures.mjs`, `L0-infr-p005`): repo sources → `.mcstructure` NBT, with a round-trip unit test and a BDS 4-rotation placement test.
+8. **New — restart/idempotency check** (`L0-infr-p007`): proves a BDS restart never re-runs a structure's one-time init.
 
-## Three verification channels
-- **build** — `tsc --noEmit` + `npm run validate`: proves the TS compiles against `@minecraft/server` 2.10.0 types and every JSON is structurally valid. Mac only, no Docker.
-- **bds** — `npm run bds:check` (creative, one-shot, self-terminating) and `npm run bds:gametest` (beta, SimulatedPlayer): proves the packs actually load on the real engine, the script executes, and — for GameTest — that specific gameplay behaves as specified, all from a log or exit code alone.
-- **ipad** — human-eyes-only: rendering, icons, Creative inventory placement, RU/EN names. A green `bds` run never closes an `ipad` criterion [C-6]; these criteria are typed `manual` and don't block merge/autopilot [decision-verification-approach-automatic].
+## Three verification channels (unchanged shape, wider `bds` content)
+- **build** — `tsc --noEmit` + `npm run validate` + (new) the structure round-trip unit test.
+- **bds** — `bds:check`, `bds:gametest` (Pickaxe lane), plus the new worldgen/placement, statistical chunk-roll, and restart/idempotency lanes.
+- **ipad** — human-eyes-only; now also covers the four structures' visual identity (rendering, silhouette, texture) — a green `bds` structural-count proof never closes an `ipad` criterion [C-6/C-9].
 
-## Known open issue
-CTR-4 (open, target `L0-infr`): the raw specs (`minerspickaxetestspec`, `stage-0-infrastructure`) still quote `@minecraft/server` 2.9.0 / engine 1.26.0 — superseded by `decision-tselevaya-versiya-bedrock-1-26-51-asm-001-q-001` and the code (`scripts/targets.mjs`: 2.10.0 / [1,26,50] / BDS 1.26.51.1). No code fix needed; the raw docs just haven't been annotated. Not re-filed here.
+## Known open issues
+- CTR-4 (open, target `L0-infr`) — version-target wording drift in old raw specs; unchanged, not re-filed.
+- Structure template **source layout** is not fixed by any ADR yet (`L0-infr-as05`).
+- Statistical-check sample size/tolerance and the exact restart mechanism for the idempotency check are infra's own defaults, not spec'd (`L0-infr-as03`, `L0-infr-as04`).
 
 ## Boundary
-Owns: build tooling, packaging, JSON/manifest validation, the Docker BDS harness (both the one-shot check and the GameTest lane), the iPad delivery mechanics (import + LAN), and the version-target single source of truth.
-Does not own: the gameplay logic that BDS/GameTest exercise (Miner's Pickaxe, Web Sword, Scythe, the `lgnd` legendary-weapon framework) — those are separate components that *consume* this one's verification channels.
+Owns (v2 addition): the structure-template compiler and its round-trip test; packing `structures/` into the behavior pack (already covered by the existing whole-directory zip); the BDS/GameTest lanes that measure structure placement correctness, statistical chunk-roll rate, and restart/idempotency.
+Does not own (v2 addition): the chunk-discovery loop, the roll formula/`worldSalt`, the collision heuristic, the instance registry, or loot filling — those belong to `L0-strf`/`L0-loot`; infra only exercises and measures them.
+Everything else unchanged from Stage 0 (see prior boundary: build tooling, packaging, JSON/manifest validation, the Docker BDS harness, iPad delivery mechanics, version-target single source of truth; does not own weapon gameplay logic).

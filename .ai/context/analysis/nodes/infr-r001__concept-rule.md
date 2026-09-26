@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-infr-r001"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 2
 title: "Rule: version targets live in one place, and drift is fixed by retargeting, never by loosening the API channel"
 aliases: ["L0-infr-r001"]
 is_a: ["rule"]

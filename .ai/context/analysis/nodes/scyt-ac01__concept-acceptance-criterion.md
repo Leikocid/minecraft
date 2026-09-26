@@ -3,26 +3,27 @@ type: "concept-acceptance-criterion"
 node_id: "L0-scyt-ac01"
 source_channel: "rollout"
 analysis_version: 1
-title: "AC-scyt-01 — No player within 20 blocks: message shown, no cooldown (§8 test 1)"
+title: "AC-scyt-01 — Nothing to target within 20 blocks: message shown, no cooldown (§8 test 1, amended)"
 aliases: ["L0-scyt-ac01"]
 is_a: ["acceptance-criterion"]
 part_of: ["L0-scyt"]
 relates_to: ["L0-scyt"]
 priority: 520
-size_chars: 742
-tags: ["is_a:acceptance-criterion", "spec-test:1", "channel:bds"]
+size_chars: 898
+tags: ["is_a:acceptance-criterion", "spec-test:1", "channel:bds", "delta:2026-09-26"]
 level: 2
 ---
-# AC-scyt-01 — No player within 20 blocks: message shown, no cooldown (§8 test 1)
+# AC-scyt-01 — Nothing to target within 20 blocks: message shown, no cooldown (§8 test 1, amended)
 
 **Links:** `part_of: ["L0-scyt"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-scyt-r003"]`
 
-**GIVEN** owner O holds a ready Scythe, and the nearest other player is 25 blocks away, or there is none,
+GameTest: `andrew:scythe_no_target_no_cooldown` (green).
+
+**GIVEN** owner O holds a ready Scythe, and there is **no visible player and no visible living mob** within 20 blocks (the nearest is at 25 blocks, behind a wall, or hidden),
 **WHEN** O presses Use,
 **THEN**:
-- O (and only O) receives `andrew.scythe_of_calamity.no_target`: «Здесь нет игрока» in `ru_RU`, "There is no player here" in `en_US`;
-- `sc_cooldown_until` is unchanged, and busy is false;
-- no particles and no volley are created;
-- a second press in the next tick behaves the same way, with no cooldown in between.
+- O's action bar shows `andrew.scythe.no_target`: «Здесь нет цели» / "There is no target here";
+- the cooldown `andrew:cd_scythe_of_calamity` is unchanged, busy is false, and no volley exists (`activeVolleyCount() === 0`);
+- a second press in the next tick behaves the same way.
 
-**Also:** a zombie or villager 5 blocks away does not change the result, because mobs are ignored.
+**Changed from before:** a zombie or villager 5 blocks away in the open **is** now targeted (`L0-scyt-ac17`), so it no longer leads to "no target".

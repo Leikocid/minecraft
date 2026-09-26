@@ -3,28 +3,26 @@ type: "concept-rule"
 node_id: "L0-scyt-r005"
 source_channel: "rollout"
 analysis_version: 1
-title: "R-scyt-005 — Exactly 3 HP true damage per hit"
+title: "R-scyt-005 — Exactly 3 HP per hit, delivered through the damage pipeline"
 aliases: ["L0-scyt-r005"]
 is_a: ["rule"]
 part_of: ["L0-scyt"]
 relates_to: ["L0-scyt"]
 priority: 520
-size_chars: 985
-tags: ["is_a:rule", "true-damage"]
+size_chars: 1177
+tags: ["is_a:rule", "damage", "true-damage", "delta:2026-09-26"]
 level: 2
 ---
-# R-scyt-005 — Exactly 3 HP true damage per hit
+# R-scyt-005 — Exactly 3 HP per hit, delivered through the damage pipeline
 
-**Links:** `part_of: ["L0-scyt"]` · `is_a: ["rule"]` · `relates_to: ["L0-sprj", "L0-sprj-cx02", "L0-sprj-as01", "ADR-022", "C-15"]` · source: Scythe §4, §7, §8 tests 6–7.
+**Links:** `part_of: ["L0-scyt"]` · `is_a: ["rule"]` · `relates_to: ["L0-scyt-ad06", "L0-sprj", "L0-sprj-cx02"]`
 
-**Rule:** each projectile that hits takes **exactly 3.0 HP** (1.5 hearts) from the target. Armour, armour toughness, Protection (any type) and Resistance do not reduce it.
-- 3 hits = 9 HP.
-- The damage is not scaled by difficulty, and it is not modified by melee enchantments on the Scythe (Sharpness does nothing here).
+Source: spec §4, `decision-scythe-true-damage`, fix `302fba4`. Code: `strike`, `trueDamageOutcome`. GameTests: `scythe_three_hits_true_damage`, `scythe_hits_mob_when_alone`, `scythe_lethal_hit_kills`.
 
-**Mechanism (ADR-022, detailed in `L0-sprj`):**
-- non-lethal: `health.setCurrentValue(cur − 3)`;
-- lethal (cur ≤ 3): the vanilla `applyDamage` path, so the death message, kill credit and Totem of Undying still work.
+**Rule:** each hit leaves the target with exactly `hp − 3`, whatever armour, Protection or Resistance it has. 3 hits take 9 HP, the same through diamond armour. Both players and mobs are affected.
 
-The Resistance V edge case is open in `L0-sprj-cx02`. Absorption hearts are consumed first (`L0-sprj-as01`).
+**Mechanism (`L0-scyt-ad06`):**
+- **non-lethal** (`hp − 3 > 0`): `applyDamage(3, {cause: entityAttack, damagingEntity: owner if valid})`, then `health.setCurrentValue(hp − 3)`. The event gives the red flash, the hurt sound and mob aggro. The write corrects whatever armour absorbed, and also covers the invulnerability window swallowing the event;
+- **lethal** (`hp − 3 ≤ 0`): `applyDamage(hp + 100, …)`, so the death message, kill credit and totem all work.
 
-**Hurt feedback:** play the hurt sound or animation if the API allows it. It is cosmetic and not part of the rule.
+**Consequence:** a non-lethal hit now fires `entityHurt`, which the GameTest asserts. Aggro makes a hit mob turn on the owner.

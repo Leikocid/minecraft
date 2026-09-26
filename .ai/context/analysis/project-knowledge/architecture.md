@@ -1,13 +1,13 @@
 ---
 title: Architecture
 type: project-knowledge
-generated_at: "2026-09-24T19:42:02.849Z"
+generated_at: "2026-09-26T08:34:28.646Z"
 source_channel: rollout
 node_id: rollout-architecture
 aliases: ["rollout-architecture","architecture","project-knowledge/architecture"]
 is_a: ["rollout","architecture"]
-relates_to: ["L0-adr-cast","L0-adr-lgnd","L0-adr-scope","L0-adr-scyt","L0-infr","L0-lgnd","L0-pick","L0-scyt","L0-webs"]
-priority: 520
+relates_to: ["L0-airs","L0-bast","L0-infr","L0-loot","L0-wind","L0-wrdn"]
+priority: 530
 ---
 
 # Architecture
@@ -16,49 +16,42 @@ priority: 520
 
 ## Components
 
-### Component: Build & verification infrastructure (Stage 0) (L0-infr)
+### Airship (`airs`) — Дирижабль (L0-airs)
 
-# Component: Build & verification infrastructure (Stage 0)
+# Airship (`airs`) — Дирижабль
 
-**Links:** `part_of: ["L0"]` · `is_a: ["component"]` · `relates_to: ["L0-lgnd"]`
+**Links:** `part_of: ["L0"]` · `is_a: ["component"]` · `relates_to: [L0-strf, L0-loot, L0-wind, L0-infr, L0-adr-strc, L0-adr-tmpl]`
+
+**Source:** Four Structures spec §1, §2, §3, §5.1–§5.6, §6, §7, §9, §10.2 (tests 24–33), §11, §12.
+**Status:** analysis only. No structure code exists yet (`packs/behavior/structures/` absent at `302fba4`). Staged after the `strf` + `loot` probe (`L0-strf-p006`); its independent half can ship as soon as `strf`/`loot` land, its linked half additionally needs `wind`'s `afterPlace` hook wired.
 
 ## Responsibility
-Turns the TypeScript source and the two static packs (`packs/behavior`, `packs/resource`) into a shippable `.mcaddon`, and proves — without a human, wherever the engine allows it — that the result actually loads and runs on real Bedrock: static (TS + JSON), a Bedrock Dedicated Server in Docker, an optional beta-only GameTest lane with SimulatedPlayer, and a LAN cycle that gets the same build onto the iPad for the checks only a human eye can make (rendering, icons, Creative placement, RU/EN names).
+`airs` is a *body* component on top of the `strf` contract layer, at the same level as `wind`. It supplies the Airship's `StructureDef` and hooks, and owns the two Airship-only decisions `strf` explicitly delegates to it: the parameters of its own validity profile, and the ring policy + "not above the Windmill" exclusion for the linked search (`L0-strf-d004`, `L0-strf-r002` item 5). It must not restate generation, persistence or loot rules; it references `strf-*`/`loot-*` by id.
 
-This is Stage 0 of the project: nothing in Stage 1 (Miner's Pickaxe) or Stage 2 (legendary weapons) starts until this component's own 5 closing criteria are green [src: stage-0-infrastructure, C-11].
+1. **Template** (`L0-airs-e001`, `-r001`). One fixed `.mcstructure` (`L0-adr-tmpl`): ~15×7×10–12, modern grey/light-grey concrete, glass windows, no decay (no vines/cobwebs/cracks). Lower hull = elongated oval gondola with 1 central corridor + 4 small rooms, 2 opposite doors, one ceiling lamp per room. Upper hull = fully decorative oval balloon, no chests/spawner inside it. No ground-access aid (no ladder/lift/waterfall/teleport to the ground). Only rotation varies (`L0-strf-r004`).
+2. **Contents** (`-r002`). 10 fixed chests: 2 per room × 4 rooms + 2 in the corridor, filled once from the shared table (`L0-loot`, custom path only — no vanilla-table path for `airs`). Exactly 1 fixed vanilla spawner, iron-axe Vindicator, at the corridor centre (`L0-strf-r010`). No one-time persistent mobs of its own (`-r005`) — unlike `wind`, `airs` has no field guards.
+3. **Independent generation** (`-r003`). 2 % per suitable Overworld chunk (`L0-strf-r002`), validated by `strf`'s `dryLand` profile at a 10 % liquid threshold (`L0-strf-as02`) plus its `altitude` profile (bottom ≥ maxSurfaceY + clearance, clearance seeded in [40,70] clamped to 40, reject on ceiling — `L0-strf-r005`, `-r003`, `-p002`). Cancel on invalid site or collision; never terraforms, never relocates, at most one per candidate chunk.
+4. **Windmill-linked generation** (`-r004`, `-e002`, `-d001`). Every Windmill instance, spawn one included, calls `airs.tryLinked(parentInstance)` from its own `afterPlace` hook, exactly once (`L0-strf-p003` step 7). `airs` runs `strf.searchRing(airsDef, windmillCentre, 40, 100)`: same validation and collision rules as independent generation, plus an `airs`-specific 2D exclusion so the candidate never sits directly over the Windmill's own footprint (`L0-strf-d004`). No dedup either direction: a pre-existing independent Airship inside 100 blocks does not satisfy the linked attempt, and a linked Airship does not consume or block the chunk's own independent 2 % roll (`L0-strf-r002` item 6). If nothing in [40,100] validates, the linked Airship is simply not created — no widening past 100, no forced site prep (contrast with `wind`'s guaranteed spawn, which always forces a site).
 
 ## Inputs
-- `src/**/*.ts` — behavior-pack script sources (single entry `src/main.ts`), plus dev-only sources under `src/selftest/`
-- `packs/behavior/`, `packs/resource/` (static manifests, textures, lang files) — hand-authored, not generated
-- `packs/gametest/`, `packs/selftest/` — dev-only packs, never shipped
-- `scripts/targets.mjs` — the single source of truth for version targets
-- Operator-supplied facts: the iPad's installed Bedrock version (read manually from Settings)
+- `strf` API: `registerDef`, `tryPlaceAt`, `searchRing(def, centre, rMin, rMax)`, the `dryLand`/`altitude` validity profiles, the collision detector, the instance registry, `runJob` budget.
+- `wind`'s `afterPlace` hook call `airs.tryLinked(parentInstance)`, carrying the parent Windmill's centre and footprint AABB.
+- Template `packs/behavior/structures/andrew/airship.mcstructure` (built by `infr`, `L0-adr-tmpl`).
 
 ## Outputs
-- `dist/andrew.mcaddon` — the release archive (behavior + resource only)
-- `dist/bds-check.log`, `dist/bds-gametest.log` — saved server logs, the evidence artifacts `/verify` attaches to run-check
-- Process exit code 0/1 from every `npm run bds:*` / `npm run validate` / `npm run build` command — this is what ai-kit's autopilot reads to close build/bds-typed acceptance criteria without an operator [src: decision-verification-approach-automatic]
-- A running LAN server (`npm run bds:up`) and a printed `ip:19132` address for the iPad
+- Placed Airships and their `InstanceRecord`s (`id = "airship"`; linked instances carry `parentInstance` for traceability only — `strf` still keys collision purely on AABB, not on the link).
+- `loot.fillChest` ×10 per instance.
+- Deviation-report rows (`L0-strf-r012`) for anything the probe finds affecting spawner/rotation/clearVolume placement of this template.
+- Debug lines `[Scripting] [andrew] strf:airs …`.
 
-## Sub-systems (see child processes for detail)
-1. **Build & package** (`npm run build`) — esbuild → validate → zip
-2. **Structural validation** (`npm run validate`, also called from build) — manifests + every JSON under `packs/**`
-3. **BDS one-shot check** (`npm run bds:check`) — creative world, in-engine selftest pack, log-verdict
-4. **GameTest harness** (`npm run bds:gametest`) — beta-only, SimulatedPlayer, separate world
-5. **LAN dev server** (`npm run bds:up` / `bds:down` / `bds:logs`) — Survival+cheats, iPad joins over the network
-6. **Version targeting** (`scripts/targets.mjs`, `scripts/set-version.mjs`) — one file, two scripts, keeps every manifest, `compose.yaml` and `package.json` in agreement
+## Not owned
+Discovery queue, seeded rolls, rotation transform, generic collision heuristic, registry, tick budget, the numeric altitude/dryLand thresholds themselves (`strf`); loot table and fill algorithm (`loot`); when/how often the linked attempt is triggered (`wind` decides once, after its own init); NBT writer (`infr`).
 
-## Three verification channels
-- **build** — `tsc --noEmit` + `npm run validate`: proves the TS compiles against `@minecraft/server` 2.10.0 types and every JSON is structurally valid. Mac only, no Docker.
-- **bds** — `npm run bds:check` (creative, one-shot, self-terminating) and `npm run bds:gametest` (beta, SimulatedPlayer): proves the packs actually load on the real engine, the script executes, and — for GameTest — that specific gameplay behaves as specified, all from a log or exit code alone.
-- **ipad** — human-eyes-only: rendering, icons, Creative inventory placement, RU/EN names. A green `bds` run never closes an `ipad` criterion [C-6]; these criteria are typed `manual` and don't block merge/autopilot [decision-verification-approach-automatic].
-
-## Known open issue
-CTR-4 (open, target `L0-infr`): the raw specs (`minerspickaxetestspec`, `stage-0-infrastructure`) still quote `@minecraft/server` 2.9.0 / engine 1.26.0 — superseded by `decision-tselevaya-versiya-bedrock-1-26-51-asm-001-q-001` and the code (`scripts/targets.mjs`: 2.10.0 / [1,26,50] / BDS 1.26.51.1). No code fix needed; the raw docs just haven't been annotated. Not re-filed here.
-
-## Boundary
-Owns: build tooling, packaging, JSON/manifest validation, the Docker BDS harness (both the one-shot check and the GameTest lane), the iPad delivery mechanics (import + LAN), and the version-target single source of truth.
-Does not own: the gameplay logic that BDS/GameTest exercise (Miner's Pickaxe, Web Sword, Scythe, the `lgnd` legendary-weapon framework) — those are separate components that *consume* this one's verification channels.
+## Key risks
+- **"Run the linked check once" (§7) vs the loaded-footprint guarantee** (`L0-strf-r007`, C-12): a 40–100-block ring around a freshly placed Windmill may reach beyond loaded chunks, so some ring candidates return `pending`. See `L0-airs-cx01`.
+- **Door placement on the two "opposite sides"** is not disambiguated by the spec (long axis vs short axis) — assumed long axis (`L0-airs-as01`).
+- **Ring-candidate sampling pattern** inside [40,100] is not specified by the spec beyond the two radii — assumed (`L0-airs-as02`).
+- Spawner light threshold and the iron-axe Vindicator are shared unknowns already tracked by `strf`'s probe (`L0-strf-p006` items 1, 6).
 
 
 
@@ -66,161 +59,87 @@ Does not own: the gameplay logic that BDS/GameTest exercise (Miner's Pickaxe, We
 
 
 
-### Legendary weapon framework (craft gate + refund, announcement, death retention/anti-dup, void return, cooldown + Action Bar, hand priority, localization) (L0-lgnd)
+### Mini Bastion — Nether custom structure (20×20×10-12, lava treasure room, one-time Piglin garrison) (L0-bast)
 
----
-is_a: ["component"]
-part_of: ["L0"]
-relates_to: ["L0-sitm", "L0-stgt", "L0-sprj", "L0-sqat"]
-governs_files: ["src/legendary/", "src/websword/", "src/main.ts", "src/gametest/main.ts"]
-see_also: ["webswordspecv1ruen-part-1", "webswordspecv1ruen-part-2", "scytheofcalamityspecv1ruen-part-1", "scytheofcalamityspecv1ruen-part-2"]
----
-# Legendary weapon framework (craft gate + refund, announcement, death retention/anti-dup, void return, cooldown + Action Bar, hand priority, localization)
+# Mini Bastion — Nether custom structure (20×20×10-12, lava treasure room, one-time Piglin garrison)
 
-**Responsibility.** Implement each "general rule for legendary weapons" (*общие правила легендарных оружий*: Scythe §1, §6; Web Sword §3, §4, §8, §9, §10) exactly once, in a new `src/legendary/`. The shipped Web Sword (0.3.0, `src/websword/*`) becomes the first registered `LegendaryDef`, and the Scythe of Calamity the second. No weapon module keeps a private copy of an anti-dup invariant (C-7).
-
-## Current state (verified in code, 2026-09-24)
-`src/legendary/` does not exist yet. Everything is hard-wired to the Web Sword:
-| File | Concern | Web-Sword-only detail |
-|---|---|---|
-| `state.ts` | key names, mark, world flag, pending, cooldown deadline | `andrew:ws_*`; `ws_pending` holds a single mark |
-| `craftgate.ts` | after-the-fact gate, refund, broadcast | `REFUND = web×4 + diamond_sword×1` |
-| `retention.ts` | death retention (inventory path + drop sweep), restore on spawn | `findMarkedSword` returns the first sword only; off hand not scanned |
-| `cooldown.ts` | `isReady/startCooldown/remainingTicks`, 10-tick HUD | `_abilityKey` ignored (one slot per player); main hand only |
-| `commands.ts` | `/andrew:websword <give\|reset> [target]` | command name, item id |
-| `rules.ts` | pure `craftDecision`, `cooldownRemaining`, mark (de)serialisation | `COOLDOWN_TICKS` |
-
-## Owns
-- Registry `registerLegendary(def)` — `L0-lgnd-ent1`, `L0-lgnd-p006`.
-- Instance mark with `gen` + `holder` — `L0-lgnd-ent2`.
-- Per-weapon one-per-world craft gate, refund, broadcast, Creative/admin exemption — `L0-lgnd-p001`, `L0-lgnd-r002`.
-- Death retention for every legendary carried, both hands — `L0-lgnd-p002`, `L0-lgnd-r008`.
-- Loss (Void/ordinary destruction) return to the last holder — `L0-lgnd-p003`, `L0-lgnd-r005`, `L0-lgnd-r011`.
-- Cooldown per (player, abilityKey) + in-memory busy — `L0-lgnd-ent3`, `L0-lgnd-r003`, `L0-lgnd-r009`.
-- Hand-priority Use dispatch — `L0-lgnd-p004`, `L0-lgnd-r004`.
-- The only Action Bar HUD for legendaries — `L0-lgnd-p005`, `L0-lgnd-r007`.
-- Operator commands — `L0-lgnd-p007`.
-- Read-only `isHiddenFromTargeting(player)` — `L0-lgnd-r010`.
-- Localization plumbing: every player-facing string is a rawtext `translate` key; the RU/EN strings themselves are owned by `L0-sitm` (C-4).
-
-## Published contracts (change only by ADR)
-- `LegendaryDef` shape (`L0-lgnd-ent1`).
-- `cooldown.isReady / isBusy / setBusy / start / remaining (player, abilityKey)`.
-- `isHiddenFromTargeting(player): boolean`.
-- Ability handler `(player, hand) → "cast" | "refused" | "busy"`; the framework never infers success.
-
-## Inputs / outputs
-**In:** stable `@minecraft/server` 2.10.0 events (C-2): `playerInventoryItemChange`, `entityDie`, `playerSpawn`, `playerLeave`, `itemUse`, `playerInteractWithBlock`, `entitySpawn`, `beforeEvents.entityRemove`, `system.beforeEvents.startup`. Weapon modules supply defs and ability handlers; `L0-sprj` calls `setBusy`/`start` on volley resolution.
-**Out:** durable world/player/item dynamic properties per weapon prefix (`L0-lgnd-ad01`); a chat broadcast on first craft; private blocked/returned/voided/admin messages; Action Bar rawtext for holders only.
-
-## Does NOT own
-What an ability does (cobweb cube in `trap.ts`/`cube.ts`; target search `L0-stgt`; volley `L0-sprj`), item JSON, recipes and lang strings (`L0-sitm`; the Web Sword JSON gains only `minecraft:allow_off_hand`), Shadow Blade itself.
-
-## Key decisions
-`L0-lgnd-ad01` frozen per-weapon prefixes · `ad02` loss recovery by generation · `ad03` transient loss watcher · `ad04` fall-through dispatch on "not ready" only · `ad05` busy is memory-only · `ad06` compatibility shims for shipped paths and command.
-
-## Open items
-- Parent-level: CTR-1 (`cool-ctr1`, Void return for Web Sword; running on `L0-lgnd-as01`), CTR-3 (`cool-ctr3`, off-hand priority; running on Q-019 default a). Not re-raised here.
-- This dive: `L0-lgnd-cx01` (Ready display differs), `L0-lgnd-cx02` (non-player pickup leaves a stale melee-capable copy), `L0-lgnd-cx06` (loss watcher vs the letter of C-5).
-- Withdrawn after checking: cx04 (no test asserts the `ws_pending` format, so "tests unchanged" and the array change do not collide), cx05 (`/andrew:websword` stays as an alias, so README remains correct). cx03 became assumption `L0-lgnd-as09`.
-
-## Constraint-number crosswalk
-Artifacts `L0-lgnd-*` written before this revision cite an older C-numbering. Read them as: old C-1 → **C-2** (stable API); old C-4 "no global scans" → **C-5**; old C-9 "translate keys" → **C-4**; old C-13 "bounded tick work" → **C-5** (second sentence); old C-6, C-7 unchanged. Old C-10 (shipped tests stay green), C-14 (volleys do not survive restart) and C-17 (one implementation per rule) have no entry in the current `concept-constraint`; they are carried as `L0-lgnd-ac11`, `L0-lgnd-r009` and `L0-lgnd-r001` respectively.
-
-## Risk
-Highest regression risk of the Stage-2 Scythe work: it rewrites code under a shipped weapon. Web Sword unit tests, the `andrew:websword_*` GameTests and the pickaxe suites must stay green (`L0-lgnd-ac11`).
-
-
-
-
-
-
-
-### Miner's Pickaxe probe (Stage 1: item, recipe, dig speed, enchantability, auto-smelt) (L0-pick)
-
-# Miner's Pickaxe probe (Stage 1: item, recipe, dig speed, enchantability, auto-smelt)
-
-**Links:** `part_of: ["L0"]` · `is_a: ["component"]` · `relates_to: ["L0-infr"]`
-
-**Responsibility:** One custom item, `andrew:miners_pickaxe`, that serves as the compatibility probe for the whole add-on stack (Behavior Pack + Resource Pack + stable `@minecraft/server` Script API) before Stage 2's PvP add-on is built. It proves a custom tool item can be crafted, enchanted, and given non-vanilla dig/drop behavior on the operator's actual installed Bedrock version, with nothing else in scope. [src: minerspickaxetestspec]
+**Responsibility:** Generate a compact, self-contained custom Nether structure that reads visually as a small Bastion Remnant, on a fixed ~20×20×10-12 template with 2-3 levels, a central lower lava treasure room, and a one-time-only garrison of Piglins/Piglin Brutes. Belongs to the "four custom structures" family defined in `docs/Four_Structures_Spec_RU_EN_copy.docx` §14 (normative) and §15/§16 (shared addendum), alongside sibling components Windmill (`L0-mill`), Airship (`L0-arsh`) and Mini Warden City (`L0-wrdn`).
 
 **Inputs:**
-- Crafting-table recipe consuming 3× Iron Ingot, 2× Raw Gold, 2× Stick (see `L0-pick-r005`, `L0-pick-ent1`).
-- `world.beforeEvents.playerBreakBlock` on any block, filtered to when the pickaxe is the held tool (`src/autosmelt.ts`).
+- Per-chunk world-generation/load events in the Nether dimension (candidate roll happens once per "suitable" chunk).
+- Physical placement context: local terrain/support at the candidate site, and the set of already-known generated structures (vanilla + custom) for overlap testing.
+- Stable `@minecraft/server` Script API only — no Experiments (per §15 shared rule, inherited across all four structures).
 
 **Outputs:**
-- One `andrew:miners_pickaxe` item, visible in Creative (Equipment → pickaxe group) and via `/give`, RU+EN localized name.
-- Diamond-pickaxe-speed breaking of any `is_pickaxe_item_destructible` block (`L0-pick-r001`).
-- Pickaxe-slot enchantability without a durability component — infinite use by omission (`L0-pick-r002`).
-- Auto-smelt: 7 ore/debris block ids drop their smelted product directly instead of the raw material (`L0-pick-r003`).
+- A placed structure instance: fixed template, footprint ~20×20, height ~10-12, 2-3 internal levels, random rotation 0/90/180/270.
+- 10 fixed chests populated once (3 treasure + 7 regular), 2-4 random Gold Blocks in the treasure room.
+- A persistent one-time garrison: 7-10 Piglins + exactly 2 Piglin Brutes.
+- World-state edits (blocks, lava, mob spawns) that behave as ordinary mutable world state from that point on — no regeneration, ever.
 
-**Deliberately out of scope for Stage 1** (per raw spec, confirmed unchanged by the implementation): durability, Fortune multiplication of auto-smelt yield, Silk Touch override, exact parity with every diamond-pickaxe mining tag beyond the three representative tag families actually tested.
+**Scope boundary:** Mini Bastion is Nether-only and independent of the Overworld pair (Windmill/Airship). It shares only the family-wide invariants in §15 (random rotation, no-Experiments implementation preference, structure-overlap cancellation, universal persistence-after-restart) and does **not** use the Windmill/Airship custom weighted loot system (§3) — it consumes real vanilla Bastion Remnant loot tables instead, the same choice Mini Warden City makes for the vanilla Ancient City table. This component has no functional dependency on the Scythe of Calamity / legendary-weapons tree already present in this KV (`L0-scyt`, `L0-sprj`, `L0-sitm`) — that is a different feature area of the same add-on.
 
-**Dependency:** gated behind Stage 0 (infrastructure) closing every criterion first — ai-kit rejects cross-epic dependencies, which is the enforcement mechanism, not a process rule anyone has to remember [src: concept-constraint C-11, `L0-infr`].
+**Key characteristics (see child rules/entities for detail):**
+- 5% candidate chance per suitable Nether chunk; no relocation on a failed site-suitability check.
+- Rejects lava-ocean sites and sites lacking solid support.
+- Rejects candidates that physically intersect any other detected structure, custom or vanilla (including a real Bastion Remnant) — existing structures are never damaged to make room.
+- Central/lower treasure room surrounded by ordinary (non-special) lava, reachable either by building a safe path through the lava area or by descending/falling from the upper level.
+- Guard roster is spawned exactly once per bastion instance, is fully persistent (no despawn by distance, chunk unload, or restart) until killed, and is never replenished.
+- Initialization is idempotent: re-loading the chunk must not create a second set of chests, gold blocks, or mobs.
 
-**Known open issue inherited from raw sources (not re-filed here):** contradiction CTR-4 already covers this component — the raw spec's compatibility target (`@minecraft/server` 2.9.0 / `min_engine_version` 1.26.0) is superseded by `decision-tselevaya-versiya-bedrock-1-26-51-asm-001-q-001` (2.10.0 / [1,26,50]) and matches the live implementation. CTR-4 targets `L0-infr` and stays open only so nobody retargets back to 2.9.0 from the stale raw doc; no new filing needed from this component.
+**Relates to:** `L0-mill` (Windmill), `L0-arsh` (Airship), `L0-wrdn` (Mini Warden City) — siblings in the same four-structure family; overlap-cancellation and the §15 shared addendum are the concrete coupling points. None of these sibling components exist yet in the KV as of this deep-dive.
 
-**Verification split** (inherited from parent, applies here): craft/digger/auto-smelt logic is proven on BDS in Docker; Creative placement, icon and RU/EN name rendering are proven only on iPad [src: concept-constraint C-6, C-9]. Both channels are green for Stage 1 — DEMO-S1, operator-accepted 2026-09-21 (see `decision-q-007-enchantable-without-durability-podtverzhde`).
-
-**Evidence base for this deep-dive:** raw spec `minerspickaxetestspec` (`docs/Miners_Pickaxe_Test_Spec.docx`); live source `packs/behavior/items/miners_pickaxe.json`, `packs/behavior/recipes/miners_pickaxe.json`, `src/autosmelt.ts`; test coverage `src/gametest/main.ts` (`pickaxe_digs_at_diamond_speed`, `pickaxe_autosmelt`, `pickaxe_keeps_vanilla_drops`) and `src/selftest/main.ts` (`pickaxe-item-stack`, `pickaxe-enchantable`, `pickaxe-no-durability`).
-
-**Children:** rules `L0-pick-r001`..`r005`; entities `L0-pick-ent1`, `ent2`; acceptance criteria `L0-pick-ac01`..`ac07`; glossary `L0-pick-gl01`..`gl05`; assumptions `L0-pick-asm1`..`asm3`; ADR `L0-pick-ad01`.
-
-
-
-
+**Sources:** `fourstructuresspecruencopy-part-9/10/11` (§14 Mini Bastion, §15 shared addendum, §16 English addendum).
 
 
 
-### Scythe of Calamity (`andrew:scythe_of_calamity`) (L0-scyt)
 
-# Scythe of Calamity (`andrew:scythe_of_calamity`)
 
-**Links:** `part_of: ["L0"]` · `is_a: ["component"]` · `relates_to: ["L0-lgnd", "L0-sprj", "L0-sitm", "L0-infr", "L0-webs"]` · sources: `scytheofcalamityspecv1ruen-part-1`, `scytheofcalamityspecv1ruen-part-2` (docs/Scythe_of_Calamity_Spec_v1_RU_EN.docx).
 
-**Status:** no code yet. Checked 2026-09-24: `src/` has only `websword/`, `autosmelt.ts` and the test harnesses, and nothing in `packs/` mentions the Scythe. This deep-dive seeds Stage-2 planning.
+
+### Component: Build & verification infrastructure (Stage 0 closed; v2 delta: structure-template pipeline) (L0-infr)
+
+# Component: Build & verification infrastructure (Stage 0 closed; v2 delta: structure-template pipeline)
+
+**Links:** `part_of: ["L0"]` · `is_a: ["component"]` · `relates_to: ["L0-lgnd", "L0-strf", "L0-wind", "L0-airs", "L0-wrdn", "L0-bast", "L0-adr-tmpl", "L0-adr-strc", "L0-adr-strs"]`
 
 ## Responsibility
-This is the second legendary weapon. It is a PvP ability: on Use, the Scythe locks the **nearest visible player** within 20 blocks and fires **3 homing projectiles** that pass through blocks. Each hit deals **exactly 3 HP true damage** and launches the target about **10 blocks** up. The attack ends early if the target leaves a **20-block leash** centred on the launch point. The cooldown outcome depends on whether any hit landed. All temporary state is cleaned up.
+Turns the TypeScript source and the two static packs (`packs/behavior`, `packs/resource`) into a shippable `.mcaddon`, and proves — without a human, wherever the engine allows it — that the result actually loads and runs on real Bedrock: static (TS + JSON), a Bedrock Dedicated Server in Docker, a beta-only GameTest lane with SimulatedPlayer, and a LAN cycle that gets the same build onto the iPad for the checks only a human eye can make.
 
-## Sub-scopes (the live KV holds partial children under other prefixes)
-| Sub-scope | Owner node | What it holds |
-|---|---|---|
-| Item JSON, recipe, melee, enchant slot, RP assets | `L0-sitm` (ADRs `sitm-adr1/2`, `sitm-asm3`) | slot = sword, no digger or tool tags |
-| Activation + target acquisition | **this node** (`L0-scyt-p001`, `r001`–`r003`). The earlier `L0-stgt`/`L0-sctg` have no live artifacts. | candidate filter, tie-break, no-target path |
-| Volley flight, hits, true damage, launch, leash, outcome FSM, tick loop | `L0-sprj` (`r005`–`r008`, `ad01`–`ad03`, `ac05`–`ac14`) | this node restates only the contract (`r004`–`r008`) |
-| Craft gate, announcement, retention, Void return, cooldown store, HUD, hand priority | `L0-lgnd` | the Scythe registers a `LegendaryDef` |
+Stage 0's own 5 closing criteria are unchanged and already green [src: stage-0-infrastructure, C-11]. **v2 delta** (Four Structures spec, `L0-adr-tmpl`): infra also owns the toolchain that compiles the four structure templates into shippable `.mcstructure` files, packs them into the behavior pack, and extends the BDS/GameTest verification lanes to prove — structurally, statistically, and across a restart — that structure generation and its one-time init behave as `L0-strf`/`L0-wind`/`L0-airs`/`L0-wrdn`/`L0-bast` specify. Infra builds and runs these checks; it does **not** own the roll algorithm, placement heuristic, or instance registry themselves (owned by `L0-strf`, decided in `L0-adr-strc`/`L0-adr-strs`).
 
 ## Inputs
-- `world.afterEvents.itemUse` where `itemStack.typeId === "andrew:scythe_of_calamity"` and the source is a `Player` (`L0-scyt-ad03`). The event goes through the `L0-lgnd` dispatcher, which applies hand priority, busy and cooldown.
-- The owner's location, view direction and dimension. The players in that dimension within 20 blocks (`L0-scyt-ad01`).
-- The `isHiddenByShadowBlade(player)` predicate. It is a stub that returns `false` until Shadow Blade exists (ASM-024, CTR-014).
+- `src/**/*.ts`, `packs/behavior/`, `packs/resource/`, `packs/gametest/`, `packs/selftest/`, `scripts/targets.mjs` — unchanged from Stage 0.
+- **New**: structure template layout sources (per-structure TS/JSON builder definitions), consumed by `scripts/build-structures.mjs`; exact repo path not yet fixed by any ADR (`L0-infr-as05`).
+- Operator-supplied facts: the iPad's installed Bedrock version.
 
 ## Outputs
-- Either a localized no-target message (`andrew.scythe_of_calamity.no_target`) with no cooldown and no busy state,
-- or one **Volley** handed to `L0-sprj` (`launchVolley(owner, target, launchPoint)`), which returns exactly one outcome and possibly one `cooldown.start(owner, "scythe")` through `L0-lgnd`.
-- Effects on the target only: health minus 3 per hit, and upward knockback.
-- **Never**: block writes, engine projectile entities, or damage to mobs or other players.
+- `dist/andrew.mcaddon`, `dist/bds-check.log`, `dist/bds-gametest.log`, exit codes — unchanged.
+- **New**: `packs/behavior/structures/andrew/*.mcstructure` (generated, gitignored build output — `L0-infr-r007`), a structure round-trip unit-test result, a statistical chunk-roll PASS/FAIL verdict, a restart/idempotency PASS/FAIL verdict — all consumed the same automatic way as existing `bds` evidence [decision-verification-approach-automatic].
 
-## Key rules (this node)
-`r001` candidate filter · `r002` nearest plus view-angle tie-break · `r003` no target means no cost · `r004` blocks untouched · `r005` exact 3 HP true damage · `r006` launch about 10 blocks, fall damage kept · `r007` leash centred on the launch point · `r008` only the locked target can be hit · `r009` item stats and recipe.
+## Sub-systems (see child processes for detail)
+1. **Build & package** (`npm run build`) — esbuild → **compile structure templates (new)** → validate → zip (`L0-infr-p001`).
+2. **Structural validation** (`npm run validate`).
+3. **BDS one-shot check** (`npm run bds:check`, `L0-infr-p002`).
+4. **GameTest harness** (`npm run bds:gametest`) — the existing Miner's Pickaxe lane (`L0-infr-p003`) **and** the new worldgen/placement + statistical chunk-roll lane (`L0-infr-p006`).
+5. **LAN dev server** (`npm run bds:up` / `bds:down` / `bds:logs`, `L0-infr-p004`).
+6. **Version targeting** (`scripts/targets.mjs`).
+7. **New — structure template pipeline** (`scripts/build-structures.mjs`, `L0-infr-p005`): repo sources → `.mcstructure` NBT, with a round-trip unit test and a BDS 4-rotation placement test.
+8. **New — restart/idempotency check** (`L0-infr-p007`): proves a BDS restart never re-runs a structure's one-time init.
 
-## Dependencies and ordering
-1. `L0-lgnd` must first be generalised from `src/websword/*` into a registry. That includes per-weapon cooldown keys (CTR-013), the steady HUD in both hands (CTR-017) and busy (ASM-017). The Scythe cannot ship on the current Web-Sword-only store.
-2. `L0-infr`: GameTest and BDS on 1.26.51.1 cover the ACs in channel `bds`. The icon, names and particle look are covered on channel `ipad` (C-9).
-3. C-11: Stage 2 Web Sword is closed (commit `f22896a`), so Scythe work may start.
+## Three verification channels (unchanged shape, wider `bds` content)
+- **build** — `tsc --noEmit` + `npm run validate` + (new) the structure round-trip unit test.
+- **bds** — `bds:check`, `bds:gametest` (Pickaxe lane), plus the new worldgen/placement, statistical chunk-roll, and restart/idempotency lanes.
+- **ipad** — human-eyes-only; now also covers the four structures' visual identity (rendering, silhouette, texture) — a green `bds` structural-count proof never closes an `ipad` criterion [C-6/C-9].
 
-## Open issues affecting this component
-- CTR-014 / Q-020: AC-3 (Shadow Blade) cannot be verified end to end.
-- `cool-ctr2`: the enchant slot. Resolved in design by `L0-sitm-adr1` (sword).
-- CTR-015: the hoe base versus the Use trigger. Resolved in design by `L0-sitm-adr2` (no hoe tag).
-- `L0-sprj-cx01/cx02`: when the cooldown is committed, and the lethal branch of true damage.
-- `L0-scyt-cx01`: missing component nodes and targeting nodes in the graph.
-- `L0-scyt-cx02`: the tuning numbers for projectile speed and lifetime disagree.
-- Q-022: does the `pvp` gamerule affect candidates? The default is no.
+## Known open issues
+- CTR-4 (open, target `L0-infr`) — version-target wording drift in old raw specs; unchanged, not re-filed.
+- Structure template **source layout** is not fixed by any ADR yet (`L0-infr-as05`).
+- Statistical-check sample size/tolerance and the exact restart mechanism for the idempotency check are infra's own defaults, not spec'd (`L0-infr-as03`, `L0-infr-as04`).
 
-## Constraints honoured
-C-2 (stable 2.10.0 only), C-4 (`andrew:` ids, RU and EN), C-5 (targeting only at activation, and a tick loop only while volleys exist), C-7 (no orphans), C-10 (no world mutation in before-events).
+## Boundary
+Owns (v2 addition): the structure-template compiler and its round-trip test; packing `structures/` into the behavior pack (already covered by the existing whole-directory zip); the BDS/GameTest lanes that measure structure placement correctness, statistical chunk-roll rate, and restart/idempotency.
+Does not own (v2 addition): the chunk-discovery loop, the roll formula/`worldSalt`, the collision heuristic, the instance registry, or loot filling — those belong to `L0-strf`/`L0-loot`; infra only exercises and measures them.
+Everything else unchanged from Stage 0 (see prior boundary: build tooling, packaging, JSON/manifest validation, the Docker BDS harness, iPad delivery mechanics, version-target single source of truth; does not own weapon gameplay logic).
 
 
 
@@ -228,72 +147,72 @@ C-2 (stable 2.10.0 only), C-4 (`andrew:` ids, RU and EN), C-5 (targeting only at
 
 
 
-### Web Sword: Targeting & 3×3×3 Cobweb Trap (L0-webs)
+### Loot system — custom weighted table + vanilla loot-table application (L0-loot)
 
----
-is_a: ["component"]
-part_of: ["L0"]
-relates_to: ["L0-lgnd", "L0-lgnd-ad06", "L0-lgnd-cx04", "L0-lgnd-p004", "L0-lgnd-ent1", "L0-sprj"]
----
+# Loot system — custom weighted table + vanilla loot-table application
 
-# Web Sword: Targeting & 3×3×3 Cobweb Trap
+**Responsibility:** Fill every structure chest exactly once, at structure init time, with either (a) a custom weighted-random item table (Windmill, Airship) or (b) an unmodified vanilla Bedrock loot table (Mini Warden City, Mini Bastion). Owns: the 13-category weight table and its selection algorithm, equipment material/slot/enchantment rolling, and the vanilla-table dispatch for the two mini structures. Does not own: chest placement, structure templates, discovery/roll/collision (that's `strf`), or which structure gets which chest count (`wind`/`airs`/`wrdn`/`bast`).
 
-**Responsibility.** This component owns only what is unique to the Web Sword as a weapon: its item/recipe identity, and its active-ability body — resolving a melee-reach target and stamping a 3×3×3 (27-cell) cobweb trap around it, skipping protected and unloaded cells. It is the Web Sword's counterpart to `L0-sprj` (Scythe's homing-projectile body): both are per-weapon "cast" implementations plugged into the shared `L0-lgnd` legendary framework.
+**Inputs:** a call from the post-place init hook (`L0-adr-strc` step 5) per chest, carrying: chest block location, which structure type placed it (Windmill/Airship → custom path; Warden City/Bastion → vanilla path + table id).
 
-**Explicitly NOT owned here** (see `L0-lgnd` instead): one-per-world craft gate + refund + first-craft broadcast (`L0-lgnd-p001`), death retention (`L0-lgnd-p002`), Void/lava/despawn loss return (`L0-lgnd-p003`), main/off-hand dispatch (`L0-lgnd-p004`), cooldown timer + busy flag + Action Bar HUD (`L0-lgnd-p005`, `L0-lgnd-ent3`), instance marking/anti-dup (`L0-lgnd-ent2`), operator commands (`L0-lgnd-p007`), localization plumbing. Raw spec §§3,4,8,9,10,14 (one-per-world, death retention, cooldown UI, multiplayer determinism, localization, DoD) are all satisfied by the shared framework already deep-dived as `L0-lgnd`; a scope-overlap contradiction (`L0-webs-cx01`) documents this so the two aren't independently re-implemented or re-decided.
+**Outputs:** container contents written exactly once; frozen thereafter — nothing later re-invokes this component for the same chest (enforced by strf's instance registry, `L0-adr-strs`, not by loot itself).
 
-**Inputs.** A ready, dispatched cast from `L0-lgnd-p004` (`onCast(player)`), the player's current melee-interaction ray/reach, and world block/entity state around the resolved target.
+**Two independent mechanisms, one scope boundary (`L0-loot-r007`):**
+1. Custom weighted table (`L0-loot-p001`) — Windmill (25 chests) and Airship (10 chests) only. 5–12 attempts per chest; each attempt picks at most one of 13 categories by relative weight; category resolves to items per `L0-loot-e001`.
+2. Vanilla loot-table application (`L0-loot-p002`) — Mini Warden City (10 chests, `chests/ancient_city`) and Mini Bastion (10 chests: 3× `chests/bastion_treasure`, 7× `chests/bastion_other`) only. Delegates entirely to the vanilla loot table; no custom weighting, no golden-apple cap, no curse filter — those constraints are specific to path 1.
 
-**Outputs.** Up to 27 placed `minecraft:web` blocks; a filled-cell count; the ability wrapper starts the cooldown itself on `filled > 0` and returns `"cast"`/`"refused"` to `L0-lgnd` (`L0-webs-r005`, `L0-adr-cast`).
+**Cross-references:** `strf` (`L0-strf`, not yet deep-dived at the time of this run) owns the post-place hook that calls this component and the persistence registry that guarantees "once." `wind`/`airs`/`wrdn`/`bast` own chest *placement* (counts, positions) but reference this component for chest *contents*. Both mechanisms reuse the shared structure rules in spec §2/§6/§7/§15 (persistence, idempotent init, no restoration after player destruction) only for "fill once" (`L0-loot-r006`); everything else in those sections belongs to `strf`.
 
-**Core flow** (detail in `L0-webs-p001`): resolve target cell (block-face-adjacent or entity-foot, entity wins ties, no hit ⇒ no target) → enumerate the 27-cell cube centered there → classify each cell (fillable / protected / unloaded / entity-occupied) → replace fillable cells with cobweb → report count.
+**Key numbers:** 13 weighted categories; 5–12 attempts/chest; Golden Apple ≤1 success/chest, qty 1–3, never enchanted via the custom table; equipment 80/20 iron/diamond material split with random slot; enchants on the custom table are compatible, non-curse, up to vanilla max level.
 
-**Item identity** (`L0-webs-ent1`, `L0-webs-r001`): Diamond-Sword-equivalent melee damage, infinite durability, `minecraft:enchantable` slot `sword`, shaped recipe (4× Cobweb + 1× Diamond Sword, any durability/enchantment, none carried over). This is currently documented only in the rollup decision `web-sword-item-values`; this component gives it a durable home.
+**Open dependency:** the exact stable-API mechanism for invoking a vanilla loot table against a chest (`L0-loot-p002`) is one of the probe questions owed by `strf` (L0 decomposition plan v2, reduce section) and is not yet confirmed — see `L0-loot-asm2`.
 
-**Why this scope now.** `L0-lgnd`'s migration (`ADR-021`, `L0-lgnd-ad06`) explicitly stopped short of the cast body: `L0-lgnd-cx04` notes the shipped `registerTrap()` (in `src/websword/trap.ts`, called from `src/gametest/main.ts`) "no longer subscribes to `itemUse` itself" under the new framework — i.e. `registerTrap`/the trap module is exactly this component's code counterpart, and it never received its own deep-dive. Decisions Q-011 (cube geometry), Q-013 (protected-block list) and Q-017 (zero-cells outcome) already resolved the hard questions operator-side; this deep-dive gives them rule/process/entity homes and adds the acceptance criteria, glossary and assumptions the rollups don't carry.
 
-**NFRs.** Server-authoritative, deterministic across clients (spec §9); no permanent per-tick world scan (spec §11, project C-4/C-5) — target resolution and cube fill are one-shot, triggered only by a cast; never write into unloaded/inaccessible chunks (spec §6/§12).
 
 
 
 
 
+### Windmill (`wind`) — Мельница (L0-wind)
 
+# Windmill (`wind`) — Мельница
 
-## Architecture Decisions
+**Links:** `part_of: ["L0"]` · `is_a: ["component"]` · `relates_to: [L0-strf, L0-loot, L0-airs, L0-infr, L0-adr-strc, L0-adr-strs, L0-adr-tmpl]`
 
-### ADR-L0-cast · One ability-handler contract for every legendary weapon (L0-adr-cast)
+**Source:** Four Structures spec §1, §2, §4.1–§4.7, §5.6, §6, §7, §9, §10.1 (tests 14–23, 33), §11, §12, §15.
+**Status:** analysis only. No structure code exists yet (`src/` has no `structures/`; `packs/behavior/structures/` is absent at `302fba4`). Staged after Stage 3, after the `strf` + `loot` probe (`L0-strf-p006`).
 
----
-is_a: ["architecture-decision"]
-part_of: ["L0"]
-relates_to: ["L0-lgnd", "L0-webs", "L0-scyt", "L0-lgnd-r001", "L0-lgnd-r003", "L0-lgnd-r007", "L0-lgnd-p004", "L0-webs-r005", "L0-webs-ad02", "L0-scyt-ad03", "L0-scyt-r003", "L0-sprj-ad01", "L0-xcx1", "L0-xcx2"]
-requires: ["L0-lgnd"]
-status: accepted
----
-# ADR-L0-cast · One ability-handler contract for every legendary weapon
+## Responsibility
+`wind` is a *body* component on top of the `strf` contract layer. It supplies the Windmill's `StructureDef` and hooks, and it owns the two Windmill-only behaviours that `strf` explicitly delegates to it: the guaranteed spawn-area search with forced site preparation, and the trigger for the linked Airship. It must not restate generation, persistence or loot rules; it references `strf-*` / `loot-*` by id.
 
-**Context.** After the deep-dive, the three children describe the boundary between framework and weapon in three different ways:
-- `L0-lgnd` (`r001`, `r003`, `p004`): the handler is `(player, hand) → "cast" | "refused" | "busy"`, and **only the ability owner** calls `cooldown.start`. The dispatcher alone subscribes to `itemUse` and `playerInteractWithBlock`. No weapon calls `setActionBar`.
-- `L0-webs` (`r005`, `ad02`): the callback returns `{filled}`, and "`L0-lgnd` decides whether to start the cooldown". → `L0-xcx1`.
-- `L0-scyt` (`ad03`, `r003`): "listens to `afterEvents.itemUse` alone" and shows its no-target text through a `hud.hold` that the `lgnd` contract does not publish. → `L0-xcx2`.
+1. **Template** (`L0-wind-e001`, `-r001`, `-r002`). One fixed `.mcstructure` (`L0-adr-tmpl`): ~15×15×30 stone-lower / wood-upper abandoned mill, fixed 4-blade rotor and a wooden door on the front, 3 full floors joined by one continuous stair, fixed ~35×35 plot of mostly mature wheat, water ditches, dirt paths, trampled patches, a damaged wooden fence with gaps, vines and cobwebs that never block the main route. Only rotation varies (`L0-strf-r004`).
+2. **Contents** (`-r003`). 25 fixed chests (floor 1: 5, floor 2: 8, floor 3: 12) filled once from the shared table (`L0-loot`). 3 fixed vanilla spawners: floor 1 Zombie Villager, floor 2 Zombie, floor 3 Vindicator with an iron axe (`L0-strf-r010`). Weak decorative light that keeps spawner zones dark.
+3. **Field guards** (`-r004`, `-r005`, `-e003`). Exactly 10 vanilla Zombie Villagers spawned once per instance, persistent until death, sun-immune, free to wander, curable into an ordinary Villager (`L0-strf-r009`, `L0-adr-strs`).
+4. **Normal generation** (`-p001`, `-r006`). 1 % per suitable Overworld dry-land chunk via `strf` discovery; `dryLand` + `flat` profiles; cancel on invalid site or collision; never terraform, never relocate.
+5. **Guaranteed spawn Windmill** (`-p002`, `-p003`, `-r007`…`-r011`, `-r013`, `-e002`, `-e004`). Exactly one per world, 100 %: 5×5 chunks around the spawn chunk → nearest valid site ≤ 500 blocks → best dry site with forced preparation (natural blocks only, level ~35×35, smooth edges, fill only shallow voids). Runs once per world; the result is persisted in `andrew:st:spawnWindmill`.
+6. **Linked-Airship trigger** (`-r012`). Every Windmill instance, spawn one included, asks `airs` for exactly one linked attempt (40–100 blocks) after its own init. `wind` owns *when* and *once*; `airs` owns the ring search and validity.
 
-**Decision.**
-1. **The handler contract is `lgnd`'s.** Each weapon registers `ability(player, hand): "cast" | "refused" | "busy"`. The weapon calls `cooldown.start(player, key)` itself, and only on success:
-   - Web Sword: when `filled > 0`.
-   - Scythe: at the first hit and again at resolution (`L0-sprj-ad01`).
+## Inputs
+- `strf` API: `registerDef`, discovery callbacks, `tryPlaceAt(def, origin, rot, opts)`, `searchRing`, validity profiles, collision detector, instance registry, `runJob` budget.
+- `world.getDefaultSpawnLocation()` (x/z) at first world load; world dynamic property `andrew:st:spawnWindmill`.
+- Template `packs/behavior/structures/andrew/windmill.mcstructure` (built by `infr` from repo sources, C-8).
 
-   The framework never infers success. The Web Sword's pure `resolveAndPlaceTrap → {filled}` stays as an internal function inside the Web Sword handler.
-2. **Trigger events belong to the dispatcher.** `L0-lgnd-p004` subscribes to both events and de-duplicates them for every weapon. `L0-scyt-ad03` reads as *"the Scythe ability ignores block context"*. It does not mean the Scythe keeps its own subscription. Its GameTest (one press on a block → one activation) still applies, now against the dispatcher.
-3. **Transient messages are added to the published contract:** `hud.notify(player, translateKey, holdMs ≈ 2000)`.
-   - Only the HUD module writes it.
-   - The steady HUD pass skips a player whose hold has not expired.
-   - It covers the Web Sword's no-room and no-target texts (`L0-webs-r005`) and the Scythe's `no_target` (`L0-scyt-r003`, CTR-017).
+## Outputs
+- Placed Windmills and their `InstanceRecord`s (`d = "windmill"`; spawn one has id `windmill:S`).
+- `loot.fillChest` ×25 per instance; 10 guard entities per instance.
+- One `airs.tryLinked(parentInstance)` call per instance, recorded as `x.linkedTried`.
+- Deviation-report rows (`L0-strf-r012`) for: discovery-time generation, forced-prep heuristics, ticking-area use, guard sun immunity via effect, anything the probe finds.
+- Debug lines `[Scripting] [andrew] strf:wind …`.
 
-   Weapons still never call `setActionBar` (`L0-lgnd-r001`, `r007`).
-4. **Item JSON ownership.** The Web Sword's `minecraft:allow_off_hand` change belongs to `L0-webs` (item identity, `L0-webs-r001`). The Scythe's belongs to `L0-sitm`. This corrects the wording in `L0-lgnd-r004`.
+## Not owned
+Discovery queue, seeded rolls, rotation transform, collision heuristic, registry, tick budget (`strf`); loot table and fill algorithm (`loot`); linked ring search and Airship validity (`airs`); NBT writer (`infr`).
 
-**Consequences.** One rule, one owner: C-17 in `lgnd`'s crosswalk, carried as `L0-lgnd-r001`. `L0-webs-r005`, `L0-webs-ad02` and the `L0-webs` component text were reconciled in place during reduce to point here. `hud.notify` must be part of the `lgnd` generalisation task, before either weapon migrates.
+## Key risks
+- **Spawn search needs far chunks loaded** before any player exists (C-12). Resolved by temporary ticking areas (`L0-wind-ad01`); unverified on BDS 1.26.51.1.
+- **No dry land within 500 blocks** is undefined in the spec (`L0-wind-cx01`).
+- **"Check the linked Airship once"** vs loaded-footprint deferral (`L0-wind-cx02`).
+- Forced preparation in an existing world could touch player builds; mitigated by a natural-block whitelist (`L0-wind-r008`).
+- Spawner light threshold, vanilla Vindicator axe, and guard behaviour under Peaceful are assumptions to confirm in the probe (`L0-wind-as06`…`as08`).
 
 
 
@@ -301,105 +220,62 @@ status: accepted
 
 
 
-### ADR-L0-lgnd · L0 rulings on the framework's open contradictions (L0-adr-lgnd)
+### Wrdn concept component (L0-wrdn)
 
----
-is_a: ["architecture-decision"]
-part_of: ["L0"]
-relates_to: ["L0-lgnd", "L0-webs", "L0-scyt", "L0-sprj", "L0-infr", "L0-lgnd-cx02", "L0-lgnd-cx03", "L0-lgnd-cx04", "L0-lgnd-cx06", "L0-lgnd-ad02", "L0-lgnd-ad03", "L0-lgnd-ad06", "L0-lgnd-ac11", "L0-lgnd-as03", "L0-xasm1", "cool-ctr1"]
-status: accepted
----
-# ADR-L0-lgnd · L0 rulings on the framework's open contradictions
+## Mini Warden City
 
-These contradictions were filed inside `L0-lgnd`. Each one needs an L0 reading because it changes a global constraint, a global assumption or a shipped weapon.
+**Source:** `Four_Structures_Spec_RU_EN_copy.docx` §13 (normative addendum, overrides earlier drafts on conflict) + §15 (four-structure shared addendum).
 
-| Child item | L0 ruling | Why it is L0's call |
-|---|---|---|
-| `L0-lgnd-cx02`: a stale copy after a hopper or allay pickup | **(a) Accept.** A stale generation cannot cast. It is deleted on its first `playerInventoryItemChange` in any player inventory (`L0-lgnd-r005`). No heuristic proximity query is added. | C-7 is about *usable* duplicates. A melee-only stale copy that disappears on first player contact does not break it. The heuristic (b) would add a local query on every removal (C-5), and (c) would undo the CTR-1 default. |
-| `L0-lgnd-cx03`: `hidden_until` in ticks | **Epoch ms.** ASM-020 is amended by `L0-xasm1`. | The same clock problem affects the cooldown store, which `webs` ships and `scyt` will use. |
-| `L0-lgnd-cx04`: "tests unchanged" | ADR-021 reads as **"no edits to assertions"**. Harness wiring in `src/gametest/main.ts` (calling `registerLegendaryFramework()` in place of the self-subscribing `registerTrap()`) is allowed. `L0-lgnd-ac11` is the gate. | The GameTest harness belongs to `L0-infr`. The code it calls belongs to `L0-webs`. |
-| `L0-lgnd-cx06`: the loss watcher vs C-5 | **The wording of C-5 is widened:** *"short-lived tick loops are allowed only while temporary objects exist: Scythe volleys, or marked legendary item entities on the ground. Each such loop iterates only those objects."* Before `L0-lgnd-ad03` ships, `L0-lgnd-as03` must be measured on BDS 1.26.51.1. If `beforeEvents.entityRemove` reliably fires on a Void kill, the watcher is dropped. | C-5 is an L0 constraint. `webs` and `scyt` also cite it. |
+### Responsibility
+A fixed-template, script-placed Overworld structure that reads as a compact vanilla Ancient City (deepslate, Sculk, Sculk Sensors/Veins/Shriekers), not a shrunken block-for-block copy of the real one. It is one of four opportunistic world-content generators (Windmill, Airship, Mini Warden City, Mini Bastion) sharing the same chunk-candidate discovery mechanism, but it is the only one of the four that is almost entirely vanilla-mechanical once placed: no custom guards, no custom spawners, no custom loot system — it leans on real Sculk Shrieker/Warden mechanics and the real Ancient City loot table.
 
-**Not re-ruled here:** CTR-1 (Void/lava return for the Web Sword) and CTR-3 (off-hand priority). Both stay open at L0 and run on their autopilot defaults (Q-020 a, Q-019 a), which `lgnd` implements. The operator may still reverse them at DEMO acceptance.
+### Identity, size, theme
+- Fixed single design, footprint ≈30×30, height ≈10–15 blocks, irregular outline permitted within the template.
+- Random rotation 0°/90°/180°/270° per instance (same convention as the other three structures, §15).
+- Almost entirely dark; only a small fixed count of Soul Lanterns/Torches near passages and the central zone — lighting must not break the oppressive mood.
 
-**Consequences.**
-- `lgnd-cx02`, `cx03`, `cx04` and `cx06` are resolved by this ADR. `cx05` is resolved by `L0-adr-scope` §5.
-- `lgnd-cx01` is escalated separately (`L0-xcx3`), because it needs the client.
-- The `lgnd` generalisation task gets one extra acceptance step: the BDS probe for `as03`.
+### Generation
+- Overworld only. 5% candidate chance per suitable chunk. A successful roll on an unsuitable site cancels outright — **no relocation** to a neighboring chunk (same rule as Windmill/Airship/Bastion).
+- Never generates where the surface point above the structure is ocean/river/large water — the surface must be land.
+- Structure top sits at a random Y in **−35…−45**, chosen per instance (so depth varies instance to instance, independent of the candidate roll).
+- Cancels on physical intersection with any detected vanilla or custom structure (including a real Ancient City); existing structures are never damaged to make room.
 
+### Surface marker
+- An irregular ~5×5 Sculk/Sculk Vein patch is generated directly above the city's center, on the real surface.
+- It is a locator only — not a pre-built shaft, ladder or tunnel.
+- Template geometry (marker footprint vs. hall position) is co-designed so that a player digging straight down from the marker's center is guaranteed to break into the structure.
+- The marker must sit on valid land and must never be used as an excuse to damage another generated structure.
 
+### Central hall & monument
+- A central hall visually echoes the real Ancient City's core.
+- Holds a purely decorative Reinforced Deepslate monument/frame, ≈5 wide × 6–7 tall. It never activates, is not a portal, and never teleports the player.
+- Exactly 3 of the 10 chests sit in the central zone; one of the two natural Shriekers sits near the hall/monument.
 
+### Sculk & Warden
+- Exactly 2 Sculk Shriekers, fixed positions, both meant to behave exactly like naturally-generated vanilla Shriekers (warning/Warden-summon mechanics), as closely as stable Bedrock allows. One is central, one is in a far part of the city.
+- No Warden is pre-placed and none is a permanent guardian — it can only appear through the ordinary Shrieker mechanic.
+- Sensors, Veins and other sculk dressing are placed throughout the fixed template; Sensors may noticeably outnumber the 2 Shriekers.
 
+### Chests & loot
+- Exactly 10 chests, fixed positions: 3 central + 7 spread through ruins/niches/side rooms/branches, requiring near-full exploration to find them all.
+- All 10 use the **real vanilla Ancient City loot table**, unmodified — same categories/quantities/rarities, including Enchanted Golden Apple and Swift Sneak odds.
+- The shared custom loot system (§3, used by Windmill/Airship) explicitly does **not** apply here (§15) — this is the sharpest divergence from its Overworld siblings.
+- Each chest fills exactly once; never refills after opening, chunk unload, or restart.
 
+### Persistence
+- Post-generation blocks are ordinary, player-mutable world blocks under normal vanilla per-block rules.
+- Destroyed/altered parts never regenerate.
+- Initialization must be idempotent: a reload never creates a second set of chests, Shriekers, Sensors, or surface marker for the same instance.
 
+### Relationship to siblings
+- Shares the chunk-candidate-roll → suitability-check → fixed-template-fill → idempotent-registry mechanism with Windmill, Airship and Mini Bastion (§15). The cross-component contradiction `L0-xcx4` (whether a permanent throttled per-chunk discovery loop is compatible with C-5) and `L0-xcx5` (spec version/priority ambiguity) both apply to this component; neither is re-raised here — see relates_to.
+- Diverges from Windmill/Airship on loot (vanilla table, not the shared weighted system) and diverges from all three siblings on guards (none — it relies on vanilla Shrieker/Warden instead of custom mobs/spawners).
+- Closest sibling in shape is Mini Bastion (§14): same 5% chunk chance, same "cancel without relocation," same 10-chests-with-3-central split, same idempotent-persistence and cancel-on-intersection rules — but Bastion uses custom Piglin guards and two different vanilla loot tables (treasure + regular), while Mini Warden City uses one vanilla table and no custom mobs at all.
 
-### ADR-L0-scope · Final component scopes after the deep-dive (L0-adr-scope)
-
----
-is_a: ["architecture-decision"]
-part_of: ["L0"]
-relates_to: ["L0-webs", "L0-lgnd", "L0-scyt", "L0-sitm", "L0-sprj", "L0-stgt", "L0-webs-cx01", "L0-scyt-cx01", "L0-sprj-cx03", "L0-lgnd-cx05"]
-status: accepted
----
-# ADR-L0-scope · Final component scopes after the deep-dive
-
-**Context.** Two children found that their scope overlapped a sibling's, or that part of the graph was missing:
-- `L0-webs-cx01`: `webs` overlaps `lgnd`.
-- `L0-scyt-cx01`: `sitm` and `sprj` have no component nodes, and no targeting node exists.
-
-Both did the sensible interim thing and scoped themselves down, or acted as the umbrella. `L0-sprj-cx03` adds that stale rollup ids (`L0-scpr`, `L0-sctg`, `L0-scit`) collide with the current numbering.
-
-**Decision.**
-1. **L0 has exactly five components:** `infr`, `pick`, `lgnd`, `webs`, `scyt`.
-2. **`L0-webs`** is scoped to the Web Sword's cast body (targeting, the 27-cell cube, the protected/unloaded filter, the outcome report) plus the **static** item/recipe definition. Craft gate, retention, loss return, cooldown/busy, dispatch, HUD, commands and localization plumbing belong to `L0-lgnd`. `webs` references them by id and does not restate them. This resolves `L0-webs-cx01`.
-3. **`L0-scyt`** is the umbrella for the Scythe:
-   - `L0-sitm` (item JSON, recipe, enchant slot, assets) and `L0-sprj` (volley engine) are its **sub-scopes**. Logically they are `part_of L0-scyt`. Their node ids are kept so their links stay valid.
-   - Targeting belongs to `L0-scyt` (`p001`, `r001`–`r003`, `ac01`–`ac04`). `L0-stgt` is **not** reopened, and references to `L0-stgt` in `lgnd`/`sprj` read as `L0-scyt-p001`.
-
-   This resolves `L0-scyt-cx01` and item 2 of `L0-sprj-cx03`.
-4. **Rollups.** `project-knowledge/*.md` are regenerated from the live KV after this run commits. The `L0-scpr`/`L0-sctg`/`L0-scit` text and their ADR/C/ASM numbering are retired. When an id means one thing in a rollup and another in a live artifact, the **live** artifact wins. This covers item 1 of `L0-sprj-cx03`. Whether the regeneration happened can be checked after commit. It is not claimed here.
-5. **Operator command.** `/andrew:legendary <id> …` is the framework command. `/andrew:websword` stays as a permanent alias, so README, Q-006, Q-008 and Q-014 remain correct. This closes `L0-lgnd-cx05`, which the child had already withdrawn.
-
-**Consequences.** Future deep-dives use the five slugs above. Each shared legendary concern has one owner (`lgnd`), and each weapon keeps only what is unique to it.
-
-
-
-
-
-
-
-### ADR-L0-scyt · Scythe tuning, when its cooldown is committed, and Stage-2 ordering (L0-adr-scyt)
-
----
-is_a: ["architecture-decision"]
-part_of: ["L0"]
-relates_to: ["L0-scyt", "L0-sprj", "L0-lgnd", "L0-infr", "L0-sitm", "L0-scyt-cx02", "L0-sprj-ad02", "L0-sprj-ad01", "L0-sprj-cx01", "L0-lgnd-r009", "L0-lgnd-r003", "cool-asm5"]
-requires: ["L0-lgnd", "L0-infr"]
-status: accepted
----
-# ADR-L0-scyt · Scythe tuning, when its cooldown is committed, and Stage-2 ordering
-
-**1. Projectile tuning (`L0-scyt-cx02`).**
-- Follow the live `L0-sprj-ad02`: **0.5 block/tick, pure pursuit, no turn limit**.
-- Where `sprj` says nothing, adopt from the retired rollup design: a hit radius of 1.0, a 5-tick stagger and a 200-tick lifetime.
-- Keep every value in one exported `SCYTHE_TUNING` constant, and have the GameTest timing windows read them from there.
-- ASM-018 is kept. The rollup's ASM-029 (0.6 plus a turn limit) is retired together with `L0-scpr` (`L0-adr-scope` §4). This agrees with L0's `cool-asm5` (finite lifetime, staggered launch).
-
-**2. Cooldown commit (`L0-sprj-cx01`).** Accept `L0-sprj-ad01` as an amendment to ADR-025: commit at the first hit and re-stamp at resolution. It is checked against the framework:
-- `L0-lgnd-r003`: the ability owner calls `start`. ✔
-- `L0-lgnd-r009`: busy wins over cooldown while the volley flies, and at resolution busy clears and `start` runs in one turn. ✔ The early write is invisible because busy hides it.
-- `cooldown.start` must be an idempotent overwrite. `lgnd` guarantees that.
-
-**3. Ordering, as the reduce invariant requires.** The Scythe **depends on the `lgnd` generalisation**. Today the framework is specific to the Web Sword: one cooldown slot per player, one pending mark, main hand only, `ws_*` ids hard-coded, and no busy or `hud.notify`. The Stage-2 Scythe plan is:
-1. `lgnd` generalisation + Web Sword migration (`L0-lgnd-p006`, gate `L0-lgnd-ac11`), including `hud.notify` (`L0-adr-cast`) and the `as03` probe (`L0-adr-lgnd`).
-2. `L0-sitm` item/recipe/assets, including the Scythe's `allow_off_hand`.
-3. `L0-scyt` targeting (`p001`) on `isHiddenFromTargeting`.
-4. The `L0-sprj` volley engine.
-5. DEMO: GameTest on the `bds` channel through `L0-infr`, then the iPad pass.
-
-C-11 is met: the Web Sword part of Stage 2 closed at `f22896a`. Steps 2–4 cannot be merged before step 1.
-
-**Not resolved here:** `L0-sprj-cx02` (the lethal branch under Resistance V). It keeps its interim option (a) as a documented exception to C-15, and it does not block.
+### Open items
+- Two assumptions filed (`L0-wrdn-as01`, `as02`) on placement mechanism and absence of extra ambient mob spawning.
+- Two architecture decisions filed (`L0-wrdn-ad01`, `ad02`) on loot-table sourcing and placement mechanism, both consistent with the project-wide "closest stable approximation" directive.
+- No new contradiction filed for this component — the two that already target it (`L0-xcx4`, `L0-xcx5`) are cross-cutting and unresolved at the parent level; this deep-dive does not attempt to resolve them.
 
 
 

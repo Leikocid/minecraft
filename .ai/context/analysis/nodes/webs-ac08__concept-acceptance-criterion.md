@@ -2,7 +2,7 @@
 type: "concept-acceptance-criterion"
 node_id: "L0-webs-ac08"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 2
 level: 2
 aliases: ["L0-webs-ac08"]
 is_a: ["acceptance-criterion"]

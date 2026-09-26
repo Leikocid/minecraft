@@ -2,7 +2,7 @@
 type: "concept-component"
 node_id: "L0-pick"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 2
 title: "Miner's Pickaxe probe (Stage 1: item, recipe, dig speed, enchantability, auto-smelt)"
 aliases: ["L0-pick"]
 is_a: ["component"]

@@ -1,18 +1,93 @@
 ---
 title: Assumptions
 type: analysis
-generated_at: "2026-09-24T19:42:02.854Z"
+generated_at: "2026-09-26T08:34:28.650Z"
 source_channel: rollout
 node_id: rollout-assumptions
 aliases: ["rollout-assumptions","assumptions"]
 is_a: ["rollout","assumptions"]
-relates_to: ["L0-infr-as01","L0-infr-as02","L0-lgnd-as01","L0-lgnd-as02","L0-lgnd-as03","L0-lgnd-as04","L0-lgnd-as05","L0-lgnd-as06","L0-lgnd-as07","L0-lgnd-as08","L0-lgnd-as09","L0-pick-asm1","L0-pick-asm2","L0-pick-asm3","L0-scyt-as01","L0-scyt-as02","L0-scyt-as03","L0-sitm-asm3","L0-sprj-as01","L0-sprj-as02","L0-sprj-as03","L0-sprj-as04","L0-sprj-as05","L0-sprj-as06","L0-webs-as01","L0-webs-as02","L0-webs-as03","L0-xasm1","cool-asm1","cool-asm2","cool-asm3","cool-asm4","cool-asm5"]
-priority: 520
+relates_to: ["L0-airs-as01","L0-airs-as02","L0-bast-as01","L0-bast-as02","L0-bast-as03","L0-infr-as01","L0-infr-as02","L0-infr-as03","L0-infr-as04","L0-infr-as05","L0-loot-asm1","L0-loot-asm2","L0-loot-asm3","L0-scyt-as03","L0-strf-as01","L0-strf-as02","L0-strf-as03","L0-strf-as04","L0-strf-as05","L0-strf-as06","L0-wind-as01","L0-wind-as02","L0-wind-as03","L0-wind-as04","L0-wind-as05","L0-wind-as06","L0-wind-as07","L0-wind-as08","L0-wind-as09","L0-wind-as10","L0-wind-as11","L0-wind-as12","L0-wrdn-as01","L0-wrdn-as02","L0-xasm5"]
+priority: 530
 ---
 
 # Assumptions (CAN_ASSUME)
 
 > Автогенерация из Knowledge Vault. Ручное редактирование — установи `status: manual` в frontmatter.
+
+### Assumption (CAN_ASSUME) — the Airship's two doors sit on the short ends of the long axis (L0-airs-as01)
+
+# Assumption (CAN_ASSUME) — the Airship's two doors sit on the short ends of the long axis
+
+**Gap.** §5.2 says only "две обычные двери на противоположных сторонах" — opposite sides, without saying which axis (the 15-block long sides or the 7-block short ends).
+
+**Assumption.** Doors sit on the two short ends (the 7-block-wide faces), i.e. at the bow and stern of the elongated-oval gondola, consistent with "вытянутый овальный объём" (an elongated oval reads lengthwise, so entry naturally sits at the ends, and this keeps both doors clear of the 4 rooms/corridor's long side walls where chest and lamp geometry is denser).
+
+**Impact if wrong.** Purely a template-geometry choice for `infr`'s builder (`L0-adr-tmpl`). It does not change chest count, chest positions relative to rooms, the spawner position, or any generation/collision/altitude rule. If the client meant the long sides, only the door local points (and the `rotateLocal` inputs derived from them) need to move; no other artifact in this deep-dive depends on the axis chosen.
+
+
+
+
+
+
+### Assumption (CAN_ASSUME) — the 40–100 ring is sampled at several seeded angles/radii, not a single point (L0-airs-as02)
+
+# Assumption (CAN_ASSUME) — the 40–100 ring is sampled at several seeded angles/radii, not a single point
+
+**Gap.** §5.6 fixes the ring's inner and outer radius (40, 100) but never says how many candidate positions are tried inside it, or in what order, before giving up.
+
+**Assumption.** `strf.searchRing` samples a deterministic, seeded sequence of points across the annulus — e.g. a fixed number of angles (8–16) crossed with a small number of radii between 40 and 100 — and validates them in that fixed order, stopping at the first `valid` result (mirrors the discovery roll's determinism, `L0-strf-r001`). This gives every Windmill instance a real chance at a linked Airship without an unbounded or non-deterministic search.
+
+**Impact if wrong.** Only the practical *success rate* and *distribution* of linked Airships around Windmills changes (denser or sparser sampling), not any pass/fail rule in this deep-dive. Test 33 (linked attempt happens regardless of a nearby independent Airship) passes under any reasonable sampling density, since it only checks that the attempt is *made*, not how many candidates were probed. If the client wants an exhaustive scan of the annulus instead, `airs.tryLinked` and `L0-airs-e002` are the only call sites that would need to change.
+
+
+
+
+
+
+### Bast as01 concept assumption (L0-bast-as01)
+
+**ASM-bast-01 — "Suitable chunk" for the 5% Nether roll** `CAN_ASSUME`
+
+The spec's "подходящий Nether-чанк" (suitable Nether chunk) is not formally defined beyond "not a lava ocean, needs solid support." Assume: a chunk is suitable when its surface/support area can host the ~20×20 footprint on solid, non-lava-ocean terrain without requiring artificial leveling — unlike the Windmill spawn-area rule, which explicitly allows site preparation; Mini Bastion has no such fallback.
+
+**Impact if wrong:** If suitability is defined too loosely, bastions could generate partially clipped into terrain or floating over voids. If too strict, the effective generation rate drops well below the nominal 5%, which would fail AC-bast-01's statistical test.
+
+**Source:** §14.2 (silent on the exact suitability algorithm).
+
+
+
+
+
+
+### Bast as02 concept assumption (L0-bast-as02)
+
+**ASM-bast-02 — Loot tables are invoked as real vanilla references, not reimplemented** `CAN_ASSUME`
+
+Assume "real vanilla Bastion Remnant treasure/regular loot table" means calling the actual vanilla loot table identifiers/behavior via the Script API (e.g. a `LootTable` reference or fill-container-with-loot pathway) rather than hand-authoring a lookalike table.
+
+**Impact if wrong:** A hand-authored approximation could silently drift from vanilla drop rates/categories (e.g. missing rare items), breaking the "genuine vanilla loot" intent of §14.4 without being caught by casual testing.
+
+**Source:** §14.4 (names the tables but not the implementation mechanism).
+
+
+
+
+
+
+### Bast as03 concept assumption (L0-bast-as03)
+
+**ASM-bast-03 — Idempotency is implemented via a stored per-instance flag** `CAN_ASSUME`
+
+The spec requires idempotent initialization but does not name a mechanism. Assume each Mini Bastion instance persists an initialization marker (e.g. a dynamic property or block/entity tag scoped to that instance) that P-bast-002 checks before populating chests/gold/guards.
+
+**Impact if wrong:** Without a reliable per-instance marker, chunk reloads could either duplicate chests/gold/guards (breaking AC-bast-05/06/07 and the persistence contract) or, if the marker logic is inverted, never populate the bastion at all.
+
+**Source:** §14.6 (states the idempotency requirement, not the mechanism).
+
+
+
+
+
 
 ### Assumption: the GameTest harness is not one of Stage 0's five closing criteria (L0-infr-as01)
 
@@ -44,198 +119,84 @@ priority: 520
 
 
 
-### Lgnd as01 concept assumption (L0-lgnd-as01)
+### Assumption (CAN_ASSUME) — statistical chunk-roll check sample size and tolerance are infra's to pick (L0-infr-as03)
 
-**ASM-lgnd-01: Q-020 default (a) applies to both weapons.**
+# Assumption (CAN_ASSUME) — statistical chunk-roll check sample size and tolerance are infra's to pick
 
-Indestructibility and Void return cover the Web Sword as well as the Scythe ("по общим правилам", by the general rules). The craft right is still not reopened.
+**Links:** `part_of: ["L0-infr"]` · `is_a: ["assumption"]` · `relates_to: ["L0-infr-p006", "L0-infr-r006", "L0-xq2"]`
 
-**Impact if wrong:**
-- **(b) Scythe only:** `returnOnLoss` becomes a per-def flag set to false for the Web Sword. That is a one-line change, and ac09 is inverted for the Web Sword.
-- **(c) not in v3:** drop `L0-lgnd-p003`, the owed/gen parts of ent4, ad02, ad03, ac08–ac10 and ac12. That removes about 30 % of this component's effort.
+**Gap**: no raw source specifies how many synthetic chunk samples the statistical check should draw, or what deviation from the configured rate (1 %/2 %/5 %) counts as a pass. `L0-xq2` even leaves the rate constants themselves open to a pending client answer.
 
+**Assumed**: infra picks a sample size and tolerance band per structure at implementation time (e.g. large enough that a binomial confidence interval around the configured rate is narrow relative to the gap between adjacent structures' rates — 1 % vs 2 % vs 5 %), driven directly through `strf`'s own roll function rather than a reimplementation (`L0-infr-r006`).
 
+**Impact if wrong**: too small a sample/tight a tolerance → the check flakes on a correct implementation and blocks autopilot merges on noise; too loose → it never catches a broken roll (wrong constant, biased hash). If `L0-xq2`'s answer changes the rate constants, this check's expected values move with them — it must read the constants from `strf`'s config table, never hardcode them.
 
 
 
 
-### Lgnd as02 concept assumption (L0-lgnd-as02)
 
-**ASM-lgnd-02: The Scythe's key prefix is `sc` and its ability key is `scythe_of_calamity`.**
 
-No source names them. They mirror the Web Sword's `ws` / `web_sword`.
+### Assumption (CAN_ASSUME) — \ (L0-infr-as04)
 
-**Impact if wrong:** none until the first world ships with them. After that, the names are frozen by the same logic as `L0-lgnd-r006`.
+# Assumption (CAN_ASSUME) — "restart" for the idempotency check means a same-volume server restart, not `bds:down`/`bds:up`
 
+**Links:** `part_of: ["L0-infr"]` · `is_a: ["assumption"]` · `relates_to: ["L0-infr-p007", "L0-adr-strs"]`
 
+**Gap**: no ADR specifies how the restart/idempotency check restarts BDS. The existing `bds:check`/`bds:up` flow re-stages the data directory fresh on every run (`L0-infr-p002`), which would erase the very world state the idempotency check needs to survive a restart.
 
+**Assumed**: the check restarts the *server process* while keeping the same `data/` volume/world (e.g. `docker compose restart`, or stopping and restarting the container without re-staging) — distinct from `bds:down` + `bds:up`, which intentionally resets to a clean world.
 
+**Impact if wrong**: if the intended check is actually "reinstall the add-on into a fresh world and confirm first-init still runs exactly once" rather than "survive a mid-lifetime restart," the check needs `bds:up`'s re-stage semantics instead, and both scenarios (fresh-install idempotency vs. restart idempotency) may be needed, not just one.
 
 
-### Lgnd as03 concept assumption (L0-lgnd-as03)
 
-**ASM-lgnd-03: The stable 2.10.0 API raises `world.beforeEvents.entityRemove` and `entitySpawn` for `minecraft:item` entities, without a removal reason.**
 
-The removals assumed to raise the event: falling below the world floor, lava/fire, cactus, explosions and despawn. Because the event gives no reason, pickup vs. loss is inferred (`L0-lgnd-p003` step 3).
 
-**Impact if wrong:**
-- If the Void kill raises no `entityRemove`, the watcher's `y < heightRange.min` check becomes the only Void path. It still works.
-- If some destruction cause raises nothing, that cause is not covered, and ac09 narrows.
 
-This must be measured on BDS 1.26.51.x first, as was done for retention path A/B.
+### Assumption (CAN_ASSUME) — structure template source files live under `src/structures/templates/` (L0-infr-as05)
 
+# Assumption (CAN_ASSUME) — structure template source files live under `src/structures/templates/`
 
+**Links:** `part_of: ["L0-infr"]` · `is_a: ["assumption"]` · `relates_to: ["L0-adr-tmpl", "L0-infr-e005", "L0-infr-p005"]`
 
+**Gap**: `L0-adr-tmpl` says the four templates are "layered block palettes or builder functions in TS/JSON" but does not fix a directory. Stage 0's fixed layout rule (`L0-infr-r003`) predates structures entirely.
 
+**Assumed**: sources live under `src/structures/templates/` (one module per structure), following the existing per-feature convention of `src/legendary/`, `src/websword/`, etc., read by `scripts/build-structures.mjs` at build time.
 
+**Impact if wrong**: purely a path/naming detail — `L0-infr-r003`'s fixed-layout table would need one more row, and `build-structures.mjs`'s import paths would move; no behavioral consequence.
 
-### Lgnd as04 concept assumption (L0-lgnd-as04)
 
-**ASM-lgnd-04: No stable item component makes a custom item entity immune to lava, fire, cactus or explosions.**
 
-So "must not be destroyed by ordinary means" (Scythe §1) is realised as *destroyed, then immediately re-issued to the last holder*, not as physical immunity.
 
-**Impact if wrong:** if such a component exists on 1.26.50 (C-1), fire, lava and explosions become prevention instead of recovery. Most gen bumps disappear, and the stale-copy surface shrinks. The Void path is still needed.
 
 
+### Loot asm1 concept assumption (L0-loot-asm1)
 
+**Assumption (CAN_ASSUME):** The spec says Golden Apple succeeds "at most once per chest" but doesn't say what happens when the weighted roll lands on Golden Apple again after it has already succeeded once. This deep-dive assumes either behavior is acceptable: (a) drop Golden Apple from the pool and renormalize remaining weights for that attempt, or (b) leave the pool unchanged and treat a repeat Golden Apple roll as a no-op/wasted attempt. Recommendation: (a), since it avoids attempts silently producing nothing, which could otherwise skew statistical tests that expect ~N items per chest.
 
+**Impact if wrong:** if a statistical AC (`L0-loot-ac01`/`L0-loot-ac06`) is later written expecting a specific one of the two behaviors (e.g. counting non-empty attempts), the wrong choice could fail that test even though both are spec-compliant. Low blast radius — single-function fix.
 
 
-### Lgnd as05 concept assumption (L0-lgnd-as05)
 
-**ASM-lgnd-05: Unmarked (Creative) copies keep casting.**
 
-The shipped `trap.ts` checks only `isWebSword`, never the mark. `src/gametest/main.ts` hands out unmarked `new ItemStack(WEB_SWORD_ID)` for the trap scenarios (checked). So the dispatcher treats an unmarked legendary as castable, with its cooldown keyed by the player. Only *stale* marked stacks are barred.
 
-**Impact if wrong:** requiring a mark to cast would break the Web Sword trap GameTests (C-10). It would also make Creative testing on the iPad impossible.
 
+### Loot asm2 concept assumption (L0-loot-asm2)
 
+**Assumption (CAN_ASSUME):** `L0-loot-p002` assumes the stable mechanism for applying a vanilla loot table to a chest is `Dimension.runCommand("loot insert <pos> loot <tableId> ...")` (or an equivalent `Entity`/`Dimension` command call), since the stable `@minecraft/server` Script API (pinned 2.10.0 per `constraints.md`) has no direct "fill container from loot table" method. This is exactly the open probe question the `strf` component owes per the L0 decomposition plan v2 reduce section ("is `/loot insert` with vanilla chest tables available through `runCommand`").
 
+**Impact if wrong:** if the probe finds `/loot insert` unavailable or behaves differently on 1.26.51.1, `L0-loot-p002`'s only step needs a different stable-API mechanism — this would not change `L0-loot-r006`/`r007`/the entities, only the process's step 2. Medium impact, contained to one process artifact.
 
 
 
-### Lgnd as06 concept assumption (L0-lgnd-as06)
 
-**ASM-lgnd-06: Ledger sizes stay far below the dynamic-property string limit (about 32 KB).**
 
-Admin `give` copies are rare, and each owed entry is about 200 chars.
 
-**Impact if wrong:** a long-running test world with many lost admin copies could overflow `_owed`. The mitigation is to drop the oldest `despawn` entries and log a line. That loses those debts, which in practice means admin copies only.
+### Loot asm3 concept assumption (L0-loot-asm3)
 
+**Assumption (CAN_ASSUME):** "Compatible vanilla enchantments" (`L0-loot-r005`) is assumed to mean whatever the stable `@minecraft/server` enchantment API itself considers valid for that item (e.g. `ItemEnchantableComponent`/`EnchantmentTypes` rejecting an incompatible pairing), rather than this add-on hand-maintaining its own per-item compatibility matrix. Curses are filtered out explicitly by category before rolling, since the API itself won't refuse a curse as "incompatible" (curses are compatible with anything item-wise, just excluded by this spec).
 
-
-
-
-
-### Lgnd as07 concept assumption (L0-lgnd-as07)
-
-**ASM-lgnd-07: Bedrock never raises `itemUse` for an off-hand custom item, and `minecraft:allow_off_hand` works on a custom sword and a custom hoe in 1.26.50.**
-
-The off-hand ability is therefore reachable only through a main-hand legendary press (Q-019 a).
-
-**Impact if wrong:**
-- If `allow_off_hand` is rejected for these items, the two-hand ACs (ac04–ac06) cannot be tested, and Q-019 degrades to (b): HUD only.
-- If an off-hand Use event does exist, the dispatcher gets a second trigger with the same priority rule.
-
-
-
-
-
-
-### Lgnd as08 concept assumption (L0-lgnd-as08)
-
-**ASM-lgnd-08: "Main hand on cooldown" (Scythe §6) also covers "main hand busy".**
-
-So while a Scythe volley is in flight, a ready off-hand Web Sword fires on the next Use press.
-
-**Impact if wrong:** if busy should swallow the press instead, one condition in `L0-lgnd-p004` changes and ac05's busy variant flips. In gameplay terms, the player could not web-trap a target mid-volley.
-
-
-
-
-
-
-### Lgnd as09 concept assumption (L0-lgnd-as09)
-
----
-is_a: ["assumption"]
-part_of: ["L0-lgnd"]
-relates_to: ["L0-lgnd-r010", "L0-stgt", "L0-lgnd-p007"]
----
-**ASM-lgnd-09: Shadow Blade hiding is stored as `andrew:hidden_until` in epoch milliseconds.**
-
-Scythe §3 excludes a player hidden by Shadow Blade's active ability, but no source defines Shadow Blade or how its hidden state is stored. `L0-lgnd-r010` fixes a player dynamic property `andrew:hidden_until` holding a `Date.now()` deadline, the same clock as cooldowns (ticks restart with the script engine; absolute time stops with `dodaylightcycle false`, measured on BDS 1.26.51.1). Earlier lgnd artifacts cite this as "ASM-020"; no such parent assumption exists in the KV, so this artifact is the record.
-
-**Impact if wrong:** low and local. If Shadow Blade arrives using a tag, an effect (invisibility) or a tick-based deadline, only the body of `isHiddenFromTargeting` changes; `L0-stgt` and the `/andrew:hide` test seam keep their call sites.
-
-
-
-
-
-
-### Pick asm1 concept assumption (L0-pick-asm1)
-
-**Assumption:** auto-smelt yield count is fixed at 1, ignoring vanilla's own variable raw-drop count (e.g. copper ore: vanilla drops 2–5 raw copper, this pickaxe always drops 1 copper ingot). The raw spec's wording ("copper ore → copper ingot", singular) is taken literally rather than as shorthand for "drop count matching vanilla's raw yield."
-
-**Impact if wrong:** if the operator actually wants smelt-yield parity with vanilla's raw-drop range, the auto-smelt payout is undervalued for copper by up to 5x, and Stage 2 balance work inherits a silently-wrong baseline. Cheap to fix — `SmeltedDrop.count` is already a field, just hardcoded to 1 at every call site — but currently untested against any explicit "should count vary" requirement; the raw spec's Fortune deferral talks about multiplication on top of a base, not what that base should be.
-
-
-
-
-
-
-### Pick asm2 concept assumption (L0-pick-asm2)
-
-**Assumption:** no XP is granted on auto-smelt, based on the reasoning that all 7 raw materials give 0 XP when mined normally in vanilla (XP comes from smelting at a furnace, not from mining the ore).
-
-**Impact if wrong:** if Stage 2's PvP economy design expects auto-smelt to be XP-neutral versus "mine then smelt at a furnace" (which *does* grant XP), this pickaxe is currently a strict downgrade in earnable XP for any player who would otherwise smelt manually — worth flagging before Stage 2 economy is designed, not after. No code path currently grants XP on auto-smelt; adding it would need an explicit per-block XP table, which does not exist.
-
-
-
-
-
-
-### Pick asm3 concept assumption (L0-pick-asm3)
-
-**Assumption:** `SPEED_TOLERANCE_TICKS = 4` and `BREAK_LIMIT_TICKS = 300` are empirically chosen GameTest constants, not derived from any written spec value — the raw spec only says "Diamond-like intended mining speed" (qualitative, no numeric target).
-
-**Impact if wrong:** too tight a tolerance risks flaky CI on a slower Docker/BDS host (false failures unrelated to the pickaxe); too loose a tolerance risks the exact class of regression this test exists to catch (0.3.0's hand-speed fallback, `L0-pick-gl02`) slipping through silently on a future edit to `destroy_speeds`. No incident yet from either direction — this is a forward-looking risk note, not a bug report.
-
-
-
-
-
-
-### ASM-scyt-01 — Only Survival or Adventure players are candidates, and only such owners can cast `CAN_ASSUME` (L0-scyt-as01)
-
-# ASM-scyt-01 — Only Survival or Adventure players are candidates, and only such owners can cast `CAN_ASSUME`
-
-**Links:** `part_of: ["L0-scyt"]` · `is_a: ["assumption"]` · `relates_to: ["L0-scyt-r001", "Q-015", "L0-sprj-as03"]`
-
-**Assumed:** Creative and Spectator players are skipped as targets, because they cannot take the damage meaningfully. A Creative owner **can** cast, so the ability can be tested with `/give` in Creative (Scythe §1 allows Creative for testing). A Spectator owner cannot cast, because a spectator cannot use items. This mirrors Q-015 (Survival and Adventure gate) for targets and relaxes it for owners.
-
-**Basis:** §3 says «видимый PLAYER» with no mention of game mode. Creative players ignore health damage.
-
-**Impact if wrong:** if Creative targets must be locked (with damage having no effect), one filter line in r001 changes and AC-scyt-02's variant flips. If Creative owners must be blocked, testing moves to Survival worlds only. Either way the blast radius is small.
-
-
-
-
-
-
-### ASM-scyt-02 — \ (L0-scyt-as02)
-
-# ASM-scyt-02 — "About 10 blocks" is an apex of 8–12 blocks, reached with one calibrated `applyKnockback` vertical strength `CAN_ASSUME`
-
-**Links:** `part_of: ["L0-scyt"]` · `is_a: ["assumption"]` · `relates_to: ["L0-scyt-r006", "L0-sprj-as04"]`
-
-**Assumed:**
-- The tolerance for «примерно на 10 блоков» is ±2 blocks on flat ground, with no Jump Boost or Levitation and no knockback resistance.
-- The vertical strength is a single constant. Start at about 2.5 and tune it on BDS 1.26.51.1 by logging the peak `location.y` of a SimulatedPlayer. The exact value depends on engine drag and gravity, so it cannot be derived on paper.
-- Netherite armour's knockback resistance is **not** compensated (`L0-sprj-as04`), so an armoured target flies lower.
-
-**Impact if wrong:** if the client expects exactly 10 regardless of armour, compensate by scaling with the target's knockback resistance or use `setVelocity`-style teleport steps. The change is local to the hit adapter.
+**Impact if wrong:** if the stable API doesn't expose a compatibility check (only an apply-or-throw), the implementation needs a hand-maintained compatibility table instead — a larger but localized change to `L0-loot-p001` step 2c.
 
 
 
@@ -259,286 +220,330 @@ Scythe §3 excludes a player hidden by Shadow Blade's active ability, but no sou
 
 
 
-### Creative Equipment sub-group is \ (L0-sitm-asm3)
+### Assumption (CAN_ASSUME) — Where the candidate footprint sits relative to its chunk (L0-strf-as01)
 
-**Links:** `part_of: ["L0-sitm"]` · `is_a: ["assumption"]` · `relates_to: ["L0-sitm-ent1"]`
+# Assumption (CAN_ASSUME) — Where the candidate footprint sits relative to its chunk
 
-# Creative Equipment sub-group is "swords," not "hoes" `CAN_ASSUME`
+**Gap.** The spec gives a chance "per chunk", but the Windmill (35×35), Warden City (30×30) and Bastion (20×20) are larger than a chunk. It never says where the footprint lies.
 
-Creative Equipment sub-grouping is assumed to be "swords," matching the item's sword-slot enchantment and no-digger design (`L0-sitm-rul2`, `L0-sitm-rul3`), rather than "hoes," which would match its crafting ingredient (Diamond Hoe). The spec never states a Creative sub-group explicitly.
+**Assumption.** The **centre** of the rotated footprint is at the centre of the rolled chunk (`cx*16+8`, `cz*16+8`), with no jitter. The origin is `centre − floor(size'/2)`. The footprint therefore spills into neighbouring chunks symmetrically. Two adjacent positive rolls for large structures always collide, and the later one in discovery order is cancelled.
 
-**Impact if wrong:** cosmetic-only change to `menu_category`'s group field in `L0-sitm-ent1`.
+**Impact if wrong.** It lowers the effective density of large structures at 5 % (see `L0-xq2`). Structures are aligned to a visible chunk grid. Adding seeded jitter (±4) later is a one-line change, and existing worlds are unaffected because placed records store the origin.
 
 
 
 
 
 
-### ASM (sprj-01) — Absorption hearts are consumed first; if they cannot be read, the effect is removed (L0-sprj-as01)
+### Assumption (CAN_ASSUME) — What counts as a \ (L0-strf-as02)
 
-# ASM (sprj-01) — Absorption hearts are consumed first; if they cannot be read, the effect is removed
+# Assumption (CAN_ASSUME) — What counts as a "significant part" of the footprint over water
 
-`CAN_ASSUME` · **Links:** `part_of: ["L0-sprj"]` · `is_a: ["assumption"]` · `relates_to: ["L0-sprj-p003", "L0-sprj-r003", "ADR-022"]`. ADR-022 defers this to "ASM in `L0-sprj`". L0 assigns the number.
+**Gap.** §5.4: "Если значимая часть footprint находится над открытой водой, позиция непригодна". No number is given.
 
-**Assumed.** "3 HP" is taken from the target's total pool, with absorption first, then health, as vanilla damage does. For the implementation:
-- If a stable 2.10.0 component exposes the absorption amount (`minecraft:absorption` via `getComponent`, to be probed), subtract `min(3, abs)` from it and the rest from health.
-- If absorption cannot be read or written on the stable API, fall back to ADR-022's literal wording: `removeEffect("absorption")` (the hearts are lost), then take the full 3 HP from health.
+**Assumption.** For the Airship, more than 10 % of the footprint's surface samples being liquid makes the site invalid. The Windmill uses 5 % (`L0-xasm4` §4), because it sits on the ground and its fields need dry soil. Warden City: 0 % at the centre and the 8-point ring (`L0-xasm4` §5). All three are constants in the def table.
 
-**Basis.** ADR-022: "Absorption hearts: set them to zero first (count them as HP)". §4 says "броня и защитные зачарования не уменьшают этот урон" and does not mention absorption.
+**Impact if wrong.** At 10 %, an Airship may hover over a small pond or a stream edge. If the client means "any water", set it to 0. Airship density along rivers drops slightly. Test 31 still passes either way because it uses open ocean or river.
 
-**Impact if wrong.** With the fallback, a target under a Golden Apple loses its absorption **and** 3 HP, so it is over-punished by up to 4 HP on the first hit. That is visible in §8 test 7 only if the test player has absorption, and `L0-sqat` should clear effects before the test. If the owner wants absorption ignored entirely (pure health damage), only `truedamage.ts` changes.
 
 
 
 
 
+### Assumption (CAN_ASSUME) — How loaded chunks are detected, and the discovery radius (L0-strf-as03)
 
-### ASM (sprj-02) — The leash is 3D Euclidean distance, and self-launch may end the volley (L0-sprj-as02)
+# Assumption (CAN_ASSUME) — How loaded chunks are detected, and the discovery radius
 
-# ASM (sprj-02) — The leash is 3D Euclidean distance, and self-launch may end the volley
+**Gap.** C-12 requires that nothing is written into unloaded chunks. It is unverified whether `Dimension.isChunkLoaded` exists in `@minecraft/server` 2.10.0 stable, and what `getBlock` does out of range.
 
-`CAN_ASSUME` · **Links:** `part_of: ["L0-sprj"]` · `is_a: ["assumption"]` · `relates_to: ["L0-sprj-r004", "L0-sprj-r008", "ASM-015", "ASM-019"]`
+**Assumption.** One of the following holds: `isChunkLoaded(location)` is present, **or** `getBlock` returns `undefined` or throws `LocationInUnloadedChunkError` for unloaded chunks. `strf` wraps both behind `isLoaded(dim, cx, cz)`. The discovery radius `R_DISCOVER = 4` chunks, which is inside BDS's default simulation/ticking distance, so footprints around a player are normally loaded. Candidates that reach beyond it go `pending`.
 
-**Assumed.** "В радиусе 20 блоков от исходной точки" is a sphere: `|target.location − launchPoint| ≤ 20`, measured on feet positions and including the Y axis. This matches `L0-stgt`'s selection metric (ASM-015).
+**Impact if wrong.** If neither method is reliable, placement could throw mid-job and leave a `planned` record, which is safe but noisy. The fallback is placing only candidates whose AABB lies entirely within 3 chunks of some player. Probe item 9 settles it.
 
-**Side effect accepted.** The ability's own launch (about 10 blocks up, ASM-019) can push the target out of the sphere. A target hit at 18 horizontal blocks reaches about √(18² + 10²) ≈ 20.6 at the apex, so the remaining projectiles vanish. That can only happen *after* a hit, so the outcome is `ESCAPED_AFTER_HIT` with a full cooldown. The spec is not violated, but that volley can land fewer than 3 hits.
 
-**Impact if wrong.** If the owner means a horizontal (cylindrical) radius, the leash test ignores Y. The code change is one line, and §8 tests 8 and 9 are unaffected when run on flat ground. Under the sphere reading, test 7 (9 HP from 3 hits) must be run with the target well inside the radius (≤ 15 blocks).
 
 
 
 
+### Assumption (CAN_ASSUME) — Guard persistence and sun immunity with stable tools (L0-strf-as04)
 
+# Assumption (CAN_ASSUME) — Guard persistence and sun immunity with stable tools
 
-### ASM (sprj-03) — A target that leaves Survival/Adventure mid-flight invalidates the volley (L0-sprj-as03)
+**Gap.** `L0-adr-strs` relies on a name tag to stop despawning and on infinite `fire_resistance` for sun immunity. The script `addEffect` duration is bounded (not infinite), and whether a *script-set* `nameTag` blocks despawn the same way a name-tag item does is unverified on BDS 1.26.51.
 
-# ASM (sprj-03) — A target that leaves Survival/Adventure mid-flight invalidates the volley
+**Assumption.**
+1. A script-set non-empty `nameTag` makes the mob persistent, as an item-applied name does.
+2. `runCommand("effect @s fire_resistance infinite 0 true")` is stable, applies an infinite hidden effect, and survives restart. Fire resistance prevents sun damage; the mob may still show the burning animation, and that visual is a deviation.
+3. Curing produces a new `minecraft:villager` without the effect.
 
-`CAN_ASSUME` · **Links:** `part_of: ["L0-sprj"]` · `is_a: ["assumption"]` · `relates_to: ["L0-sprj-p002", "L0-sprj-ent3", "ASM-015", "ADR-022"]`
+**Impact if wrong.** (1) Guards vanish and test 19 fails. Fallback: re-apply persistence via a component group defined in a behavior-pack *entity event* on our own identifier, which the spec forbids (vanilla curing), or accept and document. (2) Guards burn at noon. Fallback: a helmet in the head slot via `EntityEquippableComponent`, if stable for mobs, which vanilla sun logic respects. Probe items 5–6.
 
-**Assumed.** The tick re-checks the target's game mode. If it is no longer Survival or Adventure (for example, an operator switches to Creative or Spectator mid-flight), the volley resolves `TARGET_INVALID`, with the cooldown only if `hits ≥ 1`.
 
-**Basis.** ASM-015 excludes Creative and Spectator at selection. ADR-022's `setCurrentValue` path would otherwise damage a Creative player, because it bypasses invulnerability, which vanilla Creative never allows.
 
-**Impact if wrong.** If the owner wants the volley to keep flying and simply skip damage on non-Survival targets, only the validity predicate changes. The risk of *not* doing this is a true-damage kill of a Creative operator, which counts as a bug.
 
 
 
+### Assumption (CAN_ASSUME) — Dynamic-property budget (L0-strf-as05)
 
+# Assumption (CAN_ASSUME) — Dynamic-property budget
 
+**Gap.** World dynamic properties have per-key and total size limits that the spec and code do not record for 2.10.0.
 
-### ASM (sprj-04) — The launch is not compensated for knockback resistance (L0-sprj-as04)
+**Assumption.** One string property holds at least 32 000 characters. The total world dynamic-property storage is large enough for ~1 000 region shards of ≤ 10 KB, which covers a 1 000 × 1 000-chunk explored area per dimension. The registry only grows with explored area, not with time.
 
-# ASM (sprj-04) — The launch is not compensated for knockback resistance
+**Impact if wrong.** If the per-key limit is much smaller (e.g. 4 KB), shards split more (overflow keys, `L0-strf-e002`). If the total is capped, very large worlds stop generating new structures once the cap is near. The fail-safe is to stop generating rather than lose records, and to log it. Probe item 8 measures both limits.
 
-`CAN_ASSUME` · **Links:** `part_of: ["L0-sprj"]` · `is_a: ["assumption"]` · `relates_to: ["L0-sprj-p003", "ADR-024", "ASM-019"]`
 
-**Assumed.** `applyKnockback({x:0, z:0}, V)` uses one constant `V`, tuned in GameTest on a target **without** armour for an apex of 10 ± 2 (ASM-019). Knockback resistance (each Netherite armour piece in Bedrock) lowers the apex, and we do not scale `V` up to compensate.
 
-**Basis.** §4 says "примерно на 10 блоков", an approximate figure. Compensating means reading the armour, and the knockback-resistance attribute is not exposed on the stable API. Vanilla PvP also treats knockback resistance as a legitimate defence against launches.
 
-**Impact if wrong.** A fully Netherite-armoured target may be launched noticeably lower than 10 blocks. If the owner wants a fixed 10 blocks regardless of armour, the options are to scale `V` by the equipped Netherite piece count (read from the `equippable` component) or a scripted teleport arc. ADR-024 rejected the latter, so it would need an ADR. §8 test 6 must state that the apex is measured on an unarmoured target.
 
-**Probe needed:** check whether `applyKnockback`'s vertical strength is capped by the engine at the needed magnitude on 1.26.5x.
 
+### Assumption (CAN_ASSUME) — `structureManager.place` rotation keeps the given location as the min corner (L0-strf-as06)
 
+# Assumption (CAN_ASSUME) — `structureManager.place` rotation keeps the given location as the min corner
 
+**Gap.** Whether Bedrock rotates a placed structure *within* its bounding box, with `location` staying the min corner of the rotated box, or around the origin block, is not documented in the KV.
 
+**Assumption.** Rotation happens inside the bounding box. The placed blocks occupy `[loc, loc + rotatedSize − 1]`, as `/structure load … 90_degrees` does. `rotateLocal` is written for that convention.
 
+**Impact if wrong.** Every chest, guard and marker point would be offset for 90/180/270. `rotateLocal` gets a per-rotation offset correction taken from probe item 2 and AC-strf-02. Bodies are unaffected because they only call `rotateLocal`.
 
-### ASM (sprj-05) — The visual starts with a vanilla particle; a custom RP particle is `L0-sitm`'s asset (L0-sprj-as05)
 
-# ASM (sprj-05) — The visual starts with a vanilla particle; a custom RP particle is `L0-sitm`'s asset
 
-`CAN_ASSUME` · **Links:** `part_of: ["L0-sprj"]` · `is_a: ["assumption"]` · `relates_to: ["L0-sitm", "L0-sqat", "ADR-023"]`
 
-**Assumed.**
-- The first implementation draws each projectile with one vanilla particle identifier chosen by an iPad look-test, from candidates such as `minecraft:endrod` or `minecraft:shulker_bullet`-like trails, spawned every tick at `pos`.
-- If the look-test fails, a custom `andrew:calamity_bolt` particle JSON and texture are added to the Resource Pack. That asset is owned by `L0-sitm`, the RP owner. It is not listed in `L0-sitm`'s L0 scope, which is a gap for L0 to route. This component only references the identifier through one constant.
-- Particles spawned inside solid blocks are hidden by the client. That is accepted: the projectile "reappears" when it emerges, which reads as passing through.
 
-**Basis.** ADR-023 names both options and no owner for the RP particle. The decomposition plan's `sitm` row lists icon, JSON, recipe and lang only.
 
-**Impact if wrong.** If no vanilla particle is readable on the iPad at 20 blocks, a custom particle becomes mandatory. That adds RP work to `L0-sitm` and one more iPad verification step (C-11). The final fallback is ADR-023 option (b), a dummy entity, which re-opens C-14's load-time cleanup.
+### Assumption — \ (L0-wind-as01)
 
+# Assumption — "within 5×5 chunks" means the plot centre lies in the 5×5-chunk square around the spawn chunk
 
+**Links:** `part_of: ["L0-wind"]` · `is_a: ["assumption"]` · `relates_to: [L0-wind-r007, L0-wind-p002, L0-wind-ac01]`
 
+- The square is the spawn chunk ±2 chunks (80×80 blocks). A 35×35 plot whose centre is inside it counts, even if its edge reaches into ring 3.
+- Rationale: requiring the whole plot inside would leave only ~45×45 possible centres and make stage 1 fail more often for no gameplay benefit.
+- **Impact if wrong:** low. If the client means "whole plot inside", stage 1 candidate generation shrinks; test 14's area check tightens. One constant.
 
 
 
-### ASM (sprj-06) — `setBusy` is keyed by player id, not by a `Player` object (L0-sprj-as06)
 
-# ASM (sprj-06) — `setBusy` is keyed by player id, not by a `Player` object
 
-`CAN_ASSUME` · **Links:** `part_of: ["L0-sprj"]` · `is_a: ["assumption"]` · `relates_to: ["L0-lgnd", "L0-sprj-p004", "L0-sprj-r007", "ADR-025"]`
 
-**Assumed.** `L0-lgnd`'s in-memory busy flag (ADR-025) is a `Set`/`Map` keyed by `playerId + abilityKey`, and it can be cleared with only the id. That is required because on `OWNER_INVALID` (logout) the owner's `Player` handle is already invalid in the tick that resolves the volley.
+### Assumption — \ (L0-wind-as02)
 
-**Basis.** The L0 contract lists `cooldown.setBusy` without a signature. The durable `start` needs a `Player` (dynamic property), but busy is in memory, so an id is enough.
+# Assumption — "≤ 500 blocks" and "nearest" use horizontal Euclidean distance from world spawn (x,z) to the plot centre
 
-**Impact if wrong.** If `setBusy` requires a valid `Player`, a volley whose owner logged out can never clear busy. The flag would leak until restart and the owner would rejoin "busy". That is a C-14 violation. The fix is a signature change in `L0-lgnd`, which is cheap if caught in review.
+**Links:** `part_of: ["L0-wind"]` · `is_a: ["assumption"]` · `relates_to: [L0-wind-r007, L0-wind-p002]`
 
+- `d = hypot(cx − sx, cz − sz)`, Y ignored. World spawn = `world.getDefaultSpawnLocation()` x/z at first start (its Y may be a sentinel on a fresh world; it is not used).
+- **Impact if wrong:** low. Chebyshev (square) distance would allow corners up to ~707 blocks; switching is one function.
 
 
 
 
 
-### ASM-webs-01 — Unloaded-cell detection is \ (L0-webs-as01)
 
----
-is_a: ["assumption"]
-part_of: ["L0-webs"]
-relates_to: ["L0-webs-r004"]
----
-# ASM-webs-01 — Unloaded-cell detection is "query fails/returns undefined", not a chunk-ticking probe `CAN_ASSUME`
+### Assumption — blend band B = 6 blocks (grows to Bmax = 12), slope ≤ 1 block per block (L0-wind-as03)
 
-**Assumed.** A cell counts as outside the loaded/accessible area when the stable block-query API cannot return a definite block there (undefined result or a thrown error), not via any experimental "is chunk loaded/ticking" API. Such cells are handled exactly like `L0-webs-r004`'s protected-block branch: skip, don't force-load, don't retry.
+# Assumption — blend band B = 6 blocks (grows to Bmax = 12), slope ≤ 1 block per block
 
-**Basis.** Project constraint C-2 forbids beta/preview API and experimental toggles; the stable `@minecraft/server` 2.10.0 surface has no dedicated "chunk loaded" query, so a defensive read is the only stable-API way to detect this.
+**Links:** `part_of: ["L0-wind"]` · `is_a: ["assumption"]` · `relates_to: [L0-wind-r009, L0-wind-e004, L0-wind-p003]`
 
-**Impact if wrong.** If a stable "is loaded" query does exist at implementation time, this narrows to a direct check instead of a defensive try/read; the skip *behavior* (`L0-webs-r004`, `L0-webs-ac07`) is unaffected either way. Low.
+- The spec only says "плавно соединять края … избегая грубой квадратной платформы с вертикальными стенами". Numbers are ours.
+- B = 6 absorbs a 6-block height difference at slope 1. If larger, B grows up to 12; beyond that the candidate score is penalised so the search prefers gentler sites.
+- **Impact if wrong:** visual only (iPad review, C-9). Wider band = more terrain changed around the Windmill; narrower = steeper banks. Tunable constants.
 
 
 
 
 
 
-### ASM-webs-02 — A cell that is already Cobweb counts as satisfied, not skipped `CAN_ASSUME` (L0-webs-as02)
+### Assumption — \ (L0-wind-as04)
 
----
-is_a: ["assumption"]
-part_of: ["L0-webs"]
-relates_to: ["L0-webs-ent3", "L0-webs-r005"]
----
-# ASM-webs-02 — A cell that is already Cobweb counts as satisfied, not skipped `CAN_ASSUME`
+# Assumption — "shallow void" depth D = 4 blocks below the target surface
 
-**Assumed.** If a candidate cell already contains `minecraft:web` before the cast runs, it requires no write and counts toward the trap's success count (`TrapCube.successCount`, `L0-webs-ent3`) — it is not treated as a "protected"/skip cell.
+**Links:** `part_of: ["L0-wind"]` · `is_a: ["assumption"]` · `relates_to: [L0-wind-r010, L0-wind-e004]`
 
-**Basis.** Neither the raw spec nor Q-011/Q-013/Q-017 addresses pre-existing Cobweb explicitly; treating "already correct" as success (rather than as a no-op skip) is the reading consistent with the ability's stated goal ("form a trap") and with Q-017's zero-cells wording ("ни одна из 27 клеток не заменена" — replaced-or-already-right, not narrowly "newly written").
+- Voids within 4 blocks under the levelled surface, and only under cells that need support, are filled. Anything deeper stays open under a 4-block natural cap.
+- 4 blocks is enough to hold the template foundation and farmland/water ditches; the spec forbids filling deep caves "целиком".
+- **Impact if wrong:** low–medium. Smaller D risks thin caps over caves (players may fall through when digging); larger D starts to look like plugging caves. One constant; iPad review.
 
-**Impact if wrong.** If the owner wants pre-existing Cobweb to count as "skipped" like a protected cell, repeated casts into a partially-webbed area could flip from success to `no-room` (`L0-webs-ac06`) purely from earlier casts — a behavior change to `L0-webs-r005`, not to the cube geometry itself. Medium.
 
 
 
 
 
+### Assumption — \ (L0-wind-as05)
 
-### ASM-webs-03 — \ (L0-webs-as03)
+# Assumption — "best available dry land position" = lowest earthwork score, ties broken by distance to spawn
 
----
-is_a: ["assumption"]
-part_of: ["L0-webs"]
-relates_to: ["L0-webs-r004"]
----
-# ASM-webs-03 — "Entities" in the protected-block filter includes non-player mobs, not only players `CAN_ASSUME`
+**Links:** `part_of: ["L0-wind"]` · `is_a: ["assumption"]` · `relates_to: [L0-wind-p002, L0-wind-e004, L0-wind-r007]`
 
-**Assumed.** Decision Q-013's "клетки с живой сущностью не трогаются" (cells with a living entity are left untouched) is read as applying to any living entity — hostile/passive mobs included — not only players, matching the raw spec §6's unqualified "не удалять... сущности".
+- Eligible: liquid surface share ≤ 5 % *before* prep (dry land), no collision, all blocks in the prep volume on the natural whitelist, within 500 blocks.
+- `score = cutVolume + fillVolume + 50·max(0, Δ − 2B) + 0.1·distance`. Lowest wins.
+- The spec does not define "лучшая"; it does say the forced site must be dry land, and prefer nearer sites in stages 1–2.
+- **Impact if wrong:** medium-low. The Windmill may appear farther from spawn than a client expects, or on a site that needs more earthwork. Weights are tunable.
 
-**Basis.** Neither §6 nor Q-013 restricts this to players; the general phrasing ("живая сущность" / "entities") and the project's broader "don't remove entities" posture (also seen in `L0-lgnd`'s scope) both point to an entity-type-agnostic rule.
 
-**Impact if wrong.** If only players should block placement, cells with mobs (e.g. a cow standing in the volume) would additionally be filled around the mob today but could instead legitimately overwrite/displace it under a narrower reading — changes `L0-webs-r004`'s entity branch only. Low.
 
 
 
 
+### Assumption — a spawner-produced Vindicator carries an iron axe by vanilla default (L0-wind-as06)
 
+# Assumption — a spawner-produced Vindicator carries an iron axe by vanilla default
 
-### ASM-L0-1 · Every durable deadline in the add-on is stored as epoch ms (`Date.now()`) (L0-xasm1)
+**Links:** `part_of: ["L0-wind"]` · `is_a: ["assumption"]` · `relates_to: [L0-wind-r003, L0-strf-r010]`
 
----
-is_a: ["assumption"]
-part_of: ["L0"]
-relates_to: ["L0-lgnd", "L0-webs", "L0-scyt", "L0-lgnd-cx03", "L0-lgnd-r010", "L0-lgnd-r003", "L0-lgnd-r006", "L0-lgnd-ent3"]
-status: CAN_ASSUME
----
-# ASM-L0-1 · Every durable deadline in the add-on is stored as epoch ms (`Date.now()`)
+- Bedrock's vanilla Vindicator spawns holding an iron axe. A `mob_spawner` with `EntityIdentifier = minecraft:vindicator` should therefore satisfy §4.3/test 17 with no script.
+- **Verify** in the `strf` probe: spawn 20 from the template spawner, assert all hold `minecraft:iron_axe` in the main hand.
+- **Impact if wrong:** medium. Fallback: an `entitySpawn` handler equips an iron axe on Vindicators within 8 blocks of a registered Windmill/Airship spawner position (event-driven, no scan); recorded as a deviation. Shared with `airs`.
 
-**Assumption.** Every persisted "until" value is an **epoch-millisecond** number compared against `Date.now()`. This covers the cooldowns of both weapons, `andrew:hidden_until` (ASM-020, amended), and any future deadline. `system.currentTick` and `world.getAbsoluteTime()` are used only for in-memory, single-session timing: HUD cadence, volley flight, and the watcher interval.
 
-**Basis.** Measured on BDS 1.26.51.1 by the shipped `src/websword/cooldown.ts`:
-- `getAbsoluteTime()` stops when `dodaylightcycle` is false.
-- `currentTick` restarts at 0 with the script engine.
 
-A tick-based durable deadline is therefore wrong after a restart. `L0-lgnd-r006` already reads legacy tick-era `ws_cooldown_until` values as expired.
 
-**Amends.** The wording of ASM-020 changes from "`hidden_until` > the current tick" to "`hidden_until` > `Date.now()`". The contract (a read-only predicate, false when absent) does not change. The future Shadow Blade spec must write ms.
 
-**If wrong.** If the server clock jumps (the host's wall-clock is changed), cooldowns shorten or lengthen by the size of the jump. This is accepted for a single operator's LAN server.
 
+### Assumption — spawner zones stay at block light ≤ 7 (Lmax) (L0-wind-as07)
 
+# Assumption — spawner zones stay at block light ≤ 7 (Lmax)
 
+**Links:** `part_of: ["L0-wind"]` · `is_a: ["assumption"]` · `relates_to: [L0-wind-r003, L0-wind-ac06]`
 
+- The exact Bedrock light threshold for monster spawners is not in the spec ("достаточно тёмными"). We keep every cell within 4 blocks horizontally / 1 vertically of each spawner at block light ≤ 7 by placing lanterns only on the far side of each floor (lantern light 15 falls off 1 per block → ≥ 8 blocks away).
+- Sky light: the attic has a solid roof; windows avoid spawner line.
+- **Impact if wrong:** medium. If Bedrock spawners require light 0, spawners stop working in the lit parts of floors → reposition lanterns in the template (no code change). Probe measures spawn rate with lanterns in place.
 
 
-### A-1 · \ (cool-asm1)
 
-# A-1 · "Hidden by Shadow Blade" is detectable as an invisibility effect / marker
 
-**Gap.** Scythe §3 excludes players "скрытый активной способностью Shadow Blade", but Shadow Blade has no spec in any source.
 
-**Assumption (CAN_ASSUME).** Until Shadow Blade is specified, the Scythe target filter excludes players with the `invisibility` effect, and exposes a single predicate (`isHiddenFromTargeting(player)`) that Shadow Blade will later extend (e.g. with an `andrew:` tag or dynamic property).
 
-**Impact if wrong.** If Shadow Blade hides players by another mechanism (e.g. vanish/teleport, no effect), acceptance test Scythe #3 cannot be satisfied and the predicate must be re-implemented; if vanilla invisibility must *not* exclude targets, the filter over-excludes.
+### Assumption — on Peaceful, the guard step is deferred until the difficulty is not Peaceful (L0-wind-as08)
 
+# Assumption — on Peaceful, the guard step is deferred until the difficulty is not Peaceful
 
+**Links:** `part_of: ["L0-wind"]` · `is_a: ["assumption"]` · `relates_to: [L0-wind-r004, L0-strf-p004]`
 
+- Bedrock removes hostile mobs on Peaceful; spawning 10 Zombie Villagers then would kill the one-time guards instantly and mark them "spawned".
+- Rule: if `world.getDifficulty() === Peaceful` at `looted → guarded`, the instance stays `looted` and retries on the next discovery visit. The linked Airship waits too.
+- Guards that already exist when a player switches to Peaceful are removed by vanilla and never restored (spec: no top-up).
+- **Impact if wrong:** low. The spec is silent; a client may prefer "spawn anyway". The iPad world default is Normal.
 
 
 
-### A-2 · \ (cool-asm2)
 
-# A-2 · "Ближайший видимый игрок" means unobstructed line of sight within 20 blocks
 
-**Gap.** Scythe §3 says "nearest visible PLAYER in 20 blocks" while projectiles pass through all blocks; "visible" is not defined.
 
-**Assumption (CAN_ASSUME).** Visible = a block raycast from the owner's head to the candidate's head is not blocked by a solid block, and the candidate is not hidden per A-1; same dimension; not the owner; alive; Survival/Adventure (spectators and creative players excluded).
+### Assumption — field guards are adults, and zombie villagers do not convert to drowned in the ditches (L0-wind-as09)
 
-**Impact if wrong.** If "visible" only means "not invisible", players behind walls would be valid targets (the projectiles can reach them); line-of-sight filtering would wrongly report "There is no player here".
+# Assumption — field guards are adults, and zombie villagers do not convert to drowned in the ditches
 
+**Links:** `part_of: ["L0-wind"]` · `is_a: ["assumption"]` · `relates_to: [L0-wind-e003, L0-wind-r004]`
 
+- Guards are spawned as adults (via the entity's adult spawn event if the probe finds one; otherwise vanilla's baby chance is accepted and noted). The spec says only "Zombie Villagers".
+- Vanilla Zombie Villagers do not convert to Drowned when submerged (only Zombies/Husks do), so guards walking into the water ditches stay guards. Probe confirms on 1.26.51.
+- **Impact if wrong:** low. A baby guard is cosmetic; a drowned conversion would lose one guard's special status — acceptable, recorded.
 
 
 
 
-### A-3 · \ (cool-asm3)
 
-# A-3 · "Общие правила легендарных оружий" = union of Web Sword + Scythe rules, applied to every legendary
 
-**Gap.** No standalone document defines the shared legendary rules. The Scythe spec references them (incl. void return and "не должно уничтожаться обычными способами"); the Web Sword spec re-states most of them but has no void/indestructibility rule.
+### Assumption — installing into an existing world runs the spawn search once, with the natural-block whitelist protecting player builds (L0-wind-as10)
 
-**Assumption (CAN_ASSUME).** The shared rule set = one Survival craft per world (persistent, race-safe, refund on blocked craft), first-craft global RU/EN announcement, Creative/`/give` exempt, keep on death + return to owner without dup, return to last owner on void fall / destruction (lava, fire, cactus, despawn), infinite durability, 30 s cooldown with Action Bar, main-hand priority. It applies retroactively to the Web Sword.
+# Assumption — installing into an existing world runs the spawn search once, with the natural-block whitelist protecting player builds
 
-**Impact if wrong.** If void return / indestructibility is Scythe-only, the `lgnd` framework adds unneeded behaviour to Web Sword; if it applies but isn't implemented, the already-shipped Web Sword (v0.3.x) can be lost permanently — and with the one-per-world rule, never re-crafted in Survival (see decision q-014 "право остаётся потраченным").
+**Links:** `part_of: ["L0-wind"]` · `is_a: ["assumption"]` · `relates_to: [L0-wind-r008, L0-wind-r011, L0-wind-p002]`
 
+- §4.7 note: the primary scenario is a new world; for an existing world "при необходимости допускается аналогичная одноразовая инициализация". We read "допускается" as *do it*, same rules.
+- Player builds are not "detected structures" in the spec's sense, but the whitelist (`L0-wind-r008`) rejects any site containing crafted blocks, so a base is never flattened.
+- **Impact if wrong:** medium. If the client wants no spawn Windmill in existing worlds, a single guard (world age / existing registry) skips the search.
 
 
 
 
 
-### A-4 · True damage and 10-block launch are implemented with stable APIs by health manipulation + vertical impulse (cool-asm4)
 
-# A-4 · True damage and 10-block launch are implemented with stable APIs by health manipulation + vertical impulse
+### Assumption — `/tickingarea` works from `runCommand` on BDS 1.26.51.1 with a 10-area / 100-chunk limit (L0-wind-as11)
 
-**Gap.** Scythe §4/§7 require exactly 3 HP ignoring armor/Protection and ~10-block vertical launch, leaving the mechanism to "the available API".
+# Assumption — `/tickingarea` works from `runCommand` on BDS 1.26.51.1 with a 10-area / 100-chunk limit
 
-**Assumption (CAN_ASSUME).** True damage = reduce the `minecraft:health` component by 3 directly (with a non-armor damage cause for the hurt feedback and correct kill attribution when HP reaches 0); launch = `applyKnockback` / `applyImpulse` with a vertical strength tuned empirically on BDS to reach ≈10 blocks (±2). Fall damage is left to vanilla.
+**Links:** `part_of: ["L0-wind"]` · `is_a: ["assumption"]` · `relates_to: [L0-wind-ad01, L0-strf-p006]`
 
-**Impact if wrong.** Direct health writes may bypass totems, death messages or kill credit; if the operator expects kill credit to the Scythe owner or totem interaction, the mechanism must change. Launch height varies with Jump Boost/levitation/slow-falling.
+- `dimension.runCommand("tickingarea add <from> <to> andrew_ws_n")` succeeds without an operator player, loads the chunks within a few seconds, and `tickingarea remove` releases them.
+- **Verify** in the `strf` probe: add a 10×10 window 400 blocks from spawn, poll `getBlock` until defined, time it, remove.
+- **Impact if wrong:** high for §4.7 "at start". Fallback in `L0-wind-ad01`: search as the first player explores, deviation recorded; test 14 then passes only after the player has been online near spawn.
 
 
 
 
 
 
-### A-5 · Scythe projectiles have a finite lifetime and a staggered launch (cool-asm5)
+### Assumption — a naturally valid Windmill sits at the plot's modal surface Y, and the template's foundation skirt absorbs Δ ≤ 3 (L0-wind-as12)
 
-# A-5 · Scythe projectiles have a finite lifetime and a staggered launch
+# Assumption — a naturally valid Windmill sits at the plot's modal surface Y, and the template's foundation skirt absorbs Δ ≤ 3
 
-**Gap.** Scythe §4–5 define hit, out-of-radius and target-invalid outcomes but no timeout, speed or spacing between the 3 projectiles.
+**Links:** `part_of: ["L0-wind"]` · `is_a: ["assumption"]` · `relates_to: [L0-wind-p001, L0-wind-e001, L0-strf-r005]`
 
-**Assumption (CAN_ASSUME).** Projectiles are launched with a short stagger (~0.5 s), fly at a fixed speed faster than a sprinting player, and expire after ~10 s; expiry with ≥1 hit → full cooldown, with 0 hits → treated like "target left radius before first hit" (no cooldown).
+- The template carries 3 layers of natural-looking subsoil under the plot, so on terrain varying by up to 3 blocks no field cell floats and no wall is buried more than 3 blocks. This is part of the fixed template, not script terraforming, so §4.6 "не выравнивать" holds.
+- Terrain above the plot surface inside the footprint (hills ≤ 3, trees) is overwritten by the template's air layers — the same effect as every discovery-time placement (`L0-adr-strc` §6).
+- **Impact if wrong:** low-medium. If the client reads any tree removal as "levelling", the `flat` profile must also reject trees in the plot, cutting the 1 % yield further.
 
-**Impact if wrong.** Without a timeout a target that stays in radius but can't be reached (e.g. flying with elytra at high speed) keeps projectiles alive indefinitely, violating "no orphaned temporary entities".
+
+
+
+
+
+### Wrdn as01 concept assumption (L0-wrdn-as01)
+
+**ASM-wrdn-01 · "Naturally generated" describes required behavior, not the placement mechanism**
+
+§13.1/§13.5 call the city and its 2 Shriekers "naturally generated" and require them to behave exactly like vanilla worldgen output. Stable Bedrock Script API has no hook to inject custom content into actual chunk generation (same gap already flagged for the shared framework in `L0-xcx4`). The Windmill/Airship sections of the same doc use an explicit chunk-candidate-roll-then-fill pattern, and Mini Warden City's own §13.2 wording ("5% на подходящий чанк... генерация отменяется") is worded identically to theirs.
+
+**Assumption:** Mini Warden City is placed post-hoc via script (a fill/place pass after the chunk has generated), exactly like its three siblings. "Naturally generated" in the spec means the Shriekers must be functionally indistinguishable from vanilla ones at runtime (full `can_summon` warning/Warden-summon participation) — it is not a demand for true vanilla structure/jigsaw injection.
+
+**Impact if wrong:** if literal worldgen-time injection were required, it is very likely infeasible with stable Bedrock APIs at all; the project's own "closest stable approximation, document the deviation" directive would then apply anyway, so the practical implementation converges on the same approach regardless. Low risk.
+
+
+
+
+
+
+### Wrdn as02 concept assumption (L0-wrdn-as02)
+
+**ASM-wrdn-02 · No mobs beyond the 2 Shriekers (and Warden via their mechanic) are placed**
+
+§13 never mentions spawners or one-time guard mobs for Mini Warden City, unlike Windmill (3 vanilla-like spawners + 10 persistent Zombie Villagers) and Mini Bastion (7–10 Piglins + 2 Piglin Brutes, explicitly "спавнеры не требуются, охрана — одноразовый набор").
+
+**Assumption:** Mini Warden City deliberately ships with zero placed/spawned mobs of its own — the only hostile presence is the vanilla Shrieker→Warden chain, and ordinary ambient mob spawning in its dark interior (if any occurs under vanilla rules) is not a concern the spec addresses and is not something the add-on suppresses or augments.
+
+**Impact if wrong:** if a guard mob or spawner was intended but dropped from the doc, difficulty/balance testing (and the acceptance-test sampling in `L0-wrdn-ac07`) would miss it. Medium-low risk — worth a one-line confirmation if the client is asked about the structure's difficulty.
+
+
+
+
+
+
+### ASM-L0-5 · The two families share one dynamic-property store, with disjoint key families and one budget (L0-xasm5)
+
+# ASM-L0-5 · The two families share one dynamic-property store, with disjoint key families and one budget
+
+**Links:** `is_a: ["assumption"]` · `relates_to: ["L0-lgnd", "L0-strf", "L0-wind", "L0-adr-strs", "L0-strf-as05"]` · **status:** CAN_ASSUME
+
+**Assumption.**
+1. **Key families are disjoint by construction.**
+
+   | Family | Keys | Stored on |
+   |---|---|---|
+   | Weapons | `andrew:<prefix>_*` (`ws`, `sc`), `andrew:cd_*`, `andrew:busy_*`, `andrew:hidden_until` | players, plus world-level craft flags |
+   | Structures | `andrew:st:*` (`salt`, `<dim>:<rx>:<rz>`, `spawnWindmill`) | world only |
+
+   `st` is reserved. No `LegendaryDef.keyPrefix` may be `st`.
+2. **One budget.** The probe item 8 result (`strf-p006`) is the budget for the whole pack. The weapons' world-level use is a few short keys and negligible. The region shards (`L0-adr-strs`) are sized against that result minus a fixed 4 KB headroom for weapons.
+3. **Durable deadlines** in structure records, if any appear (for example a sweep start time), are epoch ms, following `L0-xasm1`.
+4. **Only one pack** writes `andrew:st:*` in any world (`L0-adr-own`).
+
+**If wrong.** If the probe shows the engine enforces a total per-pack limit near the shard design, the structure shards must shrink or compress, and the weapons stay unaffected. A prefix collision would corrupt state silently, so `infr`'s validate step adds a check that no `keyPrefix` equals `st`.
 
 
 

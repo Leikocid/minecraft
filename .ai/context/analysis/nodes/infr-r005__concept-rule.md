@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-infr-r005"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 2
 title: "Rule: GameTest and the Beta APIs experiment never reach the release build"
 aliases: ["L0-infr-r005"]
 is_a: ["rule"]

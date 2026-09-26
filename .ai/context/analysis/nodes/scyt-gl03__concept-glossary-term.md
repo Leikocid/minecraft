@@ -8,12 +8,14 @@ is_a: ["glossary-term"]
 part_of: ["L0-scyt"]
 relates_to: ["L0-scyt"]
 priority: 520
-size_chars: 453
-tags: ["is_a:glossary-term", "targeting", "visibility"]
+size_chars: 483
+tags: ["is_a:glossary-term", "targeting", "visibility", "delta:2026-09-26"]
 level: 2
 ---
+**Links:** `part_of: ["L0-scyt"]` · `is_a: ["glossary-term"]` · `relates_to: []`
+
 **Visible** (видимый)
 
-From the Scythe spec §3. A candidate is visible if a stable-API block raycast (`getBlockFromRay`, liquids and passable blocks ignored) from the owner's eyes reaches the candidate's head or body centre without hitting a block (`L0-scyt-ad02`, ASM-023). Glass blocks it. Entities, vanilla Invisibility and darkness do not.
+From Scythe spec §3. There is line of sight from the owner's eyes to the candidate's eyes: every block cell sampled along the segment, except the two endpoint cells, is air or liquid (`L0-scyt-ad02`). Glass, leaves, grass, slabs and unloaded cells block it. Entities, vanilla Invisibility and darkness do not.
 
-Visibility is checked **only at target selection**. Once a target is locked, the projectiles ignore blocks.
+It is checked only at target selection. Projectiles ignore blocks.

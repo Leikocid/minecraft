@@ -1,0 +1,29 @@
+# Bedrock add-on project
+node_modules/
+dist/
+packs/behavior/scripts/
+packs/selftest/scripts/
+packs/gametest/scripts/
+packs/gametest/structures/
+docker/bds/data/
+
+# ai-kit — tool-specific configs (do not commit)
+.mcp.json
+.claude/
+.cursor/
+.cursorrules
+.gemini/
+.chatgpt/
+.codex/
+.kimi-code/
+.serena/
+.agents/
+.obsidian/
+.github/copilot-instructions.md
+.DS_Store
+
+# Interactive-session worktrees (see CLAUDE.md, Working Tree)
+.work/
+
+# ai-kit — local author mapping, per clone
+.mailmap

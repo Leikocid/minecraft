@@ -8,10 +8,14 @@ is_a: ["glossary-term"]
 part_of: ["L0-scyt"]
 relates_to: ["L0-scyt"]
 priority: 520
-size_chars: 470
-tags: ["is_a:glossary-term", "shadow-blade", "external"]
+size_chars: 509
+tags: ["is_a:glossary-term", "targeting", "shadow-blade", "delta:2026-09-26"]
 level: 2
 ---
-**Hidden by Shadow Blade** (скрыт Теневым клинком)
+**Links:** `part_of: ["L0-scyt"]` · `is_a: ["glossary-term"]` · `relates_to: []`
 
-The state of a player who has an active Shadow Blade ability. Shadow Blade is a future legendary weapon that does not exist yet. A hidden player is excluded from Scythe targeting. The Scythe queries it through the seam `isHiddenByShadowBlade(player): boolean`, which is backed by a durable `andrew:hidden_until` value in epoch ms (CTR-lgnd-03). Today the seam is a stub that always returns `false` (ASM-024, CTR-014).
+**Hidden from targeting** (скрыт от наведения)
+
+A player whose dynamic property `andrew:hidden_until` (epoch ms) is still in the future. `isHiddenFromTargeting()` reads it in `src/legendary/hidden.ts`. The future Shadow Blade will set it; today only `/andrew:hide <seconds> [target]` does. It applies to players only. Vanilla Invisibility is not hiding. The property is private per pack.
+
+**Synonyms:** hidden by Shadow Blade.

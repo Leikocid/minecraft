@@ -9,14 +9,14 @@ is_a: ["rule"]
 part_of: ["L0-scyt"]
 relates_to: ["L0-scyt"]
 priority: 520
-size_chars: 609
-tags: ["is_a:rule", "projectiles", "pvp"]
+size_chars: 608
+tags: ["is_a:rule", "projectile", "delta:2026-09-26"]
 level: 2
 ---
 # R-scyt-008 — Only the locked target can be hit
 
-**Links:** `part_of: ["L0-scyt"]` · `is_a: ["rule"]` · `relates_to: ["L0-sprj", "L0-scyt-r002", "C-18"]` · source: Scythe §3, §4.
+**Links:** `part_of: ["L0-scyt"]` · `is_a: ["rule"]` · `relates_to: ["L0-scyt-r002", "L0-scyt-ad04"]`
 
-**Rule:** a projectile's hit test compares its position only with `targetId`. Other players, mobs, armour stands, the owner and item entities in the path are neither damaged nor launched, and they do not absorb the projectile. The Scythe ability never damages the owner.
+Source: spec §4. Code: `step`, which compares projectiles only against `volley.target`.
 
-**Why:** §4 says «преследуют именно выбранного игрока», and §3 says «мобы не являются целями». Collateral hits would also make the 9 HP maximum untestable.
+**Rule:** a projectile's hit test uses only the locked target's aim point (feet + 1.0). Every other entity in the path is neither damaged nor launched, and it does not absorb the projectile: other players, other mobs, the owner, armour stands and items all pass untouched. The locked target may itself be a mob (`L0-scyt-ad04`). The ability never damages the owner.

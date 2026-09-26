@@ -2,7 +2,7 @@
 type: "concept-contradiction"
 node_id: "L0-scyt-cx02"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 2
 title: "CX-scyt-02 · Projectile tuning disagrees: 0.5 vs 0.6 block/tick, and turn-limited vs pure pursuit"
 aliases: ["L0-scyt-cx02"]
 is_a: ["contradiction"]

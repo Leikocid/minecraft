@@ -2,7 +2,7 @@
 type: "concept-acceptance-criterion"
 node_id: "L0-pick-ac05"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 2
 aliases: ["L0-pick-ac05"]
 is_a: ["acceptance-criterion"]
 part_of: ["L0-pick"]

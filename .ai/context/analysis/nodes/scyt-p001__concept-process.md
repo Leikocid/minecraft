@@ -3,41 +3,33 @@ type: "concept-process"
 node_id: "L0-scyt-p001"
 source_channel: "rollout"
 analysis_version: 1
-title: "P-scyt-001 — Activation and target acquisition"
+title: "P-scyt-001 — Activation and target acquisition (as shipped)"
 aliases: ["L0-scyt-p001"]
 is_a: ["process"]
 part_of: ["L0-scyt"]
 relates_to: ["L0-scyt"]
 priority: 520
-size_chars: 2440
-tags: ["is_a:process", "targeting", "activation"]
+size_chars: 1660
+tags: ["is_a:process", "targeting", "activation", "delta:2026-09-26"]
 level: 2
 ---
-# P-scyt-001 — Activation and target acquisition
+# P-scyt-001 — Activation and target acquisition (as shipped)
 
-**Links:** `part_of: ["L0-scyt"]` · `is_a: ["process"]` · `relates_to: ["L0-scyt-r001", "L0-scyt-r002", "L0-scyt-r003", "L0-scyt-ad01", "L0-scyt-ad02", "L0-scyt-ad03", "L0-lgnd", "L0-sprj"]` · source: Scythe §3, §7.
+**Links:** `part_of: ["L0-scyt"]` · `is_a: ["process"]` · `relates_to: ["L0-scyt-ad01", "L0-scyt-ad02", "L0-scyt-ad03", "L0-scyt-r001", "L0-scyt-r002", "L0-scyt-r003", "L0-lgnd"]`
 
-**Trigger:** `world.afterEvents.itemUse`. `source` is a `Player` and `itemStack.typeId === "andrew:scythe_of_calamity"`.
+Code: `registerScytheTargeting` → `activate` → `selectTarget` → `onTarget` (`registerScytheVolley`).
 
-## Steps
-1. **Dispatch (`L0-lgnd`).** The legendary dispatcher resolves hand priority. If the main hand holds a ready legendary, it wins. If the main hand is on cooldown or busy, a ready off-hand legendary may fire. If the Scythe is not the ready ability, stop silently.
-2. **Guard.** Proceed only if the owner is valid, alive and not a spectator (a Creative owner may cast for testing, `L0-scyt-as01`), and `isBusy(owner, "scythe")` is false. Otherwise stop silently. The HUD already shows the state.
-3. **Snapshot** once:
-   - `launchPoint = owner.location`, frozen for the volley;
-   - `dim = owner.dimension`;
-   - `eye = owner.getHeadLocation()`;
-   - `view = owner.getViewDirection()`.
-4. **Candidate query**, bounded (`L0-scyt-ad01`): `dim.getPlayers({ location: launchPoint, maxDistance: 20, excludeNames?: — })`, then drop the owner by id.
-5. **Filter** each candidate with `L0-scyt-r001`: valid, alive, not spectator or creative (Q-015 mirror), not hidden by Shadow Blade, and visible (`L0-scyt-ad02`).
-6. **Select** with `L0-scyt-r002`: minimum 3D distance from `launchPoint` to `candidate.location`. On an ε-tie (0.01), pick the smallest angle between `view` and `normalize(candidate.head − eye)`. If still tied, pick the ascending entity id (ASM-025).
-7. **No target** (`L0-scyt-r003`):
-   - post `{ translate: "andrew.scythe_of_calamity.no_target" }` to the owner's action bar through `L0-lgnd`'s `hud.hold` so the steady HUD does not overwrite it;
-   - no cooldown, no busy, no world change;
-   - end.
-8. **Lock:** call `L0-sprj.launchVolley({ ownerId, targetId, launchPoint, dimensionId })`. From here `L0-sprj` owns busy, flight, damage, the leash, the outcome and cleanup.
+1. **Trigger** (`L0-scyt-ad03`): `itemUse`, or `playerInteractWithBlock` with `isFirstEvent`. The source must be a Player.
+2. **Item check:** `defForStack(stack)` must be a legendary. **De-dup:** `claimTick(player)`.
+3. **Dispatch:** `resolveActivation(player)?.def === SCYTHE_OF_CALAMITY`, otherwise return silently. That covers another hand winning, cooldown and busy, and the HUD shows the state.
+4. **Gather** (`L0-scyt-ad01`): all valid players, plus entities with health within 20 blocks of the owner.
+5. **Build candidates:** `{id, location, dimensionId, hidden (players only), isPlayer}`.
+6. **Pick** (`L0-scyt-r001`/`r002`): filter, sort by tier then distance, and walk nearest first with a lazy LOS check (`L0-scyt-ad02`) inside the ε 0.5 window. Gaze decides among the tied candidates.
+7. **Log:** `[andrew] scythe: <owner> targets <typeId> <nameTag> at x,y,z`, or `no target for …`.
+8. **Miss** (`L0-scyt-r003`): the action bar shows `andrew.scythe.no_target`. No cooldown, no busy.
+9. **Hit:** `launchVolley(owner, target)` (`L0-scyt-p002`).
 
-## Notes
-- Steps 3 to 6 run once per press. There is no per-tick scan (C-5, §7).
-- No world mutation happens here. `afterEvents` is not read-only, but nothing needs to be written anyway.
-- Multiplayer: presses from different owners are independent. Two owners may lock the same target (`L0-sprj-r007`).
-- Mobs never enter the candidate set, because `getPlayers` returns players only (spec test 2).
+**Notes:**
+- Steps 4–6 run once per press. There is no tick scan (C-5).
+- A Creative or Spectator owner is **not** blocked here. Whether they can press depends on the engine: a spectator cannot use items.
+- Two owners may lock the same target independently.

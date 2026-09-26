@@ -2,7 +2,7 @@
 type: "concept-acceptance-criterion"
 node_id: "L0-lgnd-ac10"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 2
 aliases: ["L0-lgnd-ac10"]
 is_a: ["acceptance-criterion"]
 part_of: ["L0-lgnd"]

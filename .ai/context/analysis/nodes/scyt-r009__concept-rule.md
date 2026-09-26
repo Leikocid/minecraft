@@ -3,34 +3,30 @@ type: "concept-rule"
 node_id: "L0-scyt-r009"
 source_channel: "rollout"
 analysis_version: 1
-title: "R-scyt-009 — Item stats and recipe"
+title: "R-scyt-009 — Item stats and recipe (as shipped)"
 aliases: ["L0-scyt-r009"]
 is_a: ["rule"]
 part_of: ["L0-scyt"]
 relates_to: ["L0-scyt"]
 priority: 520
-size_chars: 1240
-tags: ["is_a:rule", "item", "recipe", "melee"]
+size_chars: 1243
+tags: ["is_a:rule", "item", "recipe", "delta:2026-09-26"]
 level: 2
 ---
-# R-scyt-009 — Item stats and recipe
+# R-scyt-009 — Item stats and recipe (as shipped)
 
-**Links:** `part_of: ["L0-scyt"]` · `is_a: ["rule"]` · `relates_to: ["L0-sitm", "L0-sitm-adr1", "L0-sitm-adr2", "L0-scyt-ent1", "L0-lgnd"]` · source: Scythe §1, §2.
+**Links:** `part_of: ["L0-scyt"]` · `is_a: ["rule"]` · `relates_to: ["L0-sitm", "L0-sitm-adr2", "L0-scyt-cx03", "L0-scyt-ent1"]`
 
-**Item:**
-- Id `andrew:scythe_of_calamity`. Names: RU «Коса бедствия», EN "Scythe of Calamity".
-- Melee damage equals the Netherite Sword: `minecraft:damage: 8`. That is the shipped Web Sword's diamond-parity value 7, plus the vanilla step of +1 from diamond to netherite, which gives a Bedrock total of 9 against diamond's 8 (`L0-scyt-as03`). Check it on BDS by hitting an armour stand or zombie with both swords.
-- Infinite durability: no `minecraft:durability` component.
-- Enchantable, with slot `sword` (`L0-sitm-adr1`, resolves `cool-ctr2`).
-- No `minecraft:digger` and no tool tags (`L0-sitm-adr2`), so there is no tilling and no digger trap.
-- `minecraft:allow_off_hand: true`, for the hand-priority rule (`L0-lgnd`).
-- Max stack size 1.
-- Melee hits trigger no ability, no cooldown and no projectiles.
+Source: spec §1–2. Files: `packs/behavior/items/scythe_of_calamity.json`, `…/recipes/scythe_of_calamity.json`. GameTest: `scythe_melee_matches_netherite`.
 
-**Recipe** (shaped, `andrew:scythe_of_calamity`, crafting table), giving 1× Scythe:
-```
- .  G  .      G = minecraft:golden_apple (not enchanted)
- O  H  O      O = minecraft:obsidian
- .  G  .      H = minecraft:diamond_hoe
-```
-The empty corners must stay empty. The one-per-world gate, refund and announcement come from `L0-lgnd` (`L0-scyt-p004`).
+**Item as shipped:**
+- Id `andrew:scythe_of_calamity`. Names «Коса бедствия» / "Scythe of Calamity".
+- `minecraft:damage: 8`, measured equal to a vanilla netherite sword.
+- No `minecraft:durability` component, so durability is infinite.
+- Enchantable: slot `sword`, value 10 (`decision-scythe-enchantments-slot-sword`).
+- `max_stack_size 1`, `hand_equipped true`.
+- **Deviations from `L0-sitm-adr2`/`asm3`:** menu group `itemGroup.name.hoe`; tags `minecraft:is_tool` and `minecraft:is_hoe`; a `minecraft:digger` at speed 8 on `is_hoe_item_destructible` blocks.
+- **No `minecraft:allow_off_hand`** (`L0-scyt-cx03`).
+- Melee hits trigger no ability.
+
+**Recipe:** shaped, crafting table, `" G " / "OHO" / " G "` with G = golden apple, O = obsidian, H = diamond hoe, giving 1× Scythe. It unlocks with a diamond hoe. The one-per-world gate refunds 2 golden apples, 2 obsidian and 1 diamond hoe (`registry.ts`).

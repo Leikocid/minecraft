@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-infr-d004"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 2
 title: "ADR: verification verdicts are derived automatically from logs, not read by a human"
 aliases: ["L0-infr-d004"]
 is_a: ["architecture-decision"]

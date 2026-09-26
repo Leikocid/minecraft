@@ -2,7 +2,7 @@
 type: "concept-process"
 node_id: "L0-lgnd-p007"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 2
 title: "P-lgnd-007: Operator commands"
 aliases: ["L0-lgnd-p007"]
 is_a: ["process"]

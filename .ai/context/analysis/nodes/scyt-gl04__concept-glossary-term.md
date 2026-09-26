@@ -8,10 +8,12 @@ is_a: ["glossary-term"]
 part_of: ["L0-scyt"]
 relates_to: ["L0-scyt"]
 priority: 520
-size_chars: 405
-tags: ["is_a:glossary-term", "tie-break"]
+size_chars: 469
+tags: ["is_a:glossary-term", "targeting", "tie-break", "delta:2026-09-26"]
 level: 2
 ---
-**View-direction tie-break** (тай-брейк по направлению взгляда)
+**Links:** `part_of: ["L0-scyt"]` · `is_a: ["glossary-term"]` · `relates_to: []`
 
-When two or more candidates are equally near (within ε = 0.01 block), the Scythe picks the one with the smallest angle between the owner's view direction and the line from the owner's eyes to the candidate's head. This is computed as the largest dot product. If that is also tied, it picks by ascending entity id (`L0-scyt-r002`, ASM-025).
+**Gaze tie-break** (тай-брейк по направлению взгляда)
+
+Within one tier, candidates up to 0.5 blocks farther than the nearest **visible** candidate count as tied. The one with the highest cosine between the owner's view direction and the owner→candidate direction (feet to feet) wins. On an exact tie the first in sort order wins; there is no id fallback (`L0-scyt-r002`, `TIE_EPSILON`).

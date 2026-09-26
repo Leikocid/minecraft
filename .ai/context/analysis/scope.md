@@ -1,13 +1,13 @@
 ---
 title: Scope
 type: analysis
-generated_at: "2026-09-24T19:42:02.865Z"
+generated_at: "2026-09-26T08:34:28.663Z"
 source_channel: rollout
 node_id: rollout-scope
 aliases: ["rollout-scope","scope"]
 is_a: ["rollout","scope"]
-relates_to: ["L0-infr-ac01","L0-infr-ac02","L0-infr-ac03","L0-infr-ac04","L0-infr-ac05","L0-infr-ac06","L0-infr-ac07","L0-lgnd-ac01","L0-lgnd-ac02","L0-lgnd-ac03","L0-lgnd-ac04","L0-lgnd-ac05","L0-lgnd-ac06","L0-lgnd-ac07","L0-lgnd-ac08","L0-lgnd-ac09","L0-lgnd-ac10","L0-lgnd-ac11","L0-lgnd-ac12","L0-lgnd-ac13","L0-lgnd-ac14","L0-pick-ac01","L0-pick-ac02","L0-pick-ac03","L0-pick-ac04","L0-pick-ac05","L0-pick-ac06","L0-pick-ac07","L0-scyt-ac01","L0-scyt-ac02","L0-scyt-ac03","L0-scyt-ac04","L0-scyt-ac11","L0-scyt-ac15","L0-scyt-ac16","L0-sprj-ac05","L0-sprj-ac06","L0-sprj-ac07","L0-sprj-ac08","L0-sprj-ac09","L0-sprj-ac10","L0-sprj-ac11","L0-sprj-ac12","L0-sprj-ac13","L0-sprj-ac14","L0-webs-ac01","L0-webs-ac02","L0-webs-ac03","L0-webs-ac04","L0-webs-ac05","L0-webs-ac06","L0-webs-ac07","L0-webs-ac08"]
-priority: 520
+relates_to: ["L0-airs-ac01","L0-airs-ac02","L0-airs-ac03","L0-airs-ac04","L0-airs-ac05","L0-airs-ac06","L0-airs-ac07","L0-airs-ac08","L0-bast-ac01","L0-bast-ac02","L0-bast-ac03","L0-bast-ac04","L0-bast-ac05","L0-bast-ac06","L0-bast-ac07","L0-bast-ac08","L0-bast-ac09","L0-infr-ac01","L0-infr-ac02","L0-infr-ac03","L0-infr-ac04","L0-infr-ac05","L0-infr-ac06","L0-infr-ac07","L0-infr-ac08","L0-infr-ac09","L0-infr-ac10","L0-infr-ac11","L0-loot-ac01","L0-loot-ac02","L0-loot-ac03","L0-loot-ac04","L0-loot-ac05","L0-loot-ac06","L0-loot-ac07","L0-loot-ac08","L0-loot-ac09","L0-loot-ac10","L0-scyt-ac11","L0-scyt-ac16","L0-strf-ac01","L0-strf-ac02","L0-strf-ac03","L0-strf-ac04","L0-strf-ac05","L0-strf-ac06","L0-strf-ac07","L0-strf-ac08","L0-strf-ac09","L0-strf-ac10","L0-strf-ac11","L0-strf-ac12","L0-wind-ac01","L0-wind-ac02","L0-wind-ac03","L0-wind-ac04","L0-wind-ac05","L0-wind-ac06","L0-wind-ac07","L0-wind-ac08","L0-wind-ac09","L0-wind-ac10","L0-wind-ac11","L0-wind-ac12","L0-wind-ac13","L0-wind-ac14","L0-wind-ac15","L0-wind-ac16","L0-wind-ac17","L0-wrdn-ac01","L0-wrdn-ac02","L0-wrdn-ac03","L0-wrdn-ac04","L0-wrdn-ac05","L0-wrdn-ac06","L0-wrdn-ac07","L0-wrdn-ac08","L0-wrdn-ac09","L0-wrdn-ac10"]
+priority: 530
 ---
 
 # Scope
@@ -15,6 +15,240 @@ priority: 520
 > Автогенерация из Knowledge Vault. Ручное редактирование — установи `status: manual` в frontmatter.
 
 ## _other
+
+### AC — fixed modern appearance, size and randomized rotation (L0-airs-ac01)
+
+# AC — fixed modern appearance, size and randomized rotation
+
+**Links:** `part_of: ["L0-airs"]` · `is_a: ["acceptance-criterion"]`
+
+**GIVEN** a placed Airship instance, **WHEN** it is inspected, **THEN**:
+- Its palette is grey/light-grey concrete with intact glass windows and working lights; there is no vine, cobweb, crack, or other decay decoration anywhere on it.
+- Its upper hull is a single decorative oval volume containing no chest and no spawner.
+- Its overall footprint is ≈15×7×10–12 (L×W×H).
+- Across a sample of generated instances, the placed rotation is drawn from {0°, 90°, 180°, 270°} and is not fixed to a single value.
+
+(Spec §5.1; raw tests 24, 25.)
+
+
+- **level**: 2
+
+### AC — two opposite doors, no assisted ground access (L0-airs-ac02)
+
+# AC — two opposite doors, no assisted ground access
+
+**Links:** `part_of: ["L0-airs"]` · `is_a: ["acceptance-criterion"]`
+
+**GIVEN** a placed Airship, **WHEN** its lower hull is inspected, **THEN** it has exactly 2 doors on opposite sides, and there is no ladder, staircase, lift, waterfall, or teleporter connecting it to the ground. Reaching it is left entirely to the player.
+
+(Spec §5.2; raw test 26.)
+
+
+- **level**: 2
+
+### AC — interior corridor + 4 rooms, one lamp per room (L0-airs-ac03)
+
+# AC — interior corridor + 4 rooms, one lamp per room
+
+**Links:** `part_of: ["L0-airs"]` · `is_a: ["acceptance-criterion"]`
+
+**GIVEN** a placed Airship, **WHEN** its interior is inspected, **THEN** it has exactly 1 central corridor and 4 small rooms, each room has exactly 1 ceiling lamp, and the spawner cell's light level stays within the engine's spawner-suppression threshold despite the decorative lighting.
+
+(Spec §5.2; raw test 27.)
+
+
+- **level**: 2
+
+### AC — exactly 10 chests at fixed positions (L0-airs-ac04)
+
+# AC — exactly 10 chests at fixed positions
+
+**Links:** `part_of: ["L0-airs"]` · `is_a: ["acceptance-criterion"]`
+
+**GIVEN** a placed Airship, **WHEN** its chests are counted, **THEN** there are exactly 10: 2 in each of the 4 rooms (8 total) and 2 in the corridor, all at the same template-local positions (rotated per instance) across every instance, each reachable without breaking blocks.
+
+(Spec §5.3; raw test 28.)
+
+
+- **level**: 2
+
+### AC — exactly one iron-axe Vindicator spawner at the corridor centre (L0-airs-ac05)
+
+# AC — exactly one iron-axe Vindicator spawner at the corridor centre
+
+**Links:** `part_of: ["L0-airs"]` · `is_a: ["acceptance-criterion"]`
+
+**GIVEN** a placed Airship, **WHEN** its spawner is inspected, **THEN** there is exactly 1 `mob_spawner`, positioned at the corridor's centre, and it produces Vindicators equipped with a vanilla iron axe.
+
+(Spec §5.3; raw test 29.)
+
+
+- **level**: 2
+
+### AC — altitude clearance and rejection over water / near the world ceiling (L0-airs-ac06)
+
+# AC — altitude clearance and rejection over water / near the world ceiling
+
+**Links:** `part_of: ["L0-airs"]` · `is_a: ["acceptance-criterion"]`
+
+**GIVEN** a rolled Airship candidate, **WHEN** its footprint is validated, **THEN**:
+- Its bottom sits at least 40 blocks above the highest terrain point (including trees) under its whole rotated footprint, with a target clearance of 40–70 blocks where the build height allows it.
+- A candidate whose footprint is significantly over open water is rejected.
+- A candidate that cannot fit below the world ceiling even at the minimum 40-block clearance is rejected, with no downgrade below 40.
+
+(Spec §5.4; raw tests 30, 31.)
+
+
+- **level**: 2
+
+### AC — independent generation at 2 % on suitable land chunks only (L0-airs-ac07)
+
+# AC — independent generation at 2 % on suitable land chunks only
+
+**Links:** `part_of: ["L0-airs"]` · `is_a: ["acceptance-criterion"]`
+
+**GIVEN** a large enough sample of newly discovered Overworld chunks with no Windmill involved, **WHEN** independent Airship generation is measured statistically, **THEN** the observed rate on suitable chunks (land, valid footprint, no collision) is consistent with a 2 % per-chunk roll, and no Airship appears on an unsuitable chunk (open water, colliding, or failing the altitude/ceiling check).
+
+(Spec §5.5; raw test 32.)
+
+
+- **level**: 2
+
+### AC — the Windmill-linked attempt runs regardless of a nearby independent Airship (L0-airs-ac08)
+
+# AC — the Windmill-linked attempt runs regardless of a nearby independent Airship
+
+**Links:** `part_of: ["L0-airs"]` · `is_a: ["acceptance-criterion"]`
+
+**GIVEN** a Windmill instance that already has an independent Airship within 100 blocks of it, **WHEN** that Windmill's `afterPlace` hook runs, **THEN** `airs` still performs its own linked-attempt search in the 40–100-block ring — the existing independent Airship does not substitute for, skip, or block the linked attempt — and the two Airships, if the linked attempt also succeeds, do not physically overlap.
+
+(Spec §5.6; raw test 33.)
+
+
+- **level**: 2
+
+### Bast ac01 concept acceptance criterion (L0-bast-ac01)
+
+**AC-bast-01** (spec test 51)
+
+GIVEN a statistically sufficient sample of suitable Nether chunks,
+WHEN candidate generation runs,
+THEN the observed candidate rate converges to 5% (no exact-match requirement is imposed on small samples).
+
+**Source:** §14.7 test 51.
+
+
+- **level**: 2
+
+### Bast ac02 concept acceptance criterion (L0-bast-ac02)
+
+**AC-bast-02** (spec test 52)
+
+GIVEN suitable terrain in any Nether biome,
+WHEN a candidate rolls,
+THEN generation proceeds regardless of biome identity;
+AND GIVEN a candidate site over a lava ocean,
+WHEN evaluated,
+THEN generation never occurs there.
+
+**Source:** §14.7 test 52.
+
+
+- **level**: 2
+
+### Bast ac03 concept acceptance criterion (L0-bast-ac03)
+
+**AC-bast-03** (spec test 53)
+
+GIVEN a generated Mini Bastion,
+WHEN measured,
+THEN its footprint is ~20×20, height ~10-12, with 2-3 levels;
+AND across multiple instances, all four rotations (0°/90°/180°/270°) are observed.
+
+**Source:** §14.7 test 53.
+
+
+- **level**: 2
+
+### Bast ac04 concept acceptance criterion (L0-bast-ac04)
+
+**AC-bast-04** (spec test 54)
+
+GIVEN a generated Mini Bastion,
+WHEN the treasure room is inspected,
+THEN it sits centrally/low with ordinary vanilla lava behavior (bucketable, blockable, water-reactive);
+AND both access methods work: building/routing a safe path through the lava area, and descending/falling from the level above.
+
+**Source:** §14.7 test 54.
+
+
+- **level**: 2
+
+### Bast ac05 concept acceptance criterion (L0-bast-ac05)
+
+**AC-bast-05** (spec test 55)
+
+GIVEN a generated Mini Bastion,
+WHEN all chests are counted,
+THEN there are exactly 10: 3 treasure chests in the center + 7 regular chests elsewhere in the structure.
+
+**Source:** §14.7 test 55.
+
+
+- **level**: 2
+
+### Bast ac06 concept acceptance criterion (L0-bast-ac06)
+
+**AC-bast-06** (spec test 56)
+
+GIVEN the treasure room,
+WHEN inspected,
+THEN it contains a random count of 2-4 Gold Blocks.
+
+**Source:** §14.7 test 56.
+
+
+- **level**: 2
+
+### Bast ac07 concept acceptance criterion (L0-bast-ac07)
+
+**AC-bast-07** (spec test 57)
+
+GIVEN a freshly initialized Mini Bastion,
+WHEN the guard roster is counted,
+THEN there are 7-10 regular Piglins + exactly 2 Piglin Brutes, zero Hoglins,
+AND one Brute is positioned at/guarding the treasure room.
+
+**Source:** §14.7 test 57.
+
+
+- **level**: 2
+
+### Bast ac08 concept acceptance criterion (L0-bast-ac08)
+
+**AC-bast-08** (spec test 58)
+
+GIVEN a Mini Bastion with guards killed, loot taken, and lava altered,
+WHEN the server restarts,
+THEN none of those changes revert — guards are not respawned, loot is not refilled, and altered lava/blocks stay altered.
+
+**Source:** §14.7 test 58.
+
+
+- **level**: 2
+
+### Bast ac09 concept acceptance criterion (L0-bast-ac09)
+
+**AC-bast-09** (spec test 59)
+
+GIVEN a candidate site that physically intersects another detected structure (custom or vanilla, including a real Bastion Remnant),
+WHEN the candidate is evaluated,
+THEN generation is cancelled outright with no relocation attempt and no damage to the existing structure.
+
+**Source:** §14.7 test 59, §15.
+
+
+- **level**: 2
 
 ### Infr ac01 concept acceptance criterion (L0-infr-ac01)
 
@@ -81,397 +315,128 @@ GIVEN `docker/bds/compose.yaml`'s `VERSION` and `scripts/targets.mjs`'s `BDS_VER
 
 - **level**: 2
 
-### Lgnd ac01 concept acceptance criterion (L0-lgnd-ac01)
+### Infr ac08 concept acceptance criterion (L0-infr-ac08)
 
----
-is_a: ["acceptance-criterion"]
-part_of: ["L0-lgnd"]
-relates_to: ["L0-lgnd-r006"]
----
-**AC-lgnd-01: Upgrade from 0.3.0 keeps the flag, the cooldown, the pending token and the marks.** Channel: `bds`.
+**Links:** `part_of: ["L0-infr"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-infr-p005"]`
 
-GIVEN a world saved by 0.3.0 where:
-- the Web Sword was Survival-crafted;
-- player P has `andrew:ws_cooldown_until` = now + 20 s;
-- player Q has a single-object `ws_pending`;
-- a marked sword has no `ws_gen`
-
-WHEN the server restarts on the framework build
-THEN a Survival Web Sword craft is refunded with `andrew.web_sword.craft_blocked` and no broadcast,
-AND P's HUD shows the Web Sword cooling with ≤ 20 s,
-AND Q receives exactly one sword on the next spawn,
-AND the gen-less sword casts.
+GIVEN checked-in structure layout sources, WHEN the structure-compilation step of `npm run build` runs, THEN it emits one `.mcstructure` file per structure under `packs/behavior/structures/andrew/`, and a round-trip unit test confirms each file's chest/spawner/shrieker/door counts and footprint bounds match its source definition, for all four structures. [src: L0-adr-tmpl; L0-infr-p005]
 
 
 - **level**: 2
 
-### Lgnd ac02 concept acceptance criterion (L0-lgnd-ac02)
+### Infr ac09 concept acceptance criterion (L0-infr-ac09)
 
----
-is_a: ["acceptance-criterion"]
-part_of: ["L0-lgnd"]
-relates_to: ["L0-lgnd-r002"]
----
-**AC-lgnd-02: Craft budgets are independent per weapon.** Channel: `bds`.
+**Links:** `part_of: ["L0-infr"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-infr-p006"]`
 
-GIVEN the Web Sword flag is claimed and the Scythe flag is unset
-WHEN a Survival player crafts the Scythe
-THEN the craft succeeds, exactly one broadcast naming the crafter and the Scythe is sent, and the Scythe flag is set,
-AND a second Survival Scythe craft (by any player, also after restart) is refunded with 2 golden apples, 2 obsidian and 1 diamond hoe,
-AND `/andrew:legendary reset scythe_of_calamity` leaves the Web Sword flag set,
-AND a Creative-mode Scythe craft neither claims the flag nor is refunded.
+GIVEN a template built into the pack, WHEN the BDS/GameTest placement test places it via `structureManager.place` in each of the 4 rotations (0/90/180/270) in the `gametest` world, THEN in-world block-entity counts and states (chest count, spawner `EntityIdentifier`, shrieker `can_summon`) match the compiled template in every rotation. [src: L0-adr-tmpl; L0-infr-p006]
 
 
 - **level**: 2
 
-### Lgnd ac03 concept acceptance criterion (L0-lgnd-ac03)
+### Infr ac10 concept acceptance criterion (L0-infr-ac10)
 
----
-is_a: ["acceptance-criterion"]
-part_of: ["L0-lgnd"]
-relates_to: ["L0-lgnd-r003"]
----
-**AC-lgnd-03: Cooldowns do not bleed between weapons.** Channel: `build` (unit, stubbed clock) + `bds`.
+**Links:** `part_of: ["L0-infr"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-infr-p006", "L0-infr-as03"]`
 
-GIVEN player P with both abilities ready
-WHEN `start(P, "web_sword")` is called
-THEN `isReady(P, "web_sword")` is false for 30 000 ms (± 50 ms),
-AND `isReady(P, "scythe_of_calamity")` stays true throughout,
-AND for another player R, both stay ready.
+GIVEN the statistical chunk-roll check drives `strf`'s roll formula over a large synthetic sample of chunk coordinates per structure, WHEN the harness tallies successful rolls, THEN the observed rate falls inside the configured tolerance band of that structure's chance constant, and the run exits 0/1 by that verdict alone, with no human eye needed. [src: L0-adr-strc; L0-infr-p006; L0-infr-as03]
 
 
 - **level**: 2
 
-### Lgnd ac04 concept acceptance criterion (L0-lgnd-ac04)
+### Infr ac11 concept acceptance criterion (L0-infr-ac11)
 
----
-is_a: ["acceptance-criterion"]
-part_of: ["L0-lgnd"]
-relates_to: ["L0-lgnd-r004"]
----
-**AC-lgnd-04: A ready main hand wins, even when it refuses.** Channel: `bds`.
+**Links:** `part_of: ["L0-infr"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-infr-p007", "L0-infr-as04"]`
 
-GIVEN P holds the Scythe in the main hand and the Web Sword in the off hand, both ready, and no player is within 20 blocks
-WHEN P presses Use
-THEN only the Scythe ability runs:
-- the "no player here" message is shown,
-- no cobweb is placed,
-- neither cooldown starts.
+GIVEN a `gametest` world where at least one structure has completed one-time init, WHEN the BDS server process is restarted without re-staging the world, THEN no chest/spawner/guard/marker is duplicated and the instance registry's `placed`/`lootFilled`/`guardsSpawned` flags are byte-identical before and after the restart. [src: L0-adr-strs; C-7; L0-infr-p007; L0-infr-as04]
 
 
 - **level**: 2
 
-### Lgnd ac05 concept acceptance criterion (L0-lgnd-ac05)
+### Loot ac01 concept acceptance criterion (L0-loot-ac01)
 
----
-is_a: ["acceptance-criterion"]
-part_of: ["L0-lgnd"]
-relates_to: ["L0-lgnd-r004", "L0-lgnd-r009"]
----
-**AC-lgnd-05: The off hand fires when the main hand is cooling or busy.** Channel: `bds`.
+GIVEN a Windmill or Airship chest is initialized, WHEN the fill algorithm runs, THEN it performs between 5 and 12 fill attempts inclusive, and each individual attempt yields at most one loot category (never zero-or-more-than-one simultaneous categories from a single attempt).
 
-GIVEN P holds the Scythe in the main hand, cooling or busy with a volley, and a ready Web Sword in the off hand, aimed at a valid trap target
-WHEN P presses Use
-THEN the Web Sword trap is placed and the Web Sword cooldown starts,
-AND the Scythe cooldown and busy state are unchanged.
-
-Also:
-- If neither weapon is ready, the same press does nothing, sends no message and changes no state.
-- With an empty main hand and a ready Web Sword in the off hand, Use does nothing.
+Source: spec AC34.
 
 
 - **level**: 2
 
-### Lgnd ac06 concept acceptance criterion (L0-lgnd-ac06)
+### Loot ac02 concept acceptance criterion (L0-loot-ac02)
 
----
-is_a: ["acceptance-criterion"]
-part_of: ["L0-lgnd"]
-relates_to: ["L0-lgnd-r007", "L0-lgnd-p005"]
----
-**AC-lgnd-06: Two-hand Action Bar.** Channel: `build` (stubbed HUD test) + `ipad` (visual).
+GIVEN repeated custom-table fills across many chests, WHEN Sticks/Logs/Iron Ingot/Copper Ingot/Gold Ingot/Diamond categories are selected, THEN their quantities fall within 2–8 / 2–6 / 2–8 / 3–10 / 1–5 / 1–3 respectively, on every occurrence.
 
-GIVEN P holds a ready Scythe in the main hand and a Web Sword with 12 s left in the off hand
-WHEN the HUD renders
-THEN P's bar shows the Scythe "Ready" segment and then the Web Sword "12" segment, in P's client language,
-AND a player holding no legendary receives no `setActionBar` call,
-AND a player holding only the Web Sword in the main hand receives exactly the 0.3.0 rawtext: the shipped HUD cases in `tests/web-sword-cooldown.test.mjs` pass unmodified.
+Source: spec AC35.
 
 
 - **level**: 2
 
-### Lgnd ac07 concept acceptance criterion (L0-lgnd-ac07)
+### Loot ac03 concept acceptance criterion (L0-loot-ac03)
 
----
-is_a: ["acceptance-criterion"]
-part_of: ["L0-lgnd"]
-relates_to: ["L0-lgnd-r008"]
----
-**AC-lgnd-07: Death with several legendaries returns each exactly once.** Channel: `bds`.
+GIVEN a statistically sufficient sample of equipment-category rolls (armor, sword, axe; enchanted and unenchanted) across many chests, WHEN material is rolled, THEN iron appears in ~80% and diamond in ~20% of rolls (no exact-match requirement on small samples — statistical tolerance, not a per-roll assertion).
 
-GIVEN P carries a marked Web Sword in the off hand, a marked Scythe in the hotbar, and an admin Web Sword in the inventory
-WHEN P dies (also in the Void), respawns, disconnects and reconnects, and the server restarts
-THEN P holds exactly those three instances (same ids),
-AND no item entity of any of them is left at the death spot,
-AND no fourth copy exists.
+Source: spec AC36.
 
 
 - **level**: 2
 
-### Lgnd ac08 concept acceptance criterion (L0-lgnd-ac08)
+### Loot ac04 concept acceptance criterion (L0-loot-ac04)
 
----
-is_a: ["acceptance-criterion"]
-part_of: ["L0-lgnd"]
-relates_to: ["L0-lgnd-p003", "L0-lgnd-r011"]
----
-**AC-lgnd-08: Void return to the last holder, exactly once.** Channel: `bds`.
+GIVEN multiple armor-category attempts succeed in the same chest, WHEN slots are rolled, THEN identical armor pieces (e.g. two diamond helmets) are permitted to co-occur in one chest — the implementation must not de-duplicate or reject repeats.
 
-GIVEN P last held a marked Scythe (gen g) and drops it into the Void
-WHEN the item entity falls below the dimension's minimum height
-THEN P receives it with the same id and gen g + 1, plus a private "returned" message,
-AND the Scythe craft flag is unchanged.
-
-If P is offline, the owed entry survives a restart and is redeemed exactly once on P's next join.
+Source: spec AC37.
 
 
 - **level**: 2
 
-### Lgnd ac09 concept acceptance criterion (L0-lgnd-ac09)
+### Loot ac05 concept acceptance criterion (L0-loot-ac05)
 
----
-is_a: ["acceptance-criterion"]
-part_of: ["L0-lgnd"]
-relates_to: ["L0-lgnd-p003"]
----
-**AC-lgnd-09: Ordinary destruction returns the instance; a pickup does not.** Channel: `bds`.
+GIVEN any Enchanted Armor/Sword/Axe roll from the custom table, WHEN its enchantments are inspected, THEN none of them is a curse (Curse of Binding, Curse of Vanishing), and every enchantment level present is within that enchantment's vanilla maximum.
 
-GIVEN a marked legendary item entity last held by P
-WHEN it burns in lava or fire, is destroyed by cactus or an explosion, or despawns
-THEN P receives it back per ac08 (Web Sword and Scythe alike),
-AND an ordinary pickup of the entity by any player triggers **no** return and no generation bump,
-AND an unmarked (Creative) copy is destroyed as in vanilla.
+Source: spec AC38, §3.3.
 
 
 - **level**: 2
 
-### Lgnd ac10 concept acceptance criterion (L0-lgnd-ac10)
+### Loot ac06 concept acceptance criterion (L0-loot-ac06)
 
----
-is_a: ["acceptance-criterion"]
-part_of: ["L0-lgnd"]
-relates_to: ["L0-lgnd-r005"]
----
-**AC-lgnd-10: A stale-generation copy is voided.** Channel: `bds`.
+GIVEN a full custom-table chest fill (5–12 attempts), WHEN the resulting contents are inspected, THEN at most one Golden Apple stack exists, its quantity is 1–3, it is always a regular (never Enchanted) Golden Apple, and Enchanted Golden Apple never appears via the custom table.
 
-GIVEN an instance whose generation was bumped by a return while the original stack survived (for example collected by a hopper into a chest)
-WHEN any player moves the stale stack into their inventory
-THEN it is deleted in the handling of that event and the player gets a `voided` message,
-AND during that window it could neither cast nor be retained on death,
-AND the live copy is unaffected.
+Source: spec AC39, §3.3.
 
 
 - **level**: 2
 
-### Lgnd ac11 concept acceptance criterion (L0-lgnd-ac11)
+### Loot ac07 concept acceptance criterion (L0-loot-ac07)
 
----
-is_a: ["acceptance-criterion"]
-part_of: ["L0-lgnd"]
-relates_to: ["L0-lgnd-ad06", "L0-lgnd-cx04"]
----
-**AC-lgnd-11: Web Sword regression after migration.** Channel: `build` + `bds`.
+GIVEN a chest where Diamonds is selected on more than one attempt, WHEN contents are inspected, THEN multiple Diamond stacks/successes are permitted in the same chest (unlike Golden Apple).
 
-GIVEN the framework build
-WHEN `npm test`, `bds:check` and `bds:gametest` run
-THEN every existing test passes **without edits to its assertions**:
-- `tests/web-sword-*.test.mjs`;
-- the nine `andrew:websword_*` GameTests listed in `scripts/bds-gametest.mjs`;
-- the pickaxe and autosmelt suites.
-AND `grep -rnE "andrew:(ws|sc)_|andrew:hidden_until" src/` matches only `src/legendary/state.ts`,
-AND `/andrew:websword give|reset` still works.
+Source: spec AC40.
 
 
 - **level**: 2
 
-### Lgnd ac12 concept acceptance criterion (L0-lgnd-ac12)
+### Loot ac08 concept acceptance criterion (L0-loot-ac08)
 
----
-is_a: ["acceptance-criterion"]
-part_of: ["L0-lgnd"]
-relates_to: ["L0-lgnd-ad03", "L0-lgnd-r007"]
----
-**AC-lgnd-12: No standing watcher when nothing is watched.** Channel: `bds`.
+GIVEN any structure chest (custom or vanilla path) whose contents have already been rolled, WHEN the chest is reopened, the chunk is unloaded/reloaded, or the server restarts, THEN its contents are unchanged — no re-roll, no refill.
 
-GIVEN no marked legendary item entity exists in any loaded dimension and no volley is alive
-WHEN the server runs for 60 s
-THEN only the HUD interval is registered.
-
-The loss-watcher interval starts on the first watched `entitySpawn` and is cleared when the last watched entity is gone. This is checked via debug log lines in `bds:check`.
+Source: spec §2, §3 preamble, §13.6/§13.7, §15.
 
 
 - **level**: 2
 
-### Lgnd ac13 concept acceptance criterion (L0-lgnd-ac13)
+### Loot ac09 concept acceptance criterion (L0-loot-ac09)
 
----
-is_a: ["acceptance-criterion"]
-part_of: ["L0-lgnd"]
-relates_to: ["L0-lgnd-r009", "L0-sprj"]
----
-**AC-lgnd-13: busy blocks re-use, is volatile, and hands off to cooldown without a gap.** Channel: `build` (unit) + `bds`.
+GIVEN Mini Warden City's 10 chests, WHEN their contents are inspected, THEN all 10 use the real vanilla `chests/ancient_city` loot table unmodified — including the normal possibility of rare vanilla drops such as Enchanted Golden Apple or Swift Sneak books — and the custom weighted table is never applied to them.
 
-GIVEN `setBusy(P, "scythe_of_calamity", true)`
-THEN `isReady` is false, the HUD shows the `active` key, and a Use press with the Scythe in the main hand does not call its ability.
-
-WHEN `setBusy(false)` and `start()` are called in the same turn
-THEN no tick observes `isReady == true`.
-
-WHEN `setBusy(false)` is called alone
-THEN the ability is ready at once.
-
-AND after a server restart with busy set, `isBusy` is false.
+Source: spec §13.6, AC48.
 
 
 - **level**: 2
 
-### Lgnd ac14 concept acceptance criterion (L0-lgnd-ac14)
+### Loot ac10 concept acceptance criterion (L0-loot-ac10)
 
----
-is_a: ["acceptance-criterion"]
-part_of: ["L0-lgnd"]
-relates_to: ["L0-lgnd-r010", "L0-stgt", "L0-sqat"]
----
-**AC-lgnd-14: `isHiddenFromTargeting` contract.** Channel: `build` + `bds`.
+GIVEN Mini Bastion's 10 chests, WHEN their contents are inspected, THEN the 3 central treasure chests draw from vanilla `chests/bastion_treasure` and the 7 distributed chests draw from vanilla `chests/bastion_other`, with no custom-table influence on either.
 
-GIVEN player T with no `andrew:hidden_until`
-THEN `isHiddenFromTargeting(T)` is false.
-
-WHEN `/andrew:hide 10 T` (or GameTest) sets it to now + 10 s
-THEN it is true.
-
-- After 10 s → false.
-- After a server restart within the window → still true.
-- A non-number value → false, with no throw.
-
-
-- **level**: 2
-
-### Pick ac01 concept acceptance criterion (L0-pick-ac01)
-
-GIVEN a clean clone, WHEN `npm run build` runs and the resulting `.mcaddon` is loaded on BDS in Docker and imported on iPad, THEN there are no dependency or manifest errors involving this item's manifest/recipe/item entries. [channel: bds + ipad; src: `minerspickaxetestspec` pass criteria]
-
-
-- **level**: 2
-
-### Pick ac02 concept acceptance criterion (L0-pick-ac02)
-
-GIVEN Creative mode, WHEN the player opens Equipment → pickaxe group or searches Creative inventory, THEN `andrew:miners_pickaxe` is visible with its RU/EN localized name and icon; `/give <player> andrew:miners_pickaxe` also works. [channel: ipad; src: `minerspickaxetestspec` scope + pass criteria]
-
-
-- **level**: 2
-
-### Pick ac03 concept acceptance criterion (L0-pick-ac03)
-
-GIVEN 3× Iron Ingot, 2× Raw Gold, 2× Stick in the exact shape of `L0-pick-r005`, WHEN placed in a crafting table, THEN exactly 1× `andrew:miners_pickaxe` is produced. [channel: bds; src: `packs/behavior/recipes/miners_pickaxe.json`]
-
-
-- **level**: 2
-
-### Pick ac04 concept acceptance criterion (L0-pick-ac04)
-
-GIVEN a Survival player holding `andrew:miners_pickaxe`, WHEN they break any of the 7 allow-listed blocks (`L0-pick-r003`), THEN the smelted product spawns with count 1 and the raw material never drops. Verified in-engine for `minecraft:iron_ore` → `minecraft:iron_ingot` by GameTest `pickaxe_autosmelt`; the other 6 pairs follow the same code path with no per-block special-casing. [channel: bds; src: `src/gametest/main.ts` L189-196]
-
-
-- **level**: 2
-
-### Pick ac05 concept acceptance criterion (L0-pick-ac05)
-
-GIVEN the same pickaxe, WHEN the player breaks `minecraft:stone` (not on the allow-list), THEN it drops vanilla `minecraft:cobblestone`, not an auto-smelt product. [channel: bds; src: `src/gametest/main.ts` `pickaxe_keeps_vanilla_drops`, L198-207]
-
-
-- **level**: 2
-
-### Pick ac06 concept acceptance criterion (L0-pick-ac06)
-
-GIVEN a fresh `andrew:miners_pickaxe` ItemStack, WHEN queried in-engine, THEN `ItemEnchantableComponent.canAddEnchantment === true`, `EnchantmentSlot.Pickaxe` is among its enchantable slots, and `minecraft:durability` is absent. [channel: bds; src: `SELFTEST-01-AA` / `src/selftest/main.ts` `pickaxe-enchantable` + `pickaxe-no-durability`, L127-150]
-
-
-- **level**: 2
-
-### Pick ac07 concept acceptance criterion (L0-pick-ac07)
-
-GIVEN `copper_ore`, `deepslate`, and `ancient_debris` placed in the GameTest structure, WHEN each is broken with `andrew:miners_pickaxe` vs. a real `minecraft:diamond_pickaxe` in the same run, THEN the pickaxe finishes within `SPEED_TOLERANCE_TICKS` (4) of vanilla and within `BREAK_LIMIT_TICKS` (300). [channel: bds; src: `src/gametest/main.ts` `pickaxe_digs_at_diamond_speed`, L864-962]
-
-
-- **level**: 2
-
-### AC-scyt-01 — No player within 20 blocks: message shown, no cooldown (§8 test 1) (L0-scyt-ac01)
-
-# AC-scyt-01 — No player within 20 blocks: message shown, no cooldown (§8 test 1)
-
-**Links:** `part_of: ["L0-scyt"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-scyt-r003"]`
-
-**GIVEN** owner O holds a ready Scythe, and the nearest other player is 25 blocks away, or there is none,
-**WHEN** O presses Use,
-**THEN**:
-- O (and only O) receives `andrew.scythe_of_calamity.no_target`: «Здесь нет игрока» in `ru_RU`, "There is no player here" in `en_US`;
-- `sc_cooldown_until` is unchanged, and busy is false;
-- no particles and no volley are created;
-- a second press in the next tick behaves the same way, with no cooldown in between.
-
-**Also:** a zombie or villager 5 blocks away does not change the result, because mobs are ignored.
-
-
-- **level**: 2
-
-### AC-scyt-02 — The nearest visible player is chosen; mobs, hidden and occluded players are skipped (§8 test 2) (L0-scyt-ac02)
-
-# AC-scyt-02 — The nearest visible player is chosen; mobs, hidden and occluded players are skipped (§8 test 2)
-
-**Links:** `part_of: ["L0-scyt"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-scyt-r001", "L0-scyt-r002", "L0-scyt-ad02"]`
-
-**GIVEN** owner O, with player A at 8 blocks behind a solid 3-high stone wall, player B at 12 blocks in the open, player C at 15 blocks in the open, and a zombie at 3 blocks,
-**WHEN** O presses Use,
-**THEN** the lock is on **B**: the log shows `targetId = B`. A is skipped because it is not visible, and the zombie is skipped because it is not a player.
-
-**Variants:**
-- A player in Spectator mode at 4 blocks is skipped.
-- A player whose feet are behind a slab but whose head is exposed at 6 blocks **is** chosen (`L0-scyt-ad02`).
-- A player in another dimension is never considered.
-
-
-- **level**: 2
-
-### AC-scyt-03 — A player hidden by Shadow Blade is not chosen (§8 test 3) (L0-scyt-ac03)
-
-# AC-scyt-03 — A player hidden by Shadow Blade is not chosen (§8 test 3)
-
-**Links:** `part_of: ["L0-scyt"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-scyt-r001", "CTR-014", "ASM-024"]`
-
-**GIVEN** owner O, with player H at 5 blocks for whom `isHiddenByShadowBlade(H)` returns true, and player V at 10 blocks, both visible,
-**WHEN** O presses Use,
-**THEN** the lock is on V. If V is absent, the no-target message appears and there is no cooldown.
-
-**Verification today:** a unit or GameTest injects a predicate stub that returns true for H. End-to-end verification with a real Shadow Blade is **blocked** by CTR-014 / Q-020. Record this AC as "verified at the seam". Do not report it as fully passed.
-
-
-- **level**: 2
-
-### AC-scyt-04 — Equal distance: the view-direction tie-break decides (§8 test 4) (L0-scyt-ac04)
-
-# AC-scyt-04 — Equal distance: the view-direction tie-break decides (§8 test 4)
-
-**Links:** `part_of: ["L0-scyt"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-scyt-r002"]`
-
-**GIVEN** owner O at (0, y, 0) facing +X, with player P1 at (10, y, 0) and player P2 at (0, y, 10). Both are exactly 10 blocks away and visible.
-**WHEN** O presses Use,
-**THEN** the lock is on P1, and the log shows `tieBroken = true`.
-
-**AND WHEN** O turns to face +Z and presses again, after the cooldown or after an escape with no hit,
-**THEN** the lock is on P2.
-
-**Edge:** P1 at 10.000 and P2 at 10.005 still count as tied, within ε = 0.01. P1 at 10.0 and P2 at 10.5 are not tied, so P1 wins on distance whatever the view direction.
+Source: spec §14 addendum, AC55 (loot portion — chest counts/gold blocks/guards belong to `L0-bast`, not this component).
 
 
 - **level**: 2
@@ -494,21 +459,6 @@ GIVEN `copper_ore`, `deepslate`, and `ancient_debris` placed in the GameTest str
 
 - **level**: 2
 
-### AC-scyt-15 — Item, melee and durability (§1, §9 DoD) (L0-scyt-ac15)
-
-# AC-scyt-15 — Item, melee and durability (§1, §9 DoD)
-
-**Links:** `part_of: ["L0-scyt"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-scyt-r009", "L0-sitm", "L0-scyt-r008"]`
-
-- **BDS:** a melee hit on a zombie with the Scythe removes as much health as a hit with a vanilla `netherite_sword`. After 500 hits the item has no durability loss.
-- **BDS:** a melee hit starts no cooldown, spawns no projectiles and does not set busy.
-- **BDS:** the enchanting table and anvil accept Sharpness and Fire Aspect, and reject Efficiency.
-- **BDS:** Use on grass or dirt does not till it (no hoe tag).
-- **iPad (C-9):** the item shows in Creative under Equipment → Swords and in search. The names are «Коса бедствия» / "Scythe of Calamity". The icon renders. `/give @s andrew:scythe_of_calamity` works.
-
-
-- **level**: 2
-
 ### AC-scyt-16 — Action Bar state in either hand, and hand priority (§6) (L0-scyt-ac16)
 
 # AC-scyt-16 — Action Bar state in either hand, and hand priority (§6)
@@ -527,245 +477,436 @@ GIVEN `copper_ore`, `deepslate`, and `ancient_debris` placed in the GameTest str
 
 - **level**: 2
 
-### AC-sprj-05 — Exactly 3 projectiles, through blocks, no block changes (§8 test 5) (L0-sprj-ac05)
+### Strf ac01 concept acceptance criterion (L0-strf-ac01)
 
-# AC-sprj-05 — Exactly 3 projectiles, through blocks, no block changes (§8 test 5)
+**AC-strf-01 · The roll is deterministic and uniform** (`L0-strf-r001`)
 
-**Links:** `part_of: ["L0-sprj"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-sprj-r001", "L0-sprj-r002", "L0-sqat"]` · channel: `bds` (GameTest) + `ipad` (visual)
-
-**GIVEN** a target sealed in a 3×3×3 obsidian shell, with a glass pane and a closed door on the line between owner and target, 10 blocks away,
-**WHEN** the owner activates the Scythe,
-**THEN** the volley record holds exactly 3 projectiles (released on ticks +0, +4, +8), at least one reaches the target, **AND** a type-hash of every block within the 20-block sphere is identical before and after, **AND** no new entities of any type exist in that sphere after the volley.
+GIVEN a fixed salt, WHEN `roll(salt, dim, cx, cz, def)` is computed twice for 100 000 keys, THEN the results are identical. The success share for chance 0.05 is within 0.05 ± 0.004 (≈ 3σ). A χ² test over 100 buckets gives p > 0.01. Three golden keys produce their recorded values.
+**Verify:** unit (`npm test`).
 
 
 - **level**: 2
 
-### AC-sprj-06 — One hit = 3 HP true damage + a launch of about 10 blocks (§8 test 6) (L0-sprj-ac06)
+### Strf ac02 concept acceptance criterion (L0-strf-ac02)
 
-# AC-sprj-06 — One hit = 3 HP true damage + a launch of about 10 blocks (§8 test 6)
+**AC-strf-02 · Rotation and local-point transform match in-world placement** (`L0-strf-r004`; spec tests 25, 43, 53)
 
-**Links:** `part_of: ["L0-sprj"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-sprj-r003", "L0-sprj-p003", "L0-sprj-as04"]` · channel: `bds`
-
-**GIVEN** a target at 20 HP with no effects, in full Netherite armour with Protection IV on every piece,
-**WHEN** exactly one projectile hits (the other two are removed via the core in the test harness),
-**THEN** the target's health reads exactly 17.0 immediately after the hit, before landing.
-
-**AND GIVEN** the same target **without** armour on flat ground,
-**WHEN** one hit lands,
-**THEN** the maximum Y reached is 8–12 blocks above the hit Y (ASM-019), **AND** the fall damage on landing is non-zero and matches vanilla fall damage for that height.
+GIVEN the probe template with declared chest, spawner and door points, WHEN `strf` places it at each rotation 0/90/180/270, THEN every declared point transformed by `rotateLocal` holds the expected block type. The occupied AABB equals the computed rotated AABB (no block outside it). Unit: 4×Rotate90 equals the identity, and `rotateLocal` is a bijection.
+**Verify:** unit + bds.
 
 
 - **level**: 2
 
-### AC-sprj-07 — Three hits total 9 HP true damage, including while airborne (§8 test 7) (L0-sprj-ac07)
+### Strf ac03 concept acceptance criterion (L0-strf-ac03)
 
-# AC-sprj-07 — Three hits total 9 HP true damage, including while airborne (§8 test 7)
+**AC-strf-03 · Footprint validity rejects water, lava ocean, unevenness and the ceiling** (`L0-strf-r005`, `-r013`, `-r003`; spec tests 31, 42, 52)
 
-**Links:** `part_of: ["L0-sprj"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-sprj-r003", "L0-sprj-as01", "L0-sprj-as02"]` · channel: `bds`
-
-**GIVEN** an armoured target at 20 HP, no absorption, 8 blocks from the owner, with fall damage disabled for the test (`falldamage false`) so it does not mix into the reading,
-**WHEN** all 3 projectiles hit, the 2nd and 3rd while the target is in the air,
-**THEN** `volley.hits == 3`, the target's health is exactly 11.0, and the outcome is `COMPLETED`.
+GIVEN prepared test sites (flat grass; grass with a 30 % water pond; a 6-block step; a mountain top whose max Y + 40 + H > 319; a Nether lava sea at Y 31; a Nether netherrack shelf), WHEN `validate()` runs for each relevant profile, THEN the results are, in order: valid, `liquid`, `uneven`, `ceiling`, `lavaOcean`, valid. For the Airship on flat ground at Y 64, the chosen `bottomY` is in [104, 134]. With a 20-block tree at one corner, `bottomY ≥ treeTop + 40`.
+**Verify:** bds.
 
 
 - **level**: 2
 
-### AC-sprj-08 — Escape before the first hit cancels with no cooldown (§8 test 8) (L0-sprj-ac08)
+### Strf ac04 concept acceptance criterion (L0-strf-ac04)
 
-# AC-sprj-08 — Escape before the first hit cancels with no cooldown (§8 test 8)
+**AC-strf-04 · Collision cancels, and never damages** (`L0-strf-r006`; spec tests 50, 59)
 
-**Links:** `part_of: ["L0-sprj"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-sprj-r004", "L0-sprj-r005"]` · channel: `bds`
-
-**GIVEN** a volley launched at a target 15 blocks away,
-**WHEN** the target is teleported 25 blocks from `launchPoint` before any projectile connects (the owner stays put, then separately: the owner moves 10 blocks toward the target and the target is placed 21 blocks from `launchPoint`),
-**THEN** in both cases, in the same tick: every projectile is `GONE`, the outcome is `ESCAPED_NO_HIT`, the target's health is unchanged, `cooldown.isBusy` is false, `cooldown.isReady` is true, **AND** an immediate second activation launches a new volley.
+GIVEN a candidate AABB overlapping (a) an existing `InstanceRecord` AABB, (b) a `minecraft:mob_spawner` 1 block outside the footprint (inside the margin), (c) a column of `deepslate_tiles` inside it, WHEN validation runs, THEN each is rejected with `collision:instance` / `collision:spawner` / `collision:signature`. The world blocks in the region stay byte-identical before and after (compared through `getBlock` snapshots).
+**Verify:** bds.
 
 
 - **level**: 2
 
-### AC-sprj-09 — Escape after a hit gives a full 30 s cooldown (§8 test 9) (L0-sprj-ac09)
+### Strf ac05 concept acceptance criterion (L0-strf-ac05)
 
-# AC-sprj-09 — Escape after a hit gives a full 30 s cooldown (§8 test 9)
+**AC-strf-05 · Restart and reload never duplicate anything** (`L0-strf-r008`, `-p004`; spec tests 22, 58, §11)
 
-**Links:** `part_of: ["L0-sprj"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-sprj-r005", "L0-sprj-ad01", "L0-lgnd"]` · channel: `bds`
-
-**GIVEN** a volley where exactly one projectile has hit,
-**WHEN** the target is then moved 25 blocks from `launchPoint`,
-**THEN** the remaining projectiles are `GONE` the same tick, the outcome is `ESCAPED_AFTER_HIT`, busy is false, **AND** `cooldown.remaining(owner, "scythe")` is 30 s ± 1 tick measured from that tick, **AND** a Use at +29 s is refused while a Use at +30.1 s selects a target again.
+GIVEN a placed and initialised instance with chests, guards and a spawner, WHEN a player loots a chest, kills 3 guards, and breaks the spawner, AND the server restarts twice, AND the area is unloaded (player > 300 blocks away) and reloaded, THEN: the registry still holds exactly one record in state `done`; the looted chest is still empty; the guard count equals the initial count − 3; the spawner block is still absent; no second copy of the template exists (the chest count within AABB+32 is unchanged).
+**Verify:** bds (restart harness from `infr`).
 
 
 - **level**: 2
 
-### AC-sprj-10 — Target death, logout or dimension change leaves nothing behind (§8 test 10) (L0-sprj-ac10)
+### Strf ac06 concept acceptance criterion (L0-strf-ac06)
 
-# AC-sprj-10 — Target death, logout or dimension change leaves nothing behind (§8 test 10)
+**AC-strf-06 · A crash mid-init resumes without duplicates** (`L0-strf-p003`, `-p004`)
 
-**Links:** `part_of: ["L0-sprj"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-sprj-p004", "L0-sprj-r006", "C-14"]` · channel: `bds`
-
-**GIVEN** a live volley with `hits = 0`, run 3 separate times,
-**WHEN** the target is (a) killed with `/kill`, (b) disconnected, (c) teleported to the Nether,
-**THEN** within 1 tick the volley map is empty, the `runInterval` handle is cleared (no other volleys), busy is false, there is no cooldown, no entity was created, and no Scythe-related dynamic property changed on the target.
-
-**AND** repeating (a)–(c) with `hits = 1` gives the same cleanup plus a committed 30 s cooldown.
+GIVEN a test hook that stops the server immediately after (a) the `planned` write, (b) `place`, (c) half the chests are filled, (d) half the guards are spawned, WHEN the server restarts and a player returns, THEN the instance reaches `done` with exactly the spec's chest count filled (each chest's contents equal the deterministic expectation for its seed) and exactly the spec's guard count tagged `andrew:guard:<id>`.
+**Verify:** bds.
 
 
 - **level**: 2
 
-### AC-sprj-11 — Owner death, logout or dimension change cancels the volley (ASM-023) (L0-sprj-ac11)
+### Strf ac07 concept acceptance criterion (L0-strf-ac07)
 
-# AC-sprj-11 — Owner death, logout or dimension change cancels the volley (ASM-023)
+**AC-strf-07 · No write into unloaded chunks; pending candidates wait** (`L0-strf-r007`)
 
-**Links:** `part_of: ["L0-sprj"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-sprj-p004", "L0-sprj-ad01", "L0-sprj-as06", "ASM-023"]` · channel: `bds`
-
-**GIVEN** a live volley,
-**WHEN** the owner dies, disconnects, or changes dimension,
-**THEN** within 1 tick the volley resolves `OWNER_INVALID`, all projectiles are `GONE`, the target takes no further damage, and busy is cleared by id.
-
-**AND WHEN** the owner had already scored ≥ 1 hit and disconnected, **THEN** on reconnect their Scythe cooldown is active, and remaining ≤ 30 s measured from the first hit (`L0-sprj-ad01`).
-**AND WHEN** there were 0 hits, **THEN** on reconnect the ability is ready and not busy.
+GIVEN a forced-positive roll whose footprint straddles the edge of the loaded area, WHEN discovery evaluates it, THEN no block in the footprint changes, no `InstanceRecord` is written, and the chunk's evaluated bit stays clear. WHEN the player then moves so all covered chunks are loaded, THEN the candidate is revalidated and placed at the same origin and rotation. If the player has built a planks wall inside the footprint in between, THEN it is rejected as `collision:signature` and the wall is intact.
+**Verify:** bds.
 
 
 - **level**: 2
 
-### AC-sprj-12 — One tick loop at most, and none at idle (C-4, C-13) (L0-sprj-ac12)
+### Strf ac08 concept acceptance criterion (L0-strf-ac08)
 
-# AC-sprj-12 — One tick loop at most, and none at idle (C-4, C-13)
+**AC-strf-08 · Guards persist until death and never respawn** (`L0-strf-r009`; spec tests 19, 57, 58)
 
-**Links:** `part_of: ["L0-sprj"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-sprj-r006", "L0-sprj-r007"]` · channel: `bds`
-
-**GIVEN** two owners who activate the Scythe on different targets 2 ticks apart,
-**WHEN** both volleys are live,
-**THEN** exactly one interval handle exists (spied on `system.runInterval` and `clearRun` calls, or an exported debug counter), **AND** after both resolve, the handle is null and `runInterval` was called exactly once for the pair.
-
-**AND GIVEN** no volleys, **THEN** the Scythe module registers no per-tick callback at all.
-
-**AND** a second Use by the same owner during flight creates no second volley (busy).
+GIVEN an instance whose def spawns N guards, WHEN init completes, THEN exactly N entities of the declared vanilla types carry the tag `andrew:guard:<id>`. AFTER a walk-away of ≥ 256 blocks for 5 in-game minutes and a restart, all N still exist, unless they were killed. Windmill guards at noon in full sun take 0 damage over 60 s. Killing all N and restarting yields 0 guards. The state is still `done`/`guarded`.
+**Verify:** bds.
 
 
 - **level**: 2
 
-### AC-sprj-13 — Completion and expiry outcomes (§5 normal completion, ASM-018) (L0-sprj-ac13)
+### Strf ac09 concept acceptance criterion (L0-strf-ac09)
 
-# AC-sprj-13 — Completion and expiry outcomes (§5 normal completion, ASM-018)
+**AC-strf-09 · Template spawners behave as vanilla** (`L0-strf-r010`; spec tests 17, 18, 29)
 
-**Links:** `part_of: ["L0-sprj"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-sprj-ent3", "L0-sprj-r005", "L0-sprj-ad03"]` · channel: `build` (pure-core unit tests) + `bds`
-
-**GIVEN** the pure volley core,
-- **WHEN** 1 projectile hits and 2 expire inside the leash → **THEN** `COMPLETED` and `commitCooldown` is emitted.
-- **WHEN** all 3 expire inside the leash with 0 hits (the target is moved faster than 0.5 block/tick for 200 ticks) → **THEN** `EXPIRED_NO_HIT`, no `commitCooldown` event.
-- **WHEN** a hit and a leash crossing happen in the same step → **THEN** `ESCAPED_AFTER_HIT` (`L0-sprj-r008`).
-- **WHEN** 3 hits land → **THEN** `COMPLETED` in the same step as the third hit.
+GIVEN a placed template with a `mob_spawner` for `minecraft:vindicator` in a dark room, WHEN a player stands within 8 blocks for 60 s, THEN ≥ 1 vindicator spawns, holding an iron axe. WHEN the room is lit to light 15 around the spawner, THEN no spawns occur within 60 s. WHEN the spawner is broken in survival, THEN no spawner item drops, XP orbs appear, and it is still absent after a restart.
+**Verify:** bds.
 
 
 - **level**: 2
 
-### AC-sprj-14 — A lethal hit kills through the vanilla path; restart leaves no orphans (L0-sprj-ac14)
+### Strf ac10 concept acceptance criterion (L0-strf-ac10)
 
-# AC-sprj-14 — A lethal hit kills through the vanilla path; restart leaves no orphans
+**AC-strf-10 · The tick budget holds under exploration** (`L0-strf-p005`)
 
-**Links:** `part_of: ["L0-sprj"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-sprj-p003", "L0-sprj-cx02", "L0-sprj-p004", "C-14", "ADR-022"]` · channel: `bds`
-
-**GIVEN** a target at 2 HP (no totem), **WHEN** one projectile hits, **THEN** the target dies, the chat death message names the owner, and the volley resolves `TARGET_INVALID` with the cooldown committed.
-
-**GIVEN** the same with a Totem of Undying in the off hand, **THEN** the totem is consumed, the target survives, and the volley continues.
-
-**GIVEN** a live volley after ≥ 1 hit, **WHEN** the BDS is stopped and restarted, **THEN** after load there are no volleys, no interval and no Scythe entities in the world, **AND** the owner's cooldown is still active (`L0-sprj-ad01`).
+GIVEN 2 players flying in straight lines at elytra speed through fresh terrain for 5 minutes with all four defs registered, WHEN `strf` runs, THEN: no server tick exceeds 50 ms because of `strf` (per `Date.now()` instrumentation in the job); the discovery interval does 0 block reads; the job is idle (not scheduled) whenever the queue is empty; the BDS log has no watchdog / "script took too long" warnings.
+**Verify:** bds.
 
 
 - **level**: 2
 
-### Webs ac01 concept acceptance criterion (L0-webs-ac01)
+### Strf ac11 concept acceptance criterion (L0-strf-ac11)
 
----
-is_a: ["acceptance-criterion"]
-part_of: ["L0-webs"]
-relates_to: ["L0-webs-r001"]
----
-**AC-webs-01 (channel: bds+build).** GIVEN the exact shaped recipe (4× Cobweb + 1× Diamond Sword, empty corners), WHEN crafted, THEN the result is exactly 1× `andrew:web_sword` with melee damage equal to the server's vanilla Diamond Sword and infinite durability (no durability bar, never breaks after extended use). Source: spec §13 tests 2 & 5.
+**AC-strf-11 · Dimension lock and statistical rates** (`L0-strf-r002`, `-r003`; spec tests 23, 32, 41, 51)
+
+GIVEN a test hook that evaluates K ≥ 4 000 fresh chunks per dimension (Overworld, Nether, End), WHEN discovery runs, THEN End: 0 candidates. Overworld: no Bastion rolls. Nether: no Windmill/Airship/Warden rolls. For each def, the **roll** success share is within ±3σ of its chance. The **placed** share is reported together with the reject-reason counters. Placed ≤ rolled is the only hard assertion.
+**Verify:** bds.
 
 
 - **level**: 2
 
-### Webs ac02 concept acceptance criterion (L0-webs-ac02)
+### Strf ac12 concept acceptance criterion (L0-strf-ac12)
 
----
-is_a: ["acceptance-criterion"]
-part_of: ["L0-webs"]
-relates_to: ["L0-webs-r005"]
----
-**AC-webs-02 (channel: bds).** GIVEN a Web Sword, WHEN the player performs a normal melee attack (not the ability), THEN damage matches vanilla Diamond Sword + applied compatible enchantments, no Cobweb is placed, and the cooldown is untouched. Source: spec §13 test 6.
+**AC-strf-12 · The deviation report and probe results exist and agree** (`L0-strf-r012`, `-p006`; §11 DoD)
+
+GIVEN the structures stage is being closed, WHEN the gate runs, THEN `docs/structures/probe-results.md` lists items 1–11 with PASS/FAIL/N/A, `docs/structures/deviations.md` contains entries DEV-STRF-01 (discovery-time generation) and DEV-STRF-02 (heuristic collision), and every FAIL has a deviation entry that references it.
+**Verify:** repo check (script) + review.
 
 
 - **level**: 2
 
-### Webs ac03 concept acceptance criterion (L0-webs-ac03)
+### AC-wind-01 · A new world has exactly one spawn Windmill, in the 5×5 area or within 500 blocks (L0-wind-ac01)
 
----
-is_a: ["acceptance-criterion"]
-part_of: ["L0-webs"]
-relates_to: ["L0-webs-p001", "L0-webs-r003"]
----
-**AC-webs-03 (channel: bds).** GIVEN a valid target within reach (block or entity) and an unobstructed, fully-loaded 3×3×3 volume, WHEN the ability is used, THEN all 27 cells become Cobweb, centered per `L0-webs-r002`. Source: spec §13 test 7.
+# AC-wind-01 · A new world has exactly one spawn Windmill, in the 5×5 area or within 500 blocks
 
+**Spec:** test 14, §4.7.
 
-- **level**: 2
-
-### Webs ac04 concept acceptance criterion (L0-webs-ac04)
-
----
-is_a: ["acceptance-criterion"]
-part_of: ["L0-webs"]
-relates_to: ["L0-webs-r002"]
----
-**AC-webs-04 (channel: bds).** GIVEN no block or entity within reach (blocks >5, entities >3, or aim into open air), WHEN the ability is used, THEN nothing is created or altered in the world and the cooldown does not start. Source: spec §13 test 8.
+GIVEN a fresh BDS world with the add-on and no player online
+WHEN the server has run until `andrew:st:spawnWindmill.status` is terminal (≤ 5 min)
+THEN status is `done`, the registry has exactly one `windmill:S`
+AND its plot centre is inside the spawn chunk ±2 chunks, OR (only if no valid site existed there) within 500 blocks of spawn (horizontal)
+AND `stage` in the record matches where it was found
+AND no `andrew_ws_*` ticking area remains.
+Run on ≥ 3 seeds including one with spawn next to ocean.
 
 
 - **level**: 2
 
-### Webs ac05 concept acceptance criterion (L0-webs-ac05)
+### AC-wind-02 · Restarts never create a second spawn Windmill, chests, spawners or guards (L0-wind-ac02)
 
----
-is_a: ["acceptance-criterion"]
-part_of: ["L0-webs"]
-relates_to: ["L0-webs-r004"]
----
-**AC-webs-05 (channel: bds).** GIVEN a target whose 3×3×3 volume overlaps a chest and/or bedrock, WHEN the ability is used, THEN the chest/bedrock cells are left completely untouched (no destruction, no data loss) while every other eligible cell in the volume is still filled with Cobweb. Source: spec §13 test 10; decision Q-013.
+# AC-wind-02 · Restarts never create a second spawn Windmill, chests, spawners or guards
 
+**Spec:** §4.7.13, §6, §11 DoD 2 and 6.
 
-- **level**: 2
-
-### Webs ac06 concept acceptance criterion (L0-webs-ac06)
-
----
-is_a: ["acceptance-criterion"]
-part_of: ["L0-webs"]
-relates_to: ["L0-webs-r005"]
----
-**AC-webs-06 (channel: bds).** GIVEN a valid target whose entire 3×3×3 volume is protected, entity-occupied, and/or unloaded (zero fillable/already-satisfied cells), WHEN the ability is used, THEN no cooldown starts and the player sees a localized "No room for cobweb" actionbar message in both RU and EN. Source: decision Q-017, closing CTR-008.
+GIVEN a world whose spawn Windmill is `done`
+WHEN the server is restarted 3 times, including one kill (`SIGKILL`) during the search on a second fresh world
+THEN each world has exactly one `windmill:S`; block counts in its AABB show 25 chests and 3 spawners; tagged guards ≤ 10
+AND the killed-mid-search world completes the search after restart with one Windmill only.
 
 
 - **level**: 2
 
-### Webs ac07 concept acceptance criterion (L0-webs-ac07)
+### AC-wind-03 · Size and identity of the Windmill in all 4 rotations (L0-wind-ac03)
 
----
-is_a: ["acceptance-criterion"]
-part_of: ["L0-webs"]
-relates_to: ["L0-webs-r004"]
----
-**AC-webs-07 (channel: bds).** GIVEN a target near the edge of the loaded/simulated area such that part of the 3×3×3 volume falls outside it, WHEN the ability is used, THEN the component never forces those chunks to load or writes into them — those cells are treated as `skipped-unloaded` (same as a protected cell) and the rest of the volume fills normally. Source: spec §6 ("не пытаться создавать паутину вне загруженной/доступной области") and §12 edge case.
+# AC-wind-03 · Size and identity of the Windmill in all 4 rotations
+
+**Spec:** test 15, §4.1, §2.
+
+GIVEN the built `windmill.mcstructure`
+THEN (unit) the plot is 35±2 × 35±2, the building ~15×15 base and ~30 tall, 1 wooden door on the rotor face, 3 floors, stair cells connected F1→F3
+AND (BDS) placing it at 0/90/180/270 re-counts the same numbers in-world
+AND (iPad, manual) it reads as an old abandoned stone-lower / wood-upper mill with a wooden roof and 4 still blades on the door side.
 
 
 - **level**: 2
 
-### Webs ac08 concept acceptance criterion (L0-webs-ac08)
+### AC-wind-04 · 25 chests — 5 / 8 / 12 by floor — all reachable without breaking blocks (L0-wind-ac04)
 
----
-is_a: ["acceptance-criterion"]
-part_of: ["L0-webs"]
-relates_to: ["L0-webs-p001"]
----
-**AC-webs-08 (channel: bds).** GIVEN two clients/SimulatedPlayers observing the same cast, WHEN the ability resolves, THEN both see an identical set of filled cells (server-authoritative geometry, no client-side divergence). Source: spec §9 (server-computed ability) and §13 test 12, scoped here to trap geometry specifically (craft/retention determinism is `L0-lgnd`'s).
+# AC-wind-04 · 25 chests — 5 / 8 / 12 by floor — all reachable without breaking blocks
+
+**Spec:** test 16, §4.3.
+
+GIVEN a placed Windmill (any rotation)
+THEN the AABB holds exactly 25 chests: 5 on floor 1, 8 on floor 2, 12 on floor 3
+AND each chest is non-empty after init and was filled by `loot.fillChest` (5–12 attempts)
+AND the template BFS (`L0-wind-r002`) reaches every chest access cell from outside the door with no block broken.
+
+
+- **level**: 2
+
+### AC-wind-05 · Three floor spawners with the right mobs; the top Vindicator has an iron axe (L0-wind-ac05)
+
+# AC-wind-05 · Three floor spawners with the right mobs; the top Vindicator has an iron axe
+
+**Spec:** test 17, §4.3.
+
+GIVEN a placed Windmill and a player (or SimulatedPlayer) near each spawner
+THEN floor 1 spawns `minecraft:zombie_villager_v2`, floor 2 `minecraft:zombie`, floor 3 `minecraft:vindicator`
+AND every Vindicator from the floor-3 spawner holds `minecraft:iron_axe` (sample ≥ 10)
+AND breaking a spawner drops no spawner item and gives XP.
+
+
+- **level**: 2
+
+### AC-wind-06 · The decorative lighting does not disable any spawner (L0-wind-ac06)
+
+# AC-wind-06 · The decorative lighting does not disable any spawner
+
+**Spec:** test 18, §4.3 last bullet.
+
+GIVEN a placed Windmill at night and at noon, lanterns intact
+WHEN a player stands within activation range of each spawner for 2 in-game minutes
+THEN each of the 3 spawners produces ≥ 1 mob
+AND (unit) every spawnable cell near each spawner has computed block light ≤ `Lmax` (`L0-wind-as07`).
+
+
+- **level**: 2
+
+### AC-wind-07 · 10 field guards: once, sun-immune, persistent, never restored (L0-wind-ac07)
+
+# AC-wind-07 · 10 field guards: once, sun-immune, persistent, never restored
+
+**Spec:** test 19, §4.5, §9.8.
+
+GIVEN a freshly initialised Windmill on Normal difficulty
+THEN exactly 10 `zombie_villager_v2` with tag `andrew:guard:<id>` exist around the fields
+WHEN the time is set to noon for 60 s → none is on fire and all 10 have full health
+WHEN all players leave for 5 min (chunk unloaded) and the server restarts → all 10 still exist
+WHEN 4 are killed and the server restarts twice → exactly 6 remain; the record stays `done`; no new tagged guard appears.
+
+
+- **level**: 2
+
+### AC-wind-08 · Curing a field guard yields an ordinary Villager that stays ordinary (L0-wind-ac08)
+
+# AC-wind-08 · Curing a field guard yields an ordinary Villager that stays ordinary
+
+**Spec:** §4.5 bullet 6, §9.9.
+
+GIVEN a field guard
+WHEN it is cured the vanilla way (Weakness + golden apple, wait for conversion)
+THEN a `minecraft:villager` exists at its position with no `andrew:guard:*` tag and no structure-applied effect
+AND after a restart and 5 min it is still a Villager (no script converts it back)
+AND the guard count drops by one permanently.
+
+
+- **level**: 2
+
+### AC-wind-09 · Fields: mostly mature wheat, water, paths, abandoned patches, old fence with gaps (L0-wind-ac09)
+
+# AC-wind-09 · Fields: mostly mature wheat, water, paths, abandoned patches, old fence with gaps
+
+**Spec:** test 20, §4.4.
+
+GIVEN the template
+THEN (unit) ≥ 80 % of wheat blocks have `growth = 7`; water ditch blocks exist; every farmland block is within 4 blocks of water; path blocks connect the fence gaps to the door; the perimeter fence has ≥ 3 gaps; some plot cells are bare dirt / missing wheat
+AND (BDS) breaking mature wheat drops wheat and seeds
+AND (iPad) the fields look abandoned, not freshly farmed.
+
+
+- **level**: 2
+
+### AC-wind-10 · Vines and cobwebs present, main route never blocked (L0-wind-ac10)
+
+# AC-wind-10 · Vines and cobwebs present, main route never blocked
+
+**Spec:** test 21, §4.2.
+
+GIVEN the template
+THEN (unit) there are vines on exterior walls and inside, cobwebs on every floor with floor 3 having the most
+AND no cobweb, vine or solid block occupies a route cell (`L0-wind-g007`)
+AND (iPad) a player walks from the door to the top floor and opens all 25 chests without breaking anything.
+
+
+- **level**: 2
+
+### AC-wind-11 · Looted chests, broken spawners and broken walls stay that way after restart (L0-wind-ac11)
+
+# AC-wind-11 · Looted chests, broken spawners and broken walls stay that way after restart
+
+**Spec:** test 22, §2, §6.
+
+GIVEN a Windmill
+WHEN a player empties 3 chests, breaks 1 chest, breaks the floor-2 spawner and a wall section, then the server restarts twice and the chunk is unloaded/reloaded
+THEN the 3 chests are still empty, the broken chest and spawner are absent, the wall hole remains
+AND the broken chest dropped its contents when broken.
+
+
+- **level**: 2
+
+### AC-wind-12 · Normal generation hits ~1 % of chunks and only on suitable dry land (L0-wind-ac12)
+
+# AC-wind-12 · Normal generation hits ~1 % of chunks and only on suitable dry land
+
+**Spec:** test 23, §4.6.
+
+GIVEN the seeded roll function
+THEN (unit) over 100 000 synthetic chunk keys the Windmill roll rate is 1 % ± 0.1 %
+AND (BDS) after exploring ≥ 2 000 Overworld chunks, every placed normal Windmill has liquid share ≤ 5 % and surface Δ ≤ 3 under its plot at placement time (from the debug log), and no Windmill was placed in an ocean chunk
+AND the log's roll-success count is consistent with 1 % (no exact match required).
+
+
+- **level**: 2
+
+### AC-wind-13 · A normal candidate on rough terrain or colliding is cancelled, never moved or terraformed (L0-wind-ac13)
+
+# AC-wind-13 · A normal candidate on rough terrain or colliding is cancelled, never moved or terraformed
+
+**Spec:** §4.6, §9.2, §9.4.
+
+GIVEN a forced roll (test hook) on a chunk with surface Δ > 3, and another on a chunk overlapping a village/spawner
+THEN neither places a Windmill, no block in either plot changed, no neighbouring chunk gets a Windmill as a result
+AND the log records reasons `uneven` and `collision:*`.
+
+
+- **level**: 2
+
+### AC-wind-14 · Forced preparation levels the plot, blends the edges and leaves deep caves open (L0-wind-ac14)
+
+# AC-wind-14 · Forced preparation levels the plot, blends the edges and leaves deep caves open
+
+**Spec:** §4.7.9–12, §9.2–3.
+
+GIVEN a test world (fixture) with no naturally valid site within 500 blocks and a cave under the best dry site
+WHEN the spawn search completes
+THEN `stage = 3`, `prepared = true`; the plot surface is one Y; in plot + band no adjacent-column step > 1 that was not natural
+AND no field or building block is floating
+AND open cave volume still exists deeper than D below the plot
+AND (iPad) there is no square platform with vertical walls.
+
+
+- **level**: 2
+
+### AC-wind-15 · Forced preparation never damages a structure, a spawner or a player build (L0-wind-ac15)
+
+# AC-wind-15 · Forced preparation never damages a structure, a spawner or a player build
+
+**Spec:** §4.7.10, §6, §9.4.
+
+GIVEN a fixture where the best forced-prep site overlaps (a) a vanilla spawner, (b) a village signature, (c) a player-placed planks hut
+WHEN the spawn search runs
+THEN none of those blocks changed; the chosen site is a different position
+AND no block outside the chosen plot + band + fill volume changed.
+
+
+- **level**: 2
+
+### AC-wind-16 · Every Windmill makes exactly one linked-Airship attempt, not replaced by an independent Airship (L0-wind-ac16)
+
+# AC-wind-16 · Every Windmill makes exactly one linked-Airship attempt, not replaced by an independent Airship
+
+**Spec:** test 33, §5.6.
+
+GIVEN the spawn Windmill and a forced normal Windmill that already has an independent Airship within 100 blocks
+THEN each Windmill's record has `x.linkedTried` set once with an outcome
+AND where the outcome is `placed`, an `airship:L:<windmillId>` exists 40–100 blocks from the Windmill centre and not over its plot
+AND the independent Airship did not stop the linked attempt
+AND restarts do not create a second linked Airship.
+
+
+- **level**: 2
+
+### AC-wind-17 · Overworld only, and all four rotations occur (L0-wind-ac17)
+
+# AC-wind-17 · Overworld only, and all four rotations occur
+
+**Spec:** §2, §15, C-14.
+
+GIVEN extended exploration of the Nether and End with the roll forced to succeed
+THEN no Windmill is placed outside the Overworld
+AND across ≥ 40 placed Windmills (forced rolls, Overworld), each rotation 0/90/180/270 occurs at least once, and chest/spawner counts match in every rotation.
+
+
+- **level**: 2
+
+### Wrdn ac01 concept acceptance criterion (L0-wrdn-ac01)
+
+GIVEN a statistically sufficient sample of new, suitable Overworld chunks, WHEN candidate generation runs on each, THEN the observed Mini Warden City candidate rate converges to 5% — exact match is not required on a small sample. (Raw AC 41.)
+
+
+- **level**: 2
+
+### Wrdn ac02 concept acceptance criterion (L0-wrdn-ac02)
+
+GIVEN a successful 5% candidate roll whose surface point is ocean, river, or another large body of water, WHEN suitability is checked, THEN no Mini Warden City is generated there AND the candidate is cancelled outright with no attempt to relocate to a neighboring chunk. (Raw AC 42.)
+
+
+- **level**: 2
+
+### Wrdn ac03 concept acceptance criterion (L0-wrdn-ac03)
+
+GIVEN a generated Mini Warden City instance, WHEN its bounds and rotation are measured, THEN the footprint is ≈30×30, the height is 10–15 blocks, AND the rotation is one of 0°/90°/180°/270°, varying randomly across instances. (Raw AC 43.)
+
+
+- **level**: 2
+
+### Wrdn ac04 concept acceptance criterion (L0-wrdn-ac04)
+
+GIVEN multiple generated Mini Warden City instances, WHEN their top Y is measured, THEN each falls within −35…−45 AND the specific value varies randomly instance to instance (not a single fixed depth for every city). (Raw AC 44.)
+
+
+- **level**: 2
+
+### Wrdn ac05 concept acceptance criterion (L0-wrdn-ac05)
+
+GIVEN a generated Mini Warden City, WHEN the surface above its center is inspected, THEN an irregular ~5×5 Sculk/Sculk Vein marker is present, it contains no pre-made shaft/ladder/tunnel, AND digging straight down from the marker's center reaches the structure's interior every time. (Raw AC 45.)
+
+
+- **level**: 2
+
+### Wrdn ac06 concept acceptance criterion (L0-wrdn-ac06)
+
+GIVEN the central hall of a generated Mini Warden City, WHEN the monument is inspected and interacted with, THEN a Reinforced Deepslate monument/frame ≈5 wide × 6–7 tall is present AND it has no portal functionality — no activation, no teleportation, under any interaction. (Raw AC 46.)
+
+
+- **level**: 2
+
+### Wrdn ac07 concept acceptance criterion (L0-wrdn-ac07)
+
+GIVEN a generated Mini Warden City, WHEN its Shriekers and mob population are inspected immediately after generation, THEN exactly 2 Sculk Shriekers exist in the specified zones (central + far) AND no Warden entity is present anywhere in the structure until triggered through the ordinary Shrieker warning mechanic. (Raw AC 47.)
+
+
+- **level**: 2
+
+### Wrdn ac08 concept acceptance criterion (L0-wrdn-ac08)
+
+GIVEN a generated Mini Warden City, WHEN its chests are counted and their loot tables inspected, THEN there are exactly 10 chests (3 central + 7 outer), ALL sourced from the real vanilla Ancient City loot table, AND none refill after being opened, after chunk unload, or after a server restart. (Raw AC 48.)
+
+
+- **level**: 2
+
+### Wrdn ac09 concept acceptance criterion (L0-wrdn-ac09)
+
+GIVEN a generated Mini Warden City, WHEN its interior lighting is surveyed, THEN the structure reads as almost entirely dark AND only a small, fixed number of Soul Lanterns/Soul Torches are present, concentrated near passages and the central zone. (Raw AC 49.)
+
+
+- **level**: 2
+
+### Wrdn ac10 concept acceptance criterion (L0-wrdn-ac10)
+
+GIVEN a candidate chunk that physically intersects another detected structure, WHEN candidate resolution runs, THEN the Mini Warden City candidate is cancelled AND the other structure is left undamaged. GIVEN an existing Mini Warden City with player-destroyed parts, WHEN the server restarts, THEN the destroyed parts remain destroyed (no regeneration). (Raw AC 50.)
 
 
 - **level**: 2

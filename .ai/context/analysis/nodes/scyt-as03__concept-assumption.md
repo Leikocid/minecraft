@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-scyt-as03"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 2
 title: "ASM-scyt-03 — Netherite-sword parity is `minecraft:damage: 8` `CAN_ASSUME`"
 aliases: ["L0-scyt-as03"]
 is_a: ["assumption"]

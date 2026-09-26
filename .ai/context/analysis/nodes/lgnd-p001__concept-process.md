@@ -2,7 +2,7 @@
 type: "concept-process"
 node_id: "L0-lgnd-p001"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 2
 title: "P-lgnd-001: Craft gate, refund and first-craft broadcast (per weapon)"
 aliases: ["L0-lgnd-p001"]
 is_a: ["process"]

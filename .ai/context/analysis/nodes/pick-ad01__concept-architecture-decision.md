@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-pick-ad01"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 2
 title: "ADR: single broad tag query for pickaxe dig speed, not enumerated tier tags"
 aliases: ["L0-pick-ad01"]
 is_a: ["architecture-decision"]

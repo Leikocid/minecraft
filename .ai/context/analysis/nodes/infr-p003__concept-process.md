@@ -2,7 +2,7 @@
 type: "concept-process"
 node_id: "L0-infr-p003"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 2
 title: "Process: GameTest harness (`npm run bds:gametest`)"
 aliases: ["L0-infr-p003"]
 is_a: ["process"]

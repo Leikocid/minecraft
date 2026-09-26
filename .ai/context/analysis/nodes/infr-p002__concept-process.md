@@ -2,7 +2,7 @@
 type: "concept-process"
 node_id: "L0-infr-p002"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 2
 title: "Process: BDS one-shot check (`npm run bds:check`)"
 aliases: ["L0-infr-p002"]
 is_a: ["process"]

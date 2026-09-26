@@ -2,7 +2,7 @@
 type: "concept-process"
 node_id: "L0-lgnd-p002"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 2
 title: "P-lgnd-002: Death retention and restore (all registered weapons)"
 aliases: ["L0-lgnd-p002"]
 is_a: ["process"]

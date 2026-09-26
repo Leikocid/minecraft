@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-webs-r004"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 2
 level: 2
 aliases: ["L0-webs-r004"]
 is_a: ["rule"]

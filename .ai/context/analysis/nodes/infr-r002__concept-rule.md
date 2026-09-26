@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-infr-r002"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 2
 title: "Rule: verification is split across three channels, and only two of them are automatic"
 aliases: ["L0-infr-r002"]
 is_a: ["rule"]

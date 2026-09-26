@@ -2,7 +2,7 @@
 type: "concept-entity"
 node_id: "L0-infr-e004"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 2
 title: "Entity: BDS Docker service (`docker/bds/compose.yaml`)"
 aliases: ["L0-infr-e004"]
 is_a: ["entity"]

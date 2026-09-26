@@ -3,31 +3,35 @@ type: "concept-entity"
 node_id: "L0-scyt-ent3"
 source_channel: "rollout"
 analysis_version: 1
-title: "ScytheActivationOutcome (enumeration, press-level view)"
+title: "ScytheActivationOutcome — press outcomes and volley `EndReason` (as shipped)"
 aliases: ["L0-scyt-ent3"]
 is_a: ["entity"]
 part_of: ["L0-scyt"]
 relates_to: ["L0-scyt"]
 priority: 520
-size_chars: 1451
-tags: ["is_a:entity", "outcome", "cooldown"]
+size_chars: 1278
+tags: ["is_a:entity", "outcome", "delta:2026-09-26"]
 level: 2
 ---
-# ScytheActivationOutcome (enumeration, press-level view)
+# ScytheActivationOutcome — press outcomes and volley `EndReason` (as shipped)
 
-**Links:** `part_of: ["L0-scyt"]` · `is_a: ["entity"]` · `relates_to: ["L0-scyt-p001", "L0-sprj-r005", "L0-scyt-r003", "L0-scyt-r007"]`
+**Links:** `part_of: ["L0-scyt"]` · `is_a: ["entity"]` · `relates_to: ["L0-scyt-p001", "L0-scyt-p002", "L0-scyt-r007"]`
 
-This is every way one Use press of the Scythe can end. The `L0-sprj` volley outcomes are nested under `LAUNCHED`.
-
-| Outcome | When | Cooldown | Player-visible |
+**Press level** (`targeting.ts`):
+| Outcome | When | Cooldown | Visible |
 |---|---|---|---|
-| `NOT_DISPATCHED` | The dispatcher chose another ability, or the Scythe is on cooldown | unchanged | HUD shows the remaining time |
-| `BUSY` | The owner's volley is still flying | unchanged | HUD shows "active" |
-| `INELIGIBLE_OWNER` | The owner is dead, a spectator or in Creative | none | nothing |
-| `NO_TARGET` | No candidate passed r001 | **none** | «Здесь нет игрока» |
-| `LAUNCHED` → `COMPLETED` | All projectiles resolved, hits ≥ 1 | full 30 s | 1–3 hits |
-| `LAUNCHED` → `EXPIRED` | All projectiles expired, 0 hits | none | nothing |
-| `LAUNCHED` → `ESCAPED_BEFORE_HIT` | The target is past 20 blocks with 0 hits | **none**, ready at once | the projectiles vanish |
-| `LAUNCHED` → `ESCAPED_AFTER_HIT` | The target is past 20 blocks with hits ≥ 1 | full 30 s | the projectiles vanish |
-| `LAUNCHED` → `TARGET_INVALID` | The target died, left, changed dimension or changed mode | split on hits | the projectiles vanish |
-| `LAUNCHED` → `OWNER_INVALID` | The owner died, left or changed dimension | split on hits, committed at the first hit | the projectiles vanish |
+| ignored | Same player already handled this tick, or not a Scythe stack | – | nothing |
+| not dispatched | `resolveActivation` did not pick the Scythe (cooldown, busy, hand priority) | unchanged | HUD |
+| `NO_TARGET` | `selectTarget` returned nothing | **none** | «Здесь нет цели» |
+| `LAUNCHED` | A target was found → `launchVolley` | see below | log line |
+
+**Volley `EndReason`** (`volley-rules.ts`). The verdict is always `hits > 0 ? full : none`:
+| Reason | Trigger |
+|---|---|
+| `spent` | All 3 fired and none are still flying |
+| `out_of_radius` | Horizontal distance > 20 from launchPoint |
+| `timeout` | age > 200 ticks |
+| `target_invalid` | The target is invalid, in another dimension, or at hp ≤ 0 (includes a kill by the Scythe) |
+| `error` | A tick threw. `volleyTickErrors()` counts these |
+
+**No `OWNER_INVALID`:** if the owner dies or leaves, the volley flies on from the launch point. The cooldown is written only if the owner is still valid at hit 1 or at the end.

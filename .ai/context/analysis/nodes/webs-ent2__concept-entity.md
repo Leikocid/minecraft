@@ -2,7 +2,7 @@
 type: "concept-entity"
 node_id: "L0-webs-ent2"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 2
 level: 2
 title: "TargetResolution"
 aliases: ["L0-webs-ent2"]

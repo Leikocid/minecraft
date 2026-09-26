@@ -1,13 +1,13 @@
 ---
 title: Decisions
 type: analysis
-generated_at: "2026-09-24T19:44:23.906Z"
+generated_at: "2026-09-26T08:34:28.670Z"
 source_channel: rollout
 node_id: rollout-decisions
 aliases: ["rollout-decisions","decisions"]
 is_a: ["rollout","decisions"]
-relates_to: ["decision-completion-flow-quick","decision-merge-policy-autopilot","decision-namespace-addona-andrew-asm-002-q-002","decision-tselevaya-versiya-bedrock-1-26-51-asm-001-q-001","decision-verification-approach-automatic","decision-windows-pk-ne-nuzhen-q-004","decision-yazyk-skriptov-typescript-asm-003-q-003","decision-zacharovanie-bez-durability-proverit-pervoy-zada","decision-q-006-web-sword-provenance-yes-metka-ekzemplyara","decision-q-007-enchantable-without-durability-podtverzhde","decision-q-008-blocked-craft-refund-a-obnaruzhit-i-vernut","decision-q-009-cooldown-persistence-sohranyat-mezhdu-vyho","decision-q-010-main-hand-off-hand-priority-otlozheno","decision-q-011-cube-geometry-27-kletok-tsentr-sosednyaya-","decision-q-012-two-player-dod-gametest-s-dvumya-simulated","decision-q-013-protected-blocks-zakrytyy-spisok-posture-s","decision-q-014-budget-after-destruction-pravo-ostaetsya-p","decision-q-015-gate-game-modes-survival-i-adventure","decision-q-016-sword-unlootable-podtverzhdeno-kak-zaduman","decision-q-017-zero-cells-proval-s-lokalizovannym-soobsch","decision-resolve-l0","decision-resolve-l0-keep-ctr006","decision-resolve-l0-once","decision-resolve-l0-qatg-ctr1","decision-resolve-l0-trap-ct07","decision-resolve-l0-trap-ct08","decision-web-sword-item-values-uron-kak-u-vanilnogo-almaz","decision-legendary-hand-priority-realizuem-seychas-osnovn","decision-legendary-ready-hud-gotovo-pokazyvaetsya-postoya","decision-legendary-rules-obschie-dlya-vseh-legendarnyh-vk","decision-scythe-enchantments-slot-sword","decision-scythe-hidden-target-dynamic-property-andrew-hid","decision-scythe-launch-applyknockback-s-kalibrovannoy-ver","decision-scythe-melee-damage-8-proveryaetsya-zamerom-prot","decision-scythe-projectiles-virtualnye-bez-suschnostey-ri","decision-scythe-true-damage-pryamoe-umenshenie-zdorovya-d"]
-priority: 520
+relates_to: ["decision-completion-flow-quick","decision-merge-policy-autopilot","decision-namespace-addona-andrew-asm-002-q-002","decision-tselevaya-versiya-bedrock-1-26-51-asm-001-q-001","decision-verification-approach-automatic","decision-windows-pk-ne-nuzhen-q-004","decision-yazyk-skriptov-typescript-asm-003-q-003","decision-zacharovanie-bez-durability-proverit-pervoy-zada","decision-q-006-web-sword-provenance-yes-metka-ekzemplyara","decision-q-007-enchantable-without-durability-podtverzhde","decision-q-008-blocked-craft-refund-a-obnaruzhit-i-vernut","decision-q-009-cooldown-persistence-sohranyat-mezhdu-vyho","decision-q-010-main-hand-off-hand-priority-otlozheno","decision-q-011-cube-geometry-27-kletok-tsentr-sosednyaya-","decision-q-012-two-player-dod-gametest-s-dvumya-simulated","decision-q-013-protected-blocks-zakrytyy-spisok-posture-s","decision-q-014-budget-after-destruction-pravo-ostaetsya-p","decision-q-015-gate-game-modes-survival-i-adventure","decision-q-016-sword-unlootable-podtverzhdeno-kak-zaduman","decision-q-017-zero-cells-proval-s-lokalizovannym-soobsch","decision-resolve-l0","decision-resolve-l0-keep-ctr006","decision-resolve-l0-once","decision-resolve-l0-qatg-ctr1","decision-resolve-l0-trap-ct07","decision-resolve-l0-trap-ct08","decision-web-sword-item-values-uron-kak-u-vanilnogo-almaz","decision-legendary-hand-priority-realizuem-seychas-osnovn","decision-legendary-ready-hud-gotovo-pokazyvaetsya-postoya","decision-legendary-rules-obschie-dlya-vseh-legendarnyh-vk","decision-resolve-cool-ctr1","decision-resolve-cool-ctr2","decision-resolve-cool-ctr3","decision-resolve-cool-ctr4","decision-resolve-l0-lgnd-cx01","decision-resolve-l0-sprj-cx02","decision-resolve-l0-xcx3","decision-scythe-enchantments-slot-sword","decision-scythe-hidden-target-dynamic-property-andrew-hid","decision-scythe-launch-applyknockback-s-kalibrovannoy-ver","decision-scythe-melee-damage-8-proveryaetsya-zamerom-prot","decision-scythe-projectiles-virtualnye-bez-suschnostey-ri","decision-scythe-true-damage-pryamoe-umenshenie-zdorovya-d","decision-scythe-targets-mobs-moby-tozhe-tseli-igrok-v-pri"]
+priority: 530
 ---
 
 # Decisions
@@ -346,6 +346,83 @@ _Decided: 2026-09-24_
 
 
 
+## Resolved cool-ctr1: Возврат из Бездны и невозможность безво… (decision-resolve-cool-ctr1)
+
+_Decided: 2026-09-24_
+
+
+Возврат из Бездны и невозможность безвозвратной потери распространяются и на Паутинный меч
+
+
+
+
+
+## Resolved cool-ctr2: Коса на базе мотыги получает мечевые ча… (decision-resolve-cool-ctr2)
+
+_Decided: 2026-09-24_
+
+
+Коса на базе мотыги получает мечевые чары (slot=sword)
+
+
+
+
+
+## Resolved cool-ctr3: Приоритет рук реализуется сейчас; отсро… (decision-resolve-cool-ctr3)
+
+_Decided: 2026-09-24_
+
+
+Приоритет рук реализуется сейчас; отсрочка Q-010 отменена
+
+
+
+
+
+## Resolved cool-ctr4: Целевые версии закреплены decision-tsel… (decision-resolve-cool-ctr4)
+
+_Decided: 2026-09-24_
+
+
+Целевые версии закреплены decision-tselevaya-versiya-bedrock и scripts/targets.mjs; сырая спека устарела
+
+
+
+
+
+## Resolved L0-lgnd-cx01: HUD: «Готово» показывается непрерывно, … (decision-resolve-l0-lgnd-cx01)
+
+_Decided: 2026-09-24_
+
+
+HUD: «Готово» показывается непрерывно, пока предмет в руке, одинаково для обоих оружий
+
+
+
+
+
+## Resolved L0-sprj-cx02: Летальная ветка: при hp-3<=0 добивание … (decision-resolve-l0-sprj-cx02)
+
+_Decided: 2026-09-24_
+
+
+Летальная ветка: при hp-3<=0 добивание applyDamage с перебором (hp+100) от владельца — броня его не гасит, засчёт убийства и тотем работают
+
+
+
+
+
+## Resolved L0-xcx3: Различие в показе Ready снято: принят н… (decision-resolve-l0-xcx3)
+
+_Decided: 2026-09-24_
+
+
+Различие в показе Ready снято: принят непрерывный режим для обоих оружий
+
+
+
+
+
 ## scythe-enchantments = слот sword (decision-scythe-enchantments-slot-sword)
 
 _Decided: 2026-09-24_
@@ -407,6 +484,21 @@ _Decided: 2026-09-24_
 
 
 Решение оператора (автопилот, 2026-09-24): каждое попадание снаряда Косы снимает ровно 3 HP в обход брони и защитных чар. Механизм: hp = health.currentValue; если hp - 3 > 0 — health.setCurrentValue(hp - 3) (броня и Protection на прямую запись не влияют); если hp - 3 <= 0 — добивание через entity.applyDamage(hp + 100, { cause: EntityDamageCause.entityAttack, damagingEntity: владелец }), чтобы сработали сообщение о смерти, засчёт убийства владельцу и тотем бессмертия — броня такой перебор не погасит. Закрывает CX-sprj-02 (ADR-022 lethal branch).
+
+
+
+
+
+## scythe-targets-mobs = мобы тоже цели, игрок в приоритете (decision-scythe-targets-mobs-moby-tozhe-tseli-igrok-v-pri)
+
+_Decided: 2026-09-25_
+
+
+Решение оператора 2026-09-25: «коса бедствия должна действовать на мобов тоже». Отменяет требование спеки §3 «Мобы не являются целями способности», приёмочный тест 2 и запись в границах проекта «Scythe: mobs as targets — out of scope».
+Как реализовано: кандидатами становятся все живые сущности в тех же 20 блоках (признак — наличие компонента здоровья, он же отсекает стрелы, выпавшие предметы и шарики опыта) плюс игроки. Вся механика ниже по потоку — луч видимости, тай-брейк по взгляду, три снаряда, 3 HP чистого урона, подброс, радиус преследования, кулдаун — не менялась.
+Приоритет: игрок побеждает любого моба в радиусе, как бы близко моб ни стоял. Иначе случайный зомби перехватывал бы залп, предназначенный противнику. Это один ключ сортировки в чистых правилах — если оператор захочет «побеждает ближайший, кто бы это ни был», меняется одна строка.
+Сообщение о промахе изменено по смыслу: «Здесь нет игрока» → «Здесь нет цели» (There is no target here). Скрытность (Shadow Blade) по-прежнему только про игроков.
+Замерено на BDS 1.26.51.1: игрок + более близкая корова → выбран игрок; в одиночку с коровой → выбрана корова, здоровье 10 → 7; только скрытый игрок → цели нет, кулдаун не тронут.
 
 
 

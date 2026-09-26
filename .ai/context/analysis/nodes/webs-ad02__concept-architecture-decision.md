@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-webs-ad02"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 2
 level: 2
 title: "AD-webs-02 — This component exposes a narrow cast callback into `L0-lgnd`'s dispatcher; it does not own its own `itemUse` subscription"
 aliases: ["L0-webs-ad02"]

@@ -3,60 +3,61 @@ type: "concept-component"
 node_id: "L0-scyt"
 source_channel: "rollout"
 analysis_version: 1
-title: "Scythe of Calamity (`andrew:scythe_of_calamity`)"
+title: "Scythe of Calamity (`andrew:scythe_of_calamity`) — shipped Stage 3, targets mobs too"
 aliases: ["L0-scyt"]
 is_a: ["component"]
 part_of: ["L0"]
 relates_to: ["L0"]
 priority: 520
-size_chars: 4443
-tags: ["is_a:component", "scythe-of-calamity", "stage-2", "relates_to:L0-lgnd", "relates_to:L0-sprj", "relates_to:L0-sitm", "relates_to:L0-infr"]
+size_chars: 4620
+tags: ["is_a:component", "scythe-of-calamity", "stage-3", "shipped", "mob-targeting", "relates_to:L0-lgnd", "relates_to:L0-sprj", "relates_to:L0-sitm", "relates_to:L0-infr", "delta:2026-09-26"]
 level: 1
 ---
-# Scythe of Calamity (`andrew:scythe_of_calamity`)
+# Scythe of Calamity (`andrew:scythe_of_calamity`) — shipped Stage 3, targets mobs too
 
-**Links:** `part_of: ["L0"]` · `is_a: ["component"]` · `relates_to: ["L0-lgnd", "L0-sprj", "L0-sitm", "L0-infr", "L0-webs"]` · sources: `scytheofcalamityspecv1ruen-part-1`, `scytheofcalamityspecv1ruen-part-2` (docs/Scythe_of_Calamity_Spec_v1_RU_EN.docx).
+**Links:** `part_of: ["L0"]` · `is_a: ["component"]` · `relates_to: ["L0-lgnd", "L0-sprj", "L0-sitm", "L0-infr", "L0-webs"]`
 
-**Status:** no code yet. Checked 2026-09-24: `src/` has only `websword/`, `autosmelt.ts` and the test harnesses, and nothing in `packs/` mentions the Scythe. This deep-dive seeds Stage-2 planning.
+src: `src/scythe/*.ts`, `src/legendary/{registry,hidden}.ts`, `packs/behavior/{items,recipes}/scythe_of_calamity.json` @ 302fba4 · spec: `docs/Scythe_of_Calamity_Spec_v1_RU_EN.docx` · decisions: `decision-scythe-*` (7).
+
+**Status (checked 2026-09-26):** shipped. Stage 3 merged at `da09c10` (build 0.4.0). Mob targeting was added in `4b74f2f` (0.4.1), and visible hits in `302fba4` (0.4.2). There are 13 `andrew:scythe_*` GameTests, and all are green on BDS 1.26.51.1. `npm test` passes 285/285.
 
 ## Responsibility
-This is the second legendary weapon. It is a PvP ability: on Use, the Scythe locks the **nearest visible player** within 20 blocks and fires **3 homing projectiles** that pass through blocks. Each hit deals **exactly 3 HP true damage** and launches the target about **10 blocks** up. The attack ends early if the target leaves a **20-block leash** centred on the launch point. The cooldown outcome depends on whether any hit landed. All temporary state is cleaned up.
+This is the second legendary weapon. On Use, it locks the **nearest visible target** within 20 blocks. **Players outrank every mob**, and a mob is chosen only when no visible player qualifies (`L0-scyt-ad04`, operator decision 2026-09-25, which reverses spec §3). It then fires **3 virtual homing projectiles** that pass through blocks. Each hit deals **exactly 3 HP** and launches the target about 10 blocks up. The volley ends early when the target leaves a **20-block horizontal** radius around the frozen launch point. A volley with ≥1 hit costs the full 30 s cooldown, and a volley with 0 hits costs nothing.
 
-## Sub-scopes (the live KV holds partial children under other prefixes)
-| Sub-scope | Owner node | What it holds |
-|---|---|---|
-| Item JSON, recipe, melee, enchant slot, RP assets | `L0-sitm` (ADRs `sitm-adr1/2`, `sitm-asm3`) | slot = sword, no digger or tool tags |
-| Activation + target acquisition | **this node** (`L0-scyt-p001`, `r001`–`r003`). The earlier `L0-stgt`/`L0-sctg` have no live artifacts. | candidate filter, tie-break, no-target path |
-| Volley flight, hits, true damage, launch, leash, outcome FSM, tick loop | `L0-sprj` (`r005`–`r008`, `ad01`–`ad03`, `ac05`–`ac14`) | this node restates only the contract (`r004`–`r008`) |
-| Craft gate, announcement, retention, Void return, cooldown store, HUD, hand priority | `L0-lgnd` | the Scythe registers a `LegendaryDef` |
+## Code map
+| File | Role |
+|---|---|
+| `src/scythe/targeting-rules.ts` | Pure: `eligibleCandidates`, `pickTarget` (player tier, ε 0.5, gaze), `rayCells`, `isHiddenAt` |
+| `src/scythe/targeting.ts` | Engine: `gatherCandidates`, `hasLineOfSight`, `selectTarget`, the itemUse and playerInteractWithBlock trigger with per-tick de-dup |
+| `src/scythe/volley-rules.ts` | Pure tuning and verdicts: 3 projectiles, 10-tick stagger, 0.8 b/t, hit radius 1.0, 200-tick timeout, horizontal leash |
+| `src/scythe/volley.ts` | Engine: one `runInterval` per volley, `strike` (damage event plus exact correction, `L0-scyt-ad06`), the `end` cooldown verdict |
+| `src/legendary/registry.ts` | `SCYTHE_OF_CALAMITY` def: prefix `sc`, abilityKey `scythe_of_calamity`, 600-tick cooldown, craft gate and refund |
+| `src/legendary/hidden.ts` | `isHiddenFromTargeting` (`andrew:hidden_until`), `/andrew:hide` test command |
 
 ## Inputs
-- `world.afterEvents.itemUse` where `itemStack.typeId === "andrew:scythe_of_calamity"` and the source is a `Player` (`L0-scyt-ad03`). The event goes through the `L0-lgnd` dispatcher, which applies hand priority, busy and cooldown.
-- The owner's location, view direction and dimension. The players in that dimension within 20 blocks (`L0-scyt-ad01`).
-- The `isHiddenByShadowBlade(player)` predicate. It is a stub that returns `false` until Shadow Blade exists (ASM-024, CTR-014).
+- Use (`itemUse`, and `playerInteractWithBlock` with `isFirstEvent`), de-duplicated per player per tick, then `resolveActivation` (hand priority, cooldown, busy).
+- All players, plus the entities with a health component within 20 blocks of the owner (`L0-scyt-ad01`).
+- `andrew:hidden_until` on players.
 
 ## Outputs
-- Either a localized no-target message (`andrew.scythe_of_calamity.no_target`) with no cooldown and no busy state,
-- or one **Volley** handed to `L0-sprj` (`launchVolley(owner, target, launchPoint)`), which returns exactly one outcome and possibly one `cooldown.start(owner, "scythe")` through `L0-lgnd`.
-- Effects on the target only: health minus 3 per hit, and upward knockback.
-- **Never**: block writes, engine projectile entities, or damage to mobs or other players.
+- A miss: action bar `andrew.scythe.no_target` («Здесь нет цели» / "There is no target here"). No cooldown and no busy.
+- A hit: `launchVolley(owner, target: Entity)`, which sets busy. The first hit arms the cooldown, and the end re-arms it when hits ≥ 1.
+- Effects only on the locked target: `applyDamage` plus a health correction, and `applyKnockback(0,0,1.35)`.
+- **Never** block writes or projectile entities.
 
-## Key rules (this node)
-`r001` candidate filter · `r002` nearest plus view-angle tie-break · `r003` no target means no cost · `r004` blocks untouched · `r005` exact 3 HP true damage · `r006` launch about 10 blocks, fall damage kept · `r007` leash centred on the launch point · `r008` only the locked target can be hit · `r009` item stats and recipe.
+## Rules
+`r001` candidates (players and mobs) · `r002` player tier → nearest → gaze · `r003` a miss is free · `r004` blocks untouched · `r005` exactly 3 HP, delivered visibly · `r006` launch 1.35, about 10 blocks · `r007` 20-block horizontal leash · `r008` only the locked target · `r009` item and recipe (shipped JSON).
 
-## Dependencies and ordering
-1. `L0-lgnd` must first be generalised from `src/websword/*` into a registry. That includes per-weapon cooldown keys (CTR-013), the steady HUD in both hands (CTR-017) and busy (ASM-017). The Scythe cannot ship on the current Web-Sword-only store.
-2. `L0-infr`: GameTest and BDS on 1.26.51.1 cover the ACs in channel `bds`. The icon, names and particle look are covered on channel `ipad` (C-9).
-3. C-11: Stage 2 Web Sword is closed (commit `f22896a`), so Scythe work may start.
+## Dependencies
+`L0-lgnd` (registry, cooldown/busy, hands, craft gate, retention). It is shipped, and the Scythe is its second def. `L0-infr` (BDS GameTest, channel `bds`; iPad look, channel `ipad`). The `L0-sitm` and `L0-sprj` children describe the pre-implementation design and are **stale** against the code (`L0-scyt-cx04`).
 
-## Open issues affecting this component
-- CTR-014 / Q-020: AC-3 (Shadow Blade) cannot be verified end to end.
-- `cool-ctr2`: the enchant slot. Resolved in design by `L0-sitm-adr1` (sword).
-- CTR-015: the hoe base versus the Use trigger. Resolved in design by `L0-sitm-adr2` (no hoe tag).
-- `L0-sprj-cx01/cx02`: when the cooldown is committed, and the lethal branch of true damage.
-- `L0-scyt-cx01`: missing component nodes and targeting nodes in the graph.
-- `L0-scyt-cx02`: the tuning numbers for projectile speed and lifetime disagree.
-- Q-022: does the `pvp` gamerule affect candidates? The default is no.
+## Open issues
+- `L0-scyt-cx03`: the shipped item JSON is a hoe (tags, digger, group) and has no `allow_off_hand`, which breaks `L0-sitm-adr2` and the off-hand half of AC-16.
+- `L0-scyt-cx04`: the `L0-sprj` and prior contract text (players only, 3D leash, event-driven invalidation) do not match the code.
+- `L0-scyt-cx05`: the tuning in `L0-adr-scyt` (0.5 b/t, 5-tick stagger) is not what shipped (0.8 b/t, 10 ticks).
+- `L0-scyt-cx01`: graph hygiene, still open.
+- CTR-014: Shadow Blade does not exist. The hidden seam is verified through `/andrew:hide` and the GameTest `scythe_skips_hidden`.
+- Operational note: GameTests share the container with the LAN server. A connected real player outranks a test cow and fails the Scythe tests (see `302fba4`, and memory "BDS runs vs LAN server").
 
 ## Constraints honoured
-C-2 (stable 2.10.0 only), C-4 (`andrew:` ids, RU and EN), C-5 (targeting only at activation, and a tick loop only while volleys exist), C-7 (no orphans), C-10 (no world mutation in before-events).
+C-2 (stable API only), C-4 (`andrew:` ids, RU/EN), C-5 (targeting only on press; the interval lives only while a volley does), C-7 (no entities, so no orphans), C-10.

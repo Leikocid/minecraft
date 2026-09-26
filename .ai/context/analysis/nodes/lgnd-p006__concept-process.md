@@ -2,7 +2,7 @@
 type: "concept-process"
 node_id: "L0-lgnd-p006"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 2
 title: "P-lgnd-006: Registration, startup and Web Sword migration"
 aliases: ["L0-lgnd-p006"]
 is_a: ["process"]

@@ -2,7 +2,7 @@
 type: "concept-entity"
 node_id: "L0-pick-ent2"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 2
 title: "Entity: SmeltedDropAllowList"
 aliases: ["L0-pick-ent2"]
 is_a: ["entity"]

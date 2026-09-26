@@ -9,33 +9,21 @@ is_a: ["process"]
 part_of: ["L0-scyt"]
 relates_to: ["L0-scyt"]
 priority: 520
-size_chars: 1463
-tags: ["is_a:process", "craft", "one-per-world", "registry"]
+size_chars: 1189
+tags: ["is_a:process", "registration", "craft", "delta:2026-09-26"]
 level: 2
 ---
 # P-scyt-004 — Registration and first Survival craft
 
-**Links:** `part_of: ["L0-scyt"]` · `is_a: ["process"]` · `relates_to: ["L0-lgnd", "L0-sitm", "L0-scyt-r009", "L0-scyt-ent1"]` · source: Scythe §1, §2, §8 test 11.
+**Links:** `part_of: ["L0-scyt"]` · `is_a: ["process"]` · `relates_to: ["L0-lgnd", "L0-scyt-r009", "L0-scyt-ent1", "L0-scyt-ac11"]`
 
-The Scythe adds no private craft, retention or HUD code. It **registers** with `L0-lgnd`:
+The Scythe is the second entry in `LEGENDARIES` (`src/legendary/registry.ts`). `L0-lgnd` supplies the craft gate, refund, announcement, retention, Void return and `/andrew:scythe` admin command for it, keyed by `keyPrefix: "sc"` and `textPrefix: "andrew.scythe"`.
 
-```
-registerLegendary({
-  id: "andrew:scythe_of_calamity",
-  abilityKey: "scythe",          // key prefix `sc` (L0-lgnd-as02)
-  cooldownMs: 30_000,
-  langPrefix: "andrew.scythe_of_calamity", // .ready / .cooldown / .no_target / .announce
-  ability: (player, hand) => activate(player),  // L0-scyt-p001
-  isBusy: (playerId) => volleys.has(playerId),   // L0-sprj-r007
-})
-```
+1. A crafting-table recipe `andrew:scythe_of_calamity` (`L0-scyt-r009`) in Survival or Adventure.
+2. `craftDecision` reads `andrew:sc_crafted`. It is per weapon and independent of the Web Sword's `andrew:ws_crafted`.
+3. **First craft:** set the flag and broadcast `andrew.scythe.first_craft` («§e%s§r выковал легендарную §b%s§r!»).
+4. **Repeat:** block it, refund 2 golden apples, 2 obsidian and 1 diamond hoe, and show `andrew.scythe.craft_blocked`.
+5. **Creative or Spectator crafts** are not counted (`craftDecision`). `/andrew:scythe` gives a test copy (`admin_given`) or resets the flag (`reset`).
+6. The flag persists across restart.
 
-## First-craft flow (behaviour is inherited from `L0-lgnd`)
-1. A player crafts the shaped recipe `andrew:scythe_of_calamity` (`L0-scyt-r009`) in Survival.
-2. The craft gate reads the Scythe's own world flag. It is per weapon, not shared with the Web Sword (L0-lgnd-as01).
-3. **First craft:** set the flag durably and broadcast the localized announcement with the weapon name and the crafter's name.
-4. **Repeat craft:** block it and refund the ingredients, exactly as the Web Sword gate does.
-5. Creative and `/give` / the operator command give copies without spending the flag.
-6. **Restart:** the flag persists (spec test 11).
-
-Death retention, Void return and anti-dup are generic `L0-lgnd` behaviour. They apply unchanged, including the open CTR-011/CTR-018 scope question.
+The ability wiring is `registerScytheVolley()` (targeting → volley), called from `src/main.ts`.

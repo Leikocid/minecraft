@@ -3,36 +3,33 @@ type: "concept-process"
 node_id: "L0-scyt-p003"
 source_channel: "rollout"
 analysis_version: 1
-title: "P-scyt-003 — Invalidation and cleanup"
+title: "P-scyt-003 — Invalidation and cleanup (polled, not event-driven)"
 aliases: ["L0-scyt-p003"]
 is_a: ["process"]
 part_of: ["L0-scyt"]
 relates_to: ["L0-scyt"]
 priority: 520
-size_chars: 1904
-tags: ["is_a:process", "cleanup", "C-7"]
+size_chars: 1438
+tags: ["is_a:process", "cleanup", "delta:2026-09-26"]
 level: 2
 ---
-# P-scyt-003 — Invalidation and cleanup
+# P-scyt-003 — Invalidation and cleanup (polled, not event-driven)
 
-**Links:** `part_of: ["L0-scyt"]` · `is_a: ["process"]` · `relates_to: ["L0-sprj", "L0-sprj-ac10", "L0-sprj-ac11", "L0-sprj-ac14", "C-7", "ASM-023"]` · source: Scythe §7 bullet 6, §8 test 10, §9 DoD.
+**Links:** `part_of: ["L0-scyt"]` · `is_a: ["process"]` · `relates_to: ["L0-scyt-ent3", "C-7", "L0-sprj"]`
 
-## Triggers, and what they do
-Each trigger only **marks** the volley. `L0-sprj-r008` step 1 resolves the mark on the next loop tick.
-| Trigger | Event (stable 2.10.0) | Outcome | Cooldown |
-|---|---|---|---|
-| Target dies | `afterEvents.entityDie` (target id) | `TARGET_INVALID` | full 30 s if hits ≥ 1, otherwise none |
-| Target logs out | `afterEvents.playerLeave` (target id) | `TARGET_INVALID` | same split on hits |
-| Target changes dimension | `afterEvents.playerDimensionChange` | `TARGET_INVALID` | same split |
-| Owner dies, logs out or changes dimension | same events (owner id) | `OWNER_INVALID` | if hits ≥ 1, it is already committed at the first hit (`L0-sprj-ad01`) |
-| Target leaves Survival/Adventure | detected at re-check (`L0-sprj-as03`) | `TARGET_INVALID` | split on hits |
-| Server restart or script reload | none. Volleys are memory-only (virtual projectiles). | nothing to clean up | a cooldown already committed at a hit survives |
+Code: `liveHealth`, `end`, `launchOrigin`. GameTest: `scythe_cleanup_on_target_death`.
 
-## Cleanup guarantees
-- Projectiles are script records, not entities. Removing the record removes the projectile. No `kill`, tag sweep or load-time scan is needed.
-- Busy is in-memory. It is cleared on every resolution path, including the exception handler, and a restart clears it too.
-- The `runInterval` handle is cleared in the same tick the last volley ends.
-- Event subscriptions are permanent and cheap: each one is an id lookup in the volley map. They are not per-volley subscriptions.
+**Mechanism:** no event subscriptions. Every tick re-checks `target.isValid`, the target's dimension and hp > 0.
+| Situation | Result | Cooldown |
+|---|---|---|
+| Target dies (Scythe kill or other cause) | `target_invalid` on the same or next tick | full if hits ≥ 1, else none |
+| Target player leaves / changes dimension, mob despawns or unloads | `target_invalid` | same split |
+| Owner dies, leaves or changes dimension | the volley **continues**; new projectiles launch from launchPoint + 1.2 | armed at hit 1 if the owner was valid then; at the end only if the owner is valid |
+| Server restart or script reload | volleys and intervals vanish (memory only) | a cooldown written at hit 1 survives. Busy is a property with an 11 s deadline, so it expires on its own |
 
-## Anti-pattern (rejected)
-Spawning `minecraft:shulker_bullet` or a custom projectile entity and despawning it on these events. Rejected because a crash or an unloaded chunk leaves orphans, which violates C-7.
+**Guarantees:**
+- Projectiles are positions, not entities, so there are no orphans (C-7).
+- Every end path clears the interval and removes the volley from `active`.
+- `activeVolleyCount()` and `activeProjectileCount()` expose leaks to tests.
+
+**Gap:** an owner who is invalid at the end keeps a stale busy until its 11 s deadline passes. Busy is not cleared, because `clearBusy` needs a valid handle.

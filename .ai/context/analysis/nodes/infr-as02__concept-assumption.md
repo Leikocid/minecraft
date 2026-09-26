@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-infr-as02"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 2
 title: "Assumption: verification runs locally, not in hosted CI"
 aliases: ["L0-infr-as02"]
 is_a: ["assumption"]

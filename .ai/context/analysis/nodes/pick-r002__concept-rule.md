@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-pick-r002"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 2
 aliases: ["L0-pick-r002"]
 is_a: ["rule"]
 part_of: ["L0-pick"]

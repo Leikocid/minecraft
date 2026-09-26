@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-scyt-r004"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 2
 title: "R-scyt-004 — Projectiles pass through every block and change none"
 aliases: ["L0-scyt-r004"]
 is_a: ["rule"]

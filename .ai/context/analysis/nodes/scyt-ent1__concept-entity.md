@@ -3,44 +3,45 @@ type: "concept-entity"
 node_id: "L0-scyt-ent1"
 source_channel: "rollout"
 analysis_version: 1
-title: "ScytheOfCalamity (item plus legendary registration)"
+title: "ScytheOfCalamity (item plus `LegendaryDef`, as shipped)"
 aliases: ["L0-scyt-ent1"]
 is_a: ["entity"]
 part_of: ["L0-scyt"]
 relates_to: ["L0-scyt"]
 priority: 520
-size_chars: 1352
-tags: ["is_a:entity", "item", "legendary"]
+size_chars: 1803
+tags: ["is_a:entity", "item", "registry", "delta:2026-09-26"]
 level: 2
 ---
-# ScytheOfCalamity (item plus legendary registration)
+# ScytheOfCalamity (item plus `LegendaryDef`, as shipped)
 
-**Links:** `part_of: ["L0-scyt"]` · `is_a: ["entity"]` · `relates_to: ["L0-sitm", "L0-lgnd", "L0-scyt-r009", "L0-scyt-p004"]`
+**Links:** `part_of: ["L0-scyt"]` · `is_a: ["entity"]` · `relates_to: ["L0-lgnd", "L0-sitm", "L0-scyt-r009", "L0-scyt-cx03"]`
 
-## Static (behaviour pack JSON, owned by `L0-sitm`)
+## Static (behavior pack JSON)
 | Attribute | Value |
 |---|---|
 | identifier | `andrew:scythe_of_calamity` |
-| display name key | `item.andrew:scythe_of_calamity.name`: RU «Коса бедствия», EN "Scythe of Calamity" |
-| menu_category | `equipment`, group `itemGroup.name.sword` (`L0-sitm-asm3`) |
-| icon | `andrew_scythe_of_calamity` (RP texture) |
-| max_stack_size | 1 |
-| hand_equipped / allow_off_hand | true / true |
-| damage | 8 (Netherite parity, `L0-scyt-as03`) |
+| display name | `item.andrew:scythe_of_calamity.name`: «Коса бедствия» / "Scythe of Calamity" |
+| menu_category | `equipment`, group **`itemGroup.name.hoe`** |
+| icon | `andrew_scythe_of_calamity` |
+| max_stack_size / hand_equipped | 1 / true |
+| allow_off_hand | **absent** (`L0-scyt-cx03`) |
+| damage | 8 (measured equal to netherite) |
 | enchantable | slot `sword`, value 10 |
-| durability | none (infinite) |
-| digger / tool tags | none |
+| durability | none, so infinite |
+| tags / digger | `minecraft:is_tool`, `minecraft:is_hoe`; digger speed 8 on `is_hoe_item_destructible` |
 
-## Registration (`LegendaryDef` in `L0-lgnd`)
-| Attribute | Value |
+## `SCYTHE_OF_CALAMITY` (`src/legendary/registry.ts`)
+| Field | Value |
 |---|---|
-| abilityKey | `scythe`, storage prefix `sc` |
-| cooldownMs | 30 000 |
-| lang keys | `andrew.scythe_of_calamity.{ready,cooldown,no_target,announce}` |
-| craft flag | the Scythe's own world dynamic property, independent of the Web Sword |
-| ability | `L0-scyt-p001` |
-| isBusy | `L0-sprj` volley map lookup |
+| keyPrefix | `sc`, giving `andrew:sc_{origin,owner,id,owner_name,crafted,crafted_by,pending}` and `andrew:sc_owed` |
+| abilityKey | **`scythe_of_calamity`**, giving the cooldown property `andrew:cd_scythe_of_calamity` |
+| cooldownTicks | 600 (30 s, stored as an epoch-ms deadline) |
+| craftGate / refund | true / 2 golden apples, 2 obsidian, 1 diamond hoe |
+| textPrefix | `andrew.scythe` → `.no_target`, `.first_craft`, `.craft_blocked`, `.returned`, `.admin_given`, `.reset` |
+| command | `andrew:scythe` (admin give and reset) |
 
-## Per-player persistent state (through `L0-lgnd`)
-- `sc_cooldown_until`: epoch ms from `Date.now()`. Never ticks (CTR-lgnd-03 lesson).
-- Nothing else. Volleys and busy live in memory only.
+## Per-player state
+- Cooldown deadline `andrew:cd_scythe_of_calamity` (epoch ms).
+- Busy deadline (`busyKey`, epoch ms). It is set to launch + 11 s (220 ticks) as a crash bound and cleared at every volley end. It is a **dynamic property**, not memory-only.
+- `andrew:hidden_until` (read when the player is a target; written by `/andrew:hide` or a future Shadow Blade).

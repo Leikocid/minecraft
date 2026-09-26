@@ -3,33 +3,35 @@ type: "concept-entity"
 node_id: "L0-scyt-ent2"
 source_channel: "rollout"
 analysis_version: 1
-title: "TargetLock (transient result of P-scyt-001)"
+title: "Volley (in-memory flight record) — replaces the proposed TargetLock"
 aliases: ["L0-scyt-ent2"]
 is_a: ["entity"]
 part_of: ["L0-scyt"]
 relates_to: ["L0-scyt"]
 priority: 520
-size_chars: 1229
-tags: ["is_a:entity", "targeting", "transient"]
+size_chars: 1445
+tags: ["is_a:entity", "volley", "delta:2026-09-26"]
 level: 2
 ---
-# TargetLock (transient result of P-scyt-001)
+# Volley (in-memory flight record) — replaces the proposed TargetLock
 
-**Links:** `part_of: ["L0-scyt"]` · `is_a: ["entity"]` · `relates_to: ["L0-scyt-p001", "L0-sprj"]`
+**Links:** `part_of: ["L0-scyt"]` · `is_a: ["entity"]` · `relates_to: ["L0-scyt-p002", "L0-sprj"]`
 
-This is the hand-off record from targeting to `L0-sprj.launchVolley`. It is created once per successful press and never persisted.
+There is no separate TargetLock record. `selectTarget` returns an `Entity` (a player **or** a mob), and `launchVolley(owner, target)` builds this record. It is stored in `active: Map<ownerId, Volley>` (`src/scythe/volley.ts`) and never persisted.
 
 | Attribute | Type | Notes |
 |---|---|---|
-| ownerId | string | `Player.id`. It is an id, not a handle, so it survives handle invalidation checks. |
-| targetId | string | The selected candidate's `Player.id`. |
-| dimensionId | string | The owner's dimension at activation. The target must share it. |
-| launchPoint | Vector3 | The owner's `location` at activation, frozen. It is the leash centre. |
-| spawnPoint | Vector3 | `launchPoint + (0, 1.62, 0)`: eye height, where the projectiles appear. |
-| distance | number | Distance from launch point to target at lock time, ≤ 20. Used for diagnostics and ACs. |
-| tieBroken | boolean | True if `r002`'s view-angle tie-break decided the choice. Logged in GameTests. |
+| owner / ownerId | Player / string | The owner handle is kept, and `isValid` is checked before use |
+| target | Entity | Player or mob. `label()` logs the nameTag or typeId |
+| dimensionId | string | The owner's dimension at launch. The target must stay in it |
+| launchPoint | Vector3 | A copy of `owner.location`, frozen. It is the leash centre |
+| age | ticks | Since launch. Past 200 → `timeout` |
+| fired / flying | number / `{position}`[] | Projectile *i* spawns at tick `10·i` from `launchOrigin` (the owner's current feet + 1.2, or launchPoint + 1.2 if the owner is gone) |
+| hits | number | Drives the cooldown verdict |
+| runId | number | Its own `system.runInterval(…, 1)`, one per volley |
+| observer | `{onHit, onEnd}` | The wrapper arms the cooldown on hit 1. GameTests hook in here |
 
-## Candidate (internal to P-scyt-001)
-`{ player, distance, viewDot, visible, hidden }`. It is built for each player that `getPlayers` returns and is discarded after selection.
-
-**Invariant:** `targetId ≠ ownerId`, and `distance ≤ 20`.
+**Invariants:**
+- at most one volley per owner (`launchVolley` returns false otherwise);
+- `projectiles ≤ 3`;
+- the aim point is `target.location + (0, 1.0, 0)`, re-read every tick.

@@ -3,22 +3,23 @@ type: "concept-acceptance-criterion"
 node_id: "L0-scyt-ac15"
 source_channel: "rollout"
 analysis_version: 1
-title: "AC-scyt-15 — Item, melee and durability (§1, §9 DoD)"
+title: "AC-scyt-15 — Item, melee and durability (§1, §9 DoD, as shipped)"
 aliases: ["L0-scyt-ac15"]
 is_a: ["acceptance-criterion"]
 part_of: ["L0-scyt"]
 relates_to: ["L0-scyt"]
 priority: 520
-size_chars: 802
-tags: ["is_a:acceptance-criterion", "item", "melee", "channel:bds", "channel:ipad"]
+size_chars: 1047
+tags: ["is_a:acceptance-criterion", "channel:bds", "channel:ipad", "delta:2026-09-26"]
 level: 2
 ---
-# AC-scyt-15 — Item, melee and durability (§1, §9 DoD)
+# AC-scyt-15 — Item, melee and durability (§1, §9 DoD, as shipped)
 
-**Links:** `part_of: ["L0-scyt"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-scyt-r009", "L0-sitm", "L0-scyt-r008"]`
+**Links:** `part_of: ["L0-scyt"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-scyt-r009", "L0-scyt-cx03", "L0-sitm"]`
 
-- **BDS:** a melee hit on a zombie with the Scythe removes as much health as a hit with a vanilla `netherite_sword`. After 500 hits the item has no durability loss.
-- **BDS:** a melee hit starts no cooldown, spawns no projectiles and does not set busy.
-- **BDS:** the enchanting table and anvil accept Sharpness and Fire Aspect, and reject Efficiency.
-- **BDS:** Use on grass or dirt does not till it (no hoe tag).
-- **iPad (C-9):** the item shows in Creative under Equipment → Swords and in search. The names are «Коса бедствия» / "Scythe of Calamity". The icon renders. `/give @s andrew:scythe_of_calamity` works.
+- **BDS** (`scythe_melee_matches_netherite`, green): a melee hit on a cow removes as much health as a vanilla netherite sword.
+- **BDS:** a melee hit starts no cooldown, spawns no volley and does not set busy.
+- **BDS:** there is no durability component, so repeated hits cause no loss.
+- **BDS:** the enchanting table and anvil accept sword enchantments (Sharpness, Fire Aspect).
+- **Open (`L0-scyt-cx03`):** the item carries `is_hoe`/`is_tool` tags and a hoe digger. Whether Use on grass tills, and whether hoe enchantments such as Efficiency apply, is **not verified**. Do not assert "does not till" until `cx03` is decided.
+- **iPad (C-9):** the item appears in Creative under Equipment → **Hoes** (group `itemGroup.name.hoe`) and in search. The names are «Коса бедствия» / "Scythe of Calamity". The icon renders. `/andrew:scythe` gives a copy.
