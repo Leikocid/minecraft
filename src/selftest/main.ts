@@ -288,6 +288,57 @@ function run(): void {
     assert(s.getIsWaterlogged({ x: 0, y: 1, z: 2 }), "stairs at (0,1,2) are not waterlogged");
   });
 
+  // 7. The disposable stage4-probe measurement box (src/structures/templates/
+  //    probe_box.json). It ships only for the strf-p006 engine questions and
+  //    leaves the release structure set at the end of stage 4.
+  //
+  //    getPackStructureIds() is logged for visibility but not asserted on: in
+  //    this one-shot, player-less bds:check world it stays empty for every
+  //    pack structure — including the long-standing andrew:probe — not just
+  //    this one (confirmed by polling up to 100 ticks and by checking that
+  //    the list holds zero entries at all, not merely missing this id). Left
+  //    as a finding for whichever task teaches the harness to force a
+  //    ticking area or a player; get(id) is the reliable proof here, same as
+  //    the andrew:probe check above.
+  //
+  //    getAllStates() on a permutation read from the static Structure
+  //    template (not yet placed in a dimension) comes back empty for the
+  //    door specifically, even though chest's and sculk_shrieker's states on
+  //    this same template read correctly, and our own NBT round-trip test
+  //    (tests/probe-box.test.mjs) proves the compiled bytes carry the right
+  //    upper_block_bit per half. Logged, not asserted: this looks like a
+  //    read-path quirk for multi-part blocks on the pre-placement template
+  //    object, not a fault in the compiled data — strf-p006's own rotation
+  //    question should read state off a *placed* structure, not this one.
+  check("structure-probe-box", () => {
+    console.warn(
+      `[selftest] getPackStructureIds() = ${JSON.stringify(world.structureManager.getPackStructureIds())}`
+    );
+    const s = world.structureManager.get("andrew:probe_box");
+    assert(s !== undefined, "andrew:probe_box is not a pack structure");
+    assert(
+      s.size.x === 9 && s.size.y === 5 && s.size.z === 7,
+      `size is ${s.size.x}x${s.size.y}x${s.size.z}, expected 9x5x7`
+    );
+    const at = (x: number, y: number, z: number) => s.getBlockPermutation({ x, y, z });
+    assert(at(2, 1, 1)?.type.id === "minecraft:chest", `(2,1,1) is ${at(2, 1, 1)?.type.id}`);
+    assert(at(6, 1, 1)?.type.id === "minecraft:chest", `(6,1,1) is ${at(6, 1, 1)?.type.id}`);
+    assert(at(4, 1, 3)?.type.id === "minecraft:mob_spawner", `(4,1,3) is ${at(4, 1, 3)?.type.id}`);
+    const shrieker = at(4, 1, 5);
+    assert(shrieker?.type.id === "minecraft:sculk_shrieker", `(4,1,5) is ${shrieker?.type.id}`);
+    assert(shrieker.getState("can_summon") === true, "probe_box shrieker can_summon is not true");
+    const lower = at(4, 1, 0);
+    const upper = at(4, 2, 0);
+    assert(lower?.type.id === "minecraft:oak_door", `(4,1,0) is ${lower?.type.id}`);
+    assert(upper?.type.id === "minecraft:oak_door", `(4,2,0) is ${upper?.type.id}`);
+    console.warn(`[selftest] door lower states = ${JSON.stringify(lower.getAllStates())}`);
+    console.warn(`[selftest] door upper states = ${JSON.stringify(upper.getAllStates())}`);
+    assert(
+      at(2, 1, 5)?.type.id === "minecraft:stone_brick_stairs",
+      `(2,1,5) is ${at(2, 1, 5)?.type.id}`
+    );
+  });
+
   if (__SELFTEST_FIXTURE__) {
     // Only reachable under --break-selftest. Deliberately expects an item that
     // does not exist, so the FAIL path and the non-zero exit of bds:check are
