@@ -24,6 +24,7 @@ import {
   world,
 } from "@minecraft/server";
 import { inspectChunkApi, readLocation, scanFrontier, systemWait, tickingAreaLimit, tickingAreaLoad } from "./chunk-probe";
+import { mobProbeCount, mobProbePhase, mobProbeSpawn } from "./mob-probe";
 import { smeltedDropFor } from "../autosmelt";
 import { COOLDOWN_TICKS, cooldownRemaining } from "../legendary/rules";
 
@@ -154,6 +155,22 @@ async function runChunkProbes(): Promise<void> {
         `areas added before refusal=${limit.added} (${limit.refusal})`
     );
   });
+}
+
+/**
+ * strf-p006 Q5 and the restart half of Q6. bds:check runs the server twice
+ * over one world; the phase comes from a marker the first run saves.
+ */
+async function runMobProbe(): Promise<void> {
+  const dim = world.getDimension("overworld");
+  const spawn = world.getDefaultSpawnLocation();
+  const phase = mobProbePhase();
+  probeLog(`Q5 restart probe: run ${phase}`);
+  if (phase === 1) {
+    await checkAsync("probe-mobs-restart-run1", () => mobProbeSpawn(dim, spawn, systemWait, probeLog));
+  } else {
+    await checkAsync("probe-mobs-restart-run2", () => mobProbeCount(dim, systemWait, probeLog));
+  }
 }
 
 function run(): void {
@@ -394,5 +411,7 @@ function run(): void {
 world.afterEvents.worldLoad.subscribe(() => {
   run();
   // DONE goes last: bds:check waits for it, so it must follow the async probes.
-  void runChunkProbes().finally(() => console.warn(`[selftest] DONE passed=${passed} failed=${failed}`));
+  void runChunkProbes()
+    .then(runMobProbe)
+    .finally(() => console.warn(`[selftest] DONE passed=${passed} failed=${failed}`));
 });
