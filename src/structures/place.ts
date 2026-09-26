@@ -4,7 +4,7 @@
 // chunk unload or restart mid-way resumes where it stopped. The engine comes
 // in through PlaceWorld, so node tests drive the same code over a fake world.
 
-import type { BlockVolume, Dimension, StructureManager, StructureRotation } from "@minecraft/server";
+import type { BlockVolume, Dimension, Entity, StructureManager, StructureRotation } from "@minecraft/server";
 import { type Box, boxOf, clearBox } from "./clear";
 import type { Instance, Registry, Vec3 } from "./registry";
 import { ENGINE_ROTATION, rotatedSize, toWorld } from "./rotate";
@@ -15,6 +15,7 @@ const CHUNK = 16;
 /** Extras keys on the instance record. */
 export const CHESTS_FILLED = "lc";
 export const LINKED_TRIED = "la";
+export const GUARDS_SPAWNED = "gs";
 
 export interface ChestPoint {
   /** Template-local, unrotated. */
@@ -22,7 +23,7 @@ export interface ChestPoint {
   table: string;
 }
 
-export interface InitCtx {
+export interface TemplateCtx {
   instance: Instance;
   /** Unrotated template size. */
   templateSize: Vec3;
@@ -30,7 +31,31 @@ export interface InitCtx {
   at(local: Vec3): Vec3;
 }
 
-export interface ChestCtx extends InitCtx {
+export interface InitCtx extends TemplateCtx {
+  /**
+   * Spawns guard `index` through PlaceHooks.spawnGuard. Progress is persisted
+   * per guard, so a resume after a crash never spawns the same index twice.
+   */
+  spawnGuard(index: number, guard: GuardPoint): void;
+}
+
+export interface GuardPoint {
+  entity: string;
+  /** Template-local, unrotated; the mob stands in this cell. */
+  local: Vec3;
+  tags: readonly string[];
+  name?: string;
+  /** Infinite fire_resistance: immune to sunlight. */
+  fireproof?: boolean;
+}
+
+export interface GuardCtx extends GuardPoint {
+  instance: Instance;
+  index: number;
+  pos: Vec3;
+}
+
+export interface ChestCtx extends TemplateCtx {
   index: number;
   table: string;
   pos: Vec3;
@@ -51,6 +76,8 @@ export interface StructureBody {
 export interface PlaceHooks {
   /** loot.fillChest: fills the chest at `ctx.pos`; must write fixed slots, a crash may repeat one chest. */
   fillChest(ctx: ChestCtx): void;
+  /** Spawns one guard at `ctx.pos`; a body with guards cannot finish its guard step without it. */
+  spawnGuard?(ctx: GuardCtx): void;
 }
 
 export interface PlaceWorld {
@@ -129,7 +156,15 @@ export class Placer {
     const body = this.body(inst);
     const ctx = (current: Instance): InitCtx => {
       const templateSize = rotatedSize(current.size, current.rot);
-      return { instance: current, templateSize, at: (p) => toWorld(current.origin, p, templateSize, current.rot) };
+      const at = (p: Vec3): Vec3 => toWorld(current.origin, p, templateSize, current.rot);
+      const spawnGuard = (index: number, guard: GuardPoint): void => {
+        const done = Number(this.registry.get(inst.dim, inst.origin, inst.id)?.extras[GUARDS_SPAWNED] ?? 0);
+        if (index < done) return;
+        if (this.hooks.spawnGuard === undefined) throw new Error(`strf place: no spawnGuard hook for ${inst.id}`);
+        this.hooks.spawnGuard({ ...guard, instance: current, index, pos: at(guard.local) });
+        this.registry.setExtra(inst, GUARDS_SPAWNED, index + 1);
+      };
+      return { instance: current, templateSize, at, spawnGuard };
     };
 
     this.registry.runStep(inst, "loot", (current) => {
@@ -161,6 +196,19 @@ export class Placer {
 }
 
 // ------------------------------------------------------------ engine adapter
+
+/** Guard spawning on a real dimension (the PlaceHooks.spawnGuard of engine hooks). */
+export function engineSpawnGuard(dim: Pick<Dimension, "spawnEntity">): (ctx: GuardCtx) => Entity {
+  return (ctx) => {
+    const e = dim.spawnEntity(ctx.entity, { x: ctx.pos[0] + 0.5, y: ctx.pos[1], z: ctx.pos[2] + 0.5 });
+    // A named mob is never despawned by distance (L0-adr-strs).
+    if (ctx.name !== undefined) e.nameTag = ctx.name;
+    for (const t of ctx.tags) e.addTag(t);
+    // 2.10.0 caps addEffect's duration: "infinite" exists only as a command (probe Q6).
+    if (ctx.fireproof === true) e.runCommand("effect @s fire_resistance infinite 0 true");
+    return e;
+  };
+}
 
 export interface PlaceEngineApi {
   structureManager: StructureManager;

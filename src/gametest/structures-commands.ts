@@ -22,7 +22,8 @@ import {
   world,
 } from "@minecraft/server";
 import { type SimulatedPlayer, Test, registerAsync } from "@minecraft/server-gametest";
-import { STAND_IN_CHESTS, STAND_IN_SIZE } from "../structures/bodies";
+import { BODIES, STAND_IN_CHESTS, STAND_IN_SIZE, standIn } from "../structures/bodies";
+import { CUSTOM_TABLE } from "../structures/loot";
 import { type Box, boxOf, sliceBox } from "../structures/clear";
 import { type Reply, registerStructureCommands } from "../structures/commands";
 import { rotatedSize, toWorld } from "../structures/rotate";
@@ -59,7 +60,9 @@ function freshRuntime(): StrfRuntime {
   const store = new MemoryStore();
   store.set(SALT_KEY, `gt-cmd-${Date.now()}`);
   replies.length = 0;
-  runtime = new StrfRuntime(store, engineStrf({ world, BlockVolume, BlockTypes, StructureRotation, ItemStack, EnchantmentType }), { log });
+  // The commands are proven over the probe box; the real Windmill has its own tests (windmill-body.ts).
+  const bodies = { ...BODIES, windmill: standIn([CUSTOM_TABLE, CUSTOM_TABLE]) };
+  runtime = new StrfRuntime(store, engineStrf({ world, BlockVolume, BlockTypes, StructureRotation, ItemStack, EnchantmentType }), { log, bodies });
   return runtime;
 }
 
