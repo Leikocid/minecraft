@@ -2,8 +2,9 @@
 //   1. esbuild bundles src/main.ts -> packs/behavior/scripts/main.js
 //      (format esm, platform neutral, @minecraft/* stays external — not bundled)
 //   2. esbuild bundles src/selftest/main.ts -> packs/selftest/scripts/main.js
-//   3. validate both release packs and the selftest pack
-//   4. zip packs/behavior and packs/resource into dist/andrew.mcaddon
+//   3. compile src/structures/templates/*.json -> packs/behavior/structures/andrew/
+//   4. validate both release packs and the selftest pack
+//   5. zip packs/behavior and packs/resource into dist/andrew.mcaddon
 //
 // packs/selftest is built but deliberately NOT zipped: it is a dev-only
 // behavior pack that scripts/bds-check.mjs installs on the server alongside the
@@ -16,6 +17,7 @@ import { existsSync, mkdirSync, rmSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, join } from 'node:path';
 import { validatePacks, validateSelfTestPack } from './validate.mjs';
+import { buildStructures } from './build-structures.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, '..');
@@ -80,6 +82,12 @@ function build() {
 
   step('bundle selftest script (esbuild)', () => {
     bundleSelfTest();
+  });
+
+  step('compile structure templates', () => {
+    for (const r of buildStructures()) {
+      process.stdout.write(`  andrew:${r.id} -> ${r.bytes} bytes\n`);
+    }
   });
 
   step('validate packs', () => {

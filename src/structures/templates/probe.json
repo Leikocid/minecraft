@@ -1,0 +1,31 @@
+{
+  "size": [5, 3, 5],
+  "blocks": {
+    ".": "minecraft:air",
+    "#": "minecraft:stone_bricks",
+    "F": { "name": "minecraft:farmland", "states": { "moisturized_amount": 7 } },
+    "C": {
+      "name": "minecraft:chest",
+      "states": { "minecraft:cardinal_direction": "south" },
+      "chest": {
+        "items": [
+          { "name": "minecraft:bread", "count": 3 },
+          { "name": "minecraft:iron_ingot", "count": 2, "slot": 5 }
+        ]
+      }
+    },
+    "S": { "name": "minecraft:mob_spawner", "spawner": { "entity": "minecraft:zombie" } },
+    "K": { "name": "minecraft:sculk_shrieker", "states": { "active": false, "can_summon": true } },
+    "W": {
+      "name": "minecraft:stone_brick_stairs",
+      "states": { "upside_down_bit": false, "weirdo_direction": 2 },
+      "waterlogged": true
+    },
+    "T": { "name": "minecraft:wheat", "states": { "growth": 7 } }
+  },
+  "fill": [{ "from": [0, 0, 0], "to": [4, 0, 4], "block": "#" }],
+  "layers": {
+    "0": ["     ", "     ", "  F  "],
+    "1": ["C.S.K", ".....", "W.T.."]
+  }
+}

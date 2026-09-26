@@ -2,6 +2,7 @@
 node_modules/
 dist/
 packs/behavior/scripts/
+packs/behavior/structures/
 packs/selftest/scripts/
 packs/gametest/scripts/
 packs/gametest/structures/
