@@ -25,6 +25,7 @@ import {
 } from "@minecraft/server";
 import { inspectChunkApi, readLocation, scanFrontier, systemWait, tickingAreaLimit, tickingAreaLoad } from "./chunk-probe";
 import { mobProbeCount, mobProbePhase, mobProbeSpawn } from "./mob-probe";
+import { keepGuardsAlive, listenSpawnState, spawnWindmillCheck } from "./spawn-windmill";
 import { windmillRestartPhase, windmillRestartRun1, windmillRestartRun2 } from "./windmill-restart";
 import { smeltedDropFor } from "../autosmelt";
 import { COOLDOWN_TICKS, cooldownRemaining } from "../legendary/rules";
@@ -511,13 +512,38 @@ function run(): void {
 
 }
 
+const RUN_KEY = "andrew:selftest_run";
+
+/** bds:check starts the server three times over one world; this is the 1-based run number. */
+function nextRun(): number {
+  const raw = world.getDynamicProperty(RUN_KEY);
+  const n = (typeof raw === "number" ? raw : 0) + 1;
+  world.setDynamicProperty(RUN_KEY, n);
+  return n;
+}
+
+/** L0-wind-r011 across both restarts: one spawn Windmill, found once, the same numbers every run. */
+async function runSpawnWindmill(n: number): Promise<void> {
+  const dim = world.getDimension("overworld");
+  const log = (msg: string): void => console.warn(`[selftest] ${msg}`);
+  await checkAsync(`spawn-windmill-run${n}`, () => spawnWindmillCheck(n, dim, systemWait, log));
+}
+
+listenSpawnState();
+
 world.afterEvents.worldLoad.subscribe(() => {
+  const n = nextRun();
+  console.warn(`[selftest] run ${n}`);
+  keepGuardsAlive();
   run();
-  runRegistryRestart();
+  // The two-phase restart checks own runs 1 and 2; a third run would start their phase 1 again.
+  if (n <= 2) runRegistryRestart();
   checkTestHook();
-  // DONE goes last: bds:check waits for it, so it must follow the async probes.
-  void runChunkProbes()
-    .then(runMobProbe)
-    .then(runWindmillRestart)
+  // The spawn check goes first: until the release pack's search ends, its
+  // ticking areas would skew the Q11 area-limit probe. DONE goes last:
+  // bds:check waits for it, so it must follow the async probes.
+  void runSpawnWindmill(n)
+    .then(runChunkProbes)
+    .then(() => (n <= 2 ? runMobProbe().then(runWindmillRestart) : undefined))
     .finally(() => console.warn(`[selftest] DONE passed=${passed} failed=${failed}`));
 });
