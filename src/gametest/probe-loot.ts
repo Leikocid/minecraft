@@ -208,13 +208,17 @@ registerAsync("andrew", "probe_loot_control_known_table", async (test: Test): Pr
 
   const id = "chests/simple_dungeon";
   const discovered = await discoverLootFormat(test, dim, at, id);
-  const verdict =
-    discovered === undefined
-      ? `FAIL — no spelling filled the chest either; tried [${triedList(id)}]. ` +
-        "/loot insert cannot pull ANY vanilla chest table into a container here, independent of ancient_city/bastion_* spelling"
-      : `PASS — ${describeSpelling(discovered)} works (chest=[${discovered.contents.join(" ")}]); ` +
-        "the mechanism itself is capable — a further miss on ancient_city/bastion_* would be about those specific ids, not the mechanism";
-  log(`Q4 RESULT control (${id}): ${verdict}`);
+  if (discovered === undefined) {
+    const msg =
+      `Q4 RESULT control (${id}): FAIL — no spelling filled the chest either; tried [${triedList(id)}]. ` +
+      "/loot insert cannot pull ANY vanilla chest table into a container here, independent of ancient_city/bastion_* spelling";
+    log(msg);
+    throw new Error(msg);
+  }
+  log(
+    `Q4 RESULT control (${id}): PASS — ${describeSpelling(discovered)} works (chest=[${discovered.contents.join(" ")}]); ` +
+      "the mechanism itself is capable — a further miss on ancient_city/bastion_* would be about those specific ids, not the mechanism"
+  );
   test.succeed();
 })
   .structureName(STRUCTURE)
