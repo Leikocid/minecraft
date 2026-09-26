@@ -135,6 +135,11 @@ const EXPECTED_TESTS = [
   'andrew:strf_site_player_build',
   'andrew:strf_site_pending_unloaded',
   'andrew:strf_site_recheck',
+  // STRF-PLACE-01 — src/gametest/structures-place.ts
+  'andrew:strf_place_rotations',
+  'andrew:strf_place_clear_sliced',
+  'andrew:strf_place_block_entities',
+  'andrew:strf_place_resume',
 ];
 
 // FLAT is not cosmetic: see the LEVEL_TYPE comment in docker/bds/compose.yaml.
