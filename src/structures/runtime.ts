@@ -18,7 +18,7 @@ import { type TypeBody, BODIES, naturalDefs, spotsOf, withLinks } from "./bodies
 import type { RollDef, StructureId } from "./config";
 import { Discovery, type PlayerPos, type SiteVerdict } from "./discovery";
 import { Loot } from "./loot";
-import { type PlaceHooks, type PlaceWorld, Placer, engineSpawnGuard, engineWorld } from "./place";
+import { type PlaceHooks, type PlaceResult, type PlaceWorld, Placer, engineSpawnGuard, engineWorld } from "./place";
 import { type DimShort, type Instance, type Rotation, type Vec3, Registry } from "./registry";
 import { type Candidate, effectiveChance, rotatedSize } from "./roll";
 import { type RingLoader, type RingSystem, engineRingLoader } from "./search-ring";
@@ -215,7 +215,19 @@ export class StrfRuntime {
 
     const placer = this.placer(dim);
     if (placer === undefined) return { kind: "not-loaded" };
-    const r = placer.run(planned.instance, this.gate);
+    let r: { place: PlaceResult; state: Instance["state"] | "pending" };
+    try {
+      r = placer.run(planned.instance, this.gate);
+    } catch (e) {
+      // Same as pumpPlacement: a step that keeps throwing (a guard spawn in a
+      // Peaceful world) leaves the record where it was, not failed — it goes
+      // on the queue for a later retry instead of failing this call's caller,
+      // which for the one-shot spawn Windmill search would otherwise burn its
+      // single attempt on a transient, environmental condition.
+      this.log(`strf runtime: ${id} placement threw ${String(e)}`);
+      this.queue.set(id, { id, dim, origin: planned.instance.origin });
+      return { kind: "placed", instance: planned.instance };
+    }
     const now = this.registry.get(dim, planned.instance.origin, id) ?? planned.instance;
     if (now.state === "failed") return { kind: "failed", reason: String(now.extras.why ?? r.place), instance: now };
     if (now.state !== "done") this.queue.set(id, { id, dim, origin: now.origin });
