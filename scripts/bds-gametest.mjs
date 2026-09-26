@@ -171,6 +171,12 @@ const EXPECTED_TESTS = [
   'andrew:windmill_spawn_no_dry_land',
   // AIRS-TMPL-01 — src/gametest/airship.ts
   'andrew:airship_rotations',
+  // AIRS-BODY-01 — src/gametest/airship-body.ts
+  'andrew:airship_body_site',
+  'andrew:airship_linked_ring',
+  'andrew:airship_linked_over_windmill',
+  'andrew:airship_linked_no_merge',
+  'andrew:airship_linked_ring_invalid',
 ];
 
 // FLAT is not cosmetic: see the LEVEL_TYPE comment in docker/bds/compose.yaml.

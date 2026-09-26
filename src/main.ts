@@ -60,7 +60,7 @@ world.afterEvents.worldLoad.subscribe(() => {
   const store = new DynamicPropertyStore(world);
   strf = new StrfRuntime(
     store,
-    engineStrf({ world, BlockVolume, BlockTypes, StructureRotation, ItemStack, EnchantmentType }),
+    engineStrf({ world, BlockVolume, BlockTypes, StructureRotation, ItemStack, EnchantmentType, system }),
     { log: strfLog }
   );
   console.warn(`[andrew] ${strf.registry.statsLine()}`);
