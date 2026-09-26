@@ -5,11 +5,13 @@
 // session, so an operator's world is not littered with probe boxes.
 
 import { AIRSHIP_BODY } from "./bodies/airship";
+import { WARDEN_CITY_BODY } from "./bodies/warden-city";
 import { WINDMILL_BODY } from "./bodies/windmill";
 import { type RollDef, ROLL_DEFS, type StructureId } from "./config";
-import { ANCIENT_CITY, BASTION_OTHER, BASTION_TREASURE } from "./loot";
+import { BASTION_OTHER, BASTION_TREASURE } from "./loot";
 import type { InitCtx, StructureBody } from "./place";
 import type { Instance, Vec3 } from "./registry";
+import type { ExtraSpot } from "./site";
 
 export interface TypeBody extends StructureBody {
   /** True while the type has no real template and places the probe box instead. */
@@ -20,6 +22,8 @@ export interface TypeBody extends StructureBody {
    * reserve exactly what its template fills.
    */
   size?: Vec3;
+  /** A second area the type writes besides its box; the site gate checks it with the box. */
+  spot?: ExtraSpot;
 }
 
 export const STAND_IN_TEMPLATE = "andrew:probe_box";
@@ -42,7 +46,7 @@ export const standIn = (tables: readonly [string, string]): TypeBody => ({
 export const BODIES: Readonly<Record<StructureId, TypeBody>> = {
   windmill: WINDMILL_BODY,
   airship: AIRSHIP_BODY,
-  warden_city: standIn([ANCIENT_CITY, ANCIENT_CITY]),
+  warden_city: WARDEN_CITY_BODY,
   bastion: standIn([BASTION_TREASURE, BASTION_OTHER]),
 };
 
@@ -55,6 +59,10 @@ export const naturalDefs = (bodies: Readonly<Record<string, TypeBody>> = BODIES)
     const b = bodies[d.id];
     return { ...d, chance: b?.standIn === false ? d.chance : 0, size: b?.size ?? d.size };
   });
+
+/** Type → extra spot, for the SiteChecker. */
+export const spotsOf = (bodies: Readonly<Record<string, TypeBody>>): Record<string, ExtraSpot> =>
+  Object.fromEntries(Object.entries(bodies).flatMap(([id, b]) => (b.spot === undefined ? [] : [[id, b.spot]])));
 
 /** Parent type → the type it makes one linked attempt for (§5.6). */
 export const LINKS: Readonly<Partial<Record<StructureId, StructureId>>> = { windmill: "airship" };

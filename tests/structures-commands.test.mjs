@@ -120,8 +120,15 @@ function runtime({ store = new MemoryStore(), events = [] } = {}) {
     }),
     hooks: () => ({ fillChest: (ctx) => events.push(`chest ${ctx.index} ${ctx.table}`, ctx) }),
   };
-  // The command is tested over the probe box: every type, the Windmill and the Airship included, stands in.
-  rt = new StrfRuntime(store, engine, { bodies: { ...BODIES, windmill: standIn([CUSTOM_TABLE, CUSTOM_TABLE]), airship: standIn([CUSTOM_TABLE, CUSTOM_TABLE]) } });
+  // The command is tested over the probe box: every type, the real bodies included, stands in.
+  rt = new StrfRuntime(store, engine, {
+    bodies: {
+      ...BODIES,
+      windmill: standIn([CUSTOM_TABLE, CUSTOM_TABLE]),
+      airship: standIn([CUSTOM_TABLE, CUSTOM_TABLE]),
+      warden_city: standIn(['chests/ancient_city', 'chests/ancient_city']),
+    },
+  });
   return rt;
 }
 
@@ -289,6 +296,8 @@ test('permission: a non-operator is refused every action and nothing is created'
 
 test('bodies: every type has a body, and each stand-in names its own loot tables', () => {
   assert.deepEqual(Object.keys(BODIES).sort(), [...TYPES].sort());
-  assert.deepEqual(BODIES.warden_city.chests.map((c) => c.table), ['chests/ancient_city', 'chests/ancient_city']);
+  assert.equal(BODIES.warden_city.standIn, false);
+  assert.deepEqual(BODIES.warden_city.chests.map((c) => c.table), Array(10).fill('chests/ancient_city'));
+  assert.equal(BODIES.bastion.standIn, true);
   assert.deepEqual(BODIES.bastion.chests.map((c) => c.table), ['chests/bastion_treasure', 'chests/bastion_other']);
 });
