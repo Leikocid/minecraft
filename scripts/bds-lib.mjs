@@ -72,6 +72,20 @@ export function assertComposePinsVersion() {
   log(`✓ compose pins BDS ${BDS_VERSION}`);
 }
 
+/**
+ * The docker container name of the active instance (`bds` or `bds-qa`),
+ * read from its own compose file rather than assumed — a caller that needs
+ * `docker exec`/`docker logs` by name (compose itself resolves by file, so it
+ * never needs this) must still land on whichever instance ANDREW_BDS_DIR
+ * picked, not always the production one.
+ */
+export function containerName() {
+  const text = readFileSync(composeFile, 'utf-8');
+  const match = text.match(/^\s*container_name:\s*(\S+)\s*$/m);
+  if (!match) throw new Error(`${composeFile}: no container_name found`);
+  return match[1];
+}
+
 export function buildAddon() {
   log('▶ npm run build');
   execFileSync(process.execPath, [join(root, 'scripts', 'build.mjs')], { stdio: 'inherit', cwd: root });
