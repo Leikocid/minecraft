@@ -27,6 +27,7 @@ import { inspectChunkApi, readLocation, scanFrontier, systemWait, tickingAreaLim
 import { mobProbeCount, mobProbePhase, mobProbeSpawn } from "./mob-probe";
 import { keepGuardsAlive, listenSpawnState, spawnWindmillCheck } from "./spawn-windmill";
 import { windmillRestartPhase, windmillRestartRun1, windmillRestartRun2 } from "./windmill-restart";
+import { bastionRestartPhase, bastionRestartRun1, bastionRestartRun2 } from "./bastion-restart";
 import { smeltedDropFor } from "../autosmelt";
 import { COOLDOWN_TICKS, cooldownRemaining } from "../legendary/rules";
 import { type DimShort, type Instance, Registry, forcedOutcome, installTestHook, clearTestHook } from "../structures/registry";
@@ -185,6 +186,17 @@ async function runWindmillRestart(): Promise<void> {
     await checkAsync("windmill-restart-run1", () => windmillRestartRun1(dim, world.getDefaultSpawnLocation(), systemWait, log));
   } else {
     await checkAsync("windmill-restart-run2", () => windmillRestartRun2(dim, systemWait, log));
+  }
+}
+
+/** §14.5 across a chunk unload and the same restart: the garrison stays, nothing is refilled or re-spawned. */
+async function runBastionRestart(): Promise<void> {
+  const dim = world.getDimension("nether");
+  const log = (msg: string): void => console.warn(`[selftest] ${msg}`);
+  if (bastionRestartPhase() === 1) {
+    await checkAsync("bastion-restart-run1", () => bastionRestartRun1(dim, systemWait, log));
+  } else {
+    await checkAsync("bastion-restart-run2", () => bastionRestartRun2(dim, systemWait, log));
   }
 }
 
@@ -544,6 +556,6 @@ world.afterEvents.worldLoad.subscribe(() => {
   // bds:check waits for it, so it must follow the async probes.
   void runSpawnWindmill(n)
     .then(runChunkProbes)
-    .then(() => (n <= 2 ? runMobProbe().then(runWindmillRestart) : undefined))
+    .then(() => (n <= 2 ? runMobProbe().then(runWindmillRestart).then(runBastionRestart) : undefined))
     .finally(() => console.warn(`[selftest] DONE passed=${passed} failed=${failed}`));
 });

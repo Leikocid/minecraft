@@ -127,6 +127,7 @@ function runtime({ store = new MemoryStore(), events = [] } = {}) {
       windmill: standIn([CUSTOM_TABLE, CUSTOM_TABLE]),
       airship: standIn([CUSTOM_TABLE, CUSTOM_TABLE]),
       warden_city: standIn(['chests/ancient_city', 'chests/ancient_city']),
+      bastion: standIn(['chests/bastion_treasure', 'chests/bastion_other']),
     },
   });
   return rt;
@@ -294,10 +295,9 @@ test('permission: a non-operator is refused every action and nothing is created'
   assert.equal(chanceOverride('windmill'), undefined);
 });
 
-test('bodies: every type has a body, and each stand-in names its own loot tables', () => {
+test('bodies: every type has a real body with its own loot tables', () => {
   assert.deepEqual(Object.keys(BODIES).sort(), [...TYPES].sort());
-  assert.equal(BODIES.warden_city.standIn, false);
+  assert.ok(Object.values(BODIES).every((b) => b.standIn === false));
   assert.deepEqual(BODIES.warden_city.chests.map((c) => c.table), Array(10).fill('chests/ancient_city'));
-  assert.equal(BODIES.bastion.standIn, true);
-  assert.deepEqual(BODIES.bastion.chests.map((c) => c.table), ['chests/bastion_treasure', 'chests/bastion_other']);
+  assert.deepEqual(BODIES.bastion.chests.map((c) => c.table), [...Array(3).fill('chests/bastion_treasure'), ...Array(7).fill('chests/bastion_other')]);
 });

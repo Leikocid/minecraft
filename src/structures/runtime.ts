@@ -160,8 +160,12 @@ export class StrfRuntime {
         const r = placer.run(inst, this.gate);
         if (r.state !== "pending") this.queue.delete(q.id);
       } catch (e) {
-        // A throw leaves the record in its last state; the next pump resumes it.
+        // A throw leaves the record in its last state. It goes to the back of
+        // the queue: a step that keeps throwing (a guard spawn in a Peaceful
+        // world) must not hold every placement queued behind it.
         this.log(`strf runtime: ${q.id} placement threw ${String(e)}`);
+        this.queue.delete(q.id);
+        this.queue.set(q.id, q);
       }
     }
   }
@@ -284,7 +288,11 @@ export function engineStrf(api: StrfEngineApi): StrfEngine {
       return v;
     },
     placeWorld: (d) => engineWorld(dimension(d), { structureManager: api.world.structureManager, BlockVolume: api.BlockVolume, StructureRotation: api.StructureRotation }),
-    hooks: (d) => ({ ...new Loot(dimension(d), api).hooks, spawnGuard: engineSpawnGuard(dimension(d)) }),
+    hooks: (d) => ({
+      ...new Loot(dimension(d), api).hooks,
+      // Compared as text: the Difficulty enum is not part of StrfEngineApi.
+      spawnGuard: engineSpawnGuard(dimension(d), { peaceful: () => String(api.world.getDifficulty()) === "Peaceful" }),
+    }),
     ringLoader(d) {
       if (api.system === undefined) return undefined;
       let l = loaders.get(d);
