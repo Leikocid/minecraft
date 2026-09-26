@@ -25,6 +25,7 @@ import {
 } from "@minecraft/server";
 import { inspectChunkApi, readLocation, scanFrontier, systemWait, tickingAreaLimit, tickingAreaLoad } from "./chunk-probe";
 import { mobProbeCount, mobProbePhase, mobProbeSpawn } from "./mob-probe";
+import { windmillRestartPhase, windmillRestartRun1, windmillRestartRun2 } from "./windmill-restart";
 import { smeltedDropFor } from "../autosmelt";
 import { COOLDOWN_TICKS, cooldownRemaining } from "../legendary/rules";
 import { type DimShort, type Instance, Registry, forcedOutcome, installTestHook, clearTestHook } from "../structures/registry";
@@ -172,6 +173,17 @@ async function runMobProbe(): Promise<void> {
     await checkAsync("probe-mobs-restart-run1", () => mobProbeSpawn(dim, spawn, systemWait, probeLog));
   } else {
     await checkAsync("probe-mobs-restart-run2", () => mobProbeCount(dim, systemWait, probeLog));
+  }
+}
+
+/** L0-wind-ac11 across the same restart: what a player broke stays broken, no second set appears. */
+async function runWindmillRestart(): Promise<void> {
+  const dim = world.getDimension("overworld");
+  const log = (msg: string): void => console.warn(`[selftest] ${msg}`);
+  if (windmillRestartPhase() === 1) {
+    await checkAsync("windmill-restart-run1", () => windmillRestartRun1(dim, world.getDefaultSpawnLocation(), systemWait, log));
+  } else {
+    await checkAsync("windmill-restart-run2", () => windmillRestartRun2(dim, systemWait, log));
   }
 }
 
@@ -506,5 +518,6 @@ world.afterEvents.worldLoad.subscribe(() => {
   // DONE goes last: bds:check waits for it, so it must follow the async probes.
   void runChunkProbes()
     .then(runMobProbe)
+    .then(runWindmillRestart)
     .finally(() => console.warn(`[selftest] DONE passed=${passed} failed=${failed}`));
 });

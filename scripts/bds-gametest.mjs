@@ -155,6 +155,11 @@ const EXPECTED_TESTS = [
   // WIND-TMPL-01 — src/gametest/windmill.ts
   'andrew:windmill_rotations',
   'andrew:windmill_vindicator_axe',
+  // WIND-BODY-01 — src/gametest/windmill-body.ts
+  'andrew:windmill_body_site_cancel',
+  'andrew:windmill_body_init',
+  'andrew:windmill_guard_noon',
+  'andrew:windmill_guard_cured',
 ];
 
 // FLAT is not cosmetic: see the LEVEL_TYPE comment in docker/bds/compose.yaml.

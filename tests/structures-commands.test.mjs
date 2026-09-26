@@ -22,7 +22,8 @@ async function load() {
         export * from './src/structures/store.ts';
         export * from './src/structures/registry.ts';
         export * from './src/structures/bodies.ts';
-        export * from './src/structures/rotate.ts';`,
+        export * from './src/structures/rotate.ts';
+        export { CUSTOM_TABLE } from './src/structures/loot.ts';`,
       resolveDir: projectRoot,
       loader: 'ts',
     },
@@ -38,7 +39,7 @@ async function load() {
 }
 
 const m = await load();
-const { TEXT_KEYS, TYPES, execute, StrfRuntime, MemoryStore, SALT_KEY, setChanceOverride, chanceOverride, BODIES, STAND_IN_CHESTS, STAND_IN_SIZE, toWorld } = m;
+const { TEXT_KEYS, TYPES, execute, StrfRuntime, MemoryStore, SALT_KEY, setChanceOverride, chanceOverride, BODIES, STAND_IN_CHESTS, STAND_IN_SIZE, toWorld, standIn, CUSTOM_TABLE } = m;
 
 // ------------------------------------------------------------------ catalog
 
@@ -119,7 +120,8 @@ function runtime({ store = new MemoryStore(), events = [] } = {}) {
     }),
     hooks: () => ({ fillChest: (ctx) => events.push(`chest ${ctx.index} ${ctx.table}`, ctx) }),
   };
-  rt = new StrfRuntime(store, engine);
+  // The command is tested over the probe box: every type, the Windmill included, stands in.
+  rt = new StrfRuntime(store, engine, { bodies: { ...BODIES, windmill: standIn([CUSTOM_TABLE, CUSTOM_TABLE]) } });
   return rt;
 }
 

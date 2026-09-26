@@ -17,7 +17,7 @@ import { type TypeBody, BODIES, naturalDefs } from "./bodies";
 import type { RollDef, StructureId } from "./config";
 import { Discovery, type PlayerPos, type SiteVerdict } from "./discovery";
 import { Loot } from "./loot";
-import { type PlaceHooks, type PlaceWorld, Placer, engineWorld } from "./place";
+import { type PlaceHooks, type PlaceWorld, Placer, engineSpawnGuard, engineWorld } from "./place";
 import { type DimShort, type Instance, type Rotation, type Vec3, Registry } from "./registry";
 import { type Candidate, effectiveChance, rotatedSize } from "./roll";
 import { type BlockView, SiteChecker, SiteGate, dimensionView } from "./site";
@@ -244,6 +244,6 @@ export function engineStrf(api: StrfEngineApi): StrfEngine {
       return v;
     },
     placeWorld: (d) => engineWorld(dimension(d), { structureManager: api.world.structureManager, BlockVolume: api.BlockVolume, StructureRotation: api.StructureRotation }),
-    hooks: (d) => new Loot(dimension(d), api).hooks,
+    hooks: (d) => ({ ...new Loot(dimension(d), api).hooks, spawnGuard: engineSpawnGuard(dimension(d)) }),
   };
 }
