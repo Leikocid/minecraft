@@ -111,9 +111,15 @@ function view(dim: DimShort, rec: InstanceRecord): Instance {
   };
 }
 
-/** Footprints touch in x/z; y is ignored, a structure over another's plot still blocks it. */
-const overlapsXZ = (a: InstanceRecord, o: Vec3, b: Vec3): boolean =>
-  a.o[0] < o[0] + b[0] && o[0] < a.o[0] + a.b[0] && a.o[2] < o[2] + b[2] && o[2] < a.o[2] + a.b[2];
+/**
+ * Gap a candidate keeps from every record on all six sides (L0-strf-d004):
+ * boxes closer than this fuse walls and read as one structure cut by another.
+ */
+export const COLLISION_MARGIN = 2;
+
+/** 3D box test; a Warden City under a Windmill's plot does not touch it. */
+const overlaps = (a: InstanceRecord, o: Vec3, b: Vec3, margin: number): boolean =>
+  [0, 1, 2].every((k) => a.o[k] < o[k] + b[k] + margin && o[k] - margin < a.o[k] + a.b[k]);
 
 export class Registry {
   private readonly cache = new Map<string, RegionShard>();
@@ -177,9 +183,9 @@ export class Registry {
 
   // --------------------------------------------------------------- records
 
-  /** Every record whose footprint overlaps the given box in x/z. */
-  recordsOverlapping(dim: DimShort, origin: Vec3, size: Vec3): Instance[] {
-    const reach = MAX_FOOTPRINT_BLOCKS;
+  /** Every record whose box overlaps the given box grown by `margin` on each side. */
+  recordsOverlapping(dim: DimShort, origin: Vec3, size: Vec3, margin = 0): Instance[] {
+    const reach = MAX_FOOTPRINT_BLOCKS + margin;
     const rx0 = regionOf(chunkOf(origin[0] - reach));
     const rx1 = regionOf(chunkOf(origin[0] + size[0] + reach));
     const rz0 = regionOf(chunkOf(origin[2] - reach));
@@ -188,7 +194,7 @@ export class Registry {
     for (let rx = rx0; rx <= rx1; rx++) {
       for (let rz = rz0; rz <= rz1; rz++) {
         for (const rec of this.load(shardKey(dim, rx, rz)).i) {
-          if (overlapsXZ(rec, origin, size)) out.push(view(dim, rec));
+          if (overlaps(rec, origin, size, margin)) out.push(view(dim, rec));
         }
       }
     }
@@ -204,8 +210,8 @@ export class Registry {
   /**
    * Reserve an instance in state `planned`, before the first world mutation.
    * The same id again returns the existing record untouched; any other record
-   * on the footprint blocks the candidate, whatever its state and whether or
-   * not the structure still stands.
+   * within COLLISION_MARGIN of the box blocks the candidate, whatever its state
+   * and whether or not the structure still stands.
    */
   plan(input: PlanInput): PlanResult {
     if (input.size.some((n) => n <= 0 || n > MAX_FOOTPRINT_BLOCKS)) {
@@ -216,7 +222,7 @@ export class Registry {
     const id = input.id ?? `${input.def}:${input.dim}:${cx}:${cz}`;
     const same = this.get(input.dim, input.origin, id);
     if (same !== undefined) return { ok: true, created: false, instance: same };
-    const other = this.recordsOverlapping(input.dim, input.origin, input.size).find((r) => r.id !== id);
+    const other = this.recordsOverlapping(input.dim, input.origin, input.size, COLLISION_MARGIN).find((r) => r.id !== id);
     if (other !== undefined) return { ok: false, blockedBy: other };
 
     const rec: InstanceRecord = {
