@@ -294,9 +294,10 @@ function main() {
     }
     // Which phase ran is decided by a marker in the saved world: a run 2 that
     // reran phase 1 means the world did not survive the restart.
-    const phase = `probe-mobs-restart-run${i + 1}`;
-    if (result.started && !analysis.selftestLines.some((l) => l.includes(phase))) {
-      problems.push(`${run}: the self-check never reported ${phase} — the restart probe ran the wrong phase or not at all`);
+    for (const phase of [`probe-mobs-restart-run${i + 1}`, `strf-registry-restart-run${i + 1}`]) {
+      if (result.started && !analysis.selftestLines.some((l) => l.includes(phase))) {
+        problems.push(`${run}: the self-check never reported ${phase} — the restart check ran the wrong phase or not at all`);
+      }
     }
   });
   if (runs.length < 2) problems.push('the restart run never happened — run 1 did not start');
