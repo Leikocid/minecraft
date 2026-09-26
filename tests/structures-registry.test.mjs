@@ -340,6 +340,13 @@ test('AC5: dist/andrew.mcaddon does not contain the test hook', (t) => {
   for (const f of scripts) {
     const body = execFileSync('unzip', ['-p', archivePath, f], { encoding: 'utf-8', maxBuffer: 64 * 1024 * 1024 });
     assert.equal(body.includes(HOOK_MARKER), false, `${f} contains the strf test hook`);
-    if (f === 'behavior/scripts/main.js') assert.match(body, /strf registry: shards=/);
+    // Freshness guard: a marker only the current code emits. Without it this test
+    // passes on a stale archive that predates the structures module entirely.
+    if (f === 'behavior/scripts/main.js') {
+      assert.ok(
+        /strf registry: shards=/.test(body),
+        `${archivePath} is stale — it has no structures registry diagnostic. Run "npm run build" and re-run.`
+      );
+    }
   }
 });
