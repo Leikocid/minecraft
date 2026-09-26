@@ -243,7 +243,7 @@ function runRegistryRestart(): void {
     }
     const final = reg.allInstances().map((i) => i.state);
     assert(final.every((s) => s === "done"), `after catch-up: ${final.join(",")}`);
-    assert(reg.plan({ def: "airship", dim: "o", origin: [50, 150, 50], rot: 0, size: [15, 7, 12] }).ok === false, "an old record did not block a new candidate");
+    assert(reg.plan({ def: "airship", dim: "o", origin: [50, 80, 50], rot: 0, size: [15, 7, 12] }).ok === false, "an old record did not block a new candidate");
     console.warn(`[andrew] ${reg.statsLine()}`);
   });
 }

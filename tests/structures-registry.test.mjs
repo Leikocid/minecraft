@@ -157,7 +157,7 @@ test('AC4: a record is never deleted and keeps blocking its spot after the struc
   // look at blocks at all. A new candidate on the same plot, from a restarted
   // server, must still be refused.
   const later = new Registry(store);
-  const shifted = { def: 'airship', dim: 'o', origin: [110, 150, 210], rot: 0, size: [15, 7, 12] };
+  const shifted = { def: 'airship', dim: 'o', origin: [110, 80, 210], rot: 0, size: [15, 7, 12] };
   const res = later.plan(shifted);
   assert.equal(res.ok, false);
   assert.equal(res.blockedBy.id, instance.id);
@@ -173,16 +173,32 @@ test('AC4: a record is never deleted and keeps blocking its spot after the struc
   // A failed record blocks too.
   const f = later.plan({ def: 'airship', dim: 'o', origin: [1000, 100, 1000], rot: 0, size: [15, 7, 12] }).instance;
   assert.equal(later.fail(f, 'invalid site'), true);
-  assert.equal(later.plan({ def: 'windmill', dim: 'o', origin: [1005, 64, 1005], rot: 0, size: [10, 10, 10] }).ok, false);
+  assert.equal(later.plan({ def: 'windmill', dim: 'o', origin: [1005, 98, 1005], rot: 0, size: [10, 10, 10] }).ok, false);
 });
 
 test('AC4: blocking reaches across a region border, and is per dimension', () => {
   const { reg } = fresh();
   // Origin in region -1 (chunk -1), footprint reaching into region 0.
   reg.plan({ def: 'windmill', dim: 'o', origin: [-10, 64, -10], rot: 0, size: [35, 30, 35] });
-  assert.equal(reg.plan({ def: 'airship', dim: 'o', origin: [20, 100, 20], rot: 0, size: [5, 5, 5] }).ok, false);
-  assert.equal(reg.plan({ def: 'airship', dim: 'n', origin: [20, 100, 20], rot: 0, size: [5, 5, 5] }).ok, true);
-  assert.equal(reg.plan({ def: 'airship', dim: 'o', origin: [25, 100, 25], rot: 0, size: [5, 5, 5] }).ok, true);
+  assert.equal(reg.plan({ def: 'airship', dim: 'o', origin: [20, 80, 20], rot: 0, size: [5, 5, 5] }).ok, false);
+  assert.equal(reg.plan({ def: 'airship', dim: 'n', origin: [20, 80, 20], rot: 0, size: [5, 5, 5] }).ok, true);
+  assert.equal(reg.plan({ def: 'airship', dim: 'o', origin: [27, 80, 27], rot: 0, size: [5, 5, 5] }).ok, true);
+});
+
+test('collision is a 3D box with a 2-block margin (L0-strf-d004)', () => {
+  const { reg } = fresh();
+  // Windmill box: x/z 100..134, y 64..93.
+  assert.equal(reg.plan(WINDMILL).ok, true);
+  const city = { def: 'warden_city', dim: 'o', rot: 0, size: [30, 15, 30] };
+  // Under the plot, top at y 49: 15 blocks below the Windmill floor.
+  assert.equal(reg.plan({ ...city, origin: [102, 35, 202] }).ok, true, 'underground city under a windmill is refused');
+  // Directly above, 2 blocks of air in between: allowed; 1 block: refused.
+  const ship = { def: 'airship', dim: 'o', rot: 0, size: [15, 7, 12] };
+  assert.equal(reg.plan({ ...ship, origin: [110, 95, 210], id: 'near' }).ok, false, 'a 1-block gap is inside the margin');
+  assert.equal(reg.plan({ ...ship, origin: [110, 96, 210], id: 'far' }).ok, true, 'a 2-block gap is outside the margin');
+  // Side by side in x: same rule.
+  assert.equal(reg.plan({ ...ship, origin: [136, 64, 210], id: 'side1' }).ok, false);
+  assert.equal(reg.plan({ ...ship, origin: [137, 64, 210], id: 'side2' }).ok, true);
 });
 
 test('evaluated bit is not set while the chunk has a pending candidate', () => {
