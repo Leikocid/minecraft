@@ -169,6 +169,8 @@ const EXPECTED_TESTS = [
   'andrew:windmill_spawn_prep_smooth',
   'andrew:windmill_spawn_prep_aborts',
   'andrew:windmill_spawn_no_dry_land',
+  // AIRS-TMPL-01 — src/gametest/airship.ts
+  'andrew:airship_rotations',
 ];
 
 // FLAT is not cosmetic: see the LEVEL_TYPE comment in docker/bds/compose.yaml.
