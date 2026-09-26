@@ -152,6 +152,9 @@ const EXPECTED_TESTS = [
   'andrew:strf_cmd_locate_tp',
   'andrew:strf_cmd_chance',
   'andrew:strf_cmd_operator_only',
+  // WIND-TMPL-01 — src/gametest/windmill.ts
+  'andrew:windmill_rotations',
+  'andrew:windmill_vindicator_axe',
 ];
 
 // FLAT is not cosmetic: see the LEVEL_TYPE comment in docker/bds/compose.yaml.

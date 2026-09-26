@@ -4,12 +4,12 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { cellIndex, compileTemplate, parseMcstructure, templateToBuffer } from '../scripts/lib/mcstructure.mjs';
-import { buildStructures } from '../scripts/build-structures.mjs';
+import { buildStructures, listTemplates } from '../scripts/build-structures.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const templatesDir = join(root, 'src', 'structures', 'templates');
@@ -129,7 +129,9 @@ test('buildStructures writes one verified file per template', () => {
   const out = mkdtempSync(join(tmpdir(), 'andrew-structures-'));
   try {
     const results = buildStructures({ to: out });
-    const templates = readdirSync(templatesDir).filter((f) => f.endsWith('.json')).map((f) => f.replace(/\.json$/, ''));
+    const templates = listTemplates().map((t) => t.id);
+    assert.ok(templates.includes('windmill'), 'the .ts template is not picked up');
+    assert.ok(!templates.includes('windmill-fields') && !templates.includes('probe-big'), 'a helper module is taken for a template');
     assert.deepStrictEqual(results.map((r) => r.id).sort(), templates.sort());
     for (const id of templates) {
       const file = join(out, `${id}.mcstructure`);

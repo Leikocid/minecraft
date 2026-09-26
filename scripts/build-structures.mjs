@@ -1,13 +1,19 @@
 // Compile src/structures/templates/<id>.json into
 // packs/behavior/structures/andrew/<id>.mcstructure (engine id "andrew:<id>").
+// A template too large to write by hand is <id>.ts whose default export is the
+// template object or a function returning it; a .ts file without a default
+// export is a helper module, not a template.
 //
 // The output directory is build output: it is wiped and regenerated on every
 // run, so a deleted template cannot leave a stale structure in the pack.
 // Every written file is parsed back and checked against its own template
 // before the build moves on to packaging.
 
-import { mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
-import { basename, dirname, join } from 'node:path';
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
+import { tmpdir } from 'node:os';
+import { basename, dirname, extname, join } from 'node:path';
+import { buildSync } from 'esbuild';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { compileTemplate, parseMcstructure } from './lib/mcstructure.mjs';
 import { writeNbt } from './lib/nbt.mjs';
@@ -28,18 +34,40 @@ function verifyRoundTrip(id, buffer, counts) {
   if (a !== b) throw new Error(`${id}: block counts differ after round trip\n  wrote ${a}\n  read  ${b}`);
 }
 
+const isTsTemplate = (path) => /^export default\b/m.test(readFileSync(path, 'utf-8'));
+
+/** Bundle a .ts template module (with its imports) to CommonJS and evaluate its default export. */
+export function loadTsTemplate(path) {
+  const dir = mkdtempSync(join(tmpdir(), 'andrew-template-'));
+  const out = join(dir, 'template.cjs');
+  try {
+    buildSync({ entryPoints: [path], bundle: true, format: 'cjs', platform: 'neutral', outfile: out, logLevel: 'error' });
+    const exported = createRequire(import.meta.url)(out).default;
+    return typeof exported === 'function' ? exported() : exported;
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+/** Template ids and how to load each, in build order. */
+export function listTemplates(from = templatesDir) {
+  return readdirSync(from)
+    .filter((f) => f.endsWith('.json') || (f.endsWith('.ts') && isTsTemplate(join(from, f))))
+    .sort()
+    .map((file) => ({ id: basename(file, extname(file)), file }));
+}
+
 /** @returns {{ id: string, bytes: number, counts: Record<string, number> }[]} */
 export function buildStructures({ from = templatesDir, to = structuresDir } = {}) {
   rmSync(to, { recursive: true, force: true });
   mkdirSync(to, { recursive: true });
   const results = [];
-  for (const file of readdirSync(from).filter((f) => f.endsWith('.json')).sort()) {
-    const id = basename(file, '.json');
+  for (const { id, file } of listTemplates(from)) {
     let template;
     try {
-      template = JSON.parse(readFileSync(join(from, file), 'utf-8'));
+      template = file.endsWith('.ts') ? loadTsTemplate(join(from, file)) : JSON.parse(readFileSync(join(from, file), 'utf-8'));
     } catch (err) {
-      throw new Error(`${file}: invalid JSON: ${err.message}`);
+      throw new Error(`${file}: invalid template: ${err.message}`);
     }
     let compiled;
     try {
