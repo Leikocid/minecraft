@@ -177,6 +177,9 @@ const EXPECTED_TESTS = [
   'andrew:airship_linked_over_windmill',
   'andrew:airship_linked_no_merge',
   'andrew:airship_linked_ring_invalid',
+  // WRDN-TMPL-01 — src/gametest/warden.ts
+  'andrew:warden_rotations',
+  'andrew:warden_dig_down',
 ];
 
 // FLAT is not cosmetic: see the LEVEL_TYPE comment in docker/bds/compose.yaml.
