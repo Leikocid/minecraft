@@ -105,6 +105,11 @@ const EXPECTED_TESTS = [
   'andrew:scythe_out_of_radius_after_hit_cooldown',
   'andrew:scythe_cleanup_on_target_death',
   'andrew:scythe_lethal_hit_kills',
+  // stage4-probe strf-p006 questions 1, 2, 7, 10 — src/gametest/probe-place.ts
+  'andrew:probe_place_block_entities',
+  'andrew:probe_place_rotation',
+  'andrew:probe_place_timing',
+  'andrew:probe_fill_air_limits',
 ];
 
 // FLAT is not cosmetic: see the LEVEL_TYPE comment in docker/bds/compose.yaml.
@@ -444,6 +449,15 @@ function main() {
   log('GameTest results:');
   if (results.size === 0) log('  (no onTestPassed/onTestFailed lines in the log)');
   for (const [name, result] of results) log(`  ${result.ok ? '✓' : '✗'} ${name}`);
+
+  // Probe tests report engine answers, not pass/fail of the product; their
+  // verdict lines are the deliverable, so they go into the summary too.
+  const probeResults = text.split('\n').filter((l) => / \[probe\] .*RESULT /.test(l));
+  if (probeResults.length > 0) {
+    log('');
+    log('Engine probe answers:');
+    for (const l of probeResults) log(`  ${l.slice(l.indexOf('[probe]'))}`);
+  }
 
   log('');
   if (problems.length > 0) {

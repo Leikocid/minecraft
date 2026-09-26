@@ -12,7 +12,7 @@
     "S": { "name": "minecraft:mob_spawner", "spawner": { "entity": "minecraft:zombie" } },
     "K": { "name": "minecraft:sculk_shrieker", "states": { "active": false, "can_summon": true } },
     "D": {
-      "name": "minecraft:oak_door",
+      "name": "minecraft:wooden_door",
       "states": {
         "upper_block_bit": false,
         "minecraft:cardinal_direction": "south",
@@ -21,7 +21,7 @@
       }
     },
     "U": {
-      "name": "minecraft:oak_door",
+      "name": "minecraft:wooden_door",
       "states": {
         "upper_block_bit": true,
         "minecraft:cardinal_direction": "south",

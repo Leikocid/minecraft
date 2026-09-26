@@ -32,7 +32,7 @@ test('probe_box: exact fixture counts the strf-p006 probe depends on', () => {
     assert.strictEqual(counts['minecraft:chest'], 2, `${counts['minecraft:chest']} chests, expected 2`);
     assert.strictEqual(counts['minecraft:mob_spawner'], 1, `${counts['minecraft:mob_spawner']} spawners, expected 1`);
     assert.strictEqual(counts['minecraft:sculk_shrieker'], 1, `${counts['minecraft:sculk_shrieker']} shriekers, expected 1`);
-    assert.strictEqual(counts['minecraft:oak_door'], 2, `${counts['minecraft:oak_door']} door blocks, expected 2 (both halves)`);
+    assert.strictEqual(counts['minecraft:wooden_door'], 2, `${counts['minecraft:wooden_door']} door blocks, expected 2 (both halves)`);
     assert.strictEqual(counts['minecraft:stone_brick_stairs'], 1, `${counts['minecraft:stone_brick_stairs']} stairs, expected 1`);
 
     const spawnerEntry = [...s.blockEntities.values()].find((be) => be.id === 'MobSpawner');
@@ -41,7 +41,7 @@ test('probe_box: exact fixture counts the strf-p006 probe depends on', () => {
     const shriekerIndex = s.primary.findIndex((i) => s.palette[i].name === 'minecraft:sculk_shrieker');
     assert.strictEqual(s.palette[s.primary[shriekerIndex]].states.can_summon, 1, 'sculk_shrieker can_summon is not true');
 
-    const doorPalette = s.palette.filter((p) => p.name === 'minecraft:oak_door');
+    const doorPalette = s.palette.filter((p) => p.name === 'minecraft:wooden_door');
     assert.strictEqual(doorPalette.length, 2, 'door needs two distinct permutations, one per half');
     const halves = doorPalette.map((p) => p.states.upper_block_bit).sort();
     assert.deepStrictEqual(halves, [0, 1], 'door halves must be one upper_block_bit=false and one =true');
