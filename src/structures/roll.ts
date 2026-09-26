@@ -32,11 +32,29 @@ export const rollKey = (salt: string, dim: DimShort, cx: number, cz: number, def
 export const rollUnit = (salt: string, dim: DimShort, cx: number, cz: number, def: string, purpose: string): number =>
   hash32(rollKey(salt, dim, cx, cz, def, purpose)) / 0x100000000;
 
-/** The test hook's forced outcome wins over the hash (L0-strf-d001). */
+/**
+ * Session-only chance table set by `/andrew:structure chance` (L0-strf-d001
+ * override table). Module memory, never a dynamic property: a restart restores
+ * the configured chances. Unlike the test hook it ships in the release build,
+ * because the operator runs it on the release server.
+ */
+const chanceOverrides = new Map<string, number>();
+
+/** `undefined` clears the override; the value is a probability in [0, 1]. */
+export function setChanceOverride(def: string, chance: number | undefined): void {
+  if (chance === undefined) chanceOverrides.delete(def);
+  else chanceOverrides.set(def, Math.min(1, Math.max(0, chance)));
+}
+
+export const chanceOverride = (def: string): number | undefined => chanceOverrides.get(def);
+
+export const effectiveChance = (def: RollDef): number => chanceOverrides.get(def.id) ?? def.chance;
+
+/** The test hook's forced outcome wins over the hash, the session override over the table (L0-strf-d001). */
 export function rollHit(salt: string, dim: DimShort, cx: number, cz: number, def: RollDef): boolean {
   const forced = forcedOutcome(def.id, dim, cx, cz);
   if (forced !== undefined) return forced;
-  return rollUnit(salt, dim, cx, cz, def.id, "roll") < def.chance;
+  return rollUnit(salt, dim, cx, cz, def.id, "roll") < effectiveChance(def);
 }
 
 export const rollRotation = (salt: string, dim: DimShort, cx: number, cz: number, def: string): Rotation =>

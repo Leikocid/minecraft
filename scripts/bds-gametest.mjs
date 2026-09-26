@@ -147,6 +147,11 @@ const EXPECTED_TESTS = [
   'andrew:strf_loot_bastion_other',
   'andrew:strf_loot_control',
   'andrew:strf_loot_full_chest',
+  // STRF-CMD-01 — src/gametest/structures-commands.ts
+  'andrew:strf_cmd_place',
+  'andrew:strf_cmd_locate_tp',
+  'andrew:strf_cmd_chance',
+  'andrew:strf_cmd_operator_only',
 ];
 
 // FLAT is not cosmetic: see the LEVEL_TYPE comment in docker/bds/compose.yaml.
