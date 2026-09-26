@@ -41,6 +41,7 @@ import {
   assertDockerRunning,
   buildAddon,
   compose,
+  containerName,
   dataDir,
   log,
   root,
@@ -393,19 +394,20 @@ function waitFor(label, done, deadline) {
  * has to be skipped because its own cmdline names it too.
  */
 function sendCommand(command) {
+  const container = containerName();
   const find =
     'for p in /proc/[0-9]*; do c=$(tr "\\0" " " < $p/cmdline); ' +
     'case "$c" in *mc-server-runner*) continue;; *bedrock_server-*) basename $p; break;; esac; done';
-  const res = spawnSync('docker', ['exec', 'andrew-bds', 'sh', '-c', find], { encoding: 'utf-8' });
+  const res = spawnSync('docker', ['exec', container, 'sh', '-c', find], { encoding: 'utf-8' });
   const pid = (res.stdout ?? '').trim();
   if (!/^\d+$/.test(pid)) {
-    throw new Error(`could not find the bedrock_server process in the container (got ${JSON.stringify(pid)})`);
+    throw new Error(`could not find the bedrock_server process in container ${container} (got ${JSON.stringify(pid)})`);
   }
   // Single-quoted in the shell, and commands here are literals from this file —
   // nothing from the log or the environment reaches this string.
   const write = spawnSync(
     'docker',
-    ['exec', 'andrew-bds', 'sh', '-c', `echo '${command}' > /proc/${pid}/fd/0`],
+    ['exec', container, 'sh', '-c', `echo '${command}' > /proc/${pid}/fd/0`],
     { encoding: 'utf-8' }
   );
   if (write.status !== 0) {
