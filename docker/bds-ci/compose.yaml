@@ -1,0 +1,72 @@
+# Throwaway Bedrock instance for the automated checks.
+#
+# `bds:check` and `bds:gametest` recreate their container and world on every run.
+# Pointing them at a server somebody plays on destroys that world, so they get an
+# instance nobody joins: own container name, own ports, own ./data. The npm
+# scripts pin ANDREW_BDS_DIR=bds-ci with a command-prefix assignment, which wins
+# over an exported value — a leaked env var cannot aim a check at QA or at the
+# LAN server again (it did once: 2026-09-27, the gametest run wiped QA).
+#
+# VERSION must stay equal to BDS_VERSION in scripts/targets.mjs.
+
+services:
+  bds:
+    image: itzg/minecraft-bedrock-server:latest
+    # BDS ships x86_64 only; on Apple Silicon this runs through Rosetta.
+    # [src: concept-constraint C-5]
+    platform: linux/amd64
+    container_name: andrew-bds-ci
+    environment:
+      EULA: "TRUE"
+      VERSION: "1.26.51.1"
+      # The world the packs are attached to; scripts/bds-check.mjs writes
+      # worlds/$LEVEL_NAME/world_{behavior,resource}_packs.json.
+      # bds:check and bds:up leave this at "andrew"; scripts/bds-gametest.mjs
+      # starts the container with BDS_LEVEL_NAME=gametest so that the
+      # experiments-enabled GameTest world is a separate world and the
+      # everyday "andrew" world is never touched by it.
+      LEVEL_NAME: "${BDS_LEVEL_NAME:-andrew}"
+      # bds:check and bds:up want an ordinary world. scripts/bds-gametest.mjs
+      # starts the container with BDS_LEVEL_TYPE=FLAT: GameTest places its
+      # platform at the console's own position, and in a default world that
+      # lands wherever the generator put the origin — measured at y=53 in an
+      # ocean, i.e. under water, where mining is five times slower and the
+      # simulated player drowns inside the test's tick budget. A superflat
+      # world puts the same platform on dry land every time.
+      LEVEL_TYPE: "${BDS_LEVEL_TYPE:-DEFAULT}"
+      SERVER_NAME: "Andrew BDS CI"
+      SERVER_PORT: "19136"
+      SERVER_PORT_V6: "19137"
+
+      # bds-check leaves this at the default (creative); bds:up starts the
+      # container with BDS_GAMEMODE=survival in its environment so this
+      # resolves to survival there. The image reapplies GAMEMODE from this
+      # env var into server.properties on every container start (via
+      # set-property --bulk), so writing "survival" into the properties file
+      # directly does not stick — this is the only override that works.
+      GAMEMODE: "${BDS_GAMEMODE:-creative}"
+      DIFFICULTY: "peaceful"
+      ALLOW_CHEATS: "true"
+      # LAN-only dev server: the iPad joins without Xbox Live auth.
+      ONLINE_MODE: "false"
+      # Without console output the script's console.warn never reaches
+      # `docker logs`, and the check has nothing to assert on.
+      CONTENT_LOG_FILE_ENABLED: "true"
+      CONTENT_LOG_CONSOLE_OUTPUT_ENABLED: "true"
+    # NetherNet (BDS 1.26 default transport, bedrock_server_how_to.html §Transport):
+    #   - the handshake is HTTP over TCP on server-port, so 19132/tcp must be
+    #     published — with udp alone the iPad got "Connection refused" (2026-09-21);
+    #   - gameplay then runs over UDP on ports the server allocates; they are
+    #     pinned to 19140-19149 via server-udp-ports and published 1:1 below.
+    #   - 7551/udp is NetherNet LAN discovery, so the server shows up in the
+    #     iPad's LAN list as well as by address.
+    ports:
+      - "19136:19136/tcp"
+      - "19136:19136/udp"
+      - "19160-19169:19160-19169/udp"
+      - "7553:7553/udp"
+    volumes:
+      # Server binary, world and installed packs. Gitignored.
+      - ./data:/data
+    stdin_open: true
+    tty: true

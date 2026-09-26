@@ -41,6 +41,7 @@ import {
   assertDockerRunning,
   buildAddon,
   compose,
+  containerName,
   dataDir,
   log,
   root,
@@ -396,7 +397,7 @@ function sendCommand(command) {
   const find =
     'for p in /proc/[0-9]*; do c=$(tr "\\0" " " < $p/cmdline); ' +
     'case "$c" in *mc-server-runner*) continue;; *bedrock_server-*) basename $p; break;; esac; done';
-  const res = spawnSync('docker', ['exec', 'andrew-bds', 'sh', '-c', find], { encoding: 'utf-8' });
+  const res = spawnSync('docker', ['exec', containerName, 'sh', '-c', find], { encoding: 'utf-8' });
   const pid = (res.stdout ?? '').trim();
   if (!/^\d+$/.test(pid)) {
     throw new Error(`could not find the bedrock_server process in the container (got ${JSON.stringify(pid)})`);
@@ -405,7 +406,7 @@ function sendCommand(command) {
   // nothing from the log or the environment reaches this string.
   const write = spawnSync(
     'docker',
-    ['exec', 'andrew-bds', 'sh', '-c', `echo '${command}' > /proc/${pid}/fd/0`],
+    ['exec', containerName, 'sh', '-c', `echo '${command}' > /proc/${pid}/fd/0`],
     { encoding: 'utf-8' }
   );
   if (write.status !== 0) {

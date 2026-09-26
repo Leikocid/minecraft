@@ -8,6 +8,7 @@ packs/gametest/scripts/
 packs/gametest/structures/
 docker/bds/data/
 docker/bds-qa/data/
+docker/bds-ci/data/
 
 # ai-kit — tool-specific configs (do not commit)
 .mcp.json

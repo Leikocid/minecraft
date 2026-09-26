@@ -27,6 +27,16 @@ export const seedProperties = join(composeDir, 'server.properties');
 export const dataDir = join(composeDir, 'data');
 export const addonPath = join(root, 'dist', 'andrew.mcaddon');
 
+// The container name comes from the instance's own compose file. Hardcoding it
+// breaks the moment ANDREW_BDS_DIR points elsewhere: compose then starts one
+// container while `docker exec` looks for another, and the run fails with an
+// empty process list instead of naming the mismatch.
+export const containerName = (() => {
+  const m = readFileSync(composeFile, 'utf-8').match(/^\s*container_name:\s*(\S+)\s*$/m);
+  if (!m) throw new Error(`${composeFile}: no container_name found`);
+  return m[1];
+})();
+
 // Fixed install names, so a run never depends on leftovers from the last one.
 export const BP_DIR_NAME = 'andrew_bp';
 export const RP_DIR_NAME = 'andrew_rp';
