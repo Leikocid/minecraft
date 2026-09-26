@@ -287,6 +287,33 @@ test('AC1: on flat dry land the site is the nearest in the 5×5 chunks around sp
   assert.equal(h.states.at(-1).nearSpawn, 1);
 });
 
+test('a guard step that throws (a Peaceful world) still leaves the spawn Windmill done, not failed: guards queue for later, the one search is not burned on it', async () => {
+  const w = new FakeWorld();
+  const store = new MemoryStore();
+  store.set(SALT_KEY, 'spawn-salt-peaceful');
+  const placed = [];
+  const rt = new StrfRuntime(store, {
+    view: (d) => (d === 'o' ? w.view() : undefined),
+    placeWorld: (d) => (d === 'o' ? {
+      hasTemplate: () => true,
+      isLoaded: () => true,
+      place: (id, origin, rot) => placed.push({ id, origin, rot }),
+      fill: () => {},
+    } : undefined),
+    // Mirrors engineSpawnGuard on a real Peaceful server: the guard step throws.
+    hooks: () => ({ fillChest() {}, spawnGuard: () => { throw new Error('EntitySpawnError: Attempting to spawn a hostile mob in a peaceful world.'); } }),
+  });
+  const h = host(w, { spawn: { x: 100, z: -40 } });
+  const logs = [];
+  const s = new SpawnSearch(rt, store, h, { radius: 120, log: (l) => logs.push(l) });
+  const rec = await s.run();
+  assert.equal(rec.status, 'done', `spawn Windmill search must not fail on a recoverable guard-step error: ${rec.reason}`);
+  assert.equal(placed.length, 1, 'the template itself was placed');
+  const inst = rt.registry.get('o', rec.origin, SPAWN_ID);
+  assert.equal(inst.state, 'looted', 'guard step left pending, not skipped past');
+  assert.equal(rt.queued, 1, 'the instance is queued so pumpPlacement retries the guard step later');
+});
+
 test('AC1: with water around spawn the search takes the nearest dry flat site farther out (stage 2)', async () => {
   // Dry land only east of x = 230; spawn at 0,0.
   const w = new FakeWorld({ surface: (x) => (x < 230 ? 'minecraft:water' : 'minecraft:grass_block') });

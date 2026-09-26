@@ -400,7 +400,7 @@ function sendCommand(command) {
   const res = spawnSync('docker', ['exec', containerName, 'sh', '-c', find], { encoding: 'utf-8' });
   const pid = (res.stdout ?? '').trim();
   if (!/^\d+$/.test(pid)) {
-    throw new Error(`could not find the bedrock_server process in the container (got ${JSON.stringify(pid)})`);
+    throw new Error(`could not find the bedrock_server process in container ${containerName} (got ${JSON.stringify(pid)})`);
   }
   // Single-quoted in the shell, and commands here are literals from this file —
   // nothing from the log or the environment reaches this string.
