@@ -97,7 +97,8 @@ registerRecovery();
 
 // Engine witness for AC#4 of LG-KEEP-02: which event reports a dropped item.
 world.afterEvents.entitySpawn.subscribe((event) => {
-  if (event.entity.typeId === "minecraft:item") {
+  // An item removed in the same tick (test cleanup) arrives invalid; getComponent throws on it.
+  if (event.entity.isValid && event.entity.typeId === "minecraft:item") {
     const stack = event.entity.getComponent("minecraft:item")?.itemStack;
     console.warn(`[gametest] probe entitySpawn: minecraft:item ${stack?.typeId ?? "?"} cause=${event.cause}`);
   }
