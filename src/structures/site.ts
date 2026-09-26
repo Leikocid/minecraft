@@ -5,7 +5,7 @@
 // tests run this with a fake world.
 
 import type { BlockTypes, BlockVolume, Dimension } from "@minecraft/server";
-import { type CollisionKind, collisionBox, instanceCollision, scanCollision } from "./collision";
+import { type Box, type CollisionKind, collisionBox, instanceCollision, scanCollision } from "./collision";
 import { ROLL_DEFS, type StructureId } from "./config";
 import type { Site, SiteVerdict } from "./discovery";
 import { PendingSites } from "./pending";
@@ -23,7 +23,7 @@ import {
   netherFloor,
   surfaceY,
 } from "./profiles";
-import { type DimShort, type Instance, type Registry, COLLISION_MARGIN } from "./registry";
+import { type DimShort, type Instance, type Registry, type Vec3, COLLISION_MARGIN } from "./registry";
 import { type Candidate, rollUnit } from "./roll";
 
 const CHUNK = 16;
@@ -53,6 +53,7 @@ const FOLIAGE =
   /(leaves|_log$|_wood$|_stem$|_hyphae$|mushroom_block|vine|sapling|flower|tulip|rose_bush|dandelion|poppy|orchid|allium|bluet|daisy|cornflower|lily_of|short_grass|tall_grass|^minecraft:grass$|fern|bush|snow_layer|sugar_cane|^minecraft:bamboo$|cactus|azalea|moss_carpet|pink_petals|leaf_litter|wildflowers|dripleaf|hanging_roots|glow_lichen|roots$|fungus$|sprouts$|fire$|torchflower|pitcher|sunflower|lilac|peony|brown_mushroom$|red_mushroom$)/;
 
 export const isLiquid = (t: string): boolean => LIQUID.test(t);
+export const isFoliage = (t: string): boolean => FOLIAGE.test(t);
 const isLava = (t: string): boolean => t === "minecraft:lava" || t === "minecraft:flowing_lava";
 const isFloorBlock = (t: string): boolean => t !== AIR && !isLiquid(t) && t !== "minecraft:bedrock" && !FOLIAGE.test(t);
 
@@ -140,8 +141,33 @@ export function netherColumn(view: BlockView, x: number, z: number, inner: boole
   return { x, z, floor, lavaSea, inner };
 }
 
+/**
+ * A second area a candidate writes besides its box, such as the Warden City's
+ * surface marker. It passes the same gates as the box — loaded, suitable,
+ * collision-free — or the whole candidate is rejected.
+ */
+export interface ExtraSpot {
+  /** Prefix of the spot's reject reasons: `<label>:<reason>`. */
+  label: string;
+  /** Every column the spot reads or writes; the chunk of each must be loaded before anything is read. */
+  columns(c: Candidate): Array<[number, number]>;
+  /**
+   * Judges the spot for a box whose bottom is `y`; undefined when a read hit
+   * an unloaded chunk. On success, the cells it will write, collision-checked
+   * like the box itself.
+   */
+  check(view: BlockView, c: Candidate, y: number): { ok: true; box: Box } | { ok: false; reason: string } | undefined;
+}
+
+const chunkOf = (v: number): number => Math.floor(v / CHUNK);
+
+export const spotLoaded = (view: BlockView, c: Candidate, spot: ExtraSpot | undefined): boolean =>
+  spot === undefined || spot.columns(c).every(([x, z]) => view.isLoaded(chunkOf(x) * CHUNK, chunkOf(z) * CHUNK));
+
 export interface SiteCheckerOptions {
   profiles?: Readonly<Record<string, SiteProfile>>;
+  /** Structure type → its extra spot. */
+  spots?: Readonly<Record<string, ExtraSpot>>;
   /** Registry records block the site too; the candidate's own id is skipped on a recheck. */
   registry?: Registry;
   log?: (msg: string) => void;
@@ -166,7 +192,7 @@ export class SiteChecker {
 
   loaded(c: Candidate): boolean {
     const view = this.views(c.dim);
-    return view !== undefined && footprintLoaded(view, c);
+    return view !== undefined && footprintLoaded(view, c) && spotLoaded(view, c, this.opts.spots?.[c.def.id]);
   }
 
   /** The full check. Nothing is read from the world before the loaded gate passes. */
@@ -180,21 +206,31 @@ export class SiteChecker {
 
   private run(c: Candidate, selfId: string | undefined): SiteVerdict {
     const view = this.views(c.dim);
-    if (view === undefined || !footprintLoaded(view, c)) return { kind: "pending" };
+    const spot = this.opts.spots?.[c.def.id];
+    if (view === undefined || !footprintLoaded(view, c) || !spotLoaded(view, c, spot)) return { kind: "pending" };
     const profile = this.profiles[c.def.id];
     if (profile === undefined) return { kind: "rejected", reason: "no-profile" };
 
     const v = this.vertical(view, c, profile);
     if (!v.ok) return v.reason === "unloaded" ? { kind: "pending" } : { kind: "rejected", reason: v.reason };
 
-    const origin: [number, number, number] = [c.x, v.y, c.z];
-    if (this.opts.registry !== undefined) {
-      const other = instanceCollision(this.opts.registry, c.dim, origin, c.size, selfId ?? c.id);
-      if (other !== undefined) return { kind: "rejected", reason: collision("instance") };
+    const boxes: Array<{ prefix: string; origin: Vec3; size: Vec3 }> = [{ prefix: "", origin: [c.x, v.y, c.z], size: c.size }];
+    if (spot !== undefined) {
+      const s = spot.check(view, c, v.y);
+      if (s === undefined) return { kind: "pending" };
+      if (!s.ok) return { kind: "rejected", reason: `${spot.label}:${s.reason}` };
+      const { min, max } = s.box;
+      boxes.push({ prefix: `${spot.label}:`, origin: min, size: [max[0] - min[0] + 1, max[1] - min[1] + 1, max[2] - min[2] + 1] });
     }
-    const scan = scanCollision(view, c.dim, collisionBox(origin, c.size));
-    if (scan.kind === "unloaded") return { kind: "pending" };
-    if (scan.kind === "hit") return { kind: "rejected", reason: collision(scan.collision) };
+    for (const b of boxes) {
+      if (this.opts.registry !== undefined) {
+        const other = instanceCollision(this.opts.registry, c.dim, b.origin, b.size, selfId ?? c.id);
+        if (other !== undefined) return { kind: "rejected", reason: b.prefix + collision("instance") };
+      }
+      const scan = scanCollision(view, c.dim, collisionBox(b.origin, b.size));
+      if (scan.kind === "unloaded") return { kind: "pending" };
+      if (scan.kind === "hit") return { kind: "rejected", reason: b.prefix + collision(scan.collision) };
+    }
     return { kind: "valid", y: v.y };
   }
 

@@ -180,6 +180,9 @@ const EXPECTED_TESTS = [
   // WRDN-TMPL-01 — src/gametest/warden.ts
   'andrew:warden_rotations',
   'andrew:warden_dig_down',
+  // WRDN-BODY-01 — src/gametest/warden-body.ts
+  'andrew:warden_body_generate',
+  'andrew:warden_body_site',
 ];
 
 // FLAT is not cosmetic: see the LEVEL_TYPE comment in docker/bds/compose.yaml.
