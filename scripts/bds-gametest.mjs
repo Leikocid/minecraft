@@ -140,6 +140,13 @@ const EXPECTED_TESTS = [
   'andrew:strf_place_clear_sliced',
   'andrew:strf_place_block_entities',
   'andrew:strf_place_resume',
+  // LOOT-TBL-01 — src/gametest/structures-loot.ts
+  'andrew:strf_loot_custom',
+  'andrew:strf_loot_ancient_city',
+  'andrew:strf_loot_bastion_treasure',
+  'andrew:strf_loot_bastion_other',
+  'andrew:strf_loot_control',
+  'andrew:strf_loot_full_chest',
 ];
 
 // FLAT is not cosmetic: see the LEVEL_TYPE comment in docker/bds/compose.yaml.
