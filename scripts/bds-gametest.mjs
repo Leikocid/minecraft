@@ -26,12 +26,15 @@
 //      instead and the command is written to its stdin.
 //
 //   npm run bds:gametest
-//   npm run bds:gametest -- --no-build --timeout 600
+//   npm run bds:gametest -- --no-build --timeout 1800
 //   npm run bds:gametest -- --keep-up      # leave the server running to inspect
+//   npm run bds:gametest -- --only andrew:probe_fire_resistance_noon   # one test, for iteration
 
 import { execFileSync, spawnSync } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { buildMcstructure } from './lib/mcstructure.mjs';
+import { TAG_BYTE, readNbt, writeNbt } from './lib/nbt.mjs';
 import {
   addonPath,
   assertComposePinsVersion,
@@ -44,7 +47,6 @@ import {
   seedProperties,
   unpackAddon,
 } from './bds-lib.mjs';
-import { MIN_ENGINE_VERSION } from './targets.mjs';
 
 // A world of its own: the everyday "andrew" world must never carry the
 // experiment flag, and this one is wiped on every run.
@@ -104,6 +106,26 @@ const EXPECTED_TESTS = [
   'andrew:scythe_out_of_radius_after_hit_cooldown',
   'andrew:scythe_cleanup_on_target_death',
   'andrew:scythe_lethal_hit_kills',
+  // stage4-probe strf-p006 questions 1, 2, 7, 10 — src/gametest/probe-place.ts
+  'andrew:probe_place_block_entities',
+  'andrew:probe_place_rotation',
+  'andrew:probe_place_timing',
+  'andrew:probe_fill_air_limits',
+  // strf-p006 questions 9, 11, 8 — src/gametest/probe-chunk.ts
+  'andrew:probe_chunk_loaded',
+  'andrew:probe_tickingarea_load',
+  'andrew:probe_dynamic_property_budget',
+  // strf-p006 questions 3, 6 — src/gametest/probe-mobs.ts (Q5 and the restart
+  // half of Q6 run in bds:check: they need two server runs over one world)
+  'andrew:probe_shrieker_summons_warden',
+  'andrew:probe_fire_resistance_noon',
+  'andrew:probe_cured_villager_keeps_name',
+  // strf-p006 question 4 — src/gametest/probe-loot.ts
+  'andrew:probe_loot_ancient_city',
+  'andrew:probe_loot_bastion_treasure',
+  'andrew:probe_loot_bastion_other',
+  'andrew:probe_loot_control_known_table',
+  'andrew:probe_loot_full_chest',
 ];
 
 // FLAT is not cosmetic: see the LEVEL_TYPE comment in docker/bds/compose.yaml.
@@ -118,147 +140,26 @@ const env = {
 // ---------------------------------------------------------------- arguments
 
 function parseArgs(argv) {
-  const opts = { build: true, timeoutSec: 600, keepUp: false };
+  // The zombie-villager cure alone waits up to 5.5 minutes of game time.
+  const opts = { build: true, timeoutSec: 1800, keepUp: false, only: [] };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === '--no-build') opts.build = false;
     else if (arg === '--keep-up') opts.keepUp = true;
+    else if (arg === '--only') opts.only.push(argv[++i]);
     else if (arg === '--timeout') opts.timeoutSec = Number(argv[++i]);
     else throw new Error(`unknown argument: ${arg}`);
   }
   if (!Number.isFinite(opts.timeoutSec) || opts.timeoutSec <= 0) {
     throw new Error('--timeout must be a positive number of seconds');
   }
+  const unknown = opts.only.filter((n) => !EXPECTED_TESTS.includes(n));
+  if (unknown.length > 0) throw new Error(`--only: not in EXPECTED_TESTS: ${unknown.join(' ')}`);
   return opts;
 }
 
 function sleep(ms) {
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
-}
-
-// -------------------------------------------------------- little-endian NBT
-//
-// Bedrock writes NBT little-endian. Both files this script has to produce are
-// NBT: level.dat (with an 8-byte header: format version, payload length) and
-// .mcstructure (bare, no header).
-//
-// Tags are kept as { type, name, value } rather than plain objects so that a
-// parse -> edit -> serialise round trip preserves types exactly. level.dat is
-// written by the engine and read back by it; guessing a type would corrupt a
-// field this script never meant to touch.
-
-const TAG_END = 0;
-const TAG_BYTE = 1;
-const TAG_INT = 3;
-const TAG_STRING = 8;
-const TAG_LIST = 9;
-const TAG_COMPOUND = 10;
-
-function readNbt(buf, start) {
-  let off = start;
-
-  const readString = () => {
-    const len = buf.readUInt16LE(off);
-    off += 2;
-    const s = buf.toString('utf8', off, off + len);
-    off += len;
-    return s;
-  };
-
-  const readPayload = (type) => {
-    switch (type) {
-      case TAG_BYTE: return buf.readInt8(off++);
-      case 2: { const v = buf.readInt16LE(off); off += 2; return v; }
-      case TAG_INT: { const v = buf.readInt32LE(off); off += 4; return v; }
-      case 4: { const v = buf.readBigInt64LE(off); off += 8; return v; }
-      case 5: { const v = buf.readFloatLE(off); off += 4; return v; }
-      case 6: { const v = buf.readDoubleLE(off); off += 8; return v; }
-      case 7: { const n = buf.readInt32LE(off); off += 4; const v = Buffer.from(buf.subarray(off, off + n)); off += n; return v; }
-      case TAG_STRING: return readString();
-      case TAG_LIST: {
-        const elementType = buf.readUInt8(off++);
-        const n = buf.readInt32LE(off);
-        off += 4;
-        const items = [];
-        for (let i = 0; i < n; i++) items.push(readPayload(elementType));
-        return { elementType, items };
-      }
-      case TAG_COMPOUND: {
-        const entries = [];
-        for (;;) {
-          const type2 = buf.readUInt8(off++);
-          if (type2 === TAG_END) break;
-          entries.push({ type: type2, name: readString(), value: readPayload(type2) });
-        }
-        return entries;
-      }
-      case 11: {
-        const n = buf.readInt32LE(off);
-        off += 4;
-        const items = [];
-        for (let i = 0; i < n; i++) { items.push(buf.readInt32LE(off)); off += 4; }
-        return items;
-      }
-      default: throw new Error(`unsupported NBT tag ${type} at offset ${off}`);
-    }
-  };
-
-  const type = buf.readUInt8(off++);
-  const name = readString();
-  const value = readPayload(type);
-  return { tag: { type, name, value }, end: off };
-}
-
-function writeNbt(tag) {
-  const chunks = [];
-
-  const writeString = (s) => {
-    const b = Buffer.from(s, 'utf8');
-    const h = Buffer.alloc(2);
-    h.writeUInt16LE(b.length);
-    chunks.push(h, b);
-  };
-
-  const writePayload = (type, value) => {
-    switch (type) {
-      case TAG_BYTE: { const b = Buffer.alloc(1); b.writeInt8(value); chunks.push(b); break; }
-      case 2: { const b = Buffer.alloc(2); b.writeInt16LE(value); chunks.push(b); break; }
-      case TAG_INT: { const b = Buffer.alloc(4); b.writeInt32LE(value); chunks.push(b); break; }
-      case 4: { const b = Buffer.alloc(8); b.writeBigInt64LE(value); chunks.push(b); break; }
-      case 5: { const b = Buffer.alloc(4); b.writeFloatLE(value); chunks.push(b); break; }
-      case 6: { const b = Buffer.alloc(8); b.writeDoubleLE(value); chunks.push(b); break; }
-      case 7: { const h = Buffer.alloc(4); h.writeInt32LE(value.length); chunks.push(h, value); break; }
-      case TAG_STRING: writeString(value); break;
-      case TAG_LIST: {
-        const h = Buffer.alloc(5);
-        h.writeUInt8(value.elementType, 0);
-        h.writeInt32LE(value.items.length, 1);
-        chunks.push(h);
-        for (const item of value.items) writePayload(value.elementType, item);
-        break;
-      }
-      case TAG_COMPOUND: {
-        for (const entry of value) {
-          chunks.push(Buffer.from([entry.type]));
-          writeString(entry.name);
-          writePayload(entry.type, entry.value);
-        }
-        chunks.push(Buffer.from([TAG_END]));
-        break;
-      }
-      case 11: {
-        const h = Buffer.alloc(4); h.writeInt32LE(value.length); chunks.push(h);
-        for (const v of value) { const b = Buffer.alloc(4); b.writeInt32LE(v); chunks.push(b); }
-        break;
-      }
-      default: throw new Error(`unsupported NBT tag ${type}`);
-    }
-  };
-
-  chunks.push(Buffer.from([tag.type]));
-  writeString(tag.name);
-  writePayload(tag.type, tag.value);
-  return Buffer.concat(chunks);
 }
 
 // ------------------------------------------------------- experiments toggle
@@ -313,16 +214,6 @@ function enableBetaApis() {
  * design — the tests build what they need with setBlockType.
  */
 function writeStructure({ sx, sy, sz }) {
-  // Block "version" is the game version packed one byte per component.
-  const [major, minor, patch] = MIN_ENGINE_VERSION;
-  const blockVersion = (major << 24) | (minor << 16) | (patch << 8);
-
-  const paletteEntry = (name) => [
-    { type: TAG_STRING, name: 'name', value: name },
-    { type: TAG_COMPOUND, name: 'states', value: [] },
-    { type: TAG_INT, name: 'version', value: blockVersion },
-  ];
-
   const AIR = 0;
   const STONE = 1;
   const primary = [];
@@ -333,61 +224,11 @@ function writeStructure({ sx, sy, sz }) {
       }
     }
   }
-  // -1 means "no block" in the second layer; it exists only for waterlogging.
-  const secondary = new Array(primary.length).fill(-1);
-
-  const tag = {
-    type: TAG_COMPOUND,
-    name: '',
-    value: [
-      { type: TAG_INT, name: 'format_version', value: 1 },
-      { type: TAG_LIST, name: 'size', value: { elementType: TAG_INT, items: [sx, sy, sz] } },
-      {
-        type: TAG_COMPOUND,
-        name: 'structure',
-        value: [
-          {
-            type: TAG_LIST,
-            name: 'block_indices',
-            value: {
-              elementType: TAG_LIST,
-              items: [
-                { elementType: TAG_INT, items: primary },
-                { elementType: TAG_INT, items: secondary },
-              ],
-            },
-          },
-          { type: TAG_LIST, name: 'entities', value: { elementType: TAG_COMPOUND, items: [] } },
-          {
-            type: TAG_COMPOUND,
-            name: 'palette',
-            value: [
-              {
-                type: TAG_COMPOUND,
-                name: 'default',
-                value: [
-                  {
-                    type: TAG_LIST,
-                    name: 'block_palette',
-                    value: {
-                      elementType: TAG_COMPOUND,
-                      items: [paletteEntry('minecraft:air'), paletteEntry('minecraft:stone')],
-                    },
-                  },
-                  { type: TAG_COMPOUND, name: 'block_position_data', value: [] },
-                ],
-              },
-            ],
-          },
-        ],
-      },
-      {
-        type: TAG_LIST,
-        name: 'structure_world_origin',
-        value: { elementType: TAG_INT, items: [0, 0, 0] },
-      },
-    ],
-  };
+  const tag = buildMcstructure({
+    size: [sx, sy, sz],
+    palette: [{ name: 'minecraft:air' }, { name: 'minecraft:stone' }],
+    primary,
+  });
 
   const dir = join(gametestDir, 'structures', 'andrew');
   mkdirSync(dir, { recursive: true });
@@ -518,7 +359,7 @@ function sendCommand(command) {
  * A test that produced neither is reported as missing rather than ignored:
  * silence is the failure mode that would otherwise turn an empty run green.
  */
-function analyzeLog(text) {
+function analyzeLog(text, expected) {
   const lines = text.split('\n').map((l) => l.trimEnd());
   const problems = [];
   const evidence = [];
@@ -538,7 +379,7 @@ function analyzeLog(text) {
     if (failed) results.set(failed[1], { ok: false, line: line.trim() });
   }
 
-  for (const name of EXPECTED_TESTS) {
+  for (const name of expected) {
     const result = results.get(name);
     if (!result) problems.push(`${name} produced no onTestPassed/onTestFailed line — it never ran`);
     else if (!result.ok) problems.push(result.line);
@@ -552,6 +393,8 @@ function analyzeLog(text) {
 
 function main() {
   const opts = parseArgs(process.argv.slice(2));
+  // A partial run is for iteration; only the full list proves the suite.
+  const selected = opts.only.length > 0 ? opts.only : EXPECTED_TESTS;
 
   assertComposePinsVersion();
   assertDockerRunning();
@@ -594,7 +437,7 @@ function main() {
       deadline
     );
 
-    for (const name of EXPECTED_TESTS) {
+    for (const name of selected) {
       // Remove the previous test's structure, so the next one is placed on the
       // same clear ground instead of being pushed aside by the leftovers.
       sendCommand('gametest clearall');
@@ -622,14 +465,35 @@ function main() {
   mkdirSync(join(root, 'dist'), { recursive: true });
   writeFileSync(logPath, text);
 
-  const { problems, evidence, results } = analyzeLog(text);
+  const { problems, evidence, results } = analyzeLog(text, selected);
 
   log('');
   log('GameTest results:');
   if (results.size === 0) log('  (no onTestPassed/onTestFailed lines in the log)');
   for (const [name, result] of results) log(`  ${result.ok ? '✓' : '✗'} ${name}`);
 
+  // Probe tests report engine answers, not pass/fail of the product; their
+  // verdict lines are the deliverable, so they go into the summary too.
+  const probeResults = text.split('\n').filter((l) => / \[probe\] .*RESULT /.test(l));
+  if (probeResults.length > 0) {
+    log('');
+    log('Engine probe answers:');
+    for (const l of probeResults) log(`  ${l.slice(l.indexOf('[probe]'))}`);
+  }
+
+  // Q8's other half: whatever the engine itself says about the size of the
+  // dynamic-property store is not a script line, so it is echoed verbatim.
+  const dpWarnings = text.split('\n').filter((l) => /dynamic.?propert/i.test(l) && !l.includes('[probe]') && !/onTest\w+:/.test(l));
+  if (dpWarnings.length > 0) {
+    log('');
+    log('Engine lines about dynamic properties (Q8):');
+    for (const l of dpWarnings) log(`  ${l.trim()}`);
+  } else if (probeResults.some((l) => l.includes('Q8 RESULT'))) {
+    log('  (Q8: the engine printed no line about dynamic properties)');
+  }
+
   log('');
+  if (selected !== EXPECTED_TESTS) log(`PARTIAL RUN (--only): ${selected.length} of ${EXPECTED_TESTS.length} tests — not a suite verdict`);
   if (problems.length > 0) {
     log('FAIL — the simulated-player scenarios did not pass on BDS:');
     for (const p of problems) log(`  ✗ ${p}`);

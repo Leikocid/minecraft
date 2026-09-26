@@ -50,6 +50,10 @@ import {
 import { PROJECTILE_SPEED, TRUE_DAMAGE } from "../scythe/volley-rules";
 import { WEB_BLOCK_ID } from "../websword/cube";
 import { registerTrap } from "../websword/trap";
+import "./probe-place";
+import "./probe-chunk";
+import "./probe-mobs";
+import "./probe-loot";
 
 const WEB_SWORD_ID = WEB_SWORD.itemId;
 const isWebSword = (stack: ItemStack | undefined): stack is ItemStack => state.isItemOf(WEB_SWORD, stack);

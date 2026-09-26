@@ -3,7 +3,8 @@
 //
 // Builds dist/andrew.mcaddon, installs both release packs plus the dev-only
 // packs/selftest behavior pack into the BDS data directory, attaches them to
-// the world, starts the server, reads the log and stops.
+// the world, starts the server, reads the log and stops — twice over the same
+// world, so the self-check can measure what survives a restart (strf-p006 Q5).
 //
 // The verdict is derived from the log only — see analyzeLog() for the exact
 // rules and for why the resource pack is proven by the absence of a warning.
@@ -28,6 +29,7 @@ import {
   buildAddon,
   compose,
   log,
+  readLog,
   root,
   runServer,
   SCRIPT_LOADED,
@@ -240,14 +242,26 @@ function main() {
     ...unpackAddon(opts.overlay),
     selftest: loadSelfTestPack({ breakSelfTest: opts.breakSelfTest }),
   };
-  let result;
+  const runs = [];
   try {
     stageDataDir({ ...packs, extraBehaviorPacks: [packs.selftest] });
     // A previous container would otherwise keep serving its own old log.
     compose(['down']);
-    // The self-check runs at worldLoad and prints DONE last, so waiting for
-    // both markers is what makes "absent" mean "never happened".
-    result = runServer(opts.timeoutSec, {}, { waitFor: [SCRIPT_LOADED, SELFTEST_DONE], markerWaitMs: 60_000 });
+    // Two runs over one world: strf-p006 Q5/Q6 spawn mobs in run 1 and count
+    // them in run 2 (src/selftest/mob-probe.ts). The self-check runs at
+    // worldLoad and prints DONE last, so waiting for both markers is what makes
+    // "absent" mean "never happened". The probes wait ~60 s of ticks before DONE.
+    for (const n of [1, 2]) {
+      if (n === 2) {
+        log('▶ restart: stopping BDS (the world is saved on stop) and starting it again on the same world');
+      }
+      const result = runServer(opts.timeoutSec, {}, { waitFor: [SCRIPT_LOADED, SELFTEST_DONE], markerWaitMs: 180_000 });
+      // `stop` makes BDS save the world; the stopped container still holds the log.
+      compose(['stop', '-t', '60'], { stdio: 'inherit' });
+      runs.push({ ...result, text: readLog() });
+      compose(['down']);
+      if (!result.started) break;
+    }
   } finally {
     rmSync(packs.tmp, { recursive: true, force: true });
     if (opts.breakSelfTest) {
@@ -258,20 +272,34 @@ function main() {
   }
 
   mkdirSync(join(root, 'dist'), { recursive: true });
-  writeFileSync(logPath, result.text);
+  writeFileSync(logPath, runs.map((r, i) => `======== run ${i + 1} of 2 ========\n${r.text}`).join('\n'));
   log(`▶ log saved to ${logPath}`);
 
-  compose(['down'], { stdio: 'inherit' });
-
-  const { problems, evidence, selftestLines } = analyzeLog(result.text, packs);
-
-  if (!result.started) {
-    problems.unshift(
-      result.exited
-        ? 'the BDS container exited before the server started'
-        : `the server did not report "Server started." within ${opts.timeoutSec}s`
-    );
-  }
+  const problems = [];
+  const evidence = [];
+  const selftestLines = [];
+  runs.forEach((result, i) => {
+    const run = `run ${i + 1}`;
+    const analysis = analyzeLog(result.text, packs);
+    problems.push(...analysis.problems.map((p) => `${run}: ${p}`));
+    evidence.push(...analysis.evidence.map((e) => `${run}: ${e}`));
+    selftestLines.push(...analysis.selftestLines.map((l) => `${run}: ${l}`));
+    if (!result.started) {
+      problems.unshift(
+        `${run}: ` +
+          (result.exited
+            ? 'the BDS container exited before the server started'
+            : `the server did not report "Server started." within ${opts.timeoutSec}s`)
+      );
+    }
+    // Which phase ran is decided by a marker in the saved world: a run 2 that
+    // reran phase 1 means the world did not survive the restart.
+    const phase = `probe-mobs-restart-run${i + 1}`;
+    if (result.started && !analysis.selftestLines.some((l) => l.includes(phase))) {
+      problems.push(`${run}: the self-check never reported ${phase} — the restart probe ran the wrong phase or not at all`);
+    }
+  });
+  if (runs.length < 2) problems.push('the restart run never happened — run 1 did not start');
 
   // Every self-check line, verbatim, on both verdicts — this is the part a
   // human reads to see what the engine actually said about the content.
@@ -281,6 +309,13 @@ function main() {
     for (const l of selftestLines) log(`  ${l}`);
   } else {
     log('In-engine self-check: no [selftest] output in the log.');
+  }
+
+  const probeResults = selftestLines.filter((l) => / RESULT /.test(l));
+  if (probeResults.length > 0) {
+    log('');
+    log('Engine probe answers:');
+    for (const l of probeResults) log(`  ${l}`);
   }
 
   log('');
