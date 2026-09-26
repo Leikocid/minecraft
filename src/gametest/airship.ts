@@ -1,0 +1,138 @@
+// The Airship template on a real engine: all four rotations judged by the
+// blocks in the world — counts per block type, the 10 chests, the one spawner
+// and the two doors on opposite ends (L0-airs-r001/r002). Every test clears
+// what it placed.
+
+import { BlockTypes, BlockVolume, type Dimension, StructureRotation, type Vector3, world } from "@minecraft/server";
+import { Test, registerAsync } from "@minecraft/server-gametest";
+import { type Box, boxOf, sliceBox } from "../structures/clear";
+import type { Rotation, Vec3 } from "../structures/registry";
+import { ENGINE_ROTATION, ROTATIONS, rotateCardinal, toWorld } from "../structures/rotate";
+import airshipTemplate, { AIRSHIP_ID, AIRSHIP_SIZE, CHESTS, DOORS, SPAWNER } from "../structures/templates/airship";
+import { loadBox } from "./structures-place";
+
+const STRUCTURE = "andrew:platform";
+const SIZE: Vec3 = [...AIRSHIP_SIZE];
+
+const log = (msg: string): void => console.warn(`[gametest] ${msg}`);
+const v = (p: Vec3): Vector3 => ({ x: p[0], y: p[1], z: p[2] });
+const fmt = (p: Vec3): string => p.join(",");
+const local = (p: readonly number[]): Vec3 => [p[0], p[1], p[2]];
+
+const OPPOSITE: Record<string, string> = { north: "south", south: "north", east: "west", west: "east" };
+const STEP: Record<string, Vec3> = { north: [0, 0, -1], east: [1, 0, 0], south: [0, 0, 1], west: [-1, 0, 0] };
+
+function fillBox(dim: Dimension, box: Box, block: string): void {
+  for (const s of sliceBox(box)) dim.fillBlocks(new BlockVolume(v(s.min), v(s.max)), block);
+}
+
+/** Block counts per name straight from the template source, air excluded. */
+function templateCounts(): Map<string, number> {
+  const t = airshipTemplate();
+  const counts = new Map<string, number>();
+  for (const rows of Object.values(t.layers))
+    for (const row of rows)
+      for (const ch of row) {
+        const name = t.blocks[ch].name;
+        if (name !== "minecraft:air") counts.set(name, (counts.get(name) ?? 0) + 1);
+      }
+  return counts;
+}
+
+interface Cell {
+  at: Vec3;
+  typeId: string;
+  states: Record<string, boolean | number | string>;
+}
+
+function scan(dim: Dimension, box: Box): Cell[] {
+  const out: Cell[] = [];
+  for (let x = box.min[0]; x <= box.max[0]; x++)
+    for (let y = box.min[1]; y <= box.max[1]; y++)
+      for (let z = box.min[2]; z <= box.max[2]; z++) {
+        const b = dim.getBlock({ x, y, z });
+        if (b === undefined) throw new Error(`${x},${y},${z} unloaded during the scan`);
+        if (!b.isAir) out.push({ at: [x, y, z], typeId: b.typeId, states: b.permutation.getAllStates() });
+      }
+  return out;
+}
+
+registerAsync("andrew", "airship_rotations", async (test: Test): Promise<void> => {
+  const dim = test.getDimension();
+  const b = test.worldBlockLocation({ x: 0, y: 0, z: 0 });
+  // Floating above the platform, as an Airship does; the rotated AABB is at most 15 wide either way.
+  const loc: Vec3 = [b.x - 7, b.y + 12, b.z - 7];
+  const box = boxOf(loc, [15, SIZE[1], 15]);
+  const unload = await loadBox(test, dim, "andrew_gt_airship_a", box);
+  const expected = templateCounts();
+  const verdicts: string[] = [];
+  try {
+    const unknown = [...expected.keys()].filter((n) => BlockTypes.get(n) === undefined);
+    test.assert(unknown.length === 0, `template names the engine does not know: ${unknown.join(" ")}`);
+    fillBox(dim, box, "minecraft:air");
+
+    for (const rot of ROTATIONS) {
+      world.structureManager.place(AIRSHIP_ID, dim, v(loc), { rotation: StructureRotation[ENGINE_ROTATION[rot]], includeEntities: false });
+      const found = scan(dim, box);
+      fillBox(dim, box, "minecraft:air");
+      const problems: string[] = [];
+
+      const counts = new Map<string, number>();
+      for (const c of found) counts.set(c.typeId, (counts.get(c.typeId) ?? 0) + 1);
+      for (const [name, n] of expected) if (counts.get(name) !== n) problems.push(`${name}: ${counts.get(name) ?? 0} in the world, ${n} in the template`);
+      for (const [name, n] of counts) if (!expected.has(name)) problems.push(`${name}: ${n} in the world, none in the template`);
+
+      const chests = found.filter((c) => c.typeId === "minecraft:chest");
+      const chestAt = new Set(chests.map((c) => fmt(c.at)));
+      if (chests.length !== 10) problems.push(`${chests.length} chests`);
+      for (const c of CHESTS) if (!chestAt.has(fmt(toWorld(loc, local(c.at), SIZE, rot)))) problems.push(`no chest at template ${fmt(local(c.at))}`);
+
+      const spawners = found.filter((c) => c.typeId === "minecraft:mob_spawner").map((c) => fmt(c.at));
+      const wantSpawner = fmt(toWorld(loc, local(SPAWNER.at), SIZE, rot));
+      if (spawners.length !== 1 || spawners[0] !== wantSpawner) problems.push(`spawners at ${spawners.join(" ")}, expected ${wantSpawner}`);
+
+      // Doors: each where the template puts it, facing inward, and the two on opposite ends facing each other.
+      const doors = found.filter((f) => f.typeId === "minecraft:wooden_door");
+      const lowers: { at: Vec3; facing: string }[] = [];
+      for (const d of DOORS) {
+        const facing = rotateCardinal(d.facing, rot);
+        for (const [label, p, upper] of [["lower", d.lower, false], ["upper", d.upper, true]] as const) {
+          const w = fmt(toWorld(loc, local(p), SIZE, rot));
+          const got = doors.find((f) => fmt(f.at) === w);
+          if (got === undefined) problems.push(`door ${label}: none at ${w}`);
+          else if (got.states.upper_block_bit !== upper || got.states["minecraft:cardinal_direction"] !== facing)
+            problems.push(`door ${label} at ${w}: ${JSON.stringify(got.states)}, expected facing ${facing}`);
+          else if (!upper) lowers.push({ at: got.at, facing });
+        }
+      }
+      if (doors.length !== 4) problems.push(`${doors.length} door blocks`);
+      if (lowers.length === 2) {
+        const [a, c] = lowers;
+        const delta: Vec3 = [c.at[0] - a.at[0], c.at[1] - a.at[1], c.at[2] - a.at[2]];
+        const len = Math.abs(delta[0]) + Math.abs(delta[2]);
+        const step = STEP[a.facing];
+        const along = delta[0] === step[0] * len && delta[2] === step[2] * len && delta[1] === 0;
+        if (OPPOSITE[a.facing] !== c.facing || !along || len !== 14) problems.push(`doors ${fmt(a.at)}→${a.facing} and ${fmt(c.at)}→${c.facing} are not on opposite ends facing each other`);
+      }
+
+      for (const p of problems) log(`airship rot=${rot * 90} MISMATCH ${p}`);
+      verdicts.push(`${rot * 90}:${problems.length === 0 ? "ok" : `${problems.length} mismatch(es)`}`);
+      log(`airship rot=${rot * 90}: chests=${chests.length} spawners=${spawners.length} doors=${lowers.map((d) => `${fmt(d.at)}→${d.facing}`).join(" ")} blocks=${found.length}`);
+      await test.idle(1);
+    }
+    log(`airship rotations: ${verdicts.join(" ")}`);
+    test.assert(verdicts.every((x) => x.endsWith(":ok")), `rotations: ${verdicts.join(" ")}`);
+    test.succeed();
+  } finally {
+    fillBox(dim, box, "minecraft:air");
+    for (const e of dim.getEntities({ location: v([loc[0] + 7, loc[1] + 6, loc[2] + 7]), maxDistance: 24, type: "minecraft:item" })) e.remove();
+    unload();
+  }
+})
+  .structureName(STRUCTURE)
+  .maxTicks(600)
+  .tag("andrew");
+
+export const AIRSHIP_TESTS = ["airship_rotations"];
+
+log(`registered ${AIRSHIP_TESTS.length} airship test(s): ${AIRSHIP_TESTS.join(" ")}`);

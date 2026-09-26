@@ -63,6 +63,7 @@ import "./structures-commands";
 import "./windmill";
 import "./windmill-body";
 import "./windmill-spawn";
+import "./airship";
 import { SPAWN_EVENT } from "../structures/spawn-search";
 
 const WEB_SWORD_ID = WEB_SWORD.itemId;
