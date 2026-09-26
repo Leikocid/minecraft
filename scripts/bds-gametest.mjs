@@ -126,6 +126,32 @@ const EXPECTED_TESTS = [
   'andrew:probe_loot_bastion_other',
   'andrew:probe_loot_control_known_table',
   'andrew:probe_loot_full_chest',
+  // STRF-REG-01 — src/gametest/strf-registry.ts
+  'andrew:strf_registry_steps_idempotent',
+  // STRF-ROLL-01 — src/gametest/structures.ts
+  'andrew:strf_discovery_tick_budget',
+  // STRF-SITE-01 — src/gametest/structures-site.ts
+  'andrew:strf_site_profiles',
+  'andrew:strf_site_player_build',
+  'andrew:strf_site_pending_unloaded',
+  'andrew:strf_site_recheck',
+  // STRF-PLACE-01 — src/gametest/structures-place.ts
+  'andrew:strf_place_rotations',
+  'andrew:strf_place_clear_sliced',
+  'andrew:strf_place_block_entities',
+  'andrew:strf_place_resume',
+  // LOOT-TBL-01 — src/gametest/structures-loot.ts
+  'andrew:strf_loot_custom',
+  'andrew:strf_loot_ancient_city',
+  'andrew:strf_loot_bastion_treasure',
+  'andrew:strf_loot_bastion_other',
+  'andrew:strf_loot_control',
+  'andrew:strf_loot_full_chest',
+  // STRF-CMD-01 — src/gametest/structures-commands.ts
+  'andrew:strf_cmd_place',
+  'andrew:strf_cmd_locate_tp',
+  'andrew:strf_cmd_chance',
+  'andrew:strf_cmd_operator_only',
 ];
 
 // FLAT is not cosmetic: see the LEVEL_TYPE comment in docker/bds/compose.yaml.

@@ -27,6 +27,8 @@ import { inspectChunkApi, readLocation, scanFrontier, systemWait, tickingAreaLim
 import { mobProbeCount, mobProbePhase, mobProbeSpawn } from "./mob-probe";
 import { smeltedDropFor } from "../autosmelt";
 import { COOLDOWN_TICKS, cooldownRemaining } from "../legendary/rules";
+import { type DimShort, type Instance, Registry, forcedOutcome, installTestHook, clearTestHook } from "../structures/registry";
+import { DynamicPropertyStore } from "../structures/store";
 
 /**
  * Build-time flag, injected by esbuild `--define`. Always false in a normal
@@ -171,6 +173,95 @@ async function runMobProbe(): Promise<void> {
   } else {
     await checkAsync("probe-mobs-restart-run2", () => mobProbeCount(dim, systemWait, probeLog));
   }
+}
+
+const STRF_MARKER = "andrew:selftest_strf";
+
+/** Chunks spread over four regions, negative coordinates and both dimensions. */
+const STRF_BITS: ReadonlyArray<[DimShort, number, number]> = [
+  ["o", 0, 0],
+  ["o", -1, -1],
+  ["o", 31, 31],
+  ["o", 32, -33],
+  ["n", 5, 70],
+];
+
+interface StrfFingerprint {
+  instances: Instance[];
+  bits: Array<[DimShort, number, number]>;
+  salt: string;
+}
+
+/**
+ * L0-strf-r008 across a real restart: run 1 writes records in every init state
+ * plus evaluated bits and saves what it wrote; run 2 reads them back through a
+ * fresh Registry and checks that no init step can run twice.
+ */
+function runRegistryRestart(): void {
+  const reg = new Registry(new DynamicPropertyStore(world), (msg) => console.warn(`[andrew] ${msg}`));
+  const raw = world.getDynamicProperty(STRF_MARKER);
+  if (typeof raw !== "string") {
+    check("strf-registry-restart-run1", () => {
+      const planned = reg.plan({ def: "windmill", dim: "o", origin: [40, 64, 40], rot: 1, size: [35, 30, 35] });
+      const looted = reg.plan({ def: "airship", dim: "o", origin: [-600, 120, -300], rot: 2, size: [15, 7, 12] });
+      const done = reg.plan({ def: "bastion", dim: "n", origin: [900, 40, -900], rot: 3, size: [40, 30, 40] });
+      assert(planned.ok && looted.ok && done.ok, "plan refused a free spot");
+      for (const step of ["place", "loot"] as const) reg.runStep(looted.instance, step, () => {});
+      for (const step of ["place", "loot", "guard", "finish"] as const) reg.runStep(done.instance, step, () => {});
+      reg.setExtra(done.instance, "linkedTried", true);
+      for (const [d, cx, cz] of STRF_BITS) assert(reg.markEvaluated(d, cx, cz), `markEvaluated ${d} ${cx},${cz} refused`);
+      const fp: StrfFingerprint = { instances: reg.allInstances(), bits: [...STRF_BITS], salt: reg.salt() };
+      const states = fp.instances.map((i) => i.state).sort().join(",");
+      assert(states === "done,looted,planned", `states before restart: ${states}`);
+      world.setDynamicProperty(STRF_MARKER, JSON.stringify(fp));
+      console.warn(`[andrew] ${reg.statsLine()}`);
+    });
+    return;
+  }
+  world.setDynamicProperty(STRF_MARKER, undefined);
+  check("strf-registry-restart-run2", () => {
+    const fp = JSON.parse(raw) as StrfFingerprint;
+    const now = reg.allInstances();
+    assert(JSON.stringify(now) === JSON.stringify(fp.instances), `records differ: before ${JSON.stringify(fp.instances)} after ${JSON.stringify(now)}`);
+    assert(reg.salt() === fp.salt, `salt changed across the restart: ${fp.salt} -> ${reg.salt()}`);
+    for (const [d, cx, cz] of fp.bits) assert(reg.isEvaluated(d, cx, cz), `bit ${d} ${cx},${cz} lost`);
+    for (const [d, cx, cz] of [["o", 1, 0], ["n", 0, 0], ["o", -2, -1]] as const) {
+      assert(!reg.isEvaluated(d, cx, cz), `bit ${d} ${cx},${cz} set but never written`);
+    }
+    const stats = reg.stats();
+    assert(stats.evaluatedChunks === fp.bits.length, `${stats.evaluatedChunks} evaluated chunks, wrote ${fp.bits.length}`);
+    // Every step already taken is refused after the restart.
+    let reruns = 0;
+    for (const inst of now) {
+      for (const step of ["place", "loot", "guard", "finish"] as const) {
+        const before = inst.state;
+        const res = reg.runStep(inst, step, () => reruns++);
+        const legal = { place: "planned", loot: "placed", guard: "looted", finish: "guarded" }[step] === before;
+        assert((res === "ran") === legal, `${inst.id} ${step} from ${before}: ${res}`);
+        if (res === "ran") inst.state = { place: "placed", loot: "looted", guard: "guarded", finish: "done" }[step] as Instance["state"];
+      }
+    }
+    const final = reg.allInstances().map((i) => i.state);
+    assert(final.every((s) => s === "done"), `after catch-up: ${final.join(",")}`);
+    assert(reg.plan({ def: "airship", dim: "o", origin: [50, 80, 50], rot: 0, size: [15, 7, 12] }).ok === false, "an old record did not block a new candidate");
+    console.warn(`[andrew] ${reg.statsLine()}`);
+  });
+}
+
+// The selftest bundle keeps the strf test hook; this proves it is live here.
+function checkTestHook(): void {
+  check("strf-test-hook-live", () => {
+    const reg = new Registry(new DynamicPropertyStore(world));
+    const worldSalt = reg.salt();
+    installTestHook({ salt: "selftest", outcomes: [["windmill", "o", 7, 7, true]] });
+    try {
+      assert(reg.salt() === "selftest", `salt override ignored: ${reg.salt()}`);
+      assert(forcedOutcome("windmill", "o", 7, 7) === true, "outcome override ignored");
+    } finally {
+      clearTestHook();
+    }
+    assert(reg.salt() === worldSalt, "salt override outlived clearTestHook");
+  });
 }
 
 function run(): void {
@@ -410,6 +501,8 @@ function run(): void {
 
 world.afterEvents.worldLoad.subscribe(() => {
   run();
+  runRegistryRestart();
+  checkTestHook();
   // DONE goes last: bds:check waits for it, so it must follow the async probes.
   void runChunkProbes()
     .then(runMobProbe)

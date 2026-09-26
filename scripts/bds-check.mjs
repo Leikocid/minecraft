@@ -164,6 +164,16 @@ function analyzeLog(text, { behavior, resource, selftest }) {
 
     if (/Configured pack .*was not found and was ignored/i.test(line)) continue; // handled above
 
+    // The engine derives a bare alias from a custom command's un-namespaced
+    // tail (andrew:structure -> structure); when something else already owns
+    // that bare name — here, the vanilla /structure command — it falls back to
+    // requiring the qualified form. Informational, not a defect: our own code
+    // and docs invoke /andrew:structure fully qualified already.
+    if (/Custom Command alias \[.+\] already in use\. Required to use full name \[.+\]/i.test(line)) {
+      evidence.push(line.trim());
+      continue;
+    }
+
     // Our own console.warn output is not an engine complaint. Keyed on the
     // marker rather than on one known line: the add-on prints several
     // diagnostics now, and each of them names "andrew" by construction. This
@@ -294,9 +304,10 @@ function main() {
     }
     // Which phase ran is decided by a marker in the saved world: a run 2 that
     // reran phase 1 means the world did not survive the restart.
-    const phase = `probe-mobs-restart-run${i + 1}`;
-    if (result.started && !analysis.selftestLines.some((l) => l.includes(phase))) {
-      problems.push(`${run}: the self-check never reported ${phase} — the restart probe ran the wrong phase or not at all`);
+    for (const phase of [`probe-mobs-restart-run${i + 1}`, `strf-registry-restart-run${i + 1}`]) {
+      if (result.started && !analysis.selftestLines.some((l) => l.includes(phase))) {
+        problems.push(`${run}: the self-check never reported ${phase} — the restart check ran the wrong phase or not at all`);
+      }
     }
   });
   if (runs.length < 2) problems.push('the restart run never happened — run 1 did not start');

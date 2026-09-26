@@ -2,6 +2,8 @@
 //   1. esbuild bundles src/main.ts -> packs/behavior/scripts/main.js
 //      (format esm, platform neutral, @minecraft/* stays external — not bundled)
 //   2. esbuild bundles src/selftest/main.ts -> packs/selftest/scripts/main.js
+//      (the strf test hook is compiled into this one and the gametest bundle,
+//      never into the release script)
 //   3. compile src/structures/templates/*.json -> packs/behavior/structures/andrew/
 //   4. validate both release packs and the selftest pack
 //   5. zip packs/behavior and packs/resource into dist/andrew.mcaddon
@@ -58,6 +60,20 @@ export function bundleSelfTest({ fixture = false, outFile } = {}) {
   );
 }
 
+/**
+ * esbuild arguments of the release script, minus the output path. Dropping the
+ * STRF_TEST_HOOK label deletes the strf test hook from the release bundle only;
+ * tests/structures-registry.test.mjs bundles with these same arguments.
+ */
+export const RELEASE_BUNDLE_ARGS = [
+  join('src', 'main.ts'),
+  '--bundle',
+  '--format=esm',
+  '--platform=neutral',
+  '--external:@minecraft/*',
+  '--drop-labels=STRF_TEST_HOOK',
+];
+
 function step(label, fn) {
   process.stdout.write(`▶ ${label}\n`);
   fn();
@@ -68,14 +84,7 @@ function build() {
   step('bundle scripts (esbuild)', () => {
     execFileSync(
       esbuildBin,
-      [
-        join('src', 'main.ts'),
-        '--bundle',
-        '--format=esm',
-        '--platform=neutral',
-        '--external:@minecraft/*',
-        `--outfile=${join('packs', 'behavior', 'scripts', 'main.js')}`,
-      ],
+      [...RELEASE_BUNDLE_ARGS, `--outfile=${join('packs', 'behavior', 'scripts', 'main.js')}`],
       { stdio: 'inherit', cwd: root }
     );
   });
