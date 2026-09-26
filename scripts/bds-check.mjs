@@ -164,6 +164,16 @@ function analyzeLog(text, { behavior, resource, selftest }) {
 
     if (/Configured pack .*was not found and was ignored/i.test(line)) continue; // handled above
 
+    // The engine derives a bare alias from a custom command's un-namespaced
+    // tail (andrew:structure -> structure); when something else already owns
+    // that bare name — here, the vanilla /structure command — it falls back to
+    // requiring the qualified form. Informational, not a defect: our own code
+    // and docs invoke /andrew:structure fully qualified already.
+    if (/Custom Command alias \[.+\] already in use\. Required to use full name \[.+\]/i.test(line)) {
+      evidence.push(line.trim());
+      continue;
+    }
+
     // Our own console.warn output is not an engine complaint. Keyed on the
     // marker rather than on one known line: the add-on prints several
     // diagnostics now, and each of them names "andrew" by construction. This
