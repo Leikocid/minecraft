@@ -10,6 +10,8 @@ import { CHESTS, WINDMILL_ID, WINDMILL_SIZE } from "../templates/windmill";
 import type { TypeBody } from "../bodies";
 
 export const GUARD_ENTITY = "minecraft:zombie_villager_v2";
+/** `summon minecraft:zombie_villager_v2` is a syntax error; this id makes a _v2 (measured on BDS 1.26.51.1). */
+export const GUARD_SUMMON = "minecraft:zombie_villager";
 export const GUARD_COUNT = 10;
 /** The name keeps a guard from despawning; a cured villager keeps it, which the spec allows (L0-wind-r005). */
 export const GUARD_NAME = "Страж полей";
@@ -35,7 +37,7 @@ export const GUARD_POINTS: readonly Vec3[] = [
 ];
 
 export const guardPoints = (instanceId: string): GuardPoint[] =>
-  GUARD_POINTS.map((local) => ({ entity: GUARD_ENTITY, local, tags: [guardTag(instanceId)], name: GUARD_NAME, fireproof: true }));
+  GUARD_POINTS.map((local) => ({ entity: GUARD_ENTITY, summonAs: GUARD_SUMMON, local, tags: [guardTag(instanceId)], name: GUARD_NAME, fireproof: true }));
 
 /**
  * Chest order is floor by floor, as CHESTS lists them. No `clear`: a normal

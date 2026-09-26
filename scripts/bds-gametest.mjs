@@ -187,6 +187,9 @@ const EXPECTED_TESTS = [
   'andrew:bastion_nether_rotations',
   'andrew:bastion_treasure_access',
   'andrew:bastion_lava_vanilla',
+  // BAST-BODY-01 — src/gametest/bastion-body.ts
+  'andrew:bastion_body_generate',
+  'andrew:bastion_body_site',
 ];
 
 // FLAT is not cosmetic: see the LEVEL_TYPE comment in docker/bds/compose.yaml.

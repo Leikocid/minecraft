@@ -41,6 +41,8 @@ export interface InitCtx extends TemplateCtx {
 
 export interface GuardPoint {
   entity: string;
+  /** The `summon` id when it differs from the typeId `entity` (zombie_villager makes zombie_villager_v2). */
+  summonAs?: string;
   /** Template-local, unrotated; the mob stands in this cell. */
   local: Vec3;
   tags: readonly string[];
@@ -221,12 +223,36 @@ export class Placer {
 
 // ------------------------------------------------------------ engine adapter
 
-/** Guard spawning on a real dimension (the PlaceHooks.spawnGuard of engine hooks). */
-export function engineSpawnGuard(dim: Pick<Dimension, "spawnEntity">): (ctx: GuardCtx) => Entity {
+const quoted = (name: string): string => `"${name.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+
+/**
+ * Guard spawning on a real dimension (the PlaceHooks.spawnGuard of engine
+ * hooks). A named guard is summoned by command: a name set through
+ * `Entity.nameTag` does not stop distance despawn, a name given to `summon`
+ * does (measured on BDS 1.26.51.1, player 160 blocks away).
+ *
+ * `summon` reports success in a Peaceful world and the engine deletes the mob
+ * a tick later, so `peaceful` is asked first and a Peaceful world throws, as
+ * `spawnEntity` does: the guard step then waits and is retried.
+ */
+export function engineSpawnGuard(
+  dim: Pick<Dimension, "spawnEntity" | "runCommand" | "getEntities">,
+  opts: { peaceful?: () => boolean } = {}
+): (ctx: GuardCtx) => Entity {
   return (ctx) => {
-    const e = dim.spawnEntity(ctx.entity, { x: ctx.pos[0] + 0.5, y: ctx.pos[1], z: ctx.pos[2] + 0.5 });
-    // A named mob is never despawned by distance (L0-adr-strs).
-    if (ctx.name !== undefined) e.nameTag = ctx.name;
+    const loc = { x: ctx.pos[0] + 0.5, y: ctx.pos[1], z: ctx.pos[2] + 0.5 };
+    let e: Entity;
+    if (ctx.name === undefined) e = dim.spawnEntity(ctx.entity, loc);
+    else {
+      if (opts.peaceful?.() === true) throw new Error(`strf place: ${ctx.entity} for ${ctx.instance.id}#${ctx.index} waits: the world is Peaceful`);
+      const here = (): Entity[] => dim.getEntities({ type: ctx.entity, location: loc, maxDistance: 1, name: ctx.name });
+      const before = new Set(here().map((x) => x.id));
+      const r = dim.runCommand(`summon ${ctx.summonAs ?? ctx.entity} ${quoted(ctx.name)} ${loc.x} ${loc.y} ${loc.z}`);
+      // The summoned mob is visible in the same tick (measured); an old one of the same name is told apart by id.
+      const made = here().filter((x) => !before.has(x.id));
+      if (r.successCount === 0 || made.length !== 1) throw new Error(`strf place: summon ${ctx.entity} at ${ctx.pos.join(",")} made ${made.length} (successCount ${r.successCount})`);
+      e = made[0];
+    }
     for (const t of ctx.tags) e.addTag(t);
     // 2.10.0 caps addEffect's duration: "infinite" exists only as a command (probe Q6).
     if (ctx.fireproof === true) e.runCommand("effect @s fire_resistance infinite 0 true");
