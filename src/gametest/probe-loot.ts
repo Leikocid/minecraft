@@ -6,27 +6,25 @@
 // may want a `loot_tables/` prefix and a `.json` suffix that Java's loot-table
 // ids never had; L0-loot-asm2 flags this as unconfirmed).
 //
-// Measured result: FAIL, for all three tables and for a fourth control table
+// Measured result: PASS, for all three tables and for a fourth control table
 // (chests/simple_dungeon — one of the oldest vanilla chest tables,
-// unconditional, never empty by design). Two engine facts narrow it down:
-//   - Unquoted paths throw `CommandError: Syntax error: Unexpected "/"` —
-//     quoting the loot argument is mandatory, confirmed by the parser itself.
-//   - The bare quoted spelling ("chests/ancient_city") returns
-//     successCount=1 but leaves the chest empty, on every table tried,
-//     while every spelling with a `.json` suffix and/or a `loot_tables/`
-//     prefix returns successCount=0. successCount is decoupled from whether
-//     a table was actually found — exactly why this probe reads the
-//     container instead of trusting CommandResult.
-//   - Ruled out out-of-band: vendoring the real vanilla ancient_city.json
-//     (extracted from the BDS image's own vanilla_1.26.10 behavior pack
-//     archive) at the exact resolved path this pack's own
-//     loot_tables/chests/ancient_city.json would occupy made no difference —
-//     "ship a copy of the file yourself" is not the missing piece.
-// FALLBACK per this task's brief: Mini Warden City and Mini Bastion chests
-// need our own weighted loot table, composed to resemble the vanilla
-// category/quantity/rarity distribution — P-loot-002 §2-3 need revision away
-// from `/loot insert`, and this is a spec change the operator must see, not
-// a silent workaround.
+// unconditional, never empty by design).
+//   - Accepted spelling is the bare id, quoted, exactly as P-loot-002 writes
+//     it: `loot insert <x> <y> <z> loot "chests/ancient_city"`. No
+//     `loot_tables/` prefix, no `.json` suffix — every spelling that adds
+//     either returns successCount=0 (table not found). Unquoted throws
+//     `CommandError: Syntax error: Unexpected "/"`.
+//   - Two calls against two independently-empty chests roll different
+//     contents for the same table id — the vanilla table is genuinely
+//     rolled, not a fixed stub. See the "[probe] Q4 RESULT …" log lines for
+//     the actual item lists each run produced.
+//   - Against an already-full chest (32/32 slots occupied): the command
+//     still reports successCount=1, but the container is left unchanged and
+//     no item entities spawn nearby — loot insert silently no-ops on a full
+//     container rather than spilling the roll onto the ground.
+//   - successCount is decoupled from whether a table was actually found or
+//     the insert actually reached the container either way — exactly why
+//     this probe reads the container instead of trusting CommandResult.
 //
 // Same contract as probe-place.ts / probe-mobs.ts: a test passes when its
 // measurement completed; the engine's answer is the "[probe] Q4 RESULT …"
@@ -76,9 +74,19 @@ function lootInsertCommand(pos: Vector3, spelling: Spelling): string {
   return `loot insert ${pos.x} ${pos.y} ${pos.z} loot ${describeSpelling(spelling)}`;
 }
 
-/** Non-empty slots of the chest at `at`, as "typeId x amount", sorted for comparison. */
-function chestContents(dim: Dimension, at: Vector3): string[] {
-  const container = dim.getBlock(at)?.getComponent("minecraft:inventory")?.container;
+/**
+ * Non-empty slots of the chest at structure-relative `at`, as "typeId x
+ * amount", sorted for comparison.
+ *
+ * Takes `test` and translates internally, exactly once: every command below
+ * also builds its world position via `test.worldBlockLocation`, and a second,
+ * independent translation at the call site is how a relative-vs-world
+ * mismatch goes undetected — reading back a block that is not the one the
+ * command just filled, silently and consistently empty.
+ */
+function chestContents(test: Test, dim: Dimension, at: Vector3): string[] {
+  const world = test.worldBlockLocation(at);
+  const container = dim.getBlock(world)?.getComponent("minecraft:inventory")?.container;
   const items: string[] = [];
   if (container !== undefined) {
     for (let slot = 0; slot < container.size; slot++) {
@@ -113,7 +121,7 @@ async function discoverLootFormat(test: Test, dim: Dimension, at: Vector3, id: s
     const command = lootInsertCommand(world, spelling);
     const outcome = runCommand(dim, command);
     await test.idle(2);
-    const contents = chestContents(dim, at);
+    const contents = chestContents(test, dim, at);
     log(`Q4 ${id}: tried "${command}" -> ${outcome}, chest=[${contents.join(" ")}]`);
     if (contents.length > 0) return { ...spelling, contents };
   }
@@ -148,7 +156,7 @@ async function probeTable(test: Test, id: string, description: string): Promise<
   const commandB = lootInsertCommand(worldB, first);
   const outcomeB = runCommand(dim, commandB);
   await test.idle(4);
-  const second = chestContents(dim, chestB);
+  const second = chestContents(test, dim, chestB);
   log(`Q4 ${id}: second call "${commandB}" -> ${outcomeB}, chest=[${second.join(" ")}]`);
 
   const varies = JSON.stringify(first.contents) !== JSON.stringify(second);
@@ -200,13 +208,17 @@ registerAsync("andrew", "probe_loot_control_known_table", async (test: Test): Pr
 
   const id = "chests/simple_dungeon";
   const discovered = await discoverLootFormat(test, dim, at, id);
-  const verdict =
-    discovered === undefined
-      ? `FAIL — no spelling filled the chest either; tried [${triedList(id)}]. ` +
-        "/loot insert cannot pull ANY vanilla chest table into a container here, independent of ancient_city/bastion_* spelling"
-      : `PASS — ${describeSpelling(discovered)} works (chest=[${discovered.contents.join(" ")}]); ` +
-        "the mechanism itself is capable — a further miss on ancient_city/bastion_* would be about those specific ids, not the mechanism";
-  log(`Q4 RESULT control (${id}): ${verdict}`);
+  if (discovered === undefined) {
+    const msg =
+      `Q4 RESULT control (${id}): FAIL — no spelling filled the chest either; tried [${triedList(id)}]. ` +
+      "/loot insert cannot pull ANY vanilla chest table into a container here, independent of ancient_city/bastion_* spelling";
+    log(msg);
+    throw new Error(msg);
+  }
+  log(
+    `Q4 RESULT control (${id}): PASS — ${describeSpelling(discovered)} works (chest=[${discovered.contents.join(" ")}]); ` +
+      "the mechanism itself is capable — a further miss on ancient_city/bastion_* would be about those specific ids, not the mechanism"
+  );
   test.succeed();
 })
   .structureName(STRUCTURE)
@@ -235,12 +247,12 @@ registerAsync("andrew", "probe_loot_full_chest", async (test: Test): Promise<voi
   const container: Container | undefined = dim.getBlock(fullWorld)?.getComponent("minecraft:inventory")?.container;
   if (container === undefined) throw new Error("full-chest probe: the chest at fullAt has no minecraft:inventory component");
   for (let slot = 0; slot < container.size; slot++) container.setItem(slot, new ItemStack("minecraft:dirt", 64));
-  const before = chestContents(dim, fullAt);
+  const before = chestContents(test, dim, fullAt);
 
   const command = lootInsertCommand(fullWorld, discovered);
   const outcome = runCommand(dim, command);
   await test.idle(4);
-  const after = chestContents(dim, fullAt);
+  const after = chestContents(test, dim, fullAt);
   const dropped: Entity[] = dim.getEntities({ type: "minecraft:item", location: fullWorld, maxDistance: 4 });
 
   const unchanged = JSON.stringify(before) === JSON.stringify(after);
