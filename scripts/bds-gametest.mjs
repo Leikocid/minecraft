@@ -105,6 +105,11 @@ const EXPECTED_TESTS = [
   'andrew:scythe_out_of_radius_after_hit_cooldown',
   'andrew:scythe_cleanup_on_target_death',
   'andrew:scythe_lethal_hit_kills',
+  // stage4-probe strf-p006 questions 1, 2, 7, 10 — src/gametest/probe-place.ts
+  'andrew:probe_place_block_entities',
+  'andrew:probe_place_rotation',
+  'andrew:probe_place_timing',
+  'andrew:probe_fill_air_limits',
 ];
 
 // FLAT is not cosmetic: see the LEVEL_TYPE comment in docker/bds/compose.yaml.

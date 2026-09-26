@@ -301,15 +301,9 @@ function run(): void {
   //    ticking area or a player; get(id) is the reliable proof here, same as
   //    the andrew:probe check above.
   //
-  //    getAllStates() on a permutation read from the static Structure
-  //    template (not yet placed in a dimension) comes back empty for the
-  //    door specifically, even though chest's and sculk_shrieker's states on
-  //    this same template read correctly, and our own NBT round-trip test
-  //    (tests/probe-box.test.mjs) proves the compiled bytes carry the right
-  //    upper_block_bit per half. Logged, not asserted: this looks like a
-  //    read-path quirk for multi-part blocks on the pre-placement template
-  //    object, not a fault in the compiled data — strf-p006's own rotation
-  //    question should read state off a *placed* structure, not this one.
+  //    The oak door's block id is minecraft:wooden_door; "minecraft:oak_door"
+  //    is not a block type on 1.26.51 (BlockTypes.get returns undefined), and
+  //    the engine loads such a palette entry as a stateless unknown block.
   check("structure-probe-box", () => {
     console.warn(
       `[selftest] getPackStructureIds() = ${JSON.stringify(world.structureManager.getPackStructureIds())}`
@@ -329,10 +323,10 @@ function run(): void {
     assert(shrieker.getState("can_summon") === true, "probe_box shrieker can_summon is not true");
     const lower = at(4, 1, 0);
     const upper = at(4, 2, 0);
-    assert(lower?.type.id === "minecraft:oak_door", `(4,1,0) is ${lower?.type.id}`);
-    assert(upper?.type.id === "minecraft:oak_door", `(4,2,0) is ${upper?.type.id}`);
-    console.warn(`[selftest] door lower states = ${JSON.stringify(lower.getAllStates())}`);
-    console.warn(`[selftest] door upper states = ${JSON.stringify(upper.getAllStates())}`);
+    assert(lower?.type.id === "minecraft:wooden_door", `(4,1,0) is ${lower?.type.id}`);
+    assert(upper?.type.id === "minecraft:wooden_door", `(4,2,0) is ${upper?.type.id}`);
+    assert(lower.getState("upper_block_bit") === false, `lower door half: ${JSON.stringify(lower.getAllStates())}`);
+    assert(upper.getState("upper_block_bit") === true, `upper door half: ${JSON.stringify(upper.getAllStates())}`);
     assert(
       at(2, 1, 5)?.type.id === "minecraft:stone_brick_stairs",
       `(2,1,5) is ${at(2, 1, 5)?.type.id}`
