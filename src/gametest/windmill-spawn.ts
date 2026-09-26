@@ -340,29 +340,32 @@ registerAsync("andrew", "windmill_spawn_prep_aborts", async (test: Test): Promis
       const original = dim.getBlock(v(at))?.typeId ?? "minecraft:air";
       dim.setBlockType(v(at), k.block);
       await test.idle(1);
-      const planned = planPrep(pw.view, px, pz, PLOT);
-      const inVolume = planned.ok && [0, 1, 2].every((i) => at[i] >= planned.plan.volume.min[i] - COLLISION_MARGIN && at[i] <= planned.plan.volume.max[i] + COLLISION_MARGIN);
-      const before = await snapshot(test, dim, watch);
-      const r = planned.ok ? precheck(pw, planned.plan, "o") : planned;
-      await test.idle(2);
-      const diff = changed(before, await snapshot(test, dim, watch));
-      log(`windmill spawn abort ${k.label}: ${k.block} at ${at.join(",")} inside the checked volume ${inVolume}; precheck -> ${r.ok ? "ok" : r.reason}; ${before.length} cells compared, ${diff} changed`);
-      verdicts.push(`${k.label}:${!r.ok && r.reason === k.reason && inVolume && diff === 0 ? "ok" : "FAIL"}`);
-      dim.setBlockType(v(at), original);
+      try {
+        const planned = planPrep(pw.view, px, pz, PLOT);
+        const inVolume = planned.ok && [0, 1, 2].every((i) => at[i] >= planned.plan.volume.min[i] - COLLISION_MARGIN && at[i] <= planned.plan.volume.max[i] + COLLISION_MARGIN);
+        const r = planned.ok ? precheck(pw, planned.plan, "o") : planned;
+        // The production path: the search finds only this hill, so its one forced site must be refused with the world untouched.
+        const store = new MemoryStore();
+        const rt = runtime(store, `gt-ws-abort-${k.label}`);
+        const before = await snapshot(test, dim, watch);
+        const rec = await search(rt, store, dim, { x: px + 17, z: pz + 17 }, 4).run();
+        await test.idle(2);
+        const after = await snapshot(test, dim, watch);
+        const diff = changed(before, after);
+        const refused = Object.entries(rec.rejects ?? {}).filter(([x]) => x.startsWith("prep:"));
+        const windmills = rt.instances("windmill").length;
+        const ok = !r.ok && r.reason === k.reason && inVolume && rec.status === "failed" && refused.length > 0 && windmills === 0 && diff === 0 && before.length > 0 && !before.includes("unloaded");
+        log(
+          `windmill spawn abort ${k.label}: ${k.block} at ${at.join(",")} inside the checked volume ${inVolume}; precheck -> ${r.ok ? "ok" : r.reason}; ` +
+            `search -> ${rec.status} (${rec.reason}), refusals ${JSON.stringify(refused)}, windmills ${windmills}; ${before.length} cells compared before/after, ${diff} changed`
+        );
+        verdicts.push(`${k.label}:${ok ? "ok" : "FAIL"}`);
+      } finally {
+        dim.setBlockType(v(at), original);
+      }
     }
-
-    // The same through the production search: every forced candidate around the spawner is refused, nothing is written.
-    dim.setBlockType(v(ABORT_CASES[1].at(px, pz)), ABORT_CASES[1].block);
-    const store = new MemoryStore();
-    const rt = runtime(store, "gt-ws-abort");
-    const before = await snapshot(test, dim, watch);
-    const rec = await search(rt, store, dim, { x: px + 17, z: pz + 17 }, 4).run();
-    await test.idle(2);
-    const diff = changed(before, await snapshot(test, dim, watch));
-    const refused = Object.entries(rec.rejects ?? {}).filter(([k]) => k.startsWith("prep:"));
-    log(`windmill spawn abort RESULT ${verdicts.join(" ")}; search -> ${rec.status} (${rec.reason}), refusals ${JSON.stringify(refused)}, windmills ${rt.instances("windmill").length}, ${diff} of ${before.length} cells changed`);
-    test.assert(verdicts.every((x) => x.endsWith(":ok")), verdicts.join(" "));
-    test.assert(rec.status === "failed" && refused.length > 0 && rt.instances("windmill").length === 0 && diff === 0, `search: ${rec.status} ${rec.reason}, ${diff} changed`);
+    log(`windmill spawn abort RESULT ${verdicts.join(" ")}`);
+    test.assert(verdicts.length === ABORT_CASES.length && verdicts.every((x) => x.endsWith(":ok")), verdicts.join(" "));
     test.succeed();
   } finally {
     if (area !== undefined) unbuild(dim, area);
