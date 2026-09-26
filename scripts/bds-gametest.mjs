@@ -183,6 +183,10 @@ const EXPECTED_TESTS = [
   // WRDN-BODY-01 — src/gametest/warden-body.ts
   'andrew:warden_body_generate',
   'andrew:warden_body_site',
+  // BAST-TMPL-01 — src/gametest/bastion.ts
+  'andrew:bastion_nether_rotations',
+  'andrew:bastion_treasure_access',
+  'andrew:bastion_lava_vanilla',
 ];
 
 // FLAT is not cosmetic: see the LEVEL_TYPE comment in docker/bds/compose.yaml.
