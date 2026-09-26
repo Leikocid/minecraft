@@ -120,6 +120,12 @@ const EXPECTED_TESTS = [
   'andrew:probe_shrieker_summons_warden',
   'andrew:probe_fire_resistance_noon',
   'andrew:probe_cured_villager_keeps_name',
+  // strf-p006 question 4 — src/gametest/probe-loot.ts
+  'andrew:probe_loot_ancient_city',
+  'andrew:probe_loot_bastion_treasure',
+  'andrew:probe_loot_bastion_other',
+  'andrew:probe_loot_control_known_table',
+  'andrew:probe_loot_full_chest',
 ];
 
 // FLAT is not cosmetic: see the LEVEL_TYPE comment in docker/bds/compose.yaml.
