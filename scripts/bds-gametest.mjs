@@ -130,6 +130,11 @@ const EXPECTED_TESTS = [
   'andrew:strf_registry_steps_idempotent',
   // STRF-ROLL-01 — src/gametest/structures.ts
   'andrew:strf_discovery_tick_budget',
+  // STRF-SITE-01 — src/gametest/structures-site.ts
+  'andrew:strf_site_profiles',
+  'andrew:strf_site_player_build',
+  'andrew:strf_site_pending_unloaded',
+  'andrew:strf_site_recheck',
 ];
 
 // FLAT is not cosmetic: see the LEVEL_TYPE comment in docker/bds/compose.yaml.
