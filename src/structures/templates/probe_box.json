@@ -1,0 +1,45 @@
+{
+  "_probe": "One-shot measurement structure for the stage4-probe strf-p006 questions to BDS 1.26.51.1. Not game content: it ships only for the probe run and leaves the release structure set at the end of stage 4.",
+  "size": [9, 5, 7],
+  "blocks": {
+    ".": "minecraft:air",
+    "#": "minecraft:stone_bricks",
+    "C": {
+      "name": "minecraft:chest",
+      "states": { "minecraft:cardinal_direction": "south" },
+      "chest": { "items": [] }
+    },
+    "S": { "name": "minecraft:mob_spawner", "spawner": { "entity": "minecraft:zombie" } },
+    "K": { "name": "minecraft:sculk_shrieker", "states": { "active": false, "can_summon": true } },
+    "D": {
+      "name": "minecraft:oak_door",
+      "states": {
+        "upper_block_bit": false,
+        "minecraft:cardinal_direction": "south",
+        "open_bit": false,
+        "door_hinge_bit": false
+      }
+    },
+    "U": {
+      "name": "minecraft:oak_door",
+      "states": {
+        "upper_block_bit": true,
+        "minecraft:cardinal_direction": "south",
+        "open_bit": false,
+        "door_hinge_bit": false
+      }
+    },
+    "T": {
+      "name": "minecraft:stone_brick_stairs",
+      "states": { "upside_down_bit": false, "weirdo_direction": 3 }
+    }
+  },
+  "fill": [
+    { "from": [0, 0, 0], "to": [8, 4, 6], "block": "#" },
+    { "from": [1, 1, 1], "to": [7, 3, 5], "block": "." }
+  ],
+  "layers": {
+    "1": ["    D    ", "  C   C  ", "         ", "    S    ", "         ", "  T K    "],
+    "2": ["    U    "]
+  }
+}
