@@ -14,7 +14,7 @@ import type {
   World,
 } from "@minecraft/server";
 import { LinkedAirships } from "./bodies/airship";
-import { type TypeBody, BODIES, naturalDefs, withLinks } from "./bodies";
+import { type TypeBody, BODIES, naturalDefs, spotsOf, withLinks } from "./bodies";
 import type { RollDef, StructureId } from "./config";
 import { Discovery, type PlayerPos, type SiteVerdict } from "./discovery";
 import { Loot } from "./loot";
@@ -80,7 +80,11 @@ export class StrfRuntime {
     this.bodies = opts.bodies ?? BODIES;
     this.log = opts.log ?? (() => {});
     this.registry = new Registry(store, this.log);
-    this.checker = new SiteChecker((d) => engine.view(d), () => this.registry.salt(), { registry: this.registry, log: this.log });
+    this.checker = new SiteChecker((d) => engine.view(d), () => this.registry.salt(), {
+      registry: this.registry,
+      spots: spotsOf(this.bodies),
+      log: this.log,
+    });
     this.gate = new SiteGate(this.checker, this.registry, () => this.discovery.stats.slices, this.log);
     this.defs = naturalDefs(this.bodies);
     this.discovery = new Discovery(this.registry, this.site, { defs: this.defs, log: this.log });

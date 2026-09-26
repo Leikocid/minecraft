@@ -15,7 +15,7 @@ import { tmpdir } from 'node:os';
 import { basename, dirname, extname, join } from 'node:path';
 import { buildSync } from 'esbuild';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { compileTemplate, parseMcstructure } from './lib/mcstructure.mjs';
+import { STRUCTURE_VOID, compileTemplate, parseMcstructure } from './lib/mcstructure.mjs';
 import { writeNbt } from './lib/nbt.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -26,7 +26,7 @@ function verifyRoundTrip(id, buffer, counts) {
   const parsed = parseMcstructure(buffer);
   const reCounts = {};
   for (const i of parsed.primary) {
-    const name = parsed.palette[i].name;
+    const name = i === -1 ? STRUCTURE_VOID : parsed.palette[i].name;
     reCounts[name] = (reCounts[name] ?? 0) + 1;
   }
   const a = JSON.stringify(Object.entries(counts).sort());

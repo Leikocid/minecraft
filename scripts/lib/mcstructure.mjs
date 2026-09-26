@@ -156,6 +156,8 @@ export function buildMcstructure({ size, palette, primary, secondary, blockEntit
   ]);
 }
 
+export const STRUCTURE_VOID = 'minecraft:structure_void';
+
 export const cellIndex = ([sx, sy, sz], x, y, z) => x * sy * sz + y * sz + z;
 
 /**
@@ -240,9 +242,15 @@ export function compileTemplate(template) {
       for (let z = 0; z < sz; z++) {
         const i = cellIndex(size, x, y, z);
         const block = resolve(cells[i]);
+        counts[block.name] = (counts[block.name] ?? 0) + 1;
+        // A void cell is index -1 with no palette entry. A structure_void palette
+        // entry is placed by structureManager.place as a real block over the terrain.
+        if (block.name === STRUCTURE_VOID) {
+          primary[i] = -1;
+          continue;
+        }
         primary[i] = indexOf(block);
         if (block.waterlogged) secondary[i] = indexOf(water);
-        counts[block.name] = (counts[block.name] ?? 0) + 1;
         const be = blockEntityEntries(block, [x + origin[0], y + origin[1], z + origin[2]]);
         if (be) blockEntities.set(i, be);
       }

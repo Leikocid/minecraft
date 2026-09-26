@@ -67,6 +67,12 @@ export interface StructureBody {
   /** Air-fill the box before placing; with `fromY`, only from that template-local Y up. */
   clear?: boolean | { fromY: number };
   chests: readonly ChestPoint[];
+  /**
+   * World writes of the place step after the template, outside its box (the
+   * Warden City's surface marker). Must be idempotent: a crash repeats the
+   * whole step. Needs PlaceWorld.edit.
+   */
+  decorate?(ctx: TemplateCtx, edit: BlockEdit): void;
   /** Spawns the one-time guards; runs once, from `looted`. */
   guards?(ctx: InitCtx): void;
   /** The Windmill's linked Airship attempt; tried at most once per instance. */
@@ -80,11 +86,27 @@ export interface PlaceHooks {
   spawnGuard?(ctx: GuardCtx): void;
 }
 
+export type BlockStates = Record<string, string | number | boolean>;
+
+/** Single-block reads and writes for StructureBody.decorate; reads return undefined in an unloaded chunk. */
+export interface BlockEdit {
+  /** Topmost non-air block of the column, liquids included. */
+  topmost(x: number, z: number): { y: number; typeId: string } | undefined;
+  typeAt(x: number, y: number, z: number): string | undefined;
+  set(pos: Vec3, typeId: string, states?: BlockStates): void;
+}
+
 export interface PlaceWorld {
   hasTemplate(id: string): boolean;
   isLoaded(x: number, z: number): boolean;
   place(id: string, origin: Vec3, rot: Instance["rot"]): void;
   fill(slice: Box): void;
+  edit?: BlockEdit;
+}
+
+function templateCtx(inst: Instance): TemplateCtx {
+  const templateSize = rotatedSize(inst.size, inst.rot);
+  return { instance: inst, templateSize, at: (p) => toWorld(inst.origin, p, templateSize, inst.rot) };
 }
 
 export type PlaceResult = "placed" | "pending" | "rejected" | "skipped" | "failed";
@@ -126,6 +148,9 @@ export class Placer {
     const area = this.clearArea(inst);
     if (area !== undefined) clearBox(area, (s) => this.world.fill(s));
     this.world.place(body.templateId, inst.origin, inst.rot);
+    if (body.decorate === undefined) return;
+    if (this.world.edit === undefined) throw new Error(`strf place: ${inst.id} decorates, this world cannot edit blocks`);
+    body.decorate(templateCtx(inst), this.world.edit);
   };
 
   /**
@@ -155,8 +180,7 @@ export class Placer {
     if (!this.loaded(inst)) return "pending";
     const body = this.body(inst);
     const ctx = (current: Instance): InitCtx => {
-      const templateSize = rotatedSize(current.size, current.rot);
-      const at = (p: Vec3): Vec3 => toWorld(current.origin, p, templateSize, current.rot);
+      const { templateSize, at } = templateCtx(current);
       const spawnGuard = (index: number, guard: GuardPoint): void => {
         const done = Number(this.registry.get(inst.dim, inst.origin, inst.id)?.extras[GUARDS_SPAWNED] ?? 0);
         if (index < done) return;
@@ -216,9 +240,45 @@ export interface PlaceEngineApi {
   StructureRotation: typeof StructureRotation;
 }
 
+/** getTopmostBlock throws in an unloaded chunk (probe Q9); getBlock returns undefined. */
+const isUnloaded = (e: unknown): boolean => e instanceof Error && /unloaded/i.test(`${e.constructor?.name ?? ""} ${e.name} ${e.message}`);
+
+export function engineEdit(dim: Dimension): BlockEdit {
+  return {
+    topmost(x, z) {
+      let b;
+      try {
+        b = dim.getTopmostBlock({ x, z });
+      } catch (e) {
+        if (isUnloaded(e)) return undefined;
+        throw e;
+      }
+      // getTopmostBlock skips liquids (measured on BDS 1.26.51.1): climb them.
+      let top = b === undefined ? { y: dim.heightRange.min - 1, typeId: "minecraft:air" } : { y: b.location.y, typeId: b.typeId };
+      for (let y = top.y + 1; y < dim.heightRange.max; y++) {
+        const t = dim.getBlock({ x, y, z })?.typeId;
+        if (t === undefined) return undefined;
+        if (!/^minecraft:(flowing_)?(water|lava)$/.test(t)) break;
+        top = { y, typeId: t };
+      }
+      return top;
+    },
+    typeAt: (x, y, z) => dim.getBlock({ x, y, z })?.typeId,
+    set(pos, typeId, states = {}) {
+      const b = dim.getBlock({ x: pos[0], y: pos[1], z: pos[2] });
+      if (b === undefined) throw new Error(`strf place: ${pos.join(",")} unloaded`);
+      if (b.typeId !== typeId) b.setType(typeId);
+      let perm = b.permutation;
+      for (const [k, v] of Object.entries(states)) perm = perm.withState(k as Parameters<typeof perm.withState>[0], v);
+      if (perm !== b.permutation) b.setPermutation(perm);
+    },
+  };
+}
+
 export function engineWorld(dim: Dimension, api: PlaceEngineApi): PlaceWorld {
   const minY = dim.heightRange.min;
   return {
+    edit: engineEdit(dim),
     // getPackStructureIds() returns [] for pack structures on 2.10.0; get() is the only existence check.
     hasTemplate: (id) => api.structureManager.get(id) !== undefined,
     isLoaded: (x, z) => dim.isChunkLoaded({ x, y: minY, z }),
