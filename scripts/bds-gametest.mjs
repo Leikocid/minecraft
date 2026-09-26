@@ -126,6 +126,8 @@ const EXPECTED_TESTS = [
   'andrew:probe_loot_bastion_other',
   'andrew:probe_loot_control_known_table',
   'andrew:probe_loot_full_chest',
+  // STRF-REG-01 — src/gametest/strf-registry.ts
+  'andrew:strf_registry_steps_idempotent',
 ];
 
 // FLAT is not cosmetic: see the LEVEL_TYPE comment in docker/bds/compose.yaml.

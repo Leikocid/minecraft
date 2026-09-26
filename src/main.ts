@@ -7,6 +7,8 @@ import { registerLegendaryHud } from "./legendary/hud";
 import { registerRecovery } from "./legendary/recovery";
 import { registerRetention } from "./legendary/retention";
 import { registerScytheVolley } from "./scythe/volley";
+import { Registry } from "./structures/registry";
+import { DynamicPropertyStore } from "./structures/store";
 import { registerTrap } from "./websword/trap";
 
 registerAutoSmelt();
@@ -23,6 +25,7 @@ registerHideCommand();
 
 world.afterEvents.worldLoad.subscribe(() => {
   console.warn("[andrew] script loaded");
+  console.warn(`[andrew] ${new Registry(new DynamicPropertyStore(world)).statsLine()}`);
 });
 
 world.afterEvents.playerSpawn.subscribe((event) => {
