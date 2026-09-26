@@ -23,6 +23,7 @@ import {
   ItemStack,
   world,
 } from "@minecraft/server";
+import { inspectChunkApi, readLocation, scanFrontier, systemWait, tickingAreaLimit, tickingAreaLoad } from "./chunk-probe";
 import { smeltedDropFor } from "../autosmelt";
 import { COOLDOWN_TICKS, cooldownRemaining } from "../legendary/rules";
 
@@ -108,6 +109,51 @@ function sharpnessType(): EnchantmentType {
       "the enchantment id is wrong for this engine version, so the probe is inconclusive"
   );
   return type;
+}
+
+/** Async twin of check(): the chunk probes have to wait for ticks. */
+async function checkAsync(name: string, fn: () => Promise<void>): Promise<void> {
+  try {
+    await fn();
+    passed++;
+    console.warn(`[selftest] PASS ${name}`);
+  } catch (err) {
+    failed++;
+    const why = err instanceof Error ? err.message : String(err);
+    console.warn(`[selftest] FAIL ${name}: ${why}`);
+  }
+}
+
+const probeLog = (msg: string): void => console.warn(`[selftest] probe ${msg}`);
+
+/**
+ * strf-p006 questions 9 and 11 in a world with no player and no GameTest —
+ * the only place where "areas added before refusal" is the whole world limit.
+ * These are measurements: a check fails only when it could not measure.
+ */
+async function runChunkProbes(): Promise<void> {
+  const dim = world.getDimension("overworld");
+  const spawn = world.getDefaultSpawnLocation();
+  const origin = { x: spawn.x, y: 64, z: spawn.z };
+
+  await checkAsync("probe-chunk-loaded-api", async () => {
+    const present = inspectChunkApi(dim, probeLog, "Q9");
+    const frontier = scanFrontier(dim, origin, 40, probeLog, "Q9");
+    probeLog(`Q9 spawn ${origin.x},${origin.y},${origin.z}: ${readLocation(dim, origin)}`);
+    probeLog(`Q9 RESULT player-less world: dimension.isChunkLoaded ${present ? "PRESENT" : "ABSENT"}; last loaded chunk along +x from spawn = ${frontier}`);
+    assert(present, "dimension.isChunkLoaded is not a function on the Dimension object");
+  });
+
+  await checkAsync("probe-tickingarea-load", async () => {
+    const center = { x: origin.x + 500, y: origin.y, z: origin.z };
+    const r = await tickingAreaLoad(dim, center, "andrew_probe_q11", systemWait, probeLog, "Q11", 400);
+    const limit = tickingAreaLimit(dim, { x: origin.x + 3000, y: origin.y, z: origin.z }, probeLog, "Q11");
+    probeLog(
+      `Q11 RESULT player-less world: add at 500 blocks ${r.addResult}; loaded before=${r.loadedBefore}; ` +
+        `${r.loaded ? `loaded after ${r.ticks} tick(s) / ${r.ms} ms` : "did NOT load in 400 ticks"}; ` +
+        `areas added before refusal=${limit.added} (${limit.refusal})`
+    );
+  });
 }
 
 function run(): void {
@@ -343,9 +389,10 @@ function run(): void {
     });
   }
 
-  console.warn(`[selftest] DONE passed=${passed} failed=${failed}`);
 }
 
 world.afterEvents.worldLoad.subscribe(() => {
   run();
+  // DONE goes last: bds:check waits for it, so it must follow the async probes.
+  void runChunkProbes().finally(() => console.warn(`[selftest] DONE passed=${passed} failed=${failed}`));
 });

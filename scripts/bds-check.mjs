@@ -246,8 +246,9 @@ function main() {
     // A previous container would otherwise keep serving its own old log.
     compose(['down']);
     // The self-check runs at worldLoad and prints DONE last, so waiting for
-    // both markers is what makes "absent" mean "never happened".
-    result = runServer(opts.timeoutSec, {}, { waitFor: [SCRIPT_LOADED, SELFTEST_DONE], markerWaitMs: 60_000 });
+    // both markers is what makes "absent" mean "never happened". The chunk
+    // probes wait up to ~30 s of game ticks before DONE.
+    result = runServer(opts.timeoutSec, {}, { waitFor: [SCRIPT_LOADED, SELFTEST_DONE], markerWaitMs: 120_000 });
   } finally {
     rmSync(packs.tmp, { recursive: true, force: true });
     if (opts.breakSelfTest) {
