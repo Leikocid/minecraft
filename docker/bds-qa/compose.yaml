@@ -52,7 +52,12 @@ services:
       # set-property --bulk), so writing "survival" into the properties file
       # directly does not stick — this is the only override that works.
       GAMEMODE: "${BDS_GAMEMODE:-creative}"
-      DIFFICULTY: "peaceful"
+      # QA is where the structures are checked by eye, and their guards are hostile
+      # mobs: the Windmill's 10 zombie villagers, the Bastion's piglins and brutes.
+      # A peaceful world refuses to spawn them — the engine throws, the guard step is
+      # re-queued forever and the structure stands empty. Production and CI stay
+      # peaceful; QA must not be.
+      DIFFICULTY: "easy"
       ALLOW_CHEATS: "true"
       # LAN-only dev server: the iPad joins without Xbox Live auth.
       ONLINE_MODE: "false"
