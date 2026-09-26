@@ -42,6 +42,8 @@ export interface DiscoveryStats {
   maxSliceMs: number;
   totalMs: number;
   dropped: number;
+  /** Chunks skipped because `hold` covered them; they stay unevaluated and come back later. */
+  held: number;
   outcomes: Record<string, Record<RollOutcome, number>>;
 }
 
@@ -81,6 +83,12 @@ export class Discovery {
   private readonly pending = new Map<string, Set<string>>();
   private running = false;
   readonly stats: DiscoveryStats;
+  /**
+   * Chunks this returns true for are neither queued nor rolled, and are not
+   * marked evaluated: the spawn Windmill search holds its area this way
+   * until it is finished (L0-wind-r013).
+   */
+  hold: ((dim: DimShort, cx: number, cz: number) => boolean) | undefined;
 
   constructor(
     private readonly registry: Registry,
@@ -92,7 +100,7 @@ export class Discovery {
     this.budgetMs = opts.budgetMs ?? SLICE_BUDGET_MS;
     this.now = opts.now ?? Date.now;
     this.log = opts.log ?? (() => {});
-    this.stats = { chunks: 0, slices: 0, maxSliceMs: 0, totalMs: 0, dropped: 0, outcomes: {} };
+    this.stats = { chunks: 0, slices: 0, maxSliceMs: 0, totalMs: 0, dropped: 0, held: 0, outcomes: {} };
     for (const d of this.defs) this.stats.outcomes[d.id] = emptyCounts();
   }
 
@@ -122,6 +130,10 @@ export class Discovery {
   enqueue(dim: DimShort, cx: number, cz: number): void {
     const key = chunkKey(dim, cx, cz);
     if (this.queued.has(key) || this.registry.isEvaluated(dim, cx, cz)) return;
+    if (this.hold?.(dim, cx, cz) === true) {
+      this.stats.held++;
+      return;
+    }
     if (this.queue.length >= QUEUE_LIMIT) {
       const [od, ox, oz] = this.queue.shift() as [DimShort, number, number];
       this.queued.delete(chunkKey(od, ox, oz));
@@ -200,7 +212,9 @@ export class Discovery {
         const [dim, cx, cz] = this.queue.shift() as [DimShort, number, number];
         this.queued.delete(chunkKey(dim, cx, cz));
         try {
-          this.evaluateChunk(dim, cx, cz);
+          // Queued before the hold began: dropped unevaluated, rediscovered later.
+          if (this.hold?.(dim, cx, cz) === true) this.stats.held++;
+          else this.evaluateChunk(dim, cx, cz);
         } catch (e) {
           // Every later chunk would throw the same (lost salt, newer schema);
           // drop the queue, discovery brings the chunks back.
@@ -244,7 +258,7 @@ export class Discovery {
     const per = Object.entries(s.outcomes)
       .map(([def, c]) => `${def}:${Object.entries(c).filter(([, n]) => n > 0).map(([k, n]) => `${k}=${n}`).join("/") || "-"}`)
       .join(" ");
-    return `strf discovery: chunks=${s.chunks} slices=${s.slices} max-slice-ms=${s.maxSliceMs} total-ms=${s.totalMs} dropped=${s.dropped} ${per}`;
+    return `strf discovery: chunks=${s.chunks} slices=${s.slices} max-slice-ms=${s.maxSliceMs} total-ms=${s.totalMs} dropped=${s.dropped} held=${s.held} ${per}`;
   }
 }
 

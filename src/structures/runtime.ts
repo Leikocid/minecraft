@@ -17,7 +17,7 @@ import { type TypeBody, BODIES, naturalDefs } from "./bodies";
 import type { RollDef, StructureId } from "./config";
 import { Discovery, type PlayerPos, type SiteVerdict } from "./discovery";
 import { Loot } from "./loot";
-import { type PlaceHooks, type PlaceWorld, Placer, engineWorld } from "./place";
+import { type PlaceHooks, type PlaceWorld, Placer, engineSpawnGuard, engineWorld } from "./place";
 import { type DimShort, type Instance, type Rotation, type Vec3, Registry } from "./registry";
 import { type Candidate, effectiveChance, rotatedSize } from "./roll";
 import { type BlockView, SiteChecker, SiteGate, dimensionView } from "./site";
@@ -153,7 +153,7 @@ export class StrfRuntime {
    * world write, then the same placement and init steps natural generation
    * runs — in one call, since the caller's area is loaded around them.
    */
-  placeAt(type: StructureId, dim: DimShort, x: number, z: number, rot: Rotation): PlaceOutcome {
+  placeAt(type: StructureId, dim: DimShort, x: number, z: number, rot: Rotation, opts: { id?: string } = {}): PlaceOutcome {
     const def = this.defs.find((d) => d.id === type);
     if (def === undefined) throw new Error(`strf runtime: no roll def "${type}"`);
     if (def.dim !== dim) return { kind: "wrong-dimension", need: def.dim };
@@ -162,7 +162,7 @@ export class StrfRuntime {
     const oz = Math.floor(z) - Math.floor(size[2] / 2);
     const cx = Math.floor(ox / CHUNK);
     const cz = Math.floor(oz / CHUNK);
-    const id = `${type}:${dim}:${cx}:${cz}`;
+    const id = opts.id ?? `${type}:${dim}:${cx}:${cz}`;
     const cand: Candidate = { id, def, dim, cx, cz, rot, size, x: ox, z: oz };
 
     // The site check skips the candidate's own id, so a record that already
@@ -244,6 +244,6 @@ export function engineStrf(api: StrfEngineApi): StrfEngine {
       return v;
     },
     placeWorld: (d) => engineWorld(dimension(d), { structureManager: api.world.structureManager, BlockVolume: api.BlockVolume, StructureRotation: api.StructureRotation }),
-    hooks: (d) => new Loot(dimension(d), api).hooks,
+    hooks: (d) => ({ ...new Loot(dimension(d), api).hooks, spawnGuard: engineSpawnGuard(dimension(d)) }),
   };
 }

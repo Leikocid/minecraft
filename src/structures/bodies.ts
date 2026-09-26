@@ -1,9 +1,10 @@
-// What each structure type places (L0-strf-e001). The four real templates are
-// not in the add-on yet, so every type stands in with the probe box and its two
-// chests, filled from the type's own loot tables. A stand-in never generates
-// on its own: its natural chance is 0 until `/andrew:structure chance` lifts it
-// for the session, so an operator's world is not littered with probe boxes.
+// What each structure type places (L0-strf-e001). A type whose real template is
+// not in the add-on yet stands in with the probe box and its two chests, filled
+// from the type's own loot tables. A stand-in never generates on its own: its
+// natural chance is 0 until `/andrew:structure chance` lifts it for the
+// session, so an operator's world is not littered with probe boxes.
 
+import { WINDMILL_BODY } from "./bodies/windmill";
 import { type RollDef, ROLL_DEFS, type StructureId } from "./config";
 import { ANCIENT_CITY, BASTION_OTHER, BASTION_TREASURE, CUSTOM_TABLE } from "./loot";
 import type { StructureBody } from "./place";
@@ -30,7 +31,7 @@ export const STAND_IN_CHESTS: readonly Vec3[] = [
   [6, 1, 1],
 ];
 
-const standIn = (tables: readonly [string, string]): TypeBody => ({
+export const standIn = (tables: readonly [string, string]): TypeBody => ({
   templateId: STAND_IN_TEMPLATE,
   standIn: true,
   size: STAND_IN_SIZE,
@@ -38,7 +39,7 @@ const standIn = (tables: readonly [string, string]): TypeBody => ({
 });
 
 export const BODIES: Readonly<Record<StructureId, TypeBody>> = {
-  windmill: standIn([CUSTOM_TABLE, CUSTOM_TABLE]),
+  windmill: WINDMILL_BODY,
   airship: standIn([CUSTOM_TABLE, CUSTOM_TABLE]),
   warden_city: standIn([ANCIENT_CITY, ANCIENT_CITY]),
   bastion: standIn([BASTION_TREASURE, BASTION_OTHER]),

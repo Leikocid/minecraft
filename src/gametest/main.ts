@@ -60,6 +60,10 @@ import "./structures-site";
 import "./structures-place";
 import "./structures-loot";
 import "./structures-commands";
+import "./windmill";
+import "./windmill-body";
+import "./windmill-spawn";
+import { SPAWN_EVENT } from "../structures/spawn-search";
 
 const WEB_SWORD_ID = WEB_SWORD.itemId;
 const isWebSword = (stack: ItemStack | undefined): stack is ItemStack => state.isItemOf(WEB_SWORD, stack);
@@ -75,6 +79,14 @@ const isReady = (player: Player) => cooldown.isReady(player, WEB_SWORD.abilityKe
 const remainingTicks = (player: Player) => cooldown.remainingTicks(player, WEB_SWORD.abilityKey);
 
 console.warn("[gametest] script loaded");
+
+// The release pack's spawn-Windmill search would build at this world's spawn,
+// which is where every GameTest runs. Its start delay leaves time for this
+// skip, which it honours only before its first block write. The spawn search
+// itself is tested in windmill-spawn.ts around a stand-in spawn.
+world.afterEvents.worldLoad.subscribe(() => {
+  world.getDimension("overworld").runCommand(`scriptevent ${SPAWN_EVENT} skip`);
+});
 
 // The release pack arms this same gate, and in this world it can do nothing:
 // the engine cannot hand a pack without @minecraft/server-gametest a
