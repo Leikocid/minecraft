@@ -23,3 +23,6 @@ docker/bds/data/
 
 # Interactive-session worktrees (see CLAUDE.md, Working Tree)
 .work/
+
+# ai-kit — local author mapping, per clone
+.mailmap

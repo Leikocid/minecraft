@@ -115,13 +115,20 @@ function launchOrigin(volley: Volley): Vector3 {
 function strike(volley: Volley, hp: number): void {
   const target = volley.target;
   const outcome = trueDamageOutcome(hp);
+  const damagingEntity = volley.owner.isValid ? volley.owner : undefined;
   if (outcome === "lethal") {
     // Overkill through the damage pipeline, so the death message, the owner's
     // kill credit and a totem all work; armour cannot soak hp + 100.
-    const damagingEntity = volley.owner.isValid ? volley.owner : undefined;
     target.applyDamage(hp + 100, { cause: EntityDamageCause.entityAttack, damagingEntity });
   } else {
-    // A direct write bypasses armour and Protection entirely.
+    // Two steps, and both are needed. The damage event is what the player
+    // sees and hears — the red flash, the hurt sound, a mob turning on its
+    // attacker; a bare setCurrentValue() has none of that and reads in game
+    // as "the projectiles do nothing". The write that follows is what makes
+    // the total exactly TRUE_DAMAGE whatever armour or Protection absorbed,
+    // and it also covers the ticks where the engine's invulnerability window
+    // swallows the event outright.
+    target.applyDamage(TRUE_DAMAGE, { cause: EntityDamageCause.entityAttack, damagingEntity });
     target.getComponent("minecraft:health")?.setCurrentValue(outcome);
   }
   volley.hits++;

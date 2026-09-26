@@ -1415,6 +1415,26 @@ register("andrew", "legendary_pickup_no_duplicate", (test: Test): void => {
   .tag("andrew");
 
 
+
+/**
+ * Entity ids the engine itself reported as hurt, with who hurt them.
+ *
+ * This is the only measurable half of "the player can see the hit": a health
+ * write is silent, while a real damage event is what makes the target flash
+ * red, play the hurt sound and turn on its attacker. If the event arrives, the
+ * feedback follows from the engine.
+ */
+const hurtBy = new Map<string, string>();
+
+world.afterEvents.entityHurt.subscribe((event) => {
+  const hurt = event.hurtEntity;
+  const source = event.damageSource.damagingEntity;
+  if (hurt !== undefined) {
+    hurtBy.set(hurt.id, source?.typeId ?? "unknown");
+  }
+});
+
+
 // ------------------------------------------------------ Scythe: targeting
 //
 // SC-TGT-01-AA, spec §8 acceptance tests 1–3. "Who was chosen" is read from
@@ -1543,6 +1563,12 @@ register("andrew", "scythe_hits_mob_when_alone", (test: Test): void => {
       test.assert(
         after <= before - TRUE_DAMAGE,
         `the cow lost ${before - after} hp, less than the ${TRUE_DAMAGE} one hit must take`
+      );
+      // Silent damage reads in game as no damage at all (operator, 2026-09-26),
+      // so the engine's own hurt event is asserted, not just the number.
+      test.assert(
+        hurtBy.has(cow.id),
+        "the cow lost health without a single damage event — no red flash, no hurt sound"
       );
     });
   });
