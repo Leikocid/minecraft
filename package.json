@@ -18,6 +18,9 @@
     "bds:up": "bash scripts/bds.sh up",
     "bds:down": "bash scripts/bds.sh down",
     "bds:logs": "bash scripts/bds.sh logs",
+    "bds:qa:up": "ANDREW_BDS_DIR=bds-qa bash scripts/bds.sh up",
+    "bds:qa:down": "ANDREW_BDS_DIR=bds-qa bash scripts/bds.sh down",
+    "bds:qa:logs": "ANDREW_BDS_DIR=bds-qa bash scripts/bds.sh logs",
     "version:set": "node scripts/set-version.mjs"
   },
   "dependencies": {

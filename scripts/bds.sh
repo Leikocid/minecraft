@@ -13,7 +13,9 @@ set -euo pipefail
 cmd="${1:?usage: bds.sh <up|down|logs>}"
 shift || true
 scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-composeFile="$scriptDir/../docker/bds/compose.yaml"
+# ANDREW_BDS_DIR picks the instance: bds (production, 19132) or bds-qa (19134).
+instanceDir="${ANDREW_BDS_DIR:-bds}"
+composeFile="$scriptDir/../docker/$instanceDir/compose.yaml"
 
 if ! docker info >/dev/null 2>&1; then
   echo "bds: the Docker daemon is not reachable — start Docker Desktop and retry." >&2

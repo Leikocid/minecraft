@@ -16,7 +16,12 @@ import { BDS_VERSION } from './targets.mjs';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export const root = join(__dirname, '..');
-export const composeDir = join(root, 'docker', 'bds');
+// ANDREW_BDS_DIR picks the instance: 'bds' is the production LAN server, 'bds-qa'
+// the QA one. Each directory carries its own compose file, server.properties,
+// container name, ports and ./data — so a verification run that recreates one
+// container never touches the other.
+export const instanceDir = process.env.ANDREW_BDS_DIR || 'bds';
+export const composeDir = join(root, 'docker', instanceDir);
 export const composeFile = join(composeDir, 'compose.yaml');
 export const seedProperties = join(composeDir, 'server.properties');
 export const dataDir = join(composeDir, 'data');
@@ -130,7 +135,7 @@ export function unpackAddon(overlayDir) {
  * { dir, manifest, dirName }. bds:up passes none — the LAN server ships only
  * what the iPad would get from the archive.
  */
-export function stageDataDir({ behavior, resource, extraBehaviorPacks = [] }) {
+export function stageDataDir({ behavior, resource, extraBehaviorPacks = [], preserveWorld = false }) {
   mkdirSync(dataDir, { recursive: true });
 
   // The BDS archive is unpacked with `unzip -n`, so this file is never
@@ -152,7 +157,11 @@ export function stageDataDir({ behavior, resource, extraBehaviorPacks = [] }) {
   }
 
   const worldDir = join(dataDir, 'worlds', LEVEL_NAME);
-  rmSync(worldDir, { recursive: true, force: true });
+  // A check recreates the world so a stale one cannot make it lie. `bds:up` keeps
+  // it: that server is played on, and wiping it on every pack update loses whatever
+  // was built there. The pack lists below are rewritten either way, so an existing
+  // world still picks up new pack versions.
+  if (!preserveWorld) rmSync(worldDir, { recursive: true, force: true });
   mkdirSync(worldDir, { recursive: true });
 
   const entry = (m) => ({ pack_id: m.header.uuid, version: m.header.version });

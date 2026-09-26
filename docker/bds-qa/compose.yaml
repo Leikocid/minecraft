@@ -1,0 +1,79 @@
+# QA Bedrock server for the andrew add-on — a second, independent instance.
+#
+# Why it exists: every `bds:check` / `bds:gametest` run recreates the container
+# named `andrew-bds`, so any verification run takes the operator's LAN server
+# down with it. This lane has its own container name, ports, data directory and
+# world, so the QA server survives verification runs and the production one is
+# never touched by a deploy here.
+#
+#   npm run bds:qa:up     build, install the current packs, start QA on 19134
+#   npm run bds:qa:logs   follow the QA log
+#   npm run bds:qa:down   stop and remove the QA container
+#
+# Production stays on 19132 via `npm run bds:up`. VERSION must stay equal to
+# BDS_VERSION in scripts/targets.mjs, same as the production compose file.
+
+services:
+  bds:
+    image: itzg/minecraft-bedrock-server:latest
+    # BDS ships x86_64 only; on Apple Silicon this runs through Rosetta.
+    # [src: concept-constraint C-5]
+    platform: linux/amd64
+    container_name: andrew-bds-qa
+    environment:
+      EULA: "TRUE"
+      VERSION: "1.26.51.1"
+      # The world the packs are attached to; scripts/bds-check.mjs writes
+      # worlds/$LEVEL_NAME/world_{behavior,resource}_packs.json.
+      # bds:check and bds:up leave this at "andrew"; scripts/bds-gametest.mjs
+      # starts the container with BDS_LEVEL_NAME=gametest so that the
+      # experiments-enabled GameTest world is a separate world and the
+      # everyday "andrew" world is never touched by it.
+      LEVEL_NAME: "${BDS_LEVEL_NAME:-andrew}"
+      # bds:check and bds:up want an ordinary world. scripts/bds-gametest.mjs
+      # starts the container with BDS_LEVEL_TYPE=FLAT: GameTest places its
+      # platform at the console's own position, and in a default world that
+      # lands wherever the generator put the origin — measured at y=53 in an
+      # ocean, i.e. under water, where mining is five times slower and the
+      # simulated player drowns inside the test's tick budget. A superflat
+      # world puts the same platform on dry land every time.
+      LEVEL_TYPE: "${BDS_LEVEL_TYPE:-DEFAULT}"
+      SERVER_NAME: "Andrew BDS QA"
+      # QA listens on its own ports inside the container as well, and they are
+      # published 1:1: NetherNet tells the client the port the server sees, so a
+      # host-to-container translation breaks the handshake.
+      SERVER_PORT: "19134"
+      SERVER_PORT_V6: "19135"
+
+      # bds-check leaves this at the default (creative); bds:up starts the
+      # container with BDS_GAMEMODE=survival in its environment so this
+      # resolves to survival there. The image reapplies GAMEMODE from this
+      # env var into server.properties on every container start (via
+      # set-property --bulk), so writing "survival" into the properties file
+      # directly does not stick — this is the only override that works.
+      GAMEMODE: "${BDS_GAMEMODE:-creative}"
+      DIFFICULTY: "peaceful"
+      ALLOW_CHEATS: "true"
+      # LAN-only dev server: the iPad joins without Xbox Live auth.
+      ONLINE_MODE: "false"
+      # Without console output the script's console.warn never reaches
+      # `docker logs`, and the check has nothing to assert on.
+      CONTENT_LOG_FILE_ENABLED: "true"
+      CONTENT_LOG_CONSOLE_OUTPUT_ENABLED: "true"
+    # NetherNet (BDS 1.26 default transport, bedrock_server_how_to.html §Transport):
+    #   - the handshake is HTTP over TCP on server-port, so 19132/tcp must be
+    #     published — with udp alone the iPad got "Connection refused" (2026-09-21);
+    #   - gameplay then runs over UDP on ports the server allocates; they are
+    #     pinned to 19140-19149 via server-udp-ports and published 1:1 below.
+    #   - 7551/udp is NetherNet LAN discovery, so the server shows up in the
+    #     iPad's LAN list as well as by address.
+    ports:
+      - "19134:19134/tcp"
+      - "19134:19134/udp"
+      - "19150-19159:19150-19159/udp"
+      - "7552:7552/udp"
+    volumes:
+      # Server binary, world and installed packs. Gitignored.
+      - ./data:/data
+    stdin_open: true
+    tty: true

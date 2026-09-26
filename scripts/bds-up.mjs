@@ -13,24 +13,27 @@
 //   npm run bds:up -- --no-build --timeout 120
 
 import { spawnSync } from 'node:child_process';
-import { rmSync } from 'node:fs';
+import { readFileSync, rmSync } from 'node:fs';
 import {
   applyPropertyOverrides,
   assertComposePinsVersion,
   assertDockerRunning,
   buildAddon,
   compose,
+  instanceDir,
   log,
   runServer,
+  seedProperties,
   stageDataDir,
   unpackAddon,
 } from './bds-lib.mjs';
 
 function parseArgs(argv) {
-  const opts = { build: true, timeoutSec: 300 };
+  const opts = { build: true, timeoutSec: 300, freshWorld: false };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === '--no-build') opts.build = false;
+    else if (arg === '--fresh-world') opts.freshWorld = true;
     else if (arg === '--timeout') opts.timeoutSec = Number(argv[++i]);
     else throw new Error(`unknown argument: ${arg}`);
   }
@@ -67,7 +70,10 @@ function main() {
   let result;
   let lanIpForReport = null;
   try {
-    stageDataDir(packs);
+    // The LAN server is played on: keep its world across pack updates. Use
+    // `--fresh-world` to start over (the closing demo does, to show generation
+    // from an untouched world).
+    stageDataDir({ ...packs, preserveWorld: !opts.freshWorld });
     // texturepack-required forces the iPad to pull the resource pack (icons,
     // names) from the server rather than joining with it disabled. The image
     // does not manage this key from an env var, so writing it into the
@@ -124,9 +130,14 @@ function main() {
 
   log('▶ server up: Survival, cheats on, texture pack required');
 
+  // The port comes from this instance's own server.properties: production listens
+  // on 19132, QA on 19134, and printing a hardcoded port sends the operator to
+  // the wrong server.
+  const port = (readFileSync(seedProperties, 'utf-8').match(/^server-port=(\d+)$/m) ?? [, '19132'])[1];
   const ip = lanIpForReport;
-  const address = ip ? `${ip}:19132` : 'IP не определён — посмотрите в Настройках macOS → Сеть';
-  log(`Сервер поднят: ${address} — на iPad: Играть → Серверы → Добавить сервер`);
+  const address = ip ? `${ip}:${port}` : 'IP не определён — посмотрите в Настройках macOS → Сеть';
+  const which = instanceDir === 'bds-qa' ? 'QA-сервер' : 'Сервер';
+  log(`${which} поднят: ${address} — на iPad: Играть → Серверы → Добавить сервер`);
 }
 
 try {
