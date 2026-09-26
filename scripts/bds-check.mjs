@@ -307,7 +307,7 @@ function main() {
     }
     // Which phase ran is decided by a marker in the saved world: a run 2 that
     // reran phase 1 means the world did not survive the restart.
-    const phases = i < 2 ? [`probe-mobs-restart-run${i + 1}`, `strf-registry-restart-run${i + 1}`, `windmill-restart-run${i + 1}`] : [];
+    const phases = i < 2 ? [`probe-mobs-restart-run${i + 1}`, `strf-registry-restart-run${i + 1}`, `windmill-restart-run${i + 1}`, `bastion-restart-run${i + 1}`] : [];
     for (const phase of [...phases, `spawn-windmill-run${i + 1}`]) {
       if (result.started && !analysis.selftestLines.some((l) => l.includes(phase))) {
         problems.push(`${run}: the self-check never reported ${phase} — the restart check ran the wrong phase or not at all`);

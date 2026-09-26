@@ -5,10 +5,10 @@
 // session, so an operator's world is not littered with probe boxes.
 
 import { AIRSHIP_BODY } from "./bodies/airship";
+import { BASTION_BODY } from "./bodies/bastion";
 import { WARDEN_CITY_BODY } from "./bodies/warden-city";
 import { WINDMILL_BODY } from "./bodies/windmill";
 import { type RollDef, ROLL_DEFS, type StructureId } from "./config";
-import { BASTION_OTHER, BASTION_TREASURE } from "./loot";
 import type { InitCtx, StructureBody } from "./place";
 import type { Instance, Vec3 } from "./registry";
 import type { ExtraSpot } from "./site";
@@ -47,7 +47,7 @@ export const BODIES: Readonly<Record<StructureId, TypeBody>> = {
   windmill: WINDMILL_BODY,
   airship: AIRSHIP_BODY,
   warden_city: WARDEN_CITY_BODY,
-  bastion: standIn([BASTION_TREASURE, BASTION_OTHER]),
+  bastion: BASTION_BODY,
 };
 
 /**
