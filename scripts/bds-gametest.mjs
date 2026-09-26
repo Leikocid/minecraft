@@ -26,8 +26,9 @@
 //      instead and the command is written to its stdin.
 //
 //   npm run bds:gametest
-//   npm run bds:gametest -- --no-build --timeout 600
+//   npm run bds:gametest -- --no-build --timeout 1800
 //   npm run bds:gametest -- --keep-up      # leave the server running to inspect
+//   npm run bds:gametest -- --only andrew:probe_fire_resistance_noon   # one test, for iteration
 
 import { execFileSync, spawnSync } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
@@ -114,6 +115,11 @@ const EXPECTED_TESTS = [
   'andrew:probe_chunk_loaded',
   'andrew:probe_tickingarea_load',
   'andrew:probe_dynamic_property_budget',
+  // strf-p006 questions 3, 6 — src/gametest/probe-mobs.ts (Q5 and the restart
+  // half of Q6 run in bds:check: they need two server runs over one world)
+  'andrew:probe_shrieker_summons_warden',
+  'andrew:probe_fire_resistance_noon',
+  'andrew:probe_cured_villager_keeps_name',
 ];
 
 // FLAT is not cosmetic: see the LEVEL_TYPE comment in docker/bds/compose.yaml.
@@ -128,17 +134,21 @@ const env = {
 // ---------------------------------------------------------------- arguments
 
 function parseArgs(argv) {
-  const opts = { build: true, timeoutSec: 600, keepUp: false };
+  // The zombie-villager cure alone waits up to 5.5 minutes of game time.
+  const opts = { build: true, timeoutSec: 1800, keepUp: false, only: [] };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === '--no-build') opts.build = false;
     else if (arg === '--keep-up') opts.keepUp = true;
+    else if (arg === '--only') opts.only.push(argv[++i]);
     else if (arg === '--timeout') opts.timeoutSec = Number(argv[++i]);
     else throw new Error(`unknown argument: ${arg}`);
   }
   if (!Number.isFinite(opts.timeoutSec) || opts.timeoutSec <= 0) {
     throw new Error('--timeout must be a positive number of seconds');
   }
+  const unknown = opts.only.filter((n) => !EXPECTED_TESTS.includes(n));
+  if (unknown.length > 0) throw new Error(`--only: not in EXPECTED_TESTS: ${unknown.join(' ')}`);
   return opts;
 }
 
@@ -343,7 +353,7 @@ function sendCommand(command) {
  * A test that produced neither is reported as missing rather than ignored:
  * silence is the failure mode that would otherwise turn an empty run green.
  */
-function analyzeLog(text) {
+function analyzeLog(text, expected) {
   const lines = text.split('\n').map((l) => l.trimEnd());
   const problems = [];
   const evidence = [];
@@ -363,7 +373,7 @@ function analyzeLog(text) {
     if (failed) results.set(failed[1], { ok: false, line: line.trim() });
   }
 
-  for (const name of EXPECTED_TESTS) {
+  for (const name of expected) {
     const result = results.get(name);
     if (!result) problems.push(`${name} produced no onTestPassed/onTestFailed line — it never ran`);
     else if (!result.ok) problems.push(result.line);
@@ -377,6 +387,8 @@ function analyzeLog(text) {
 
 function main() {
   const opts = parseArgs(process.argv.slice(2));
+  // A partial run is for iteration; only the full list proves the suite.
+  const selected = opts.only.length > 0 ? opts.only : EXPECTED_TESTS;
 
   assertComposePinsVersion();
   assertDockerRunning();
@@ -419,7 +431,7 @@ function main() {
       deadline
     );
 
-    for (const name of EXPECTED_TESTS) {
+    for (const name of selected) {
       // Remove the previous test's structure, so the next one is placed on the
       // same clear ground instead of being pushed aside by the leftovers.
       sendCommand('gametest clearall');
@@ -447,7 +459,7 @@ function main() {
   mkdirSync(join(root, 'dist'), { recursive: true });
   writeFileSync(logPath, text);
 
-  const { problems, evidence, results } = analyzeLog(text);
+  const { problems, evidence, results } = analyzeLog(text, selected);
 
   log('');
   log('GameTest results:');
@@ -475,6 +487,7 @@ function main() {
   }
 
   log('');
+  if (selected !== EXPECTED_TESTS) log(`PARTIAL RUN (--only): ${selected.length} of ${EXPECTED_TESTS.length} tests — not a suite verdict`);
   if (problems.length > 0) {
     log('FAIL — the simulated-player scenarios did not pass on BDS:');
     for (const p of problems) log(`  ✗ ${p}`);
