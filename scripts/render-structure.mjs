@@ -144,8 +144,34 @@ const COLOURS = {
   'minecraft:end_rod': [232, 226, 206],
 };
 
+// Wood species, because the family fallback below would paint every plank oak-brown and a
+// birch rotor would vanish into an oak wall — in game birch is nearly white against it.
+const WOOD = {
+  oak: [162, 130, 78],
+  birch: [216, 200, 150],
+  spruce: [114, 84, 48],
+  dark_oak: [66, 43, 20],
+  acacia: [168, 90, 50],
+  jungle: [160, 115, 80],
+  mangrove: [117, 54, 48],
+  cherry: [226, 168, 178],
+  bamboo: [194, 158, 66],
+  crimson: [108, 60, 86],
+  warped: [43, 104, 99],
+};
+const WOOD_PARTS = [
+  '_planks', '_fence_gate', '_fence', '_log', '_wood', '_slab', '_stairs', '_door',
+  '_trapdoor', '_button', '_pressure_plate', '_sign', '_stem', '_hyphae',
+];
+
 function colourOf(name) {
   if (name in COLOURS) return COLOURS[name];
+  const bare = name.replace('minecraft:', '');
+  if (WOOD_PARTS.some((s) => bare.endsWith(s))) {
+    // Longest species first, so dark_oak wins over oak.
+    for (const species of Object.keys(WOOD).sort((a, b) => b.length - a.length))
+      if (bare.startsWith(species + '_')) return WOOD[species];
+  }
   // Families that only vary by wood/colour prefix: fall back to the base material.
   for (const [suffix, c] of [
     ['_concrete', COLOURS['minecraft:concrete']],
