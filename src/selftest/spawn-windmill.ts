@@ -64,6 +64,13 @@ function count(dim: Dimension, origin: [number, number, number]): Counts {
 }
 
 export async function spawnWindmillCheck(run: number, dim: Dimension, wait: Wait, log: Log): Promise<void> {
+  // A fresh world enables nothing, and the search waits for Windmill. Enabled
+  // through the operator's own command: this pack cannot write the release
+  // pack's dynamic properties. The setting persists into runs 2 and 3.
+  if (run === 1) {
+    const r = dim.runCommand("andrew:structure enable windmill");
+    log(`spawn windmill run 1: /andrew:structure enable windmill -> successCount ${r.successCount}`);
+  }
   for (let t = 0; t < STATE_WAIT_TICKS && !terminal(latest); t += 20) {
     if (t % 400 === 0) dim.runCommand(`scriptevent ${SPAWN_EVENT} report`);
     await wait(20);

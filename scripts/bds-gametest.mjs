@@ -65,8 +65,11 @@ const SERVER_STARTED = /^\[.*INFO\] Server started\.$/m;
 const SCRIPT_LOADED = '[gametest] script loaded';
 const EXPERIMENT_ACTIVE = 'Experiment(s) active:';
 // The release pack's spawn-Windmill search must stand down in this world:
-// every test runs at its spawn (src/gametest/main.ts sends the skip).
-const SPAWN_SEARCH_SKIPPED = '[andrew] spawn windmill: search finished: skipped';
+// every test runs at its spawn. On a fresh world nothing is enabled, so it
+// never starts; were Windmill enabled, src/gametest/main.ts sends the skip.
+const SPAWN_SEARCH_STOOD_DOWN = ['[andrew] spawn windmill: not started: windmill is not enabled', '[andrew] spawn windmill: search finished: skipped'];
+// The world is deleted before every run, so the release pack's load line must name no type.
+const ENABLED_NONE = '[andrew] structures enabled: none';
 
 /**
  * Tests registered by src/gametest/main.ts, run one at a time.
@@ -167,6 +170,8 @@ const EXPECTED_TESTS = [
   'andrew:windmill_body_init',
   'andrew:windmill_guard_noon',
   'andrew:windmill_guard_cured',
+  // STRF-SUBSET-01 — src/gametest/windmill-body.ts
+  'andrew:windmill_body_airship_disabled',
   // WIND-SPAWN-01 — src/gametest/windmill-spawn.ts
   'andrew:windmill_spawn_once',
   'andrew:windmill_spawn_holds_discovery',
@@ -440,9 +445,13 @@ function analyzeLog(text, expected) {
   if (lines.some((l) => l.includes(SCRIPT_LOADED))) evidence.push(SCRIPT_LOADED);
   else problems.push(`"${SCRIPT_LOADED}" is absent — the gametest pack script did not execute`);
 
-  const skipped = lines.find((l) => l.includes(SPAWN_SEARCH_SKIPPED));
-  if (skipped) evidence.push(skipped.trim());
-  else problems.push(`"${SPAWN_SEARCH_SKIPPED}" is absent — the release pack may have built its spawn Windmill where the tests run`);
+  const stoodDown = lines.find((l) => SPAWN_SEARCH_STOOD_DOWN.some((m) => l.includes(m)));
+  if (stoodDown) evidence.push(stoodDown.trim());
+  else problems.push(`none of ${JSON.stringify(SPAWN_SEARCH_STOOD_DOWN)} — the release pack may have built its spawn Windmill where the tests run`);
+
+  const enabledLine = lines.find((l) => l.includes('[andrew] structures enabled:'));
+  if (enabledLine?.includes(ENABLED_NONE)) evidence.push(enabledLine.trim());
+  else problems.push(`"${ENABLED_NONE}" is absent on a fresh world (got ${JSON.stringify(enabledLine?.trim() ?? null)})`);
 
   for (const line of lines) {
     const passed = line.match(/onTestPassed:\s*(\S+)/);

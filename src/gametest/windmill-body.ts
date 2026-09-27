@@ -16,6 +16,7 @@ import {
   StructureRotation,
   type Vector3,
   WeatherType,
+  system,
   world,
 } from "@minecraft/server";
 import { type SimulatedPlayer, Test, registerAsync } from "@minecraft/server-gametest";
@@ -23,7 +24,9 @@ import { stripHelmet } from "../selftest/mob-probe";
 import { GUARD_COUNT, GUARD_ENTITY, WINDMILL_BODY, guardPoints, guardTag } from "../structures/bodies/windmill";
 import { type Box, boxOf, sliceBox } from "../structures/clear";
 import { contents } from "../structures/loot";
-import { CHESTS_FILLED, GUARDS_SPAWNED, engineSpawnGuard } from "../structures/place";
+import { LINKED_STATUS } from "../structures/bodies/airship";
+import { EnabledTypes } from "../structures/config";
+import { CHESTS_FILLED, GUARDS_SPAWNED, LINKED_TRIED, engineSpawnGuard } from "../structures/place";
 import { COLLISION_MARGIN, type Instance, type Rotation, type Vec3, SALT_KEY, clearTestHook, installTestHook } from "../structures/registry";
 import { buildCandidate } from "../structures/roll";
 import { StrfRuntime, engineStrf } from "../structures/runtime";
@@ -439,6 +442,62 @@ registerAsync("andrew", "windmill_guard_cured", async (test: Test): Promise<void
   .maxTicks(CURE_WAIT_TICKS + STAYS_TICKS + 600)
   .tag("andrew");
 
-export const WINDMILL_BODY_TESTS = ["windmill_body_site_cancel", "windmill_body_init", "windmill_guard_noon", "windmill_guard_cured"];
+// ------------------------------------------------ STRF-SUBSET-01: the Airship disabled, the Windmill still done
+
+registerAsync("andrew", "windmill_body_airship_disabled", async (test: Test): Promise<void> => {
+  const dim = test.getDimension();
+  const restore = worldSnapshot();
+  const store = new MemoryStore();
+  store.set(SALT_KEY, `gt-wb-noair-${Date.now()}`);
+  const enabled = new EnabledTypes(store);
+  enabled.enable(["windmill"]);
+  const lines: string[] = [];
+  // A ring-capable engine: without the gate the linked search would really run here.
+  const rt = new StrfRuntime(
+    store,
+    engineStrf({ world, BlockVolume, BlockTypes, StructureRotation, ItemStack, EnchantmentType, system, ringAreaPrefix: "andrew_gt_noair" }),
+    { log: (m) => (lines.push(m), log(m)), enabled }
+  );
+  const [cx, cz] = farChunk(test, 150);
+  const x = cx * CHUNK + 8;
+  const z = cz * CHUNK + 8;
+  const unload = await loadBox(test, dim, "andrew_gt_wb_noair", { min: [x - 24, 0, z - 24], max: [x + 24, 0, z + 24] });
+  let inst: Instance | undefined;
+  try {
+    world.setDifficulty(Difficulty.Easy);
+    const out = rt.placeAt("windmill", "o", x, z, 0);
+    test.assert(out.kind === "placed", `placeAt: ${JSON.stringify(out)}`);
+    if (out.kind !== "placed") return;
+    inst = out.instance;
+    await test.idle(20);
+    const rec = rt.registry.get("o", inst.origin, inst.id);
+    const skipped = lines.filter((l) => l.includes(`linked attempt for ${inst!.id} skipped: airship is not enabled`));
+    const airships = rt.instances("airship").length;
+    log(
+      `windmill airship disabled RESULT enabled=${enabled.list().join(",")} record ${rec?.state} lt=${String(rec?.extras[LINKED_TRIED])} ls=${String(rec?.extras[LINKED_STATUS])}; ` +
+        `linked attempts ${rt.linked.attempts.size}, airship records ${airships}; skip lines ${skipped.length}`
+    );
+    test.assert(rec?.state === "done", `record ${rec?.state}`);
+    test.assert(rec?.extras[LINKED_STATUS] === "skipped", `linked status ${String(rec?.extras[LINKED_STATUS])}`);
+    test.assert(rt.linked.attempts.size === 0 && airships === 0, "a linked Airship was attempted");
+    test.assert(skipped.length === 1, `skip logged ${skipped.length} times`);
+    test.succeed();
+  } finally {
+    if (inst !== undefined) {
+      const box = boxOf(inst.origin, inst.size);
+      for (const c of WINDMILL_BODY.chests) dim.getBlock(v(toWorld(inst.origin, c.local, SIZE, inst.rot)))?.getComponent("minecraft:inventory")?.container?.clearAll();
+      removeMobs(dim, box);
+      fillBox(dim, box, "minecraft:air");
+      removeMobs(dim, box);
+    }
+    restore();
+    unload();
+  }
+})
+  .structureName(STRUCTURE)
+  .maxTicks(1200)
+  .tag("andrew");
+
+export const WINDMILL_BODY_TESTS = ["windmill_body_site_cancel", "windmill_body_init", "windmill_guard_noon", "windmill_guard_cured", "windmill_body_airship_disabled"];
 
 log(`registered ${WINDMILL_BODY_TESTS.length} windmill body test(s): ${WINDMILL_BODY_TESTS.join(" ")}`);

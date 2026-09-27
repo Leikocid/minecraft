@@ -2,6 +2,7 @@
 // plus the discovery and job budget knobs (L0-strf-p001, L0-strf-p005).
 
 import type { DimShort, Vec3 } from "./registry";
+import type { KeyValueStore } from "./store";
 
 export type StructureId = "windmill" | "airship" | "warden_city" | "bastion";
 
@@ -56,3 +57,48 @@ export const SLICE_BUDGET_MS = 5;
  * overrun. A slice over it is a failure, not a warning.
  */
 export const SLICE_CEILING_MS = 10;
+
+/** World dynamic property holding the enabled types, comma-separated. */
+export const ENABLED_KEY = "andrew:st:enabled";
+
+/**
+ * Which types may roll and be used by `/andrew:structure`, kept in the world so
+ * one pack serves every server. Without a stored value `fallback` applies: the
+ * release script passes none (nothing enabled until the operator says so);
+ * harnesses that build their own runtime default to every type.
+ */
+export class EnabledTypes {
+  constructor(
+    private readonly store: KeyValueStore,
+    private readonly fallback: readonly StructureId[] = []
+  ) {}
+
+  /** In roll-table order; unknown names in the stored value are dropped. */
+  list(): StructureId[] {
+    const raw = this.store.get(ENABLED_KEY);
+    const named = raw === undefined ? this.fallback : raw.split(",");
+    return ROLL_DEFS.map((d) => d.id).filter((id) => named.includes(id));
+  }
+
+  has(type: string): boolean {
+    return (this.list() as string[]).includes(type);
+  }
+
+  enable(types: readonly StructureId[]): StructureId[] {
+    return this.write([...this.list(), ...types]);
+  }
+
+  disable(types: readonly StructureId[]): StructureId[] {
+    return this.write(this.list().filter((t) => !types.includes(t)));
+  }
+
+  /** An empty set is stored as "", not deleted: disabling everything must outlive a change of `fallback`. */
+  private write(types: readonly StructureId[]): StructureId[] {
+    this.store.set(ENABLED_KEY, ROLL_DEFS.map((d) => d.id).filter((id) => types.includes(id)).join(","));
+    return this.list();
+  }
+}
+
+/** The load-time log line: what this world lets generate. */
+export const enabledLine = (enabled: readonly StructureId[]): string =>
+  `structures enabled: ${enabled.length === 0 ? "none (nothing generates until /andrew:structure enable)" : enabled.join(",")}`;

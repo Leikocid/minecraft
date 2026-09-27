@@ -13,9 +13,9 @@ import type {
   StructureRotation,
   World,
 } from "@minecraft/server";
-import { LinkedAirships } from "./bodies/airship";
+import { LINKED_STATUS, LinkedAirships } from "./bodies/airship";
 import { type TypeBody, BODIES, naturalDefs, spotsOf, withLinks } from "./bodies";
-import type { RollDef, StructureId } from "./config";
+import { EnabledTypes, ROLL_DEFS, type RollDef, type StructureId } from "./config";
 import { Discovery, type PlayerPos, type SiteVerdict } from "./discovery";
 import { Loot } from "./loot";
 import { type PlaceHooks, type PlaceResult, type PlaceWorld, Placer, engineSpawnGuard, engineWorld } from "./place";
@@ -23,7 +23,7 @@ import { type DimShort, type Instance, type Rotation, type Vec3, Registry } from
 import { type Candidate, effectiveChance, rotatedSize } from "./roll";
 import { type RingLoader, type RingSystem, engineRingLoader } from "./search-ring";
 import { type BlockView, SiteChecker, SiteGate, dimensionView } from "./site";
-import type { KeyValueStore } from "./store";
+import { type KeyValueStore, MemoryStore } from "./store";
 
 const CHUNK = 16;
 /** Queued natural placements run per pump; each is a template place plus its chests. */
@@ -40,6 +40,7 @@ export interface StrfEngine {
 }
 
 export type PlaceOutcome =
+  | { kind: "disabled" }
   | { kind: "wrong-dimension"; need: DimShort }
   | { kind: "not-loaded" }
   | { kind: "rejected"; reason: string }
@@ -56,6 +57,8 @@ interface Queued {
 export interface StrfOptions {
   bodies?: Readonly<Record<string, TypeBody>>;
   log?: (msg: string) => void;
+  /** The release script passes the world's set; without it every type is enabled, in memory only. */
+  enabled?: EnabledTypes;
 }
 
 export class StrfRuntime {
@@ -65,6 +68,7 @@ export class StrfRuntime {
   readonly discovery: Discovery;
   readonly defs: readonly RollDef[];
   readonly linked: LinkedAirships;
+  readonly enabled: EnabledTypes;
   private readonly bodies: Readonly<Record<string, TypeBody>>;
   private readonly placerBodies: Readonly<Record<string, TypeBody>>;
   private rounds = 0;
@@ -79,6 +83,7 @@ export class StrfRuntime {
   ) {
     this.bodies = opts.bodies ?? BODIES;
     this.log = opts.log ?? (() => {});
+    this.enabled = opts.enabled ?? new EnabledTypes(new MemoryStore(), ROLL_DEFS.map((d) => d.id));
     this.registry = new Registry(store, this.log);
     this.checker = new SiteChecker((d) => engine.view(d), () => this.registry.salt(), {
       registry: this.registry,
@@ -87,7 +92,7 @@ export class StrfRuntime {
     });
     this.gate = new SiteGate(this.checker, this.registry, () => this.discovery.stats.slices, this.log);
     this.defs = naturalDefs(this.bodies);
-    this.discovery = new Discovery(this.registry, this.site, { defs: this.defs, log: this.log });
+    this.discovery = new Discovery(this.registry, this.site, { defs: this.defs, enabled: (t) => this.enabled.has(t), log: this.log });
     this.linked = new LinkedAirships({
       registry: this.registry,
       gate: this.gate,
@@ -100,7 +105,14 @@ export class StrfRuntime {
       loader: (dim) => engine.ringLoader?.(dim),
       log: this.log,
     });
-    this.placerBodies = withLinks(this.bodies, (parent) => this.linked.start(parent));
+    this.placerBodies = withLinks(this.bodies, (parent) => this.startLinked(parent));
+  }
+
+  /** §5.6 with the Airship disabled: the one attempt is spent as "skipped", never made up later. */
+  private startLinked(parent: Instance): void {
+    if (this.enabled.has("airship")) return this.linked.start(parent);
+    this.registry.setExtra(parent, LINKED_STATUS, "skipped");
+    this.log(`strf:airs linked attempt for ${parent.id} skipped: airship is not enabled`);
   }
 
   /** The Site handed to discovery: the gate's check, plus a note of what to place once reserved. */
@@ -112,11 +124,11 @@ export class StrfRuntime {
 
   /** Whether any type can roll a hit at all; with none, discovery would only mark chunks as misses. */
   generating(): boolean {
-    return this.defs.some((d) => effectiveChance(d) > 0);
+    return this.defs.some((d) => this.enabled.has(d.id) && effectiveChance(d) > 0);
   }
 
   discover(players: Iterable<PlayerPos>, runJob: (job: Generator<void, void, void>) => unknown): void {
-    if (++this.rounds % LINKED_RETRY_ROUNDS === 0 && this.linked.pendingCount > 0) this.linked.retryPending();
+    if (++this.rounds % LINKED_RETRY_ROUNDS === 0 && this.linked.pendingCount > 0 && this.enabled.has("airship")) this.linked.retryPending();
     if (!this.generating()) return;
     this.discovery.discover(players);
     this.discovery.pump(runJob);
@@ -134,7 +146,8 @@ export class StrfRuntime {
       this.queue.set(inst.id, { id: inst.id, dim: inst.dim, origin: inst.origin });
       n++;
     }
-    const linked = this.linked.resume(all.filter((i) => i.state !== "failed"));
+    // A pending linked attempt would place a new Airship: it waits while the type is disabled.
+    const linked = this.enabled.has("airship") ? this.linked.resume(all.filter((i) => i.state !== "failed")) : 0;
     if (linked > 0) this.log(`strf runtime: ${linked} open linked attempt(s) resumed`);
     return n;
   }
@@ -193,6 +206,7 @@ export class StrfRuntime {
   placeAt(type: StructureId, dim: DimShort, x: number, z: number, rot: Rotation, opts: { id?: string } = {}): PlaceOutcome {
     const def = this.defs.find((d) => d.id === type);
     if (def === undefined) throw new Error(`strf runtime: no roll def "${type}"`);
+    if (!this.enabled.has(type)) return { kind: "disabled" };
     if (def.dim !== dim) return { kind: "wrong-dimension", need: def.dim };
     const size = rotatedSize(def.size, rot);
     const ox = Math.floor(x) - Math.floor(size[0] / 2);

@@ -4,7 +4,8 @@
 //   2. esbuild bundles src/selftest/main.ts -> packs/selftest/scripts/main.js
 //      (the strf test hook is compiled into this one and the gametest bundle,
 //      never into the release script)
-//   3. compile src/structures/templates/*.json -> packs/behavior/structures/andrew/
+//   3. compile src/structures/templates -> packs/behavior/structures/andrew/,
+//      except the probe templates, which go to packs/gametest/structures/andrew/
 //   4. validate both release packs and the selftest pack
 //   5. zip packs/behavior and packs/resource into dist/andrew.mcaddon
 //
@@ -19,7 +20,7 @@ import { existsSync, mkdirSync, rmSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, join } from 'node:path';
 import { validatePacks, validateSelfTestPack } from './validate.mjs';
-import { buildStructures } from './build-structures.mjs';
+import { buildPackStructures } from './build-structures.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, '..');
@@ -94,9 +95,9 @@ function build() {
   });
 
   step('compile structure templates', () => {
-    for (const r of buildStructures()) {
-      process.stdout.write(`  andrew:${r.id} -> ${r.bytes} bytes\n`);
-    }
+    const { release, gametest } = buildPackStructures();
+    for (const r of release) process.stdout.write(`  andrew:${r.id} -> ${r.bytes} bytes\n`);
+    for (const r of gametest) process.stdout.write(`  andrew:${r.id} -> ${r.bytes} bytes (gametest pack, not released)\n`);
   });
 
   step('validate packs', () => {

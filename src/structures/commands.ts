@@ -4,6 +4,7 @@
 //   /andrew:structure locate [type]            nearest created instance, or counts per type
 //   /andrew:structure chance <type> [0-100]    session-only chance per chunk; no number resets
 //   /andrew:structure tp <type>                teleport to the nearest created instance
+//   /andrew:structure enable|disable <type|all> which types this world generates and the command accepts
 // Engine classes come in through CommandApi, so node tests load this module
 // without a @minecraft/server stub.
 
@@ -18,7 +19,7 @@ import type {
   StartupEvent,
   System,
 } from "@minecraft/server";
-import { ROLL_DEFS, type StructureId, dimShort } from "./config";
+import { ROLL_DEFS, type StructureId, dimShort, enabledLine } from "./config";
 import type { DimShort, Instance, Rotation } from "./registry";
 import { chanceOverride, setChanceOverride } from "./roll";
 import { type PlaceOutcome, type StrfRuntime, centreOf, nearest } from "./runtime";
@@ -26,9 +27,11 @@ import { type FindResult, type SpawnHost, SEARCH_RADIUS, SpawnSearch } from "./s
 
 export const STRUCTURE_COMMAND = "andrew:structure";
 
-export const ACTIONS = ["place", "find", "locate", "chance", "tp"] as const;
+export const ACTIONS = ["place", "find", "locate", "chance", "tp", "enable", "disable"] as const;
 export type Action = (typeof ACTIONS)[number];
 export const TYPES: readonly StructureId[] = ROLL_DEFS.map((d) => d.id);
+/** The type argument of enable/disable that names every type. */
+export const ALL = "all";
 export const ROTATION_DEGREES = [0, 90, 180, 270] as const;
 export const MAX_FIND_RADIUS = 1000;
 
@@ -68,6 +71,11 @@ export const TEXT = {
   findNone: `${P}.find_none`,
   findChecked: `${P}.find_checked`,
   findError: `${P}.find_error`,
+  disabled: `${P}.disabled`,
+  needTypeOrAll: `${P}.need_type_or_all`,
+  enabledNow: `${P}.enabled_now`,
+  enabledNone: `${P}.enabled_none`,
+  disableKeeps: `${P}.disable_keeps`,
 } as const;
 
 /** Site-check and placement reasons with their own text; anything else goes through `why.other`. */
@@ -161,7 +169,10 @@ export function execute(
       ...TYPES.map((ty) => ({ ok: true, message: t(TEXT.summaryLine, typeName(ty), String(all.filter((i) => i.def === ty).length)) })),
     ];
   }
+  if (action === "enable" || action === "disable") return toggle(runtime, action, type);
   if (!isType(type)) return no(t(TEXT.needType, TYPES.join(", ")));
+  // Before any per-type work: a disabled type is refused, never stood in for by the probe box.
+  if (!runtime.enabled.has(type)) return no(t(TEXT.disabled, typeName(type), type));
 
   if (action === "chance") return chance(runtime, type, value);
 
@@ -240,6 +251,22 @@ function startFind(
   return [{ ok: true, message: t(TEXT.findStarted, typeName(type), String(r), String(Math.floor(point.x)), String(Math.floor(point.z))) }];
 }
 
+/** The set lives in the world (EnabledTypes); the reply names what is enabled after the change. */
+function toggle(runtime: StrfRuntime, action: "enable" | "disable", type: string | undefined): Reply[] {
+  if (type !== ALL && !isType(type)) return [{ ok: false, message: t(TEXT.needTypeOrAll, [...TYPES, ALL].join(", ")) }];
+  const types = type === ALL ? TYPES : [type];
+  const now = action === "enable" ? runtime.enabled.enable(types) : runtime.enabled.disable(types);
+  const lines: Reply[] = [{ ok: true, message: enabledMessage(now) }];
+  if (action === "disable") lines.push({ ok: true, message: t(TEXT.disableKeeps) });
+  return lines;
+}
+
+export function enabledMessage(enabled: readonly string[]): RawMessage {
+  if (enabled.length === 0) return t(TEXT.enabledNone);
+  const names: RawMessage[] = enabled.flatMap((ty, i) => (i === 0 ? [typeName(ty)] : [{ text: ", " }, typeName(ty)]));
+  return t(TEXT.enabledNow, { rawtext: names });
+}
+
 /** "liquid=12 uneven=3", most frequent first. */
 const rejectsLine = (rejects: Record<string, number>): string =>
   Object.entries(rejects)
@@ -278,6 +305,8 @@ function chance(runtime: StrfRuntime, type: StructureId, value: number | undefin
 function placeReplies(runtime: StrfRuntime, type: StructureId, r: PlaceOutcome, rot: Rotation): Reply[] {
   const name = typeName(type);
   switch (r.kind) {
+    case "disabled":
+      return [{ ok: false, message: t(TEXT.disabled, name, type) }];
     case "wrong-dimension":
       return [{ ok: false, message: t(TEXT.wrongDimension, name, { translate: dimKey(r.need) }) }];
     case "not-loaded":
@@ -309,6 +338,8 @@ export interface CommandApi {
 }
 
 export interface CommandOptions {
+  /** Called after enable/disable with the set now in force. */
+  onEnabledChange?(enabled: readonly StructureId[]): void;
   /** The GameTest pack registers its own copy under another name; the release one owns STRUCTURE_COMMAND. */
   name?: string;
   runtime(): StrfRuntime | undefined;
@@ -338,12 +369,12 @@ export function registerStructureCommands(api: CommandApi, opts: CommandOptions)
     const actionEnum = `${name}_action`;
     const typeEnum = `${name}_type`;
     registry.registerEnum(actionEnum, [...ACTIONS]);
-    registry.registerEnum(typeEnum, [...TYPES]);
+    registry.registerEnum(typeEnum, [...TYPES, ALL]);
     registry.registerCommand(
       {
         name,
         description:
-          "Structure operator tools: place exactly at you or at given coordinates, find a valid site nearby and build there, locate, change the chance per chunk for this session, teleport.",
+          "Structure operator tools: place exactly at you or at given coordinates, find a valid site nearby and build there, locate, change the chance per chunk for this session, teleport, enable or disable a type in this world.",
         permissionLevel: api.CommandPermissionLevel.GameDirectors,
         mandatoryParameters: [{ name: actionEnum, type: api.CustomCommandParamType.Enum }],
         optionalParameters: [
@@ -401,6 +432,11 @@ export function registerStructureCommands(api: CommandApi, opts: CommandOptions)
             replies = [{ ok: false, message: t(reasonKey("other"), String(e)) }];
           }
           deliver(replies);
+          if ((action === "enable" || action === "disable") && replies[0]?.ok === true) {
+            const now = runtime.enabled.list();
+            log(`[andrew] ${enabledLine(now)}`);
+            opts.onEnabledChange?.(now);
+          }
           log(`[andrew] ${name} ${action} ${type ?? ""} ${value ?? ""} by ${player?.name ?? "the console"}: ${replies.map((r) => (r.ok ? "ok" : "refused")).join(",")}`);
         });
         return { status: api.CustomCommandStatus.Success };

@@ -20,7 +20,7 @@ import { registerRecovery } from "./legendary/recovery";
 import { registerRetention } from "./legendary/retention";
 import { registerScytheVolley } from "./scythe/volley";
 import { registerStructureCommands } from "./structures/commands";
-import { DISCOVER_INTERVAL_TICKS } from "./structures/config";
+import { DISCOVER_INTERVAL_TICKS, EnabledTypes, enabledLine } from "./structures/config";
 import type { PlayerPos } from "./structures/discovery";
 import { StrfRuntime, engineStrf } from "./structures/runtime";
 import { SPAWN_EVENT, SPAWN_STATE_EVENT, SpawnSearch, engineSpawnHost } from "./structures/spawn-search";
@@ -42,11 +42,21 @@ registerHideCommand();
 const strfLog = (msg: string): void => console.warn(`[andrew] ${msg}`);
 let strf: StrfRuntime | undefined;
 let spawnSearch: SpawnSearch | undefined;
+let spawnStarted = false;
+
+/** §4.7 is a Windmill: its one-time search waits until the type is enabled in this world. */
+function startSpawnSearch(): void {
+  if (spawnStarted || spawnSearch === undefined || strf?.enabled.has("windmill") !== true) return;
+  spawnStarted = true;
+  spawnSearch.run().catch((e: unknown) => strfLog(`spawn windmill: the search threw ${String(e)}`));
+}
+
 registerStructureCommands(
   { system, Player, CommandPermissionLevel, CustomCommandParamType, CustomCommandStatus },
   {
     runtime: () => strf,
     log: (msg) => console.warn(msg),
+    onEnabledChange: () => startSpawnSearch(),
     searchHost: (d) =>
       engineSpawnHost(world.getDimension(d === "n" ? "nether" : "overworld"), system, { BlockVolume, BlockTypes }, () => world.getDefaultSpawnLocation(), undefined, {
         prefix: "andrew_find_",
@@ -69,9 +79,10 @@ world.afterEvents.worldLoad.subscribe(() => {
   strf = new StrfRuntime(
     store,
     engineStrf({ world, BlockVolume, BlockTypes, StructureRotation, ItemStack, EnchantmentType, system }),
-    { log: strfLog }
+    { log: strfLog, enabled: new EnabledTypes(store) }
   );
   console.warn(`[andrew] ${strf.registry.statsLine()}`);
+  strfLog(enabledLine(strf.enabled.list()));
   // Before the discovery loop starts: while the search runs, it holds the
   // chunks around spawn so nothing else can take the spot (L0-wind-r013).
   spawnSearch = new SpawnSearch(
@@ -86,7 +97,8 @@ world.afterEvents.worldLoad.subscribe(() => {
     ),
     { log: strfLog }
   );
-  spawnSearch.run().catch((e: unknown) => strfLog(`spawn windmill: the search threw ${String(e)}`));
+  startSpawnSearch();
+  if (!spawnStarted) strfLog("spawn windmill: not started: windmill is not enabled in this world");
   const resumed = strf.resumeUnfinished();
   if (resumed > 0) strfLog(`strf runtime: ${resumed} unfinished instance(s) queued`);
   const runtime = strf;

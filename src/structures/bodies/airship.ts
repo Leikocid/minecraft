@@ -28,7 +28,8 @@ export const LINKED_STATUS = "ls";
 /** `{ id, origin }` of the reserved Airship, written before its record is planned. */
 export const LINKED_SPOT = "lo";
 
-export type LinkedStatus = "searching" | "pending" | "none" | "placed";
+/** `skipped`: the Airship type was disabled when the parent finished; the attempt is spent. */
+export type LinkedStatus = "searching" | "pending" | "none" | "placed" | "skipped";
 
 /** Reason a ring candidate is refused for hanging over the parent's plot (§5.6). */
 export const OVER_PARENT = "over-parent";
@@ -109,7 +110,7 @@ export class LinkedAirships {
     let n = 0;
     for (const p of parents) {
       const status = p.extras[LINKED_STATUS];
-      if (p.extras[LINKED_TRIED] !== true || status === "none" || status === "placed") continue;
+      if (p.extras[LINKED_TRIED] !== true || status === "none" || status === "placed" || status === "skipped") continue;
       this.launch(p);
       n++;
     }

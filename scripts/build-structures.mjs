@@ -21,6 +21,12 @@ import { writeNbt } from './lib/nbt.mjs';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 export const templatesDir = join(root, 'src', 'structures', 'templates');
 export const structuresDir = join(root, 'packs', 'behavior', 'structures', 'andrew');
+/** The GameTest pack loads beside the release one, so its structures resolve under the same "andrew:" ids. */
+export const gametestStructuresDir = join(root, 'packs', 'gametest', 'structures', 'andrew');
+
+/** Measurement templates of the engine probes: gametest pack only, never the release pack. */
+export const PROBE_TEMPLATES = new Set(['probe', 'probe_box']);
+export const isProbe = (id) => PROBE_TEMPLATES.has(id);
 
 function verifyRoundTrip(id, buffer, counts) {
   const parsed = parseMcstructure(buffer);
@@ -57,12 +63,16 @@ export function listTemplates(from = templatesDir) {
     .map((file) => ({ id: basename(file, extname(file)), file }));
 }
 
-/** @returns {{ id: string, bytes: number, counts: Record<string, number> }[]} */
-export function buildStructures({ from = templatesDir, to = structuresDir } = {}) {
-  rmSync(to, { recursive: true, force: true });
+/**
+ * `only` picks template ids; `clean: false` leaves files it does not write in
+ * place (the gametest directory also holds the runner's platform).
+ * @returns {{ id: string, bytes: number, counts: Record<string, number> }[]}
+ */
+export function buildStructures({ from = templatesDir, to = structuresDir, only = () => true, clean = true } = {}) {
+  if (clean) rmSync(to, { recursive: true, force: true });
   mkdirSync(to, { recursive: true });
   const results = [];
-  for (const { id, file } of listTemplates(from)) {
+  for (const { id, file } of listTemplates(from).filter((t) => only(t.id))) {
     let template;
     try {
       template = file.endsWith('.ts') ? loadTsTemplate(join(from, file)) : JSON.parse(readFileSync(join(from, file), 'utf-8'));
@@ -83,8 +93,16 @@ export function buildStructures({ from = templatesDir, to = structuresDir } = {}
   return results;
 }
 
+/** The release pack gets every template but the probes; the gametest pack gets the probes. */
+export function buildPackStructures() {
+  return {
+    release: buildStructures({ to: structuresDir, only: (id) => !isProbe(id) }),
+    gametest: buildStructures({ to: gametestStructuresDir, only: isProbe, clean: false }),
+  };
+}
+
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  for (const r of buildStructures()) {
-    process.stdout.write(`  andrew:${r.id} -> ${r.bytes} bytes\n`);
-  }
+  const { release, gametest } = buildPackStructures();
+  for (const r of release) process.stdout.write(`  andrew:${r.id} -> ${r.bytes} bytes\n`);
+  for (const r of gametest) process.stdout.write(`  andrew:${r.id} -> ${r.bytes} bytes (gametest pack)\n`);
 }

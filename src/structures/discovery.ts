@@ -49,6 +49,8 @@ export interface DiscoveryStats {
 
 export interface DiscoveryOptions {
   defs?: readonly RollDef[];
+  /** A def this returns false for is not rolled at all: no outcome, no record. */
+  enabled?: (def: string) => boolean;
   radius?: number;
   budgetMs?: number;
   now?: () => number;
@@ -73,6 +75,7 @@ export function chunksAround(cx: number, cz: number, radius: number): Array<[num
 
 export class Discovery {
   private readonly defs: readonly RollDef[];
+  private readonly enabled: (def: string) => boolean;
   private readonly radius: number;
   private readonly budgetMs: number;
   private readonly now: () => number;
@@ -96,6 +99,7 @@ export class Discovery {
     opts: DiscoveryOptions = {}
   ) {
     this.defs = opts.defs ?? ROLL_DEFS;
+    this.enabled = opts.enabled ?? (() => true);
     this.radius = opts.radius ?? R_DISCOVER;
     this.budgetMs = opts.budgetMs ?? SLICE_BUDGET_MS;
     this.now = opts.now ?? Date.now;
@@ -157,7 +161,7 @@ export class Discovery {
     const results: DefResult[] = [];
 
     for (const def of this.defs) {
-      if (def.dim !== dim) continue;
+      if (def.dim !== dim || !this.enabled(def.id)) continue;
       // A revisit of a chunk with a pending candidate retries only that one;
       // a candidate already rejected here is never rolled again.
       if (retry !== undefined && !retry.has(def.id)) continue;
