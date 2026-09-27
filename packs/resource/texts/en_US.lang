@@ -22,6 +22,7 @@ andrew.legendary.recovered=Your legendary weapon has returned to you
 
 andrew.structure.no_permission=Only an operator can use /andrew:structure
 andrew.structure.not_player=Run this as a player: the command works at your position
+andrew.structure.need_coords=From the server console, give coordinates: /andrew:structure place %s <rotation> <x> <y> <z>. The height comes from the structure's own site rules, so y is ignored
 andrew.structure.need_type=Name a structure type: %s
 andrew.structure.bad_rotation=Rotation must be 0, 90, 180 or 270
 andrew.structure.bad_chance=Chance must be a whole number from 0 to 100

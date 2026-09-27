@@ -35,6 +35,7 @@ const P = "andrew.structure";
 export const TEXT = {
   noPermission: `${P}.no_permission`,
   notPlayer: `${P}.not_player`,
+  needCoords: `${P}.need_coords`,
   needType: `${P}.need_type`,
   badRotation: `${P}.bad_rotation`,
   badChance: `${P}.bad_chance`,
@@ -116,7 +117,14 @@ export const isType = (v: unknown): v is StructureId => typeof v === "string" &&
  * The command body. Runs outside the read-only callback: it may write the
  * registry, place blocks and teleport. Returns every line it has to say.
  */
-export function execute(runtime: StrfRuntime, action: Action, caller: Caller | undefined, type?: string, value?: number): Reply[] {
+export function execute(
+  runtime: StrfRuntime,
+  action: Action,
+  caller: Caller | undefined,
+  type?: string,
+  value?: number,
+  at?: { x: number; z: number }
+): Reply[] {
   const no = (message: RawMessage): Reply[] => [{ ok: false, message }];
   if (caller !== undefined && !caller.permitted) return no(t(TEXT.noPermission));
 
@@ -131,16 +139,25 @@ export function execute(runtime: StrfRuntime, action: Action, caller: Caller | u
   if (!isType(type)) return no(t(TEXT.needType, TYPES.join(", ")));
 
   if (action === "chance") return chance(runtime, type, value);
-  if (caller === undefined) return no(t(TEXT.notPlayer));
-  const dim = dimShort(caller.dimensionId);
 
   if (action === "place") {
     if (value !== undefined && !(ROTATION_DEGREES as readonly number[]).includes(value)) return no(t(TEXT.badRotation));
     const rot = (value === undefined ? Math.floor(Math.random() * 4) : value / 90) as Rotation;
     const need = ROLL_DEFS.find((d) => d.id === type)?.dim ?? "o";
-    if (dim === undefined) return no(t(TEXT.wrongDimension, typeName(type), { translate: dimKey(need) }));
-    return placeReplies(runtime, type, runtime.placeAt(type, dim, caller.location.x, caller.location.z, rot), rot);
+    // Explicit coordinates win over the caller's feet, and they are the only way in from
+    // the server console: there is nobody standing anywhere there.
+    const point = at ?? caller?.location;
+    if (point === undefined) return no(t(TEXT.needCoords, typeName(type)));
+    // A player places in the dimension they stand in, so a Bastion attempted from the
+    // Overworld still refuses. From the console the type's own dimension is the only
+    // sound answer — nothing else is known about where the command came from.
+    const where = caller === undefined ? need : dimShort(caller.dimensionId);
+    if (where === undefined) return no(t(TEXT.wrongDimension, typeName(type), { translate: dimKey(need) }));
+    return placeReplies(runtime, type, runtime.placeAt(type, where, point.x, point.z, rot), rot);
   }
+
+  if (caller === undefined) return no(t(TEXT.notPlayer));
+  const dim = dimShort(caller.dimensionId);
 
   const hit = dim === undefined ? undefined : nearest(runtime.instances(type), dim, caller.location);
   if (hit === undefined) return no(t(TEXT.noneOfType, typeName(type)));
@@ -232,15 +249,18 @@ export function registerStructureCommands(api: CommandApi, opts: CommandOptions)
     registry.registerCommand(
       {
         name,
-        description: "Structure operator tools: place at you, locate, change the chance per chunk for this session, teleport.",
+        description: "Structure operator tools: place at you or at given coordinates, locate, change the chance per chunk for this session, teleport.",
         permissionLevel: api.CommandPermissionLevel.GameDirectors,
         mandatoryParameters: [{ name: actionEnum, type: api.CustomCommandParamType.Enum }],
         optionalParameters: [
           { name: typeEnum, type: api.CustomCommandParamType.Enum },
           { name: "number", type: api.CustomCommandParamType.Integer },
+          // Only x and z are read: the height is chosen by the structure's own site
+          // rules, exactly as in natural generation, so a y given here is ignored.
+          { name: "at", type: api.CustomCommandParamType.Location },
         ],
       },
-      (origin: CustomCommandOrigin, action: string, type?: string, value?: number): CustomCommandResult => {
+      (origin: CustomCommandOrigin, action: string, type?: string, value?: number, at?: { x: number; y: number; z: number }): CustomCommandResult => {
         const player = origin.sourceEntity instanceof api.Player ? origin.sourceEntity : undefined;
         // The callback is read-only: registry writes, placement and teleport wait for the next tick.
         api.system.run(() => {
@@ -260,7 +280,7 @@ export function registerStructureCommands(api: CommandApi, opts: CommandOptions)
           }
           let replies: Reply[];
           try {
-            replies = execute(runtime, action as Action, caller, type, value);
+            replies = execute(runtime, action as Action, caller, type, value, at);
           } catch (e) {
             log(`[andrew] ${name} ${action} ${type ?? ""} threw ${String(e)}`);
             replies = [{ ok: false, message: t(reasonKey("other"), String(e)) }];

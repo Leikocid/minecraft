@@ -77,7 +77,21 @@ export async function loadBox(test: Test, dim: Dimension, name: string, box: Box
   const xs = chunks.map(([x]) => x);
   const zs = chunks.map(([, z]) => z);
   const [x0, x1, z0, z1] = [Math.min(...xs) * CHUNK, Math.max(...xs) * CHUNK + 15, Math.min(...zs) * CHUNK, Math.max(...zs) * CHUNK + 15];
-  if (dim.runCommand(`tickingarea add ${x0} 0 ${z0} ${x1} 0 ${z1} ${name}`).successCount === 0) throw new Error(`tickingarea add ${name} refused`);
+  const add = (): number => dim.runCommand(`tickingarea add ${x0} 0 ${z0} ${x1} 0 ${z1} ${name}`).successCount;
+  if (add() === 0) {
+    // The engine caps how many ticking areas a world may hold — measured at ten by the
+    // strf probe (Q11). Every test releases its own, but `tickingarea remove` does not
+    // free the slot in the same tick, so a back-to-back suite can meet the cap without
+    // anything leaking. Clear the leftovers once and retry; the log keeps a real leak
+    // visible instead of hiding behind the retry.
+    log(`strf place: tickingarea add ${name} refused — clearing leftover areas and retrying once`);
+    try {
+      dim.runCommand("tickingarea remove_all");
+    } catch (e) {
+      log(`strf place: tickingarea remove_all threw ${String(e)}`);
+    }
+    if (add() === 0) throw new Error(`tickingarea add ${name} refused twice, after remove_all`);
+  }
   const remove = (): void => {
     try {
       dim.runCommand(`tickingarea remove ${name}`);

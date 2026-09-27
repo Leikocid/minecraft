@@ -103,11 +103,11 @@ const flatView = () => ({
   contains: () => false,
 });
 
-function runtime({ store = new MemoryStore(), events = [] } = {}) {
+function runtime({ store = new MemoryStore(), events = [], dims = ['o'] } = {}) {
   if (store.get(SALT_KEY) === undefined) store.set(SALT_KEY, 'node-cmd');
   let rt;
   const engine = {
-    view: (d) => (d === 'o' ? flatView() : undefined),
+    view: (d) => (dims.includes(d) ? flatView() : undefined),
     placeWorld: () => ({
       hasTemplate: (id) => id === 'andrew:probe_box',
       isLoaded: () => true,
@@ -300,4 +300,47 @@ test('bodies: every type has a real body with its own loot tables', () => {
   assert.ok(Object.values(BODIES).every((b) => b.standIn === false));
   assert.deepEqual(BODIES.warden_city.chests.map((c) => c.table), Array(10).fill('chests/ancient_city'));
   assert.deepEqual(BODIES.bastion.chests.map((c) => c.table), [...Array(3).fill('chests/bastion_treasure'), ...Array(7).fill('chests/bastion_other')]);
+});
+
+// -------------------------------------------- place from the server console
+
+test('place from the console: without coordinates it refuses by name, with them it places', () => {
+  const rt = runtime();
+  // Nobody stands anywhere on a dedicated server console, so the point must be given.
+  assert.deepEqual(keysOf(execute(rt, 'place', undefined, 'windmill', 90)), ['andrew.structure.need_coords']);
+  assert.equal(rt.instances('windmill').length, 0, 'a refusal must not leave a record behind');
+
+  const replies = execute(rt, 'place', undefined, 'windmill', 90, { x: -40, z: 64 });
+  assert.deepEqual(keysOf(replies), ['andrew.structure.placed', 'andrew.structure.stand_in']);
+  const all = rt.instances('windmill');
+  assert.equal(all.length, 1);
+  assert.equal(all[0].state, 'done', 'the console path goes through the same state machine');
+  // Centred on the given point, 7×5×9 after the 90° rotation.
+  assert.deepEqual([all[0].origin[0], all[0].origin[2]], [-40 - 3, 64 - 4]);
+  assert.equal(all[0].origin[1], GROUND + 1, 'the height still comes from the site profile');
+});
+
+test('place: explicit coordinates win over the feet of the player who typed it', () => {
+  const rt = runtime();
+  execute(rt, 'place', op(), 'windmill', 90, { x: -40, z: 64 });
+  const all = rt.instances('windmill');
+  assert.equal(all.length, 1);
+  assert.deepEqual([all[0].origin[0], all[0].origin[2]], [-40 - 3, 64 - 4], 'placed at the coordinates, not at 100/200');
+});
+
+test('place from the console: the dimension comes from the type, not from the Overworld default', () => {
+  const rt = runtime({ dims: ['o', 'n'] });
+  const replies = execute(rt, 'place', undefined, 'bastion', 0, { x: 8, z: 8 });
+  // The flat stand-in view cannot satisfy the Bastion's netherFloor profile, so the site
+  // check refuses — and that is the point: had the console fallen back to the Overworld,
+  // placeAt would have answered wrong-dimension instead, before any site check ran.
+  assert.deepEqual(keysOf(replies), ['andrew.structure.rejected'], 'the dimension must not be the thing that refused');
+  assert.notEqual(keysOf(replies)[0], 'andrew.structure.wrong_dimension');
+});
+
+test('place: a player in the wrong dimension is still refused — the type does not override where they stand', () => {
+  const rt = runtime({ dims: ['o', 'n'] });
+  const replies = execute(rt, 'place', op(), 'bastion', 0, { x: 8, z: 8 });
+  assert.deepEqual(keysOf(replies), ['andrew.structure.wrong_dimension']);
+  assert.equal(rt.instances('bastion').length, 0);
 });

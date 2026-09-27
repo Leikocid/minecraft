@@ -22,6 +22,7 @@ andrew.legendary.recovered=Легендарное оружие вернулос�
 
 andrew.structure.no_permission=Команда /andrew:structure доступна только оператору
 andrew.structure.not_player=Запустите это от имени игрока: команда работает там, где вы стоите
+andrew.structure.need_coords=С консоли сервера укажите координаты: /andrew:structure place %s <поворот> <x> <y> <z>. Высоту выбирают правила самой структуры, y не учитывается
 andrew.structure.need_type=Укажите тип структуры: %s
 andrew.structure.bad_rotation=Поворот может быть только 0, 90, 180 или 270
 andrew.structure.bad_chance=Шанс — целое число от 0 до 100

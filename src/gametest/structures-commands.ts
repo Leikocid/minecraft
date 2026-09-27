@@ -71,7 +71,18 @@ const repliesOf = (p: Player): Array<{ ok: boolean; key: string; text: string }>
 /** A chunk-aligned square far from the platform, loaded by one ticking area; resolves with its remover. */
 async function loadArea(test: Test, dim: Dimension, name: string, cx0: number, cz0: number, chunks: number): Promise<() => void> {
   const [x0, z0, x1, z1] = [cx0 * CHUNK, cz0 * CHUNK, (cx0 + chunks) * CHUNK - 1, (cz0 + chunks) * CHUNK - 1];
-  if (dim.runCommand(`tickingarea add ${x0} 0 ${z0} ${x1} 0 ${z1} ${name}`).successCount === 0) throw new Error(`tickingarea add ${name} refused`);
+  const add = (): number => dim.runCommand(`tickingarea add ${x0} 0 ${z0} ${x1} 0 ${z1} ${name}`).successCount;
+  if (add() === 0) {
+    // Same cap as loadBox in structures-place.ts: ten areas, and a remove does not free
+    // the slot in the same tick.
+    log(`strf cmd: tickingarea add ${name} refused — clearing leftover areas and retrying once`);
+    try {
+      dim.runCommand("tickingarea remove_all");
+    } catch (e) {
+      log(`strf cmd: tickingarea remove_all threw ${String(e)}`);
+    }
+    if (add() === 0) throw new Error(`tickingarea add ${name} refused twice, after remove_all`);
+  }
   const remove = (): void => {
     try {
       dim.runCommand(`tickingarea remove ${name}`);
@@ -184,6 +195,33 @@ registerAsync("andrew", "strf_cmd_place", async (test: Test): Promise<void> => {
     run(op, "place bastion");
     await test.idle(3);
     test.assert(repliesOf(op).some((r) => !r.ok && r.key === "andrew.structure.wrong_dimension"), `bastion: ${repliesOf(op).map((r) => r.key).join(" ")}`);
+
+    // Explicit coordinates place there, not at the caller — the same loaded area, three
+    // chunks over, so this costs no extra ticking area (the engine allows about ten).
+    const atX = (cx + 4) * CHUNK + 8;
+    const atZ = (cz + 4) * CHUNK + 8;
+    // Measured before placing: afterwards getTopmostBlock finds the structure's own roof.
+    const groundThere = groundAt(dim, atX, atZ);
+    replies.length = 0;
+    const typedY = 64;
+    const atOutcome = run(op, `place windmill 0 ${atX} ${typedY} ${atZ}`);
+    await test.idle(3);
+    const second = rt.instances("windmill").find((i) => i.rot === 0);
+    log(
+      `strf cmd place at coords: ${atOutcome}; caller at ${x},${z}, named ${atX},${atZ}; ` +
+        `record ${JSON.stringify(second)}; ground there was ${groundThere}`
+    );
+    test.assert(second !== undefined, `no record for the coordinate form: ${atOutcome} ${repliesOf(op).map((r) => r.text).join(" | ")}`);
+    if (second !== undefined) {
+      test.assert(second.state === "done", `coordinate form state ${second.state}`);
+      const centre = centreOf(second);
+      test.assert(Math.abs(centre[0] - atX) <= 1 && Math.abs(centre[2] - atZ) <= 1, `centre ${centre.join(",")} is not the named ${atX},${atZ}`);
+      test.assert(Math.abs(centre[0] - x) > CHUNK, `centre ${centre.join(",")} landed at the caller (${x},${z}) instead`);
+      // The typed y is ignored: the height comes from the site profile, as in natural generation.
+      test.assert(second.origin[1] !== typedY, `origin y is the typed ${typedY} — the site profile was bypassed`);
+      test.assert(second.origin[1] === groundThere + 1, `origin y ${second.origin[1]}, the surface there was ${groundThere}`);
+      wipe(dim, second);
+    }
     test.succeed();
   } finally {
     wipe(dim, inst);
@@ -348,5 +386,6 @@ registerAsync("andrew", "strf_cmd_operator_only", async (test: Test): Promise<vo
   .structureName(STRUCTURE)
   .maxTicks(600)
   .tag("andrew");
+
 
 export const STRF_CMD_TESTS = ["strf_cmd_place", "strf_cmd_locate_tp", "strf_cmd_chance", "strf_cmd_operator_only"];
