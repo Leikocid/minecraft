@@ -10,6 +10,8 @@
 //   node scripts/render-structure.mjs                 all four, into dist/renders/
 //   node scripts/render-structure.mjs windmill        one of them
 //   node scripts/render-structure.mjs --tile 24       bigger blocks (closer view)
+//   node scripts/render-structure.mjs --cut 4          drop everything at that height and above (no roof)
+//   node scripts/render-structure.mjs --wall 1         drop the near faces (no front wall, look inside)
 
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
@@ -181,8 +183,12 @@ function cells(file, maxY = Infinity) {
 const shade = (c, k) => [Math.min(255, Math.round(c[0] * k)), Math.min(255, Math.round(c[1] * k)), Math.min(255, Math.round(c[2] * k))];
 
 /** Render one isometric view. `turn` is 0..3 quarter turns around the vertical axis. */
-function render({ size, list }, turn, tile) {
+function render({ size, list }, turn, tile, strip = 0) {
   const [sx, , sz] = size;
+  // In this projection depth is x+z, so the two faces at the high end of both axes are the
+  // ones between the camera and the interior. Dropping them is the only way to look inside
+  // a structure whose roof must stay on.
+  const [rsx, rsz] = turn % 2 === 0 ? [sx, sz] : [sz, sx];
   const rot = ({ x, z }) => {
     switch (turn) {
       case 1:
@@ -206,6 +212,7 @@ function render({ size, list }, turn, tile) {
   let maxY = -Infinity;
   for (const b of list) {
     const { x, z } = rot(b);
+    if (strip > 0 && (x >= rsx - strip || z >= rsz - strip)) continue;
     const px = (x - z) * half;
     const py = (x + z) * quarter - b.y * wall;
     put.push({ px, py, depth: x + z, y: b.y, c: b.c });
@@ -279,6 +286,12 @@ function main() {
     maxY = Number(args[si + 1]);
     args.splice(si, 2);
   }
+  let strip = 0;
+  const wi = args.indexOf('--wall');
+  if (wi !== -1) {
+    strip = Number(args[wi + 1]);
+    args.splice(wi, 2);
+  }
   const want = args.filter((a) => !a.startsWith('--'));
   const files = readdirSync(structuresDir)
     .filter((f) => f.endsWith('.mcstructure'))
@@ -297,9 +310,10 @@ function main() {
       );
     for (const tile of tiles)
       for (let turn = 0; turn < 4; turn++) {
-        const img = render(data, turn, tile);
+        const img = render(data, turn, tile, strip);
         const cut = Number.isFinite(maxY) ? `-cut${maxY}` : '';
-        const name = `${id}${cut}-${String(tile).padStart(2, '0')}px-${turn}.png`;
+        const front = strip > 0 ? `-wall${strip}` : '';
+        const name = `${id}${cut}${front}-${String(tile).padStart(2, '0')}px-${turn}.png`;
         writeFileSync(join(outDir, name), encodePng(img));
         process.stdout.write(`  ${name}  ${img.width}×${img.height}  (${SIDE[turn]})\n`);
       }
