@@ -8,6 +8,7 @@ import { BlockTypes, BlockVolume, type Dimension, StructureRotation, type Vector
 import { Test, registerAsync } from "@minecraft/server-gametest";
 import { type Box, boxOf, sliceBox } from "../structures/clear";
 import type { Rotation, Vec3 } from "../structures/registry";
+import { rotatedSize } from "../structures/roll";
 import { ENGINE_ROTATION, ROTATIONS, rotateCardinal, toWorld } from "../structures/rotate";
 import airshipTemplate, { AIRSHIP_ID, AIRSHIP_SIZE, CHESTS, DOORS, GONDOLA, SPAWNER } from "../structures/templates/airship";
 import { loadBox } from "./structures-place";
@@ -77,7 +78,8 @@ registerAsync("andrew", "airship_rotations", async (test: Test): Promise<void> =
 
     for (const rot of ROTATIONS) {
       world.structureManager.place(AIRSHIP_ID, dim, v(loc), { rotation: StructureRotation[ENGINE_ROTATION[rot]], includeEntities: false });
-      const found = scan(dim, box);
+      // The rotated AABB only: the square round it is four times the cells for one tick's scan.
+      const found = scan(dim, boxOf(loc, rotatedSize(SIZE, rot)));
       fillBox(dim, box, "minecraft:air");
       const problems: string[] = [];
 
@@ -85,6 +87,9 @@ registerAsync("andrew", "airship_rotations", async (test: Test): Promise<void> =
       for (const c of found) counts.set(c.typeId, (counts.get(c.typeId) ?? 0) + 1);
       for (const [name, n] of expected) if (counts.get(name) !== n) problems.push(`${name}: ${counts.get(name) ?? 0} in the world, ${n} in the template`);
       for (const [name, n] of counts) if (!expected.has(name)) problems.push(`${name}: ${n} in the world, none in the template`);
+
+      const lamps = found.filter((c) => c.typeId === "minecraft:soul_lantern" && c.states.hanging === true).length;
+      if (lamps !== 4) problems.push(`${lamps} hanging cabin lamps`);
 
       const chests = found.filter((c) => c.typeId === "minecraft:chest");
       const chestAt = new Set(chests.map((c) => fmt(c.at)));
@@ -121,7 +126,7 @@ registerAsync("andrew", "airship_rotations", async (test: Test): Promise<void> =
 
       for (const p of problems) log(`airship rot=${rot * 90} MISMATCH ${p}`);
       verdicts.push(`${rot * 90}:${problems.length === 0 ? "ok" : `${problems.length} mismatch(es)`}`);
-      log(`airship rot=${rot * 90}: chests=${chests.length} spawners=${spawners.length} doors=${lowers.map((d) => `${fmt(d.at)}→${d.facing}`).join(" ")} blocks=${found.length}`);
+      log(`airship rot=${rot * 90} size ${rotatedSize(SIZE, rot).join("x")}: chests=${chests.length} spawners=${spawners.length} lamps=${lamps} doors=${lowers.map((d) => `${fmt(d.at)}→${d.facing}`).join(" ")} blocks=${found.length}`);
       await test.idle(1);
     }
     log(`airship rotations: ${verdicts.join(" ")}`);
@@ -155,7 +160,10 @@ registerAsync("andrew", "airship_spawner_light", async (test: Test): Promise<voi
     { min: shell.min, max: [shell.max[0], shell.min[1], shell.max[2]] },
     { min: [shell.min[0], shell.max[1], shell.min[2]], max: shell.max },
   ];
-  const unload = await loadBox(test, dim, "andrew_gt_airship_l", { min: shell.min, max: [box.max[0], box.max[1], box.max[2]] });
+  const unload = await loadBox(test, dim, "andrew_gt_airship_l", {
+    min: [Math.min(box.min[0], shell.min[0]), 0, Math.min(box.min[2], shell.min[2])],
+    max: [Math.max(box.max[0], shell.max[0]), 0, Math.max(box.max[2], shell.max[2])],
+  });
   try {
     fillBox(dim, box, "minecraft:air");
     world.structureManager.place(AIRSHIP_ID, dim, v(loc), { rotation: StructureRotation[ENGINE_ROTATION[0]], includeEntities: false });

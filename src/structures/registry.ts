@@ -87,7 +87,7 @@ export const SCHEMA_VERSION = 1;
  * within this distance of a candidate, because a record lives in the shard of
  * its origin chunk and can reach into the next region.
  */
-export const MAX_FOOTPRINT_BLOCKS = 64;
+export const MAX_FOOTPRINT_BLOCKS = 80;
 
 const CHUNK = 16;
 const CACHE_SHARDS = 64;

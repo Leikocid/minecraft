@@ -34,6 +34,10 @@ const at = (x, y, z) => (inside(x, y, z) ? s.palette[s.primary[cellIndex(s.size,
 const beAt = (x, y, z) => s.blockEntities.get(cellIndex(s.size, x, y, z));
 const k = (x, y, z) => `${x},${y},${z}`;
 const unk = (key) => key.split(',').map(Number);
+const range = (vals) => (vals.length === 0 ? undefined : [Math.min(...vals), Math.max(...vals)]);
+const span = (r) => (r === undefined ? 0 : r[1] - r[0] + 1);
+/** The template's central row: odd width, so a real row of blocks and not a seam. */
+const AXIS_Z_OF_TEMPLATE = (SZ - 1) / 2;
 
 function cellsOf(pred) {
   const found = [];
@@ -113,12 +117,27 @@ const COMPONENTS = interiorComponents();
 const ROOMS = COMPONENTS.filter((cells) => cells.some(standable));
 const touches = (cellKeys, [x, y, z]) => H.some(([dx, dz]) => cellKeys.has(k(x + dx, y, z + dz)));
 
-/** The gondola: every block at or under its roof. */
-const GONDOLA_CELLS = cellsOf((b, _x, y) => y <= ROOF_Y && b.name !== 'minecraft:air');
+/** The gondola: the solid cells at or under its roof connected to the doors (the lower fin reaches that height far aft). */
+const GONDOLA_CELLS = [];
+{
+  const seen = new Set();
+  const queue = DA ? [DA] : [];
+  if (DA) seen.add(k(...DA));
+  while (queue.length) {
+    const c = queue.pop();
+    GONDOLA_CELLS.push(c);
+    for (const [dx, dy, dz] of N6) {
+      const n = [c[0] + dx, c[1] + dy, c[2] + dz];
+      if (!inside(...n) || seen.has(k(...n)) || n[1] > ROOF_Y || at(...n).name === 'minecraft:air') continue;
+      seen.add(k(...n));
+      queue.push(n);
+    }
+  }
+}
 const G_X = [Math.min(...GONDOLA_CELLS.map((c) => c[0])), Math.max(...GONDOLA_CELLS.map((c) => c[0]))];
 const G_Z = [Math.min(...GONDOLA_CELLS.map((c) => c[2])), Math.max(...GONDOLA_CELLS.map((c) => c[2]))];
 
-test('AC1: exactly 10 single chests, 1 Vindicator spawner at the corridor centre, 2 doors on opposite ends', () => {
+test('AC5: exactly 10 single chests, 1 Vindicator spawner at the corridor centre, 2 doors on opposite ends', () => {
   assert.strictEqual(CHESTS.length, 10, `${CHESTS.length} chests`);
   for (const other of ['minecraft:trapped_chest', 'minecraft:barrel', 'minecraft:ender_chest']) assert.strictEqual(named(other).length, 0, `${other} present`);
   for (const [x, y, z] of CHESTS) {
@@ -156,8 +175,14 @@ test('AC1: exactly 10 single chests, 1 Vindicator spawner at the corridor centre
   assert.ok(sp[1] === FLOOR_Y || CORRIDOR_KEYS.has(k(sp[0], sp[1], sp[2])), `spawner ${k(...sp)} is neither in the corridor floor nor in the corridor`);
 });
 
-test('AC2: a corridor plus 4 rooms, one ceiling lamp and two chests per room, two chests in the corridor', () => {
+/** Chests opened from a set of cells: beside one of them, or under one. */
+const opensOnto = (cellKeys, [x, y, z]) => touches(cellKeys, [x, y, z]) || cellKeys.has(k(x, y + 1, z));
+
+test('AC5: one corridor plus 4 cabins two cells deep, one ceiling lamp and two chests per cabin, two chests in the corridor', () => {
+  // Everything inside the gondola that is not the corridor is one of the four cabins: one corridor, no side passage.
+  assert.strictEqual(COMPONENTS.length, 4, `${COMPONENTS.length} spaces off the corridor: ${COMPONENTS.map((r) => r.length).join(' ')}`);
   assert.strictEqual(ROOMS.length, 4, `${ROOMS.length} rooms: ${ROOMS.map((r) => r.length).join(' ')}`);
+  assert.ok(CORRIDOR.every((c) => c[2] === AXIS_Z_OF_TEMPLATE), 'the corridor is not on the central row');
   const roomKeys = ROOMS.map((cells) => new Set(cells.map((c) => k(...c))));
   ROOMS.forEach((cells, i) => {
     const lamps = cells.filter((c) => LAMPS.some((l) => k(...l) === k(...c)));
@@ -165,14 +190,21 @@ test('AC2: a corridor plus 4 rooms, one ceiling lamp and two chests per room, tw
     const [lx, ly, lz] = lamps[0];
     assert.strictEqual(at(lx, ly, lz).states.hanging, 1, `room ${i}: lamp is not hanging`);
     assert.strictEqual(ly + 1, ROOF_Y, `room ${i}: lamp at y=${ly} does not hang from the ceiling at y=${ROOF_Y}`);
-    const chests = CHESTS.filter((c) => touches(roomKeys[i], c));
+    const chests = CHESTS.filter((c) => opensOnto(roomKeys[i], c));
     assert.strictEqual(chests.length, 2, `room ${i}: ${chests.length} chests`);
     const doorways = cells.filter((c) => touches(CORRIDOR_KEYS, c));
     assert.ok(doorways.length > 0, `room ${i} has no doorway onto the corridor`);
+    // The floor plan, chests included: 5 along the corridor, 2 deep away from it.
+    const plan = new Set([...cells, ...chests].map(([x, , z]) => `${x},${z}`));
+    const xs = range([...plan].map((p) => Number(p.split(',')[0])));
+    const zs = range([...plan].map((p) => Number(p.split(',')[1])));
+    assert.deepStrictEqual([span(xs), span(zs), plan.size], [5, 2, 10], `room ${i}: ${span(xs)}×${span(zs)}, ${plan.size} cells`);
+    assert.ok(zs[0] > AXIS_Z_OF_TEMPLATE || zs[1] < AXIS_Z_OF_TEMPLATE, `room ${i} straddles the corridor`);
   });
   assert.strictEqual(LAMPS.length, 4, `${LAMPS.length} lamps in total`);
-  const corridorChests = CHESTS.filter((c) => touches(CORRIDOR_KEYS, c) && !roomKeys.some((r) => touches(r, c)));
+  const corridorChests = CHESTS.filter((c) => opensOnto(CORRIDOR_SPACE, c) && !roomKeys.some((r) => opensOnto(r, c)));
   assert.strictEqual(corridorChests.length, 2, `${corridorChests.length} corridor chests`);
+  assert.strictEqual(corridorChests.length + ROOMS.length * 2, CHESTS.length, 'a chest belongs to no room and not to the corridor');
 });
 
 // ------------------------------------------------------------------ the shape
@@ -185,8 +217,6 @@ const GONDOLA_TOP = ROOF_Y;
 const isEnvelope = (x, y, z) =>
   y > GONDOLA_TOP && (CONCRETE.test(at(x, y, z).name) || (at(x, y, z).name === LIGHT && N6.some(([dx, dy, dz]) => CONCRETE.test(at(x + dx, y + dy, z + dz).name))));
 const ENVELOPE = cellsOf((_b, x, y, z) => isEnvelope(x, y, z));
-const range = (vals) => (vals.length === 0 ? undefined : [Math.min(...vals), Math.max(...vals)]);
-const span = (r) => (r === undefined ? 0 : r[1] - r[0] + 1);
 const STATIONS = Array.from({ length: SX }, (_, x) => ENVELOPE.filter((c) => c[0] === x));
 const [EX0, EX1] = range(ENVELOPE.map((c) => c[0]));
 const E_LEN = EX1 - EX0 + 1;
@@ -197,28 +227,43 @@ const AXIS_Z = (E_Z[0] + E_Z[1]) / 2;
 /** Side view: vertical extent on the axis plane; plan view: horizontal extent on the axis height. */
 const sideD = (x) => span(range(STATIONS[x].filter((c) => c[2] === AXIS_Z).map((c) => c[1])));
 const planD = (x) => span(range(STATIONS[x].filter((c) => c[1] === AXIS_Y).map((c) => c[2])));
-const TABLE = [0, 1, 3, 5, 5, 5, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 5, 5, 5, 5, 5, 5, 3, 3, 3, 3, 1, 1];
+const SIDE = STATIONS.map((_, x) => sideD(x));
+const DIAMETER = Math.max(...SIDE);
 const DECLARED = ROLL_DEFS.find((d) => d.id === 'airship').size;
 
-test('shape AC1: 28×11×7, the envelope at least 3.5 times as long as it is thick, in plan and from the side', () => {
-  assert.deepStrictEqual(s.size, [28, 11, 7], `template ${s.size}`);
+test('scale AC1: 75×18×13, the envelope 5.0–6.5 times as long as it is thick, in plan and from the side', () => {
+  assert.deepStrictEqual(s.size, [75, 18, 13], `template ${s.size}`);
   assert.deepStrictEqual([...DECLARED], s.size, `declared ${DECLARED}`);
-  const side = E_LEN / Math.max(...STATIONS.map((_, x) => sideD(x)));
+  const side = E_LEN / DIAMETER;
   const plan = E_LEN / Math.max(...STATIONS.map((_, x) => planD(x)));
-  assert.ok(side >= 3.5, `side fineness ${side.toFixed(2)} (${E_LEN} long)`);
-  assert.ok(plan >= 3.5, `plan fineness ${plan.toFixed(2)} (${E_LEN} long)`);
+  assert.strictEqual(E_LEN, 73, `envelope ${E_LEN} long`);
+  assert.strictEqual(DIAMETER, 13, `envelope ${DIAMETER} across`);
+  assert.strictEqual(span(E_Z), 13, `envelope ${span(E_Z)} wide`);
+  assert.ok(side >= 5 && side <= 6.5, `side fineness ${side.toFixed(2)} (${E_LEN} long)`);
+  assert.ok(plan >= 5 && plan <= 6.5, `plan fineness ${plan.toFixed(2)} (${E_LEN} long)`);
 });
 
-test('shape AC2: every station is a round section of the tabled diameter, widest forward of the middle', () => {
-  const side = STATIONS.map((_, x) => sideD(x));
+test('scale AC2: a blunt bow full in 8 blocks, full diameter to 45 % of the length, then down to 1; no flat top or bottom anywhere', () => {
   const plan = STATIONS.map((_, x) => planD(x));
-  assert.deepStrictEqual(side, TABLE, 'side-view diameters by station');
-  assert.deepStrictEqual(plan, TABLE, 'plan-view diameters by station');
+  assert.deepStrictEqual(plan, SIDE, 'plan and side diameters differ: sections are not round');
+  const len = SIDE.slice(EX0, EX1 + 1);
+  assert.deepStrictEqual(len.slice(0, 8), [1, 3, 5, 7, 9, 11, 13, 13], `bow ${len.slice(0, 8)}`);
+  const full = len.flatMap((d, i) => (d === DIAMETER ? [i] : []));
+  const lastFull = Math.max(...full);
+  assert.deepStrictEqual(full, Array.from({ length: lastFull - 6 + 1 }, (_, i) => 6 + i), 'the full diameter is not one unbroken run');
+  const held = (lastFull + 1) / E_LEN;
+  assert.ok(Math.abs(held - 0.45) <= 1 / E_LEN, `full diameter held to ${(held * 100).toFixed(1)} % of the length`);
+  const tail = len.slice(lastFull);
+  for (let i = 1; i < tail.length; i++) {
+    assert.ok(tail[i] <= tail[i - 1], `tail widens at station ${EX0 + lastFull + i}`);
+    assert.ok(tail[i - 1] - tail[i] === 0 || tail[i - 1] - tail[i] === 2, `tail steps by ${tail[i - 1] - tail[i]} at station ${EX0 + lastFull + i}`);
+  }
+  assert.strictEqual(tail[tail.length - 1], 1, 'the stern has no one-block tip');
   for (let x = 0; x < SX; x++) {
-    const d = TABLE[x];
+    const d = SIDE[x];
     const cells = STATIONS[x];
     if (d === 0) {
-      assert.strictEqual(cells.length, 0, `station ${x}: envelope where the table has none`);
+      assert.strictEqual(cells.length, 0, `station ${x}: envelope off the axis plane`);
       continue;
     }
     // Round, not boxed: on the section's outermost rows and columns fewer cells than the diameter.
@@ -226,24 +271,15 @@ test('shape AC2: every station is a round section of the tabled diameter, widest
     const [z0, z1] = range(cells.map((c) => c[2]));
     assert.strictEqual(span([y0, y1]), d, `station ${x}: section height`);
     assert.strictEqual(span([z0, z1]), d, `station ${x}: section width`);
+    assert.strictEqual((y0 + y1) / 2, AXIS_Y, `station ${x} off the axis height`);
+    assert.strictEqual((z0 + z1) / 2, AXIS_Z, `station ${x} off the axis line`);
     if (d < 3) continue;
     for (const [label, row] of [['top', cells.filter((c) => c[1] === y1)], ['bottom', cells.filter((c) => c[1] === y0)]])
       assert.ok(row.length < d, `station ${x}: flat ${label}, ${row.length} of ${d} wide`);
     for (const [label, col] of [['north', cells.filter((c) => c[2] === z0)], ['south', cells.filter((c) => c[2] === z1)]])
       assert.ok(col.length < d, `station ${x}: flat ${label} side, ${col.length} of ${d} high`);
-    // Centred on one axis.
-    assert.strictEqual((y0 + y1) / 2, AXIS_Y, `station ${x} off the axis height`);
-    assert.strictEqual((z0 + z1) / 2, AXIS_Z, `station ${x} off the axis line`);
   }
-  const widest = Math.max(...TABLE);
-  const wide = TABLE.flatMap((d, x) => (d === widest ? [x] : []));
-  const mid = (EX0 + EX1) / 2;
-  assert.ok(wide.reduce((a, b) => a + b, 0) / wide.length < mid, `widest stations ${wide} not forward of the middle x=${mid}`);
-  // The tail takes the last ~45 %: from the end of the widest part to the tip.
-  const tail = (EX1 - Math.max(...wide)) / E_LEN;
-  assert.ok(tail >= 0.4 && tail <= 0.5, `tail ${(tail * 100).toFixed(0)} % of the length`);
-  assert.strictEqual(TABLE[EX0], 1, 'the bow has no one-block tip');
-  assert.strictEqual(TABLE[EX1], 1, 'the stern has no one-block tip');
+  assert.strictEqual(AXIS_Z, AXIS_Z_OF_TEMPLATE, 'the envelope axis is not on the central row');
 });
 
 test('shape: two greys and half blocks on the steps, lit bow, stern and fin tips', () => {
@@ -252,9 +288,10 @@ test('shape: two greys and half blocks on the steps, lit bow, stern and fin tips
   const upper = ENVELOPE.filter((c) => c[1] > AXIS_Y && CONCRETE.test(at(...c).name));
   assert.ok(lower.length > 0 && lower.every((c) => at(...c).name === 'minecraft:gray_concrete'), 'the lower third is not gray');
   assert.ok(upper.length > 0 && upper.every((c) => at(...c).name === 'minecraft:light_gray_concrete'), 'the upper half is not light gray');
-  // A step in diameter away from the fins gets a slab over the smaller station's top and under its bottom.
-  for (let x = EX0; x < 21; x++) {
-    const small = TABLE[x] < TABLE[x + 1] ? x : TABLE[x] > TABLE[x + 1] ? x + 1 : undefined;
+  const finX0 = Math.min(...named(FIN).map((c) => c[0]));
+  // A step in diameter ahead of the fins gets a slab over the smaller station's top and under its bottom.
+  for (let x = EX0; x < finX0 - 1; x++) {
+    const small = SIDE[x] < SIDE[x + 1] ? x : SIDE[x] > SIDE[x + 1] ? x + 1 : undefined;
     if (small === undefined) continue;
     const r = range(STATIONS[small].filter((c) => c[2] === AXIS_Z).map((c) => c[1]));
     const over = at(small, r[1] + 1, AXIS_Z);
@@ -268,7 +305,7 @@ test('shape: two greys and half blocks on the steps, lit bow, stern and fin tips
   assert.strictEqual(at(EX1, AXIS_Y, AXIS_Z).name, LIGHT, 'the stern tip is not lit');
 });
 
-test('shape AC3: four tail fins in a cross — two vertical, two horizontal — inside the declared size', () => {
+test('scale AC3: four tail fins in a cross — chord ≈ 22 % of the length, vertical pair on the central row — inside the declared size', () => {
   const fin = named(FIN);
   const groups = {
     up: fin.filter(([, y, z]) => z === AXIS_Z && y > AXIS_Y),
@@ -277,39 +314,50 @@ test('shape AC3: four tail fins in a cross — two vertical, two horizontal — 
     south: fin.filter(([, y, z]) => y === AXIS_Y && z > AXIS_Z),
   };
   assert.strictEqual(Object.values(groups).reduce((n, g) => n + g.length, 0), fin.length, 'a fin block off the two fin planes');
+  const chords = [];
   for (const [name, cells] of Object.entries(groups)) {
     assert.ok(cells.length > 0, `no ${name} fin`);
     const xs = range(cells.map((c) => c[0]));
-    assert.deepStrictEqual(xs, [21, 26], `${name} fin chord x ${xs}`);
-    assert.ok(xs[0] > (EX0 + EX1) / 2, `${name} fin is not on the tail`);
-    // The fin carries the outline of the widest section on, no further.
-    const reach = name === 'up' || name === 'down' ? Math.max(...cells.map((c) => Math.abs(c[1] - AXIS_Y))) : Math.max(...cells.map((c) => Math.abs(c[2] - AXIS_Z)));
-    assert.strictEqual(reach, 3, `${name} fin reaches ${reach} past the axis, the widest section 3`);
-    const tip = name === 'up' ? [26, AXIS_Y + 3, AXIS_Z] : name === 'down' ? [26, AXIS_Y - 3, AXIS_Z] : name === 'north' ? [26, AXIS_Y, AXIS_Z - 3] : [26, AXIS_Y, AXIS_Z + 3];
+    chords.push(xs.join('..'));
+    const chord = span(xs) / E_LEN;
+    assert.ok(Math.abs(chord - 0.22) <= 0.02, `${name} fin chord ${span(xs)} = ${(chord * 100).toFixed(1)} % of ${E_LEN}`);
+    assert.ok(xs[0] > (EX0 + EX1) / 2 && xs[1] < EX1, `${name} fin x ${xs} is not on the tail, ahead of the stern tip`);
+    // Past the widest section: the fins stand out of the outline, the vertical pair up to the template's top row.
+    const vertical = name === 'up' || name === 'down';
+    const reach = Math.max(...cells.map((c) => (vertical ? Math.abs(c[1] - AXIS_Y) : Math.abs(c[2] - AXIS_Z))));
+    const want = vertical ? SY - 1 - AXIS_Y : AXIS_Z;
+    assert.strictEqual(reach, want, `${name} fin reaches ${reach} past the axis`);
+    assert.ok(reach >= (DIAMETER - 1) / 2, `${name} fin does not reach the widest section`);
+    const tip = name === 'up' ? [xs[1], AXIS_Y + reach, AXIS_Z] : name === 'down' ? [xs[1], AXIS_Y - reach, AXIS_Z] : name === 'north' ? [xs[1], AXIS_Y, AXIS_Z - reach] : [xs[1], AXIS_Y, AXIS_Z + reach];
     assert.strictEqual(at(...tip).name, LIGHT, `${name} fin tip ${k(...tip)} is not lit`);
     for (const c of [...cells, tip]) for (let i = 0; i < 3; i++) assert.ok(c[i] >= 0 && c[i] < DECLARED[i], `${name} fin ${k(...c)} outside the declared ${DECLARED}`);
   }
+  assert.strictEqual(new Set(chords).size, 1, `fin chords differ: ${chords.join(' ')}`);
+  assert.strictEqual(AXIS_Z, AXIS_Z_OF_TEMPLATE, 'the vertical fins are not on the central row');
   const solid = cellsOf((b) => b.name !== 'minecraft:air');
   for (let i = 0; i < 3; i++) assert.ok(Math.max(...solid.map((c) => c[i])) < DECLARED[i], `a block past the declared size on axis ${i}`);
 });
 
-test('shape AC4: a small gondola under the envelope — 13×5×4, forward, a block narrower each side, ≤ half the length', () => {
+test('scale AC4: the gondola — 13×7×4, forward, ≤ 20 % of the envelope length, about half its diameter wide', () => {
   const g = GONDOLA_CELLS;
   const [gx, gy, gz] = [0, 1, 2].map((i) => range(g.map((c) => c[i])));
-  assert.deepStrictEqual([span(gx), span(gy), span(gz)], [13, 4, 5], `gondola ${span(gx)}×${span(gy)}×${span(gz)}`);
+  assert.deepStrictEqual([span(gx), span(gz), span(gy)], [13, 7, 4], `gondola ${span(gx)}×${span(gz)}×${span(gy)}`);
   assert.ok((gx[0] + gx[1]) / 2 < (EX0 + EX1) / 2, `gondola centre x=${(gx[0] + gx[1]) / 2} is not forward of the envelope centre x=${(EX0 + EX1) / 2}`);
-  assert.deepStrictEqual(gz, [E_Z[0] + 1, E_Z[1] - 1], `gondola z ${gz} vs envelope z ${E_Z}`);
-  assert.ok(span(gx) <= 0.5 * E_LEN, `gondola ${span(gx)} of ${E_LEN}`);
-  // The envelope sits on the roof: no gap, no hangers.
+  assert.ok(span(gx) <= 0.2 * E_LEN, `gondola ${span(gx)} of ${E_LEN}: ${((100 * span(gx)) / E_LEN).toFixed(1)} %`);
+  const width = span(gz) / DIAMETER;
+  assert.ok(width >= 0.45 && width <= 0.6, `gondola ${span(gz)} wide under a ${DIAMETER} envelope`);
+  assert.strictEqual((gz[0] + gz[1]) / 2, AXIS_Z, 'the gondola is not under the envelope axis');
+  // The envelope sits on the roof: no gap, no hangers, and the gondola only under full-diameter stations.
   const roof = g.filter(([, y]) => y === GONDOLA_TOP);
   assert.ok(roof.some(([x, y, z]) => isEnvelope(x, y + 1, z)), 'the envelope does not rest on the gondola roof');
   assert.ok(gy[1] + 1 === E_Y[0], `envelope bottom y=${E_Y[0]} is not on the gondola roof y=${gy[1]}`);
+  for (let x = gx[0]; x <= gx[1]; x++) assert.strictEqual(SIDE[x], DIAMETER, `station ${x} over the gondola is ${SIDE[x]}, not full`);
   // Bow and stern walls trimmed at floor and roof, but for the sill each door stands on.
   const sills = new Set(LOWER_DOORS.map(([x, y, z]) => k(x, y - 1, z)));
   for (const x of gx) for (const y of gy) assert.ok(g.every((c) => !(c[0] === x && c[1] === y) || sills.has(k(...c))), `gondola corner row x=${x} y=${y} not trimmed`);
   // A window strip: glass the whole way round at one height.
   const glass = named('minecraft:glass');
-  assert.ok(glass.length >= 18, `${glass.length} windows`);
+  assert.ok(glass.length >= 24, `${glass.length} windows`);
 });
 
 // Block light as the Windmill test models it: an upper bound, light passes everything but opaque cubes.
@@ -317,22 +365,26 @@ const TRANSPARENT = /air|door|glass|lantern|chest|spawner|iron_chain|slab/;
 const LMAX = 7;
 const EMISSION = { 'minecraft:lantern': 15, 'minecraft:soul_lantern': 10, [LIGHT]: 15 };
 const EMITTERS = cellsOf((b) => b.name in EMISSION);
-
-test('AC2: the room lamps leave the spawner and the corridor inside its reach at block light ≤ Lmax', () => {
-  assert.ok(EMITTERS.length > 0, 'no lights at all');
-  const light = new Map();
+/** Block light per cell, flooded from every emitter; a cell missing from it is dark. */
+const LIGHT_MAP = new Map();
+{
   const queue = EMITTERS.map((c) => [...c, EMISSION[at(...c).name]]);
-  for (const [x, y, z, l] of queue) light.set(k(x, y, z), l);
-  while (queue.length) {
-    const [x, y, z, l] = queue.shift();
+  for (const [x, y, z, l] of queue) LIGHT_MAP.set(k(x, y, z), l);
+  for (let i = 0; i < queue.length; i++) {
+    const [x, y, z, l] = queue[i];
     if (l <= 1) continue;
     for (const [dx, dy, dz] of N6) {
       const n = [x + dx, y + dy, z + dz];
-      if (!inside(...n) || !TRANSPARENT.test(at(...n).name) || (light.get(k(...n)) ?? 0) >= l - 1) continue;
-      light.set(k(...n), l - 1);
+      if (!inside(...n) || !TRANSPARENT.test(at(...n).name) || (LIGHT_MAP.get(k(...n)) ?? 0) >= l - 1) continue;
+      LIGHT_MAP.set(k(...n), l - 1);
       queue.push([...n, l - 1]);
     }
   }
+}
+
+test('AC5: the room lamps leave the spawner and the corridor inside its reach at block light ≤ Lmax', () => {
+  assert.ok(EMITTERS.length > 0, 'no lights at all');
+  const light = LIGHT_MAP;
   const [sx, sy, sz] = SPAWNERS[0];
   const own = light.get(k(sx, sy, sz)) ?? 0;
   assert.ok(own <= LMAX, `block light ${own} at the spawner > Lmax ${LMAX}`);
@@ -353,7 +405,7 @@ test('AC2: the room lamps leave the spawner and the corridor inside its reach at
   assert.ok(worst <= LMAX, `block light ${worst} at ${where} > Lmax ${LMAX}`);
 });
 
-test('AC3: modern and whole — no decay blocks, and the hull has no hole but its two doors', () => {
+test('AC5: modern and whole — no decay blocks, and the hull has no hole but its two doors', () => {
   const MODERN = new Set([
     'minecraft:air',
     'minecraft:gray_concrete',
@@ -395,7 +447,7 @@ test('AC3: modern and whole — no decay blocks, and the hull has no hole but it
   }
 });
 
-test('AC4: the balloon is decoration — no chest or spawner above the gondola, no hidden space inside it', () => {
+test('AC5: the balloon is a hollow shell of decoration — no chest or spawner above the gondola, nothing but air inside it', () => {
   assert.ok(ROOF_Y > FLOOR_Y + 2 && ROOF_Y < SY - 1, `roof at y=${ROOF_Y}`);
   const above = [...CHESTS, ...SPAWNERS].filter(([, y]) => y >= ROOF_Y);
   assert.deepStrictEqual(above, [], `above the gondola: ${above.map((c) => k(...c)).join(' ')}`);
@@ -426,8 +478,25 @@ test('AC4: the balloon is decoration — no chest or spawner above the gondola, 
       }
     }
   }
+  // Air above the roof that the open sky cannot reach is the envelope's inside: hollow, sealed, empty.
   const hidden = cellsOf((b, x, y, z) => y > ROOF_Y && b.name === 'minecraft:air' && !outside.has(k(x, y, z)));
-  assert.deepStrictEqual(hidden, [], `enclosed air in the balloon: ${hidden.map((c) => k(...c)).join(' ')}`);
+  assert.ok(hidden.length > 1000, `the envelope is not hollow: ${hidden.length} enclosed air cells`);
+  const inSection = ([x, y, z]) => {
+    const cells = STATIONS[x];
+    if (cells.length === 0) return false;
+    const [y0, y1] = range(cells.filter((c) => c[2] === z).map((c) => c[1])) ?? [Infinity, -Infinity];
+    return y > y0 && y < y1;
+  };
+  const stray = hidden.filter((c) => !inSection(c));
+  assert.deepStrictEqual(stray, [], `enclosed air outside the envelope: ${stray.slice(0, 10).map((c) => k(...c)).join(' ')}`);
+  // The sealed inside is a cave: every cell a mob could stand in gets block light, or hostile mobs spawn there.
+  const floor = hidden.filter(([x, y, z]) => at(x, y - 1, z).name !== 'minecraft:air' && at(x, y + 1, z).name === 'minecraft:air');
+  const dark = floor.filter((c) => (LIGHT_MAP.get(k(...c)) ?? 0) < 1);
+  assert.ok(floor.length > 100, `${floor.length} floor cells inside the envelope`);
+  assert.deepStrictEqual(dark, [], `${dark.length} of ${floor.length} floor cells inside the envelope at block light 0: ${dark.slice(0, 10).map((c) => k(...c)).join(' ')}`);
+  // Nothing but air and the shell's own blocks inside the envelope's outline.
+  const filled = cellsOf((b, x, y, z) => y > ROOF_Y && b.name !== 'minecraft:air' && !isEnvelope(x, y, z) && inSection([x, y, z]));
+  assert.deepStrictEqual(filled, [], `something inside the envelope: ${filled.slice(0, 10).map((c) => `${k(...c)} ${at(...c).name}`).join(' ')}`);
 });
 
 test('AC5: no ready way down — no ladder, stairs, water, lift or chain below the gondola', () => {

@@ -297,6 +297,17 @@ registerAsync("andrew", "airship_linked_ring", async (test: Test): Promise<void>
         `3D distance to the Windmill centre ${o.airship === undefined ? "-" : Math.hypot(d, o.airship.origin[1] - w.origin[1]).toFixed(2)}; ` +
         `attempts ${rt.linked.attempts.get(w.id)} la=${String(rec?.extras[LINKED_TRIED])} ${LINKED_STATUS}=${String(rec?.extras[LINKED_STATUS])}; checked ${o.result?.checked} rejects ${JSON.stringify(o.result?.rejects ?? {})}`
     );
+    // What the footprint's size costs the ring: candidates vetoed over the plot before any site check, now and at the former 28×7.
+    const share = (size: Vec3): string => {
+      const ring = linkedCandidates(rt.registry.salt(), w, { ...airshipDef(rt), size });
+      const vetoed = ring.filter((c) => overParent(w)(c) !== undefined).length;
+      return `${vetoed}/${ring.length} (${((100 * vetoed) / ring.length).toFixed(1)} %)`;
+    };
+    const searched = o.result === undefined ? 0 : Object.values(o.result.rejects).reduce((a, b) => a + b, 0) + (o.status === "placed" ? 1 : 0);
+    log(
+      `airship ring share RESULT footprint ${AIRSHIP_SIZE[0]}x${AIRSHIP_SIZE[2]}: vetoed over the Windmill plot ${share([...AIRSHIP_SIZE])}, at 28x7 ${share([28, 11, 7])}; ` +
+        `this search judged ${searched} candidate(s) before it placed, rejects ${JSON.stringify(o.result?.rejects ?? {})}`
+    );
     test.assert(o.status === "placed" && o.airship !== undefined, `linked: ${o.status}`);
     test.assert(d >= LINKED_RING.rMin && d <= LINKED_RING.rMax, `distance ${d}`);
     const over = overParent(w)({ x: o.airship!.origin[0], z: o.airship!.origin[2], size: o.airship!.size });
@@ -386,7 +397,7 @@ registerAsync("andrew", "airship_linked_over_windmill", async (test: Test): Prom
     const size = rotatedSize(def.size, 0);
     const [mx, mz] = parentCentre(w);
     // One column over the plot's east edge: the rest of the footprint is dry grass, so only the veto can refuse it.
-    // Centred on the plot, a 28-long footprint crosses the field ditches and the site check refuses it on liquid first.
+    // Centred on the plot, the footprint crosses the field ditches and the site check refuses it on liquid first.
     const over: RingCandidate = { id: "airship:gt:over", def, dim: "o", cx, cz, rot: 0, size, x: w.origin[0] + w.size[0] - 1, z: mz - Math.floor(size[2] / 2), distance: 0 };
     const unloadOver = await loadBox(test, dim, "andrew_gt_as_over_c", { min: [over.x - 2, 0, over.z - 2], max: [over.x + size[0] + 1, 0, over.z + size[2] + 1] });
     let verdict: ReturnType<typeof rt.checker.check>;
@@ -531,12 +542,11 @@ registerAsync("andrew", "airship_linked_ring_invalid", async (test: Test): Promi
   const [cx, cz] = farChunk(test, 340);
   const x = cx * CHUNK + 8;
   const z = cz * CHUNK + 8;
-  const quads: Box[] = [
-    { min: [x - RING_REACH, 0, z - RING_REACH], max: [x - 1, 0, z - 1] },
-    { min: [x, 0, z - RING_REACH], max: [x + RING_REACH, 0, z - 1] },
-    { min: [x - RING_REACH, 0, z], max: [x - 1, 0, z + RING_REACH] },
-    { min: [x, 0, z], max: [x + RING_REACH, 0, z + RING_REACH] },
-  ];
+  // A 4×4 grid over the ring's square: at 75 long a quadrant spans 10×10 chunks and its area never loads.
+  const edges = [x - RING_REACH, x - Math.ceil(RING_REACH / 2), x, x + Math.ceil(RING_REACH / 2), x + RING_REACH + 1];
+  const zEdges = [z - RING_REACH, z - Math.ceil(RING_REACH / 2), z, z + Math.ceil(RING_REACH / 2), z + RING_REACH + 1];
+  const quads: Box[] = [];
+  for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) quads.push({ min: [edges[i], 0, zEdges[j]], max: [edges[i + 1] - 1, 0, zEdges[j + 1] - 1] });
   let ground = 0;
   const dry: Box = { min: [x - DRY, 0, z - DRY], max: [x + DRY, 0, z + DRY] };
   const clip = (q: Box, y: number): Box | undefined => {
@@ -545,7 +555,7 @@ registerAsync("andrew", "airship_linked_ring_invalid", async (test: Test): Promi
     return min[0] <= max[0] && min[2] <= max[2] ? { min, max } : undefined;
   };
   const band = (q: Box): Box => ({ min: [q.min[0], ground - 1, q.min[2]], max: [q.max[0], ground + 1, q.max[2]] });
-  /** One quadrant at a time: the loaded quadrant plus the production loader stay well under the engine's 10 areas. */
+  /** One tile at a time: the loaded tile plus the production loader stay well under the engine's 10 areas. */
   const eachQuad = async (work: (q: Box) => Promise<void> | void): Promise<void> => {
     for (let i = 0; i < quads.length; i++) {
       const u = await loadBox(test, dim, `andrew_gt_as_inv_q${i}`, quads[i]);
@@ -554,6 +564,8 @@ registerAsync("andrew", "airship_linked_ring_invalid", async (test: Test): Promi
       } finally {
         u();
       }
+      // A ticking area added in the tick another was removed never loads its chunks (measured on BDS 1.26.51.1).
+      await test.idle(20);
     }
   };
   let flooded = false;
@@ -596,7 +608,9 @@ registerAsync("andrew", "airship_linked_ring_invalid", async (test: Test): Promi
     );
     test.assert(o.status === "none" && rec?.extras[LINKED_STATUS] === "none", `linked: ${o.status}`);
     test.assert(rt.instances("airship").length === 0, "an Airship was created");
-    test.assert(o.result?.checked === ring.length && (o.result?.rejects.liquid ?? 0) === ring.length, "not every ring candidate was checked and refused on water");
+    // At 75 long some candidates reach over the plot and are vetoed before their site is read; every other one is refused on water.
+    const vetoed = o.result?.rejects[OVER_PARENT] ?? 0;
+    test.assert(o.result?.checked === ring.length - vetoed && (o.result?.rejects.liquid ?? 0) === ring.length - vetoed, "not every ring candidate was vetoed or checked and refused on water");
     test.assert(changed.length === 0, `${changed.length} land blocks changed`);
     test.succeed();
   } finally {
@@ -607,7 +621,7 @@ registerAsync("andrew", "airship_linked_ring_invalid", async (test: Test): Promi
   }
 })
   .structureName(STRUCTURE)
-  .maxTicks(6000)
+  .maxTicks(9000)
   .tag("andrew");
 
 export const AIRSHIP_BODY_TESTS = ["airship_body_site", "airship_linked_ring", "airship_linked_over_windmill", "airship_linked_no_merge", "airship_linked_ring_invalid"];
