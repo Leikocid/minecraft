@@ -274,6 +274,8 @@ Applies to: Claude / Codex / Gemini agents a human started in an IDE or a termin
 
 **The project root is read-only. Every task is done in your own worktree (`git worktree add .work/{session-id}`).** Editing the root directly, or destructive git operations there (`reset --hard`, `checkout -- .`, `clean -fd`), can wipe the work of parallel interactive sessions without a trace — you cannot see your neighbours and you get no warning.
 
+**Read-only is about hand edits, not about git.** Merging your finished branch into the root branch is done *from* the root checkout — a merge run inside your own worktree touches nothing and says nothing — and so are `git worktree remove` and `git branch -d`. Those moves are what the root checkout is for.
+
 **The tree is yours to remove, too.** Once your branch has landed in the root branch, take the tree and the branch down yourself — `git worktree remove .work/{session-id}` and `git branch -d <branch>`, from the root checkout. A merged tree left behind is not "kept for later": it is a leftover with no owner, and the board cannot tell it from abandoned work. The chronicle daemon sweeps what survives — merged, clean, idle for three days, nobody inside — but that is the safety net, not the way out.
 <!-- ai-kit:end:working-tree -->
 
@@ -348,6 +350,26 @@ Where a check is executable, its proof is an `ai-kit run-check` artifact, not a
 sentence.
 <!-- ai-kit:end:defects -->
 
+<!-- ai-kit:start:comment-policy -->
+## Comment Policy
+
+A comment survives only if removing it loses information that exists nowhere else — not in the code, not in the Knowledge Vault, not in git history.
+
+**Five kinds are worth writing** (one to three lines each, in English, present tense — "X breaks Y", never "X used to break Y" or "previously X"):
+
+1. **Contract with another system** — `// the partner API rejects epoch millis, only ISO-8601`
+2. **Platform or library quirk** — `// Kotlin data class equals() ignores lazy-initialized fields`
+3. **Non-obvious default** — `// an unset timeout means 30s, not 0 (no timeout)`
+4. **Silent failure mode** — `// returns an empty array on auth failure, never throws`
+5. **Ordering requirement** — `// must run before migrateSchema() — it writes the column that reads`
+
+**Harmful — delete on sight:** memoirs (dates, commit numbers, "used to be", "before TASK-N" — git and the chronicle already carry this), restating what the declaration below already says, banner/separator comments, commented-out code, multi-paragraph essays.
+
+**Never touched:** tool directives (`eslint-disable`, `noqa`, `type: ignore`, `pragma`, `swiftlint:`, `MARK:`) and string literals — a scanner enforcing this policy skips both by construction, and so does this rule.
+
+**Citing a spec:** reference it by section number (`§3.5`), never by heading — a heading in the source language does not survive translation, a number does.
+<!-- ai-kit:end:comment-policy -->
+
 ## Rules for AI
 
 ### Do freely:
@@ -363,7 +385,7 @@ sentence.
 - Change build or deploy configuration
 
 ### Never:
-- Commit directly to the project's root branch (the one the root checkout sits on) — go through a task/epic branch first
+- Commit code directly to the project's root branch (the one the root checkout sits on) — go through a task/epic branch first. Two exceptions: documentation, which goes straight in, and a quickfix — a file or three committed with a `quickfix:` prefix
 - Modify .env files or secrets
 - Delete tests without replacement
 - Update major dependency versions without approval
