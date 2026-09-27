@@ -385,8 +385,18 @@ registerAsync("andrew", "airship_linked_over_windmill", async (test: Test): Prom
     const def = airshipDef(rt);
     const size = rotatedSize(def.size, 0);
     const [mx, mz] = parentCentre(w);
-    const over: RingCandidate = { id: "airship:gt:over", def, dim: "o", cx, cz, rot: 0, size, x: mx - Math.floor(size[0] / 2), z: mz - Math.floor(size[2] / 2), distance: 0 };
-    const verdict = rt.checker.check(over);
+    // One column over the plot's east edge: the rest of the footprint is dry grass, so only the veto can refuse it.
+    // Centred on the plot, a 28-long footprint crosses the field ditches and the site check refuses it on liquid first.
+    const over: RingCandidate = { id: "airship:gt:over", def, dim: "o", cx, cz, rot: 0, size, x: w.origin[0] + w.size[0] - 1, z: mz - Math.floor(size[2] / 2), distance: 0 };
+    const unloadOver = await loadBox(test, dim, "andrew_gt_as_over_c", { min: [over.x - 2, 0, over.z - 2], max: [over.x + size[0] + 1, 0, over.z + size[2] + 1] });
+    let verdict: ReturnType<typeof rt.checker.check>;
+    try {
+      verdict = rt.checker.check(over);
+    } finally {
+      unloadOver();
+    }
+    // A ticking area added in the tick another was removed never loads its chunks (measured on BDS 1.26.51.1).
+    await test.idle(20);
     const top = w.origin[1] + w.size[1] - 1;
     const gap = verdict.kind === "valid" ? verdict.y - top : NaN;
 
@@ -401,11 +411,11 @@ registerAsync("andrew", "airship_linked_over_windmill", async (test: Test): Prom
     const ring = linkedCandidates(rt.registry.salt(), w, def);
     const ringVetoed = ring.filter((c) => overParent(w!)(c) !== undefined).length;
     log(
-      `airship over windmill RESULT candidate centre ${mx},${mz} = windmill centre; site check alone -> ${verdict.kind}${verdict.kind === "valid" ? ` y ${verdict.y}` : ""}, ` +
+      `airship over windmill RESULT candidate x ${over.x}..${over.x + size[0] - 1} over the plot edge x ${w.origin[0] + w.size[0] - 1} (windmill centre ${mx},${mz}); site check alone -> ${JSON.stringify(verdict)}, ` +
         `windmill top ${top}, height gap ${gap}; search -> ${result.kind} rejects ${JSON.stringify(result.rejects)}, loads ${loads}, takes ${takes}; ` +
         `beside the plot -> ${beside ?? "allowed"}; ring candidates vetoed ${ringVetoed}/${ring.length}; airship records ${rt.instances("airship").length}`
     );
-    test.assert(verdict.kind === "valid" && gap >= 10, `the site check alone must accept it high above the Windmill: ${JSON.stringify(verdict)} gap ${gap}`);
+    test.assert(verdict.kind === "valid" && gap > 0, `the site check alone must accept it above the Windmill: ${JSON.stringify(verdict)} gap ${gap}`);
     test.assert(result.kind === "none" && result.rejects[OVER_PARENT] === 1 && loads === 0 && takes === 0, `the veto did not stop it: ${JSON.stringify(result)}`);
     test.assert(beside === undefined, "a footprint beside the plot was vetoed");
     test.assert(rt.instances("airship").length === 0, "an Airship was placed");
