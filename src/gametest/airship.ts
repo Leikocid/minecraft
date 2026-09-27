@@ -1,6 +1,7 @@
 // The Airship template on a real engine: all four rotations judged by the
 // blocks in the world — counts per block type, the 10 chests, the one spawner
-// and the two doors on opposite sides (L0-airs-r001/r002). Every test clears
+// and the two doors on opposite ends (L0-airs-r001/r002), and the spawner's
+// block light measured in the engine. Every test clears
 // what it placed.
 
 import { BlockTypes, BlockVolume, type Dimension, StructureRotation, type Vector3, world } from "@minecraft/server";
@@ -8,7 +9,7 @@ import { Test, registerAsync } from "@minecraft/server-gametest";
 import { type Box, boxOf, sliceBox } from "../structures/clear";
 import type { Rotation, Vec3 } from "../structures/registry";
 import { ENGINE_ROTATION, ROTATIONS, rotateCardinal, toWorld } from "../structures/rotate";
-import airshipTemplate, { AIRSHIP_ID, AIRSHIP_SIZE, CHESTS, DOORS, SPAWNER } from "../structures/templates/airship";
+import airshipTemplate, { AIRSHIP_ID, AIRSHIP_SIZE, CHESTS, DOORS, GONDOLA, SPAWNER } from "../structures/templates/airship";
 import { loadBox } from "./structures-place";
 
 const STRUCTURE = "andrew:platform";
@@ -94,7 +95,7 @@ registerAsync("andrew", "airship_rotations", async (test: Test): Promise<void> =
       const wantSpawner = fmt(toWorld(loc, local(SPAWNER.at), SIZE, rot));
       if (spawners.length !== 1 || spawners[0] !== wantSpawner) problems.push(`spawners at ${spawners.join(" ")}, expected ${wantSpawner}`);
 
-      // Doors: each where the template puts it, facing inward, and the two on opposite sides facing each other.
+      // Doors: each where the template puts it, facing inward, and the two on opposite ends facing each other.
       const doors = found.filter((f) => f.typeId === "minecraft:wooden_door");
       const lowers: { at: Vec3; facing: string }[] = [];
       for (const d of DOORS) {
@@ -115,7 +116,7 @@ registerAsync("andrew", "airship_rotations", async (test: Test): Promise<void> =
         const len = Math.abs(delta[0]) + Math.abs(delta[2]);
         const step = STEP[a.facing];
         const along = delta[0] === step[0] * len && delta[2] === step[2] * len && delta[1] === 0;
-        if (OPPOSITE[a.facing] !== c.facing || !along || len !== DOOR_GAP) problems.push(`doors ${fmt(a.at)}→${a.facing} and ${fmt(c.at)}→${c.facing} are not on opposite sides facing each other`);
+        if (OPPOSITE[a.facing] !== c.facing || !along || len !== DOOR_GAP) problems.push(`doors ${fmt(a.at)}→${a.facing} and ${fmt(c.at)}→${c.facing} are not on opposite ends facing each other`);
       }
 
       for (const p of problems) log(`airship rot=${rot * 90} MISMATCH ${p}`);
@@ -136,6 +137,61 @@ registerAsync("andrew", "airship_rotations", async (test: Test): Promise<void> =
   .maxTicks(600)
   .tag("andrew");
 
-export const AIRSHIP_TESTS = ["airship_rotations"];
+/** The Windmill's Lmax: the brightest block light a spawner cell may have and still spawn. */
+const LMAX = 7;
+
+registerAsync("andrew", "airship_spawner_light", async (test: Test): Promise<void> => {
+  const dim = test.getDimension();
+  const b = test.worldBlockLocation({ x: 0, y: 0, z: 0 });
+  const loc: Vec3 = [b.x - Math.floor(SIZE[0] / 2), b.y + 12, b.z - Math.floor(SIZE[2] / 2)];
+  const box = boxOf(loc, SIZE);
+  // An opaque shell round the gondola keeps sky light out, so the combined level inside is block light alone.
+  const shell: Box = { min: [loc[0] + GONDOLA.x0 - 1, loc[1] - 1, loc[2] + GONDOLA.z0 - 1], max: [loc[0] + GONDOLA.x1 + 1, loc[1] + GONDOLA.roofY + 1, loc[2] + GONDOLA.z1 + 1] };
+  const faces: Box[] = [
+    { min: shell.min, max: [shell.max[0], shell.max[1], shell.min[2]] },
+    { min: [shell.min[0], shell.min[1], shell.max[2]], max: shell.max },
+    { min: shell.min, max: [shell.min[0], shell.max[1], shell.max[2]] },
+    { min: [shell.max[0], shell.min[1], shell.min[2]], max: shell.max },
+    { min: shell.min, max: [shell.max[0], shell.min[1], shell.max[2]] },
+    { min: [shell.min[0], shell.max[1], shell.min[2]], max: shell.max },
+  ];
+  const unload = await loadBox(test, dim, "andrew_gt_airship_l", { min: shell.min, max: [box.max[0], box.max[1], box.max[2]] });
+  try {
+    fillBox(dim, box, "minecraft:air");
+    world.structureManager.place(AIRSHIP_ID, dim, v(loc), { rotation: StructureRotation[ENGINE_ROTATION[0]], includeEntities: false });
+    for (const f of faces) fillBox(dim, f, "minecraft:stone");
+    await test.idle(20);
+
+    const at = (p: readonly number[]): Vec3 => toWorld(loc, local(p), SIZE, 0);
+    const read = (p: Vec3): { l: number; sky: number } => ({ l: dim.getLightLevel(v(p)), sky: dim.getSkyLightLevel(v(p)) });
+    const [sx, sy, sz] = SPAWNER.at;
+    // Spawner reach: 4 horizontally, 1 vertically — the walkable corridor row over the spawner.
+    const reach: Vec3[] = [];
+    for (let x = GONDOLA.x0 + 1; x < GONDOLA.x1; x++) if (Math.abs(x - sx) <= 4) reach.push(at([x, sy + 1, sz]));
+    const spawner = read(at(SPAWNER.at));
+    const cells = reach.map((p) => ({ p, ...read(p) }));
+    // Control: the cabin floor next to a lamp is lit, so a dark reading is not an engine that never computed light.
+    const control = read(at([GONDOLA.x0 + 1, sy + 1, sz - 1]));
+    log(
+      `airship spawner light RESULT spawner ${spawner.l}/${spawner.sky}; corridor in reach ${cells.map((c) => `${fmt(c.p)}=${c.l}/${c.sky}`).join(" ")}; ` +
+        `cabin control ${control.l}/${control.sky} (combined/sky)`
+    );
+    const worst = Math.max(spawner.l, ...cells.map((c) => c.l));
+    test.assert([spawner, ...cells, control].every((c) => c.sky === 0), "sky light inside the shell: the reading is not block light alone");
+    test.assert(control.l > LMAX, `cabin control ${control.l}: the lamps give no measurable light`);
+    test.assert(worst <= LMAX, `block light ${worst} in the spawner reach > Lmax ${LMAX}`);
+    test.succeed();
+  } finally {
+    fillBox(dim, box, "minecraft:air");
+    for (const f of faces) fillBox(dim, f, "minecraft:air");
+    for (const e of dim.getEntities({ location: v([loc[0] + SIZE[0] / 2, loc[1] + SIZE[1] / 2, loc[2] + SIZE[2] / 2]), maxDistance: SIZE[0], type: "minecraft:item" })) e.remove();
+    unload();
+  }
+})
+  .structureName(STRUCTURE)
+  .maxTicks(600)
+  .tag("andrew");
+
+export const AIRSHIP_TESTS = ["airship_rotations", "airship_spawner_light"];
 
 log(`registered ${AIRSHIP_TESTS.length} airship test(s): ${AIRSHIP_TESTS.join(" ")}`);

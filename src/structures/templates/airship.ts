@@ -5,7 +5,7 @@
 //
 // Template-local axes: x west→east (the long axis, bow at x = 1), y up, z
 // north→south. A round envelope 27 long and 7 across (x 1..27, y 4..10) with
-// four tail fins sits straight on a small gondola (x 6..14, y 0..3). The
+// four tail fins sits straight on a small gondola (x 4..16, y 0..3). The
 // length is a deliberate departure from the ≈15 of §5.1: at 15 the silhouette
 // cannot hold the gondola's contents and still read as an airship.
 //
@@ -31,33 +31,43 @@ export const ENVELOPE_DIAMETER: readonly number[] = [
 /** Half-width of a round section of diameter d at |dy| rows off the axis. */
 const HALF: Readonly<Record<number, readonly number[]>> = { 1: [0], 3: [1, 0], 5: [2, 2, 1], 7: [3, 3, 2, 1] };
 
-export const GONDOLA = { x0: 6, x1: 14, z0: 1, z1: 5, floorY: 0, roofY: 3 } as const;
+export const GONDOLA = { x0: 4, x1: 16, z0: 1, z1: 5, floorY: 0, roofY: 3 } as const;
 const MID_X = 10;
 
 /** Fins: x 21..26, the vertical pair in the plane z = AXIS_Z, the horizontal pair in y = AXIS_Y. */
 export const FINS = { x0: 21, x1: 26, y0: 4, y1: 10, z0: 0, z1: 6 } as const;
 
-/** Doors in the two long walls, halfway along, facing into the gondola across its width. */
-export const DOORS: readonly { lower: Point; upper: Point; facing: "north" | "south" }[] = [
-  { lower: [MID_X, 1, GONDOLA.z0], upper: [MID_X, 2, GONDOLA.z0], facing: "south" },
-  { lower: [MID_X, 1, GONDOLA.z1], upper: [MID_X, 2, GONDOLA.z1], facing: "north" },
+/** Doors on the bow and stern ends of the corridor, facing each other along it. */
+export const DOORS: readonly { lower: Point; upper: Point; facing: "east" | "west" }[] = [
+  { lower: [GONDOLA.x0, 1, AXIS_Z], upper: [GONDOLA.x0, 2, AXIS_Z], facing: "east" },
+  { lower: [GONDOLA.x1, 1, AXIS_Z], upper: [GONDOLA.x1, 2, AXIS_Z], facing: "west" },
 ];
 
-/** In the floor under the aisle between the doors, so the aisle stays walkable door to door. */
+/** In the corridor floor, so the corridor stays walkable door to door. */
 export const SPAWNER: { at: Point; entity: string } = { at: [MID_X, GONDOLA.floorY, AXIS_Z], entity: "minecraft:vindicator" };
 
 type Facing = "north" | "east" | "south" | "west";
 
 /**
- * Ten single chests on the 7×3 floor, none touching another, none on the aisle
- * between the doors: four along each long wall, two on the centre line.
+ * Four cabins, open onto the corridor along their length, split by a walled
+ * niche at x = 9..11. Each lamp hangs at the cabin's far end: a soul lantern
+ * (light 10), because a 15-light lantern that close to the corridor lights the
+ * spawner reach above 7 (the Windmill's Lmax).
  */
-export const CHESTS: readonly { at: Point; facing: Facing }[] = [
-  ...[7, 9, 11, 13].map((x) => ({ at: [x, 1, 2] as Point, facing: "south" as Facing })),
-  ...[7, 9, 11, 13].map((x) => ({ at: [x, 1, 4] as Point, facing: "north" as Facing })),
-  { at: [8, 1, AXIS_Z], facing: "east" },
-  { at: [12, 1, AXIS_Z], facing: "west" },
+export const ROOMS: readonly { z: number; x0: number; x1: number; lamp: Point; chests: readonly { at: Point; facing: Facing }[] }[] = [
+  { z: 2, x0: 5, x1: 8, lamp: [5, 2, 2], chests: [{ at: [6, 1, 2], facing: "south" }, { at: [8, 1, 2], facing: "south" }] },
+  { z: 2, x0: 12, x1: 15, lamp: [15, 2, 2], chests: [{ at: [12, 1, 2], facing: "south" }, { at: [14, 1, 2], facing: "south" }] },
+  { z: 4, x0: 5, x1: 8, lamp: [5, 2, 4], chests: [{ at: [6, 1, 4], facing: "north" }, { at: [8, 1, 4], facing: "north" }] },
+  { z: 4, x0: 12, x1: 15, lamp: [15, 2, 4], chests: [{ at: [12, 1, 4], facing: "north" }, { at: [14, 1, 4], facing: "north" }] },
 ];
+
+/** Two chests in the niches either side of the spawner, facing into the corridor. */
+export const CORRIDOR_CHESTS: readonly { at: Point; facing: Facing }[] = [
+  { at: [MID_X, 1, AXIS_Z - 1], facing: "south" },
+  { at: [MID_X, 1, AXIS_Z + 1], facing: "north" },
+];
+
+export const CHESTS: readonly { at: Point; facing: Facing }[] = [...ROOMS.flatMap((r) => r.chests), ...CORRIDOR_CHESTS];
 
 /** Lit tips: bow, stern and the outer end of every fin. */
 export const LIGHTS: readonly Point[] = [
@@ -129,12 +139,12 @@ function fins(set: Put): void {
 
 function gondola(set: Put): void {
   const { x0, x1, z0, z1, floorY, roofY } = GONDOLA;
-  for (let x = x0; x <= x1; x++)
-    for (let z = z0; z <= z1; z++)
-      for (let y = floorY; y <= roofY; y++) {
+  for (let x: number = x0; x <= x1; x++)
+    for (let z: number = z0; z <= z1; z++)
+      for (let y: number = floorY; y <= roofY; y++) {
         const end = x === x0 || x === x1;
-        // The bow and stern walls stop short of floor and roof: a rounded nose.
-        if (end && (y === floorY || y === roofY)) continue;
+        // The bow and stern walls stop short of floor and roof, a rounded nose; the doors keep their sill.
+        if (end && (y === roofY || (y === floorY && z !== AXIS_Z))) continue;
         const wall = end || z === z0 || z === z1;
         if (y === floorY) set(x, y, z, wall ? GRAY : LIGHT_GRAY);
         else if (y === roofY) set(x, y, z, GRAY);
@@ -142,10 +152,14 @@ function gondola(set: Put): void {
         else set(x, y, z, y === 2 ? GLASS : GRAY);
       }
 
+  // The niche walls between the cabins; the niche itself keeps air over its chest.
+  for (let y = floorY + 1; y < roofY; y++) for (const z of [AXIS_Z - 1, AXIS_Z + 1]) for (const x of [MID_X - 1, MID_X + 1]) set(x, y, z, LIGHT_GRAY);
+
   for (const d of DOORS) {
     set(...d.lower, { name: "minecraft:wooden_door", states: { upper_block_bit: false, "minecraft:cardinal_direction": d.facing, open_bit: false, door_hinge_bit: false } });
     set(...d.upper, { name: "minecraft:wooden_door", states: { upper_block_bit: true, "minecraft:cardinal_direction": d.facing, open_bit: false, door_hinge_bit: false } });
   }
+  for (const r of ROOMS) set(...r.lamp, { name: "minecraft:soul_lantern", states: { hanging: true } });
 }
 
 /** The whole template in the compileTemplate format of scripts/lib/mcstructure.mjs. */

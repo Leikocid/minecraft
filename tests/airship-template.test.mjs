@@ -47,6 +47,7 @@ const H = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 
 const CHESTS = named('minecraft:chest');
 const SPAWNERS = named('minecraft:mob_spawner');
+const LAMPS = cellsOf((b) => b.name === 'minecraft:lantern' || b.name === 'minecraft:soul_lantern');
 const DOOR_CELLS = named('minecraft:wooden_door');
 const LOWER_DOORS = DOOR_CELLS.filter((c) => at(...c).states.upper_block_bit === 0);
 
@@ -64,7 +65,7 @@ const MID = CORRIDOR[Math.floor(CORRIDOR.length / 2)];
 let ROOF_Y = FLOOR_Y + 1;
 while (MID && inside(MID[0], ROOF_Y, MID[2]) && at(MID[0], ROOF_Y, MID[2]).name === 'minecraft:air') ROOF_Y++;
 
-const passable = (b) => b.name === 'minecraft:air' || b.name === 'minecraft:lantern';
+const passable = (b) => b.name === 'minecraft:air' || b.name === 'minecraft:lantern' || b.name === 'minecraft:soul_lantern';
 
 /** The corridor's whole air column, floor to roof. */
 const CORRIDOR_SPACE = new Set(CORRIDOR.flatMap(([x, , z]) => Array.from({ length: ROOF_Y - FLOOR_Y - 1 }, (_, i) => k(x, FLOOR_Y + 1 + i, z))));
@@ -85,7 +86,39 @@ const INTERIOR = new Set(CORRIDOR_SPACE);
 }
 const standable = ([x, y, z]) => y === FLOOR_Y + 1 && at(x, y, z).name === 'minecraft:air' && at(x, y + 1, z).name === 'minecraft:air' && at(x, y - 1, z).name !== 'minecraft:air';
 
-test('AC1: exactly 10 single chests, 1 Vindicator spawner under the aisle centre, 2 doors on opposite sides', () => {
+/** Interior air around the corridor, flood-filled without crossing the corridor or a door; standable components are rooms. */
+function interiorComponents() {
+  const seen = new Set(CORRIDOR_SPACE);
+  const comps = [];
+  for (const c of CORRIDOR)
+    for (let y = FLOOR_Y + 1; y < ROOF_Y; y++)
+      for (const [dx, dz] of H) {
+        const start = [c[0] + dx, y, c[2] + dz];
+        if (seen.has(k(...start)) || !passable(at(...start))) continue;
+        const cells = [start];
+        seen.add(k(...start));
+        for (let i = 0; i < cells.length; i++)
+          for (const [ex, ey, ez] of N6) {
+            const n = [cells[i][0] + ex, cells[i][1] + ey, cells[i][2] + ez];
+            if (!seen.has(k(...n)) && inside(...n) && passable(at(...n)) && n[1] > FLOOR_Y && n[1] < ROOF_Y) {
+              seen.add(k(...n));
+              cells.push(n);
+            }
+          }
+        comps.push(cells);
+      }
+  return comps;
+}
+const COMPONENTS = interiorComponents();
+const ROOMS = COMPONENTS.filter((cells) => cells.some(standable));
+const touches = (cellKeys, [x, y, z]) => H.some(([dx, dz]) => cellKeys.has(k(x + dx, y, z + dz)));
+
+/** The gondola: every block at or under its roof. */
+const GONDOLA_CELLS = cellsOf((b, _x, y) => y <= ROOF_Y && b.name !== 'minecraft:air');
+const G_X = [Math.min(...GONDOLA_CELLS.map((c) => c[0])), Math.max(...GONDOLA_CELLS.map((c) => c[0]))];
+const G_Z = [Math.min(...GONDOLA_CELLS.map((c) => c[2])), Math.max(...GONDOLA_CELLS.map((c) => c[2]))];
+
+test('AC1: exactly 10 single chests, 1 Vindicator spawner at the corridor centre, 2 doors on opposite ends', () => {
   assert.strictEqual(CHESTS.length, 10, `${CHESTS.length} chests`);
   for (const other of ['minecraft:trapped_chest', 'minecraft:barrel', 'minecraft:ender_chest']) assert.strictEqual(named(other).length, 0, `${other} present`);
   for (const [x, y, z] of CHESTS) {
@@ -97,27 +130,49 @@ test('AC1: exactly 10 single chests, 1 Vindicator spawner under the aisle centre
     assert.ok(H.some(([dx, dz]) => INTERIOR.has(k(x + dx, y, z + dz))) || INTERIOR.has(k(x, y + 1, z)), `chest ${k(x, y, z)} is not reachable from inside`);
   }
 
-  // Doors: two stacked halves each, in the two long walls, facing each other across the gondola.
+  // Doors: two stacked halves each, on the bow and stern ends of the gondola along the long axis (L0-airs-ac02, -as01).
   assert.strictEqual(DOOR_CELLS.length, 4, `${DOOR_CELLS.length} door blocks`);
   assert.strictEqual(LOWER_DOORS.length, 2, `${LOWER_DOORS.length} lower door halves`);
   for (const [x, y, z] of LOWER_DOORS) assert.strictEqual(at(x, y + 1, z).states.upper_block_bit, 1, `door ${k(x, y, z)} has no upper half`);
+  for (const [x, y, z] of LOWER_DOORS) assert.notStrictEqual(at(x, y - 1, z).name, 'minecraft:air', `door ${k(x, y, z)} has no sill under it`);
   assert.ok(SX > SZ, `template is ${SX}×${SZ}: x is expected to be the long axis`);
-  assert.strictEqual(DA[0], DB[0], 'the doors are not facing each other across the gondola');
-  assert.ok(DB[2] - DA[2] >= 2, `doors at z=${DA[2]} and z=${DB[2]} are not on opposite sides`);
+  assert.deepStrictEqual([DA[0], DB[0]], G_X, `doors at x=${DA[0]} and x=${DB[0]}, not on the two ends of the gondola ${G_X}`);
+  assert.strictEqual(DA[2], DB[2], 'the doors are not facing each other along the gondola');
   assert.strictEqual(DA[1], DB[1], 'the doors are on different levels');
   const facings = [DA, DB].map((c) => at(...c).states['minecraft:cardinal_direction']);
-  assert.deepStrictEqual(facings, ['south', 'north'], `door facings ${facings}`);
+  assert.deepStrictEqual(facings, ['east', 'west'], `door facings ${facings}`);
 
-  // The aisle runs door to door, walkable end to end.
-  assert.ok(CORRIDOR.length >= 3, `aisle ${CORRIDOR.length} long`);
-  for (const c of CORRIDOR) assert.ok(standable(c), `aisle cell ${k(...c)} is not walkable`);
+  // The corridor runs door to door, walkable end to end.
+  assert.ok(CORRIDOR.length >= 11, `corridor ${CORRIDOR.length} long`);
+  for (const c of CORRIDOR) assert.ok(standable(c), `corridor cell ${k(...c)} is not walkable`);
 
   assert.strictEqual(SPAWNERS.length, 1, `${SPAWNERS.length} spawners`);
   const [sp] = SPAWNERS;
   assert.strictEqual(beAt(...sp)?.id, 'MobSpawner', 'spawner has no MobSpawner block entity');
   assert.strictEqual(beAt(...sp).EntityIdentifier, 'minecraft:vindicator');
   assert.strictEqual([...s.blockEntities.values()].filter((be) => be.id === 'MobSpawner').length, 1, 'more than one MobSpawner block entity');
-  assert.deepStrictEqual(sp, [DA[0], FLOOR_Y, (DA[2] + DB[2]) / 2], `spawner ${k(...sp)} is not in the floor under the aisle centre`);
+  const centre = (DA[0] + DB[0]) / 2;
+  assert.ok(Math.abs(sp[0] - centre) <= 1 && sp[2] === DA[2], `spawner ${k(...sp)} is not at the corridor centre x≈${centre}, z=${DA[2]}`);
+  assert.ok(sp[1] === FLOOR_Y || CORRIDOR_KEYS.has(k(sp[0], sp[1], sp[2])), `spawner ${k(...sp)} is neither in the corridor floor nor in the corridor`);
+});
+
+test('AC2: a corridor plus 4 rooms, one ceiling lamp and two chests per room, two chests in the corridor', () => {
+  assert.strictEqual(ROOMS.length, 4, `${ROOMS.length} rooms: ${ROOMS.map((r) => r.length).join(' ')}`);
+  const roomKeys = ROOMS.map((cells) => new Set(cells.map((c) => k(...c))));
+  ROOMS.forEach((cells, i) => {
+    const lamps = cells.filter((c) => LAMPS.some((l) => k(...l) === k(...c)));
+    assert.strictEqual(lamps.length, 1, `room ${i}: ${lamps.length} lamps`);
+    const [lx, ly, lz] = lamps[0];
+    assert.strictEqual(at(lx, ly, lz).states.hanging, 1, `room ${i}: lamp is not hanging`);
+    assert.strictEqual(ly + 1, ROOF_Y, `room ${i}: lamp at y=${ly} does not hang from the ceiling at y=${ROOF_Y}`);
+    const chests = CHESTS.filter((c) => touches(roomKeys[i], c));
+    assert.strictEqual(chests.length, 2, `room ${i}: ${chests.length} chests`);
+    const doorways = cells.filter((c) => touches(CORRIDOR_KEYS, c));
+    assert.ok(doorways.length > 0, `room ${i} has no doorway onto the corridor`);
+  });
+  assert.strictEqual(LAMPS.length, 4, `${LAMPS.length} lamps in total`);
+  const corridorChests = CHESTS.filter((c) => touches(CORRIDOR_KEYS, c) && !roomKeys.some((r) => touches(r, c)));
+  assert.strictEqual(corridorChests.length, 2, `${corridorChests.length} corridor chests`);
 });
 
 // ------------------------------------------------------------------ the shape
@@ -238,19 +293,20 @@ test('shape AC3: four tail fins in a cross — two vertical, two horizontal — 
   for (let i = 0; i < 3; i++) assert.ok(Math.max(...solid.map((c) => c[i])) < DECLARED[i], `a block past the declared size on axis ${i}`);
 });
 
-test('shape AC4: a small gondola under the envelope — 9×5×4, forward, a block narrower each side, ≤ 40 % of the length', () => {
-  const g = cellsOf((b, _x, y) => y <= GONDOLA_TOP && b.name !== 'minecraft:air');
+test('shape AC4: a small gondola under the envelope — 13×5×4, forward, a block narrower each side, ≤ half the length', () => {
+  const g = GONDOLA_CELLS;
   const [gx, gy, gz] = [0, 1, 2].map((i) => range(g.map((c) => c[i])));
-  assert.deepStrictEqual([span(gx), span(gy), span(gz)], [9, 4, 5], `gondola ${span(gx)}×${span(gy)}×${span(gz)}`);
+  assert.deepStrictEqual([span(gx), span(gy), span(gz)], [13, 4, 5], `gondola ${span(gx)}×${span(gy)}×${span(gz)}`);
   assert.ok((gx[0] + gx[1]) / 2 < (EX0 + EX1) / 2, `gondola centre x=${(gx[0] + gx[1]) / 2} is not forward of the envelope centre x=${(EX0 + EX1) / 2}`);
   assert.deepStrictEqual(gz, [E_Z[0] + 1, E_Z[1] - 1], `gondola z ${gz} vs envelope z ${E_Z}`);
-  assert.ok(span(gx) <= 0.4 * E_LEN, `gondola ${span(gx)} of ${E_LEN}`);
+  assert.ok(span(gx) <= 0.5 * E_LEN, `gondola ${span(gx)} of ${E_LEN}`);
   // The envelope sits on the roof: no gap, no hangers.
   const roof = g.filter(([, y]) => y === GONDOLA_TOP);
   assert.ok(roof.some(([x, y, z]) => isEnvelope(x, y + 1, z)), 'the envelope does not rest on the gondola roof');
   assert.ok(gy[1] + 1 === E_Y[0], `envelope bottom y=${E_Y[0]} is not on the gondola roof y=${gy[1]}`);
-  // Bow and stern walls trimmed at floor and roof.
-  for (const x of gx) for (const y of gy) assert.ok(g.every((c) => !(c[0] === x && c[1] === y)), `gondola corner row x=${x} y=${y} not trimmed`);
+  // Bow and stern walls trimmed at floor and roof, but for the sill each door stands on.
+  const sills = new Set(LOWER_DOORS.map(([x, y, z]) => k(x, y - 1, z)));
+  for (const x of gx) for (const y of gy) assert.ok(g.every((c) => !(c[0] === x && c[1] === y) || sills.has(k(...c))), `gondola corner row x=${x} y=${y} not trimmed`);
   // A window strip: glass the whole way round at one height.
   const glass = named('minecraft:glass');
   assert.ok(glass.length >= 18, `${glass.length} windows`);
@@ -259,13 +315,14 @@ test('shape AC4: a small gondola under the envelope — 9×5×4, forward, a bloc
 // Block light as the Windmill test models it: an upper bound, light passes everything but opaque cubes.
 const TRANSPARENT = /air|door|glass|lantern|chest|spawner|iron_chain|slab/;
 const LMAX = 7;
-const EMITTERS = cellsOf((b) => b.name === 'minecraft:lantern' || b.name === LIGHT);
+const EMISSION = { 'minecraft:lantern': 15, 'minecraft:soul_lantern': 10, [LIGHT]: 15 };
+const EMITTERS = cellsOf((b) => b.name in EMISSION);
 
-test('AC2: every light leaves the gondola inside the spawner reach at block light ≤ Lmax', () => {
+test('AC2: the room lamps leave the spawner and the corridor inside its reach at block light ≤ Lmax', () => {
   assert.ok(EMITTERS.length > 0, 'no lights at all');
   const light = new Map();
-  const queue = EMITTERS.map((c) => [...c, 15]);
-  for (const c of EMITTERS) light.set(k(...c), 15);
+  const queue = EMITTERS.map((c) => [...c, EMISSION[at(...c).name]]);
+  for (const [x, y, z, l] of queue) light.set(k(x, y, z), l);
   while (queue.length) {
     const [x, y, z, l] = queue.shift();
     if (l <= 1) continue;
@@ -276,19 +333,23 @@ test('AC2: every light leaves the gondola inside the spawner reach at block ligh
       queue.push([...n, l - 1]);
     }
   }
-  // Vanilla spawner reach: 4 blocks horizontally, 1 vertically.
   const [sx, sy, sz] = SPAWNERS[0];
+  const own = light.get(k(sx, sy, sz)) ?? 0;
+  assert.ok(own <= LMAX, `block light ${own} at the spawner > Lmax ${LMAX}`);
+  // Vanilla spawner reach: 4 blocks horizontally, 1 vertically. The rooms inside
+  // that box are lit and refuse spawns; the corridor is where the Vindicators appear.
   let worst = 0;
   let where = '';
   let cells = 0;
-  for (const key of INTERIOR) {
+  for (const key of CORRIDOR_SPACE) {
     const [x, y, z] = unk(key);
     if (Math.abs(x - sx) > 4 || Math.abs(z - sz) > 4 || Math.abs(y - sy) > 1) continue;
     cells++;
     const l = light.get(key) ?? 0;
     if (l > worst) [worst, where] = [l, key];
   }
-  assert.ok(cells >= 8, `${cells} interior cells in the spawner reach`);
+  assert.ok(cells >= 8, `${cells} corridor cells in the spawner reach`);
+  assert.ok(worst > 0, 'the corridor gets no light at all from the rooms');
   assert.ok(worst <= LMAX, `block light ${worst} at ${where} > Lmax ${LMAX}`);
 });
 
@@ -301,6 +362,7 @@ test('AC3: modern and whole — no decay blocks, and the hull has no hole but it
     'minecraft:iron_block',
     'minecraft:iron_chain',
     'minecraft:lantern',
+    'minecraft:soul_lantern',
     'minecraft:chest',
     'minecraft:mob_spawner',
     'minecraft:wooden_door',
@@ -325,7 +387,7 @@ test('AC3: modern and whole — no decay blocks, and the hull has no hole but it
       assert.ok(inside(...n), `the interior leaks out of the template at ${k(...n)}`);
       if (seen.has(k(...n)) || !passable(at(...n))) continue;
       assert.ok(n[1] > FLOOR_Y && n[1] < ROOF_Y, `the interior leaks through the floor or roof at ${k(...n)}`);
-      const outer = n[0] === 0 || n[0] === SX - 1 || n[2] === 0 || n[2] === SZ - 1;
+      const outer = n[0] <= G_X[0] || n[0] >= G_X[1] || n[2] <= G_Z[0] || n[2] >= G_Z[1];
       assert.ok(!outer, `hole in the hull at ${k(...n)}`);
       seen.add(k(...n));
       queue.push(n);
