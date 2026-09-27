@@ -156,6 +156,9 @@ const EXPECTED_TESTS = [
   'andrew:strf_cmd_locate_tp',
   'andrew:strf_cmd_chance',
   'andrew:strf_cmd_operator_only',
+  // STRF-FIND-01 — src/gametest/structures-commands.ts
+  'andrew:strf_cmd_find',
+  'andrew:strf_cmd_find_refuses',
   // WIND-TMPL-01 — src/gametest/windmill.ts
   'andrew:windmill_rotations',
   'andrew:windmill_vindicator_axe',

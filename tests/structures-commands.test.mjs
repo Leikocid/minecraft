@@ -17,6 +17,7 @@ async function load() {
     stdin: {
       contents: `
         export * from './src/structures/commands.ts';
+        export { SEARCH_RADIUS } from './src/structures/spawn-search.ts';
         export * from './src/structures/runtime.ts';
         export * from './src/structures/roll.ts';
         export * from './src/structures/store.ts';
@@ -39,7 +40,7 @@ async function load() {
 }
 
 const m = await load();
-const { TEXT_KEYS, TYPES, execute, StrfRuntime, MemoryStore, SALT_KEY, setChanceOverride, chanceOverride, BODIES, STAND_IN_CHESTS, STAND_IN_SIZE, toWorld, standIn, CUSTOM_TABLE } = m;
+const { TEXT_KEYS, TYPES, execute, findReplies, SEARCH_RADIUS, StrfRuntime, MemoryStore, SALT_KEY, setChanceOverride, chanceOverride, BODIES, STAND_IN_CHESTS, STAND_IN_SIZE, toWorld, standIn, CUSTOM_TABLE } = m;
 
 // ------------------------------------------------------------------ catalog
 
@@ -85,6 +86,15 @@ test('catalog: every key a reply names is in TEXT_KEYS (refusals included)', () 
     ['place', op(), 'windmill', 0], ['place', op(), 'windmill', 0], ['locate', op()], ['locate', op(), 'windmill'], ['tp', op(), 'windmill'],
   ];
   for (const [action, caller, type, value] of scenarios) for (const r of execute(rt, action, caller, type, value)) walk(r.message);
+  // find: the synchronous refusals, then every shape of the result it delivers later.
+  for (const [caller, type, value, at] of [[undefined, 'windmill'], [op(), 'windmill', 0], [op(), 'bastion'], [op(), 'windmill', 50]]) {
+    for (const r of execute(rt, 'find', caller, type, value, at)) walk(r.message);
+  }
+  const base = { type: 'windmill', centre: [0, 0], radius: 50, checked: 7, rejects: { liquid: 5, uneven: 2 } };
+  const inst = rt.instances('windmill')[0];
+  for (const res of [base, { ...base, error: 'boom' }, { ...base, rot: 1, placement: { kind: 'rejected', reason: 'uneven' } }, { ...base, rot: 1, placement: { kind: 'placed', instance: inst } }]) {
+    for (const r of findReplies(rt, res)) walk(r.message);
+  }
   setChanceOverride('windmill', undefined);
   const unknown = [...keys].filter((k) => !TEXT_KEYS.includes(k));
   assert.deepEqual(unknown, []);
@@ -343,4 +353,89 @@ test('place: a player in the wrong dimension is still refused — the type does 
   const replies = execute(rt, 'place', op(), 'bastion', 0, { x: 8, z: 8 });
   assert.deepEqual(keysOf(replies), ['andrew.structure.wrong_dimension']);
   assert.equal(rt.instances('bastion').length, 0);
+});
+
+// ------------------------------------------------------------------ find
+
+const findHost = () => {
+  const h = {
+    loads: 0,
+    removed: 0,
+    spawn: () => ({ x: 0, z: 0 }),
+    async load() {
+      h.loads++;
+      return () => { h.removed++; };
+    },
+    async wait() {},
+    prep: () => ({ view: flatView() }),
+  };
+  return h;
+};
+
+/** execute's find with a fake host; resolves with the lines delivered after the search. */
+function find(rt, caller, type, value, at, host = findHost()) {
+  let done;
+  const later = new Promise((resolve) => { done = resolve; });
+  const now = execute(rt, 'find', caller, type, value, at, { host: () => host, deliver: done });
+  return { now, later, host };
+}
+
+const text = (msg) => JSON.stringify(msg);
+
+test('find from the console: answers "started" at once, then builds at a site it searched for and reports how many it checked', async () => {
+  const events = [];
+  const rt = runtime({ events });
+  const f = find(rt, undefined, 'windmill', 40, { x: -40, z: 64 });
+  assert.deepEqual(keysOf(f.now), ['andrew.structure.find_started']);
+  assert.match(text(f.now[0].message), /"text":"40"\},\{"text":"-40"\},\{"text":"64"/);
+  const later = await f.later;
+  assert.deepEqual(keysOf(later), ['andrew.structure.find_placed', 'andrew.structure.stand_in']);
+  const all = rt.instances('windmill');
+  assert.equal(all.length, 1);
+  assert.equal(all[0].state, 'done', 'find places through the same state machine as place');
+  assert.match(events[0], /^place andrew:probe_box .* record=planned$/, 'the record is written before the first world write');
+  const c = [all[0].origin[0] + Math.floor(all[0].size[0] / 2), all[0].origin[2] + Math.floor(all[0].size[2] / 2)];
+  assert.ok(Math.hypot(c[0] + 40, c[1] - 64) <= 40, `centre ${c} outside the radius`);
+  // Where, how many were checked, and why the rest went: all in the one line.
+  const line = text(later[0].message);
+  assert.ok(line.includes(`{"text":"${c[0]}"}`) && line.includes(`{"text":"${c[1]}"}`), line);
+  assert.match(line, /"with":\{"rawtext":\[.*\{"text":"\d+"\},\{"text":"[^"]+"\}\]/);
+  assert.equal(f.host.loads, f.host.removed, 'every ticking area was removed');
+});
+
+test('find: from a player, the centre is where they stand; the default radius is the spawn search radius', async () => {
+  const rt = runtime();
+  const f = find(rt, op({ x: 300, y: GROUND + 1, z: -200 }), 'airship');
+  assert.match(text(f.now[0].message), new RegExp(`"text":"${SEARCH_RADIUS}"\\},\\{"text":"300"\\},\\{"text":"-200"`));
+  await f.later;
+  const inst = rt.instances('airship')[0];
+  assert.equal(inst?.state, 'done');
+  assert.ok(Math.hypot(inst.origin[0] - 300, inst.origin[2] + 200) < 40, JSON.stringify(inst.origin));
+});
+
+test('find: refusals — no point from the console, a bad radius, the wrong dimension, no loader, a search already running', async () => {
+  const rt = runtime({ dims: ['o', 'n'] });
+  assert.deepEqual(keysOf(execute(rt, 'find', undefined, 'windmill', undefined, undefined, { host: findHost, deliver() {} })), ['andrew.structure.need_coords_find']);
+  for (const r of [0, -5, 1001]) assert.deepEqual(keysOf(find(rt, op(), 'windmill', r).now), ['andrew.structure.bad_radius'], `radius ${r}`);
+  assert.deepEqual(keysOf(find(rt, op(), 'bastion').now), ['andrew.structure.wrong_dimension']);
+  assert.deepEqual(keysOf(execute(rt, 'find', op(), 'windmill')), ['andrew.structure.find_unavailable']);
+  assert.deepEqual(keysOf(execute(rt, 'find', player(false), 'windmill')), ['andrew.structure.no_permission']);
+  const first = find(rt, op(), 'windmill', 20);
+  assert.deepEqual(keysOf(find(rt, op(), 'windmill', 20).now), ['andrew.structure.find_busy']);
+  await first.later;
+  const again = find(rt, op({ x: 900, y: 0, z: 900 }), 'windmill', 20);
+  assert.deepEqual(keysOf(again.now), ['andrew.structure.find_started'], 'the busy flag is released when the search ends');
+  await again.later;
+  assert.equal(rt.instances().length, 2);
+});
+
+test('find: with no valid site in the radius the delivered answer is a refusal naming the counts, and nothing is created', async () => {
+  const rt = runtime();
+  const wet = { ...findHost(), prep: () => ({ view: { ...flatView(), topmost: () => ({ y: GROUND, typeId: 'minecraft:water' }) } }) };
+  const f = find(rt, op(), 'windmill', 30, undefined, wet);
+  const later = await f.later;
+  assert.deepEqual(keysOf(later), ['andrew.structure.find_none']);
+  assert.equal(later[0].ok, false);
+  assert.match(text(later[0].message), /liquid=\d+/);
+  assert.equal(rt.instances().length, 0);
 });
