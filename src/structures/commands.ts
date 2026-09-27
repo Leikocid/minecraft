@@ -1,5 +1,6 @@
 // Operator tools for structures, one command registered like /andrew:websword:
 //   /andrew:structure place <type> [rotation]  build at the caller, through the registry
+//   /andrew:structure find <type> [radius]     search rings for the nearest valid site, build there
 //   /andrew:structure locate [type]            nearest created instance, or counts per type
 //   /andrew:structure chance <type> [0-100]    session-only chance per chunk; no number resets
 //   /andrew:structure tp <type>                teleport to the nearest created instance
@@ -21,13 +22,15 @@ import { ROLL_DEFS, type StructureId, dimShort } from "./config";
 import type { DimShort, Instance, Rotation } from "./registry";
 import { chanceOverride, setChanceOverride } from "./roll";
 import { type PlaceOutcome, type StrfRuntime, centreOf, nearest } from "./runtime";
+import { type FindResult, type SpawnHost, SEARCH_RADIUS, SpawnSearch } from "./spawn-search";
 
 export const STRUCTURE_COMMAND = "andrew:structure";
 
-export const ACTIONS = ["place", "locate", "chance", "tp"] as const;
+export const ACTIONS = ["place", "find", "locate", "chance", "tp"] as const;
 export type Action = (typeof ACTIONS)[number];
 export const TYPES: readonly StructureId[] = ROLL_DEFS.map((d) => d.id);
 export const ROTATION_DEGREES = [0, 90, 180, 270] as const;
+export const MAX_FIND_RADIUS = 1000;
 
 const P = "andrew.structure";
 
@@ -56,6 +59,15 @@ export const TEXT = {
   chanceReset: `${P}.chance_reset`,
   chanceStandIn: `${P}.chance_stand_in`,
   teleported: `${P}.teleported`,
+  needCoordsFind: `${P}.need_coords_find`,
+  badRadius: `${P}.bad_radius`,
+  findStarted: `${P}.find_started`,
+  findBusy: `${P}.find_busy`,
+  findUnavailable: `${P}.find_unavailable`,
+  findPlaced: `${P}.find_placed`,
+  findNone: `${P}.find_none`,
+  findChecked: `${P}.find_checked`,
+  findError: `${P}.find_error`,
 } as const;
 
 /** Site-check and placement reasons with their own text; anything else goes through `why.other`. */
@@ -113,6 +125,18 @@ export interface Reply {
 
 export const isType = (v: unknown): v is StructureId => typeof v === "string" && (TYPES as readonly string[]).includes(v);
 
+/** What `find` needs besides the runtime: chunk loading, and a way to answer after the command returned. */
+export interface FindDeps {
+  /** Ticking-area loader over the type's dimension; undefined when this engine cannot load terrain. */
+  host(dim: DimShort): SpawnHost | undefined;
+  /** Receives the result lines once the search ends. */
+  deliver(replies: Reply[]): void;
+  log?(msg: string): void;
+}
+
+/** One find at a time: each loads up to PARALLEL windows through ticking areas, and the engine allows ten. */
+let finding = false;
+
 /**
  * The command body. Runs outside the read-only callback: it may write the
  * registry, place blocks and teleport. Returns every line it has to say.
@@ -123,7 +147,8 @@ export function execute(
   caller: Caller | undefined,
   type?: string,
   value?: number,
-  at?: { x: number; z: number }
+  at?: { x: number; z: number },
+  find?: FindDeps
 ): Reply[] {
   const no = (message: RawMessage): Reply[] => [{ ok: false, message }];
   if (caller !== undefined && !caller.permitted) return no(t(TEXT.noPermission));
@@ -156,6 +181,8 @@ export function execute(
     return placeReplies(runtime, type, runtime.placeAt(type, where, point.x, point.z, rot), rot);
   }
 
+  if (action === "find") return startFind(runtime, type, caller, value, at, find);
+
   if (caller === undefined) return no(t(TEXT.notPlayer));
   const dim = dimShort(caller.dimensionId);
 
@@ -168,6 +195,70 @@ export function execute(
     return [{ ok: true, message: t(TEXT.teleported, typeName(type), ...xyz([top.x, top.y, top.z])) }];
   }
   return [{ ok: true, message: t(TEXT.found, typeName(type), ...xyz(c), String(Math.round(hit.distance)), stateName(hit.instance.state)) }];
+}
+
+/**
+ * `find` changes only where the structure goes: the search picks the spot,
+ * then the same placeAt as `place` reserves and builds it. The search never
+ * prepares ground, so a refusal leaves the world as it was.
+ */
+function startFind(
+  runtime: StrfRuntime,
+  type: StructureId,
+  caller: Caller | undefined,
+  radius: number | undefined,
+  at: { x: number; z: number } | undefined,
+  deps: FindDeps | undefined
+): Reply[] {
+  const no = (message: RawMessage): Reply[] => [{ ok: false, message }];
+  if (radius !== undefined && (!Number.isInteger(radius) || radius < 1 || radius > MAX_FIND_RADIUS)) return no(t(TEXT.badRadius, String(MAX_FIND_RADIUS)));
+  const need = ROLL_DEFS.find((d) => d.id === type)?.dim ?? "o";
+  const point = at ?? caller?.location;
+  if (point === undefined) return no(t(TEXT.needCoordsFind, typeName(type)));
+  const where = caller === undefined ? need : dimShort(caller.dimensionId);
+  if (where !== need) return no(t(TEXT.wrongDimension, typeName(type), { translate: dimKey(need) }));
+  if (finding) return no(t(TEXT.findBusy));
+  const host = deps?.host(need);
+  if (deps === undefined || host === undefined) return no(t(TEXT.findUnavailable));
+  const r = radius ?? SEARCH_RADIUS;
+  finding = true;
+  const search = SpawnSearch.operator(runtime, host, { type, radius: r, centre: { x: point.x, z: point.z }, log: (m) => deps.log?.(`[andrew] ${m}`) });
+  search
+    .find()
+    .then(
+      (res) => findReplies(runtime, res),
+      (e: unknown): Reply[] => [{ ok: false, message: t(TEXT.findError, typeName(type), String(e)) }]
+    )
+    .then((lines) => {
+      finding = false;
+      deps.deliver(lines);
+    })
+    .catch((e: unknown) => {
+      finding = false;
+      deps.log?.(`[andrew] ${STRUCTURE_COMMAND} find: result not delivered: ${String(e)}`);
+    });
+  return [{ ok: true, message: t(TEXT.findStarted, typeName(type), String(r), String(Math.floor(point.x)), String(Math.floor(point.z))) }];
+}
+
+/** "liquid=12 uneven=3", most frequent first. */
+const rejectsLine = (rejects: Record<string, number>): string =>
+  Object.entries(rejects)
+    .sort((a, b) => b[1] - a[1])
+    .map(([k, n]) => `${k}=${n}`)
+    .join(" ") || "-";
+
+export function findReplies(runtime: StrfRuntime, r: FindResult): Reply[] {
+  const name = typeName(r.type);
+  const checked = String(r.checked);
+  const rejects = rejectsLine(r.rejects);
+  if (r.error !== undefined) return [{ ok: false, message: t(TEXT.findError, name, r.error) }, { ok: false, message: t(TEXT.findChecked, checked, rejects) }];
+  const p = r.placement;
+  if (p === undefined) return [{ ok: false, message: t(TEXT.findNone, name, String(r.radius), ...xyz(r.centre), checked, rejects) }];
+  const rot = r.rot ?? 0;
+  if (p.kind !== "placed") return [...placeReplies(runtime, r.type, p, rot), { ok: false, message: t(TEXT.findChecked, checked, rejects) }];
+  const lines: Reply[] = [{ ok: true, message: t(TEXT.findPlaced, name, ...xyz(centreOf(p.instance)), String(rot * 90), stateName(p.instance.state), checked, rejects) }];
+  if (runtime.isStandIn(r.type)) lines.push({ ok: true, message: t(TEXT.standIn, name) });
+  return lines;
 }
 
 function chance(runtime: StrfRuntime, type: StructureId, value: number | undefined): Reply[] {
@@ -224,6 +315,8 @@ export interface CommandOptions {
   /** Where replies go; defaults to the calling player's chat. */
   send?(player: Player | undefined, reply: Reply): void;
   log?(msg: string): void;
+  /** Chunk loading for `find`; without it `find` refuses. */
+  searchHost?(dim: DimShort): SpawnHost | undefined;
 }
 
 /**
@@ -249,7 +342,8 @@ export function registerStructureCommands(api: CommandApi, opts: CommandOptions)
     registry.registerCommand(
       {
         name,
-        description: "Structure operator tools: place at you or at given coordinates, locate, change the chance per chunk for this session, teleport.",
+        description:
+          "Structure operator tools: place exactly at you or at given coordinates, find a valid site nearby and build there, locate, change the chance per chunk for this session, teleport.",
         permissionLevel: api.CommandPermissionLevel.GameDirectors,
         mandatoryParameters: [{ name: actionEnum, type: api.CustomCommandParamType.Enum }],
         optionalParameters: [
@@ -278,20 +372,35 @@ export function registerStructureCommands(api: CommandApi, opts: CommandOptions)
             log(`[andrew] ${name} ${action}: the structure runtime is not up yet`);
             return;
           }
+          const deliver = (lines: Reply[]): void => {
+            for (const r of lines) {
+              try {
+                send(player?.isValid === false ? undefined : player, r);
+              } catch (e) {
+                log(`[andrew] ${name}: reply ${r.message.translate ?? "?"} not delivered: ${String(e)}`);
+              }
+            }
+          };
+          const searchHost = opts.searchHost;
+          const find: FindDeps | undefined =
+            searchHost === undefined
+              ? undefined
+              : {
+                  host: (d) => searchHost(d),
+                  deliver: (lines) => {
+                    deliver(lines);
+                    log(`[andrew] ${name} find ${type ?? ""} by ${player?.name ?? "the console"} finished: ${lines.map((r) => JSON.stringify(r.message)).join(" | ")}`);
+                  },
+                  log,
+                };
           let replies: Reply[];
           try {
-            replies = execute(runtime, action as Action, caller, type, value, at);
+            replies = execute(runtime, action as Action, caller, type, value, at, find);
           } catch (e) {
             log(`[andrew] ${name} ${action} ${type ?? ""} threw ${String(e)}`);
             replies = [{ ok: false, message: t(reasonKey("other"), String(e)) }];
           }
-          for (const r of replies) {
-            try {
-              send(player, r);
-            } catch (e) {
-              log(`[andrew] ${name}: reply ${r.message.translate ?? "?"} not delivered: ${String(e)}`);
-            }
-          }
+          deliver(replies);
           log(`[andrew] ${name} ${action} ${type ?? ""} ${value ?? ""} by ${player?.name ?? "the console"}: ${replies.map((r) => (r.ok ? "ok" : "refused")).join(",")}`);
         });
         return { status: api.CustomCommandStatus.Success };

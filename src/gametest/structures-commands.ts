@@ -3,6 +3,8 @@
 // /andrew:gt_structure over its own runtime, and the simulated players run it
 // through the engine's command line — permission gate included. Each test
 // builds far from the platform, in its own ticking area, and removes it.
+// `find` loads its own terrain through the production search host, under
+// ticking-area names of its own.
 
 import {
   BlockComponentTypes,
@@ -30,6 +32,7 @@ import { rotatedSize, toWorld } from "../structures/rotate";
 import { chanceOverride, setChanceOverride } from "../structures/roll";
 import { type Instance, SALT_KEY, type Vec3 } from "../structures/registry";
 import { StrfRuntime, centreOf, engineStrf } from "../structures/runtime";
+import { engineSpawnHost } from "../structures/spawn-search";
 import { MemoryStore } from "../structures/store";
 
 const STRUCTURE = "andrew:platform";
@@ -53,6 +56,11 @@ registerStructureCommands(
       player?.sendMessage(reply.message);
     },
     log,
+    searchHost: (d) =>
+      engineSpawnHost(world.getDimension(d === "n" ? "nether" : "overworld"), system, { BlockVolume, BlockTypes }, () => ({ x: 0, z: 0 }), undefined, {
+        prefix: "andrew_gt_find_",
+        pool: 5,
+      }),
   }
 );
 
@@ -387,5 +395,129 @@ registerAsync("andrew", "strf_cmd_operator_only", async (test: Test): Promise<vo
   .maxTicks(600)
   .tag("andrew");
 
+// ------------------------------------------------ find: search, then build through the registry
 
-export const STRF_CMD_TESTS = ["strf_cmd_place", "strf_cmd_locate_tp", "strf_cmd_chance", "strf_cmd_operator_only"];
+/** The flat world's grass layer turned to water in a square of half-side `half` around x,z. */
+function pool(dim: Dimension, x: number, z: number, half: number, block = "minecraft:water"): Box {
+  const box: Box = { min: [x - half, -61, z - half], max: [x + half, -61, z + half] };
+  for (const s of sliceBox(box)) dim.fillBlocks(new BlockVolume(v(s.min), v(s.max)), block);
+  return box;
+}
+
+/** Waits for the line `find` delivers once its search ends. */
+async function findResult(test: Test, who: string, ticks: number): Promise<{ ok: boolean; key: string; text: string } | undefined> {
+  for (let t = 0; t < ticks; t++) {
+    const hit = replies.find((r) => r.player === who && /\.find_(placed|none|error)$|\.(rejected|blocked|failed|not_loaded)$/.test(r.key));
+    if (hit !== undefined) return hit;
+    await test.idle(1);
+  }
+  return undefined;
+}
+
+registerAsync("andrew", "strf_cmd_find", async (test: Test): Promise<void> => {
+  const dim = test.getDimension();
+  const rt = freshRuntime();
+  const [cx, cz] = farChunk(test, 65);
+  const unload = await loadArea(test, dim, "andrew_gt_cmd_f", cx, cz, 5);
+  const op = spawnPlayer(test, "andrew_cmd_finder", CommandPermissionLevel.GameDirectors);
+  const x = (cx + 2) * CHUNK + 8;
+  const z = (cz + 2) * CHUNK + 8;
+  pool(dim, x, z, 20);
+  let inst: Instance | undefined;
+  try {
+    // The named point is in the middle of a pool: `place` there refuses.
+    run(op, `place windmill 0 ${x} -60 ${z}`);
+    await test.idle(3);
+    const placeThere = repliesOf(op).map((r) => r.key);
+    log(`strf cmd find: place in the pool -> ${placeThere.join(" ")}`);
+    test.assert(placeThere.includes("andrew.structure.rejected") && rt.instances().length === 0, `place in the pool: ${placeThere.join(" ")}`);
+
+    replies.length = 0;
+    const outcome = run(op, `find windmill 48 ${x} -60 ${z}`);
+    await test.idle(2);
+    const started = repliesOf(op).find((r) => r.key === "andrew.structure.find_started");
+    log(`strf cmd find: ${outcome}; immediate reply ${started?.text}`);
+    test.assert(started !== undefined, `no "find_started" reply: ${repliesOf(op).map((r) => r.key).join(" ")}`);
+    const result = await findResult(test, op.name, 1500);
+    inst = rt.instances("windmill")[0];
+    log(`strf cmd find RESULT: ${result?.key} ${result?.text}; record ${JSON.stringify(inst)}`);
+    test.assert(result?.ok === true && result.key === "andrew.structure.find_placed", `find result: ${result?.key} ${result?.text}`);
+    test.assert(inst !== undefined && inst.state === "done", `record ${JSON.stringify(inst)}`);
+    if (inst === undefined) return;
+    const c = centreOf(inst);
+    const off = Math.hypot(c[0] - x, c[2] - z);
+    test.assert(off > 10 && off <= 48, `centre ${c.join(",")} is ${off.toFixed(1)} from the named ${x},${z}`);
+    // Where, how many were checked and why the rest went — all in the delivered line.
+    test.assert(result?.text.includes(`{"text":"${c[0]}"},{"text":"${c[1]}"},{"text":"${c[2]}"}`) === true, `centre missing from ${result?.text}`);
+    test.assert(/liquid=\d+/.test(result?.text ?? ""), `no reject reasons in ${result?.text}`);
+    // Nothing of the footprint stands in the pool.
+    const box = templateBox(inst);
+    let wet = 0;
+    for (let bx = box.min[0]; bx <= box.max[0]; bx++)
+      for (let bz = box.min[2]; bz <= box.max[2]; bz++) if (dim.getBlock({ x: bx, y: -61, z: bz })?.typeId === "minecraft:water") wet++;
+    test.assert(wet === 0, `${wet} water cell(s) under the footprint`);
+    test.succeed();
+  } finally {
+    wipe(dim, inst);
+    pool(dim, x, z, 20, "minecraft:grass_block");
+    unload();
+  }
+})
+  .structureName(STRUCTURE)
+  .maxTicks(2000)
+  .tag("andrew");
+
+registerAsync("andrew", "strf_cmd_find_refuses", async (test: Test): Promise<void> => {
+  const dim = test.getDimension();
+  const rt = freshRuntime();
+  const [cx, cz] = farChunk(test, 85);
+  const unload = await loadArea(test, dim, "andrew_gt_cmd_g", cx, cz, 5);
+  const x = (cx + 2) * CHUNK + 8;
+  const z = (cz + 2) * CHUNK + 8;
+  // Radius 12 plus the stand-in's half-diagonal stays inside a 28-block half-side pool.
+  pool(dim, x, z, 28);
+  const watch: Box = { min: [x - 36, -64, z - 36], max: [x + 36, -52, z + 36] };
+  try {
+    await test.idle(5);
+    const before = await snapshot(test, dim, watch);
+    // From the server console: no entity behind the command, the centre is the typed point.
+    let outcome: string;
+    try {
+      outcome = `successCount=${dim.runCommand(`${COMMAND} find windmill 12 ${x} -60 ${z}`).successCount}`;
+    } catch (e) {
+      outcome = `threw ${String(e)}`;
+    }
+    const result = await findResult(test, "console", 1500);
+    const after = await snapshot(test, dim, watch);
+    const diff = changed(before, after);
+    const all = replies.filter((r) => r.player === "console");
+    log(`strf cmd find refuses RESULT: ${outcome}; replies ${all.map((r) => `${r.key} ${r.text}`).join(" | ")}; cells changed ${diff} of ${before.length}; records ${rt.registry.allInstances().length}`);
+    test.assert(all.some((r) => r.key === "andrew.structure.find_started"), `no "find_started" reply: ${all.map((r) => r.key).join(" ")}`);
+    test.assert(result?.ok === false && result.key === "andrew.structure.find_none", `find result: ${result?.key} ${result?.text}`);
+    test.assert(/liquid=\d+/.test(result?.text ?? ""), `no reject reasons in ${result?.text}`);
+    test.assert(diff === 0, `${diff} cell(s) of the world changed after a refused find`);
+    test.assert(rt.registry.allInstances().length === 0, `${rt.registry.allInstances().length} record(s) after a refused find`);
+    test.succeed();
+  } finally {
+    pool(dim, x, z, 28, "minecraft:grass_block");
+    unload();
+  }
+})
+  .structureName(STRUCTURE)
+  .maxTicks(2000)
+  .tag("andrew");
+
+/** Type of every cell, a few x-slices per tick so no single tick runs long. */
+async function snapshot(test: Test, dim: Dimension, box: Box): Promise<string[]> {
+  const out: string[] = [];
+  for (let x = box.min[0]; x <= box.max[0]; x++) {
+    for (let y = box.min[1]; y <= box.max[1]; y++)
+      for (let z = box.min[2]; z <= box.max[2]; z++) out.push(dim.getBlock({ x, y, z })?.typeId ?? "unloaded");
+    if ((x - box.min[0]) % 4 === 3) await test.idle(1);
+  }
+  return out;
+}
+
+const changed = (a: string[], b: string[]): number => a.reduce((n, t, i) => n + (b[i] === t ? 0 : 1), 0);
+
+export const STRF_CMD_TESTS = ["strf_cmd_place", "strf_cmd_locate_tp", "strf_cmd_chance", "strf_cmd_operator_only", "strf_cmd_find", "strf_cmd_find_refuses"];

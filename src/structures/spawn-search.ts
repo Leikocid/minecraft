@@ -4,15 +4,18 @@
 // by force (prepare.ts). Terrain is loaded through temporary ticking areas
 // (L0-wind-ad01), a window at a time. Engine objects come in through
 // SpawnHost, so node tests drive the search over a fake world.
+// The operator's `find` runs the same ring search for any type around any
+// point (SpawnSearch.operator): no one-time record, no discovery hold, and
+// never forced preparation — §4.7 allows that to the spawn Windmill alone.
 
 import type { BlockTypes, BlockVolume, Dimension } from "@minecraft/server";
-import type { RollDef } from "./config";
+import type { RollDef, StructureId } from "./config";
 import { type PrepPlan, type PrepWorld, BAND_MAX, applyPrep, enginePrepWorld, planPrep, precheck } from "./prepare";
-import { dryLand, flat, PROFILES, type SurfaceSample } from "./profiles";
-import { type Instance, type Rotation, type Vec3, COLLISION_MARGIN } from "./registry";
+import { type NetherColumn, type SiteProfile, type SurfaceSample, PROFILES, dryLand, flat, netherFloor } from "./profiles";
+import { type DimShort, type Instance, type Rotation, type Vec3, COLLISION_MARGIN } from "./registry";
 import { type Candidate, rollRotation, rotatedSize } from "./roll";
-import { type StrfRuntime, centreOf } from "./runtime";
-import { surfaceSample } from "./site";
+import { type PlaceOutcome, type StrfRuntime, centreOf } from "./runtime";
+import { netherColumn, surfaceSample } from "./site";
 import type { KeyValueStore } from "./store";
 
 export const SPAWN_KEY = "andrew:st:spawn";
@@ -35,14 +38,14 @@ const GRID = 4;
 const WINDOW = 5;
 /** Windows loaded at once; the engine allows 10 ticking areas (probe Q11). */
 const PARALLEL = 4;
-/** Farthest pre-screen sample from a plot centre: 17·√2 ≈ 24.04. */
-const REACH = 25;
 /** Full site checks per search; each loads its own area. */
 const MAX_FULL_CHECKS = 64;
 const FORCED_KEEP = 6;
 /** Forced candidates closer than this to a better one are dropped: they fail for the same reason. */
 const FORCED_SPACING = 32;
 const COLUMNS_PER_TICK = 800;
+/** A Nether column is a downward scan of ~80 reads, not one topmost read. */
+const NETHER_COLUMNS_PER_TICK = 80;
 const CANDIDATES_PER_TICK = 4000;
 
 export type SpawnStatus = "searching" | "preparing" | "done" | "failed" | "skipped";
@@ -95,7 +98,23 @@ export interface SpawnHost {
 
 export interface SpawnOptions {
   radius?: number;
+  /** Structure type searched for; the spawn search is always the Windmill. */
+  type?: StructureId;
+  /** Search centre; defaults to the host's world spawn. */
+  centre?: { x: number; z: number };
   log?: (msg: string) => void;
+}
+
+/** What the operator's search ends with; `placement` is absent when no site was valid. */
+export interface FindResult {
+  type: StructureId;
+  centre: [number, number];
+  radius: number;
+  checked: number;
+  rejects: Record<string, number>;
+  rot?: Rotation;
+  placement?: PlaceOutcome;
+  error?: string;
 }
 
 interface Cand {
@@ -110,15 +129,36 @@ interface Forced extends Cand {
 }
 
 type Found = { cand: Cand; rot: Rotation; release: () => void };
+type Column = SurfaceSample | NetherColumn;
 
 const SKIP = Symbol("skip");
+
+/** The operator's search owns no store: any read or write is a bug, and it throws. */
+const NO_STORE: KeyValueStore = {
+  get: (key) => {
+    throw new Error(`operator search touched the store (get ${key})`);
+  },
+  set: (key) => {
+    throw new Error(`operator search touched the store (set ${key})`);
+  },
+  keys: () => [],
+  totalBytes: () => undefined,
+};
 
 export class SpawnSearch {
   private readonly radius: number;
   private readonly log: (msg: string) => void;
   private readonly def: RollDef;
   private readonly size: Vec3;
-  private readonly heights = new Map<string, SurfaceSample | null>();
+  private readonly type: StructureId;
+  private readonly dim: DimShort;
+  private readonly profile: SiteProfile;
+  /** Farthest pre-screen sample from a plot centre, for any rotation. */
+  private readonly reach: number;
+  private readonly centre: { x: number; z: number } | undefined;
+  /** Set only by operator(): no SPAWN_KEY, no discovery hold, no forced preparation. */
+  private operatorMode = false;
+  private readonly heights = new Map<string, Column | null>();
   private readonly removers = new Set<() => void>();
   private readonly forced: Forced[] = [];
   private skipRequested: string | undefined;
@@ -136,10 +176,23 @@ export class SpawnSearch {
   ) {
     this.radius = opts.radius ?? SEARCH_RADIUS;
     this.log = opts.log ?? (() => {});
-    const def = rt.defs.find((d) => d.id === "windmill");
-    if (def === undefined) throw new Error("spawn windmill: no windmill roll def");
+    this.type = opts.type ?? "windmill";
+    this.centre = opts.centre;
+    const def = rt.defs.find((d) => d.id === this.type);
+    if (def === undefined) throw new Error(`spawn windmill: no ${this.type} roll def`);
     this.def = def;
     this.size = def.size;
+    this.dim = def.dim;
+    this.profile = PROFILES[this.type];
+    const side = Math.max(this.size[0], this.size[2]);
+    this.reach = Math.ceil(Math.hypot(side / 2, side / 2));
+  }
+
+  /** The operator's search: the same rings around `opts.centre`, run by find(). */
+  static operator(rt: StrfRuntime, host: SpawnHost, opts: SpawnOptions & { type: StructureId }): SpawnSearch {
+    const s = new SpawnSearch(rt, NO_STORE, host, opts);
+    s.operatorMode = true;
+    return s;
   }
 
   read(): SpawnRecord | undefined {
@@ -157,7 +210,7 @@ export class SpawnSearch {
 
   /** Stops a search that has not written a block yet; the world then has no spawn Windmill. */
   requestSkip(why: string): boolean {
-    if (!this.active || this.read()?.status !== "searching") return false;
+    if (this.operatorMode || !this.active || this.read()?.status !== "searching") return false;
     this.skipRequested = why;
     return true;
   }
@@ -169,7 +222,7 @@ export class SpawnSearch {
   }
 
   private releaseAll(): void {
-    this.rt.discovery.hold = undefined;
+    if (!this.operatorMode) this.rt.discovery.hold = undefined;
     for (const r of this.removers) r();
     this.removers.clear();
   }
@@ -196,6 +249,7 @@ export class SpawnSearch {
 
   /** The one entry point: runs the search if this world never ran it, otherwise reports what it found. */
   async run(): Promise<SpawnRecord> {
+    if (this.operatorMode) throw new Error("spawn windmill: run() on an operator search; use find()");
     const prev = this.read();
     if (prev !== undefined) return this.resume(prev);
 
@@ -262,6 +316,44 @@ export class SpawnSearch {
     return rec;
   }
 
+  /**
+   * The operator's entry: nearest valid site within the radius, placed through
+   * the registry like `place`. Nothing is written when no site is valid.
+   */
+  async find(): Promise<FindResult> {
+    if (!this.operatorMode) throw new Error("spawn windmill: find() is the operator's search; use SpawnSearch.operator");
+    const at = this.centre ?? this.host.spawn();
+    const centre: [number, number] = [Math.floor(at.x), Math.floor(at.z)];
+    const result: FindResult = { type: this.type, centre, radius: this.radius, checked: 0, rejects: this.rejects };
+    this.active = true;
+    this.log(`structure find: ${this.type} search started around ${centre.join(",")} (radius ${this.radius})`);
+    try {
+      const found = await this.search(centre);
+      if (found !== undefined) {
+        result.rot = found.rot;
+        result.placement = this.placeFound(found.cand, found.rot);
+        found.release();
+      }
+    } catch (e) {
+      result.error = e instanceof Error ? e.message : String(e);
+    } finally {
+      this.active = false;
+      this.releaseAll();
+    }
+    result.checked = this.checked;
+    result.rejects = { ...this.rejects };
+    const p = result.placement;
+    const outcome =
+      result.error !== undefined ? `stopped (${result.error})` : p === undefined ? "no valid site" : p.kind === "placed" ? `built at ${centreOf(p.instance).join(",")}` : `site found, not built (${p.kind})`;
+    const reasons = Object.entries(result.rejects).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k}=${n}`).join(" ");
+    this.log(
+      // Worded without "failed"/"error": bds:check reads those as a script failure.
+      `structure find: ${this.type} search finished: ${outcome}; ` +
+        `checked ${result.checked} place(s) within ${this.radius} blocks of ${centre.join(",")}, rejected by reason: ${reasons || "none"}`
+    );
+    return result;
+  }
+
   // ---------------------------------------------------------------- search
 
   private windowBox(spawnChunk: [number, number], i: number, j: number): { min: [number, number]; max: [number, number] } {
@@ -279,11 +371,13 @@ export class SpawnSearch {
         const b = this.windowBox(spawnChunk, i, j);
         const nx = Math.max(b.min[0], Math.min(spawn[0], b.max[0]));
         const nz = Math.max(b.min[1], Math.min(spawn[1], b.max[1]));
-        if (Math.hypot(nx - spawn[0], nz - spawn[1]) > this.radius + REACH) continue;
+        if (Math.hypot(nx - spawn[0], nz - spawn[1]) > this.radius + this.reach) continue;
         boxes.push(b);
       }
     }
     const view = this.host.prep().view;
+    const nether = this.profile.netherFloor;
+    const perTick = nether === undefined ? COLUMNS_PER_TICK : NETHER_COLUMNS_PER_TICK;
     for (let k = 0; k < boxes.length; k += PARALLEL) {
       const batch = boxes.slice(k, k + PARALLEL);
       const loaded = await Promise.all(batch.map((b) => this.load(b.min, b.max)));
@@ -294,8 +388,9 @@ export class SpawnSearch {
         const remove = loaded[w];
         for (let x = Math.ceil(b.min[0] / GRID) * GRID; x <= b.max[0]; x += GRID) {
           for (let z = Math.ceil(b.min[1] / GRID) * GRID; z <= b.max[1]; z += GRID) {
-            this.heights.set(`${x},${z}`, remove === undefined ? null : (surfaceSample(view, x, z) ?? null));
-            if (++n % COLUMNS_PER_TICK === 0) await this.tick();
+            const col = remove === undefined ? undefined : nether === undefined ? surfaceSample(view, x, z) : netherColumn(view, x, z, false, nether);
+            this.heights.set(`${x},${z}`, col ?? null);
+            if (++n % perTick === 0) await this.tick();
           }
         }
         remove?.();
@@ -327,7 +422,7 @@ export class SpawnSearch {
     const spawnChunk: [number, number] = [Math.floor(spawn[0] / CHUNK), Math.floor(spawn[1] / CHUNK)];
     const all = this.candidates(spawn);
     let ringMax = 0;
-    while ((WINDOW * ringMax + 2) * CHUNK < this.radius + REACH) ringMax++;
+    while ((WINDOW * ringMax + 2) * CHUNK < this.radius + this.reach) ringMax++;
     ringMax = Math.max(ringMax, 1);
 
     await this.sampleRing(spawn, spawnChunk, 0);
@@ -347,7 +442,7 @@ export class SpawnSearch {
     for (let r = 1; r <= ringMax; r++) {
       if (r > 1) await this.sampleRing(spawn, spawnChunk, r);
       const covered = r === ringMax ? Infinity : (WINDOW * r + 2) * CHUNK;
-      for (; idx < rest.length && rest[idx].d + REACH <= covered; idx++) {
+      for (; idx < rest.length && rest[idx].d + this.reach <= covered; idx++) {
         const found = await this.evaluate(rest[idx]);
         if (found !== undefined) return found;
         if (++n % CANDIDATES_PER_TICK === 0) await this.tick();
@@ -356,16 +451,53 @@ export class SpawnSearch {
     return undefined;
   }
 
-  private samplesOf(c: Cand): SurfaceSample[] | undefined {
-    const out: SurfaceSample[] = [];
-    for (let i = 0; i < this.size[0]; i += GRID) {
-      for (let j = 0; j < this.size[2]; j += GRID) {
+  private samplesOf(c: Cand, size: Vec3): Column[] | undefined {
+    const out: Column[] = [];
+    for (let i = 0; i < size[0]; i += GRID) {
+      for (let j = 0; j < size[2]; j += GRID) {
         const s = this.heights.get(`${c.ox + i},${c.oz + j}`);
         if (s === undefined || s === null) return undefined;
         out.push(s);
       }
     }
     return out;
+  }
+
+  /** Grid columns nearest to the site check's centre-and-ring columns (site.ts centreRing). */
+  private ringOf(c: Cand, size: Vec3): Column[] | undefined {
+    const snap = (v: number): number => Math.round(v / GRID) * GRID;
+    const out: Column[] = [];
+    for (const i of [0, Math.floor(size[0] / 2), size[0] - 1]) {
+      for (const j of [0, Math.floor(size[2] / 2), size[2] - 1]) {
+        const s = this.heights.get(`${snap(c.ox + i)},${snap(c.oz + j)}`);
+        if (s === undefined || s === null) return undefined;
+        out.push(s);
+      }
+    }
+    return out;
+  }
+
+  /** The site profile's gates on the heightmap; `score` ranks forced-preparation candidates. */
+  private prescreen(c: Cand, size: Vec3): { reason: string; score?: number } | { score: number } | undefined {
+    const p = this.profile;
+    if (p.netherFloor !== undefined) {
+      const cols = this.samplesOf(c, size) as NetherColumn[] | undefined;
+      if (cols === undefined) return undefined;
+      const midX = c.ox + (size[0] - 1) / 2;
+      const midZ = c.oz + (size[2] - 1) / 2;
+      const s = p.netherFloor.innerShare;
+      const judged = cols.map((col) => ({ ...col, inner: Math.abs(col.x - midX) <= (s * size[0]) / 2 && Math.abs(col.z - midZ) <= (s * size[2]) / 2 }));
+      const v = netherFloor(judged, size[1], p.netherFloor);
+      return v.ok ? { score: 0 } : { reason: v.reason };
+    }
+    const samples = (p.dryLand?.centreRing === true ? this.ringOf(c, size) : this.samplesOf(c, size)) as SurfaceSample[] | undefined;
+    if (samples === undefined) return undefined;
+    if (p.dryLand !== undefined && !dryLand(samples, p.dryLand).ok) return { reason: "liquid" };
+    const ys = samples.map((s) => s.ground).sort((a, b) => a - b);
+    const med = ys[Math.floor((ys.length - 1) / 2)];
+    const score = ys.reduce((sum, y) => sum + Math.abs(y - med), 0) * GRID * GRID + 0.1 * c.d;
+    if (p.flat !== undefined && !flat(samples, p.flat).ok) return { reason: "uneven", score };
+    return { score };
   }
 
   private keepForced(c: Cand, score: number): void {
@@ -377,48 +509,60 @@ export class SpawnSearch {
     if (this.forced.length > FORCED_KEEP) this.forced.length = FORCED_KEEP;
   }
 
+  /** The registry id the placement will take: SPAWN_ID for the spawn search, placeAt's default otherwise. */
+  private idOf(c: Cand): string {
+    return this.operatorMode ? `${this.type}:${this.dim}:${Math.floor(c.ox / CHUNK)}:${Math.floor(c.oz / CHUNK)}` : SPAWN_ID;
+  }
+
+  private rotationOf(c: Cand): Rotation {
+    return rollRotation(this.rt.registry.salt(), this.dim, Math.floor(c.ox / CHUNK), Math.floor(c.oz / CHUNK), this.type);
+  }
+
   private candidate(c: Cand, rot: Rotation): Candidate {
-    return { id: SPAWN_ID, def: this.def, dim: "o", cx: Math.floor(c.ox / CHUNK), cz: Math.floor(c.oz / CHUNK), rot, size: rotatedSize(this.size, rot), x: c.ox, z: c.oz };
+    return { id: this.idOf(c), def: this.def, dim: this.dim, cx: Math.floor(c.ox / CHUNK), cz: Math.floor(c.oz / CHUNK), rot, size: rotatedSize(this.size, rot), x: c.ox, z: c.oz };
   }
 
   /** Pre-screen on the heightmap, then the normal site check (L0-strf-p002) on loaded terrain. */
   private async evaluate(c: Cand): Promise<Found | undefined> {
     this.checked++;
-    const samples = this.samplesOf(c);
-    if (samples === undefined) return this.reject("unloaded"), undefined;
-    const p = PROFILES.windmill;
-    if (p.dryLand !== undefined && !dryLand(samples, p.dryLand).ok) return this.reject("liquid"), undefined;
-    const ys = samples.map((s) => s.ground).sort((a, b) => a - b);
-    const med = ys[Math.floor((ys.length - 1) / 2)];
-    const score = ys.reduce((sum, y) => sum + Math.abs(y - med), 0) * GRID * GRID + 0.1 * c.d;
-    if (p.flat !== undefined && !flat(samples, p.flat).ok) {
-      this.keepForced(c, score);
-      return this.reject("uneven"), undefined;
+    const rot = this.rotationOf(c);
+    const size = rotatedSize(this.size, rot);
+    const pre = this.prescreen(c, size);
+    if (pre === undefined) return this.reject("unloaded"), undefined;
+    if ("reason" in pre) {
+      if (pre.reason === "uneven" && pre.score !== undefined && !this.operatorMode) this.keepForced(c, pre.score);
+      return this.reject(pre.reason), undefined;
     }
+    const score = pre.score;
     if (this.fullChecks >= MAX_FULL_CHECKS) return this.reject("full-check-budget"), undefined;
     this.fullChecks++;
 
-    const cx = Math.floor(c.ox / CHUNK);
-    const cz = Math.floor(c.oz / CHUNK);
-    const rot = rollRotation(this.rt.registry.salt(), "o", cx, cz, "windmill");
     const cand = this.candidate(c, rot);
+    // The site check skips the candidate's own id; placeAt would then refuse a taken one.
+    if (this.operatorMode && this.rt.registry.get(this.dim, [c.ox, 0, c.oz], cand.id) !== undefined) return this.reject("collision:instance"), undefined;
     const m = COLLISION_MARGIN;
     const release = await this.load([c.ox - m, c.oz - m], [c.ox + cand.size[0] - 1 + m, c.oz + cand.size[2] - 1 + m]);
     if (this.skipRequested !== undefined) throw SKIP;
     if (release === undefined) return this.reject("unloaded"), undefined;
-    const v = this.rt.checker.check(cand, SPAWN_ID);
+    const v = this.rt.checker.check(cand, cand.id);
     if (v.kind === "valid") return { cand: c, rot, release };
     release();
     if (v.kind === "pending") return this.reject("unloaded"), undefined;
-    if (v.reason === "uneven") this.keepForced(c, score);
+    if (v.reason === "uneven" && !this.operatorMode) this.keepForced(c, score);
     return this.reject(v.reason), undefined;
   }
 
   // --------------------------------------------------------------- placing
 
+  /** placeAt takes the centre; the rotated size's half maps it back onto the checked origin. */
+  private placeFound(c: Cand, rot: Rotation): PlaceOutcome {
+    const size = rotatedSize(this.size, rot);
+    const id = this.operatorMode ? undefined : SPAWN_ID;
+    return this.rt.placeAt(this.type, this.dim, c.ox + Math.floor(size[0] / 2), c.oz + Math.floor(size[2] / 2), rot, { id });
+  }
+
   private place(rec: SpawnRecord, c: Cand, rot: Rotation, stage: 1 | 2 | 3, prepared: boolean): SpawnRecord {
-    const half = Math.floor(this.size[0] / 2);
-    const out = this.rt.placeAt("windmill", "o", c.ox + half, c.oz + half, rot, { id: SPAWN_ID });
+    const out = this.placeFound(c, rot);
     if (out.kind === "placed") {
       return { ...rec, status: "done", stage, origin: [...out.instance.origin], rot, prepared };
     }
@@ -567,7 +711,7 @@ export interface SpawnSystem {
 
 /** Ticking-area names the search owns; removed at startup, so a crash never leaks one for good. */
 const AREA_POOL = 8;
-const areaName = (i: number): string => `andrew_ws_${i}`;
+const AREA_PREFIX = "andrew_ws_";
 const LOAD_TIMEOUT_TICKS = 400;
 const ADD_RETRIES = 30;
 
@@ -576,8 +720,12 @@ export function engineSpawnHost(
   sys: SpawnSystem,
   api: { BlockVolume: typeof BlockVolume; BlockTypes: typeof BlockTypes },
   spawn: () => { x: number; z: number },
-  announce?: (s: SpawnState) => void
+  announce?: (s: SpawnState) => void,
+  /** A second search running beside the spawn one needs its own names, or each removes the other's areas. */
+  areas: { prefix?: string; pool?: number } = {}
 ): SpawnHost {
+  const pool = areas.pool ?? AREA_POOL;
+  const areaName = (i: number): string => `${areas.prefix ?? AREA_PREFIX}${i}`;
   const wait = (ticks: number): Promise<void> => new Promise((resolve) => sys.runTimeout(resolve, Math.max(1, ticks)));
   const used = new Set<number>();
   const run = (cmd: string): number => {
@@ -587,7 +735,7 @@ export function engineSpawnHost(
       return 0;
     }
   };
-  for (let i = 0; i < AREA_POOL; i++) run(`tickingarea remove ${areaName(i)}`);
+  for (let i = 0; i < pool; i++) run(`tickingarea remove ${areaName(i)}`);
   let prep: PrepWorld | undefined;
   const minY = dim.heightRange.min;
 
@@ -599,7 +747,7 @@ export function engineSpawnHost(
     async load(min, max) {
       let slot = -1;
       for (let tries = 0; tries < ADD_RETRIES && slot < 0; tries++) {
-        for (let i = 0; i < AREA_POOL; i++) {
+        for (let i = 0; i < pool; i++) {
           if (used.has(i)) continue;
           // The engine caps ticking areas at 10 per world; others may hold some.
           if (run(`tickingarea add ${min[0]} 0 ${min[1]} ${max[0]} 0 ${max[1]} ${areaName(i)}`) > 0) slot = i;

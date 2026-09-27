@@ -44,7 +44,15 @@ let strf: StrfRuntime | undefined;
 let spawnSearch: SpawnSearch | undefined;
 registerStructureCommands(
   { system, Player, CommandPermissionLevel, CustomCommandParamType, CustomCommandStatus },
-  { runtime: () => strf, log: (msg) => console.warn(msg) }
+  {
+    runtime: () => strf,
+    log: (msg) => console.warn(msg),
+    searchHost: (d) =>
+      engineSpawnHost(world.getDimension(d === "n" ? "nether" : "overworld"), system, { BlockVolume, BlockTypes }, () => world.getDefaultSpawnLocation(), undefined, {
+        prefix: "andrew_find_",
+        pool: 5,
+      }),
+  }
 );
 
 /** SimulatedPlayers reach this pack as unreadable entries (see playerSpawn below); they are skipped. */

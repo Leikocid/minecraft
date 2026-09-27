@@ -448,3 +448,159 @@ test('a skip before the first write ends the search with no Windmill and no area
   assert.equal(env.h.loads, env.h.removed);
   assert.equal(s.requestSkip('late'), false);
 });
+
+// ------------------------------------------------------------ the operator's find: same rings, no record, no prep
+
+/** A store that records every access to SPAWN_KEY and hands the rest through. */
+function spyStore(inner) {
+  const touched = [];
+  return {
+    touched,
+    get: (k) => { if (k === SPAWN_KEY) touched.push(`get ${k}`); return inner.get(k); },
+    set: (k, v) => { if (k === SPAWN_KEY) touched.push(`set ${k}`); inner.set(k, v); },
+    keys: () => inner.keys(),
+    totalBytes: () => inner.totalBytes(),
+  };
+}
+
+function operatorEnv(world, spawnRecord) {
+  const inner = new MemoryStore();
+  inner.set(SALT_KEY, 'find-salt');
+  if (spawnRecord !== undefined) inner.set(SPAWN_KEY, spawnRecord);
+  const store = spyStore(inner);
+  const placed = [];
+  const rt = new StrfRuntime(store, {
+    view: (d) => (d === 'o' ? world.view() : undefined),
+    placeWorld: (d) => (d === 'o' ? { hasTemplate: () => true, isLoaded: () => true, place: (id, origin, rot) => placed.push({ id, origin, rot }), fill: () => {} } : undefined),
+    hooks: () => ({ fillChest() {}, spawnGuard() {} }),
+  });
+  return { rt, store, inner, placed };
+}
+
+for (const [label, rec] of [['absent', undefined], ['done', JSON.stringify({ v: 1, status: 'done', spawn: [0, 0], searches: 1, origin: [-17, 65, -17], rot: 0 })]]) {
+  test(`find: the operator search neither reads nor writes the one-time spawn record (record ${label})`, async () => {
+    const w = new FakeWorld();
+    const env = operatorEnv(w, rec);
+    const h = host(w, { spawn: { x: 0, z: 0 } });
+    // The spawn search's hold, if one runs beside it, must survive the operator's search.
+    const sentinel = () => false;
+    env.rt.discovery.hold = sentinel;
+    const res = await SpawnSearch.operator(env.rt, h, { type: 'windmill', radius: 60, centre: { x: 500, z: 500 } }).find();
+    assert.equal(res.placement?.kind, 'placed', JSON.stringify(res));
+    assert.deepEqual(env.store.touched, [], 'SPAWN_KEY was accessed');
+    assert.equal(env.inner.get(SPAWN_KEY), rec, 'SPAWN_KEY changed');
+    assert.equal(env.rt.discovery.hold, sentinel, 'the discovery hold was replaced');
+    assert.notEqual(res.placement.instance.id, SPAWN_ID);
+    assert.equal(h.loads, h.removed, 'every ticking area was removed');
+  });
+}
+
+test('find: an operator search on the spawn search entry points refuses, and run() refuses on an operator search', async () => {
+  const w = new FakeWorld();
+  const env = operatorEnv(w);
+  const op = SpawnSearch.operator(env.rt, host(w), { type: 'windmill', radius: 20 });
+  await assert.rejects(op.run(), /operator search/);
+  await assert.rejects(new SpawnSearch(env.rt, env.store, host(w), { radius: 20 }).find(), /operator/);
+  assert.deepEqual(env.store.touched, []);
+});
+
+test('find: from a pool it takes the nearest dry flat site around the given centre and places it through the registry', async () => {
+  // Water within 40 blocks of 300,300; the world spawn at 0,0 plays no part.
+  const w = new FakeWorld({ surface: (x, z) => (Math.hypot(x - 300, z - 300) < 40 ? 'minecraft:water' : 'minecraft:grass_block') });
+  const env = operatorEnv(w);
+  const logs = [];
+  const res = await SpawnSearch.operator(env.rt, host(w, { spawn: { x: 0, z: 0 } }), { type: 'windmill', radius: 120, centre: { x: 300, z: 300 }, log: (l) => logs.push(l) }).find();
+  assert.equal(res.placement?.kind, 'placed', JSON.stringify(res));
+  const inst = res.placement.instance;
+  assert.equal(inst.state, 'done');
+  assert.equal(env.placed.length, 1);
+  const [cx, , cz] = [inst.origin[0] + 17, 0, inst.origin[2] + 17];
+  const d = Math.hypot(cx - 300, cz - 300);
+  // The plot (half-diagonal ≈ 24.7) clears the pool: its centre lies about 40 + 17 out.
+  assert.ok(d >= 40 && d <= 80, `centre ${cx},${cz} at ${d.toFixed(1)} from 300,300`);
+  assert.ok(res.checked > 0 && res.rejects.liquid > 0, JSON.stringify(res));
+  const line = logs.find((l) => /search finished: built at/.test(l));
+  assert.ok(line, logs.join('\n'));
+  assert.match(line, /checked \d+ place\(s\) within 120 blocks of 300,300, rejected by reason: .*liquid=\d+/);
+});
+
+test('find: with no natural site in the radius it refuses and writes nothing — no forced preparation', async () => {
+  // The same checkerboard that makes the spawn search prepare a site by force (stage 3).
+  const w = new FakeWorld({ ground: (x, z) => 64 + ((Math.floor(x / 6) + Math.floor(z / 6)) % 2) * 5 });
+  const env = operatorEnv(w);
+  const res = await SpawnSearch.operator(env.rt, host(w), { type: 'windmill', radius: 40, centre: { x: 0, z: 0 } }).find();
+  assert.equal(res.placement, undefined, JSON.stringify(res.placement));
+  assert.equal(res.error, undefined);
+  assert.equal(w.writes, 0, 'the world was written');
+  assert.equal(w.fills.length, 0);
+  assert.equal(env.placed.length, 0);
+  assert.equal(env.rt.registry.allInstances().length, 0);
+  assert.ok(res.rejects.uneven > 0, JSON.stringify(res.rejects));
+  const sum = Object.values(res.rejects).reduce((a, b) => a + b, 0);
+  assert.equal(sum, res.checked, 'every checked place has exactly one reason');
+
+  // The spawn search over the same ground still prepares: the two differ only in that branch.
+  const spawn = search(new FakeWorld({ ground: (x, z) => 64 + ((Math.floor(x / 6) + Math.floor(z / 6)) % 2) * 5 }), { spawn: { x: 0, z: 0 }, radius: 40 });
+  const rec = await spawn.s.run();
+  assert.equal(rec.stage, 3);
+  assert.equal(rec.prepared, true);
+});
+
+test('find: a non-square type lands on the origin it was checked at, for every rotation', async () => {
+  // The airship's footprint is not square; placeAt takes a centre, so the half must follow the rotation.
+  const w = new FakeWorld();
+  const rots = new Set();
+  for (let i = 0; i < 12; i++) {
+    const env = operatorEnv(w);
+    env.inner.set(SALT_KEY, `find-rot-${i}`);
+    const checked = [];
+    const check = env.rt.checker.check.bind(env.rt.checker);
+    env.rt.checker.check = (c, self) => {
+      const v = check(c, self);
+      if (v.kind === 'valid') checked.push(c);
+      return v;
+    };
+    const res = await SpawnSearch.operator(env.rt, host(w), { type: 'airship', radius: 40, centre: { x: 1000 * i, z: 0 } }).find();
+    assert.equal(res.placement?.kind, 'placed', JSON.stringify(res));
+    const inst = res.placement.instance;
+    const [w0, , d0] = env.rt.defs.find((d) => d.id === 'airship').size;
+    assert.notEqual(w0, d0, 'the airship footprint is not square');
+    const size = inst.rot % 2 === 0 ? [w0, d0] : [d0, w0];
+    assert.deepEqual([inst.size[0], inst.size[2]], size, `rot ${inst.rot}`);
+    const searched = checked[0];
+    assert.deepEqual([inst.origin[0], inst.origin[2]], [searched.x, searched.z], `rot ${inst.rot}: placed at another origin than the search checked`);
+    rots.add(inst.rot);
+  }
+  assert.ok(rots.has(1) || rots.has(3), `no odd rotation among ${[...rots]}`);
+});
+
+test('find: a Bastion in the Nether skips the lava sea around the centre and lands on the nearest floor', async () => {
+  // Lava sea (top at y 31) within 30 blocks of the centre, a floor at y 64 beyond it.
+  const w = new FakeWorld({
+    ground: (x, z) => (Math.hypot(x, z) < 30 ? 31 : 64),
+    surface: (x, z) => (Math.hypot(x, z) < 30 ? 'minecraft:lava' : 'minecraft:netherrack'),
+  });
+  const inner = new MemoryStore();
+  inner.set(SALT_KEY, 'find-nether');
+  const placed = [];
+  const rt = new StrfRuntime(inner, {
+    view: (d) => (d === 'n' ? w.view() : undefined),
+    placeWorld: (d) => (d === 'n' ? { hasTemplate: () => true, isLoaded: () => true, place: (id, origin, rot) => placed.push({ id, origin, rot }), fill: () => {} } : undefined),
+    hooks: () => ({ fillChest() {}, spawnGuard() {} }),
+  });
+  const res = await SpawnSearch.operator(rt, host(w), { type: 'bastion', radius: 80, centre: { x: 0, z: 0 } }).find();
+  assert.equal(res.placement?.kind, 'placed', JSON.stringify(res));
+  const inst = res.placement.instance;
+  assert.equal(inst.dim, 'n');
+  assert.equal(inst.origin[1], 65, 'on the floor at y 64');
+  // The profile rejects lava sea under the inner 60 % only; the rim may overhang it.
+  // The site check samples every 2 blocks, so an unsampled cell may sit one diagonal step closer.
+  const [w0, , d0] = inst.size;
+  const mid = [inst.origin[0] + (w0 - 1) / 2, inst.origin[2] + (d0 - 1) / 2];
+  for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+    const p = [Math.round(mid[0] + (sx * 0.6 * w0) / 2), Math.round(mid[1] + (sz * 0.6 * d0) / 2)];
+    assert.ok(Math.hypot(p[0], p[1]) >= 30 - 2 * Math.SQRT2 - 0.5, `inner corner over the lava sea at ${p}`);
+  }
+  assert.ok(res.rejects.lavaOcean > 0 || res.rejects.uneven > 0, JSON.stringify(res.rejects));
+  assert.equal(placed.length, 1);
+});
