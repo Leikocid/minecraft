@@ -480,3 +480,50 @@ test('the palette reads as an Ancient City: deepslate masonry, sculk, sensors, s
   const foreign = [...names].filter((n) => !/deepslate|sculk|air|structure_void|chest|soul_|gray_wool/.test(n));
   assert.deepStrictEqual(foreign, [], `off-theme blocks: ${foreign.join(' ')}`);
 });
+
+// A player needs two cells of clearance, climbs at most one block and falls any distance —
+// interior() only floods open cells, so it passes through gaps nobody can walk.
+function walkFromMarkerShaft() {
+  const passable = (x, y, z) => inside(x, y, z) && open(at(x, y, z));
+  const stand = (x, y, z) => passable(x, y, z) && passable(x, y + 1, z) && inside(x, y - 1, z) && !passable(x, y - 1, z);
+  const [cx, cz] = HALL_CENTER.map(Math.round);
+  let start = null;
+  for (let y = SY - 2; y >= 1 && !start; y--) if (stand(cx, y, cz)) start = [cx, y, cz];
+  assert.ok(start, 'digging straight down the marker centre reaches no cell a player can stand on');
+
+  const seen = new Set([k(...start)]);
+  const queue = [start];
+  while (queue.length > 0) {
+    const [x, y, z] = queue.pop();
+    for (const [dx, dz] of H4)
+      for (let ny = y + 1; ny >= y - 8; ny--) {
+        if (ny === y + 1 && !passable(x, y + 2, z)) continue;
+        if (!stand(x + dx, ny, z + dz)) continue;
+        let blocked = false;
+        for (let t = Math.min(y, ny); t <= Math.max(y, ny) + 1 && !blocked; t++)
+          if (t !== ny - 1 && !passable(x + dx, t, z + dz)) blocked = true;
+        if (blocked) continue;
+        if (!seen.has(k(x + dx, ny, z + dz))) {
+          seen.add(k(x + dx, ny, z + dz));
+          queue.push([x + dx, ny, z + dz]);
+        }
+        break;
+      }
+  }
+  return seen;
+}
+
+test('every chest is reachable on foot from where the marker shaft lands', () => {
+  const reached = walkFromMarkerShaft();
+  const stranded = CHESTS.filter(([x, y, z]) =>
+    !H4.some(([dx, dz]) => [0, -1, 1].some((dy) => reached.has(k(x + dx, y + dy, z + dz))))
+  );
+  assert.deepStrictEqual(stranded, [], `${stranded.length} of ${CHESTS.length} chests are walled off`);
+});
+
+test('the upper hall is reached on foot from the lower floor, not only by flying', () => {
+  const reached = [...walkFromMarkerShaft()].map((c) => c.split(',').map(Number));
+  const floors = new Set(reached.map(([, y]) => y));
+  const hallFloor = Math.min(...SHRIEKERS.map(([, y]) => y).filter((y) => y > Math.min(...CHESTS.map(([, cy]) => cy)) + 4));
+  assert.ok(floors.has(hallFloor), `no walking route reaches the hall floor at y=${hallFloor}`);
+});
