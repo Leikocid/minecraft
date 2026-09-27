@@ -12,6 +12,8 @@
 //   node scripts/render-structure.mjs --tile 24       bigger blocks (closer view)
 //   node scripts/render-structure.mjs --cut 4          drop everything at that height and above (no roof)
 //   node scripts/render-structure.mjs --wall 1         drop the near faces (no front wall, look inside)
+//   node scripts/render-structure.mjs --from 1 --cut 5  render one height band: walls in frame are
+//                                                      only a few blocks tall, so nothing is hidden
 
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
@@ -158,7 +160,7 @@ function colourOf(name) {
 }
 
 /** Load a structure into a sparse list of solid cells plus its size. */
-function cells(file, maxY = Infinity) {
+function cells(file, maxY = Infinity, minY = 0) {
   const s = parseMcstructure(readFileSync(file));
   const [sx, sy, sz] = s.size.map(Number);
   const out = [];
@@ -170,7 +172,7 @@ function cells(file, maxY = Infinity) {
       for (let z = 0; z < sz; z++, i++) {
         const idx = s.primary[i];
         if (idx === -1) continue;
-        if (y >= maxY) continue;
+        if (y >= maxY || y < minY) continue;
         const name = s.palette[idx].name;
         const c = colourOf(name);
         if (c === null) continue;
@@ -286,6 +288,15 @@ function main() {
     maxY = Number(args[si + 1]);
     args.splice(si, 2);
   }
+  // Interior walls stand full height and hide the rooms even with the outer faces gone, so the
+  // only view that shows a floor plan is a thin height band: every wall in frame is then a few
+  // blocks tall and cannot cover anything behind it.
+  let minY = 0;
+  const fi = args.indexOf('--from');
+  if (fi !== -1) {
+    minY = Number(args[fi + 1]);
+    args.splice(fi, 2);
+  }
   let strip = 0;
   const wi = args.indexOf('--wall');
   if (wi !== -1) {
@@ -302,7 +313,7 @@ function main() {
 
   for (const f of files) {
     const id = basename(f, '.mcstructure');
-    const data = cells(join(structuresDir, f), maxY);
+    const data = cells(join(structuresDir, f), maxY, minY);
     process.stdout.write(`${id}: ${data.size.join('×')}, ${data.list.length} видимых блоков\n`);
     if (data.unknown.size > 0)
       process.stdout.write(
@@ -311,7 +322,7 @@ function main() {
     for (const tile of tiles)
       for (let turn = 0; turn < 4; turn++) {
         const img = render(data, turn, tile, strip);
-        const cut = Number.isFinite(maxY) ? `-cut${maxY}` : '';
+        const cut = minY > 0 || Number.isFinite(maxY) ? `-y${minY}_${Number.isFinite(maxY) ? maxY : 'top'}` : '';
         const front = strip > 0 ? `-wall${strip}` : '';
         const name = `${id}${cut}${front}-${String(tile).padStart(2, '0')}px-${turn}.png`;
         writeFileSync(join(outDir, name), encodePng(img));
