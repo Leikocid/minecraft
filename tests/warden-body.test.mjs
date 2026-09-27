@@ -2,7 +2,7 @@
 // fakes: the 5 % Overworld roll, the depth profile, the surface marker as a
 // second spot of the site gate — loaded, judged and collision-checked before
 // the first write, cancelling the whole candidate when bad — the marker lay,
-// the vanilla table on all 10 chests, no guard step, and a restart.
+// the vanilla table on all 40 chests, no guard step, and a restart.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -45,6 +45,8 @@ const {
 } = m;
 
 const AIR = 'minecraft:air';
+/** Offset of the city's centre column from its min corner, the same under every rotation. */
+const MID = (WARDEN_CITY_SIZE[0] - 1) / 2;
 const cityDef = () => naturalDefs(BODIES).find((d) => d.id === 'warden_city');
 
 /** Grass at `ground(x, z)` over stone, plus explicit blocks; reads and writes are logged. */
@@ -139,12 +141,12 @@ function runtime(w, { store = new MemoryStore(), events = [], salt = 'wrdn-node'
 
 // ------------------------------------------------------------------ the body
 
-test('the Warden City is a real body: its template, 10 chests on the vanilla Ancient City table, no guard step, no clear', () => {
+test('the Warden City is a real body: its template, 40 chests on the vanilla Ancient City table, no guard step, no clear', () => {
   assert.equal(BODIES.warden_city, WARDEN_CITY_BODY);
   assert.equal(WARDEN_CITY_BODY.standIn, false);
   assert.equal(WARDEN_CITY_BODY.templateId, WARDEN_CITY_ID);
   assert.deepEqual(WARDEN_CITY_BODY.size, [...WARDEN_CITY_SIZE]);
-  assert.equal(WARDEN_CITY_BODY.chests.length, 10);
+  assert.equal(WARDEN_CITY_BODY.chests.length, 40);
   assert.deepEqual(WARDEN_CITY_BODY.chests.map((c) => c.local), CITY_CHESTS.map((c) => [...c.at]));
   assert.ok(WARDEN_CITY_BODY.chests.every((c) => c.table === ANCIENT_CITY && c.table !== CUSTOM_TABLE));
   // AC5: the guard step is absent, not empty.
@@ -200,18 +202,31 @@ test('AC7: through discovery, cities roll only in the Overworld; the Nether, the
 
 // ------------------------------------------------------------------ depth
 
-test('depth: the top of the city lands on Y −45…−35, spread over the whole range', () => {
+test('depth: the top of the city lands on Y −45…−35 and its bottom never below the world floor; a draw that would reach it is rejected, not cut', () => {
   const tops = new Set();
-  for (let i = 0; i < 200; i++) {
+  let floor = 0;
+  const N = 400;
+  for (let i = 0; i < N; i++) {
     const rt = runtime(new FakeWorld(), { salt: `depth-${i}` });
     const c = buildCandidate(rt.registry.salt(), 'o', 5, 5, cityDef());
     const v = rt.checker.check(c);
+    if (v.kind === 'rejected') {
+      assert.equal(v.reason, 'floor', JSON.stringify(v));
+      floor++;
+      continue;
+    }
     assert.equal(v.kind, 'valid', JSON.stringify(v));
     const top = v.y + c.size[1] - 1;
     assert.ok(top >= -45 && top <= -35, `top ${top}`);
+    // One layer of the world floor (−64) stays under the city.
+    assert.ok(v.y >= -63, `bottom ${v.y} for top ${top}`);
     tops.add(top);
   }
-  assert.equal(tops.size, 11, `tops seen: ${[...tops].sort((a, b) => a - b).join(' ')}`);
+  console.log(`# warden depth: ${N - floor}/${N} valid, tops ${[...tops].sort((a, b) => a - b).join(' ')}; ${floor} rejected for the floor`);
+  // Height 20: tops −44…−35 fit over the floor; a −45 draw (one in eleven) would put the bottom on −64.
+  assert.equal(WARDEN_CITY_SIZE[1], 20);
+  assert.deepEqual([...tops].sort((a, b) => a - b), [-44, -43, -42, -41, -40, -39, -38, -37, -36, -35]);
+  assert.ok(floor > 0 && floor / N < 0.2, `${floor}/${N} rejected for the floor`);
 });
 
 // ------------------------------------------------------------------ AC2: the second spot
@@ -225,7 +240,7 @@ test('marker spot: its columns lie inside the footprint and follow the rotation'
     assert.equal(cols.length, MARKER.length);
     for (const [x, z] of cols) assert.ok(x >= c.x && x < c.x + c.size[0] && z >= c.z && z < c.z + c.size[2]);
     const centre = markerCells(c).find((k) => k.center);
-    assert.deepEqual([centre.x, centre.z], [c.x + 15, c.z + 15]);
+    assert.deepEqual([centre.x, centre.z], [c.x + MID, c.z + MID]);
   }
 });
 
@@ -242,7 +257,7 @@ test('AC2: water under one marker cell the centre ring never samples cancels the
   // The same spot with the underground box alone would pass: the marker decided.
   const boxOnly = new SiteChecker(() => w.view(), () => rt.registry.salt()).check(c);
   assert.equal(boxOnly.kind, 'valid');
-  const out = rt.placeAt('warden_city', 'o', c.x + 15, c.z + 15, c.rot);
+  const out = rt.placeAt('warden_city', 'o', c.x + MID, c.z + MID, c.rot);
   assert.deepEqual(out, { kind: 'rejected', reason: 'marker:liquid' });
   assert.equal(rt.instances().length, 0);
   assert.deepEqual(w.writes, [], 'a rejected candidate wrote to the world');
@@ -282,7 +297,7 @@ test('AC2: an unloaded spot keeps the candidate pending, and nothing is read or 
   assert.deepEqual(rt.checker.check(c), { kind: 'pending' });
   assert.equal(rt.checker.loaded(c), false);
   assert.equal(w.unloadedReads, 0, 'a read went into an unloaded chunk');
-  assert.equal(rt.placeAt('warden_city', 'o', c.x + 15, c.z + 15, c.rot).kind, 'not-loaded');
+  assert.equal(rt.placeAt('warden_city', 'o', c.x + MID, c.z + MID, c.rot).kind, 'not-loaded');
   assert.deepEqual(w.writes, []);
 
   // A spot reaching outside the footprint is gated on its own chunks.
@@ -299,7 +314,7 @@ test('AC2: an unloaded spot keeps the candidate pending, and nothing is read or 
 
 // ------------------------------------------------------------------ placement, marker, loot, restart
 
-test('placement: reservation first, then the template, then the marker in the same place step, then 10 vanilla chests; no guards', () => {
+test('placement: reservation first, then the template, then the marker in the same place step, then 40 vanilla chests; no guards', () => {
   const w = new FakeWorld();
   const events = [];
   const rt = runtime(w, { events });
@@ -319,12 +334,12 @@ test('placement: reservation first, then the template, then the marker in the sa
     assert.ok(marker.includes(want), `missing ${want}`);
   }
   const chests = events.filter((e) => typeof e === 'object');
-  assert.equal(chests.length, 10);
+  assert.equal(chests.length, 40);
   assert.ok(chests.every((e) => e.table === ANCIENT_CITY));
-  assert.equal(new Set(chests.map((e) => e.pos.join())).size, 10);
+  assert.equal(new Set(chests.map((e) => e.pos.join())).size, 40);
   assert.equal(events.filter((e) => typeof e === 'string' && e.startsWith('guard')).length, 0);
   const rec = rt.registry.get('o', inst.origin, inst.id);
-  assert.equal(rec.extras[CHESTS_FILLED], 10);
+  assert.equal(rec.extras[CHESTS_FILLED], 40);
   assert.equal(rec.extras[GUARDS_SPAWNED], undefined);
 });
 
@@ -354,7 +369,7 @@ test('AC6: a restart gives no second set of chests and never refills a plundered
   const out = rt.placeAt('warden_city', 'o', 400, 400, 0);
   assert.equal(out.kind, 'placed');
   const fills = () => events.filter((e) => typeof e === 'object').length;
-  assert.equal(fills(), 10);
+  assert.equal(fills(), 40);
 
   const after = [];
   const rt2 = runtime(w, { store, events: after });

@@ -129,16 +129,22 @@ function interior() {
 }
 const INTERIOR = interior();
 
-test('AC1: footprint ≈30×30, height 10–15, exactly 10 single chests, 3 of them in the central hall', () => {
+// The city is four times the §13 footprint by area, with the contents grown in
+// proportion: 62×62×20, 40 chests (12 in the hall), 8 shriekers.
+const CHEST_COUNT = 40;
+const HALL_CHESTS = 12;
+const SHRIEKER_COUNT = 8;
+
+test('AC1: footprint ≈62×62, height 20, exactly 40 single chests, 12 of them in the central hall', () => {
   const solid = cellsOf((b) => !isAir(b) && !isVoid(b));
   const ext = [0, 1, 2].map((i) => Math.max(...solid.map((c) => c[i])) - Math.min(...solid.map((c) => c[i])) + 1);
-  // ≈30×30: within two blocks of 30 on each side; the outline itself is irregular.
-  assert.ok(Math.abs(ext[0] - 30) <= 2 && Math.abs(ext[2] - 30) <= 2, `footprint ${ext[0]}×${ext[2]}`);
-  assert.ok(ext[1] >= 10 && ext[1] <= 15, `height ${ext[1]}`);
+  // ≈62×62: within two blocks of 62 on each side; the outline itself is irregular.
+  assert.ok(Math.abs(ext[0] - 62) <= 2 && Math.abs(ext[2] - 62) <= 2, `footprint ${ext[0]}×${ext[2]}`);
+  assert.strictEqual(ext[1], 20, `height ${ext[1]}`);
   const corners = [[0, 0], [SX - 1, 0], [0, SZ - 1], [SX - 1, SZ - 1]].filter(([x, z]) => isVoid(at(x, 0, z)));
   assert.ok(corners.length >= 2, 'the outline is a plain rectangle, not irregular');
 
-  assert.strictEqual(CHESTS.length, 10, `${CHESTS.length} chests`);
+  assert.strictEqual(CHESTS.length, CHEST_COUNT, `${CHESTS.length} chests`);
   for (const other of ['minecraft:trapped_chest', 'minecraft:barrel', 'minecraft:ender_chest']) assert.strictEqual(named(other).length, 0, `${other} present`);
   for (const [x, y, z] of CHESTS) {
     for (const [dx, dz] of H4) assert.notStrictEqual(at(x + dx, y, z + dz).name, 'minecraft:chest', `chest ${k(x, y, z)} touches another chest`);
@@ -150,11 +156,13 @@ test('AC1: footprint ≈30×30, height 10–15, exactly 10 single chests, 3 of t
   }
 
   assert.strictEqual(TALL_ROOMS.length, 1, `${TALL_ROOMS.length} rooms at least ${TALL} high`);
-  assert.ok(HALL_COLS.size >= 100, `central hall of ${HALL_COLS.size} columns`);
+  assert.ok(HALL_COLS.size >= 400, `central hall of ${HALL_COLS.size} columns`);
   assert.ok(Math.abs(HALL_CENTER[0] - (SX - 1) / 2) <= 1 && Math.abs(HALL_CENTER[1] - (SZ - 1) / 2) <= 1, `hall centred at ${HALL_CENTER}, not in the middle of the template`);
   const central = CHESTS.filter(([x, , z]) => inHall(x, z));
-  assert.strictEqual(central.length, 3, `${central.length} chests in the central hall: ${central.map((c) => k(...c)).join(' ')}`);
-  // The other seven are spread out: no wing holds more than three of them.
+  assert.strictEqual(central.length, HALL_CHESTS, `${central.length} chests in the central hall: ${central.map((c) => k(...c)).join(' ')}`);
+  // The hall's chests are not all on its floor: its upper level holds some too.
+  assert.ok(central.filter(([, y]) => y >= 7).length >= 4, `hall chests by level ${central.map(([, y]) => y).join(' ')}`);
+  // The other 28 are spread out: every side of the city has some, none holds more than a third.
   const outer = CHESTS.filter(([x, , z]) => !inHall(x, z));
   const side = ([x, , z]) => {
     const [dx, dz] = [x - HALL_CENTER[0], z - HALL_CENTER[1]];
@@ -162,11 +170,11 @@ test('AC1: footprint ≈30×30, height 10–15, exactly 10 single chests, 3 of t
   };
   const perSide = {};
   for (const c of outer) perSide[side(c)] = (perSide[side(c)] ?? 0) + 1;
-  assert.ok(Object.keys(perSide).length >= 3 && Math.max(...Object.values(perSide)) <= 3, `outer chests per side ${JSON.stringify(perSide)}`);
+  assert.ok(Object.keys(perSide).length === 4 && Math.max(...Object.values(perSide)) <= (CHEST_COUNT - HALL_CHESTS) / 3, `outer chests per side ${JSON.stringify(perSide)}`);
 });
 
-test('AC2: exactly 2 can_summon shriekers — one by the central hall, one in the far part; more sensors than shriekers', () => {
-  assert.strictEqual(SHRIEKERS.length, 2, `${SHRIEKERS.length} shriekers`);
+test('AC2: exactly 8 can_summon shriekers — two by the central hall, six in the far parts, apart; more sensors than shriekers', () => {
+  assert.strictEqual(SHRIEKERS.length, SHRIEKER_COUNT, `${SHRIEKERS.length} shriekers`);
   for (const [x, y, z] of SHRIEKERS) {
     const b = at(x, y, z);
     assert.strictEqual(b.states.can_summon, 1, `shrieker ${k(x, y, z)}: can_summon=${b.states.can_summon}`);
@@ -175,19 +183,29 @@ test('AC2: exactly 2 can_summon shriekers — one by the central hall, one in th
     assert.ok(open(at(x, y + 1, z)) && INTERIOR.keys.has(k(x, y + 1, z)), `shrieker ${k(x, y, z)} is not reachable by a player`);
   }
   // Fixed positions: the template is the only source, so pin them exactly.
-  assert.deepStrictEqual(SHRIEKERS.map((c) => k(...c)).sort(), ['15,1,12', '28,1,19'], 'shrieker positions moved');
+  assert.deepStrictEqual(
+    SHRIEKERS.map((c) => k(...c)).sort(),
+    ['13,1,59', '3,1,35', '31,3,27', '42,7,41', '49,1,3', '56,1,56', '59,1,29', '6,1,6'],
+    'shrieker positions moved'
+  );
 
+  // Eight shriekers call the Warden four times as fast as two: most stay in the far rooms, apart.
   const near = SHRIEKERS.filter(([x, , z]) => toHall(x, z) <= 2);
-  const far = SHRIEKERS.filter(([x, , z]) => !inHall(x, z) && Math.hypot(x - HALL_CENTER[0], z - HALL_CENTER[1]) >= 12);
-  assert.strictEqual(near.length, 1, `${near.length} shriekers by the hall`);
-  assert.strictEqual(far.length, 1, `${far.length} shriekers in the far part`);
-  const monumentDist = Math.min(...MONUMENT.map(([x, , z]) => Math.hypot(x - near[0][0], z - near[0][2])));
-  assert.ok(monumentDist <= 3, `the central shrieker is ${monumentDist.toFixed(1)} from the monument`);
+  const far = SHRIEKERS.filter(([x, , z]) => !inHall(x, z) && Math.hypot(x - HALL_CENTER[0], z - HALL_CENTER[1]) >= 24);
+  assert.strictEqual(near.length, 2, `${near.length} shriekers by the hall`);
+  assert.strictEqual(far.length, SHRIEKER_COUNT - 2, `${far.length} shriekers in the far parts`);
+  for (let i = 0; i < SHRIEKERS.length; i++)
+    for (let j = i + 1; j < SHRIEKERS.length; j++) {
+      const [a, b] = [SHRIEKERS[i], SHRIEKERS[j]];
+      assert.ok(Math.hypot(a[0] - b[0], a[2] - b[2]) >= 12, `shriekers ${k(...a)} and ${k(...b)} stand together`);
+    }
+  const monumentDist = Math.min(...near.map((s) => Math.min(...MONUMENT.map(([x, , z]) => Math.hypot(x - s[0], z - s[2])))));
+  assert.ok(monumentDist <= 3, `the nearest hall shrieker is ${monumentDist.toFixed(1)} from the monument`);
 
   assert.ok(SENSORS.length > SHRIEKERS.length, `${SENSORS.length} sensors`);
-  assert.ok(SENSORS.length >= 8, `${SENSORS.length} sensors — the sculk dressing is thin`);
-  assert.ok(named('minecraft:sculk').length >= 100, `${named('minecraft:sculk').length} sculk blocks`);
-  assert.ok(named('minecraft:sculk_vein').length >= 30, `${named('minecraft:sculk_vein').length} sculk veins`);
+  assert.ok(SENSORS.length >= 24, `${SENSORS.length} sensors — the sculk dressing is thin`);
+  assert.ok(named('minecraft:sculk').length >= 400, `${named('minecraft:sculk').length} sculk blocks`);
+  assert.ok(named('minecraft:sculk_vein').length >= 120, `${named('minecraft:sculk_vein').length} sculk veins`);
   // A sensor right next to a shrieker would relay non-player vibrations into it.
   for (const [x, y, z] of SENSORS)
     for (const [a, , c] of SHRIEKERS) assert.ok(Math.abs(x - a) + Math.abs(z - c) > 2, `sensor ${k(x, y, z)} hugs a shrieker`);
@@ -222,6 +240,29 @@ test('AC3: a purely decorative reinforced deepslate monument ≈5 wide × 6–7 
     }
   }
   assert.strictEqual(seen.size, MONUMENT.length, 'the monument is in pieces');
+
+  // A building, not a frame on a beam: the masonry joined to the frame fills a
+  // solid volume in the hall, reaching over the frame's top.
+  const hallSolid = (b) => !open(b) && !isVoid(b) && !/chest|sculk_(sensor|shrieker)/.test(b.name);
+  const body = new Set(seen);
+  const grow = [...MONUMENT];
+  while (grow.length) {
+    const [x, y, z] = grow.pop();
+    for (const [dx, dy, dz] of N6) {
+      const n = [x + dx, y + dy, z + dz];
+      // The hall's floor and walls are not the monument: stay inside the hall, above its floor.
+      if (n[1] < 1 || !inHall(n[0], n[2]) || toHall(n[0], n[2]) > 0 || body.has(k(...n)) || !hallSolid(at(...n))) continue;
+      if (n[0] === HALL.x0 || n[0] === HALL.x1 || n[2] === HALL.z0 || n[2] === HALL.z1) continue;
+      body.add(k(...n));
+      grow.push(n);
+    }
+  }
+  const bodyCells = [...body].map((c) => c.split(',').map(Number));
+  const top = Math.max(...bodyCells.map((c) => c[1]));
+  const frameTop = Math.max(...MONUMENT.map((c) => c[1]));
+  console.log(`# warden-city monument: ${body.size} cells joined to the frame, top y=${top} (frame top ${frameTop})`);
+  assert.ok(body.size >= 400, `the monument building is ${body.size} cells`);
+  assert.ok(top >= frameTop + 3, `the monument stops at y=${top}, the frame's top is ${frameTop}`);
 
   // Nothing functional anywhere in the build: no portal, no redstone, no command or structure blocks.
   const names = [...new Set(s.palette.map((p) => p.name))];
@@ -261,17 +302,18 @@ test('AC3: a purely decorative reinforced deepslate monument ≈5 wide × 6–7 
 const LIGHT_PASSES = /air|sculk_vein|sculk_sensor|sculk_shrieker|soul_lantern|soul_torch|chest/;
 const EMITTERS = { 'minecraft:soul_lantern': 10, 'minecraft:soul_torch': 10 };
 // Limits for "almost completely dark" (§13.1):
-//  - MAX_LIGHTS 6: the build has four — two torches at the monument, one
-//    lantern in each of the two main passages, the "few, by the passages and
-//    the centre" of §13.1; the cap leaves room for one more pair, no more.
-//    Every other light-emitting vanilla block is banned outright below.
+//  - MAX_LIGHTS 10: the build has eight — two torches at the monument, a
+//    lantern in the ring avenue by each hall door and two at its corners, the
+//    "few, by the passages and the centre" of §13.1 over a city four times the
+//    §13 area; the cap leaves room for one more pair, no more. Every other
+//    light-emitting vanilla block is banned outright below.
 //  - LIT_LEVEL 7: at 7 and below a space still reads as dark in the vanilla
 //    renderer; 7 is also the spawner Lmax the Windmill and Airship tests use.
 //  - MAX_LIT_SHARE 0.15: under a sixth of the floor may be brighter than that.
 //  - MIN_BLACK_SHARE 0.5: at least half the floor stays at block light 0 —
 //    the only level where Bedrock (1.18+) spawns hostile mobs, i.e. the real
 //    Ancient City's darkness.
-const MAX_LIGHTS = 6;
+const MAX_LIGHTS = 10;
 const LIT_LEVEL = 7;
 const MAX_LIT_SHARE = 0.15;
 const MIN_BLACK_SHARE = 0.5;
@@ -287,8 +329,16 @@ test('AC4: almost completely dark — a handful of soul lamps, little lit floor,
   const lamps = cellsOf((b) => b.name in EMITTERS);
   assert.ok(lamps.length > 0, 'no light at all — §13.1 places a few soul lamps');
   assert.ok(lamps.length <= MAX_LIGHTS, `${lamps.length} light sources > ${MAX_LIGHTS}`);
-  // Every lamp sits in the hall or at the mouth of a passage leading out of it.
-  for (const [x, y, z] of lamps) assert.ok(toHall(x, z) <= 4, `lamp ${k(x, y, z)} is ${toHall(x, z).toFixed(1)} from the central hall`);
+  // Every lamp sits in the hall or in a passage: an open run at most 5 wide across it.
+  const span = (x, y, z, dx, dz) => {
+    let n = 1;
+    for (const s of [1, -1]) for (let i = 1; open(at(x + s * i * dx, y, z + s * i * dz)); i++) n++;
+    return n;
+  };
+  for (const [x, y, z] of lamps) {
+    const across = Math.min(span(x, y, z, 1, 0), span(x, y, z, 0, 1));
+    assert.ok(toHall(x, z) <= 4 || across <= 5, `lamp ${k(x, y, z)} is ${toHall(x, z).toFixed(1)} from the central hall in an opening ${across} wide`);
+  }
 
   const light = new Map();
   const queue = [];
@@ -316,7 +366,7 @@ test('AC4: almost completely dark — a handful of soul lamps, little lit floor,
   const hist = new Array(16).fill(0);
   for (const c of floor) hist[light.get(k(...c)) ?? 0]++;
   console.log(`# warden-city light: ${lamps.length} lamps, floor ${floor.length}, lit>${LIT_LEVEL} ${(litShare * 100).toFixed(1)}%, black ${(blackShare * 100).toFixed(1)}%, by level ${hist.join(' ')}`);
-  assert.ok(floor.length >= 400, `${floor.length} floor cells`);
+  assert.ok(floor.length >= 1600, `${floor.length} floor cells`);
   assert.ok(litShare < MAX_LIT_SHARE, `${(litShare * 100).toFixed(1)}% of the floor above block light ${LIT_LEVEL}`);
   assert.ok(blackShare >= MIN_BLACK_SHARE, `only ${(blackShare * 100).toFixed(1)}% of the floor at block light 0`);
 });
