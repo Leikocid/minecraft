@@ -197,7 +197,9 @@ test('airship site: bottom clears the highest tree by 40; mountain top hits the 
 });
 
 test('warden city site: dry centre ring is valid; water over the centre rejects', () => {
-  const c = cand('warden_city');
+  // A 20-high city drawn to top at −45 would reach the world floor and is rejected
+  // for depth (see the depth test); take the first chunk whose draw fits.
+  const c = [0, 1, 2, 3, 4, 5].map((cx) => cand('warden_city', cx)).find((k) => setup(new FakeWorld()).checker.check(k).kind === 'valid');
   const r = setup(new FakeWorld()).checker.check(c);
   assert.equal(r.kind, 'valid');
   assert.ok(r.y + c.size[1] - 1 <= -35 && r.y + c.size[1] - 1 >= -45);

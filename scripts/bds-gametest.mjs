@@ -180,6 +180,7 @@ const EXPECTED_TESTS = [
   'andrew:windmill_spawn_no_dry_land',
   // AIRS-TMPL-01 — src/gametest/airship.ts
   'andrew:airship_rotations',
+  'andrew:airship_spawner_light',
   // AIRS-BODY-01 — src/gametest/airship-body.ts
   'andrew:airship_body_site',
   'andrew:airship_linked_ring',
