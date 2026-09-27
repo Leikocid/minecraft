@@ -305,7 +305,7 @@ test('AC6 (fakes): water everywhere in the ring — no Airship, status none, not
   assert.equal(w.rt.registry.get('o', windmill.origin, windmill.id).extras[LINKED_STATUS], 'none');
   assert.equal(outcome.result.rejects.liquid, outcome.result.checked);
   // Every area it loaded is inside the ring plus one footprint: nothing past 100 blocks + half an Airship + margin.
-  const reach = 100 + 8 + 2;
+  const reach = 100 + Math.ceil(Math.max(AIRSHIP_SIZE[0], AIRSHIP_SIZE[2]) / 2) + 2;
   for (const l of w.loads.filter((l) => l !== 'released')) {
     for (const [x, z] of [l[0], l[1]]) assert.ok(Math.abs(x - cx) <= reach && Math.abs(z - cx) <= reach, `loaded ${x},${z}`);
   }
