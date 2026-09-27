@@ -23,8 +23,9 @@ export const templatesDir = join(root, 'src', 'structures', 'templates');
 export const structuresDir = join(root, 'packs', 'behavior', 'structures', 'andrew');
 /** The GameTest pack loads beside the release one, so its structures resolve under the same "andrew:" ids. */
 export const gametestStructuresDir = join(root, 'packs', 'gametest', 'structures', 'andrew');
+export const selftestStructuresDir = join(root, 'packs', 'selftest', 'structures', 'andrew');
 
-/** Measurement templates of the engine probes: gametest pack only, never the release pack. */
+/** Measurement templates of the engine probes: the dev packs only, never the release pack. */
 export const PROBE_TEMPLATES = new Set(['probe', 'probe_box']);
 export const isProbe = (id) => PROBE_TEMPLATES.has(id);
 
@@ -93,16 +94,17 @@ export function buildStructures({ from = templatesDir, to = structuresDir, only 
   return results;
 }
 
-/** The release pack gets every template but the probes; the gametest pack gets the probes. */
+/** The release pack gets every template but the probes; the gametest and selftest packs get the probes. */
 export function buildPackStructures() {
   return {
     release: buildStructures({ to: structuresDir, only: (id) => !isProbe(id) }),
     gametest: buildStructures({ to: gametestStructuresDir, only: isProbe, clean: false }),
+    selftest: buildStructures({ to: selftestStructuresDir, only: isProbe }),
   };
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const { release, gametest } = buildPackStructures();
   for (const r of release) process.stdout.write(`  andrew:${r.id} -> ${r.bytes} bytes\n`);
-  for (const r of gametest) process.stdout.write(`  andrew:${r.id} -> ${r.bytes} bytes (gametest pack)\n`);
+  for (const r of gametest) process.stdout.write(`  andrew:${r.id} -> ${r.bytes} bytes (gametest and selftest packs)\n`);
 }

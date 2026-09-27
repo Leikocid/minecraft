@@ -468,8 +468,8 @@ function run(): void {
   });
 
   // 7. The disposable stage4-probe measurement box (src/structures/templates/
-  //    probe_box.json). It ships only for the strf-p006 engine questions and
-  //    leaves the release structure set at the end of stage 4.
+  //    probe_box.json). Both probes are built into this dev pack and the
+  //    gametest pack, never into the release pack.
   //
   //    getPackStructureIds() is logged for visibility but not asserted on: in
   //    this one-shot, player-less bds:check world it stays empty for every

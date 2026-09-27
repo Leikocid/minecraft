@@ -300,7 +300,7 @@ test('AC7: the release structure set is every template but the probes; the probe
   }
 });
 
-test('AC7: dist/andrew.mcaddon holds the four structures and no probe; packs/gametest keeps the probes', (t) => {
+test('AC7: dist/andrew.mcaddon holds the four structures and no probe; the gametest and selftest packs keep the probes', (t) => {
   const archive = join(projectRoot, 'dist', 'andrew.mcaddon');
   if (!existsSync(archive)) {
     t.skip(`${archive} not built yet — run "npm run build" first`);
@@ -311,4 +311,6 @@ test('AC7: dist/andrew.mcaddon holds the four structures and no probe; packs/gam
   const gtDir = join(projectRoot, 'packs', 'gametest', 'structures', 'andrew');
   const gtFiles = readdirSync(gtDir);
   assert.ok(gtFiles.includes('probe.mcstructure') && gtFiles.includes('probe_box.mcstructure'), `gametest pack: ${gtFiles}`);
+  const stFiles = readdirSync(join(projectRoot, 'packs', 'selftest', 'structures', 'andrew'));
+  assert.deepEqual(stFiles.sort(), ['probe.mcstructure', 'probe_box.mcstructure'], 'selftest pack');
 });

@@ -5,7 +5,7 @@
 //      (the strf test hook is compiled into this one and the gametest bundle,
 //      never into the release script)
 //   3. compile src/structures/templates -> packs/behavior/structures/andrew/,
-//      except the probe templates, which go to packs/gametest/structures/andrew/
+//      except the probe templates, which go to the dev-only gametest and selftest packs
 //   4. validate both release packs and the selftest pack
 //   5. zip packs/behavior and packs/resource into dist/andrew.mcaddon
 //
@@ -97,7 +97,7 @@ function build() {
   step('compile structure templates', () => {
     const { release, gametest } = buildPackStructures();
     for (const r of release) process.stdout.write(`  andrew:${r.id} -> ${r.bytes} bytes\n`);
-    for (const r of gametest) process.stdout.write(`  andrew:${r.id} -> ${r.bytes} bytes (gametest pack, not released)\n`);
+    for (const r of gametest) process.stdout.write(`  andrew:${r.id} -> ${r.bytes} bytes (gametest and selftest packs, not released)\n`);
   });
 
   step('validate packs', () => {

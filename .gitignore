@@ -4,6 +4,7 @@ dist/
 packs/behavior/scripts/
 packs/behavior/structures/
 packs/selftest/scripts/
+packs/selftest/structures/
 packs/gametest/scripts/
 packs/gametest/structures/
 docker/bds/data/
