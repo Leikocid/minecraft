@@ -1,8 +1,9 @@
 // The Mini Warden City body on a real engine (§13.2, §13.4, §13.6, L0-wrdn):
 // the natural roll on a buried site built in the flat test world, its top on
-// Y −45…−35 measured from the blocks; both spots — the city and the surface
+// Y −45…−35 and its bottom over the world floor measured from the blocks, a
+// draw that would reach the floor rejected before any write; both spots — the city and the surface
 // marker — loaded and judged before the first write, either one cancelling the
-// candidate; 10 chests of vanilla chests/ancient_city judged by their
+// candidate; 40 chests of vanilla chests/ancient_city judged by their
 // contents; no Warden and no guard; a restart that neither adds chests nor
 // refills a plundered one. Every test restores the flat world it built on.
 
@@ -11,12 +12,13 @@ import { Test, registerAsync } from "@minecraft/server-gametest";
 import { MARKER_SPOT, markerCells } from "../structures/bodies/warden-city";
 import { BODIES } from "../structures/bodies";
 import { type Box, boxOf, sliceBox } from "../structures/clear";
-import type { RollDef } from "../structures/config";
+import { ROLL_DEFS, type RollDef } from "../structures/config";
 import { ANCIENT_CITY } from "../structures/loot";
 import { ARMOR_SLOTS, CATEGORIES } from "../structures/loot-table";
 import { CHESTS_FILLED, GUARDS_SPAWNED } from "../structures/place";
 import { COLLISION_MARGIN, type Instance, type Vec3, SALT_KEY, clearTestHook, installTestHook } from "../structures/registry";
-import { type Candidate, buildCandidate } from "../structures/roll";
+import { PROFILES, depth } from "../structures/profiles";
+import { type Candidate, buildCandidate, rollUnit } from "../structures/roll";
 import { toWorld } from "../structures/rotate";
 import { type StrfEngine, StrfRuntime, engineStrf } from "../structures/runtime";
 import { centreRing, coveredChunks } from "../structures/site";
@@ -29,6 +31,8 @@ const CHUNK = 16;
 const GUARD_TAG = "andrew:guard:";
 /** The flat world's grass; everything above it is built by the test and removed again. */
 const FLAT_GRASS = -61;
+/** The Overworld's lowest block: the flat world's bedrock, never touched. A city may reach down to one above it. */
+const WORLD_FLOOR = -64;
 /** Grass of the built site: six blocks of rock and one of dirt over the highest possible city top. */
 const SURFACE = -28;
 const SIZE: Vec3 = [...WARDEN_CITY_SIZE];
@@ -130,9 +134,13 @@ const cityDef = (rt: StrfRuntime): RollDef => {
   return d;
 };
 
-/** The worked area of a candidate: its footprint plus the margin and two more columns. */
+/**
+ * The worked area of a candidate: its footprint plus the margin and two more
+ * columns, from just over the bedrock up: a 20-high city reaches through the
+ * flat world's own dirt and grass, which restore() lays back.
+ */
 const areaOf = (c: Candidate): Box => ({
-  min: [c.x - COLLISION_MARGIN - 2, FLAT_GRASS + 1, c.z - COLLISION_MARGIN - 2],
+  min: [c.x - COLLISION_MARGIN - 2, WORLD_FLOOR + 1, c.z - COLLISION_MARGIN - 2],
   max: [c.x + c.size[0] + COLLISION_MARGIN + 1, SURFACE + 3, c.z + c.size[2] + COLLISION_MARGIN + 1],
 });
 
@@ -144,12 +152,27 @@ function buildSite(dim: Dimension, area: Box, surface: number): void {
   fillBox(dim, { min: [area.min[0], surface, area.min[2]], max: [area.max[0], surface, area.max[2]] }, "minecraft:grass_block");
 }
 
-/** Chests emptied first so the air fill drops nothing; then every mob and item in reach. */
-function restore(dim: Dimension, area: Box, inst: Instance | undefined): void {
+/** The flat world's layers from the area's bottom to its grass, read before the site is built over them. */
+function flatLayers(dim: Dimension, area: Box): string[] {
+  const out: string[] = [];
+  for (let y = area.min[1]; y <= FLAT_GRASS; y++) {
+    const t = dim.getBlock({ x: area.min[0], y, z: area.min[2] })?.typeId;
+    if (t === undefined) throw new Error(`flat layer ${y} unloaded`);
+    out.push(t);
+  }
+  return out;
+}
+
+/** Chests emptied first so the air fill drops nothing; the flat layers laid back; then every mob and item in reach. */
+function restore(dim: Dimension, area: Box, inst: Instance | undefined, layers: readonly string[]): void {
   if (inst !== undefined) for (const p of chestCells(inst)) dim.getBlock(v(p))?.getComponent("minecraft:inventory")?.container?.clearAll();
   fillBox(dim, area, "minecraft:air");
+  layers.forEach((t, i) => {
+    const y = area.min[1] + i;
+    if (t !== "minecraft:air") fillBox(dim, { min: [area.min[0], y, area.min[2]], max: [area.max[0], y, area.max[2]] }, t);
+  });
   const centre: Vec3 = [(area.min[0] + area.max[0]) / 2, (area.min[1] + area.max[1]) / 2, (area.min[2] + area.max[2]) / 2];
-  for (const e of dim.getEntities({ location: v(centre), maxDistance: 48 })) if (e.typeId !== "minecraft:player") e.remove();
+  for (const e of dim.getEntities({ location: v(centre), maxDistance: 64 })) if (e.typeId !== "minecraft:player") e.remove();
 }
 
 const chestCells = (inst: Instance): Vec3[] => BODIES.warden_city.chests.map((c) => toWorld(inst.origin, c.local, SIZE, inst.rot));
@@ -162,11 +185,27 @@ const anyOf = (dim: Dimension, box: Box, types: string[]): boolean =>
 function measureCity(dim: Dimension, c: Pick<Candidate, "x" | "z" | "size">): { top: number; bottom: number } | undefined {
   const layer = (y: number): boolean => anyOf(dim, { min: [c.x, y, c.z], max: [c.x + c.size[0] - 1, y, c.z + c.size[2] - 1] }, CITY_TYPES);
   let top = SURFACE - 1;
-  while (top > FLAT_GRASS && !layer(top)) top--;
-  if (top === FLAT_GRASS) return undefined;
+  while (top > WORLD_FLOOR && !layer(top)) top--;
+  if (top === WORLD_FLOOR) return undefined;
   let bottom = top;
-  while (bottom - 1 > FLAT_GRASS && layer(bottom - 1)) bottom--;
+  while (bottom - 1 >= WORLD_FLOOR && layer(bottom - 1)) bottom--;
   return { top, bottom };
+}
+
+/**
+ * A fresh salt whose depth draw for the chunk's city either fits over the
+ * world floor (`fits`) or would reach it: the check itself reads the same draw.
+ */
+function saltFor(label: string, cx: number, cz: number, fits: boolean): string {
+  const def = ROLL_DEFS.find((d) => d.id === "warden_city");
+  const spec = PROFILES.warden_city.depth;
+  if (def === undefined || spec === undefined) throw new Error("no warden_city def or depth profile");
+  for (let i = 0; i < 500; i++) {
+    const salt = unique(`${label}${i}`);
+    const c = buildCandidate(salt, "o", cx, cz, def);
+    if (depth(c.size[1], rollUnit(salt, "o", c.x, c.z, def.id, "depth"), WORLD_FLOOR, spec).ok === fits) return salt;
+  }
+  throw new Error(`no salt ${fits ? "fits" : "reaches the floor"} for ${cx},${cz}`);
 }
 
 /** One chest's stacks, "typeId x amount" plus enchantments, sorted: slot order is random and does not count as different loot. */
@@ -210,10 +249,11 @@ registerAsync("andrew", "warden_body_generate", async (test: Test): Promise<void
   const [cx, cz] = farChunk(test, 420);
   const watch: Watch = { firstWrites: [], fills: [] };
   const store = new MemoryStore();
-  const rt = runtime(unique("gen"), watch, dim, store);
+  const rt = runtime(saltFor("gen", cx, cz, true), watch, dim, store);
   const cand = buildCandidate(rt.registry.salt(), "o", cx, cz, cityDef(rt));
   const area = areaOf(cand);
   const unload = await loadBox(test, dim, "andrew_gt_wr_gen", area);
+  const layers = flatLayers(dim, area);
   let inst: Instance | undefined;
   try {
     buildSite(dim, area, SURFACE);
@@ -229,9 +269,11 @@ registerAsync("andrew", "warden_body_generate", async (test: Test): Promise<void
     const recTop = city.origin[1] + city.size[1] - 1;
     log(
       `warden generate AC1 RESULT ${city.id} rot ${city.rot} origin ${city.origin.join(",")}: measured city top Y=${m?.top} bottom Y=${m?.bottom} ` +
-        `(height ${m === undefined ? "-" : m.top - m.bottom + 1}), record top ${recTop}, allowed −45…−35; surface ${SURFACE}; first write: ${watch.firstWrites.join(" | ")}`
+        `(height ${m === undefined ? "-" : m.top - m.bottom + 1} of ${SIZE[1]}), record top ${recTop}, allowed −45…−35, floor ${WORLD_FLOOR}; surface ${SURFACE}; first write: ${watch.firstWrites.join(" | ")}`
     );
     test.assert(m !== undefined && m.top >= -45 && m.top <= -35 && m.top === recTop, `measured top ${m?.top}, record ${recTop}`);
+    // Whole, not cut by the floor: every layer of the template stands in the world, over the bedrock.
+    test.assert(m !== undefined && m.bottom > WORLD_FLOOR && m.top - m.bottom + 1 === SIZE[1] && m.bottom === city.origin[1], `measured ${m?.bottom}…${m?.top}, origin ${city.origin[1]}`);
 
     // The marker on the surface, over the centre.
     const cells = markerCells({ x: city.origin[0], z: city.origin[2], rot: city.rot });
@@ -255,9 +297,9 @@ registerAsync("andrew", "warden_body_generate", async (test: Test): Promise<void
         `ancient-city items ${marks.join(",") || "none"}; record lc=${String(city.extras[CHESTS_FILLED])}`
     );
     log(`warden chests AC4 RESULT items the custom table cannot give: ${notCustom.length}/${items.size}: ${notCustom.join(",")}`);
-    test.assert(loot.length === 10 && empty === 0, `${empty} empty of ${loot.length}`);
-    test.assert(distinct === 10, `only ${distinct} distinct chest contents`);
-    test.assert(watch.fills.length === 10 && tables.size === 1 && tables.has(ANCIENT_CITY), `fills: ${watch.fills.join(" | ")}`);
+    test.assert(loot.length === 40 && empty === 0, `${empty} empty of ${loot.length}`);
+    test.assert(distinct === 40, `only ${distinct} distinct chest contents`);
+    test.assert(watch.fills.length === 40 && tables.size === 1 && tables.has(ANCIENT_CITY), `fills: ${watch.fills.join(" | ")}`);
     test.assert(marks.length > 0, "no item of the Ancient City table in any chest");
     test.assert(notCustom.length > 0, "every item could have come from the custom table");
 
@@ -284,14 +326,14 @@ registerAsync("andrew", "warden_body_generate", async (test: Test): Promise<void
     const resumed = rt2.resumeUnfinished();
     rt2.pumpPlacement(10);
     const again = generate(rt2, cx, cz);
-    const byHand = rt2.placeAt("warden_city", "o", cand.x + 15, cand.z + 15, city.rot, { id: city.id });
+    const byHand = rt2.placeAt("warden_city", "o", cand.x + (SIZE[0] - 1) / 2, cand.z + (SIZE[2] - 1) / 2, city.rot, { id: city.id });
     await test.idle(5);
     const after = chestCells(city).map((p) => chestLoot(dim, p).join(" "));
     let chestBlocks = 0;
     for (let x = box.min[0]; x <= box.max[0]; x++) {
       for (let y = box.min[1]; y <= box.max[1]; y++)
         for (let z = box.min[2]; z <= box.max[2]; z++) if (dim.getBlock({ x, y, z })?.typeId === "minecraft:chest") chestBlocks++;
-      if (x % 8 === 0) await test.idle(1);
+      await test.idle(1);
     }
     const changed = before.filter((b, i) => after[i] !== b).length;
     log(
@@ -300,10 +342,10 @@ registerAsync("andrew", "warden_body_generate", async (test: Test): Promise<void
     );
     test.assert(resumed === 0 && again.outcome === "existing" && byHand.kind === "blocked", `restart: ${resumed} ${again.outcome} ${byHand.kind}`);
     test.assert(watch2.firstWrites.length === 0 && watch2.fills.length === 0, "the restart wrote or filled");
-    test.assert(chestBlocks === 10 && after[3] === "" && changed === 0, `chests ${chestBlocks}, plundered ${after[3]}, changed ${changed}`);
+    test.assert(chestBlocks === 40 && after[3] === "" && changed === 0, `chests ${chestBlocks}, plundered ${after[3]}, changed ${changed}`);
     test.succeed();
   } finally {
-    restore(dim, area, inst);
+    restore(dim, area, inst, layers);
     unload();
   }
 })
@@ -321,6 +363,8 @@ interface SiteCase {
   build(dim: Dimension, c: Candidate): string;
   expect: "planned" | "rejected" | "pending";
   reason?: string;
+  /** Whether the salt's depth draw fits over the world floor; every case but "floor" needs it to. */
+  fits?: false;
 }
 
 const centreOf = (c: Candidate): { x: number; z: number } => {
@@ -365,7 +409,7 @@ const SITE_CASES: readonly SiteCase[] = [
     // Planks deep in the city box: the marker is fine, the city is not.
     build(dim, c) {
       const k = centreOf(c);
-      // −45 lies between every possible bottom (−57…−47) and top (−45…−35).
+      // −45 lies between every possible bottom (−63…−54) and top (−44…−35).
       dim.getBlock({ x: k.x, y: -45, z: k.z })?.setType("minecraft:oak_planks");
       return `oak_planks at ${k.x},-45,${k.z}`;
     },
@@ -380,6 +424,16 @@ const SITE_CASES: readonly SiteCase[] = [
     build: () => "ground at -50",
     expect: "rejected",
     reason: "marker:no-cover",
+  },
+  {
+    label: "floor",
+    offset: 460,
+    surface: SURFACE,
+    // Flat dry land, but the draw puts the top at −45: the 20-high city would reach the bedrock.
+    build: () => "flat dry land, top drawn at -45",
+    expect: "rejected",
+    reason: "floor",
+    fits: false,
   },
   {
     label: "dry",
@@ -411,10 +465,11 @@ registerAsync("andrew", "warden_body_site", async (test: Test): Promise<void> =>
   for (const sc of SITE_CASES) {
     const [cx, cz] = farChunk(test, sc.offset);
     const watch: Watch = { firstWrites: [], fills: [] };
-    const rt = runtime(unique(sc.label), watch, dim);
+    const rt = runtime(saltFor(sc.label, cx, cz, sc.fits ?? true), watch, dim);
     const cand = buildCandidate(rt.registry.salt(), "o", cx, cz, cityDef(rt));
     const area = areaOf(cand);
     const unload = await loadBox(test, dim, `andrew_gt_wr_${sc.label}`, area);
+    const layers = flatLayers(dim, area);
     let inst: Instance | undefined;
     try {
       buildSite(dim, area, sc.surface);
@@ -440,7 +495,7 @@ registerAsync("andrew", "warden_body_site", async (test: Test): Promise<void> =>
       );
       verdicts.push(`${sc.label}:${ok ? "ok" : "FAIL"}`);
     } finally {
-      restore(dim, area, inst);
+      restore(dim, area, inst, layers);
       unload();
     }
     // A ticking area added in the tick another was removed never loads its chunks (measured on BDS 1.26.51.1).

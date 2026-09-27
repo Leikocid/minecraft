@@ -8,7 +8,7 @@ import { Test, registerAsync } from "@minecraft/server-gametest";
 import { type Box, boxOf, sliceBox } from "../structures/clear";
 import type { Rotation, Vec3 } from "../structures/registry";
 import { ENGINE_ROTATION, ROTATIONS, rotatedSize, toWorld } from "../structures/rotate";
-import wardenCityTemplate, { CHESTS, SHRIEKERS, WARDEN_CITY_ID, WARDEN_CITY_SIZE, markerColumns } from "../structures/templates/warden-city";
+import wardenCityTemplate, { CENTER_XZ, CHESTS, SHRIEKERS, WARDEN_CITY_ID, WARDEN_CITY_SIZE, markerColumns } from "../structures/templates/warden-city";
 import { loadBox } from "./structures-place";
 
 const STRUCTURE = "andrew:platform";
@@ -87,15 +87,15 @@ function layMarker(site: Site, rot: Rotation): Vec3 {
 async function withSites(test: Test, name: string, body: (site: Site) => Promise<void>): Promise<void> {
   const dim = test.getDimension();
   const b = test.worldBlockLocation({ x: 0, y: 0, z: 0 });
-  const loc: Vec3 = [b.x - 15, b.y + 6, b.z - 15];
+  const loc: Vec3 = [b.x - CENTER_XZ[0], b.y + 6, b.z - CENTER_XZ[1]];
   const surfaceY = loc[1] + SIZE[1] + COVER;
-  const box: Box = { min: [loc[0], loc[1], loc[2]], max: [loc[0] + 30, surfaceY + 1, loc[2] + 30] };
+  const box: Box = { min: [loc[0], loc[1], loc[2]], max: [loc[0] + SIZE[0] - 1, surfaceY + 1, loc[2] + SIZE[2] - 1] };
   const unload = await loadBox(test, dim, name, box);
   try {
     await body({ dim, loc, box, surfaceY });
   } finally {
     fillBox(dim, box, "minecraft:air");
-    for (const e of dim.getEntities({ location: v([loc[0] + 15, loc[1] + 10, loc[2] + 15]), maxDistance: 32, type: "minecraft:item" })) e.remove();
+    for (const e of dim.getEntities({ location: v([loc[0] + CENTER_XZ[0], loc[1] + SIZE[1] / 2, loc[2] + CENTER_XZ[1]]), maxDistance: 64, type: "minecraft:item" })) e.remove();
     unload();
   }
 }
@@ -127,12 +127,12 @@ registerAsync("andrew", "warden_rotations", async (test: Test): Promise<void> =>
       // The city's box, block by block.
       const cityBox = boxOf(loc, rotatedSize(SIZE, rot));
       const counts = new Map<string, number>();
-      const found = new Map<string, { typeId: string; states: Record<string, boolean | number | string> }>();
+      const found = new Map<string, string>();
       const min: Vec3 = [Infinity, Infinity, Infinity];
       const max: Vec3 = [-Infinity, -Infinity, -Infinity];
       let stone = 0;
       for (let y = cityBox.min[1]; y <= cityBox.max[1]; y++) {
-        for (let x = cityBox.min[0]; x <= cityBox.max[0]; x++)
+        for (let x = cityBox.min[0]; x <= cityBox.max[0]; x++) {
           for (let z = cityBox.min[2]; z <= cityBox.max[2]; z++) {
             const blk = dim.getBlock({ x, y, z });
             if (blk === undefined) throw new Error(`${x},${y},${z} unloaded during the scan`);
@@ -142,10 +142,13 @@ registerAsync("andrew", "warden_rotations", async (test: Test): Promise<void> =>
               continue;
             }
             counts.set(blk.typeId, (counts.get(blk.typeId) ?? 0) + 1);
-            found.set(`${x},${y},${z}`, { typeId: blk.typeId, states: blk.permutation.getAllStates() });
+            found.set(`${x},${y},${z}`, blk.typeId);
             const p = [x, y, z];
             for (let i = 0; i < 3; i++) [min[i], max[i]] = [Math.min(min[i], p[i]), Math.max(max[i], p[i])];
           }
+          // About a thousand reads a tick: a whole 63×63 layer in one tick trips the script watchdog.
+          if ((x - cityBox.min[0]) % 16 === 15) await test.idle(1);
+        }
         await test.idle(1);
       }
       for (const [name, n] of facts.counts) if (counts.get(name) !== n) problems.push(`${name}: ${counts.get(name) ?? 0} in the world, ${n} in the template`);
@@ -155,12 +158,13 @@ registerAsync("andrew", "warden_rotations", async (test: Test): Promise<void> =>
 
       for (const c of CHESTS) {
         const w = fmt(toWorld(loc, local(c.at), SIZE, rot));
-        if (found.get(w)?.typeId !== "minecraft:chest") problems.push(`no chest at ${w} (template ${fmt(local(c.at))})`);
+        if (found.get(w) !== "minecraft:chest") problems.push(`no chest at ${w} (template ${fmt(local(c.at))})`);
       }
       for (const sh of SHRIEKERS) {
-        const w = fmt(toWorld(loc, local(sh.at), SIZE, rot));
-        const got = found.get(w);
-        if (got?.typeId !== "minecraft:sculk_shrieker" || got.states.can_summon !== true) problems.push(`${sh.slot} shrieker at ${w}: ${JSON.stringify(got)}`);
+        const p = toWorld(loc, local(sh.at), SIZE, rot);
+        const blk = dim.getBlock(v(p));
+        const got = blk === undefined ? undefined : { typeId: blk.typeId, states: blk.permutation.getAllStates() };
+        if (got?.typeId !== "minecraft:sculk_shrieker" || got.states.can_summon !== true) problems.push(`${sh.slot} shrieker at ${fmt(p)}: ${JSON.stringify(got)}`);
       }
 
       // The marker: the rotated pattern exactly, and its centre over the centre of what was built.
@@ -171,12 +175,14 @@ registerAsync("andrew", "warden_rotations", async (test: Test): Promise<void> =>
         if (!ok) problems.push(`marker ${c.kind} at ${c.x},${c.z}: ${top} under ${above}`);
       }
       let surfaceSculk = 0;
-      for (let x = site.box.min[0]; x <= site.box.max[0]; x++)
+      for (let x = site.box.min[0]; x <= site.box.max[0]; x++) {
         for (let z = site.box.min[2]; z <= site.box.max[2]; z++) {
           const t = dim.getBlock({ x, y: site.surfaceY, z })?.typeId;
           const a = dim.getBlock({ x, y: site.surfaceY + 1, z })?.typeId;
           if (t === "minecraft:sculk" || a === "minecraft:sculk_vein") surfaceSculk++;
         }
+        if (x % 16 === 0) await test.idle(1);
+      }
       const want = markerColumns(loc, rot).length;
       if (surfaceSculk !== want) problems.push(`${surfaceSculk} sculk columns on the surface, the marker has ${want}`);
       const centreX = (min[0] + max[0]) / 2;
@@ -195,7 +201,7 @@ registerAsync("andrew", "warden_rotations", async (test: Test): Promise<void> =>
   test.succeed();
 })
   .structureName(STRUCTURE)
-  .maxTicks(1200)
+  .maxTicks(2400)
   .tag("andrew");
 
 registerAsync("andrew", "warden_dig_down", async (test: Test): Promise<void> => {

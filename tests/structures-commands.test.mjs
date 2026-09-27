@@ -308,7 +308,7 @@ test('permission: a non-operator is refused every action and nothing is created'
 test('bodies: every type has a real body with its own loot tables', () => {
   assert.deepEqual(Object.keys(BODIES).sort(), [...TYPES].sort());
   assert.ok(Object.values(BODIES).every((b) => b.standIn === false));
-  assert.deepEqual(BODIES.warden_city.chests.map((c) => c.table), Array(10).fill('chests/ancient_city'));
+  assert.deepEqual(BODIES.warden_city.chests.map((c) => c.table), Array(40).fill('chests/ancient_city'));
   assert.deepEqual(BODIES.bastion.chests.map((c) => c.table), [...Array(3).fill('chests/bastion_treasure'), ...Array(7).fill('chests/bastion_other')]);
 });
 
