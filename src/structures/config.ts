@@ -3,6 +3,10 @@
 
 import type { DimShort, Vec3 } from "./registry";
 import type { KeyValueStore } from "./store";
+import { AIRSHIP_SIZE } from "./templates/airship";
+import { BASTION_SIZE } from "./templates/bastion";
+import { WARDEN_CITY_SIZE } from "./templates/warden-city";
+import { WINDMILL_SIZE } from "./templates/windmill";
 
 export type StructureId = "windmill" | "airship" | "warden_city" | "bastion";
 
@@ -28,10 +32,10 @@ export const CHANCES: Readonly<Record<StructureId, number>> = {
  * earlier ones and is cancelled if it collides with them.
  */
 export const ROLL_DEFS: readonly RollDef[] = [
-  { id: "windmill", dim: "o", chance: CHANCES.windmill, size: [35, 30, 35] },
-  { id: "airship", dim: "o", chance: CHANCES.airship, size: [15, 7, 12] },
-  { id: "warden_city", dim: "o", chance: CHANCES.warden_city, size: [30, 15, 30] },
-  { id: "bastion", dim: "n", chance: CHANCES.bastion, size: [20, 12, 20] },
+  { id: "windmill", dim: "o", chance: CHANCES.windmill, size: [...WINDMILL_SIZE] },
+  { id: "airship", dim: "o", chance: CHANCES.airship, size: [...AIRSHIP_SIZE] },
+  { id: "warden_city", dim: "o", chance: CHANCES.warden_city, size: [...WARDEN_CITY_SIZE] },
+  { id: "bastion", dim: "n", chance: CHANCES.bastion, size: [...BASTION_SIZE] },
 ];
 
 /** The End and every custom dimension map to undefined: nothing rolls there. */

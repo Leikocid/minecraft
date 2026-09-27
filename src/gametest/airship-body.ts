@@ -67,6 +67,9 @@ function groundAt(dim: Dimension, x: number, z: number): number {
   return top.location.y;
 }
 
+/** Half an Airship's footprint diagonal plus a margin: how far any of its cells lies from its centre. */
+const HALF_REACH = Math.ceil(Math.hypot(AIRSHIP_SIZE[0], AIRSHIP_SIZE[2]) / 2) + 2;
+
 const airshipDef = (rt: StrfRuntime): RollDef => {
   const d = rt.defs.find((x) => x.id === "airship");
   if (d === undefined) throw new Error("no airship roll def");
@@ -143,12 +146,13 @@ const SITE_CASES: readonly SiteCase[] = [
   {
     label: "water",
     offset: 200,
-    // A still pond under the last 4 cells of the rotated long axis: the centre column stays dry.
+    // A still pond under the last third of the rotated long axis: the centre column stays dry.
     build(dim, c, ground) {
       const alongZ = c.size[2] > c.size[0];
+      const n = Math.ceil(Math.max(c.size[0], c.size[2]) / 3);
       const pond: Box = alongZ
-        ? { min: [c.x, ground, c.z + c.size[2] - 4], max: [c.x + c.size[0] - 1, ground, c.z + c.size[2] - 1] }
-        : { min: [c.x + c.size[0] - 4, ground, c.z], max: [c.x + c.size[0] - 1, ground, c.z + c.size[2] - 1] };
+        ? { min: [c.x, ground, c.z + c.size[2] - n], max: [c.x + c.size[0] - 1, ground, c.z + c.size[2] - 1] }
+        : { min: [c.x + c.size[0] - n, ground, c.z], max: [c.x + c.size[0] - 1, ground, c.z + c.size[2] - 1] };
       fillBox(dim, pond, "minecraft:water");
       const [mx, mz] = footprintCentre(c);
       const centreTop = dim.getTopmostBlock({ x: mx, z: mz })?.typeId;
@@ -295,6 +299,9 @@ registerAsync("andrew", "airship_linked_ring", async (test: Test): Promise<void>
     );
     test.assert(o.status === "placed" && o.airship !== undefined, `linked: ${o.status}`);
     test.assert(d >= LINKED_RING.rMin && d <= LINKED_RING.rMax, `distance ${d}`);
+    const over = overParent(w)({ x: o.airship!.origin[0], z: o.airship!.origin[2], size: o.airship!.size });
+    log(`airship linked footprint ${o.airship!.size[0]}x${o.airship!.size[2]} rot ${o.airship!.rot} over the Windmill plot: ${over ?? "no"}`);
+    test.assert(over === undefined, "the linked Airship hangs over the Windmill plot");
     test.assert(o.airship!.state === "done", `airship state ${o.airship!.state}`);
     test.assert(rt.linked.attempts.get(w.id) === 1 && rec?.extras[LINKED_TRIED] === true, "not exactly one attempt");
 
@@ -427,7 +434,7 @@ registerAsync("andrew", "airship_linked_no_merge", async (test: Test): Promise<v
   try {
     world.setDifficulty(Difficulty.Easy);
     // An independent Airship already inside the future ring, 60 blocks east of the Windmill centre.
-    unloads.push(await loadBox(test, dim, "andrew_gt_as_merge_i", { min: [x + 48, 0, z - 12], max: [x + 72, 0, z + 12] }));
+    unloads.push(await loadBox(test, dim, "andrew_gt_as_merge_i", { min: [x + 60 - HALF_REACH, 0, z - HALF_REACH], max: [x + 60 + HALF_REACH, 0, z + HALF_REACH] }));
     const ind = rt.placeAt("airship", "o", x + 60, z, 0);
     test.assert(ind.kind === "placed", `independent airship: ${JSON.stringify(ind)}`);
     if (ind.kind !== "placed") return;
@@ -503,7 +510,7 @@ registerAsync("andrew", "airship_linked_no_merge", async (test: Test): Promise<v
 // ------------------------------------------------ AC6: an all-invalid ring gives no Airship and touches nothing
 
 /** Half-side of the square the ring's footprints can reach: 100 + half an Airship's diagonal + margin. */
-const RING_REACH = 112;
+const RING_REACH = LINKED_RING.rMax + HALF_REACH;
 /** Half-side of the dry square kept under the Windmill plot and its margin. */
 const DRY = 24;
 

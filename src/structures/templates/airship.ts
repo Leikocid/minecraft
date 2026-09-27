@@ -3,12 +3,11 @@
 // packs/behavior/structures/andrew/airship.mcstructure (engine id
 // "andrew:airship"). Only rotation varies at placement.
 //
-// Template-local axes: x west→east (the long axis), y up, z north→south.
-// Lower hull, the gondola, is y 0..5; the balloon above it is solid decoration.
-//
-// ASSUMPTION (L0-airs-as01, the spec does not fix the axis): the two doors sit
-// on the short ends of the long axis — bow (x = 0) and stern (x = 14) — and the
-// corridor runs straight between them. tests/airship-template.test.mjs pins it.
+// Template-local axes: x west→east (the long axis, bow at x = 1), y up, z
+// north→south. A round envelope 27 long and 7 across (x 1..27, y 4..10) with
+// four tail fins sits straight on a small gondola (x 6..14, y 0..3). The
+// length is a deliberate departure from the ≈15 of §5.1: at 15 the silhouette
+// cannot hold the gondola's contents and still read as an airship.
 //
 // Pure data, no @minecraft/server: the GameTest pack imports the named points
 // below, node evaluates the default export at build time.
@@ -18,44 +17,64 @@ import type { TemplateBlock } from "./windmill-fields";
 export type Point = readonly [number, number, number];
 
 export const AIRSHIP_ID = "andrew:airship";
-export const AIRSHIP_SIZE: Point = [15, 12, 7];
+export const AIRSHIP_SIZE: Point = [28, 11, 7];
 
-/** Gondola floor and ceiling; players stand at y = 1 with headroom up to y = 4. */
-export const GONDOLA_FLOOR_Y = 0;
-export const GONDOLA_TOP_Y = 5;
-const MID_Z = 3;
-const DIVIDER_X = 7;
+/** Envelope axis: every station is a round section centred here. */
+export const AXIS_Y = 7;
+export const AXIS_Z = 3;
 
-export const DOORS: readonly { lower: Point; upper: Point; facing: "east" | "west" }[] = [
-  { lower: [0, 1, MID_Z], upper: [0, 2, MID_Z], facing: "east" },
-  { lower: [14, 1, MID_Z], upper: [14, 2, MID_Z], facing: "west" },
+/** Envelope diameter per station x; x = 0 is empty, the template is one block longer than the envelope. */
+export const ENVELOPE_DIAMETER: readonly number[] = [
+  0, 1, 3, 5, 5, 5, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 5, 5, 5, 5, 5, 5, 3, 3, 3, 3, 1, 1,
 ];
 
-/** In the corridor floor, so the 1-wide corridor stays walkable door to door. */
-export const SPAWNER: { at: Point; entity: string } = { at: [DIVIDER_X, GONDOLA_FLOOR_Y, MID_Z], entity: "minecraft:vindicator" };
+/** Half-width of a round section of diameter d at |dy| rows off the axis. */
+const HALF: Readonly<Record<number, readonly number[]>> = { 1: [0], 3: [1, 0], 5: [2, 2, 1], 7: [3, 3, 2, 1] };
+
+export const GONDOLA = { x0: 6, x1: 14, z0: 1, z1: 5, floorY: 0, roofY: 3 } as const;
+const MID_X = 10;
+
+/** Fins: x 21..26, the vertical pair in the plane z = AXIS_Z, the horizontal pair in y = AXIS_Y. */
+export const FINS = { x0: 21, x1: 26, y0: 4, y1: 10, z0: 0, z1: 6 } as const;
+
+/** Doors in the two long walls, halfway along, facing into the gondola across its width. */
+export const DOORS: readonly { lower: Point; upper: Point; facing: "north" | "south" }[] = [
+  { lower: [MID_X, 1, GONDOLA.z0], upper: [MID_X, 2, GONDOLA.z0], facing: "south" },
+  { lower: [MID_X, 1, GONDOLA.z1], upper: [MID_X, 2, GONDOLA.z1], facing: "north" },
+];
+
+/** In the floor under the aisle between the doors, so the aisle stays walkable door to door. */
+export const SPAWNER: { at: Point; entity: string } = { at: [MID_X, GONDOLA.floorY, AXIS_Z], entity: "minecraft:vindicator" };
 
 type Facing = "north" | "east" | "south" | "west";
 
 /**
- * The four rooms: one-wide rows along the hull, split by the divider at x = 7,
- * each entered by a doorway in the corridor partition. The doorway and the
- * lamp sit at opposite ends of the room so the lamp's light reaches the
- * spawner's reach at no more than 7 (the Windmill's Lmax).
+ * Ten single chests on the 7×3 floor, none touching another, none on the aisle
+ * between the doors: four along each long wall, two on the centre line.
  */
-export const ROOMS: readonly { z: number; x0: number; x1: number; doorwayX: number; lamp: Point; chests: readonly { at: Point; facing: Facing }[] }[] = [
-  { z: 1, x0: 2, x1: 6, doorwayX: 5, lamp: [2, 4, 1], chests: [{ at: [2, 1, 1], facing: "east" }, { at: [6, 1, 1], facing: "west" }] },
-  { z: 1, x0: 8, x1: 12, doorwayX: 9, lamp: [12, 4, 1], chests: [{ at: [8, 1, 1], facing: "east" }, { at: [12, 1, 1], facing: "west" }] },
-  { z: 5, x0: 2, x1: 6, doorwayX: 5, lamp: [2, 4, 5], chests: [{ at: [2, 1, 5], facing: "east" }, { at: [6, 1, 5], facing: "west" }] },
-  { z: 5, x0: 8, x1: 12, doorwayX: 9, lamp: [12, 4, 5], chests: [{ at: [8, 1, 5], facing: "east" }, { at: [12, 1, 5], facing: "west" }] },
+export const CHESTS: readonly { at: Point; facing: Facing }[] = [
+  ...[7, 9, 11, 13].map((x) => ({ at: [x, 1, 2] as Point, facing: "south" as Facing })),
+  ...[7, 9, 11, 13].map((x) => ({ at: [x, 1, 4] as Point, facing: "north" as Facing })),
+  { at: [8, 1, AXIS_Z], facing: "east" },
+  { at: [12, 1, AXIS_Z], facing: "west" },
 ];
 
-/** Two chests in niches of the corridor partitions, facing into the corridor. */
-export const CORRIDOR_CHESTS: readonly { at: Point; facing: Facing }[] = [
-  { at: [DIVIDER_X, 1, 2], facing: "south" },
-  { at: [DIVIDER_X, 1, 4], facing: "north" },
+/** Lit tips: bow, stern and the outer end of every fin. */
+export const LIGHTS: readonly Point[] = [
+  [1, AXIS_Y, AXIS_Z],
+  [27, AXIS_Y, AXIS_Z],
+  [FINS.x1, FINS.y0, AXIS_Z],
+  [FINS.x1, FINS.y1, AXIS_Z],
+  [FINS.x1, AXIS_Y, FINS.z0],
+  [FINS.x1, AXIS_Y, FINS.z1],
 ];
 
-export const CHESTS: readonly { at: Point; facing: Facing }[] = [...ROOMS.flatMap((r) => r.chests), ...CORRIDOR_CHESTS];
+export function inEnvelope(x: number, y: number, z: number): boolean {
+  const d = ENVELOPE_DIAMETER[x] ?? 0;
+  if (d === 0) return false;
+  const dy = Math.abs(y - AXIS_Y);
+  return dy <= (d - 1) / 2 && Math.abs(z - AXIS_Z) <= HALF[d][dy];
+}
 
 const key = (x: number, y: number, z: number): string => `${x},${y},${z}`;
 
@@ -64,66 +83,69 @@ const GRAY: TemplateBlock = { name: "minecraft:gray_concrete" };
 const LIGHT_GRAY: TemplateBlock = { name: "minecraft:light_gray_concrete" };
 const GLASS: TemplateBlock = { name: "minecraft:glass" };
 const IRON: TemplateBlock = { name: "minecraft:iron_block" };
-const CHAIN: TemplateBlock = { name: "minecraft:iron_chain", states: { pillar_axis: "y" } };
-
-/** Gondola plan: the z range of each x column — an oval tapering to the door ends. */
-function gondolaZ(x: number): [number, number] {
-  if (x === 0 || x === 14) return [2, 4];
-  if (x === 1 || x === 13) return [1, 5];
-  return [0, 6];
-}
-const inPlan = (x: number, z: number): boolean => x >= 0 && x <= 14 && z >= gondolaZ(x)[0] && z <= gondolaZ(x)[1];
-const onRim = (x: number, z: number): boolean => [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dz]) => !inPlan(x + dx, z + dz));
+const LIGHT: TemplateBlock = { name: "minecraft:sea_lantern" };
+const TOP_SLAB: TemplateBlock = { name: "minecraft:smooth_stone_slab", states: { "minecraft:vertical_half": "bottom" } };
+const UNDER_SLAB: TemplateBlock = { name: "minecraft:polished_andesite_slab", states: { "minecraft:vertical_half": "top" } };
 
 type Put = (x: number, y: number, z: number, b: TemplateBlock) => void;
 
-function gondola(set: Put): void {
-  for (let x = 0; x <= 14; x++)
-    for (let z = gondolaZ(x)[0]; z <= gondolaZ(x)[1]; z++)
-      for (let y = GONDOLA_FLOOR_Y; y <= GONDOLA_TOP_Y; y++) {
-        const rim = onRim(x, z);
-        // Rounded keel and roof edge along the long sides.
-        if ((z === 0 || z === 6) && (y === GONDOLA_FLOOR_Y || y === GONDOLA_TOP_Y)) continue;
-        if (y === GONDOLA_FLOOR_Y) set(x, y, z, rim ? GRAY : LIGHT_GRAY);
-        else if (y === GONDOLA_TOP_Y || rim) set(x, y, z, GRAY);
-        else set(x, y, z, AIR);
+/** Shaded like a lit cylinder: the lower third darker. */
+const envelopeBlock = (y: number): TemplateBlock => (y <= AXIS_Y - 2 ? GRAY : LIGHT_GRAY);
+
+/** Solid, so the envelope holds no space for anything (§5.1: decoration only). */
+function envelope(set: Put): void {
+  const [sx, sy, sz] = AIRSHIP_SIZE;
+  for (let x = 0; x < sx; x++) for (let y = GONDOLA.roofY + 1; y < sy; y++) for (let z = 0; z < sz; z++) if (inEnvelope(x, y, z)) set(x, y, z, envelopeBlock(y));
+
+  // A half block over every step up to a neighbouring column and under every
+  // step down, so the stepped outline reads as a curve.
+  const column = (x: number, z: number): [number, number] | undefined => {
+    let lo = Infinity;
+    let hi = -Infinity;
+    for (let y = 0; y < sy; y++)
+      if (inEnvelope(x, y, z)) {
+        lo = Math.min(lo, y);
+        hi = Math.max(hi, y);
       }
+    return hi < lo ? undefined : [lo, hi];
+  };
+  for (let x = 0; x < sx; x++)
+    for (let z = 0; z < sz; z++) {
+      const own = column(x, z);
+      if (own === undefined) continue;
+      const near = [[x + 1, z], [x - 1, z], [x, z + 1], [x, z - 1]].map(([nx, nz]) => column(nx, nz)).filter((c) => c !== undefined);
+      if (near.some(([, hi]) => hi > own[1])) set(x, own[1] + 1, z, TOP_SLAB);
+      if (near.some(([lo]) => lo < own[0]) && own[0] - 1 > GONDOLA.roofY) set(x, own[0] - 1, z, UNDER_SLAB);
+    }
+}
 
-  // Corridor partitions and the room divider, full height.
-  for (let x = 1; x <= 13; x++) for (let y = 1; y <= 4; y++) for (const z of [2, 4]) set(x, y, z, LIGHT_GRAY);
-  for (let y = 1; y <= 4; y++) for (const z of [1, 5]) set(DIVIDER_X, y, z, LIGHT_GRAY);
-  for (const r of ROOMS) {
-    const pz = r.z < MID_Z ? 2 : 4;
-    for (let y = 1; y <= 2; y++) set(r.doorwayX, y, pz, AIR);
+/** Four fins in a cross; each fills its plane out to the fin box beyond the envelope. */
+function fins(set: Put): void {
+  for (let x = FINS.x0; x <= FINS.x1; x++) {
+    for (let y = FINS.y0; y <= FINS.y1; y++) if (!inEnvelope(x, y, AXIS_Z)) set(x, y, AXIS_Z, IRON);
+    for (let z = FINS.z0; z <= FINS.z1; z++) if (!inEnvelope(x, AXIS_Y, z)) set(x, AXIS_Y, z, IRON);
   }
-  // A corridor chest needs air above it to open.
-  for (const c of CORRIDOR_CHESTS) set(c.at[0], c.at[1] + 1, c.at[2], AIR);
+}
 
-  // Intact windows in the rooms' outer walls, away from the lamps.
-  for (const r of ROOMS) {
-    const wz = r.z < MID_Z ? 0 : 6;
-    for (const x of [r.x0 + 1, r.x0 + 2, r.x0 + 3].filter((x) => x !== r.lamp[0])) set(x, 2, wz, GLASS);
-  }
+function gondola(set: Put): void {
+  const { x0, x1, z0, z1, floorY, roofY } = GONDOLA;
+  for (let x = x0; x <= x1; x++)
+    for (let z = z0; z <= z1; z++)
+      for (let y = floorY; y <= roofY; y++) {
+        const end = x === x0 || x === x1;
+        // The bow and stern walls stop short of floor and roof: a rounded nose.
+        if (end && (y === floorY || y === roofY)) continue;
+        const wall = end || z === z0 || z === z1;
+        if (y === floorY) set(x, y, z, wall ? GRAY : LIGHT_GRAY);
+        else if (y === roofY) set(x, y, z, GRAY);
+        else if (!wall) set(x, y, z, AIR);
+        else set(x, y, z, y === 2 ? GLASS : GRAY);
+      }
 
   for (const d of DOORS) {
     set(...d.lower, { name: "minecraft:wooden_door", states: { upper_block_bit: false, "minecraft:cardinal_direction": d.facing, open_bit: false, door_hinge_bit: false } });
     set(...d.upper, { name: "minecraft:wooden_door", states: { upper_block_bit: true, "minecraft:cardinal_direction": d.facing, open_bit: false, door_hinge_bit: false } });
-    set(d.lower[0], 3, MID_Z, IRON);
   }
-}
-
-/** The balloon: a solid ellipsoid, so there is no room inside it for anything. */
-function balloon(set: Put): void {
-  const [cx, cy, cz] = [7, 8.5, 3];
-  const [rx, ry, rz] = [7.5, 3, 3.5];
-  for (let x = 0; x <= 14; x++)
-    for (let y = GONDOLA_TOP_Y + 1; y < AIRSHIP_SIZE[1]; y++)
-      for (let z = 0; z <= 6; z++) {
-        const d = ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 + ((z - cz) / rz) ** 2;
-        if (d <= 1) set(x, y, z, y === 9 ? GRAY : LIGHT_GRAY);
-      }
-  // Chains from the gondola roof up to the balloon's underside.
-  for (const [x, z] of [[3, 1], [11, 1], [3, 5], [11, 5]]) set(x, GONDOLA_TOP_Y + 1, z, CHAIN);
 }
 
 /** The whole template in the compileTemplate format of scripts/lib/mcstructure.mjs. */
@@ -139,11 +161,12 @@ export default function airshipTemplate(): {
     cells.set(key(x, y, z), b);
   };
 
+  envelope(set);
+  fins(set);
   gondola(set);
-  balloon(set);
+  for (const p of LIGHTS) set(...p, LIGHT);
   for (const c of CHESTS) set(...c.at, { name: "minecraft:chest", states: { "minecraft:cardinal_direction": c.facing }, chest: { items: [] } });
   set(...SPAWNER.at, { name: "minecraft:mob_spawner", spawner: { entity: SPAWNER.entity } });
-  for (const r of ROOMS) set(...r.lamp, { name: "minecraft:lantern", states: { hanging: true } });
 
   // Legend: '.' is air, every other distinct block gets the next printable character.
   const blocks: Record<string, TemplateBlock> = { ".": AIR };

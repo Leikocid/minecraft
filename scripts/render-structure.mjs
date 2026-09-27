@@ -83,6 +83,8 @@ const COLOURS = {
   'minecraft:stone_brick_stairs': [136, 136, 136],
   'minecraft:stone_brick_slab': [136, 136, 136],
   'minecraft:smooth_stone': [148, 148, 148],
+  'minecraft:smooth_stone_slab': [168, 168, 168],
+  'minecraft:polished_andesite_slab': [118, 120, 118],
   'minecraft:gravel': [130, 126, 124],
   'minecraft:glass': [206, 226, 232],
   'minecraft:glass_pane': [206, 226, 232],

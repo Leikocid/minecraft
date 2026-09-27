@@ -1,6 +1,6 @@
 // The Airship template on a real engine: all four rotations judged by the
 // blocks in the world — counts per block type, the 10 chests, the one spawner
-// and the two doors on opposite ends (L0-airs-r001/r002). Every test clears
+// and the two doors on opposite sides (L0-airs-r001/r002). Every test clears
 // what it placed.
 
 import { BlockTypes, BlockVolume, type Dimension, StructureRotation, type Vector3, world } from "@minecraft/server";
@@ -20,6 +20,8 @@ const fmt = (p: Vec3): string => p.join(",");
 const local = (p: readonly number[]): Vec3 => [p[0], p[1], p[2]];
 
 const OPPOSITE: Record<string, string> = { north: "south", south: "north", east: "west", west: "east" };
+/** Blocks between the two lower door halves in the template. */
+const DOOR_GAP = Math.abs(DOORS[1].lower[0] - DOORS[0].lower[0]) + Math.abs(DOORS[1].lower[2] - DOORS[0].lower[2]);
 const STEP: Record<string, Vec3> = { north: [0, 0, -1], east: [1, 0, 0], south: [0, 0, 1], west: [-1, 0, 0] };
 
 function fillBox(dim: Dimension, box: Box, block: string): void {
@@ -60,9 +62,10 @@ function scan(dim: Dimension, box: Box): Cell[] {
 registerAsync("andrew", "airship_rotations", async (test: Test): Promise<void> => {
   const dim = test.getDimension();
   const b = test.worldBlockLocation({ x: 0, y: 0, z: 0 });
-  // Floating above the platform, as an Airship does; the rotated AABB is at most 15 wide either way.
-  const loc: Vec3 = [b.x - 7, b.y + 12, b.z - 7];
-  const box = boxOf(loc, [15, SIZE[1], 15]);
+  // Floating above the platform, as an Airship does; the rotated AABB fits a square of the long side.
+  const side = Math.max(SIZE[0], SIZE[2]);
+  const loc: Vec3 = [b.x - Math.floor(side / 2), b.y + 12, b.z - Math.floor(side / 2)];
+  const box = boxOf(loc, [side, SIZE[1], side]);
   const unload = await loadBox(test, dim, "andrew_gt_airship_a", box);
   const expected = templateCounts();
   const verdicts: string[] = [];
@@ -91,7 +94,7 @@ registerAsync("andrew", "airship_rotations", async (test: Test): Promise<void> =
       const wantSpawner = fmt(toWorld(loc, local(SPAWNER.at), SIZE, rot));
       if (spawners.length !== 1 || spawners[0] !== wantSpawner) problems.push(`spawners at ${spawners.join(" ")}, expected ${wantSpawner}`);
 
-      // Doors: each where the template puts it, facing inward, and the two on opposite ends facing each other.
+      // Doors: each where the template puts it, facing inward, and the two on opposite sides facing each other.
       const doors = found.filter((f) => f.typeId === "minecraft:wooden_door");
       const lowers: { at: Vec3; facing: string }[] = [];
       for (const d of DOORS) {
@@ -112,7 +115,7 @@ registerAsync("andrew", "airship_rotations", async (test: Test): Promise<void> =
         const len = Math.abs(delta[0]) + Math.abs(delta[2]);
         const step = STEP[a.facing];
         const along = delta[0] === step[0] * len && delta[2] === step[2] * len && delta[1] === 0;
-        if (OPPOSITE[a.facing] !== c.facing || !along || len !== 14) problems.push(`doors ${fmt(a.at)}→${a.facing} and ${fmt(c.at)}→${c.facing} are not on opposite ends facing each other`);
+        if (OPPOSITE[a.facing] !== c.facing || !along || len !== DOOR_GAP) problems.push(`doors ${fmt(a.at)}→${a.facing} and ${fmt(c.at)}→${c.facing} are not on opposite sides facing each other`);
       }
 
       for (const p of problems) log(`airship rot=${rot * 90} MISMATCH ${p}`);
@@ -125,7 +128,7 @@ registerAsync("andrew", "airship_rotations", async (test: Test): Promise<void> =
     test.succeed();
   } finally {
     fillBox(dim, box, "minecraft:air");
-    for (const e of dim.getEntities({ location: v([loc[0] + 7, loc[1] + 6, loc[2] + 7]), maxDistance: 24, type: "minecraft:item" })) e.remove();
+    for (const e of dim.getEntities({ location: v([loc[0] + side / 2, loc[1] + SIZE[1] / 2, loc[2] + side / 2]), maxDistance: side, type: "minecraft:item" })) e.remove();
     unload();
   }
 })
