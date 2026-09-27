@@ -302,15 +302,15 @@ registerAsync("andrew", "strf_cmd_locate_tp", async (test: Test): Promise<void> 
 registerAsync("andrew", "strf_cmd_chance", async (test: Test): Promise<void> => {
   const dim = test.getDimension();
   const [cx, cz] = farChunk(test, 40);
-  const unload = await loadArea(test, dim, "andrew_gt_cmd_c", cx, cz, 5);
+  // An Airship footprint plus margin reaches 2 chunks past its own: the sampled 3×3 sits 2 chunks inside the loaded 7×7.
+  const unload = await loadArea(test, dim, "andrew_gt_cmd_c", cx, cz, 7);
   const op = spawnPlayer(test, "andrew_cmd_chance", CommandPermissionLevel.GameDirectors);
   const propsBefore = world.getDynamicPropertyIds().length;
   try {
-    /** The inner 3×3 chunks: their footprint plus margin lies inside the loaded 5×5. */
     const sample = (): { miss: number; other: string[] } => {
       const out = { miss: 0, other: [] as string[] };
-      for (let x = cx + 1; x <= cx + 3; x++)
-        for (let z = cz + 1; z <= cz + 3; z++)
+      for (let x = cx + 2; x <= cx + 4; x++)
+        for (let z = cz + 2; z <= cz + 4; z++)
           for (const r of runtime?.discovery.evaluateChunk("o", x, z).results ?? []) {
             if (r.def !== "airship") continue;
             if (r.outcome === "miss") out.miss++;

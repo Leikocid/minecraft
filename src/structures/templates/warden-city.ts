@@ -4,8 +4,8 @@
 // "andrew:warden-city"). Only rotation varies at placement.
 //
 // Template-local axes: x west→east, y up, z north→south. Floor at y = 0,
-// everyone walks at y = 1 except on the hall balconies (y = 7) and the
-// monument dais (y = 3). The massing is stepped: the central hall block rises
+// everyone walks at y = 1 except in the hall's upper level (y = 9, on the
+// gallery and the bridge) and on the monument dais (y = 3). The massing is stepped: the central hall block rises
 // to y = 19, the wings around it to y = 8, the two corner ruins to y = 6.
 // Cells outside the irregular outline are structure_void, so the surrounding
 // terrain stays as generated.
@@ -124,31 +124,40 @@ const DOORS: readonly Box[] = [
 /** Rooms and passages carved out of the massing. */
 const CARVE: readonly Box[] = [HALL, ...RING, ...ROOMS, ...RUINS, ...DOORS];
 
-/** Hall balconies along the west and east walls: a one-block floor at y = 6, walked at y = 7. */
-const BALCONIES: readonly Box[] = [
-  { x0: 20, x1: 22, y0: 6, y1: 6, z0: 20, z1: 42 },
-  { x0: 40, x1: 42, y0: 6, y1: 6, z0: 20, z1: 42 },
+/** The floor of the hall's upper level; it is walked one block higher. */
+export const UPPER_FLOOR_Y = 8;
+
+/**
+ * The upper level: a gallery along the west, south and east walls and a bridge
+ * across the front of the monument, closing it into a ring around the open
+ * middle of the hall. The middle stays open floor to roof over the centre column.
+ */
+const GALLERY: readonly Box[] = [
+  { x0: 20, x1: 24, y0: UPPER_FLOOR_Y, y1: UPPER_FLOOR_Y, z0: 20, z1: 42 },
+  { x0: 38, x1: 42, y0: UPPER_FLOOR_Y, y1: UPPER_FLOOR_Y, z0: 20, z1: 42 },
+  { x0: 25, x1: 37, y0: UPPER_FLOOR_Y, y1: UPPER_FLOOR_Y, z0: 37, z1: 42 },
+  { x0: 25, x1: 37, y0: UPPER_FLOOR_Y, y1: UPPER_FLOOR_Y, z0: 28, z1: 29 },
 ];
 
 type Chest = { at: Point; facing: Facing; zone: "central" | "outer" };
 const hall = (x: number, y: number, z: number, facing: Facing): Chest => ({ at: [x, y, z], facing, zone: "central" });
 const outer = (x: number, z: number, facing: Facing): Chest => ({ at: [x, 1, z], facing, zone: "outer" });
 
-/** Twelve in the hall (the central zone), twenty-eight spread through the rooms and ruins. */
+/** Twelve in the hall (the central zone), ten of them upstairs; twenty-eight spread through the rooms and ruins. */
 export const CHESTS: readonly Chest[] = [
-  // Hall: on the dais by the towers, on the floor, on both balconies.
+  // Hall: two on the dais by the towers, ten along the gallery walls.
   hall(27, 3, 28, "south"),
   hall(35, 3, 28, "south"),
-  hall(23, 1, 27, "east"),
-  hall(39, 1, 33, "west"),
-  hall(28, 1, 42, "north"),
-  hall(34, 1, 42, "north"),
-  hall(20, 7, 24, "east"),
-  hall(20, 7, 30, "east"),
-  hall(20, 7, 35, "east"),
-  hall(42, 7, 23, "west"),
-  hall(42, 7, 30, "west"),
-  hall(42, 7, 36, "west"),
+  hall(20, 9, 22, "east"),
+  hall(20, 9, 27, "east"),
+  hall(20, 9, 33, "east"),
+  hall(20, 9, 39, "east"),
+  hall(42, 9, 23, "west"),
+  hall(42, 9, 28, "west"),
+  hall(42, 9, 34, "west"),
+  hall(42, 9, 40, "west"),
+  hall(28, 9, 42, "north"),
+  hall(34, 9, 42, "north"),
   // North rooms.
   outer(19, 2, "south"),
   outer(13, 8, "north"),
@@ -185,12 +194,13 @@ export const CHESTS: readonly Chest[] = [
 ];
 
 /**
- * Two in the hall — one in front of the monument, one in the far corner of the
- * east balcony — and six in the far rooms and ruins, apart from each other.
+ * Two in the hall's upper level — one on the bridge before the monument, one
+ * in the far corner of the gallery — and six in the far rooms and ruins, apart
+ * from each other.
  */
 export const SHRIEKERS: readonly { at: Point; slot: "central" | "far" }[] = [
-  { at: [31, 3, 27], slot: "central" },
-  { at: [42, 7, 41], slot: "central" },
+  { at: [31, 9, 28], slot: "central" },
+  { at: [42, 9, 41], slot: "central" },
   { at: [6, 1, 6], slot: "far" },
   { at: [56, 1, 56], slot: "far" },
   { at: [49, 1, 3], slot: "far" },
@@ -201,14 +211,15 @@ export const SHRIEKERS: readonly { at: Point; slot: "central" | "far" }[] = [
 
 /** Sensors on the floor; none within two blocks of a shrieker, none in a doorway. */
 export const SENSORS: readonly Point[] = [
-  // Hall floor and balconies.
+  // Hall floor and gallery.
   [28, 1, 33],
-  [34, 1, 37],
+  [35, 1, 40],
   [29, 1, 39],
-  [36, 1, 30],
+  [33, 1, 34],
   [23, 1, 36],
-  [21, 7, 28],
-  [41, 7, 26],
+  [22, 9, 30],
+  [40, 9, 25],
+  [31, 9, 40],
   // Ring avenue.
   [20, 1, 12],
   [42, 1, 13],
@@ -373,17 +384,19 @@ export default function wardenCityTemplate(): {
       }
 
   // ---- The hall.
-  // Balconies on a colonnade, reached by block steps along the south wall.
-  for (const b of BALCONIES) fill(b, (x, _y, z) => (noise(x, 6, z, 41) < 0.2 ? CRACKED_TILES : TILES));
-  for (const z of [21, 25, 36, 41]) for (const x of [22, 40]) for (let y = 1; y <= 5; y++) set(x, y, z, y === 5 ? CHISELED : POLISHED);
-  // A crenellated parapet on the balcony edge, open at the steps and the chests.
-  for (let z = 20; z <= 37; z += 2) for (const x of [22, 40]) set(x, 7, z, BRICKS);
-  for (const x0 of [23, 38])
-    for (let i = 0; i < 5; i++) for (let x = x0; x <= x0 + 1; x++) for (let y = 1; y <= 5 - i; y++) set(x, y, 38 + i, i === 0 && y === 5 ? CHISELED : TILES);
-  // Free-standing pillars up to the roof and beams between them.
-  for (const [px, pz] of [[25, 32], [37, 32], [25, 38], [37, 38]]) for (let y = HALL.y0; y <= HALL.y1; y++) set(px, y, pz, y >= 12 ? CHISELED : POLISHED);
-  for (let z = 32; z <= 38; z++) for (const x of [25, 37]) set(x, 14, z, BRICKS);
-  for (let x = 25; x <= 37; x++) set(x, 14, 38, BRICKS);
+  // The upper level on a colonnade; four of its columns run on to the roof.
+  const U = UPPER_FLOOR_Y;
+  for (const b of GALLERY) fill(b, (x, _y, z) => (noise(x, U, z, 41) < 0.2 ? CRACKED_TILES : TILES));
+  for (const [px, pz] of [[24, 21], [24, 25], [24, 33], [38, 21], [38, 25], [38, 33], [28, 37], [34, 37]])
+    for (let y = 1; y < U; y++) set(px, y, pz, y === U - 1 ? CHISELED : POLISHED);
+  for (const [px, pz] of [[24, 29], [38, 29], [24, 37], [38, 37]]) for (let y = HALL.y0; y <= HALL.y1; y++) set(px, y, pz, y === U - 1 || y === HALL.y1 ? CHISELED : POLISHED);
+  // Block steps up from the hall floor: seven, along the inner edge of each side of the gallery, onto its south arm.
+  for (const x0 of [25, 36]) for (let i = 1; i <= U - 1; i++) for (let x = x0; x <= x0 + 1; x++) fill({ x0: x, x1: x, y0: 1, y1: i, z0: 29 + i, z1: 29 + i }, (_x, y) => (y === i ? TILES : POLISHED));
+  // A crenellated parapet on the open edges, broken where the steps and the bridge come in.
+  for (let z = 20; z <= 36; z += 2) for (const x of [24, 38]) if (get(x, U + 1, z) === AIR && (z < 27 || z > 30)) set(x, U + 1, z, BRICKS);
+  for (let x = 27; x <= 35; x += 2) if (get(x, U + 1, 37) === AIR) set(x, U + 1, 37, BRICKS);
+  for (const x of [26, 28, 34, 36]) set(x, U + 1, 29, BRICKS);
+  // A beam across the hall under the roof, broken over the centre column.
   for (let x = 20; x <= 42; x++) if (x < 29 || x > 33) set(x, 14, 31, POLISHED);
   // Wool banners on the hall walls, as in the Ancient City.
   for (let i = 22; i <= 40; i += 6)
@@ -397,7 +410,7 @@ export default function wardenCityTemplate(): {
   fill(DAIS, (x, y, z) => (y === 2 ? (noise(x, y, z, 7) < 0.2 ? CRACKED_TILES : TILES) : POLISHED));
   fill({ x0: 27, x1: 35, y0: 1, y1: 1, z0: 29, z1: 29 }, TILES);
   for (const [x0, x1] of [[25, 28], [34, 37]])
-    fill({ x0, x1, y0: 3, y1: 12, z0: 22, z1: 27 }, (x, y, z) => {
+    fill({ x0, x1, y0: 3, y1: HALL.y1, z0: 22, z1: 27 }, (x, y, z) => {
       if (y === 7 || y === 12) return CHISELED;
       if ((x === x0 || x === x1) && (z === 22 || z === 27)) return POLISHED;
       if (z === 27 && y >= 8 && y <= 11 && x !== x0 && x !== x1) return WOOL;
@@ -405,8 +418,7 @@ export default function wardenCityTemplate(): {
     });
   fill({ x0: 29, x1: 33, y0: 3, y1: 11, z0: 21, z1: 24 }, (x, y, z) => (noise(x, y, z, 19) < 0.15 ? CRACKED_BRICKS : BRICKS));
   fill({ x0: 25, x1: 37, y0: 10, y1: 12, z0: 23, z1: 26 }, (x, y, z) => (y === 12 ? CHISELED : noise(x, y, z, 23) < 0.12 ? CRACKED_BRICKS : BRICKS));
-  fill({ x0: 29, x1: 33, y0: 13, y1: 13, z0: 23, z1: 26 }, POLISHED);
-  fill({ x0: 30, x1: 32, y0: 13, y1: 13, z0: 24, z1: 25 }, CHISELED);
+  fill({ x0: 29, x1: 33, y0: 13, y1: HALL.y1, z0: 23, z1: 26 }, (x, y, z) => (z === 26 && y === 13 && x >= 30 && x <= 32 ? CHISELED : POLISHED));
   for (const x of [24, 38]) fill({ x0: x, x1: x, y0: 3, y1: 5, z0: 21, z1: 26 }, BRICKS);
   for (let x = MONUMENT.x0; x <= MONUMENT.x1; x++)
     for (let y = MONUMENT.y0; y <= MONUMENT.y1; y++) {

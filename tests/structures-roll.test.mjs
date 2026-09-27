@@ -332,7 +332,7 @@ test('candidate footprint is centred on the rolled chunk, rotation swaps x and z
     const c = buildCandidate(SALT, 'o', i - 100, 50 - i, def('airship'));
     assert.equal(c.x + Math.floor(c.size[0] / 2), c.cx * 16 + 8);
     assert.equal(c.z + Math.floor(c.size[2] / 2), c.cz * 16 + 8);
-    assert.deepEqual(c.size, c.rot % 2 === 0 ? [28, 11, 7] : [7, 11, 28]);
+    assert.deepEqual(c.size, c.rot % 2 === 0 ? [75, 18, 13] : [13, 18, 75]);
   }
 });
 

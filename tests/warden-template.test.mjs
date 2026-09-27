@@ -129,6 +129,28 @@ function interior() {
 }
 const INTERIOR = interior();
 
+/** The hall's highest open cell over its centre: the roof starts above it. */
+const HALL_TOP = (() => {
+  const [cx, cz] = HALL_CENTER.map(Math.round);
+  let top = -1;
+  for (let y = 1; y < SY; y++) if (open(at(cx, y, cz))) top = y;
+  return top;
+})();
+
+// The hall's upper level, found from the blocks: above the hall floor, the
+// walking level with the most standing cells (solid under, two open above) in
+// the hall. Its floor is the block layer under that level.
+const standing = (x, y, z) => !open(at(x, y - 1, z)) && !isVoid(at(x, y - 1, z)) && open(at(x, y, z)) && open(at(x, y + 1, z));
+const UPPER = (() => {
+  let best = { y: -1, cells: 0 };
+  for (let y = 4; y < HALL_TOP; y++) {
+    let cells = 0;
+    for (let x = HALL.x0; x <= HALL.x1; x++) for (let z = HALL.z0; z <= HALL.z1; z++) if (standing(x, y, z)) cells++;
+    if (cells > best.cells) best = { y, cells };
+  }
+  return best;
+})();
+
 // The city is four times the §13 footprint by area, with the contents grown in
 // proportion: 62×62×20, 40 chests (12 in the hall), 8 shriekers.
 const CHEST_COUNT = 40;
@@ -160,8 +182,6 @@ test('AC1: footprint ≈62×62, height 20, exactly 40 single chests, 12 of them 
   assert.ok(Math.abs(HALL_CENTER[0] - (SX - 1) / 2) <= 1 && Math.abs(HALL_CENTER[1] - (SZ - 1) / 2) <= 1, `hall centred at ${HALL_CENTER}, not in the middle of the template`);
   const central = CHESTS.filter(([x, , z]) => inHall(x, z));
   assert.strictEqual(central.length, HALL_CHESTS, `${central.length} chests in the central hall: ${central.map((c) => k(...c)).join(' ')}`);
-  // The hall's chests are not all on its floor: its upper level holds some too.
-  assert.ok(central.filter(([, y]) => y >= 7).length >= 4, `hall chests by level ${central.map(([, y]) => y).join(' ')}`);
   // The other 28 are spread out: every side of the city has some, none holds more than a third.
   const outer = CHESTS.filter(([x, , z]) => !inHall(x, z));
   const side = ([x, , z]) => {
@@ -171,6 +191,22 @@ test('AC1: footprint ≈62×62, height 20, exactly 40 single chests, 12 of them 
   const perSide = {};
   for (const c of outer) perSide[side(c)] = (perSide[side(c)] ?? 0) + 1;
   assert.ok(Object.keys(perSide).length === 4 && Math.max(...Object.values(perSide)) <= (CHEST_COUNT - HALL_CHESTS) / 3, `outer chests per side ${JSON.stringify(perSide)}`);
+});
+
+test('the hall is filled at height: at least 10 chests and 2 shriekers stand on its upper level, the totals stay 40 and 8', () => {
+  assert.ok(UPPER.cells >= 150, `the hall's upper level has ${UPPER.cells} standing cells at y=${UPPER.y}: it is a ledge, not a floor`);
+  const floorY = UPPER.y - 1;
+  const above = (cells) => cells.filter(([x, y, z]) => inHall(x, z) && y > floorY);
+  const byLevel = (cells) => [...new Set(cells.map(([, y]) => y))].sort((a, b) => a - b).map((y) => `y${y}:${cells.filter((c) => c[1] === y).length}`).join(' ');
+  console.log(`# warden-city upper hall: floor y=${floorY}, ${UPPER.cells} standing cells; chests ${byLevel(CHESTS)}; shriekers ${byLevel(SHRIEKERS)}`);
+  assert.strictEqual(CHESTS.length, CHEST_COUNT, `${CHESTS.length} chests`);
+  assert.strictEqual(SHRIEKERS.length, SHRIEKER_COUNT, `${SHRIEKERS.length} shriekers`);
+  assert.ok(above(CHESTS).length >= 10, `${above(CHESTS).length} chests above the upper hall floor y=${floorY}; by level ${byLevel(CHESTS)}`);
+  assert.ok(above(SHRIEKERS).length >= 2, `${above(SHRIEKERS).length} shriekers above the upper hall floor y=${floorY}; by level ${byLevel(SHRIEKERS)}`);
+  // Each of them stands on that level, not on some post sticking up through it.
+  for (const c of [...above(CHESTS), ...above(SHRIEKERS)]) assert.strictEqual(c[1], UPPER.y, `${k(...c)} is not on the upper level y=${UPPER.y}`);
+  // And the level is reached on foot: its floor joins the hall floor through the interior.
+  assert.ok(INTERIOR.keys.has(k(...above(CHESTS)[0].map((v, i) => (i === 1 ? v + 1 : v)))), 'the upper level is sealed off from the hall');
 });
 
 test('AC2: exactly 8 can_summon shriekers — two by the central hall, six in the far parts, apart; more sensors than shriekers', () => {
@@ -185,7 +221,7 @@ test('AC2: exactly 8 can_summon shriekers — two by the central hall, six in th
   // Fixed positions: the template is the only source, so pin them exactly.
   assert.deepStrictEqual(
     SHRIEKERS.map((c) => k(...c)).sort(),
-    ['13,1,59', '3,1,35', '31,3,27', '42,7,41', '49,1,3', '56,1,56', '59,1,29', '6,1,6'],
+    ['13,1,59', '3,1,35', '31,9,28', '42,9,41', '49,1,3', '56,1,56', '59,1,29', '6,1,6'],
     'shrieker positions moved'
   );
 
@@ -251,7 +287,7 @@ test('AC3: a purely decorative reinforced deepslate monument ≈5 wide × 6–7 
     for (const [dx, dy, dz] of N6) {
       const n = [x + dx, y + dy, z + dz];
       // The hall's floor and walls are not the monument: stay inside the hall, above its floor.
-      if (n[1] < 1 || !inHall(n[0], n[2]) || toHall(n[0], n[2]) > 0 || body.has(k(...n)) || !hallSolid(at(...n))) continue;
+      if (n[1] < 1 || n[1] > HALL_TOP || !inHall(n[0], n[2]) || toHall(n[0], n[2]) > 0 || body.has(k(...n)) || !hallSolid(at(...n))) continue;
       if (n[0] === HALL.x0 || n[0] === HALL.x1 || n[2] === HALL.z0 || n[2] === HALL.z1) continue;
       body.add(k(...n));
       grow.push(n);
