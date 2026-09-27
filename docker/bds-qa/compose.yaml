@@ -38,6 +38,10 @@ services:
       # simulated player drowns inside the test's tick budget. A superflat
       # world puts the same platform on dry land every time.
       LEVEL_TYPE: "${BDS_LEVEL_TYPE:-DEFAULT}"
+      # An empty seed makes this image generate the same world every time, so a
+      # --fresh-world gave back the same ocean-heavy spawn. Pass BDS_LEVEL_SEED to
+      # pick a world; structure checks need land near spawn.
+      LEVEL_SEED: "${BDS_LEVEL_SEED:-}"
       SERVER_NAME: "Andrew BDS QA"
       # QA listens on its own ports inside the container as well, and they are
       # published 1:1: NetherNet tells the client the port the server sees, so a

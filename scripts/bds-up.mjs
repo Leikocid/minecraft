@@ -103,7 +103,11 @@ function main() {
     // without hunting for ores by hand. GAMEMODE must go through the
     // container's environment (BDS_GAMEMODE), not the properties file —
     // the entrypoint reapplies GAMEMODE from env on every start.
-    result = runServer(opts.timeoutSec, { BDS_GAMEMODE: 'survival' });
+    // BDS_LEVEL_SEED is passed through so a QA world can be regenerated on a chosen
+    // seed: with an empty seed this image rebuilds the same world every time.
+    const env = { BDS_GAMEMODE: 'survival' };
+    if (process.env.BDS_LEVEL_SEED !== undefined) env.BDS_LEVEL_SEED = process.env.BDS_LEVEL_SEED;
+    result = runServer(opts.timeoutSec, env);
   } finally {
     rmSync(packs.tmp, { recursive: true, force: true });
   }
