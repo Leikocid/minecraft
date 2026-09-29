@@ -3,8 +3,21 @@
 #   measure.sh          print every number the claim rests on; exit 0
 #   measure.sh header   exit 1 unless the visible header names all four structures
 #   measure.sh dupes <.ai/context>   every KV line restating the claim or its numbers
+#   measure.sh live <container>      pack version and template sizes a running BDS has loaded
 # Needs pandoc and unzip; run from the repository root.
 set -uo pipefail
+
+if [ "${1:-}" = live ]; then
+  bp=/data/behavior_packs/andrew_bp
+  tmp=$(mktemp -d)
+  echo "$2 $bp manifest: $(docker exec "$2" grep -m1 -oE '"version": *\[[^]]*\]' "$bp/manifest.json")"
+  for n in windmill airship warden-city bastion; do
+    docker cp "$2:$bp/structures/andrew/$n.mcstructure" "$tmp/" >/dev/null || exit 1
+    node --input-type=module -e "import { parseMcstructure } from './scripts/lib/mcstructure.mjs'; import { readFileSync } from 'node:fs'; console.log('  $n', JSON.stringify(parseMcstructure(readFileSync(process.argv[1])).size))" "$tmp/$n.mcstructure" || exit 1
+  done
+  rm -rf "$tmp"
+  exit 0
+fi
 
 if [ "${1:-}" = dupes ]; then
   cd "$2/analysis" || exit 2
