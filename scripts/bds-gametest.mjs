@@ -103,7 +103,14 @@ const EXPECTED_TESTS = [
   'andrew:websword_cooldown_blocks_reuse',
   'andrew:legendary_returns_from_void',
   'andrew:legendary_survives_lava',
+  'andrew:legendary_survives_fire',
   'andrew:legendary_pickup_no_duplicate',
+  // CX-lgnd-09 items 2–3 — src/gametest/legendary-recovery.ts
+  'andrew:legendary_cx09_hopper_to_chest',
+  'andrew:legendary_cx09_hopper_alone',
+  'andrew:legendary_cx09_hopper_minecart',
+  'andrew:legendary_cx09_owed_two_losses',
+  'andrew:legendary_cx09_owed_redeemed_on_respawn',
   'andrew:scythe_melee_matches_netherite',
   'andrew:scythe_no_target_no_cooldown',
   'andrew:scythe_prefers_player_over_mob',
@@ -142,6 +149,15 @@ const EXPECTED_TESTS = [
   'andrew:probe_xcx9_give_then_craft',
   'andrew:probe_xcx9_give_after_craft',
   'andrew:probe_xcx9_creative_copy_pickup',
+  // LGND-CRAFTGATE-01 — src/gametest/legendary-craftgate.ts
+  'andrew:legendary_give_then_craft_web_sword',
+  'andrew:legendary_give_then_craft_scythe',
+  'andrew:legendary_second_real_craft_refunded',
+  // LGND-OFFHAND-01 — src/gametest/legendary-offhand.ts
+  'andrew:legendary_offhand_admitted',
+  'andrew:legendary_offhand_resolves',
+  'andrew:legendary_offhand_death_returns',
+  'andrew:legendary_offhand_token_refused',
   // STRF-REG-01 — src/gametest/strf-registry.ts
   'andrew:strf_registry_steps_idempotent',
   // STRF-ROLL-01 — src/gametest/structures.ts
@@ -156,6 +172,7 @@ const EXPECTED_TESTS = [
   'andrew:strf_place_clear_sliced',
   'andrew:strf_place_block_entities',
   'andrew:strf_place_resume',
+  'andrew:strf_place_protects_legendaries',
   // LOOT-TBL-01 — src/gametest/structures-loot.ts
   'andrew:strf_loot_custom',
   'andrew:strf_loot_ancient_city',

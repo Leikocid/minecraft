@@ -14,6 +14,11 @@ export interface LegendaryDef {
   nameKey: string;
   cooldownTicks: number;
   craftGate: boolean;
+  /**
+   * What the weapon's recipe outputs instead of the weapon (AD-lgnd-08). Only a
+   * token spends the world's one craft; a plain `itemId` stack never does.
+   */
+  craftTokenId: string;
   /** What a blocked craft hands back (Q-008). */
   refund: ReadonlyArray<readonly [string, number]>;
   /** Prefix of the weapon's own lang keys: first_craft, craft_blocked, returned, admin_given, reset. */
@@ -29,6 +34,7 @@ export const WEB_SWORD: LegendaryDef = {
   nameKey: "item.andrew:web_sword",
   cooldownTicks: 600,
   craftGate: true,
+  craftTokenId: "andrew:web_sword_crafted",
   refund: [
     ["minecraft:web", 4],
     ["minecraft:diamond_sword", 1],
@@ -44,6 +50,7 @@ export const SCYTHE_OF_CALAMITY: LegendaryDef = {
   nameKey: "item.andrew:scythe_of_calamity",
   cooldownTicks: 600,
   craftGate: true,
+  craftTokenId: "andrew:scythe_of_calamity_crafted",
   refund: [
     ["minecraft:golden_apple", 2],
     ["minecraft:obsidian", 2],
@@ -61,6 +68,11 @@ export function defFor(itemId: string): LegendaryDef | undefined {
 
 export function defForStack(stack?: ItemStack): LegendaryDef | undefined {
   return stack === undefined ? undefined : defFor(stack.typeId);
+}
+
+/** The weapon whose craft token `stack` is, if it is one. */
+export function defForToken(stack?: ItemStack): LegendaryDef | undefined {
+  return stack === undefined ? undefined : LEGENDARIES.find((def) => def.craftGate && def.craftTokenId === stack.typeId);
 }
 
 export function defForAbility(abilityKey: string): LegendaryDef | undefined {
@@ -82,6 +94,10 @@ export interface LegendaryKeys {
   craftedBy: string;
   /** Player: serialized mark owed back after death. */
   pending: string;
+  /** ItemStack: instance generation (absent = 0). */
+  gen: string;
+  /** World: return target's id -> instances owed back after a loss. */
+  owed: string;
 }
 
 /**
@@ -99,7 +115,14 @@ export function keysFor(def: LegendaryDef): LegendaryKeys {
     crafted: `${p}crafted`,
     craftedBy: `${p}crafted_by`,
     pending: `${p}pending`,
+    gen: `${p}gen`,
+    owed: `${p}owed`,
   };
+}
+
+/** World property: the live generation of instance `id` (absent = 0). */
+export function genLedgerKey(def: LegendaryDef, id: string): string {
+  return `andrew:${def.keyPrefix}_gen:${id}`;
 }
 
 /** Player property holding the epoch-ms deadline of the ability's cooldown. */

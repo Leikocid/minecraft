@@ -17,6 +17,7 @@ import {
   world,
 } from "@minecraft/server";
 import { Test, registerAsync } from "@minecraft/server-gametest";
+import { protectLegendariesIn } from "../legendary/recovery";
 import { LINKED_RING, LINKED_STATUS, OVER_PARENT, linkedCandidates, overParent, parentCentre } from "../structures/bodies/airship";
 import { BODIES, type TypeBody, withLinks } from "../structures/bodies";
 import { type Box, boxOf, sliceBox } from "../structures/clear";
@@ -40,7 +41,7 @@ const GUARD_TAG = "andrew:guard:";
 const log = (msg: string): void => console.warn(`[gametest] ${msg}`);
 const v = (p: Vec3): Vector3 => ({ x: p[0], y: p[1], z: p[2] });
 
-const engineApi = { world, BlockVolume, BlockTypes, StructureRotation, ItemStack, EnchantmentType };
+const engineApi = { world, BlockVolume, BlockTypes, StructureRotation, ItemStack, EnchantmentType, protectLegendaries: protectLegendariesIn };
 
 /** `ring`: the production ring loader on temporary ticking areas; without it a linked attempt waits as pending. */
 function runtime(salt: string, ring: boolean): StrfRuntime {

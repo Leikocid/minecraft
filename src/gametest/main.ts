@@ -55,7 +55,10 @@ import "./probe-chunk";
 import "./probe-mobs";
 import "./probe-loot";
 import "./probe-give";
+import "./legendary-craftgate";
 import "./probe-retention";
+import "./legendary-fireproof";
+import "./legendary-offhand";
 import "./strf-registry";
 import "./structures";
 import "./structures-site";
@@ -71,6 +74,7 @@ import "./warden";
 import "./warden-body";
 import "./bastion";
 import "./bastion-body";
+import "./legendary-recovery";
 import "./probe-input";
 import { SPAWN_EVENT } from "../structures/spawn-search";
 
@@ -80,9 +84,8 @@ const getMark = (stack: ItemStack) => state.getMark(WEB_SWORD, stack);
 const markSword = (stack: ItemStack, mark: ReturnType<typeof state.makeMark>) => state.markItem(WEB_SWORD, stack, mark);
 const makeMark = state.makeMark;
 const findMarkedSword = (container: Container) => state.findMarked(WEB_SWORD, container);
-const getPending = (player: Player) => state.getPending(WEB_SWORD, player);
+const hasPending = (player: Player) => state.readPending(WEB_SWORD, player).length > 0;
 const isCrafted = () => state.isCrafted(WEB_SWORD);
-const setCrafted = (byName: string) => state.setCrafted(WEB_SWORD, byName);
 const resetCrafted = () => state.resetCrafted(WEB_SWORD);
 const isReady = (player: Player) => cooldown.isReady(player, WEB_SWORD.abilityKey);
 const remainingTicks = (player: Player) => cooldown.remainingTicks(player, WEB_SWORD.abilityKey);
@@ -283,10 +286,10 @@ register(
 // ------------------------------------------------- Web Sword: one per world
 //
 // A SimulatedPlayer cannot operate a crafting grid, so the craft is imitated by
-// putting an *unmarked* andrew:web_sword into the player's inventory. That is
-// not a shortcut around the gate — it is the same path a real craft takes: the
-// gate has no "before craft" event to hook and reacts to an unmarked sword
-// appearing in an inventory, whatever put it there.
+// putting the recipe's output — the craft token — into the player's inventory.
+// The gate has no "before craft" event to hook and reacts to a token appearing
+// in an inventory, whatever put it there (AD-lgnd-08). The recipe itself is run
+// by a Crafter in legendary-craftgate.ts.
 // [src: decision-q-008-blocked-craft-refund-a-obnaruzhit-i-vernut]
 //
 // The gate itself lives in the *release* behavior pack, which this world loads
@@ -316,9 +319,9 @@ function countOf(container: Container, itemId: string): number {
   return countByType(container).get(itemId) ?? 0;
 }
 
-/** Hand the player an unmarked sword — the stand-in for a completed craft. */
+/** Hand the player a craft token — the stand-in for a completed craft. */
 function fakeCraft(player: Player): void {
-  inventoryOf(player).addItem(new ItemStack(WEB_SWORD_ID, 1));
+  inventoryOf(player).addItem(new ItemStack(WEB_SWORD.craftTokenId, 1));
 }
 
 // The world flag is durable by design, so it survives from one test to the
@@ -429,9 +432,7 @@ register("andrew", "websword_creative_ignored", (test: Test): void => {
 // The sword handed out here is marked with origin "admin", the same stamp
 // /andrew:websword give writes. That is deliberate: it is retained on death
 // exactly like a crafted one, but it does not spend the world's single craft,
-// so these scenarios cannot interfere with the gate ones above — and it also
-// walks straight past the gate, which would otherwise treat an *unmarked*
-// sword handed to a Survival player as a craft.
+// so these scenarios cannot interfere with the gate ones above.
 // [src: decision-q-006-web-sword-provenance-yes-metka-ekzemplyara]
 
 /** Must agree with DROP_SEARCH_RADIUS in src/legendary/retention.ts. */
@@ -511,7 +512,7 @@ register("andrew", "websword_death_returns", (test: Test): void => {
     // The token that makes the whole thing idempotent: left set, the next
     // respawn — or the next reconnect — would hand out a second sword.
     test.assert(
-      getPending(player) === undefined,
+      !hasPending(player),
       "the pending return survived the restore, so a further respawn would issue a duplicate"
     );
   });
@@ -524,28 +525,13 @@ register("andrew", "websword_death_returns", (test: Test): void => {
 // retention must not latch onto it: no pending mark, and nothing handed back.
 // [src: decision-q-006-web-sword-provenance-yes-metka-ekzemplyara]
 //
-// The player starts in Creative and dies in Survival, and both halves are
-// load-bearing:
-//
-//   Creative when the sword arrives, because that is the one game mode the
-//   craft gate exempts — in Survival an unmarked sword is by definition a
-//   craft, and the gate would mark it or take it back before it could be the
-//   control for anything;
-//
-//   Survival when the killing happens, because a Creative player cannot be
-//   killed. Measured on BDS 1.26.51.1: the first version of this scenario
-//   stayed Creative throughout, went green, and proved nothing — kill() raised
-//   no entityDie at all, so retention was never asked the question. The death
-//   witness below is what makes the negative claim mean something.
+// The player starts in Creative and dies in Survival. The Survival half is
+// load-bearing: a Creative player cannot be killed. Measured on BDS 1.26.51.1:
+// the first version of this scenario stayed Creative throughout, went green,
+// and proved nothing — kill() raised no entityDie at all, so retention was
+// never asked the question. The death witness below is what makes the
+// negative claim mean something.
 register("andrew", "websword_unmarked_drops", (test: Test): void => {
-  // Pin the gate into its refund branch for the whole scenario. After
-  // respawning, the player may well walk back over their own drop; with the
-  // world's craft budget spent the gate takes the sword back rather than
-  // stamping a mark on it, so the assertions below cannot be tripped by the
-  // gate doing its own job.
-  // [src: decision-q-008-blocked-craft-refund-a-obnaruzhit-i-vernut]
-  setCrafted("andrew_control");
-
   const player = test.spawnSimulatedPlayer(STAND_B, "andrew_bystander", GameMode.Creative);
 
   let died = false;
@@ -581,7 +567,7 @@ register("andrew", "websword_unmarked_drops", (test: Test): void => {
               "the control player never died, so retention was never offered an unmarked sword to ignore"
             );
             test.assert(
-              getPending(player) === undefined,
+              !hasPending(player),
               "retention latched an unmarked Web Sword and owes the player a marked one"
             );
             test.assert(
@@ -601,11 +587,7 @@ register("andrew", "websword_unmarked_drops", (test: Test): void => {
 
 // ----------------------------------------------- Web Sword: the trap ability
 //
-// The sword handed out below is marked "admin", for the same two reasons the
-// retention scenarios use that stamp: it does not spend the world's single
-// craft, and it walks past the craft gate, which would otherwise treat an
-// unmarked sword appearing in a Survival inventory as a craft and confiscate
-// it mid-scenario.
+// The sword handed out below is marked "admin", as in the retention scenarios.
 //
 // Coordinates: everything below is structure-relative, including the arguments
 // to lookAtBlock/lookAtLocation.
@@ -1117,16 +1099,7 @@ function meleeHit(
 }
 
 
-/**
- * A Scythe the craft gate will leave alone.
- *
- * The Scythe is a registered legendary, so an *unmarked* one appearing in a
- * Survival player's inventory is a craft: the first is claimed and marked, and
- * every later one is confiscated and refunded — which is what silently emptied
- * this test's hand and made every dig measurement read bare-hand speed
- * (16 ticks on hay, 7 on leaves, both exactly hand). Handing over an
- * admin-marked instance is the same thing `/andrew:websword give` does.
- */
+/** An admin-marked Scythe — the same thing `/andrew:scythe give` hands out. */
 function giveMarkedScythe(player: SimulatedPlayer): void {
   const stack = state.markItem(
     SCYTHE_OF_CALAMITY,
@@ -1362,7 +1335,7 @@ function lossScenario(
           );
           const dropped = swordsOnGround(player.dimension, player.location);
           test.assert(dropped === 0, `${dropped} Web Sword(s) are still lying on the ground`);
-          test.assert(getPending(player) === undefined, "the pending return survived the restore");
+          test.assert(!hasPending(player), "the pending return survived the restore");
           test.succeed();
         });
       });
@@ -1388,33 +1361,10 @@ register(
   .maxTicks(200)
   .tag("andrew");
 
-/** Lava far from the player, where the sword is dropped instead of thrown. */
-const LAVA_CELL: Vector3 = { x: 5, y: 2, z: 1 };
-
-register(
-  "andrew",
-  "legendary_survives_lava",
-  lossScenario(
-    "andrew_burner",
-    (test, player, stack) => {
-      inventoryOf(player).setItem(player.selectedSlotIndex, undefined);
-      const at = test.worldLocation({ x: LAVA_CELL.x + 0.5, y: LAVA_CELL.y + 0.2, z: LAVA_CELL.z + 0.5 });
-      player.dimension.spawnItem(stack, at);
-    },
-    (test, entity) => {
-      test.setBlockType("minecraft:lava", LAVA_CELL);
-      test.runAfterDelay(20, () => {
-        const burned = !entity.isValid;
-        console.warn(`[gametest] lava: sword entity ${burned ? "burned in real lava" : "survived 20 ticks, removed"}`);
-        if (!burned) entity.remove();
-        test.setBlockType("minecraft:air", LAVA_CELL);
-      });
-    }
-  )
-)
-  .structureName(STRUCTURE)
-  .maxTicks(200)
-  .tag("andrew");
+// andrew:legendary_survives_lava and andrew:legendary_survives_fire moved to
+// src/gametest/legendary-fireproof.ts: fire/lava no longer destroy a marked
+// legendary (minecraft:fire_resistant), so there is no loss for this
+// lossScenario helper to drive.
 
 // The control: a pickup also makes the entity vanish, and must not be read as
 // a loss — that would hand the owner a second copy.
@@ -1439,7 +1389,7 @@ register("andrew", "legendary_pickup_no_duplicate", (test: Test): void => {
     // Past two recovery checks, so a misread pickup has had time to re-issue.
     test.assert(system.currentTick - pickedAt >= 2 * RECOVERY_DEADLINE_TICKS, "waiting out the recovery checks");
     test.assert(held === 1, `the player carries ${held} Web Sword(s) with ws_id ${instanceId}, expected exactly 1`);
-    test.assert(getPending(player) === undefined, "recovery owes the player a sword they picked up themselves");
+    test.assert(!hasPending(player), "recovery owes the player a sword they picked up themselves");
   });
 })
   .structureName(STRUCTURE)

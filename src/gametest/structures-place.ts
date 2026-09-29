@@ -1,13 +1,17 @@
 // Placement on a real engine (L0-strf-p003, L0-strf-p004): all four rotations
 // judged by the blocks in the world, a clear larger than one fillBlocks call,
-// block entities that survive place, and a resume after an interrupted chest
-// fill. Every test clears what it placed.
+// block entities that survive place, a resume after an interrupted chest fill,
+// and a legendary in a holder under the write box surviving the write
+// (L0-lgnd-p008). Every test clears what it placed.
 
 import {
   BlockComponentTypes,
+  BlockTypes,
   BlockVolume,
   Difficulty,
   type Dimension,
+  EnchantmentType,
+  type Entity,
   GameMode,
   ItemStack,
   StructureRotation,
@@ -15,9 +19,17 @@ import {
   world,
 } from "@minecraft/server";
 import { Test, registerAsync } from "@minecraft/server-gametest";
+import { forgetWatched, protectLegendariesIn } from "../legendary/recovery";
+import { WEB_SWORD } from "../legendary/registry";
+import { withoutOwed } from "../legendary/rules";
+import { getMark, isItemOf, ledgerGen, markItem, readOwed, writeOwed } from "../legendary/state";
+import { BODIES } from "../structures/bodies";
 import { type Box, FILL_CELL_LIMIT, boxOf, cells, sliceBox } from "../structures/clear";
 import { type PlaceHooks, type PlaceWorld, Placer, type StructureBody, CHESTS_FILLED, engineWorld } from "../structures/place";
+import { EnabledTypes } from "../structures/config";
 import { type Instance, type Rotation, type Vec3, Registry, SALT_KEY } from "../structures/registry";
+import type { Candidate } from "../structures/roll";
+import { StrfRuntime, engineStrf } from "../structures/runtime";
 import { ROTATIONS, rotateCardinal, rotatedSize, toWorld } from "../structures/rotate";
 import { coveredChunks } from "../structures/site";
 import { MemoryStore } from "../structures/store";
@@ -65,7 +77,7 @@ function plan(reg: Registry, origin: Vec3, rot: Rotation, size: Vec3 = rotatedSi
 }
 
 // world.structureManager throws in early execution; read it only inside a test.
-const api = () => ({ structureManager: world.structureManager, BlockVolume, StructureRotation });
+const api = () => ({ structureManager: world.structureManager, BlockVolume, StructureRotation, protectLegendaries: protectLegendariesIn });
 
 function fillBox(dim: Dimension, box: Box, block: string): void {
   for (const s of sliceBox(box)) dim.fillBlocks(new BlockVolume(v(s.min), v(s.max)), block);
@@ -429,4 +441,151 @@ registerAsync("andrew", "strf_place_resume", async (test: Test): Promise<void> =
   .maxTicks(600)
   .tag("andrew");
 
-export const STRF_PLACE_TESTS = ["strf_place_rotations", "strf_place_clear_sliced", "strf_place_block_entities", "strf_place_resume"];
+// ------------------------------------------------ a legendary in a holder under the write box survives the write
+
+interface ProtectCase {
+  holder: string;
+  /** Chunks east of the test; the GameTest world is flat, so any of them is a valid Windmill site. */
+  offset: number;
+  /** false: the same write with the protection pass taken out — the check must go red. */
+  pass: boolean;
+}
+
+const PROTECT_CASES: readonly ProtectCase[] = [
+  { holder: "minecraft:hopper", offset: 720, pass: true },
+  { holder: "minecraft:purple_shulker_box", offset: 730, pass: true },
+  { holder: "minecraft:hopper", offset: 740, pass: false },
+  { holder: "minecraft:purple_shulker_box", offset: 750, pass: false },
+];
+
+const PROTECT_OWNER = "gt-protect-owner";
+/** Wider than the Windmill's footprint plus the drop spot's 16 rings. */
+const PROTECT_RADIUS = 40;
+
+function protectRuntime(salt: string): StrfRuntime {
+  const store = new MemoryStore();
+  store.set(SALT_KEY, `${salt}-${Date.now()}`);
+  const enabled = new EnabledTypes(store);
+  enabled.enable(["windmill"]);
+  const api = { world, BlockVolume, BlockTypes, StructureRotation, ItemStack, EnchantmentType, protectLegendaries: protectLegendariesIn };
+  return new StrfRuntime(store, engineStrf(api), { log, enabled });
+}
+
+function markedSword(id: string): ItemStack {
+  return markItem(WEB_SWORD, new ItemStack(WEB_SWORD.itemId, 1), { origin: "admin", owner: PROTECT_OWNER, id, gen: 0 });
+}
+
+function holderAt(dim: Dimension, at: Vector3, typeId: string, sword: ItemStack): void {
+  dim.setBlockType(at, typeId);
+  const container = dim.getBlock(at)?.getComponent(BlockComponentTypes.Inventory)?.container;
+  if (container === undefined) throw new Error(`${typeId} at ${at.x},${at.y},${at.z} has no inventory`);
+  container.setItem(0, sword);
+  container.setItem(1, new ItemStack("minecraft:diamond", 3));
+}
+
+/** Every copy of instance `id` near `centre`: on the ground, in the block at `at`, owed. */
+function censusOf(dim: Dimension, id: string, centre: Vector3, at: Vector3): { ground: Entity[]; inHolder: number; owed: number; gen: number } {
+  const ground = dim.getEntities({ type: "minecraft:item", location: centre, maxDistance: PROTECT_RADIUS }).filter((e) => {
+    const s = e.getComponent("minecraft:item")?.itemStack;
+    return isItemOf(WEB_SWORD, s) && getMark(WEB_SWORD, s)?.id === id;
+  });
+  const container = dim.getBlock(at)?.getComponent(BlockComponentTypes.Inventory)?.container;
+  let inHolder = 0;
+  for (let i = 0; i < (container?.size ?? 0); i++) {
+    const s = container?.getItem(i);
+    if (isItemOf(WEB_SWORD, s) && getMark(WEB_SWORD, s)?.id === id) inHolder++;
+  }
+  const owed = (readOwed(WEB_SWORD)[PROTECT_OWNER] ?? []).filter((e) => e.mark.id === id).length;
+  return { ground, inHolder, owed, gen: ledgerGen(WEB_SWORD, id) };
+}
+
+registerAsync("andrew", "strf_place_protects_legendaries", async (test: Test): Promise<void> => {
+  const dim = test.getDimension();
+  const verdicts: string[] = [];
+  for (const c of PROTECT_CASES) {
+    const tag = `${c.holder.replace("minecraft:", "")}${c.pass ? "" : "/no-pass"}`;
+    const rt = protectRuntime(`gt-protect-${c.offset}`);
+    const def = rt.defs.find((d) => d.id === "windmill");
+    if (def === undefined) throw new Error("no windmill roll def");
+    const [cx, cz] = [Math.floor(base(test)[0] / CHUNK) + c.offset, Math.floor(base(test)[2] / CHUNK)];
+    const x = cx * CHUNK + 8;
+    const z = cz * CHUNK + 8;
+    const unload = await loadBox(test, dim, `andrew_gt_protect_${c.offset}`, { min: [x - PROTECT_RADIUS, 0, z - PROTECT_RADIUS], max: [x + PROTECT_RADIUS, 0, z + PROTECT_RADIUS] });
+    const size = rotatedSize(def.size, 0);
+    const [ox, oz] = [x - Math.floor(size[0] / 2), z - Math.floor(size[2] / 2)];
+    let footprint: Box | undefined;
+    const ids: string[] = [];
+    try {
+      const top = dim.getTopmostBlock({ x, z });
+      if (top === undefined) throw new Error(`no ground at ${x},${z}`);
+      const at: Vector3 = { x, y: top.location.y + 1, z };
+      const centre: Vector3 = { x: x + 0.5, y: at.y, z: z + 0.5 };
+
+      // The guard: a player's holder in the footprint keeps the Windmill off the site.
+      const guardId = `gt-protect-${c.offset}-guard-${Date.now()}`;
+      ids.push(guardId);
+      holderAt(dim, at, c.holder, markedSword(guardId));
+      const guard = rt.placeAt("windmill", "o", x, z, 0);
+      const kept = censusOf(dim, guardId, centre, at).inHolder;
+      const guardOk = guard.kind === "rejected" && guard.reason === "collision:player" && kept === 1;
+      dim.getBlock(at)?.getComponent(BlockComponentTypes.Inventory)?.container?.clearAll();
+      dim.setBlockType(at, "minecraft:air");
+
+      // The write: a holder that got into the box after the site check, through
+      // SiteGate.occupy into Placer.write with the production engine adapter.
+      const cand: Candidate = { id: `windmill:o:${Math.floor(ox / CHUNK)}:${Math.floor(oz / CHUNK)}`, def, dim: "o", cx: Math.floor(ox / CHUNK), cz: Math.floor(oz / CHUNK), rot: 0, size, x: ox, z: oz };
+      const site = rt.gate.site(cand);
+      if (site.kind !== "valid") throw new Error(`${tag}: site ${JSON.stringify(site)}`);
+      const planned = rt.registry.plan({ def: "windmill", dim: "o", origin: [ox, site.y, oz], rot: 0, size, id: cand.id });
+      if (!planned.ok) throw new Error(`${tag}: plan blocked by ${planned.blockedBy.id}`);
+      footprint = boxOf(planned.instance.origin, size);
+      const id = `gt-protect-${c.offset}-${Date.now()}`;
+      ids.push(id);
+      holderAt(dim, at, c.holder, markedSword(id));
+      const engine = engineStrf({ world, BlockVolume, BlockTypes, StructureRotation, ItemStack, EnchantmentType, protectLegendaries: protectLegendariesIn });
+      const pw = engine.placeWorld("o");
+      if (pw === undefined) throw new Error("no place world");
+      const placer = new Placer(rt.registry, c.pass ? pw : { ...pw, protect: undefined }, BODIES, engine.hooks("o"), log);
+      const placed = placer.place(planned.instance, rt.gate);
+      await test.idle(20);
+
+      const n = censusOf(dim, id, centre, at);
+      const fp = footprint;
+      const outside = n.ground.filter((e) => {
+        const l = e.location;
+        return l.x < fp.min[0] || l.x >= fp.max[0] + 1 || l.z < fp.min[2] || l.z >= fp.max[2] + 1;
+      });
+      const copies = n.ground.length + n.inHolder + n.owed;
+      // Criterion 1: placed, and exactly one live copy — outside the footprint or owed to its owner — with no loss return.
+      const writeOk = placed === "placed" && copies === 1 && outside.length + n.owed === 1 && n.gen === 0;
+      const where = n.ground.map((e) => `${e.location.x.toFixed(1)},${e.location.y.toFixed(1)},${e.location.z.toFixed(1)}`).join(" ");
+      log(
+        `strf protect ${tag} RESULT guard=${guard.kind}${guard.kind === "rejected" ? `:${guard.reason}` : ""} kept=${kept}; ` +
+          `write=${placed} block now=${dim.getBlock(at)?.typeId}; copies=${copies} (ground ${n.ground.length} [${where}] outside ${outside.length}, holder ${n.inHolder}, owed ${n.owed}) gen=${n.gen}; ` +
+          `footprint ${footprint.min.join(",")}..${footprint.max.join(",")}; criterion=${writeOk ? "green" : "red"}`
+      );
+      verdicts.push(`${tag}:${guardOk && writeOk === c.pass ? "ok" : `FAIL(guard ${guardOk}, write ${writeOk})`}`);
+    } finally {
+      for (const e of dim.getEntities({ type: "minecraft:item", location: { x, y: 0, z }, maxDistance: 400 })) {
+        const s = e.getComponent("minecraft:item")?.itemStack;
+        if (isItemOf(WEB_SWORD, s) && ids.includes(getMark(WEB_SWORD, s)?.id ?? "")) {
+          forgetWatched(e.id);
+          e.remove();
+        }
+      }
+      let owed = readOwed(WEB_SWORD);
+      for (const e of owed[PROTECT_OWNER] ?? []) owed = withoutOwed(owed, PROTECT_OWNER, e.mark);
+      writeOwed(WEB_SWORD, owed);
+      if (footprint !== undefined) fillBox(dim, footprint, "minecraft:air");
+      unload();
+    }
+  }
+  log(`strf protect RESULT ${verdicts.join(" ")}`);
+  test.assert(verdicts.every((v) => v.endsWith(":ok")), `protect: ${verdicts.join(" ")}`);
+  test.succeed();
+})
+  .structureName(STRUCTURE)
+  .maxTicks(2400)
+  .tag("andrew");
+
+export const STRF_PLACE_TESTS = ["strf_place_rotations", "strf_place_clear_sliced", "strf_place_block_entities", "strf_place_resume", "strf_place_protects_legendaries"];

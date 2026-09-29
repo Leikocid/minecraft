@@ -34,6 +34,16 @@ function parseLang(raw) {
 const enLang = parseLang(enLangRaw);
 const ruLang = parseLang(ruLangRaw);
 
+function versionAtLeast(version, min) {
+  const parts = String(version).split('.').map(Number);
+  for (let i = 0; i < min.length; i++) {
+    const a = parts[i] ?? 0;
+    const b = min[i];
+    if (a !== b) return a > b;
+  }
+  return true;
+}
+
 // Minimal PNG IHDR reader (no external image libraries).
 function readPngSize(path) {
   const buf = readFileSync(path);
@@ -133,7 +143,49 @@ test('Web Sword item JSON', async (t) => {
     const menuCategory = itemJson['minecraft:item'].description?.menu_category;
     assert.ok(menuCategory, 'description.menu_category must be set');
     assert.strictEqual(menuCategory.category, 'equipment', 'menu_category.category must be "equipment"');
-    assert.strictEqual(menuCategory.group, 'itemGroup.name.sword', 'menu_category.group must be the sword group');
+    assert.strictEqual(
+      menuCategory.group,
+      'minecraft:itemGroup.name.sword',
+      'menu_category.group must be the namespaced sword group (format_version >= 1.21.90 refuses a bare group name)'
+    );
+  });
+
+  // CNTR-XCX10-AA / LGND-FIREPROOF-01-AA: Orbital §5 wants a legendary to
+  // never be destroyed. Fire and lava are met literally via this component
+  // (measured on BDS 1.26.51.1 — a marked andrew:web_sword without it burns
+  // in both; with it, it survives 80 ticks); cactus, explosions and despawn
+  // still fall back to destroyed-then-returned (recovery.ts).
+  await t.test('is fire resistant, so it stays in place in lava and fire instead of being destroyed and returned', () => {
+    const fireResistant = itemJson['minecraft:item'].components?.['minecraft:fire_resistant'];
+    assert.ok(fireResistant, 'minecraft:fire_resistant component must be present');
+    const value = typeof fireResistant === 'boolean' ? fireResistant : fireResistant.value;
+    assert.strictEqual(value, true, 'minecraft:fire_resistant.value must be true');
+  });
+
+  // The object form of minecraft:fire_resistant is refused at load below
+  // 1.21.90 ("expected an object"); a bare boolean parses but does nothing.
+  await t.test('format_version supports the object form of minecraft:fire_resistant', () => {
+    assert.ok(
+      versionAtLeast(itemJson.format_version, [1, 21, 90]),
+      `format_version ${itemJson.format_version} must be >= 1.21.90 for minecraft:fire_resistant as an object`
+    );
+  });
+
+  // Scythe §6 and decision-legendary-hand-priority need both hands. The engine
+  // admits a custom item to the off-hand slot only with this component; without
+  // it setEquipment(Offhand) returns false (BDS 1.26.51.1, CNTR-LGND-CX08-AA).
+  await t.test('is admitted to the off hand (minecraft:allow_off_hand)', () => {
+    const allow = itemJson['minecraft:item'].components?.['minecraft:allow_off_hand'];
+    assert.ok(allow !== undefined, 'minecraft:allow_off_hand must be present — without it the item cannot be held in the off hand');
+    const value = typeof allow === 'boolean' ? allow : allow.value;
+    assert.strictEqual(value, true, 'minecraft:allow_off_hand must be true');
+  });
+
+  // playerInventoryItemChange has no off-hand inventory type, so a craft token
+  // parked there is settled only when another craft wakes the gate.
+  await t.test('its craft token is not admitted to the off hand', () => {
+    const tokenJson = JSON.parse(readFileSync(join(projectRoot, 'packs', 'behavior', 'items', 'web_sword_crafted.json'), 'utf-8'));
+    assert.strictEqual(tokenJson['minecraft:item'].components?.['minecraft:allow_off_hand'], undefined);
   });
 
   await t.test('has a display_name loc key present in both languages', () => {
@@ -190,9 +242,10 @@ test('Web Sword recipe', async (t) => {
     assert.strictEqual(webCount, 4, 'exactly 4 web ingredients are required');
   });
 
-  await t.test('result is exactly one andrew:web_sword', () => {
+  // The craft token, not the weapon: the craft gate swaps it for andrew:web_sword (AD-lgnd-08).
+  await t.test('result is exactly one andrew:web_sword_crafted', () => {
     const result = recipeJson['minecraft:recipe_shaped'].result;
-    assert.strictEqual(result.item, 'andrew:web_sword', 'result item must be andrew:web_sword');
+    assert.strictEqual(result.item, 'andrew:web_sword_crafted', 'result item must be the craft token andrew:web_sword_crafted');
     assert.strictEqual(result.count ?? 1, 1, 'result count must be 1');
   });
 

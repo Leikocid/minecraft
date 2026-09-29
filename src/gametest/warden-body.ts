@@ -9,6 +9,7 @@
 
 import { BlockTypes, BlockVolume, type Dimension, EnchantmentType, ItemStack, StructureRotation, type Vector3, world } from "@minecraft/server";
 import { Test, registerAsync } from "@minecraft/server-gametest";
+import { protectLegendariesIn } from "../legendary/recovery";
 import { MARKER_SPOT, markerCells } from "../structures/bodies/warden-city";
 import { BODIES } from "../structures/bodies";
 import { type Box, boxOf, sliceBox } from "../structures/clear";
@@ -39,7 +40,7 @@ const SIZE: Vec3 = [...WARDEN_CITY_SIZE];
 
 const log = (msg: string): void => console.warn(`[gametest] ${msg}`);
 const v = (p: Vec3): Vector3 => ({ x: p[0], y: p[1], z: p[2] });
-const engineApi = { world, BlockVolume, BlockTypes, StructureRotation, ItemStack, EnchantmentType };
+const engineApi = { world, BlockVolume, BlockTypes, StructureRotation, ItemStack, EnchantmentType, protectLegendaries: protectLegendariesIn };
 
 /** Every block name the template writes: a block of one of these in the world is the city. */
 const CITY_TYPES: string[] = [...new Set(Object.values(wardenCityTemplate().blocks).map((b) => b.name))].filter(

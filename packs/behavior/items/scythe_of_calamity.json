@@ -1,11 +1,11 @@
 {
-  "format_version": "1.21.0",
+  "format_version": "1.21.90",
   "minecraft:item": {
     "description": {
       "identifier": "andrew:scythe_of_calamity",
       "menu_category": {
         "category": "equipment",
-        "group": "itemGroup.name.hoe"
+        "group": "minecraft:itemGroup.name.hoe"
       }
     },
     "components": {
@@ -15,6 +15,12 @@
       "minecraft:icon": "andrew_scythe_of_calamity",
       "minecraft:max_stack_size": 1,
       "minecraft:hand_equipped": true,
+      "minecraft:allow_off_hand": {
+        "value": true
+      },
+      "minecraft:fire_resistant": {
+        "value": true
+      },
       "minecraft:enchantable": {
         "slot": "sword",
         "value": 10

@@ -20,6 +20,7 @@ import {
   world,
 } from "@minecraft/server";
 import { type SimulatedPlayer, Test, registerAsync } from "@minecraft/server-gametest";
+import { protectLegendariesIn } from "../legendary/recovery";
 import { stripHelmet } from "../selftest/mob-probe";
 import { GUARD_COUNT, GUARD_ENTITY, WINDMILL_BODY, guardPoints, guardTag } from "../structures/bodies/windmill";
 import { type Box, boxOf, sliceBox } from "../structures/clear";
@@ -49,7 +50,7 @@ const health = (e: Entity): number => (e.isValid ? (e.getComponent("minecraft:he
 function runtime(salt: string): StrfRuntime {
   const store = new MemoryStore();
   store.set(SALT_KEY, `${salt}-${Date.now()}`);
-  return new StrfRuntime(store, engineStrf({ world, BlockVolume, BlockTypes, StructureRotation, ItemStack, EnchantmentType }), { log });
+  return new StrfRuntime(store, engineStrf({ world, BlockVolume, BlockTypes, StructureRotation, ItemStack, EnchantmentType, protectLegendaries: protectLegendariesIn }), { log });
 }
 
 /** Chunk `offset` chunks east of the test, clear of every other test's ground. */
@@ -455,7 +456,7 @@ registerAsync("andrew", "windmill_body_airship_disabled", async (test: Test): Pr
   // A ring-capable engine: without the gate the linked search would really run here.
   const rt = new StrfRuntime(
     store,
-    engineStrf({ world, BlockVolume, BlockTypes, StructureRotation, ItemStack, EnchantmentType, system, ringAreaPrefix: "andrew_gt_noair" }),
+    engineStrf({ world, BlockVolume, BlockTypes, StructureRotation, ItemStack, EnchantmentType, system, protectLegendaries: protectLegendariesIn, ringAreaPrefix: "andrew_gt_noair" }),
     { log: (m) => (lines.push(m), log(m)), enabled }
   );
   const [cx, cz] = farChunk(test, 150);

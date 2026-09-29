@@ -22,6 +22,7 @@ import {
   world,
 } from "@minecraft/server";
 import { Test, registerAsync } from "@minecraft/server-gametest";
+import { protectLegendariesIn } from "../legendary/recovery";
 import { BRUTE, PIGLIN, PIGLIN_MAX, PIGLIN_MIN, goldKept, guardTag, piglinCount, roleTag } from "../structures/bodies/bastion";
 import { BODIES } from "../structures/bodies";
 import { type Box, boxOf, sliceBox } from "../structures/clear";
@@ -50,7 +51,7 @@ const SIZE: Vec3 = [...BASTION_SIZE];
 
 const log = (msg: string): void => console.warn(`[gametest] ${msg}`);
 const v = (p: Vec3): Vector3 => ({ x: p[0], y: p[1], z: p[2] });
-const engineApi = { world, BlockVolume, BlockTypes, StructureRotation, ItemStack, EnchantmentType };
+const engineApi = { world, BlockVolume, BlockTypes, StructureRotation, ItemStack, EnchantmentType, protectLegendaries: protectLegendariesIn };
 const nether = (): Dimension => world.getDimension("nether");
 
 /** Everything the custom table of loot-table.ts can put in a chest. */

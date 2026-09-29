@@ -90,13 +90,22 @@ test('cooldownRemaining', async (t) => {
 
 test('parseMark / serializeMark', async (t) => {
   await t.test('round-trips a craft mark with owner name', () => {
-    const mark = { origin: 'craft', owner: 'p1', id: '123-abc', ownerName: 'Steve' };
+    const mark = { origin: 'craft', owner: 'p1', id: '123-abc', gen: 0, ownerName: 'Steve' };
     assert.deepStrictEqual(parseMark(serializeMark(mark)), mark);
   });
 
   await t.test('round-trips an admin mark with no owner name', () => {
-    const mark = { origin: 'admin', owner: 'p2', id: '456-def' };
+    const mark = { origin: 'admin', owner: 'p2', id: '456-def', gen: 3 };
     assert.deepStrictEqual(parseMark(serializeMark(mark)), mark);
+  });
+
+  await t.test('a mark written before generations reads as gen 0', () => {
+    assert.deepStrictEqual(parseMark('{"origin":"admin","owner":"p2","id":"456-def"}'), {
+      origin: 'admin',
+      owner: 'p2',
+      id: '456-def',
+      gen: 0,
+    });
   });
 
   const garbage = [
@@ -114,6 +123,8 @@ test('parseMark / serializeMark', async (t) => {
     '{"origin":"craft","owner":"p1","id":1}',
     '{"origin":"craft","owner":"p1","id":"x","ownerName":42}',
     '{"origin":null,"owner":"p1","id":"x"}',
+    '{"origin":"craft","owner":"p1","id":"x","gen":-1}',
+    '{"origin":"craft","owner":"p1","id":"x","gen":"1"}',
   ];
 
   for (const json of garbage) {
