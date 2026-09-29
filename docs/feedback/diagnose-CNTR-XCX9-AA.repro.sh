@@ -26,9 +26,13 @@ node scripts/bds-gametest.mjs "${args[@]}" "$@" || exit 1
 
 grep -E "XCX9 |craft gate|first craft by|craft blocked for" "$log"
 
+# The BDS console runs under a tty and ends every line with CR, which a `$`
+# anchor never matches.
+clean=$(tr -d '\r' < "$log")
+
 fail=0
 expect() {
-  if grep -qE "$2" "$log"; then echo "PASS $1"; else echo "FAIL $1 — expected /$2/"; fail=1; fi
+  if grep -qE "$2" <<<"$clean"; then echo "PASS $1"; else echo "FAIL $1 — expected /$2/"; fail=1; fi
 }
 expect give_websword        "XCX9 give_websword RESULT mode=Survival give_success=1 flag=false held=1 marks=none refund=0$"
 expect give_scythe          "XCX9 give_scythe RESULT mode=Survival give_success=1 flag=false held=1 marks=none refund=0$"
