@@ -4,7 +4,7 @@
 // chunk unload or restart mid-way resumes where it stopped. The engine comes
 // in through PlaceWorld, so node tests drive the same code over a fake world.
 
-import type { BlockVolume, Dimension, Entity, StructureManager, StructureRotation } from "@minecraft/server";
+import type { BlockVolume, Dimension, Entity, StructureManager, StructureRotation, Vector3 } from "@minecraft/server";
 import { type Box, boxOf, clearBox } from "./clear";
 import type { Instance, Registry, Vec3 } from "./registry";
 import { ENGINE_ROTATION, rotatedSize, toWorld } from "./rotate";
@@ -101,6 +101,11 @@ export interface BlockEdit {
 export interface PlaceWorld {
   hasTemplate(id: string): boolean;
   isLoaded(x: number, z: number): boolean;
+  /**
+   * Moves live legendaries out of the holders in `box`; throws, having moved
+   * nothing, when it cannot. engineWorld always has it; node fakes may omit it.
+   */
+  protect?(box: Box): void;
   place(id: string, origin: Vec3, rot: Instance["rot"]): void;
   fill(slice: Box): void;
   edit?: BlockEdit;
@@ -144,10 +149,12 @@ export class Placer {
     return box.min[1] > box.max[1] ? undefined : box;
   }
 
-  /** The world writes of the place step: clear, then place. The SiteGate.occupy callback. */
+  /** The world writes of the place step: protect, clear, then place. The SiteGate.occupy callback. */
   readonly write = (inst: Instance): void => {
     const body = this.body(inst);
     const area = this.clearArea(inst);
+    // Order: before the first fill or place — both erase a holder's contents without a spill.
+    this.world.protect?.(boxOf(inst.origin, inst.size));
     if (area !== undefined) clearBox(area, (s) => this.world.fill(s));
     this.world.place(body.templateId, inst.origin, inst.rot);
     if (body.decorate === undefined) return;
@@ -264,6 +271,8 @@ export interface PlaceEngineApi {
   structureManager: StructureManager;
   BlockVolume: typeof BlockVolume;
   StructureRotation: typeof StructureRotation;
+  /** legendary/recovery protectLegendariesIn, passed in: its engine imports would break the node tests that bundle this file. */
+  protectLegendaries(dimension: Dimension, volume: { min: Vector3; max: Vector3 }, opts: { reason: string }): unknown;
 }
 
 /** getTopmostBlock throws in an unloaded chunk (probe Q9); getBlock returns undefined. */
@@ -308,6 +317,8 @@ export function engineWorld(dim: Dimension, api: PlaceEngineApi): PlaceWorld {
     // getPackStructureIds() returns [] for pack structures on 2.10.0; get() is the only existence check.
     hasTemplate: (id) => api.structureManager.get(id) !== undefined,
     isLoaded: (x, z) => dim.isChunkLoaded({ x, y: minY, z }),
+    protect: (b) =>
+      api.protectLegendaries(dim, { min: { x: b.min[0], y: b.min[1], z: b.min[2] }, max: { x: b.max[0], y: b.max[1], z: b.max[2] } }, { reason: "structure write" }),
     place: (id, o, rot) =>
       api.structureManager.place(id, dim, { x: o[0], y: o[1], z: o[2] }, {
         rotation: api.StructureRotation[ENGINE_ROTATION[rot]],

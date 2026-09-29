@@ -24,6 +24,7 @@ import {
   world,
 } from "@minecraft/server";
 import { type SimulatedPlayer, Test, registerAsync } from "@minecraft/server-gametest";
+import { protectLegendariesIn } from "../legendary/recovery";
 import { BODIES, STAND_IN_CHESTS, STAND_IN_SIZE, standIn } from "../structures/bodies";
 import { CUSTOM_TABLE } from "../structures/loot";
 import { type Box, boxOf, sliceBox } from "../structures/clear";
@@ -70,7 +71,7 @@ function freshRuntime(): StrfRuntime {
   replies.length = 0;
   // The commands are proven over the probe box; the real Windmill has its own tests (windmill-body.ts).
   const bodies = { ...BODIES, windmill: standIn([CUSTOM_TABLE, CUSTOM_TABLE]) };
-  runtime = new StrfRuntime(store, engineStrf({ world, BlockVolume, BlockTypes, StructureRotation, ItemStack, EnchantmentType }), { log, bodies });
+  runtime = new StrfRuntime(store, engineStrf({ world, BlockVolume, BlockTypes, StructureRotation, ItemStack, EnchantmentType, protectLegendaries: protectLegendariesIn }), { log, bodies });
   return runtime;
 }
 

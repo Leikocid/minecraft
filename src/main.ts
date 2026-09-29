@@ -16,7 +16,7 @@ import { registerLegendaryCommands } from "./legendary/commands";
 import { registerCraftGate } from "./legendary/craftgate";
 import { registerHideCommand } from "./legendary/hidden";
 import { registerLegendaryHud } from "./legendary/hud";
-import { registerRecovery } from "./legendary/recovery";
+import { protectLegendariesIn, registerRecovery } from "./legendary/recovery";
 import { registerRetention } from "./legendary/retention";
 import { registerScytheVolley } from "./scythe/volley";
 import { registerStructureCommands } from "./structures/commands";
@@ -78,7 +78,7 @@ world.afterEvents.worldLoad.subscribe(() => {
   const store = new DynamicPropertyStore(world);
   strf = new StrfRuntime(
     store,
-    engineStrf({ world, BlockVolume, BlockTypes, StructureRotation, ItemStack, EnchantmentType, system }),
+    engineStrf({ world, BlockVolume, BlockTypes, StructureRotation, ItemStack, EnchantmentType, system, protectLegendaries: protectLegendariesIn }),
     { log: strfLog, enabled: new EnabledTypes(store) }
   );
   console.warn(`[andrew] ${strf.registry.statsLine()}`);

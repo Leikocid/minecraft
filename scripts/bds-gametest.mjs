@@ -167,6 +167,7 @@ const EXPECTED_TESTS = [
   'andrew:strf_place_clear_sliced',
   'andrew:strf_place_block_entities',
   'andrew:strf_place_resume',
+  'andrew:strf_place_protects_legendaries',
   // LOOT-TBL-01 — src/gametest/structures-loot.ts
   'andrew:strf_loot_custom',
   'andrew:strf_loot_ancient_city',

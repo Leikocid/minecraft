@@ -57,6 +57,8 @@ export const SCAN_RULES: readonly ScanRule[] = [
       "torch", "lantern", "glass", "glass_pane", "bed", "ladder", "bookshelf", "bricks", "brick_block", "anvil", "enchanting_table",
       "smooth_stone", "stonecutter_block", "loom", "cartography_table", "smithing_table", "fletching_table", "brewing_stand",
       "iron_block", "gold_block", "diamond_block", "emerald_block", "netherite_block",
+      "hopper", "dropper", "dispenser", "crafter", "decorated_pot", "frame", "glow_frame",
+      "shulker_box", "undyed_shulker_box", ...COLORS.map((c) => `${c}_shulker_box`),
     ].map(mc),
   },
   // Cobblestone forms where lava meets water in deep caves; near the surface

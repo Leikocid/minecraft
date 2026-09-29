@@ -17,6 +17,7 @@ import {
   world,
 } from "@minecraft/server";
 import { Test, registerAsync } from "@minecraft/server-gametest";
+import { protectLegendariesIn } from "../legendary/recovery";
 import { GUARD_COUNT, guardTag } from "../structures/bodies/windmill";
 import { ROLL_DEFS } from "../structures/config";
 import { type Box, FILL_CELL_LIMIT, boxOf, sliceBox } from "../structures/clear";
@@ -40,7 +41,7 @@ const api = { BlockVolume, BlockTypes };
 
 function runtime(store: MemoryStore, salt: string): StrfRuntime {
   if (store.get(SALT_KEY) === undefined) store.set(SALT_KEY, `${salt}-${Date.now()}`);
-  return new StrfRuntime(store, engineStrf({ world, BlockVolume, BlockTypes, StructureRotation, ItemStack, EnchantmentType }), { log });
+  return new StrfRuntime(store, engineStrf({ world, BlockVolume, BlockTypes, StructureRotation, ItemStack, EnchantmentType, protectLegendaries: protectLegendariesIn }), { log });
 }
 
 function search(rt: StrfRuntime, store: MemoryStore, dim: Dimension, spawn: { x: number; z: number }, radius?: number, lines?: string[]): SpawnSearch {
