@@ -18,6 +18,7 @@ current_versions_by_node:
   L0-ring: 3
 pending_revisions:
   - L0
+  - L0-lgnd
 last_run:
   started_at: '2026-09-29T18:44:27.410Z'
   completed_at: '2026-09-29T19:09:13.569Z'
@@ -82,12 +83,12 @@ last_rollout_hashes:
   project-knowledge/domain-model.md: f00f536d8be51b72
   project-knowledge/architecture.md: f8290ab0d88f380b
   assumptions.md: 22abdf3e14285f94
-  contradictions.md: 9f789678babeb549
+  contradictions.md: 648ac277e440311f
   client-questions.md: d66956366f545063
   summary.md: d3bb69a73ecfb912
   scope.md: 6168ee4cf1be604c
-  risks.md: fabcadd181dd01ce
-  decisions.md: b15675e6ef8a8b5f
+  risks.md: 64c46ccd9c63276b
+  decisions.md: 1655392ab3d44b2e
 runtime_vocabulary:
   concept-boundary:
     description: Seen at runtime
@@ -212,6 +213,7 @@ Runtime state for the analyst pipeline (analyse runs, vocabulary, slug map, roll
 ## Pending Revisions
 
 - L0
+- L0-lgnd
 
 ## Changelog
 
