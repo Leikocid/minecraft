@@ -15,16 +15,19 @@ ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 ID="${WCX_ID:-bds-wcx1}"
 DIR="$ROOT/docker/$ID"
 NAME="andrew-$ID"
+# Host ports: P (tcp+udp), P+1 (v6), P+2..P+9 (gameplay udp), DISC (LAN discovery udp).
+P="${WCX_PORT:-19380}"
+DISC="${WCX_DISC:-7577}"
 cd "$ROOT"
 
 mkdir -p "$DIR"
 sed -e "s/container_name: andrew-bds-ci/container_name: $NAME/" \
-    -e 's/"19136:19136\/tcp"/"19280:19280\/tcp"/' -e 's/"19136:19136\/udp"/"19280:19280\/udp"/' \
-    -e 's/19160-19169:19160-19169/19282-19289:19282-19289/' -e 's/"7553:7553\/udp"/"7564:7564\/udp"/' \
-    -e 's/SERVER_PORT: "19136"/SERVER_PORT: "19280"/' -e 's/SERVER_PORT_V6: "19137"/SERVER_PORT_V6: "19281"/' \
+    -e "s/\"19136:19136\/tcp\"/\"$P:$P\/tcp\"/" -e "s/\"19136:19136\/udp\"/\"$P:$P\/udp\"/" \
+    -e "s/19160-19169:19160-19169/$((P + 2))-$((P + 9)):$((P + 2))-$((P + 9))/" -e "s/\"7553:7553\/udp\"/\"$DISC:$DISC\/udp\"/" \
+    -e "s/SERVER_PORT: \"19136\"/SERVER_PORT: \"$P\"/" -e "s/SERVER_PORT_V6: \"19137\"/SERVER_PORT_V6: \"$((P + 1))\"/" \
     docker/bds-ci/compose.yaml > "$DIR/compose.yaml"
-sed -e 's/^server-port=.*/server-port=19280/' -e 's/^server-portv6=.*/server-portv6=19281/' \
-    -e 's/^server-udp-ports=.*/server-udp-ports=19282-19289/' docker/bds-ci/server.properties > "$DIR/server.properties"
+sed -e "s/^server-port=.*/server-port=$P/" -e "s/^server-portv6=.*/server-portv6=$((P + 1))/" \
+    -e "s/^server-udp-ports=.*/server-udp-ports=$((P + 2))-$((P + 9))/" docker/bds-ci/server.properties > "$DIR/server.properties"
 grep -q "container_name: $NAME" "$DIR/compose.yaml" && ! grep -vE '^\s*#' "$DIR/compose.yaml" | grep -qE '1913[2-7]|1916[0-9]|7553' \
   || { echo "FAIL: private compose still points at a shared port or name"; exit 2; }
 if [ ! -d "$DIR/data" ] && [ -n "${WCX_SEED_DATA:-}" ]; then
