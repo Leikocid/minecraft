@@ -10,9 +10,13 @@ part_of: ["L0"]
 relates_to: ["L0"]
 priority: 530
 size_chars: 2554
-tags: ["title:wrdn and bast restate the strf/loot contract instead of referencing it", "target:L0", "status:open", "category:invariant-violation", "severity:medium", "reduce", "relates_to:L0-wrdn", "relates_to:L0-bast", "relates_to:L0-strf", "relates_to:L0-loot", "relates_to:L0-adr-strc", "relates_to:L0-adr-body", "relates_to:L0-wrdn-rul1", "relates_to:L0-wrdn-rul7", "relates_to:L0-wrdn-ad02", "relates_to:L0-bast-r001", "relates_to:L0-bast-r006", "relates_to:L0-bast-ad01", "relates_to:L0-bast-as03", "relates_to:L0-bast-p001", "relates_to:L0-bast-p002", "relates_to:L0-strf-r002", "relates_to:L0-strf-r008", "relates_to:L0-strf-p001", "relates_to:L0-strf-p005", "relates_to:L0-strf-p006"]
+tags: ["title:wrdn and bast restate the strf/loot contract instead of referencing it","target:L0","status:open","category:invariant-violation","severity:medium","reduce","relates_to:L0-wrdn","relates_to:L0-bast","relates_to:L0-strf","relates_to:L0-loot","relates_to:L0-adr-strc","relates_to:L0-adr-body","relates_to:L0-wrdn-rul1","relates_to:L0-wrdn-rul7","relates_to:L0-wrdn-ad02","relates_to:L0-bast-r001","relates_to:L0-bast-r006","relates_to:L0-bast-ad01","relates_to:L0-bast-as03","relates_to:L0-bast-p001","relates_to:L0-bast-p002","relates_to:L0-strf-r002","relates_to:L0-strf-r008","relates_to:L0-strf-p001","relates_to:L0-strf-p005","relates_to:L0-strf-p006","resolved"]
 level: 1
+closed_at: 2026-09-29
+closed_reason: resolved_by_decision
+closed_by_ref: decision-resolve-l0-xcx6
 ---
+
 # CX-L0-06 · `wrdn` and `bast` restate the structure contract instead of referencing `strf-*` / `loot-*`, and list no probe dependencies
 
 **Links:** `is_a: ["contradiction"]` · `relates_to: ["L0-wrdn", "L0-bast", "L0-strf", "L0-loot", "L0-adr-body"]` · **target_node:** `L0` · **status:** open

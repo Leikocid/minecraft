@@ -2,7 +2,7 @@
 type: "concept-process"
 node_id: "L0-lgnd-p005"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 3
 title: "P-lgnd-005: Single Action Bar HUD (both hands)"
 aliases: ["L0-lgnd-p005"]
 is_a: ["process"]

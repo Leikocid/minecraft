@@ -2,28 +2,32 @@
 type: "concept-acceptance-criterion"
 node_id: "L0-lgnd-ac11"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 3
 aliases: ["L0-lgnd-ac11"]
 is_a: ["acceptance-criterion"]
 part_of: ["L0-lgnd"]
 relates_to: ["L0-lgnd"]
-priority: 520
-size_chars: 625
-tags: ["acceptance-criterion", "channel:build", "channel:bds", "regression", "C-10"]
+priority: 540
+size_chars: 920
+tags: ["v3-delta", "reconciled"]
 level: 2
 ---
 ---
 is_a: ["acceptance-criterion"]
 part_of: ["L0-lgnd"]
-relates_to: ["L0-lgnd-ad06", "L0-lgnd-cx04"]
+relates_to: ["L0-lgnd-ad07", "L0-lgnd-ad08", "L0-adr-lgnd"]
 ---
-**AC-lgnd-11: Web Sword regression after migration.** Channel: `build` + `bds`.
+**AC-lgnd-11: Regression gate for the v3 framework change.** Channel: `build` + `bds`.
 
-GIVEN the framework build
+GIVEN the v3 build
 WHEN `npm test`, `bds:check` and `bds:gametest` run
 THEN every existing test passes **without edits to its assertions**:
 - `tests/web-sword-*.test.mjs`;
-- the nine `andrew:websword_*` GameTests listed in `scripts/bds-gametest.mjs`;
+- the `andrew:websword_*` and Scythe GameTests;
 - the pickaxe and autosmelt suites.
-AND `grep -rnE "andrew:(ws|sc)_|andrew:hidden_until" src/` matches only `src/legendary/state.ts`,
-AND `/andrew:websword give|reset` still works.
+
+Harness changes are allowed (`L0-adr-lgnd`, cx04 reading), for example a simulated craft now inserting the craft token.
+
+AND `grep -rnE "andrew:(ws|sc|oc)_|andrew:(cd|busy)_|andrew:hidden_until" src/` matches only files in `src/legendary/`,
+AND `/andrew:websword`, `/andrew:scythe` and `/andrew:orbital` `give|reset` all work,
+AND a node test asserts that `itemId`, `keyPrefix`, `abilityKey`, `command` and `craftTokenId` are unique across `LEGENDARIES`.

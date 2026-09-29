@@ -10,9 +10,13 @@ part_of: ["L0-scyt"]
 relates_to: ["L0-scyt"]
 priority: 520
 size_chars: 1327
-tags: ["is_a:contradiction", "category:design-vs-impl", "severity:medium", "target:L0-sitm", "delta:2026-09-26"]
+tags: ["is_a:contradiction","category:design-vs-impl","severity:medium","target:L0-sitm","delta:2026-09-26","resolved"]
 level: 2
+closed_at: 2026-09-29
+closed_reason: resolved_by_decision
+closed_by_ref: decision-resolve-l0-scyt-cx03
 ---
+
 # CX-scyt-03 · The shipped item JSON is a hoe and has no `allow_off_hand`, against `L0-sitm-adr2`, `L0-sitm-asm3`, `L0-adr-scyt` and AC-16
 
 **Links:** `part_of: ["L0-scyt"]` · `is_a: ["contradiction"]` · `relates_to: ["L0-sitm-adr2", "L0-sitm-asm3", "L0-adr-scyt", "L0-scyt-ac15", "L0-scyt-ac16", "L0-scyt-r009"]`

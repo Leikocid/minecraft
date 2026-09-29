@@ -10,9 +10,13 @@ part_of: ["L0"]
 relates_to: ["L0"]
 priority: 530
 size_chars: 1332
-tags: ["title:airs, wrdn and bast ACs are not split into bds and ipad channels", "target:L0", "status:open", "category:invariant-violation", "severity:low", "reduce", "relates_to:L0-infr", "relates_to:L0-wind", "relates_to:L0-airs", "relates_to:L0-wrdn", "relates_to:L0-bast", "relates_to:L0-infr-p006", "relates_to:L0-airs-ac01", "relates_to:L0-wrdn-ac01", "relates_to:L0-bast-ac01"]
+tags: ["title:airs, wrdn and bast ACs are not split into bds and ipad channels","target:L0","status:open","category:invariant-violation","severity:low","reduce","relates_to:L0-infr","relates_to:L0-wind","relates_to:L0-airs","relates_to:L0-wrdn","relates_to:L0-bast","relates_to:L0-infr-p006","relates_to:L0-airs-ac01","relates_to:L0-wrdn-ac01","relates_to:L0-bast-ac01","resolved"]
 level: 1
+closed_at: 2026-09-29
+closed_reason: resolved_by_decision
+closed_by_ref: decision-resolve-l0-xcx7
 ---
+
 # CX-L0-07 · Structure tests 14–59 are channel-split only for the Windmill
 
 **Links:** `is_a: ["contradiction"]` · `relates_to: ["L0-infr", "L0-wind", "L0-airs", "L0-wrdn", "L0-bast"]` · **target_node:** `L0` · **status:** open

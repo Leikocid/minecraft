@@ -2,38 +2,47 @@
 type: "concept-process"
 node_id: "L0-lgnd-p003"
 source_channel: "rollout"
-analysis_version: 2
-title: "P-lgnd-003: Loss return (Void, lava, fire, cactus, explosion, despawn)"
+analysis_version: 3
+title: "P-lgnd-003: Loss return (tier 3 of the destruction policy) — v3 target"
 aliases: ["L0-lgnd-p003"]
 is_a: ["process"]
 part_of: ["L0-lgnd"]
 relates_to: ["L0-lgnd"]
-priority: 520
-size_chars: 1949
-tags: ["process", "void-return", "indestructibility", "CTR-011", "Q-020"]
+priority: 540
+size_chars: 2279
+tags: ["v3-delta", "destruction-policy"]
 level: 2
 ---
 ---
 is_a: ["process"]
 part_of: ["L0-lgnd"]
-relates_to: ["L0-lgnd-ent4", "L0-lgnd-r005", "L0-lgnd-r011", "L0-lgnd-ad02", "L0-lgnd-ad03", "L0-lgnd-cx02"]
+relates_to: ["L0-lgnd-ent2", "L0-lgnd-ent4", "L0-lgnd-r005", "L0-lgnd-r011", "L0-lgnd-r012", "L0-lgnd-ad02", "L0-lgnd-ad03", "L0-lgnd-ad11", "L0-lgnd-p008", "L0-lgnd-cx11"]
 ---
-# P-lgnd-003: Loss return (Void, lava, fire, cactus, explosion, despawn)
+# P-lgnd-003: Loss return (tier 3 of the destruction policy) — v3 target
 
-New. There is no shipped counterpart. Implements Scythe §1 (*«не должно уничтожаться обычными способами; при падении в Void возвращается последнему владельцу»*) for **all** legendaries (Q-020 default a).
+`src/legendary/recovery.ts`. As built it has a 40-tick watcher over the watch set, owner return and a single owed map. The v3 target adds `gen` (from `wpn2`), the holder (`ad11`) and the `protect` tag (`p008`).
 
-1. **Watch.** On `entitySpawn` of a `minecraft:item` whose stack is a live marked legendary: add its entity id to the watch set and record `{prefix, mark, holder, dimension}`. Start the watcher interval if the set was empty (`L0-lgnd-ad03`).
-2. **Removal.**
-   - On `world.beforeEvents.entityRemove` for a watched entity: snapshot the mark, then defer to `system.run` (before-events are read-only).
-   - On each watcher tick (every 10 ticks): if a watched entity has `location.y < dimension.heightRange.min`, treat it as a Void loss **before** the engine kills it.
-3. **Classify, one tick later:**
-   - The instance `(id, gen)` appeared in some player's inventory via `playerInventoryItemChange` in that window → **pickup**. Update the holder and do nothing else.
-   - The removal was tagged `retention` by `L0-lgnd-p002` → do nothing.
+1. **Watch.**
+   - On `entitySpawn` and `entityLoad` of a `minecraft:item` whose stack is a **live** marked legendary: add it to the watch set with `{def, mark}`. The mark includes `holder`.
+   - A stale-gen item entity is removed on sight and never watched.
+   - The 40-tick interval starts on the first add (C-5a′ as widened by `L0-adr-lgnd`).
+2. **Detect.**
+   - **Void:** watcher tick, `y < heightRange.min`. The script removes the entity itself.
+   - **Destroyed or despawned:** the entity is no longer valid at the next watcher tick, or `beforeEvents.entityRemove` fires (`as03`).
+3. **Classify:**
+   - The removal is tagged `retention` (`p002`) or `protect` (`p008`) → nothing.
+   - The instance is found in an online player's inventory, or in the container at or below the spot → **pickup**. Update `holder` (`ent2`), and stop. This is the as-built heuristic.
    - Otherwise → **lost**.
-4. **Re-issue (one synchronous turn):** `gen := gen + 1` in the ledger. If `holder` is online, `addItem` the stack with the same id and the new gen, then send `returned`. If not, append to `andrew:<p>_owed`.
-5. **Redeem owed** on `playerSpawn`/join, with the same token rules as `L0-lgnd-p002`.
-6. **Stop.** Remove the entity from the watch set. Clear the interval when the set is empty.
+4. **Re-issue**, in one synchronous turn:
+   1. ledger `gen := gen + 1`;
+   2. target = `holder ?? owner`;
+   3. if the target is online: `addItem` the stack with the same `id`, the new `gen` and `holder = target`, then send `<textPrefix>.returned`;
+   4. otherwise append `{mark, reason, holderName}` to `owed[target]`.
+5. **Redeem owed** on `playerSpawn`: each entry is granted once, with the token rules of `p002`.
+6. **Stale survivor.** A copy that a hopper, allay or hopper-minecart took (mis-classified) now has an old `gen`. It cannot cast and is deleted on its first player-inventory event (`r005`). This closes the as-built duplication window (`cx09` item 2).
+7. **Stop.** Unwatch the entity. Clear the interval when the set is empty.
 
-**Not done:** the craft right is never reopened (Q-014, `L0-lgnd-r011`). Containers are not scanned (C-4). Any physical survivor of a mis-classified loss becomes stale (`L0-lgnd-r005`).
-
-Unmarked (Creative) copies are not watched. They keep vanilla destruction.
+**Not done.**
+- The craft right is never reopened (`r011`).
+- No container scan outside `p008`.
+- Unmarked copies are never watched.

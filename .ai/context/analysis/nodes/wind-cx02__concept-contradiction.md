@@ -3,16 +3,20 @@ type: "concept-contradiction"
 node_id: "L0-wind-cx02"
 source_channel: "rollout"
 analysis_version: 2
-title: "CX-wind-02 · \"Check the linked Airship once, right after the Windmill\" vs never touching unloaded chunks"
+title: "CX-wind-02 · \\"Check the linked Airship once, right after the Windmill\\" vs never touching unloaded chunks"
 aliases: ["L0-wind-cx02"]
 is_a: ["contradiction"]
 part_of: ["L0-wind"]
 relates_to: ["L0-wind"]
 priority: 530
 size_chars: 1415
-tags: ["is_a:contradiction", "category:source-vs-constraint", "severity:low", "status:open", "target:L0-airs", "linked-airship", "relates_to:L0-wind-r012", "relates_to:L0-wind-ad03", "relates_to:L0-strf-r007"]
+tags: ["is_a:contradiction","category:source-vs-constraint","severity:low","status:open","target:L0-airs","linked-airship","relates_to:L0-wind-r012","relates_to:L0-wind-ad03","relates_to:L0-strf-r007","resolved"]
 level: 2
+closed_at: 2026-09-29
+closed_reason: resolved_by_decision
+closed_by_ref: decision-resolve-l0-wind-cx02
 ---
+
 # CX-wind-02 · "Check the linked Airship once, right after the Windmill" vs never touching unloaded chunks
 
 **Links:** `part_of: ["L0-wind"]` · `is_a: ["contradiction"]` · `relates_to: [L0-wind-r012, L0-wind-ad03, L0-strf-r007, L0-airs]`

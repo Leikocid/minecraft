@@ -2,75 +2,77 @@
 type: "concept-component"
 node_id: "L0-lgnd"
 source_channel: "rollout"
-analysis_version: 2
-title: "Legendary weapon framework (shipped `src/legendary/`)"
+analysis_version: 3
+title: "Legendary weapon framework (shipped `src/legendary/`) — v3 delta"
 aliases: ["L0-lgnd"]
 is_a: ["component"]
 part_of: ["L0"]
 relates_to: ["L0"]
-priority: 530
-size_chars: 5314
-tags: ["is_a:component", "as-built", "reconcile"]
+priority: 540
+size_chars: 4530
+tags: ["v3-delta", "orbital-cannon"]
 level: 1
 ---
 ---
 is_a: ["component"]
 part_of: ["L0"]
-relates_to: ["L0-sitm", "L0-stgt", "L0-sprj", "L0-sqat", "L0-scyt"]
-governs_files: ["src/legendary/", "src/websword/trap.ts", "src/scythe/targeting.ts", "src/scythe/volley.ts", "src/main.ts", "src/gametest/main.ts"]
-see_also: ["webswordspecv1ruen-part-1", "webswordspecv1ruen-part-2", "scytheofcalamityspecv1ruen-part-1", "scytheofcalamityspecv1ruen-part-2"]
+relates_to: ["L0-orbc", "L0-webs", "L0-scyt", "L0-pntr", "L0-ring", "L0-adr-orbc", "L0-adr-hold", "L0-adr-wpn2", "L0-adr-ochg", "L0-xcx9", "L0-xcx10", "L0-xcx11", "L0-xq3"]
+governs_files: ["src/legendary/", "src/websword/trap.ts", "src/scythe/targeting.ts", "src/scythe/volley.ts", "src/orbital/", "src/main.ts", "src/gametest/main.ts"]
+see_also: ["webswordspecv1ruen-part-1", "scytheofcalamityspecv1ruen-part-1", "orbitalcannonspecv1ruen-part-1", "orbitalcannonspecv1ruen-part-2", "orbitalcannonspecv1ruen-part-3"]
 ---
-# Legendary weapon framework (shipped `src/legendary/`)
+# Legendary weapon framework (shipped `src/legendary/`) — v3 delta
 
-**Responsibility.** Implement each general rule for legendary weapons (Scythe §1, §6; Web Sword §3, §4, §8–§10) once, in `src/legendary/`, for the Web Sword and the Scythe of Calamity.
+**Responsibility.** Every general legendary rule is implemented once, in `src/legendary/`, for three weapons: the Web Sword, the Scythe of Calamity and (v3) the Orbital Cannon. The general rules are Scythe §1 and §6, Web Sword §3, §4 and §8–§10, and Orbital §4, §5 and §7.
 
-## Current state (verified in code, 2026-09-26)
-This replaces the 2026-09-24 note that "`src/legendary/` does not exist". It was built by `LG-CORE-01-AA` (392253d), `LG-KEEP-02-AA` (ed7558b, e38cb75) and `SC-TGT-01-AA` (120bdd5). `src/websword/` now holds only `trap.ts` and `cube.ts`. The shims planned in `ad06` were **not** built: the old modules were deleted and `src/main.ts` imports `src/legendary/*` directly.
+## Current state (verified in code, 2026-09-29)
+The as-built shape in `L0-lgnd-ad07` still holds. No `src/legendary/` commit has landed since `120bdd5`. The **v2 backlog from `L0-adr-wpn2` has not shipped** (`L0-lgnd-cx11`):
+- There is no `gen` on the mark or in the ledger.
+- `_owed` is still a map `ownerId → one mark` (`recovery.ts:253`).
+- `retention.ts` does not read the `Offhand` slot.
+- No item JSON declares `minecraft:allow_off_hand`.
+- `grep -rn orbital src/` finds nothing, so the Cannon is not started.
 
-| File | What it does as built |
-|---|---|
-| `registry.ts` | Static `LEGENDARIES = [WEB_SWORD, SCYTHE_OF_CALAMITY]` (no `registerLegendary()`), `keysFor(def)`, `cooldownKey` = `andrew:cd_<abilityKey>`, `busyKey` = `andrew:busy_<abilityKey>` |
-| `state.ts` | Mark `{origin, owner, id, ownerName?}` under `andrew:<prefix>_*`. No `gen`, no `holder`. `pending` holds a **single** mark per weapon. `findMarked` returns the first match only. |
-| `rules.ts` | Pure `craftDecision`, `cooldownRemaining`, `parseMark`/`serializeMark` |
-| `craftgate.ts` | Per-weapon one-per-world gate, refund (`def.refund`) and broadcast |
-| `retention.ts` | Death retention: path A (inventory container), path B (8-block drop sweep), restore on `playerSpawn` guarded by `carriesInstance` |
-| `recovery.ts` | Loss return. Watches item entities from `entitySpawn` and `entityLoad` with a 40-tick interval that runs only while something is watched. It removes items below `heightRange.min` itself. A pickup is inferred from `playerInventoryItemChange`, a scan of online player inventories, or a container at or below the spot. The item returns to the **mark's `owner`**. If the owner is offline, the mark goes to `andrew:<p>_owed`, a map keyed by player id with one mark per player. |
-| `cooldown.ts` | `remainingMs/remainingTicks/isReady/startCooldown/clearCooldown/setBusy(ms)/clearBusy/isBusy`, all on `Date.now()` |
-| `hands.ts` | `heldLegendaries` (main, then off), `resolveActivation` (the first held legendary that is ready and not busy) |
-| `hud.ts` | One 10-tick interval. It shows `andrew.legendary.cooldown` / `andrew.legendary.ready` for each held weapon, and "Ready" stays up **continuously**. There is no `active` segment, and nothing is written when no legendary is held. |
-| `hidden.ts` | `isHiddenFromTargeting` reads `andrew:hidden_until` (epoch ms), plus `/andrew:hide <seconds> [target]` |
-| `commands.ts` | One command per def: `/andrew:websword` and `/andrew:scythe` `<give|reset> [target]`. There is no `/andrew:legendary`. |
+## v3 delta (this pass)
+| # | Change | Artifacts |
+|---|---|---|
+| 1 | Add `ORBITAL_CANNON` to the static `LEGENDARIES`: `oc` / `orbital_cannon`, 600 ticks, refund 4 TNT + 1 Fishing Rod, `andrew:orbital` | `ent1`, `ac17`, `L0-adr-orbc` |
+| 2 | Activation **mode**: `resolveActivation(player, mode)` with `"use" \| "attack"` and a per-def `activations`. Attack reads the main hand only. | `ad09`, `r015`, `p009`, `ac16` |
+| 3 | Craft provenance: a recipe outputs a hidden **craft token** item. Plain `andrew:<weapon>` stacks (vanilla `/give`, Creative) never claim or refund (`xcx9`). | `ad08`, `r014`, `p001`, `ac15` |
+| 4 | Loss return goes to the **last holder** (`holder` in the mark), with `owed` as a list keyed by holder (`xcx11`, answers `xq3`, realises `L0-adr-hold`) | `ad11`, `ent2`, `ent4`, `p003`, `ac08`, `ac18` |
+| 5 | "Not destroyed" policy in three tiers: *prevent* (script-caused) → *spill* (vanilla container break) → *return* (fire, lava, cactus, TNT, Void). There is also a container-destruction rule (`xcx10`). | `ad10`, `r012`, `r013`, `ac09`, `ac20` |
+| 6 | `protectLegendariesIn(dimension, volume)`, published for `pntr`/`ring` to call before they remove blocks or detonate | `p008`, `ac19` |
+| 7 | The unshipped `wpn2` backlog (`gen`, owed list, off-hand read) is a **prerequisite** of 4 and 5 | `cx11` |
 
-Each weapon module still subscribes to `itemUse` and `playerInteractWithBlock` itself (`trap.ts`, `scythe/targeting.ts`). It then acts only if `resolveActivation(player)?.def` is its own def. So there is no central dispatcher, but the priority decision lives in one place.
+## Owns (unchanged, plus v3)
+Everything it owned before, plus:
+- the activation-mode resolver;
+- craft tokens (the gate's half: the token → marked swap);
+- the holder field;
+- the destruction policy;
+- `protectLegendariesIn`.
 
-## Owns
-Registry and keys, instance mark, craft gate and refund, death retention, loss return (owed ledger), cooldown and busy timers, the hand-priority resolver, the single HUD, the hidden predicate plus `/andrew:hide`, and the operator commands.
-
-## Published contracts
-- `LegendaryDef {itemId, keyPrefix, abilityKey, nameKey, cooldownTicks, craftGate, refund, textPrefix, command}`.
-- `cooldown.*(player, abilityKey)` as listed above.
-- `resolveActivation(player)`.
-- `isHiddenFromTargeting(player)`.
+## Published contracts (v3)
+- `LegendaryDef` gains `activations: ReadonlyArray<"use"|"attack">` (default `["use"]`) and `craftTokenId?: string`.
+- `resolveActivation(player, mode = "use")`.
+- `protectLegendariesIn(dimension, volume, opts?) → {moved, returned}`.
+- `isLegendaryItemEntity(entity)`, which `ring` uses for drop suppression (`L0-adr-ochg` §3).
+- `cooldown.*` and `isHiddenFromTargeting` are unchanged. The HUD gains a per-weapon key lookup: `andrew.<prefix>.ready/cooldown` if defined, else the shared `andrew.legendary.*` keys (which render `%s: Ready` / `%s: %s s`). The Cannon uses its own keys to render "Orbital Cannon — Ready" / "— 27s" (Orbital §7; `L0-adr-oded`).
 
 ## Does NOT own
-What an ability does (`trap.ts`/`cube.ts`, `L0-stgt`, `L0-sprj`), item JSON, recipes and lang strings (`L0-sitm`), and Shadow Blade.
+- What an ability does: `trap.ts`, the Scythe volley, and the Cannon's charges and effects (`L0-orbc`, `L0-pntr`, `L0-ring`).
+- The LMB target raycast and the Creative break cancel (`L0-orbc`).
+- Item, entity and recipe JSON, including the token items' JSON (`webs`, `scyt`, `orbc`). `lgnd` only states the contract those files must meet (`r014`).
 
-## Spec ↔ code reconciliation (this pass)
-- **Resolved by decision and matched by code:**
-  - `cx01`: Ready is continuous for both weapons (decision-legendary-ready-hud).
-  - Loss return covers the Web Sword too (decision-resolve-cool-ctr1).
-  - Hand priority is implemented, and busy counts as not ready (decision-legendary-hand-priority).
-  - `andrew:hidden_until` is in ms (decision-scythe-hidden-target).
-- **New divergences:**
-  - `cx07`: the 0.3.0 cooldown key is orphaned.
-  - `cx08`: neither item declares `minecraft:allow_off_hand`, so the off-hand half of hand priority and of the HUD cannot happen.
-  - `cx09`: loss return goes to the owner and has no generation guard.
-  - `cx10`: death with several marked copies of one weapon.
-- **Design superseded by as-built** (`ad07`):
-  - Busy is a durable deadline, not memory-only (`ad05`).
-  - Keys are the `andrew:cd_*` / `andrew:busy_*` family.
-  - The shims (`ad06`) and the central dispatcher (`ad04` mechanics) were not built.
-  - The registry is static.
+## Sequencing
+One `lgnd` v3 task, in this order:
+1. the `wpn2` backlog;
+2. `holder`;
+3. the tokens;
+4. activation mode + the Cannon def;
+5. `protectLegendariesIn`.
+
+The `orbc` core tasks depend on items 4–5. They are also blocked on `L0-xq5` (LMB reach).
 
 ## Risk
-Web Sword regression is covered by the existing `andrew:websword_*` GameTests, which are run from `src/gametest/main.ts` against the framework. `ac11`'s grep guard no longer matches the code: keys are built in `registry.ts`/`recovery.ts`/`hidden.ts`, not only in `state.ts`.
+- The token recipe change touches the shipped Web Sword and Scythe recipes. GameTests that simulate a craft by inserting an unmarked `andrew:web_sword` must insert the token instead. This is harness wiring, not an assertion (`L0-adr-lgnd` cx04 reading). `ac11` still gates it.
+- A legendary nested inside a shulker box or bundle is invisible to every protection (`cx12`).
