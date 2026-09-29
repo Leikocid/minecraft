@@ -133,6 +133,12 @@ const EXPECTED_TESTS = [
   'andrew:probe_loot_bastion_other',
   'andrew:probe_loot_control_known_table',
   'andrew:probe_loot_full_chest',
+  // CX-L0-09 — src/gametest/probe-give.ts; verdict read by docs/feedback/diagnose-CNTR-XCX9-AA.repro.sh
+  'andrew:probe_xcx9_give_websword',
+  'andrew:probe_xcx9_give_scythe',
+  'andrew:probe_xcx9_give_then_craft',
+  'andrew:probe_xcx9_give_after_craft',
+  'andrew:probe_xcx9_creative_copy_pickup',
   // STRF-REG-01 — src/gametest/strf-registry.ts
   'andrew:strf_registry_steps_idempotent',
   // STRF-ROLL-01 — src/gametest/structures.ts
