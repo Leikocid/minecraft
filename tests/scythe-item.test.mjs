@@ -35,6 +35,16 @@ function parseLang(raw) {
 const enLang = parseLang(enLangRaw);
 const ruLang = parseLang(ruLangRaw);
 
+function versionAtLeast(version, min) {
+  const parts = String(version).split('.').map(Number);
+  for (let i = 0; i < min.length; i++) {
+    const a = parts[i] ?? 0;
+    const b = min[i];
+    if (a !== b) return a > b;
+  }
+  return true;
+}
+
 // Minimal PNG IHDR reader (no external image libraries).
 function readPngSize(path) {
   const buf = readFileSync(path);
@@ -112,7 +122,31 @@ test('Scythe of Calamity item JSON', async (t) => {
     const menuCategory = itemJson['minecraft:item'].description?.menu_category;
     assert.ok(menuCategory, 'description.menu_category must be set');
     assert.strictEqual(menuCategory.category, 'equipment', 'menu_category.category must be "equipment"');
-    assert.strictEqual(menuCategory.group, 'itemGroup.name.hoe', 'menu_category.group must be the hoe group');
+    assert.strictEqual(
+      menuCategory.group,
+      'minecraft:itemGroup.name.hoe',
+      'menu_category.group must be the namespaced hoe group (format_version >= 1.21.90 refuses a bare group name)'
+    );
+  });
+
+  // CNTR-XCX10-AA / LGND-FIREPROOF-01-AA: Orbital §5 wants a legendary to
+  // never be destroyed. Fire and lava are met literally via this component
+  // (measured on BDS 1.26.51.1); cactus, explosions and despawn still fall
+  // back to destroyed-then-returned (recovery.ts).
+  await t.test('is fire resistant, so it stays in place in lava and fire instead of being destroyed and returned', () => {
+    const fireResistant = itemJson['minecraft:item'].components?.['minecraft:fire_resistant'];
+    assert.ok(fireResistant, 'minecraft:fire_resistant component must be present');
+    const value = typeof fireResistant === 'boolean' ? fireResistant : fireResistant.value;
+    assert.strictEqual(value, true, 'minecraft:fire_resistant.value must be true');
+  });
+
+  // The object form of minecraft:fire_resistant is refused at load below
+  // 1.21.90 ("expected an object"); a bare boolean parses but does nothing.
+  await t.test('format_version supports the object form of minecraft:fire_resistant', () => {
+    assert.ok(
+      versionAtLeast(itemJson.format_version, [1, 21, 90]),
+      `format_version ${itemJson.format_version} must be >= 1.21.90 for minecraft:fire_resistant as an object`
+    );
   });
 
   await t.test('has a display_name loc key present in both languages', () => {

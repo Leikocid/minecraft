@@ -1,12 +1,18 @@
 // Loss return for every legendary item (Scythe spec §1, applied to all
 // legendaries by decision-legendary-rules-obschie-dlya-vseh-legendarnyh).
 //
-// The stable API has no way to make an item entity indestructible, so the rule
-// is "destroyed means returned": a marked instance lying on the ground is
-// watched, and when it vanishes without having reached an inventory — Void,
-// lava, fire, cactus, explosion, despawn — its owner (the mark's `owner`) is
-// owed it back through the same pending mark death retention uses. The craft
-// right is never reopened (Q-014).
+// Orbital §5 wants a legendary to never be destroyed. Fire and lava are met
+// literally: both item JSONs carry minecraft:fire_resistant (format >=
+// 1.21.90), which keeps the item entity alive in both (measured,
+// CNTR-XCX10-AA F1) — this module never sees that entity vanish, so no return
+// fires. The stable API still has no component for cactus, an explosion or
+// despawn, so for those three the fallback stays "destroyed means returned"
+// (deviation, C-16): a marked instance lying on the ground is watched, and
+// when it vanishes without having reached an inventory, its owner (the mark's
+// `owner`) is owed it back through the same pending mark death retention uses.
+// The Void is not a deviation — §5 itself prescribes returning a legendary
+// that falls in, and that path also runs through this module. The craft right
+// is never reopened (Q-014).
 //
 // Watching is event-driven, never a world scan: entitySpawn/entityLoad add an
 // entity, and a 2 s interval, alive only while something is watched, checks

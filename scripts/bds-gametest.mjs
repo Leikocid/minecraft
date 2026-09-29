@@ -103,6 +103,7 @@ const EXPECTED_TESTS = [
   'andrew:websword_cooldown_blocks_reuse',
   'andrew:legendary_returns_from_void',
   'andrew:legendary_survives_lava',
+  'andrew:legendary_survives_fire',
   'andrew:legendary_pickup_no_duplicate',
   'andrew:scythe_melee_matches_netherite',
   'andrew:scythe_no_target_no_cooldown',
