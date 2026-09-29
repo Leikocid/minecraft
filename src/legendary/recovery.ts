@@ -4,9 +4,17 @@
 // The stable API has no way to make an item entity indestructible, so the rule
 // is "destroyed means returned": a marked instance lying on the ground is
 // watched, and when it vanishes without having reached an inventory — Void,
-// lava, fire, cactus, explosion, despawn — its owner (the mark's `owner`) is
-// owed it back through the same pending mark death retention uses. The craft
-// right is never reopened (Q-014).
+// lava, fire, cactus, explosion, despawn — its owner (the mark's `owner`) gets
+// it back, at once when online and alive, otherwise from the owed list on their
+// next spawn. The craft right is never reopened (Q-014).
+//
+// The returned copy keeps the instance id and carries the next generation
+// (L0-lgnd-ad02). A pickup misread as a loss therefore leaves a stale copy,
+// never a second live one: a stale stack cannot cast, is not retained on death,
+// is removed on sight as an item entity, and is deleted from any player
+// inventory it enters (R-lgnd-005). The stable API reports no reason for an
+// entity's removal (C-16), so the classification below stays a heuristic and
+// the generation is what keeps its mistakes harmless.
 //
 // Watching is event-driven, never a world scan: entitySpawn/entityLoad add an
 // entity, and a 2 s interval, alive only while something is watched, checks
@@ -19,6 +27,7 @@
 // in a container right at the spot (a hopper). Only then is nothing owed.
 
 import {
+  type Container,
   type Dimension,
   type Entity,
   type Player,
@@ -27,13 +36,15 @@ import {
   world,
 } from "@minecraft/server";
 import { LEGENDARIES, type LegendaryDef, defForStack } from "./registry";
-import { restore } from "./retention";
-import { getMark, getPending, isItemOf, setPending } from "./state";
-import { type Mark, parseMark, serializeMark } from "./rules";
+import { grant } from "./retention";
+import { bumpGen, carriesInstance, getMark, isItemOf, isLive, readOwed, writeOwed } from "./state";
+import { type Mark, withOwed, withoutOwed } from "./rules";
 
 const CHECK_INTERVAL_TICKS = 40;
 
 const RECOVERED_KEY = "andrew.legendary.recovered";
+
+const VOIDED_KEY = "andrew.legendary.voided";
 
 interface Watched {
   entity: Entity;
@@ -72,16 +83,28 @@ export function registerRecovery(): void {
     if (def === undefined || stack === undefined) {
       return;
     }
-    const id = getMark(def, stack)?.id;
-    if (id === undefined || ![...watched.values()].some((w) => w.mark.id === id)) {
+    const mark = getMark(def, stack);
+    if (mark === undefined) {
+      return;
+    }
+    const player: Player | undefined = event.player;
+    const container = player?.getComponent("minecraft:inventory")?.container;
+    if (player === undefined || container === undefined) {
       return;
     }
     // The event also fires for the drop that created the entity, still
-    // naming the stack; only a slot that holds the instance now is a pickup.
-    const player: Player | undefined = event.player;
-    const now = player?.getComponent("minecraft:inventory")?.container?.getItem(event.slot);
-    if (isItemOf(def, now) && getMark(def, now)?.id === id) {
-      seenInInventory.add(id);
+    // naming the stack; only a slot that holds the instance now counts.
+    const now = container.getItem(event.slot);
+    const there = isItemOf(def, now) ? getMark(def, now) : undefined;
+    if (there === undefined || there.id !== mark.id) {
+      return;
+    }
+    if (!isLive(def, there)) {
+      voidStaleSlot(def, player, container, event.slot, there);
+      return;
+    }
+    if ([...watched.values()].some((w) => w.mark.id === mark.id)) {
+      seenInInventory.add(mark.id);
     }
   });
 
@@ -112,6 +135,11 @@ function watch(entity: Entity, via: string): void {
   const mark = getMark(def, stack);
   if (mark === undefined) {
     // Unmarked Creative copies keep vanilla destruction.
+    return;
+  }
+  if (!isLive(def, mark)) {
+    entity.remove();
+    console.warn(`[andrew] legendary recovery: removed a stale ${def.itemId} id ${mark.id} gen ${mark.gen} (via ${via})`);
     return;
   }
   watched.set(entity.id, { entity, def, mark, dimension: entity.dimension, location: entity.location });
@@ -215,63 +243,66 @@ function whereIs(w: Watched): string | undefined {
   return undefined;
 }
 
-function lost(w: Watched, how: string): void {
-  const owner = world.getAllPlayers().find((player) => player?.isValid && player.id === w.mark.owner);
+function voidStaleSlot(def: LegendaryDef, player: Player, container: Container, slot: number, mark: Mark): void {
+  container.setItem(slot, undefined);
+  player.sendMessage({ translate: VOIDED_KEY });
   console.warn(
-    `[andrew] legendary recovery: ${w.def.itemId} id ${w.mark.id} ${how}; ` +
-      (owner === undefined ? `owner ${w.mark.owner} offline, owed on next join` : `returning to ${owner.name}`)
+    `[andrew] legendary recovery: voided a stale ${def.itemId} id ${mark.id} gen ${mark.gen} in ${player.name}'s inventory`
   );
-  if (owner === undefined) {
-    setOwed(w.def, w.mark.owner, w.mark);
+}
+
+/** An online, living player who can take a stack right now. */
+function reachable(playerId: string): { player: Player; container: Container } | undefined {
+  const player = world.getAllPlayers().find((p) => p?.isValid && p.id === playerId);
+  const health = player?.getComponent("minecraft:health");
+  const container = player?.getComponent("minecraft:inventory")?.container;
+  if (player === undefined || container === undefined || (health !== undefined && health.currentValue <= 0)) {
+    return undefined;
+  }
+  return { player, container };
+}
+
+function lost(w: Watched, how: string): void {
+  if (!isLive(w.def, w.mark)) {
+    console.warn(`[andrew] legendary recovery: ${w.def.itemId} id ${w.mark.id} ${how}, but it was already stale`);
     return;
   }
-  setPending(w.def, owner, w.mark);
-  system.run(() => {
-    restore(w.def, owner, RECOVERED_KEY);
-  });
-}
-
-/** World property: owner id -> serialized mark, for owners offline at the loss. */
-function owedKey(def: LegendaryDef): string {
-  return `andrew:${def.keyPrefix}_owed`;
-}
-
-function readOwed(def: LegendaryDef): Record<string, string> {
-  const raw = world.getDynamicProperty(owedKey(def));
-  if (typeof raw !== "string") {
-    return {};
+  // Order: one synchronous turn — the generation moves before the new stack
+  // exists, so the vanished copy is stale before a second one can be live.
+  const mark: Mark = { ...w.mark, gen: bumpGen(w.def, w.mark.id) };
+  const target = w.mark.owner;
+  const online = reachable(target);
+  console.warn(
+    `[andrew] legendary recovery: ${w.def.itemId} id ${w.mark.id} ${how}; now gen ${mark.gen}, ` +
+      (online === undefined ? `owner ${target} offline or dead, owed on next spawn` : `returning to ${online.player.name}`)
+  );
+  if (online === undefined) {
+    writeOwed(w.def, withOwed(readOwed(w.def), target, { mark, reason: how }));
+    return;
   }
-  try {
-    const parsed: unknown = JSON.parse(raw);
-    return typeof parsed === "object" && parsed !== null ? (parsed as Record<string, string>) : {};
-  } catch {
-    return {};
-  }
+  grant(w.def, online.player, online.container, mark, RECOVERED_KEY);
 }
 
-function setOwed(def: LegendaryDef, ownerId: string, mark: Mark): void {
-  const owed = readOwed(def);
-  owed[ownerId] = serializeMark(mark);
-  world.setDynamicProperty(owedKey(def), JSON.stringify(owed));
-}
-
+/** Hands `player` every instance owed to them, each once. */
 function redeemOwed(def: LegendaryDef, player: Player): void {
   if (!player.isValid) {
     return;
   }
-  const owed = readOwed(def);
-  const raw = owed[player.id];
-  if (raw === undefined) {
+  const entries = readOwed(def)[player.id];
+  const online = reachable(player.id);
+  if (entries === undefined || online === undefined) {
     return;
   }
-  const mark = parseMark(raw);
-  // Order: the pending mark is durable before the world entry goes, so a
-  // throw in between leaves the debt recorded twice, never zero times.
-  if (mark !== undefined && getPending(def, player) === undefined) {
-    setPending(def, player, mark);
+  for (const { mark } of entries) {
+    if (!isLive(def, mark)) {
+      console.warn(`[andrew] legendary recovery: owed ${def.itemId} id ${mark.id} gen ${mark.gen} is stale, dropped`);
+    } else if (carriesInstance(def, online.container, mark)) {
+      console.warn(`[andrew] legendary recovery: ${player.name} already carries owed ${def.itemId} id ${mark.id}, dropped`);
+    } else {
+      grant(def, player, online.container, mark, RECOVERED_KEY);
+    }
+    // Order: the entry goes after its grant, so a throw in between leaves a
+    // token the next spawn drops as already carried, never a lost debt.
+    writeOwed(def, withoutOwed(readOwed(def), player.id, mark));
   }
-  delete owed[player.id];
-  world.setDynamicProperty(owedKey(def), JSON.stringify(owed));
-  restore(def, player, RECOVERED_KEY);
 }
-

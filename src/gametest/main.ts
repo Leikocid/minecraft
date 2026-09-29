@@ -71,6 +71,7 @@ import "./warden";
 import "./warden-body";
 import "./bastion";
 import "./bastion-body";
+import "./legendary-recovery";
 import "./probe-input";
 import { SPAWN_EVENT } from "../structures/spawn-search";
 

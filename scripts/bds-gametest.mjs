@@ -104,6 +104,12 @@ const EXPECTED_TESTS = [
   'andrew:legendary_returns_from_void',
   'andrew:legendary_survives_lava',
   'andrew:legendary_pickup_no_duplicate',
+  // CX-lgnd-09 items 2–3 — src/gametest/legendary-recovery.ts
+  'andrew:legendary_cx09_hopper_to_chest',
+  'andrew:legendary_cx09_hopper_alone',
+  'andrew:legendary_cx09_hopper_minecart',
+  'andrew:legendary_cx09_owed_two_losses',
+  'andrew:legendary_cx09_owed_redeemed_on_respawn',
   'andrew:scythe_melee_matches_netherite',
   'andrew:scythe_no_target_no_cooldown',
   'andrew:scythe_prefers_player_over_mob',

@@ -121,7 +121,7 @@ function makeHolder(heldTypeId, name = 'holder', hand = 'Mainhand') {
         if (slot !== hand) {
           return undefined;
         }
-        return heldTypeId === undefined ? undefined : { typeId: heldTypeId };
+        return heldTypeId === undefined ? undefined : { typeId: heldTypeId, getDynamicProperty: () => undefined };
       },
     };
   };

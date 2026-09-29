@@ -19,6 +19,7 @@ andrew.scythe.reset=Scythe of Calamity craft budget reset
 andrew.legendary.cooldown=%s: %s s
 andrew.legendary.ready=%s: Ready
 andrew.legendary.recovered=Your legendary weapon has returned to you
+andrew.legendary.voided=This copy of a legendary weapon was superseded by its returned instance and has crumbled away
 
 andrew.structure.no_permission=Only an operator can use /andrew:structure
 andrew.structure.not_player=Run this as a player: the command works at your position

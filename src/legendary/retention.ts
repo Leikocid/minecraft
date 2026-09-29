@@ -41,7 +41,18 @@ import {
 } from "@minecraft/server";
 import { forgetWatched } from "./recovery";
 import { LEGENDARIES, type LegendaryDef, defForStack } from "./registry";
-import { clearPending, findMarked, getMark, getPending, isItemOf, markItem, setPending } from "./state";
+import { type Mark } from "./rules";
+import {
+  carriesInstance,
+  clearPending,
+  findMarked,
+  getMark,
+  getPending,
+  isLive,
+  markItem,
+  setPending,
+  voidStale,
+} from "./state";
 
 /**
  * How far from the death spot to sweep for dropped items.
@@ -101,6 +112,11 @@ function retain(player: Player): void {
   const container = player.getComponent("minecraft:inventory")?.container;
   if (container !== undefined) {
     for (const def of LEGENDARIES) {
+      // A superseded copy is deleted, not retained (R-lgnd-005).
+      const voided = voidStale(def, container);
+      if (voided > 0) {
+        console.warn(`[andrew] legendary retention: path A — voided ${voided} stale ${def.itemId} on ${player.name}'s death`);
+      }
       const found = findMarked(def, container);
       if (found === undefined) {
         console.warn(
@@ -156,14 +172,17 @@ function sweep(player: Player, dimension: Dimension, location: Vector3): void {
       // An unmarked copy is an ordinary item — vanilla rules, leave it lying.
       continue;
     }
-    if (getPending(def, player) === undefined) {
+    const live = isLive(def, mark);
+    if (live && getPending(def, player) === undefined) {
       setPending(def, player, mark);
     }
     // Order: unwatched before removal, or recovery reads this removal as a
     // loss and owes the mark a second time.
     forgetWatched(entity.id);
     entity.remove();
-    reclaimed++;
+    if (live) {
+      reclaimed++;
+    }
   }
 
   console.warn(
@@ -175,10 +194,7 @@ function sweep(player: Player, dimension: Dimension, location: Vector3): void {
   );
 }
 
-/**
- * Hand the owed item back, once. Called on respawn/join, and by recovery for a
- * live player; `messageKey` is what the owner is told.
- */
+/** Hand the item retained on death back, once. Called on respawn/join; `messageKey` is what the owner is told. */
 export function restore(def: LegendaryDef, player: Player, messageKey = `${def.textPrefix}.returned`): void {
   if (!player.isValid) {
     return;
@@ -190,9 +206,7 @@ export function restore(def: LegendaryDef, player: Player, messageKey = `${def.t
     return;
   }
 
-  // Re-read rather than trusting the value the subscriber saw: the release
-  // pack and the GameTest pack both arm this module in the same world, and
-  // whichever gets there first clears the mark for the other.
+  // Re-read rather than trusting the value the subscriber saw a tick ago.
   const mark = getPending(def, player);
   if (mark === undefined) {
     return;
@@ -204,7 +218,16 @@ export function restore(def: LegendaryDef, player: Player, messageKey = `${def.t
     return;
   }
 
-  if (carriesInstance(def, container, mark.id)) {
+  if (!isLive(def, mark)) {
+    // A loss return superseded this instance while the token waited.
+    clearPending(def, player);
+    console.warn(
+      `[andrew] legendary retention: pending ${def.itemId} id ${mark.id} gen ${mark.gen} is stale, cleared without a copy`
+    );
+    return;
+  }
+
+  if (carriesInstance(def, container, mark)) {
     clearPending(def, player);
     console.warn(
       `[andrew] legendary retention: ${player.name} already carries ${def.itemId} id ${mark.id}, ` +
@@ -213,27 +236,24 @@ export function restore(def: LegendaryDef, player: Player, messageKey = `${def.t
     return;
   }
 
+  grant(def, player, container, mark, messageKey);
+  clearPending(def, player);
+}
+
+/**
+ * Hands `player` a fresh stack stamped with `mark` and tells them. Every return
+ * path goes through here; the caller owns the token that makes it happen once.
+ */
+export function grant(def: LegendaryDef, player: Player, container: Container, mark: Mark, messageKey: string): void {
   const leftover = container.addItem(markItem(def, new ItemStack(def.itemId, 1), mark));
   if (leftover !== undefined) {
     // Nowhere in the inventory to put it. At their feet is still "returned to
     // the owner", and it beats destroying the world's only copy.
     player.dimension.spawnItem(leftover, player.location);
   }
-  clearPending(def, player);
   player.sendMessage({ translate: messageKey });
   console.warn(
-    `[andrew] legendary retention: returned ${def.itemId} id ${mark.id} to ${player.name}` +
+    `[andrew] legendary retention: returned ${def.itemId} id ${mark.id} gen ${mark.gen} to ${player.name}` +
       (leftover === undefined ? "" : " (inventory full — dropped at their feet)")
   );
-}
-
-/** Whether `container` already holds the instance `id` of `def`. */
-function carriesInstance(def: LegendaryDef, container: Container, id: string): boolean {
-  for (let slot = 0; slot < container.size; slot++) {
-    const stack = container.getItem(slot);
-    if (isItemOf(def, stack) && getMark(def, stack)?.id === id) {
-      return true;
-    }
-  }
-  return false;
 }
