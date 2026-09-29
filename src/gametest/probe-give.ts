@@ -75,7 +75,7 @@ giveCase("give_websword", WEB_SWORD);
 giveCase("give_scythe", SCYTHE_OF_CALAMITY);
 
 // A /give first, then a craft by somebody else. The craft stand-in is the one the
-// websword_* gate tests use: an unmarked sword added to a Survival inventory.
+// websword_* gate tests use: the recipe's craft token added to a Survival inventory.
 register("andrew", "probe_xcx9_give_then_craft", (test: Test): void => {
   state.resetCrafted(WEB_SWORD);
   const tester = test.spawnSimulatedPlayer(STAND_A, "xcx9_tester", GameMode.Survival);
@@ -85,7 +85,7 @@ register("andrew", "probe_xcx9_give_then_craft", (test: Test): void => {
     const given = vanillaGive(test, WEB_SWORD, tester);
     test.runAfterDelay(SETTLE_TICKS, () => {
       const afterGive = measure(WEB_SWORD, tester);
-      inventoryOf(crafter).addItem(new ItemStack(WEB_SWORD.itemId, 1));
+      inventoryOf(crafter).addItem(new ItemStack(WEB_SWORD.craftTokenId, 1));
       test.runAfterDelay(SETTLE_TICKS, () => {
         console.warn(
           `XCX9 give_then_craft RESULT give_success=${given} tester[${afterGive}] crafter[${measure(WEB_SWORD, crafter)}]`

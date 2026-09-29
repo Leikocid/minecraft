@@ -1,33 +1,34 @@
 // One survival craft per world for every legendary with `craftGate` (spec §3).
 //
 // The stable @minecraft/server 2.10.0 surface has no "before craft" event, so
-// the gate cannot veto the recipe. It works the only way the stable API allows:
-// by noticing an *unmarked* legendary item appearing in a player's inventory
-// and deciding after the fact — keep it and claim the world's single craft, or
-// take it back and return the ingredients.
+// the gate cannot veto the recipe, and its inventory event carries no cause, so
+// a craft looks exactly like a /give. The recipe therefore outputs a craft
+// token (`def.craftTokenId`), not the weapon, and the gate acts on tokens only:
+// it swaps each one, after the fact, for a marked weapon (and claims the
+// world's single craft) or for the ingredients. A plain weapon stack — /give, a
+// Creative copy, a pickup — is never gated (AD-lgnd-08, Orbital §4).
 // [src: decision-q-008-blocked-craft-refund-a-obnaruzhit-i-vernut]
 //
-// The decision itself is not made here: rules.craftDecision() owns it, so the
-// Creative/Spectator exemption and the already-marked exemption are testable
-// off the engine. This module is the engine half — events in, container writes
-// and messages out.
+// The decision itself is not made here: rules.tokenDecision() owns it, so the
+// Creative/Spectator exemption is testable off the engine. This module is the
+// engine half — events in, container writes and messages out.
 
 import { type Container, ItemStack, type Player, type RawMessage, system, world } from "@minecraft/server";
-import { type LegendaryDef, defForStack } from "./registry";
-import { craftDecision } from "./rules";
-import { getMark, isCrafted, isItemOf, makeMark, markItem, setCrafted } from "./state";
+import { type LegendaryDef, defForToken } from "./registry";
+import { tokenDecision } from "./rules";
+import { isCrafted, makeMark, markItem, setCrafted } from "./state";
 
 // Known limitation, not fixable on this surface: refund items (def.refund) are
-// *new* stacks. By the time an unmarked result exists the ingredients are gone,
-// so their enchantments and durability are not restored.
+// *new* stacks. By the time a token exists the ingredients are gone, so their
+// enchantments and durability are not restored.
 // [src: decision-q-008-blocked-craft-refund-a-obnaruzhit-i-vernut]
 
 /**
- * Players with an unmarked sword seen this tick, in the order the engine
- * reported them. One craft touches several slots (the result slot, then the
- * inventory slot it is moved to), and each touch is its own event — so the
- * events are collected and the inventory is read once, rather than acting on
- * every one of them.
+ * Players with a craft token seen this tick, in the order the engine reported
+ * them. One craft touches several slots (the result slot, then the inventory
+ * slot it is moved to), and each touch is its own event — so the events are
+ * collected and the inventory is read once, rather than acting on every one of
+ * them.
  */
 const queued = new Map<string, Player>();
 
@@ -35,9 +36,8 @@ let flushScheduled = false;
 
 export function registerCraftGate(): void {
   world.afterEvents.playerInventoryItemChange.subscribe((event) => {
-    const stack = event.itemStack;
-    const def = defForStack(stack);
-    if (def === undefined || !def.craftGate || stack === undefined || getMark(def, stack) !== undefined) {
+    const def = defForToken(event.itemStack);
+    if (def === undefined) {
       return;
     }
 
@@ -53,7 +53,7 @@ export function registerCraftGate(): void {
     // this gate instead; see src/gametest/main.ts.
     const holder: Player | undefined = event.player;
     if (holder === undefined) {
-      console.warn(`[andrew] legendary gate: an unmarked ${def.itemId} was reported with no readable holder`);
+      console.warn(`[andrew] legendary gate: a craft token ${def.craftTokenId} was reported with no readable holder`);
       return;
     }
     queued.set(holder.id, holder);
@@ -73,7 +73,7 @@ export function registerCraftGate(): void {
  *
  * Sequential on purpose: this is where the §9 craft race is decided. Two
  * players who craft on the same tick are both in the queue, `isCrafted()` is
- * re-read for each sword, and so exactly one of them claims the world's budget
+ * re-read for each token, and so exactly one of them claims the world's budget
  * while the other is refunded.
  */
 function flush(): void {
@@ -91,8 +91,8 @@ function flush(): void {
       gate(player);
     } catch (err) {
       // One player's failure must not swallow the rest of the queue — and a
-      // silent throw here would leave an unmarked sword in the world, which is
-      // the one outcome the gate exists to prevent.
+      // silent throw here would leave a token in the world instead of the
+      // weapon or the ingredients.
       const why = err instanceof Error ? err.message : String(err);
       console.warn(`[andrew] legendary craft gate failed for ${player.name}: ${why}`);
     }
@@ -107,36 +107,37 @@ function gate(player: Player): void {
 
   // The whole inventory rather than the event's slot index: a craft can land
   // in more than one slot, and a shift-click bulk craft in several at once.
-  // This runs only when an unmarked sword was reported, never per tick (C-4).
+  // This runs only when a token was reported, never per tick (C-4).
   for (let slot = 0; slot < container.size; slot++) {
-    const stack = container.getItem(slot);
-    const def = defForStack(stack);
-    if (def === undefined || !def.craftGate || !isItemOf(def, stack) || getMark(def, stack) !== undefined) {
+    const def = defForToken(container.getItem(slot));
+    if (def === undefined) {
       continue;
     }
 
-    switch (craftDecision({ crafted: isCrafted(def), gameMode: player.getGameMode(), marked: false })) {
-      case "ignore":
-        break;
+    switch (tokenDecision(isCrafted(def), player.getGameMode())) {
       case "claim":
-        claim(def, player, container, slot, stack);
+        claim(def, player, container, slot);
         break;
       case "refund":
         refund(def, player, container, slot);
+        break;
+      case "unwrap":
+        container.setItem(slot, new ItemStack(def.itemId, 1));
         break;
     }
   }
 }
 
 /**
- * First survival craft: stamp the instance and spend the world's budget.
+ * First survival craft: swap the token for a marked weapon and spend the
+ * world's budget.
  *
- * Order is load-bearing — the sword is marked and written back *before* the
- * flag is claimed, so a throw in the middle leaves the budget unspent rather
- * than spent on a sword that never reached the player.
+ * Order is load-bearing — the weapon is written *before* the flag is claimed,
+ * so a throw in the middle leaves the budget unspent rather than spent on a
+ * weapon that never reached the player.
  */
-function claim(def: LegendaryDef, player: Player, container: Container, slot: number, stack: ItemStack): void {
-  container.setItem(slot, markItem(def, stack, makeMark("craft", player)));
+function claim(def: LegendaryDef, player: Player, container: Container, slot: number): void {
+  container.setItem(slot, markItem(def, new ItemStack(def.itemId, 1), makeMark("craft", player)));
   setCrafted(def, player.name);
   announce(def, player);
 }
@@ -172,7 +173,7 @@ function announce(def: LegendaryDef, player: Player): void {
   }
 }
 
-/** The budget is already spent: take the item back, hand the ingredients over. */
+/** The budget is already spent: take the token back, hand the ingredients over. */
 function refund(def: LegendaryDef, player: Player, container: Container, slot: number): void {
   container.setItem(slot, undefined);
   for (const [itemId, count] of def.refund) {
