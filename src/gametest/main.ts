@@ -69,6 +69,7 @@ import "./warden";
 import "./warden-body";
 import "./bastion";
 import "./bastion-body";
+import "./probe-input";
 import { SPAWN_EVENT } from "../structures/spawn-search";
 
 const WEB_SWORD_ID = WEB_SWORD.itemId;
