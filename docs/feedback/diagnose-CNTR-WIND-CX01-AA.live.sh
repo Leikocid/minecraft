@@ -25,7 +25,7 @@ sed -e "s/container_name: andrew-bds-ci/container_name: $NAME/" \
     docker/bds-ci/compose.yaml > "$DIR/compose.yaml"
 sed -e 's/^server-port=.*/server-port=19280/' -e 's/^server-portv6=.*/server-portv6=19281/' \
     -e 's/^server-udp-ports=.*/server-udp-ports=19282-19289/' docker/bds-ci/server.properties > "$DIR/server.properties"
-grep -q "container_name: $NAME" "$DIR/compose.yaml" && ! grep -qE '1913[2-7]|7553' "$DIR/compose.yaml" \
+grep -q "container_name: $NAME" "$DIR/compose.yaml" && ! grep -vE '^\s*#' "$DIR/compose.yaml" | grep -qE '1913[2-7]|1916[0-9]|7553' \
   || { echo "FAIL: private compose still points at a shared port or name"; exit 2; }
 if [ ! -d "$DIR/data" ] && [ -n "${WCX_SEED_DATA:-}" ]; then
   mkdir -p "$DIR/data"
