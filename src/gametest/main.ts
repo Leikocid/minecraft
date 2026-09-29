@@ -56,6 +56,7 @@ import "./probe-mobs";
 import "./probe-loot";
 import "./probe-give";
 import "./probe-retention";
+import "./legendary-fireproof";
 import "./strf-registry";
 import "./structures";
 import "./structures-site";
@@ -1388,33 +1389,10 @@ register(
   .maxTicks(200)
   .tag("andrew");
 
-/** Lava far from the player, where the sword is dropped instead of thrown. */
-const LAVA_CELL: Vector3 = { x: 5, y: 2, z: 1 };
-
-register(
-  "andrew",
-  "legendary_survives_lava",
-  lossScenario(
-    "andrew_burner",
-    (test, player, stack) => {
-      inventoryOf(player).setItem(player.selectedSlotIndex, undefined);
-      const at = test.worldLocation({ x: LAVA_CELL.x + 0.5, y: LAVA_CELL.y + 0.2, z: LAVA_CELL.z + 0.5 });
-      player.dimension.spawnItem(stack, at);
-    },
-    (test, entity) => {
-      test.setBlockType("minecraft:lava", LAVA_CELL);
-      test.runAfterDelay(20, () => {
-        const burned = !entity.isValid;
-        console.warn(`[gametest] lava: sword entity ${burned ? "burned in real lava" : "survived 20 ticks, removed"}`);
-        if (!burned) entity.remove();
-        test.setBlockType("minecraft:air", LAVA_CELL);
-      });
-    }
-  )
-)
-  .structureName(STRUCTURE)
-  .maxTicks(200)
-  .tag("andrew");
+// andrew:legendary_survives_lava and andrew:legendary_survives_fire moved to
+// src/gametest/legendary-fireproof.ts: fire/lava no longer destroy a marked
+// legendary (minecraft:fire_resistant), so there is no loss for this
+// lossScenario helper to drive.
 
 // The control: a pickup also makes the entity vanish, and must not be read as
 // a loss — that would hand the owner a second copy.
