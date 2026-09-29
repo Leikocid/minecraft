@@ -4,14 +4,15 @@
 
 Death retention does delete the second marked copy of a weapon, and nothing brings it back. The off-hand half has no harm: on BDS 1.26.51.1, path B already retains an off-hand copy. The node stays open until the code task below lands.
 
-Evidence (BDS 1.26.51.1, private instance, code `9285e90`):
+Evidence (BDS 1.26.51.1, private instance; the commit is each artifact's `code_sha`):
 
 | Check | Artifact | Exit |
 |---|---|---|
 | `env ANDREW_BDS_DIR=bds-cx10 bash docs/feedback/diagnose-CNTR-LGND-CX10-AA.repro.sh two-copies` | `.ai/verify/CNTR-LGND-CX10-AA/2.red.json` | 1 (expect-red) |
 | `env ANDREW_BDS_DIR=bds-cx10 bash docs/feedback/diagnose-CNTR-LGND-CX10-AA.repro.sh offhand` | `.ai/verify/CNTR-LGND-CX10-AA/2.json` | 0 |
+| `env ANDREW_BDS_DIR=bds-cx10 node scripts/bds-gametest.mjs --only andrew:probe_retention_offhand` (item as shipped) | log line `RETENTION-OFF RESULT off hand refused …` | 0 |
 
-The probes are `src/gametest/probe-retention.ts`, registered in `scripts/bds-gametest.mjs`. Each passes when its measurement completes. The repro script turns each RESULT line into an exit code.
+The probes are `src/gametest/probe-retention.ts`, registered in `scripts/bds-gametest.mjs`. Each passes when its measurement completes, so neither can turn the full `bds:gametest` suite red; with the item as shipped, the off-hand probe reports the refusal and passes. The repro script turns each RESULT line into an exit code.
 
 ## Claim, number by number
 
@@ -25,7 +26,7 @@ The probes are `src/gametest/probe-retention.ts`, registered in `scripts/bds-gam
 | "keeps one" | RESULT `accounted=1/2`, twice | true, but the copy kept is the first in `getEntities` order, not the first slot: both runs kept the copy added **second**. |
 | "otherwise it is swept or left behind, and loss return would then re-issue it" | RESULT `held=0 ground=0 pending=false owed=false`, over 100 ticks (two 40-tick recovery checks) | **false.** Path B deletes it (`retention.ts:164-165`). `forgetWatched` runs first, so recovery never counts a loss. The copy is gone for good. |
 | "an off-hand legendary, once cx08 is fixed, would … go through loss return" | `2.json`, with `allow_off_hand` patched in for the run | **false.** The off-hand drop spawns before `entityDie`. Path B logs "reclaimed 1", retention logs "returned …", and `owed=none`. |
-| (cx08) "a GameTest can still force the slot through `setEquipment(Offhand)`" | first measurement run, item JSON as shipped | **false.** It returned `false`, and the off hand stayed empty. |
+| (cx08) "a GameTest can still force the slot through `setEquipment(Offhand)`" | item JSON as shipped | **false.** It returned `false`, and the off hand stayed empty. |
 | (cx11 / `L0-lgnd`) `recovery.ts:253` | `grep -n "owed\[ownerId\]" src/legendary/recovery.ts` | the line is **254** |
 
 ## /diagnose
@@ -110,7 +111,7 @@ Exposure: in a plain Survival world only one crafted copy exists, so the defect 
 An array `pending` (option a) would also satisfy the checks below, but it reopens the accepted ruling (b). I do not recommend it.
 
 Acceptance criteria:
-1. **e2e (bds)**: `env ANDREW_BDS_DIR=<instance> bash docs/feedback/diagnose-CNTR-LGND-CX10-AA.repro.sh two-copies` exits 0 with `RETENTION-2 RESULT accounted=2/2`. This is the command that is red at `9285e90`.
+1. **e2e (bds)**: `env ANDREW_BDS_DIR=<instance> bash docs/feedback/diagnose-CNTR-LGND-CX10-AA.repro.sh two-copies` exits 0 with `RETENTION-2 RESULT accounted=2/2`. This is the command that is red in `2.red.json`.
 2. **e2e (bds)**: a new GameTest. A Survival SimulatedPlayer carries one `craft`-origin and one `admin`-origin marked Web Sword and dies. After respawn plus 100 ticks:
    - both ids are held exactly once;
    - no Web Sword item entity lies within 16 blocks of the death spot;
@@ -125,7 +126,7 @@ Acceptance criteria:
 
 ## Resolution text (for refine resolve)
 
-> CX-lgnd-10 re-measured on BDS 1.26.51.1 (CNTR-LGND-CX10-AA, `9285e90`).
+> CX-lgnd-10 re-measured on BDS 1.26.51.1 (CNTR-LGND-CX10-AA).
 >
 > The engine spawns death drops before `entityDie`, so retention path A found nothing in 4 of 4 deaths, and path B does all the work.
 >

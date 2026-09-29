@@ -153,7 +153,13 @@ registerAsync("andrew", "probe_retention_offhand", async (test: Test): Promise<v
     `RETENTION-OFF before death: ${set}; offhand=${offhand?.typeId ?? "empty"} mark=${offMark?.id ?? "none"}; ` +
       `in container=${inContainer}`
   );
-  test.assert(offMark?.id === mark.id, `the marked sword is not in the off hand (${set})`);
+  if (offMark?.id !== mark.id) {
+    // The shipped item has no minecraft:allow_off_hand, and the engine then
+    // refuses the slot to scripts as well; that refusal is the answer.
+    log(`RETENTION-OFF RESULT off hand refused the marked sword (${set}); nothing to retain`);
+    test.succeed();
+    return;
+  }
 
   const { died, deathAt, dimension } = await dieAndRespawn(test, player);
   test.assert(died, "the player never died, so retention was never asked");
