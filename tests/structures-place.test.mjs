@@ -32,7 +32,7 @@ const bundle = await build({
 const m = await import('data:text/javascript;base64,' + Buffer.from(bundle.outputFiles[0].text, 'utf-8').toString('base64'));
 const {
   Registry, MemoryStore, SALT_KEY, rotateLocal, rotatedSize, toWorld, rotateCardinal, ROTATIONS,
-  sliceBox, clearBox, cells, boxOf, FILL_CELL_LIMIT, Placer, CHESTS_FILLED, LINKED_TRIED,
+  sliceBox, clearBox, cells, boxOf, FILL_CELL_LIMIT, Placer, CHESTS_FILLED, LINKED_TRIED, engineWorld,
 } = m;
 
 // ------------------------------------------------------------------ rotate
@@ -123,13 +123,18 @@ const SIZE = [9, 5, 7];
 const CHESTS = [{ local: [2, 1, 1], table: 't:a' }, { local: [6, 1, 1], table: 't:b' }, { local: [4, 1, 3], table: 't:c' }];
 
 class FakeWorld {
-  constructor({ templates = [TEMPLATE] } = {}) {
+  constructor({ templates = [TEMPLATE], protectThrows = false } = {}) {
     this.templates = new Set(templates);
     this.unloaded = new Set();
+    this.protectThrows = protectThrows;
     this.log = [];
   }
   hasTemplate(id) { return this.templates.has(id); }
   isLoaded(x, z) { return !this.unloaded.has(`${Math.floor(x / 16)},${Math.floor(z / 16)}`); }
+  protect(b) {
+    this.log.push(['protect', b]);
+    if (this.protectThrows) throw new Error('holder with no script inventory');
+  }
   place(id, origin, rot) { this.log.push(['place', id, origin.join(','), rot]); }
   fill(s) { this.log.push(['fill', cells(s), s]); }
 }
@@ -165,7 +170,7 @@ test('Placer.run: place → chests in order at rotated points → guards → lin
   const inst = plan(reg, 1);
   const r = placer.run(inst);
   assert.deepEqual(r, { place: 'placed', state: 'done' });
-  assert.deepEqual(world.log, [['place', TEMPLATE, '32,64,32', 1]]);
+  assert.deepEqual(world.log, [['protect', boxOf(inst.origin, inst.size)], ['place', TEMPLATE, '32,64,32', 1]]);
   assert.deepEqual(
     calls.fill.map(([i, t, p]) => [i, t, p]),
     CHESTS.map((c, i) => [i, c.table, toWorld(inst.origin, c.local, SIZE, 1).join(',')])
@@ -180,7 +185,7 @@ test('Placer.run: place → chests in order at rotated points → guards → lin
   assert.equal(calls.fill.length, CHESTS.length);
   assert.equal(calls.guards, 1);
   assert.equal(calls.linked, 1);
-  assert.equal(world.log.length, 1);
+  assert.equal(world.log.length, 2);
 });
 
 test('Placer: interrupted chest filling resumes at the next chest after a restart, no second set', () => {
@@ -244,6 +249,45 @@ test('Placer: the clear is sliced, stays inside the footprint, and runs before p
   assert.deepEqual(area, { min: [0, 70, 0], max: [39, 89, 39] });
 });
 
+// fillBlocks and structureManager.place erase a holder's contents with no
+// spill (CNTR-XCX10-AA F2): the pass must see the box before either runs.
+test('Placer.write: the legendary protection pass covers the whole box before the first fill and the first place', () => {
+  for (const clear of [true, { fromY: 2 }, undefined]) {
+    for (const rot of ROTATIONS) {
+      const { reg, world, placer } = rig({ clear });
+      const inst = plan(reg, rot, [-40, 70, 17]);
+      placer.write(inst);
+      const kinds = world.log.map(([k]) => k);
+      const label = `clear=${JSON.stringify(clear)} rot=${rot}: ${kinds.join(' ')}`;
+      assert.equal(kinds.filter((k) => k === 'protect').length, 1, label);
+      assert.equal(kinds[0], 'protect', label);
+      assert.ok(kinds.indexOf('place') > 0, label);
+      if (clear !== undefined) assert.ok(kinds.indexOf('fill') > 0, label);
+      assert.deepEqual(world.log[0][1], boxOf(inst.origin, inst.size), label);
+    }
+  }
+});
+
+test('Placer: a protection pass that throws writes nothing and leaves the record planned', () => {
+  const { reg, world, calls, placer } = rig({ world: new FakeWorld({ protectThrows: true }), clear: true });
+  const inst = plan(reg);
+  assert.throws(() => placer.run(inst), /no script inventory/);
+  assert.deepEqual(world.log.map(([k]) => k), ['protect']);
+  assert.equal(reg.get('o', inst.origin, inst.id).state, 'planned');
+  assert.equal(calls.fill.length, 0);
+});
+
+test('engineWorld: protect hands the box to protectLegendaries as inclusive Vector3 corners', () => {
+  const calls = [];
+  const dim = { heightRange: { min: -64, max: 320 } };
+  const w = engineWorld(dim, { protectLegendaries: (d, v, o) => calls.push([d, v, o]) });
+  w.protect({ min: [1, -60, 3], max: [35, -31, 37] });
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], dim);
+  assert.deepEqual(calls[0][1], { min: { x: 1, y: -60, z: 3 }, max: { x: 35, y: -31, z: 37 } });
+  assert.equal(typeof calls[0][2].reason, 'string');
+});
+
 test('Placer: linked attempt is optional and runs at most once', () => {
   const { reg, calls, placer } = rig({ linked: false });
   assert.equal(placer.run(plan(reg)).state, 'done');
@@ -262,4 +306,10 @@ test('template existence is checked with structureManager.get, never getPackStru
   assert.match(place, /hasTemplate: \(id\) => api\.structureManager\.get\(id\) !== undefined/);
   const gt = readFileSync(join(projectRoot, 'src', 'gametest', 'structures-place.ts'), 'utf-8').replace(/\/\/.*$/gm, '');
   assert.ok(!/getPackStructureIds/.test(gt), 'structures-place GameTest calls getPackStructureIds');
+});
+
+test('the release script hands the real protection pass to the structure engine', () => {
+  const main = readFileSync(join(projectRoot, 'src', 'main.ts'), 'utf-8').replace(/\/\/.*$/gm, '');
+  assert.match(main, /import \{[^}]*\bprotectLegendariesIn\b[^}]*\} from "\.\/legendary\/recovery"/);
+  assert.match(main, /engineStrf\(\{[^}]*protectLegendaries: protectLegendariesIn[^}]*\}\)/);
 });

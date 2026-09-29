@@ -34,9 +34,12 @@
 // in a container right at the spot (a hopper). Only then is nothing owed.
 
 import {
+  BlockTypes,
+  BlockVolume,
   type Container,
   type Dimension,
   type Entity,
+  type ItemStack,
   type Player,
   type Vector3,
   system,
@@ -316,4 +319,201 @@ function redeemOwed(def: LegendaryDef, player: Player): void {
     // token the next spawn drops as already carried, never a lost debt.
     writeOwed(def, withoutOwed(readOwed(def), player.id, mark));
   }
+}
+
+// ------------------------------------------------ protection before a script write (L0-lgnd-p008)
+
+const COLORS = [
+  "white", "orange", "magenta", "light_blue", "yellow", "lime", "pink", "gray",
+  "light_gray", "cyan", "purple", "blue", "brown", "green", "red", "black",
+];
+const COPPER = ["", "exposed_", "weathered_", "oxidized_"];
+const WOODS = ["oak", "spruce", "birch", "jungle", "acacia", "dark_oak", "mangrove", "cherry", "pale_oak", "bamboo", "crimson", "warped"];
+
+/**
+ * Blocks that can hold a legendary as a stack. Ids the running engine does not
+ * know are dropped before the query, so an entry from another game version is
+ * harmless. The ender chest is absent: its contents live with the player.
+ */
+export const HOLDER_TYPES: readonly string[] = [
+  "chest", "trapped_chest", "barrel", "hopper", "dropper", "dispenser", "crafter", "brewing_stand",
+  "furnace", "lit_furnace", "blast_furnace", "lit_blast_furnace", "smoker", "lit_smoker",
+  "shulker_box", "undyed_shulker_box", ...COLORS.map((c) => `${c}_shulker_box`),
+  ...COPPER.flatMap((a) => [`${a}copper_chest`, `waxed_${a}copper_chest`]),
+  ...WOODS.map((w) => `${w}_shelf`),
+  "decorated_pot", "frame", "glow_frame",
+].map((id) => `minecraft:${id}`);
+
+/** Per-call cap of an engine volume query, the fillBlocks cap (structures probe Q10). */
+const QUERY_CELLS = 32768;
+
+/** How far outside the protected box the drop spot is searched, in blocks. */
+const SPOT_RINGS = 16;
+
+/** Items on these burn or break; a spot above them is not safe. */
+const UNSAFE_FLOOR = new Set(["minecraft:cactus", "minecraft:magma_block", "minecraft:fire", "minecraft:soul_fire", "minecraft:campfire", "minecraft:soul_campfire"]);
+
+export interface BlockBox {
+  /** Inclusive corners. */
+  min: Vector3;
+  max: Vector3;
+}
+
+export interface ProtectResult {
+  moved: number;
+  handedBack: number;
+}
+
+let knownHolders: string[] | undefined;
+
+function holderIds(): string[] {
+  knownHolders ??= HOLDER_TYPES.filter((id) => BlockTypes.get(id) !== undefined);
+  return knownHolders;
+}
+
+const fmt = (v: Vector3): string => `${v.x},${v.y},${v.z}`;
+
+/**
+ * Takes every live marked legendary out of the holders in `volume` and drops
+ * it outside `volume` and `avoid`, same id and generation; recovery then
+ * watches it through entitySpawn. fillBlocks and structureManager.place erase
+ * a holder's contents with no spill (CNTR-XCX10-AA F2), so script writers call
+ * this in the same synchronous step as, and before, their first block change.
+ *
+ * Throws before moving anything when the volume is not loaded or holds a
+ * holder with no script inventory (crafter, item frames: C-16), so the caller
+ * writes nothing rather than erase blind. With no safe spot within SPOT_RINGS
+ * the stack goes to its owner, owed if offline (P-lgnd-008 step 6).
+ */
+export function protectLegendariesIn(dimension: Dimension, volume: BlockBox, opts: { avoid?: BlockBox; reason?: string } = {}): ProtectResult {
+  const { min: floor, max: ceiling } = dimension.heightRange;
+  const y0 = Math.max(volume.min.y, floor);
+  const y1 = Math.min(volume.max.y, ceiling - 1);
+  const ids = holderIds();
+  if (y0 > y1 || ids.length === 0) {
+    return { moved: 0, handedBack: 0 };
+  }
+
+  const holders: Array<{ at: Vector3; typeId: string; container: Container }> = [];
+  const area = (volume.max.x - volume.min.x + 1) * (volume.max.z - volume.min.z + 1);
+  const slab = Math.max(1, Math.floor(QUERY_CELLS / area));
+  for (let y = y0; y <= y1; y += slab) {
+    const query = new BlockVolume({ x: volume.min.x, y, z: volume.min.z }, { x: volume.max.x, y: Math.min(y1, y + slab - 1), z: volume.max.z });
+    for (const at of dimension.getBlocks(query, { includeTypes: ids }, false).getBlockLocationIterator()) {
+      const block = dimension.getBlock(at);
+      const container = block?.getComponent("minecraft:inventory")?.container;
+      if (block === undefined || container === undefined) {
+        throw new Error(`legendary protect: ${block?.typeId ?? "an unloaded block"} at ${fmt(at)} has no script-readable inventory; not writing over it (${opts.reason ?? "no reason given"})`);
+      }
+      holders.push({ at: { x: at.x, y: at.y, z: at.z }, typeId: block.typeId, container });
+    }
+  }
+
+  const found: Array<{ def: LegendaryDef; mark: Mark; stack: ItemStack; from: string }> = [];
+  for (const h of holders) {
+    for (let slot = 0; slot < h.container.size; slot++) {
+      const stack = h.container.getItem(slot);
+      const def = defForStack(stack);
+      const mark = def === undefined || stack === undefined ? undefined : getMark(def, stack);
+      // Unmarked and stale copies share the holder's fate, as in vanilla.
+      if (def === undefined || stack === undefined || mark === undefined || !isLive(def, mark)) {
+        continue;
+      }
+      found.push({ def, mark, stack, from: `${h.typeId} at ${fmt(h.at)}` });
+      h.container.setItem(slot, undefined);
+    }
+  }
+  if (found.length === 0) {
+    return { moved: 0, handedBack: 0 };
+  }
+
+  const spot = safeSpot(dimension, union(volume, opts.avoid));
+  const result: ProtectResult = { moved: 0, handedBack: 0 };
+  for (const f of found) {
+    if (spot !== undefined && drop(dimension, f.stack, spot)) {
+      result.moved++;
+      console.warn(`[andrew] legendary protect: moved ${f.def.itemId} id ${f.mark.id} gen ${f.mark.gen} out of ${f.from} to ${fmt(spot)}`);
+    } else {
+      result.handedBack++;
+      handBack(f.def, f.mark, f.stack, `protect: ${f.from}`);
+    }
+  }
+  console.warn(`[andrew] legendary protect: moved=${result.moved} handedBack=${result.handedBack} reason=${opts.reason ?? "unspecified"}`);
+  return result;
+}
+
+function drop(dimension: Dimension, stack: ItemStack, at: Vector3): boolean {
+  try {
+    dimension.spawnItem(stack, at).clearVelocity();
+    return true;
+  } catch (e) {
+    console.warn(`[andrew] legendary protect: dropping at ${fmt(at)} threw ${String(e)}`);
+    return false;
+  }
+}
+
+function union(a: BlockBox, b: BlockBox | undefined): BlockBox {
+  if (b === undefined) {
+    return a;
+  }
+  return {
+    min: { x: Math.min(a.min.x, b.min.x), y: Math.min(a.min.y, b.min.y), z: Math.min(a.min.z, b.min.z) },
+    max: { x: Math.max(a.max.x, b.max.x), y: Math.max(a.max.y, b.max.y), z: Math.max(a.max.z, b.max.z) },
+  };
+}
+
+/**
+ * The first cell an item can rest on in rings 2..SPOT_RINGS blocks outside
+ * `box`'s XZ footprint, leaving a free block between the drop and the box.
+ */
+function safeSpot(dimension: Dimension, box: BlockBox): Vector3 | undefined {
+  const { min: floor, max: ceiling } = dimension.heightRange;
+  const top = Math.min(box.max.y + 1, ceiling - 1);
+  for (let r = 2; r <= SPOT_RINGS; r++) {
+    const [x0, x1, z0, z1] = [box.min.x - r, box.max.x + r, box.min.z - r, box.max.z + r];
+    const ring: Array<[number, number]> = [];
+    for (let x = x0; x <= x1; x++) ring.push([x, z0], [x, z1]);
+    for (let z = z0 + 1; z < z1; z++) ring.push([x0, z], [x1, z]);
+    for (const [x, z] of ring) {
+      const y = restingY(dimension, x, z, top, floor);
+      if (y !== undefined) {
+        return { x: x + 0.5, y, z: z + 0.5 };
+      }
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Going down from `top` in a column open at `top`: the cell above the first
+ * non-air block, unless that block is liquid or burns items. Undefined for a
+ * column that is closed at `top` or not loaded (getBlock answers undefined).
+ */
+function restingY(dimension: Dimension, x: number, z: number, top: number, floor: number): number | undefined {
+  for (let y = top; y >= floor; y--) {
+    const here = dimension.getBlock({ x, y, z });
+    if (here === undefined || (y === top && !here.isAir)) {
+      return undefined;
+    }
+    if (!here.isAir) {
+      return here.isLiquid || UNSAFE_FLOOR.has(here.typeId) ? undefined : y + 1;
+    }
+  }
+  return undefined;
+}
+
+/** P-lgnd-008 step 6: the stack was removed, not lost, so its generation stays. */
+function handBack(def: LegendaryDef, mark: Mark, stack: ItemStack, reason: string): void {
+  const online = reachable(mark.owner);
+  if (online === undefined) {
+    writeOwed(def, withOwed(readOwed(def), mark.owner, { mark, reason }));
+    console.warn(`[andrew] legendary protect: no safe spot for ${def.itemId} id ${mark.id}; owner ${mark.owner} offline or dead, owed on next spawn`);
+    return;
+  }
+  const leftover = online.container.addItem(stack);
+  if (leftover !== undefined) {
+    online.player.dimension.spawnItem(leftover, online.player.location);
+  }
+  online.player.sendMessage({ translate: RECOVERED_KEY });
+  console.warn(`[andrew] legendary protect: no safe spot for ${def.itemId} id ${mark.id}; handed to ${online.player.name}`);
 }

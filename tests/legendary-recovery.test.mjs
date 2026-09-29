@@ -79,6 +79,14 @@ mc.ItemStack = ItemStack;
 mc.Player = Player;
 export const EntityComponentTypes = { Equippable: 'minecraft:equippable' };
 export const EquipmentSlot = { Mainhand: 'Mainhand', Offhand: 'Offhand' };
+// This engine has no shelves: an id it does not know must never reach a query.
+export const BlockTypes = { get: (id) => (id.endsWith('_shelf') ? undefined : { id }) };
+export class BlockVolume {
+  constructor(from, to) {
+    this.from = from;
+    this.to = to;
+  }
+}
 `;
 
 const minecraftServerStub = {
@@ -96,7 +104,7 @@ const bundle = await build({
       "export * from './src/legendary/registry.ts';",
       "export * from './src/legendary/state.ts';",
       "export * from './src/legendary/hands.ts';",
-      "export { registerRecovery } from './src/legendary/recovery.ts';",
+      "export { registerRecovery, protectLegendariesIn, HOLDER_TYPES } from './src/legendary/recovery.ts';",
       "export { registerRetention } from './src/legendary/retention.ts';",
     ].join('\n'),
     resolveDir: projectRoot,
@@ -551,5 +559,163 @@ test('off hand: death retention reads it, and the already-carried checks see it'
     assert.deepStrictEqual(gensOf(carrier, entry.mark.id), [], 'a second copy entered the inventory');
     assert.deepStrictEqual(owedOf(carrier), []);
     assert.deepStrictEqual(carrier.messages, []);
+  });
+});
+
+// ------------------------------------------------ protectLegendariesIn (L0-lgnd-p008)
+
+/**
+ * A dimension with stone up to y=63 and air above, plus the blocks `put` sets.
+ * getBlocks answers from those blocks only, as the engine's filtered query does.
+ */
+function protectWorld() {
+  const blocks = new Map();
+  const key = (p) => `${p.x},${p.y},${p.z}`;
+  const w = {
+    queries: [],
+    drops: [],
+    put(at, typeId, container) {
+      blocks.set(key(at), { typeId, container });
+    },
+    heightRange: { min: -64, max: 320 },
+    getBlocks(vol, filter, allowUnloaded) {
+      assert.strictEqual(allowUnloaded, false, 'an unloaded part must throw, not be skipped');
+      w.queries.push({ vol, types: filter.includeTypes });
+      const hits = [];
+      for (const [k, b] of blocks) {
+        const [x, y, z] = k.split(',').map(Number);
+        const inside = x >= vol.from.x && x <= vol.to.x && y >= vol.from.y && y <= vol.to.y && z >= vol.from.z && z <= vol.to.z;
+        if (inside && filter.includeTypes.includes(b.typeId)) hits.push({ x, y, z });
+      }
+      return { getBlockLocationIterator: () => hits[Symbol.iterator]() };
+    },
+    getBlock(at) {
+      const b = blocks.get(key(at));
+      const typeId = b?.typeId ?? (at.y <= 63 ? 'minecraft:stone' : 'minecraft:air');
+      return {
+        typeId,
+        location: at,
+        isAir: typeId === 'minecraft:air',
+        isLiquid: typeId === 'minecraft:water',
+        getComponent: (id) => (id === 'minecraft:inventory' && b?.container !== undefined ? { container: b.container } : undefined),
+      };
+    },
+    spawnItem(stack, at) {
+      const entity = { stack, at, velocityCleared: false, clearVelocity() { this.velocityCleared = true; } };
+      w.drops.push(entity);
+      return entity;
+    },
+  };
+  return w;
+}
+
+const BOX = { min: { x: 0, y: 64, z: 0 }, max: { x: 34, y: 93, z: 34 } };
+const outsideXZ = (at, box) => at.x < box.min.x || at.x > box.max.x + 1 || at.z < box.min.z || at.z > box.max.z + 1;
+
+test('protectLegendariesIn: a live marked legendary leaves the holder before the write', async (t) => {
+  const owner = makePlayer('protect-owner');
+  online();
+
+  await t.test('moved out of a hopper and a shulker box, dropped outside the box with its id and generation', () => {
+    const w = protectWorld();
+    const hopper = makeContainer(5);
+    const shulker = makeContainer(27);
+    const a = markedSword(owner);
+    const b = markedSword(owner);
+    hopper.setItem(0, a);
+    shulker.setItem(13, b);
+    w.put({ x: 17, y: 64, z: 17 }, 'minecraft:hopper', hopper);
+    w.put({ x: 3, y: 70, z: 30 }, 'minecraft:purple_shulker_box', shulker);
+    const r = lg.protectLegendariesIn(w, BOX, { reason: 'test' });
+    assert.deepStrictEqual(r, { moved: 2, handedBack: 0 });
+    assert.strictEqual(hopper.getItem(0), undefined);
+    assert.strictEqual(shulker.getItem(13), undefined);
+    assert.deepStrictEqual(w.drops.map((d) => d.stack), [a, b], 'the same stacks, not re-made copies');
+    for (const d of w.drops) {
+      assert.ok(outsideXZ(d.at, BOX), `dropped at ${JSON.stringify(d.at)}, inside the box's footprint`);
+      assert.strictEqual(d.at.y, 64, 'on the ground next to the box');
+      assert.ok(d.velocityCleared);
+    }
+    for (const s of [a, b]) assert.strictEqual(lg.isLive(WEB_SWORD, lg.getMark(WEB_SWORD, s)), true, 'no generation moved');
+  });
+
+  await t.test('unmarked and stale copies and ordinary items stay and share the holder\'s fate', () => {
+    const w = protectWorld();
+    const chest = makeContainer(27);
+    const stale = markedSword(owner);
+    lg.bumpGen(WEB_SWORD, lg.getMark(WEB_SWORD, stale).id);
+    chest.setItem(0, new mc.ItemStack(WEB_SWORD.itemId, 1));
+    chest.setItem(1, stale);
+    chest.setItem(2, new mc.ItemStack('minecraft:diamond', 3));
+    w.put({ x: 5, y: 65, z: 5 }, 'minecraft:chest', chest);
+    assert.deepStrictEqual(lg.protectLegendariesIn(w, BOX), { moved: 0, handedBack: 0 });
+    assert.deepStrictEqual(chest.slots.slice(0, 3).map((s) => s?.typeId), [WEB_SWORD.itemId, WEB_SWORD.itemId, 'minecraft:diamond']);
+    assert.deepStrictEqual(w.drops, []);
+  });
+
+  await t.test('a holder with no script inventory in the volume: throws before anything is moved', () => {
+    const w = protectWorld();
+    const hopper = makeContainer(5);
+    const sword = markedSword(owner);
+    hopper.setItem(0, sword);
+    w.put({ x: 1, y: 64, z: 1 }, 'minecraft:hopper', hopper);
+    w.put({ x: 30, y: 80, z: 30 }, 'minecraft:crafter', undefined);
+    assert.throws(() => lg.protectLegendariesIn(w, BOX), /minecraft:crafter at 30,80,30 has no script-readable inventory/);
+    assert.strictEqual(hopper.getItem(0), sword);
+    assert.deepStrictEqual(w.drops, []);
+  });
+
+  await t.test('only ids the engine knows are queried, in slabs within the one-call cap', () => {
+    const w = protectWorld();
+    const big = { min: { x: 0, y: -60, z: 0 }, max: { x: 63, y: 3, z: 63 } };
+    lg.protectLegendariesIn(w, big);
+    assert.ok(w.queries.length >= 8);
+    const types = w.queries[0].types;
+    assert.ok(types.includes('minecraft:hopper') && types.includes('minecraft:undyed_shulker_box') && types.includes('minecraft:glow_frame'));
+    assert.ok(!types.some((id) => id.endsWith('_shelf')), 'an unknown id reached the query');
+    assert.ok(lg.HOLDER_TYPES.some((id) => id.endsWith('_shelf')));
+    let covered = 0;
+    for (const { vol } of w.queries) {
+      const cells = (vol.to.x - vol.from.x + 1) * (vol.to.y - vol.from.y + 1) * (vol.to.z - vol.from.z + 1);
+      assert.ok(cells <= 32768, `a query of ${cells} cells`);
+      covered += cells;
+    }
+    assert.strictEqual(covered, 64 * 64 * 64);
+  });
+
+  await t.test('no safe spot: the stack goes to its owner online, or is owed at the same generation', () => {
+    const flooded = () => {
+      const w = protectWorld();
+      const getBlock = w.getBlock;
+      // Every column around the box is under water: nowhere to rest an item.
+      w.getBlock = (at) => (at.y === 64 ? { ...getBlock(at), typeId: 'minecraft:water', isAir: false, isLiquid: true } : getBlock(at));
+      return w;
+    };
+    const w1 = flooded();
+    const barrel = makeContainer(27);
+    const sword = markedSword(owner);
+    const { id } = lg.getMark(WEB_SWORD, sword);
+    barrel.setItem(4, sword);
+    w1.put({ x: 9, y: 64, z: 9 }, 'minecraft:barrel', barrel);
+    online(owner);
+    assert.deepStrictEqual(lg.protectLegendariesIn(w1, BOX), { moved: 0, handedBack: 1 });
+    assert.deepStrictEqual(gensOf(owner, id), [0]);
+    assert.strictEqual(owner.container.slots.find((s) => s !== undefined && lg.getMark(WEB_SWORD, s)?.id === id), sword);
+    assert.strictEqual(lg.ledgerGen(WEB_SWORD, id), 0);
+
+    const w2 = flooded();
+    const again = makeContainer(5);
+    const other = markedSword(owner);
+    const otherId = lg.getMark(WEB_SWORD, other).id;
+    again.setItem(0, other);
+    w2.put({ x: 9, y: 64, z: 9 }, 'minecraft:hopper', again);
+    online();
+    assert.deepStrictEqual(lg.protectLegendariesIn(w2, BOX), { moved: 0, handedBack: 1 });
+    assert.deepStrictEqual(owedOf(owner).map((e) => [e.mark.id, e.mark.gen]), [[otherId, 0]]);
+    online(owner);
+    fire('playerSpawn', { player: owner, initialSpawn: false });
+    flush();
+    assert.deepStrictEqual(gensOf(owner, otherId), [0]);
+    assert.deepStrictEqual(owedOf(owner), []);
   });
 });

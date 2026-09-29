@@ -17,6 +17,7 @@ import {
   type Vector3,
   world,
 } from "@minecraft/server";
+import { protectLegendariesIn } from "../legendary/recovery";
 import { BASTION_BODY, BRUTE, PIGLIN, guardTag, piglinCount } from "../structures/bodies/bastion";
 import { type Box, boxOf, sliceBox } from "../structures/clear";
 import { Loot, contents } from "../structures/loot";
@@ -127,7 +128,7 @@ export async function bastionRestartRun1(dim: Dimension, wait: Wait, log: Log): 
     if (!planned.ok) throw new Error(`plan refused: blocked by ${planned.blockedBy.id}`);
     const placer = new Placer(
       reg,
-      engineWorld(dim, { structureManager: world.structureManager, BlockVolume, StructureRotation }),
+      engineWorld(dim, { structureManager: world.structureManager, BlockVolume, StructureRotation, protectLegendaries: protectLegendariesIn }),
       { bastion: BASTION_BODY },
       { ...new Loot(dim, { ItemStack, EnchantmentType }, log).hooks, spawnGuard: engineSpawnGuard(dim, { peaceful }) },
       log
@@ -190,7 +191,7 @@ export async function bastionRestartRun2(dim: Dimension, wait: Wait, log: Log): 
   await load(dim, m.center, wait);
   try {
     // What main.ts does at startup: the registry resumes anything unfinished.
-    const rt = new StrfRuntime(store(), engineStrf({ world, BlockVolume, BlockTypes, StructureRotation, ItemStack, EnchantmentType }), { log });
+    const rt = new StrfRuntime(store(), engineStrf({ world, BlockVolume, BlockTypes, StructureRotation, ItemStack, EnchantmentType, protectLegendaries: protectLegendariesIn }), { log });
     const resumed = rt.resumeUnfinished();
     for (let i = 0; i < 5; i++) rt.pumpPlacement();
     await wait(40);

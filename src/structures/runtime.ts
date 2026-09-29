@@ -18,7 +18,7 @@ import { type TypeBody, BODIES, naturalDefs, spotsOf, withLinks } from "./bodies
 import { EnabledTypes, ROLL_DEFS, type RollDef, type StructureId } from "./config";
 import { Discovery, type PlayerPos, type SiteVerdict } from "./discovery";
 import { Loot } from "./loot";
-import { type PlaceHooks, type PlaceResult, type PlaceWorld, Placer, engineSpawnGuard, engineWorld } from "./place";
+import { type PlaceEngineApi, type PlaceHooks, type PlaceResult, type PlaceWorld, Placer, engineSpawnGuard, engineWorld } from "./place";
 import { type DimShort, type Instance, type Rotation, type Vec3, Registry } from "./registry";
 import { type Candidate, effectiveChance, rotatedSize } from "./roll";
 import { type RingLoader, type RingSystem, engineRingLoader } from "./search-ring";
@@ -281,6 +281,7 @@ export interface StrfEngineApi {
   StructureRotation: typeof StructureRotation;
   ItemStack: typeof ItemStack;
   EnchantmentType: typeof EnchantmentType;
+  protectLegendaries: PlaceEngineApi["protectLegendaries"];
   /** With it, ring searches load their chunks through temporary ticking areas named `${ringAreaPrefix}_<n>`. */
   system?: RingSystem;
   ringAreaPrefix?: string;
@@ -313,7 +314,13 @@ export function engineStrf(api: StrfEngineApi): StrfEngine {
       }
       return v;
     },
-    placeWorld: (d) => engineWorld(dimension(d), { structureManager: api.world.structureManager, BlockVolume: api.BlockVolume, StructureRotation: api.StructureRotation }),
+    placeWorld: (d) =>
+      engineWorld(dimension(d), {
+        structureManager: api.world.structureManager,
+        BlockVolume: api.BlockVolume,
+        StructureRotation: api.StructureRotation,
+        protectLegendaries: api.protectLegendaries,
+      }),
     hooks: (d) => ({
       ...new Loot(dimension(d), api).hooks,
       // Compared as text: the Difficulty enum is not part of StrfEngineApi.
