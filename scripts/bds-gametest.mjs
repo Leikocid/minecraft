@@ -209,6 +209,10 @@ const EXPECTED_TESTS = [
   // BAST-BODY-01 — src/gametest/bastion-body.ts
   'andrew:bastion_body_generate',
   'andrew:bastion_body_site',
+  // CX-L0-14 — src/gametest/probe-input.ts
+  'andrew:probe_input_survival',
+  'andrew:probe_input_creative',
+  'andrew:probe_input_face_location',
 ];
 
 // FLAT is not cosmetic: see the LEVEL_TYPE comment in docker/bds/compose.yaml.
