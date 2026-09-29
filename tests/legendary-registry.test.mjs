@@ -21,6 +21,7 @@ const minecraftServerStub = {
     }));
     pluginBuild.onLoad({ filter: /.*/, namespace: 'mc-stub' }, () => ({
       contents: [
+        'export const world = { getDynamicProperty() {} };',
         'export const EntityComponentTypes = { Equippable: "minecraft:equippable" };',
         'export const EquipmentSlot = { Mainhand: "Mainhand", Offhand: "Offhand" };',
       ].join('\n'),
@@ -126,6 +127,8 @@ test('keys from keyPrefix', async (t) => {
       crafted: 'andrew:ws_crafted',
       craftedBy: 'andrew:ws_crafted_by',
       pending: 'andrew:ws_pending',
+      gen: 'andrew:ws_gen',
+      owed: 'andrew:ws_owed',
     });
   });
 
@@ -159,14 +162,16 @@ function makePlayer(main, off) {
 }
 
 test('resolveActivation — main-hand priority table', async (t) => {
-  const sword = { typeId: 'andrew:web_sword' };
-  const stick = { typeId: 'minecraft:stick' };
+  // Unmarked stacks: a marked one would also need the world's generation ledger.
+  const unmarked = (typeId) => ({ typeId, getDynamicProperty: () => undefined });
+  const sword = unmarked('andrew:web_sword');
+  const stick = unmarked('minecraft:stick');
 
   // The registry is read-only by type but a plain array at runtime; a second
   // entry makes the two-item rows real and is removed afterwards.
   LEGENDARIES.push(OTHER);
   t.after(() => LEGENDARIES.splice(LEGENDARIES.indexOf(OTHER), 1));
-  const other = { typeId: OTHER.itemId };
+  const other = unmarked(OTHER.itemId);
 
   const rows = [
     // [main state, off state, expected]

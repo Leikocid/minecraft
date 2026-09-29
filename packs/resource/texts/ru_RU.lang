@@ -19,6 +19,7 @@ andrew.scythe.reset=Право крафта Косы бедствия сброш
 andrew.legendary.cooldown=%s: %s с
 andrew.legendary.ready=%s: Готово
 andrew.legendary.recovered=Легендарное оружие вернулось к вам
+andrew.legendary.voided=Эта копия легендарного оружия заменена возвращённым экземпляром и рассыпалась
 
 andrew.structure.no_permission=Команда /andrew:structure доступна только оператору
 andrew.structure.not_player=Запустите это от имени игрока: команда работает там, где вы стоите

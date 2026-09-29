@@ -82,6 +82,10 @@ export interface LegendaryKeys {
   craftedBy: string;
   /** Player: serialized mark owed back after death. */
   pending: string;
+  /** ItemStack: instance generation (absent = 0). */
+  gen: string;
+  /** World: return target's id -> instances owed back after a loss. */
+  owed: string;
 }
 
 /**
@@ -99,7 +103,14 @@ export function keysFor(def: LegendaryDef): LegendaryKeys {
     crafted: `${p}crafted`,
     craftedBy: `${p}crafted_by`,
     pending: `${p}pending`,
+    gen: `${p}gen`,
+    owed: `${p}owed`,
   };
+}
+
+/** World property: the live generation of instance `id` (absent = 0). */
+export function genLedgerKey(def: LegendaryDef, id: string): string {
+  return `andrew:${def.keyPrefix}_gen:${id}`;
 }
 
 /** Player property holding the epoch-ms deadline of the ability's cooldown. */
