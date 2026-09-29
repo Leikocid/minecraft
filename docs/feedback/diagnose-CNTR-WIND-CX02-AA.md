@@ -35,7 +35,7 @@ The measurement script is `scratchpad/measure-ring.mjs`. It bundles `src/` at HE
 | discovery radius 4 chunks = 64 blocks | `R_DISCOVER = 4`, Chebyshev around the player's chunk | `config.ts:49`, `discovery.ts:64-67` |
 | "most of a 100-block ring plus the footprint is not loaded" | **True.** Model: 4 chunks loaded around a player. With the player at the Windmill centre, **17–24 of 153–165** open candidates (11–15 %) have their whole load box loaded. With the player at the discovery edge, **28–34** (18–21 %). Measured over 4 parents. | `measure-ring.mjs`; the "~4 chunks" figure is the probe's, quoted in `decision-l0-airs-cx01:16` |
 | ring + footprint reach | Candidate centres are at most 100 blocks out. The farthest block a candidate reads is **139.7 blocks** (Chebyshev 138) = **9 chunks** from the Windmill centre. That is 100 + half of the 75-long hull + the 2-block margin. | `airship.ts:24`, `templates/airship.ts:20`, `registry.ts:118` |
-| candidates per ring **Δ** | **160–176**, of which **7–12** are vetoed over the plot. The count depends on the world salt and the position, so it is not a fixed 168/12. Live runs: 164/7 and 176/6. | `search-ring.ts:47-77` |
+| candidates per ring **Δ** | **160–176**, of which **7–12** are vetoed over the plot. The count depends on the world salt and the position, so it is not a fixed 168/12. Live runs: 164/7, 176/6 and 172/10. | `search-ring.ts:47-77` |
 | 10-area cap | 10. The 11th `tickingarea add` returns `successCount=0` (probe `b7876f9`, BDS 1.26.51.1). | `search-ring.ts:179-180` |
 | ticking area per Windmill | Per **candidate**, not per Windmill. The ring pool has 4 names per dimension, and 2 are loaded at once. Each load box is **10–12 chunks**, under the 100-chunk limit per area. | `runtime.ts:290`, `airship.ts:75`, `search-ring.ts:85-90` |
 | "returns `deferred`, resumes on later discovery visits" | The status is `pending`, not `deferred`. It is retried every 30 rounds × 20 ticks = **600 ticks** whatever the player's position, and again on restart. There is no cap. | `airship.ts:32,194-199`, `runtime.ts:32,131,149-151`, `config.ts:51` |
@@ -89,25 +89,29 @@ RADIUS:   no code change. The fix is text in KV only, and it is applied by the p
           linked-airship / linked-search / relates_to:*cx0* / resolves:L0-wind-cx02;
           kv_resolve_alias L0-adr-link, strf-r007, adr-spwn; doc_get on each hit; grep over src/
           and tests/ for linkedTried|tryLinked|deferred|airship:L:.
-GREEN:    1.json at HEAD: 26/26 plus the measurement. The measurement still reaches the subject:
-          the same test turns red on the one-line mutation (2.red.json) and green without it.
-LIVE:     private BDS 1.26.51.1 (docker/bds-wcx02, own ports, deleted afterwards), artifact
-          .ai/verify/CNTR-WIND-CX02-AA/2.json:
+GREEN:    1.json at 250a720: 26/26 plus the measurement. The measurement still reaches the
+          subject: the same test turns red on the one-line mutation (2.red.json) and green
+          without it.
+LIVE:     private BDS 1.26.51.1 (docker/bds-wcx02, own ports, deleted afterwards). There were two
+          runs, each in a fresh world with a new salt. Run 1 was at 32f4aca; its artifact was
+          overwritten, so its numbers come from its log. Run 2 was at 250a720, and its
+          artifact is .ai/verify/CNTR-WIND-CX02-AA/2.json.
           - airship_linked_ring: Windmill windmill:o:239:-1, centre 3848,8, ~3,840 blocks from
             the test platform. Only ±24 blocks around it are loaded (airship-body.ts:267-270).
-            Result: placed airship:linked:windmill:o:239:-1:0, distance 90.45, la=true
-            ls=placed, attempts 1, ring 164 (7 vetoed over the plot).
-          - The crash case of the same test: finish reran → done, attempts 1.
-          - airship_linked_ring_invalid: all-water ring of 176 candidates, 6 vetoed, 170
-            checked, all liquid → ls=none, attempts 1, not widened, 0 of 240,267 land blocks
-            changed.
-          The production code logged no unloaded-chunk error. The one UnloadedChunksError in the
-          log is test cleanup (see "Side finding").
+            Result: placed airship:linked:windmill:o:239:-1:0 at distance 90.45 (run 1) and
+            90.25 (run 2), with la=true ls=placed attempts 1 in both runs. Run 1's ring had 164
+            candidates, 7 vetoed over the plot.
+          - The crash case of the same test: finish reran → done, attempts 1, in both runs.
+          - airship_linked_ring_invalid: an all-water ring. Run 1: 176 candidates, 6 vetoed, 170
+            checked. Run 2: 172 candidates, 10 vetoed, 162 checked. Every checked candidate was
+            liquid → ls=none, attempts 1, not widened, 0 of 240,267 land blocks changed.
+          The production code logged no unloaded-chunk error. The one UnloadedChunksError per run
+          is test cleanup (see "Side finding").
 ```
 
 ## Resolution text (for `refine resolve L0-wind-cx02` and `L0-airs-cx01`)
 
-> Resolved by `decision-l0-airs-cx01` (2026-09-26), implemented in `b619e55`, and re-measured on 2026-09-29 against `src/` at `32f4aca`.
+> Resolved by `decision-l0-airs-cx01` (2026-09-26), implemented in `b619e55`, and re-measured on 2026-09-29 against `src/` at `32f4aca` (unchanged through `250a720`).
 >
 > "Once" = one attempt per Windmill. `la=true` is written before the attempt (`place.ts:207-210`). The outcome is `ls` ∈ searching/pending/none/placed/skipped, where `none` and `placed` are terminal.
 >
@@ -128,7 +132,7 @@ LIVE:     private BDS 1.26.51.1 (docker/bds-wcx02, own ports, deleted afterwards
 > Evidence:
 > - unit tests: 26/26 (`.ai/verify/CNTR-WIND-CX02-AA/1.json`);
 > - red mutation: `2.red.json`;
-> - live on BDS 1.26.51.1 (`2.json`): a linked Airship was placed 90.45 blocks out with only the Windmill plot loaded, and an all-water ring was read in full (170/170) and ended `none`.
+> - live on BDS 1.26.51.1 (`2.json`): a linked Airship was placed 90.45 and 90.25 blocks out with only the Windmill plot loaded, and an all-water ring was read in full (170/170 and 162/162 over two runs) and ended `none`.
 >
 > `L0-wind-cx02` and `L0-airs-cx01` are one issue and close together.
 
@@ -194,9 +198,9 @@ Code note, not a defect: `tests/structures-registry.test.mjs:126` and `src/selft
 ## Side finding — test-harness cleanup (not fixed here, handed to the operator)
 
 ```text
-OBSERVED: live run, dist/bds-gametest.log:167, right after onTestPassed airship_linked_ring:
-          "Unhandled promise rejection: UnloadedChunksError: Block Volume contains (12)
-          unloaded chunk(s) out of (12) at fillBox → removeStructure → removeAirship".
+OBSERVED: both live runs (2 of 2), in dist/bds-gametest.log right after onTestPassed airship_linked_ring:
+          "Unhandled promise rejection: UnloadedChunksError: Block Volume contains (12, then 10)
+          unloaded chunk(s) out of (12, then 10) at fillBox → removeStructure → removeAirship".
 CAUSE:    src/gametest/airship-body.ts:359 (and :291) queue removeAirship for ring Airships
           90 blocks from their Windmill. The test loads only ±24 blocks around each Windmill
           (:267-270), and the ring loader has already released the Airship's area
