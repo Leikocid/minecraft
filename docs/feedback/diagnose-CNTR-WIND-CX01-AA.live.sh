@@ -38,15 +38,19 @@ fi
 cleanup() {
   docker compose -f "$DIR/compose.yaml" down >/dev/null 2>&1 || true
   [ "${WCX_KEEP:-0}" = 1 ] || rm -rf "$DIR"
+  rm -f "${LOGF:-}"
 }
 trap cleanup EXIT
 
 ANDREW_BDS_DIR="$ID" node scripts/bds-up.mjs --fresh-world --timeout 600
 
-logs() { docker logs "$NAME" 2>&1; }
+# Read into a file first: under pipefail, `docker logs | grep -q` fails on the SIGPIPE a match causes.
+LOGF="$(mktemp)"
+logs() { docker logs "$NAME" > "$LOGF" 2>&1; cat "$LOGF"; }
+has() { docker logs "$NAME" > "$LOGF" 2>&1; grep -qE "$1" "$LOGF"; }
 wait_for() { # pattern, seconds
   local t=0
-  until logs | grep -qE "$1"; do
+  until has "$1"; do
     t=$((t + 5)); [ "$t" -le "$2" ] || { echo "FAIL: no line /$1/ within $2 s"; logs | grep -E 'andrew\]' | tail -40; return 1; }
     sleep 5
   done
@@ -60,15 +64,16 @@ wait_for 'spawn windmill: search finished' 900
 echo "--- live log (spawn search) ---"
 logs | grep -E 'Difficulty:|Pack Stack - \[00\]|spawn windmill:|windmill:spawn placement threw' | sed -n '1,40p'
 
-logs | grep -q 'Difficulty: 0 PEACEFUL' || { echo "FAIL: the world is not Peaceful"; exit 1; }
-logs | grep -q 'spawn windmill: search finished: done' || { echo "FAIL: the search did not end done"; exit 1; }
-logs | grep -qE 'strf runtime: windmill:spawn placement threw .*the world is Peaceful' \
+has 'Difficulty: 0 PEACEFUL' || { echo "FAIL: the world is not Peaceful"; exit 1; }
+has 'spawn windmill: search finished: done' || { echo "FAIL: the search did not end done"; exit 1; }
+has 'strf runtime: windmill:spawn placement threw .*the world is Peaceful' \
   || { echo "FAIL: placeAt never caught the guard throw (the changed path was not entered)"; exit 1; }
 
 docker restart "$NAME" >/dev/null
 wait_for 'search already ran once in this world \(status=' 300
 echo "--- after restart ---"
-logs | grep -E 'search already ran once in this world' | tail -1
-logs | grep 'search already ran once in this world' | tail -1 | grep -q 'status=done' \
+LAST="$(logs | grep -E 'search already ran once in this world' | tail -1)"
+echo "$LAST"
+[[ "$LAST" == *"status=done"* ]] \
   || { echo "FAIL: the persisted record is not done"; exit 1; }
 echo "PASS: Peaceful world, spawn search done, guard step deferred by placeAt, record persisted as done"
