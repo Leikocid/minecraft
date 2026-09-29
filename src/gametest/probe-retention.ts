@@ -1,10 +1,12 @@
 // CX-lgnd-10 probes against BDS 1.26.51.1: what death retention does with a
 // second marked copy of one weapon, and with a marked copy in the off hand.
 //
-// Same contract as probe-place.ts: a test passes when its measurement
-// completed; the engine's answer is the "[probe] RETENTION… RESULT …" line.
-// The retention module's own "[andrew] legendary retention: path A|B" lines,
-// printed between this test's start and its RESULT, say which path acted.
+// probe_retention_offhand keeps the contract of probe-place.ts: it passes when
+// its measurement completed, and the engine's answer is the "[probe]
+// RETENTION-OFF RESULT …" line. probe_retention_two_copies asserts: every copy
+// comes back exactly once, and a later death with nothing on the player grants
+// nothing. The retention module's own "[andrew] legendary retention: path A|B"
+// lines, printed between a test's start and its RESULT, say which path acted.
 
 import {
   type Container,
@@ -20,7 +22,7 @@ import {
 } from "@minecraft/server";
 import { type SimulatedPlayer, Test, registerAsync } from "@minecraft/server-gametest";
 import { WEB_SWORD } from "../legendary/registry";
-import { getMark, getPending, isItemOf, makeMark, markItem } from "../legendary/state";
+import { getMark, isItemOf, makeMark, markItem } from "../legendary/state";
 
 const STRUCTURE = "andrew:platform";
 const STAND: Vector3 = { x: 3, y: 2, z: 5 };
@@ -71,11 +73,17 @@ function owedRaw(): string {
   return typeof raw === "string" ? raw : "none";
 }
 
+/** The stored pending value as text, whatever its format, or "none". */
+function pendingRaw(player: Player): string {
+  const raw = player.getDynamicProperty(`andrew:${WEB_SWORD.keyPrefix}_pending`);
+  return typeof raw === "string" ? raw : "none";
+}
+
 /** Where instance `id` is after death, respawn and the settle window. */
 function whereabouts(player: Player, dimension: Dimension, deathAt: Vector3, id: string): string {
   const held = heldCount(player, id);
   const ground = groundCount(dimension, deathAt, id);
-  const pending = getPending(WEB_SWORD, player)?.id === id;
+  const pending = pendingRaw(player).includes(id);
   const owed = owedRaw().includes(id);
   const accounted = held + ground > 0 || pending || owed;
   return `${id}: held=${held} ground=${ground} pending=${pending} owed=${owed} -> ${accounted ? "ACCOUNTED" : "VANISHED"}`;
@@ -108,7 +116,8 @@ registerAsync("andrew", "probe_retention_two_copies", async (test: Test): Promis
   const player = test.spawnSimulatedPlayer(STAND, "andrew_probe_two", GameMode.Survival);
   await test.idle(4);
 
-  const marks = [makeMark("admin", player), makeMark("admin", player)];
+  // A crafted copy plus an operator give: the pair README recommends for testing retention.
+  const marks = [makeMark("craft", player), makeMark("admin", player)];
   for (const mark of marks) {
     inventoryOf(player).addItem(markItem(WEB_SWORD, new ItemStack(WEB_SWORD.itemId, 1), mark));
   }
@@ -123,12 +132,35 @@ registerAsync("andrew", "probe_retention_two_copies", async (test: Test): Promis
   const accounted = rows.filter((r) => r.endsWith("ACCOUNTED")).length;
   log(
     `RETENTION-2 RESULT accounted=${accounted}/${marks.length}; ${rows.join("; ")}; ` +
-      `pending=${getPending(WEB_SWORD, player)?.id ?? "none"}; owed=${owedRaw()}`
+      `pending=${pendingRaw(player)}; owed=${owedRaw()}`
+  );
+  for (const mark of marks) {
+    const held = heldCount(player, mark.id);
+    test.assert(held === 1, `${mark.origin} copy ${mark.id} is held ${held} times after respawn, expected once`);
+    const ground = groundCount(dimension, deathAt, mark.id);
+    test.assert(ground === 0, `${ground} item entities of ${mark.origin} copy ${mark.id} lie at the death spot`);
+    test.assert(!owedRaw().includes(mark.id), `${mark.origin} copy ${mark.id} is owed although it was returned`);
+  }
+  test.assert(pendingRaw(player) === "none", `the pending return survived the restore: ${pendingRaw(player)}`);
+
+  // The tokens are spent: dying again with nothing must hand nothing back.
+  inventoryOf(player).clearAll();
+  const second = await dieAndRespawn(test, player);
+  test.assert(second.died, "the player never died a second time");
+  const again = marks.map((m) => heldCount(player, m.id) + groundCount(second.dimension, second.deathAt, m.id));
+  log(`RETENTION-2 second death RESULT copies=${again.join(",")}; pending=${pendingRaw(player)}; owed=${owedRaw()}`);
+  test.assert(
+    again.every((n) => n === 0),
+    `a death with an empty inventory brought copies back: ${again.join(",")}`
+  );
+  test.assert(
+    pendingRaw(player) === "none" && !marks.some((m) => owedRaw().includes(m.id)),
+    "a death with an empty inventory left a return outstanding"
   );
   test.succeed();
 })
   .structureName(STRUCTURE)
-  .maxTicks(400)
+  .maxTicks(600)
   .tag("andrew");
 
 registerAsync("andrew", "probe_retention_offhand", async (test: Test): Promise<void> => {

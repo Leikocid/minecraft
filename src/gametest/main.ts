@@ -84,7 +84,7 @@ const getMark = (stack: ItemStack) => state.getMark(WEB_SWORD, stack);
 const markSword = (stack: ItemStack, mark: ReturnType<typeof state.makeMark>) => state.markItem(WEB_SWORD, stack, mark);
 const makeMark = state.makeMark;
 const findMarkedSword = (container: Container) => state.findMarked(WEB_SWORD, container);
-const getPending = (player: Player) => state.getPending(WEB_SWORD, player);
+const hasPending = (player: Player) => state.readPending(WEB_SWORD, player).length > 0;
 const isCrafted = () => state.isCrafted(WEB_SWORD);
 const resetCrafted = () => state.resetCrafted(WEB_SWORD);
 const isReady = (player: Player) => cooldown.isReady(player, WEB_SWORD.abilityKey);
@@ -512,7 +512,7 @@ register("andrew", "websword_death_returns", (test: Test): void => {
     // The token that makes the whole thing idempotent: left set, the next
     // respawn — or the next reconnect — would hand out a second sword.
     test.assert(
-      getPending(player) === undefined,
+      !hasPending(player),
       "the pending return survived the restore, so a further respawn would issue a duplicate"
     );
   });
@@ -567,7 +567,7 @@ register("andrew", "websword_unmarked_drops", (test: Test): void => {
               "the control player never died, so retention was never offered an unmarked sword to ignore"
             );
             test.assert(
-              getPending(player) === undefined,
+              !hasPending(player),
               "retention latched an unmarked Web Sword and owes the player a marked one"
             );
             test.assert(
@@ -1335,7 +1335,7 @@ function lossScenario(
           );
           const dropped = swordsOnGround(player.dimension, player.location);
           test.assert(dropped === 0, `${dropped} Web Sword(s) are still lying on the ground`);
-          test.assert(getPending(player) === undefined, "the pending return survived the restore");
+          test.assert(!hasPending(player), "the pending return survived the restore");
           test.succeed();
         });
       });
@@ -1389,7 +1389,7 @@ register("andrew", "legendary_pickup_no_duplicate", (test: Test): void => {
     // Past two recovery checks, so a misread pickup has had time to re-issue.
     test.assert(system.currentTick - pickedAt >= 2 * RECOVERY_DEADLINE_TICKS, "waiting out the recovery checks");
     test.assert(held === 1, `the player carries ${held} Web Sword(s) with ws_id ${instanceId}, expected exactly 1`);
-    test.assert(getPending(player) === undefined, "recovery owes the player a sword they picked up themselves");
+    test.assert(!hasPending(player), "recovery owes the player a sword they picked up themselves");
   });
 })
   .structureName(STRUCTURE)

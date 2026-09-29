@@ -120,6 +120,45 @@ export function serializeMark(mark: Mark): string {
   return JSON.stringify(mark);
 }
 
+/**
+ * Parses a player's stored death-return list. A value from before lists — one
+ * serialized mark — reads as a list of one. Malformed entries are dropped,
+ * never the whole list.
+ */
+export function parsePending(raw: unknown): Mark[] {
+  if (typeof raw !== "string") {
+    return [];
+  }
+  let value: unknown;
+  try {
+    value = JSON.parse(raw);
+  } catch {
+    return [];
+  }
+  const marks: Mark[] = [];
+  for (const item of Array.isArray(value) ? (value as unknown[]) : [value]) {
+    const mark = markFromValue(item);
+    if (mark !== undefined) {
+      marks.push(mark);
+    }
+  }
+  return marks;
+}
+
+export function serializePending(marks: readonly Mark[]): string {
+  return JSON.stringify(marks);
+}
+
+/** `marks` with `mark` appended. An older entry for the same instance is replaced. */
+export function withPending(marks: readonly Mark[], mark: Mark): Mark[] {
+  return [...marks.filter((m) => m.id !== mark.id), mark];
+}
+
+/** `marks` without the entry for exactly this instance and generation. */
+export function withoutPending(marks: readonly Mark[], mark: Mark): Mark[] {
+  return marks.filter((m) => m.id !== mark.id || m.gen !== mark.gen);
+}
+
 /** One lost instance owed to a player who could not take it at the time (L0-lgnd-ent4). */
 export interface OwedEntry {
   mark: Mark;

@@ -14,7 +14,7 @@
 import { type Dimension, type Entity, GameMode, ItemStack, type Player, type Vector3 } from "@minecraft/server";
 import { type Test, registerAsync } from "@minecraft/server-gametest";
 import { LEGENDARIES, type LegendaryDef } from "../legendary/registry";
-import { getPending, makeMark, markItem } from "../legendary/state";
+import { makeMark, markItem, readPending } from "../legendary/state";
 
 const STRUCTURE = "andrew:platform";
 const STAND: Vector3 = { x: 2, y: 2, z: 5 };
@@ -71,7 +71,7 @@ async function scenario(test: Test, block: string): Promise<void> {
   }
   test.assert(!control.isValid, `${CONTROL_ITEM_ID} survived ${block} — the probe cell does not actually destroy items, so the assertion above proves nothing`);
   for (const def of LEGENDARIES) {
-    test.assert(getPending(def, owner) === undefined, `${block}: a return was queued for ${def.itemId} even though it survived in place`);
+    test.assert(readPending(def, owner).length === 0, `${block}: a return was queued for ${def.itemId} even though it survived in place`);
   }
   log(`${block} RESULT: ${spawned.map((s) => s.def.itemId).join(", ")} survived in place; ${CONTROL_ITEM_ID} destroyed; no pending return`);
 

@@ -490,15 +490,15 @@ test('off hand: death retention reads it, and the already-carried checks see it'
     fire('entityDie', { deadEntity: player });
     flush();
     assert.strictEqual(player.offhand, undefined, 'the off hand still holds the sword, so the engine drops it');
-    assert.strictEqual(lg.getPending(WEB_SWORD, player)?.id, lg.getMark(WEB_SWORD, sword).id);
+    assert.deepStrictEqual(lg.readPending(WEB_SWORD, player).map((m) => m.id), [lg.getMark(WEB_SWORD, sword).id]);
 
     fire('playerSpawn', { player, initialSpawn: false });
     flush();
     assert.deepStrictEqual(gensOf(player, lg.getMark(WEB_SWORD, sword).id), [0], 'returned exactly once on respawn');
-    assert.strictEqual(lg.getPending(WEB_SWORD, player), undefined);
+    assert.deepStrictEqual(lg.readPending(WEB_SWORD, player), []);
   });
 
-  await t.test('the inventory copy fills pending first; the off-hand copy is left where it is', () => {
+  await t.test('an inventory copy and an off-hand copy of one weapon both go to pending, both slots emptied', () => {
     const player = makePlayer('both-places');
     online(player);
     const bag = markedSword(player);
@@ -507,9 +507,12 @@ test('off hand: death retention reads it, and the already-carried checks see it'
     player.offhand = held;
     fire('entityDie', { deadEntity: player });
     flush();
-    assert.strictEqual(lg.getPending(WEB_SWORD, player)?.id, lg.getMark(WEB_SWORD, bag).id);
+    assert.deepStrictEqual(
+      lg.readPending(WEB_SWORD, player).map((m) => m.id),
+      [bag, held].map((s) => lg.getMark(WEB_SWORD, s).id)
+    );
     assert.strictEqual(player.container.getItem(5), undefined);
-    assert.strictEqual(player.offhand, held, 'pending holds one mark per weapon; a second copy is not overwritten into it');
+    assert.strictEqual(player.offhand, undefined, 'the off-hand copy is left for the engine to drop');
   });
 
   await t.test('a stale sword in the off hand at death is voided, not retained', () => {
@@ -521,7 +524,7 @@ test('off hand: death retention reads it, and the already-carried checks see it'
     fire('entityDie', { deadEntity: player });
     flush();
     assert.strictEqual(player.offhand, undefined);
-    assert.strictEqual(lg.getPending(WEB_SWORD, player), undefined);
+    assert.deepStrictEqual(lg.readPending(WEB_SWORD, player), []);
   });
 
   await t.test('an unmarked sword in the off hand keeps vanilla death behaviour', () => {
@@ -532,19 +535,19 @@ test('off hand: death retention reads it, and the already-carried checks see it'
     fire('entityDie', { deadEntity: player });
     flush();
     assert.strictEqual(player.offhand, plain);
-    assert.strictEqual(lg.getPending(WEB_SWORD, player), undefined);
+    assert.deepStrictEqual(lg.readPending(WEB_SWORD, player), []);
   });
 
   await t.test('a pending instance already held in the off hand is not issued a second time', () => {
     const player = makePlayer('holder');
     online(player);
     const sword = markedSword(player);
-    lg.setPending(WEB_SWORD, player, lg.getMark(WEB_SWORD, sword));
+    lg.writePending(WEB_SWORD, player, [lg.getMark(WEB_SWORD, sword)]);
     player.offhand = sword;
     fire('playerSpawn', { player, initialSpawn: true });
     flush();
     assert.deepStrictEqual(gensOf(player, lg.getMark(WEB_SWORD, sword).id), [], 'a second copy entered the inventory');
-    assert.strictEqual(lg.getPending(WEB_SWORD, player), undefined);
+    assert.deepStrictEqual(lg.readPending(WEB_SWORD, player), []);
   });
 
   await t.test('a debt for an instance held in the off hand is dropped without a copy', () => {
