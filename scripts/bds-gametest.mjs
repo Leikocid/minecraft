@@ -153,6 +153,11 @@ const EXPECTED_TESTS = [
   'andrew:legendary_give_then_craft_web_sword',
   'andrew:legendary_give_then_craft_scythe',
   'andrew:legendary_second_real_craft_refunded',
+  // LGND-OFFHAND-01 — src/gametest/legendary-offhand.ts
+  'andrew:legendary_offhand_admitted',
+  'andrew:legendary_offhand_resolves',
+  'andrew:legendary_offhand_death_returns',
+  'andrew:legendary_offhand_token_refused',
   // STRF-REG-01 — src/gametest/strf-registry.ts
   'andrew:strf_registry_steps_idempotent',
   // STRF-ROLL-01 — src/gametest/structures.ts

@@ -14,8 +14,9 @@
 // fires, or whether the engine has already spat the contents out as item
 // entities — and the answer is an engine fact, not a type. So both are handled:
 //
-//   path A — the item is still in the inventory: stash the mark and blank the
-//            slot, so there is nothing left for the engine to drop;
+//   path A — the item is still in the inventory or the off hand: stash the
+//            mark and blank the slot, so there is nothing left for the engine
+//            to drop;
 //   path B — next tick, sweep the death spot for dropped item entities carrying
 //            a marked item, stash the mark and delete them.
 //
@@ -48,8 +49,12 @@ import {
   findMarked,
   getMark,
   getPending,
+  isItemOf,
   isLive,
+  isStale,
   markItem,
+  offhandOf,
+  setOffhand,
   setPending,
   voidStale,
 } from "./state";
@@ -108,36 +113,55 @@ function retain(player: Player): void {
   // the next-tick sweep needs, and by then the player may have respawned.
   const location = player.location;
   const dimension = player.dimension;
+  // Scheduled first, so a throw in path A below cannot cost the sweep.
+  system.run(() => {
+    sweep(player, dimension, location);
+  });
 
   const container = player.getComponent("minecraft:inventory")?.container;
-  if (container !== undefined) {
-    for (const def of LEGENDARIES) {
-      // A superseded copy is deleted, not retained (R-lgnd-005).
-      const voided = voidStale(def, container);
-      if (voided > 0) {
-        console.warn(`[andrew] legendary retention: path A — voided ${voided} stale ${def.itemId} on ${player.name}'s death`);
-      }
-      const found = findMarked(def, container);
-      if (found === undefined) {
-        console.warn(
-          `[andrew] legendary retention: path A — ${player.name} had no marked ${def.itemId} in inventory at entityDie`
-        );
-        continue;
-      }
+  for (const def of LEGENDARIES) {
+    // A superseded copy is deleted, not retained (R-lgnd-005).
+    const voided = (container === undefined ? 0 : voidStale(def, container)) + voidStaleOffhand(def, player);
+    if (voided > 0) {
+      console.warn(`[andrew] legendary retention: path A — voided ${voided} stale ${def.itemId} on ${player.name}'s death`);
+    }
+    // Pending holds one mark per weapon: the inventory copy first, the off
+    // hand only when the inventory had none. A copy left over goes to path B.
+    const found = container === undefined ? undefined : findMarked(def, container);
+    const offhand = offhandOf(player);
+    const offMark = isItemOf(def, offhand) ? getMark(def, offhand) : undefined;
+    if (found !== undefined) {
       // Order: the mark is durable before the slot is blanked, so a throw in
       // between loses the item to the drop rather than to nothing at all.
       setPending(def, player, found.mark);
-      container.setItem(found.slot, undefined);
+      container?.setItem(found.slot, undefined);
       console.warn(
         `[andrew] legendary retention: path A — ${player.name} still held ${def.itemId} id ${found.mark.id} ` +
           `in slot ${found.slot} at entityDie; slot blanked before the engine could drop it`
       );
+    } else if (offMark !== undefined) {
+      setPending(def, player, offMark);
+      setOffhand(player, undefined);
+      console.warn(
+        `[andrew] legendary retention: path A — ${player.name} still held ${def.itemId} id ${offMark.id} ` +
+          "in the off hand at entityDie; off hand emptied before the engine could drop it"
+      );
+    } else {
+      console.warn(
+        `[andrew] legendary retention: path A — ${player.name} had no marked ${def.itemId} in inventory or off hand at entityDie`
+      );
     }
   }
+}
 
-  system.run(() => {
-    sweep(player, dimension, location);
-  });
+/** Empties the off hand if it holds a stale copy of `def`; returns how many (0 or 1). */
+function voidStaleOffhand(def: LegendaryDef, player: Player): number {
+  const offhand = offhandOf(player);
+  if (!isItemOf(def, offhand) || !isStale(def, offhand)) {
+    return 0;
+  }
+  setOffhand(player, undefined);
+  return 1;
 }
 
 /**
@@ -227,7 +251,7 @@ export function restore(def: LegendaryDef, player: Player, messageKey = `${def.t
     return;
   }
 
-  if (carriesInstance(def, container, mark)) {
+  if (carriesInstance(def, player, container, mark)) {
     clearPending(def, player);
     console.warn(
       `[andrew] legendary retention: ${player.name} already carries ${def.itemId} id ${mark.id}, ` +

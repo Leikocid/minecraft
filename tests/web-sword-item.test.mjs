@@ -171,6 +171,23 @@ test('Web Sword item JSON', async (t) => {
     );
   });
 
+  // Scythe §6 and decision-legendary-hand-priority need both hands. The engine
+  // admits a custom item to the off-hand slot only with this component; without
+  // it setEquipment(Offhand) returns false (BDS 1.26.51.1, CNTR-LGND-CX08-AA).
+  await t.test('is admitted to the off hand (minecraft:allow_off_hand)', () => {
+    const allow = itemJson['minecraft:item'].components?.['minecraft:allow_off_hand'];
+    assert.ok(allow !== undefined, 'minecraft:allow_off_hand must be present — without it the item cannot be held in the off hand');
+    const value = typeof allow === 'boolean' ? allow : allow.value;
+    assert.strictEqual(value, true, 'minecraft:allow_off_hand must be true');
+  });
+
+  // playerInventoryItemChange has no off-hand inventory type, so a craft token
+  // parked there is settled only when another craft wakes the gate.
+  await t.test('its craft token is not admitted to the off hand', () => {
+    const tokenJson = JSON.parse(readFileSync(join(projectRoot, 'packs', 'behavior', 'items', 'web_sword_crafted.json'), 'utf-8'));
+    assert.strictEqual(tokenJson['minecraft:item'].components?.['minecraft:allow_off_hand'], undefined);
+  });
+
   await t.test('has a display_name loc key present in both languages', () => {
     const displayName = itemJson['minecraft:item'].components?.['minecraft:display_name'];
     assert.ok(displayName, 'minecraft:display_name component must be present');

@@ -2,7 +2,14 @@
 // Script API. Key names come from registry.ts; the pure decisions these
 // wrappers feed live in rules.ts.
 
-import { type Container, type ItemStack, type Player, world } from "@minecraft/server";
+import {
+  type Container,
+  EntityComponentTypes,
+  EquipmentSlot,
+  type ItemStack,
+  type Player,
+  world,
+} from "@minecraft/server";
 import { type LegendaryDef, genLedgerKey, keysFor } from "./registry";
 import {
   type Mark,
@@ -149,19 +156,38 @@ export function findMarked(def: LegendaryDef, container: Container): MarkedSlot 
   return undefined;
 }
 
-/** Whether `container` already holds this instance at this generation. */
-export function carriesInstance(def: LegendaryDef, container: Container, mark: Mark): boolean {
+/** The player's off-hand stack. `minecraft:inventory` does not include the off hand. */
+export function offhandOf(player: Player): ItemStack | undefined {
+  return player.getComponent(EntityComponentTypes.Equippable)?.getEquipment(EquipmentSlot.Offhand);
+}
+
+/**
+ * Writes the off hand, or throws. The engine refuses a custom item without
+ * `minecraft:allow_off_hand` by returning false, not by throwing.
+ */
+export function setOffhand(player: Player, stack: ItemStack | undefined): void {
+  const equippable = player.getComponent(EntityComponentTypes.Equippable);
+  if (equippable === undefined || !equippable.setEquipment(EquipmentSlot.Offhand, stack)) {
+    throw new Error(`${player.name}'s off hand refused ${stack?.typeId ?? "to be emptied"}`);
+  }
+}
+
+function isInstance(def: LegendaryDef, stack: ItemStack | undefined, mark: Mark): boolean {
+  if (!isItemOf(def, stack)) {
+    return false;
+  }
+  const held = getMark(def, stack);
+  return held?.id === mark.id && held.gen === mark.gen;
+}
+
+/** Whether `player` already holds this instance at this generation, in `container` or the off hand. */
+export function carriesInstance(def: LegendaryDef, player: Player, container: Container, mark: Mark): boolean {
   for (let slot = 0; slot < container.size; slot++) {
-    const stack = container.getItem(slot);
-    if (!isItemOf(def, stack)) {
-      continue;
-    }
-    const held = getMark(def, stack);
-    if (held?.id === mark.id && held.gen === mark.gen) {
+    if (isInstance(def, container.getItem(slot), mark)) {
       return true;
     }
   }
-  return false;
+  return isInstance(def, offhandOf(player), mark);
 }
 
 /** Empties every slot of `container` holding a stale stack of `def`; returns how many. */

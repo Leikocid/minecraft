@@ -58,6 +58,7 @@ import "./probe-give";
 import "./legendary-craftgate";
 import "./probe-retention";
 import "./legendary-fireproof";
+import "./legendary-offhand";
 import "./strf-registry";
 import "./structures";
 import "./structures-site";
