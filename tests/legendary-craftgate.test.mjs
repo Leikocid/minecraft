@@ -12,14 +12,25 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { build } from 'esbuild';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = join(__dirname, '..');
 
+/** Item ids the shipped JSON admits to the off hand; the engine refuses every other custom item there. */
+const OFFHAND_ADMITTED = readdirSync(join(projectRoot, 'packs', 'behavior', 'items'))
+  .map((f) => JSON.parse(readFileSync(join(projectRoot, 'packs', 'behavior', 'items', f), 'utf-8'))['minecraft:item'])
+  .filter((item) => {
+    const allow = item.components?.['minecraft:allow_off_hand'];
+    return allow === true || allow?.value === true;
+  })
+  .map((item) => item.description.identifier);
+
 const ENGINE = `
+const OFFHAND_ADMITTED = new Set(${JSON.stringify(OFFHAND_ADMITTED)});
+
 const engine = {
   listeners: [],
   events: [],
@@ -92,13 +103,28 @@ class Player {
     this.messages = [];
     this.dropped = [];
     this.container = new Container(this);
+    // Written directly by a test, as /replaceitem does: no inventory event,
+    // since the engine's inventory types are Hotbar and Inventory only.
+    this.offhand = undefined;
     this.dimension = { spawnItem: (stack) => this.dropped.push(stack) };
   }
   getGameMode() {
     return this.gameMode;
   }
   getComponent(id) {
-    return id === 'minecraft:inventory' ? { container: this.container } : undefined;
+    if (id === 'minecraft:inventory') return { container: this.container };
+    if (id === 'minecraft:equippable') {
+      return {
+        getEquipment: (slot) => (slot === 'Offhand' ? this.offhand?.clone() : undefined),
+        setEquipment: (slot, stack) => {
+          if (slot !== 'Offhand') return false;
+          if (stack !== undefined && stack.typeId.startsWith('andrew:') && !OFFHAND_ADMITTED.has(stack.typeId)) return false;
+          this.offhand = stack?.clone();
+          return true;
+        },
+      };
+    }
+    return undefined;
   }
   sendMessage(message) {
     this.messages.push(message);
@@ -110,6 +136,9 @@ export const system = {
     engine.jobs.push(fn);
   },
 };
+
+export const EntityComponentTypes = { Equippable: 'minecraft:equippable', Inventory: 'minecraft:inventory' };
+export const EquipmentSlot = { Mainhand: 'Mainhand', Offhand: 'Offhand' };
 
 export const world = {
   afterEvents: {
@@ -139,6 +168,10 @@ export const __engine = {
     engine.broadcasts.length = 0;
   },
   player: (name, gameMode = 'Survival') => new Player(name, gameMode),
+  /** The event the engine raises when a craft's result slot is touched, with no inventory write of ours behind it. */
+  touch(player, stack) {
+    engine.events.push({ player, slot: 0, beforeItemStack: undefined, itemStack: stack.clone(), inventoryType: 'Inventory' });
+  },
   broadcasts: () => [...engine.broadcasts],
   prop: (key) => engine.props.get(key),
   /** After-events first, then the jobs system.run queued — one tick at a time, until quiet. */
@@ -417,6 +450,79 @@ test('Creative and Spectator crafts yield an ordinary copy and leave the flag al
       assert.deepEqual(engine.broadcasts(), []);
     });
   }
+});
+
+// ------------------------------------------------------------------ the off hand
+
+test('the gate reads the off hand as well as the inventory', async (t) => {
+  const offOrigin = (player, def) =>
+    player.offhand?.typeId === def.itemId ? player.offhand.getDynamicProperty(keysFor(def).origin) ?? 'none' : undefined;
+
+  for (const def of GATED) {
+    await t.test(`${def.itemId}: a token in the off hand is claimed there, and the craft is spent once`, () => {
+      engine.reset();
+      const player = engine.player('lefty');
+      player.offhand = new ItemStack(def.craftTokenId, 1);
+      engine.touch(player, player.offhand);
+      settle();
+
+      assert.equal(offOrigin(player, def), 'craft', `off hand holds ${player.offhand?.typeId ?? 'nothing'}, not the marked weapon`);
+      assert.equal(crafted(def), true);
+      assert.equal(engine.broadcasts().length, 1);
+      assert.deepEqual(stacks(player), [], 'the claim put something in the inventory as well');
+    });
+
+    await t.test(`${def.itemId}: flag spent — a token in the off hand is taken and refunded`, () => {
+      engine.reset();
+      craft(engine.player('first'), def);
+      settle();
+      const player = engine.player('lefty');
+      player.offhand = new ItemStack(def.craftTokenId, 1);
+      engine.touch(player, player.offhand);
+      settle();
+
+      assert.equal(player.offhand, undefined, 'the token stayed in the off hand');
+      for (const [id, n] of def.refund) assert.equal(count(player, id), n, `${id}`);
+      assert.deepEqual(player.messages, [{ translate: `${def.textPrefix}.craft_blocked` }]);
+      assert.equal(engine.prop(keysFor(def).craftedBy), 'first');
+    });
+  }
+
+  await t.test('a real craft with a token parked in the off hand: one claim, one refund, no token left', () => {
+    engine.reset();
+    const player = engine.player('parked');
+    player.offhand = new ItemStack(WEB_SWORD.craftTokenId, 1);
+    craft(player, WEB_SWORD);
+    settle();
+
+    const tokens = count(player, WEB_SWORD.craftTokenId) + (player.offhand?.typeId === WEB_SWORD.craftTokenId ? 1 : 0);
+    assert.equal(tokens, 0, 'a craft token survived the gate');
+    const weapons = origins(player, WEB_SWORD).concat(offOrigin(player, WEB_SWORD) ?? []);
+    assert.deepEqual(weapons, ['craft']);
+    assert.equal(count(player, 'minecraft:web'), 4);
+    assert.equal(engine.broadcasts().length, 1);
+  });
+
+  await t.test('Creative: a token in the off hand is unwrapped in place', () => {
+    engine.reset();
+    const player = engine.player('builder', 'Creative');
+    player.offhand = new ItemStack(SCYTHE_OF_CALAMITY.craftTokenId, 1);
+    engine.touch(player, player.offhand);
+    settle();
+    assert.equal(offOrigin(player, SCYTHE_OF_CALAMITY), 'none');
+    assert.equal(crafted(SCYTHE_OF_CALAMITY), false);
+  });
+
+  await t.test('a plain weapon in the off hand is never gated, even when a craft wakes the gate', () => {
+    engine.reset();
+    const player = engine.player('giver');
+    player.offhand = new ItemStack(WEB_SWORD.itemId, 1);
+    craft(player, WEB_SWORD);
+    settle();
+    assert.equal(offOrigin(player, WEB_SWORD), 'none', 'the /give copy in the off hand was marked or taken');
+    assert.deepEqual(origins(player, WEB_SWORD), ['craft']);
+    assert.equal(refunded(player, WEB_SWORD), 0);
+  });
 });
 
 // ------------------------------------------------------------------ the pure rule

@@ -44,7 +44,7 @@ import {
 } from "@minecraft/server";
 import { LEGENDARIES, type LegendaryDef, defForStack } from "./registry";
 import { grant } from "./retention";
-import { bumpGen, carriesInstance, getMark, isItemOf, isLive, readOwed, writeOwed } from "./state";
+import { bumpGen, carriesInstance, getMark, isItemOf, isLive, offhandOf, readOwed, writeOwed } from "./state";
 import { type Mark, withOwed, withoutOwed } from "./rules";
 
 const CHECK_INTERVAL_TICKS = 40;
@@ -231,6 +231,10 @@ function whereIs(w: Watched): string | undefined {
         return `in ${player.name}'s inventory`;
       }
     }
+    const offhand = offhandOf(player);
+    if (isItemOf(w.def, offhand) && getMark(w.def, offhand)?.id === id) {
+      return `in ${player.name}'s off hand`;
+    }
   }
   // A hopper pulls items from the block above it, so the spot and the cell
   // below are the only containers that can take an item without a player.
@@ -303,7 +307,7 @@ function redeemOwed(def: LegendaryDef, player: Player): void {
   for (const { mark } of entries) {
     if (!isLive(def, mark)) {
       console.warn(`[andrew] legendary recovery: owed ${def.itemId} id ${mark.id} gen ${mark.gen} is stale, dropped`);
-    } else if (carriesInstance(def, online.container, mark)) {
+    } else if (carriesInstance(def, player, online.container, mark)) {
       console.warn(`[andrew] legendary recovery: ${player.name} already carries owed ${def.itemId} id ${mark.id}, dropped`);
     } else {
       grant(def, player, online.container, mark, RECOVERED_KEY);

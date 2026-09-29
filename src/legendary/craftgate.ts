@@ -16,7 +16,7 @@
 import { type Container, ItemStack, type Player, type RawMessage, system, world } from "@minecraft/server";
 import { type LegendaryDef, defForToken } from "./registry";
 import { tokenDecision } from "./rules";
-import { isCrafted, makeMark, markItem, setCrafted } from "./state";
+import { isCrafted, makeMark, markItem, offhandOf, setCrafted, setOffhand } from "./state";
 
 // Known limitation, not fixable on this surface: refund items (def.refund) are
 // *new* stacks. By the time a token exists the ingredients are gone, so their
@@ -109,22 +109,30 @@ function gate(player: Player): void {
   // in more than one slot, and a shift-click bulk craft in several at once.
   // This runs only when a token was reported, never per tick (C-4).
   for (let slot = 0; slot < container.size; slot++) {
-    const def = defForToken(container.getItem(slot));
-    if (def === undefined) {
-      continue;
-    }
+    settle(defForToken(container.getItem(slot)), player, container, (stack) => container.setItem(slot, stack));
+  }
+  // A guard: a token cannot enter the off hand on 1.26.51.1 (GameTest
+  // legendary_offhand_token_refused), and no inventory event names that slot.
+  settle(defForToken(offhandOf(player)), player, container, (stack) => setOffhand(player, stack));
+}
 
-    switch (tokenDecision(isCrafted(def), player.getGameMode())) {
-      case "claim":
-        claim(def, player, container, slot);
-        break;
-      case "refund":
-        refund(def, player, container, slot);
-        break;
-      case "unwrap":
-        container.setItem(slot, new ItemStack(def.itemId, 1));
-        break;
-    }
+/** Replaces the token in the slot it was found in. */
+type Put = (stack: ItemStack | undefined) => void;
+
+function settle(def: LegendaryDef | undefined, player: Player, container: Container, put: Put): void {
+  if (def === undefined) {
+    return;
+  }
+  switch (tokenDecision(isCrafted(def), player.getGameMode())) {
+    case "claim":
+      claim(def, player, put);
+      break;
+    case "refund":
+      refund(def, player, container, put);
+      break;
+    case "unwrap":
+      put(new ItemStack(def.itemId, 1));
+      break;
   }
 }
 
@@ -136,8 +144,8 @@ function gate(player: Player): void {
  * so a throw in the middle leaves the budget unspent rather than spent on a
  * weapon that never reached the player.
  */
-function claim(def: LegendaryDef, player: Player, container: Container, slot: number): void {
-  container.setItem(slot, markItem(def, new ItemStack(def.itemId, 1), makeMark("craft", player)));
+function claim(def: LegendaryDef, player: Player, put: Put): void {
+  put(markItem(def, new ItemStack(def.itemId, 1), makeMark("craft", player)));
   setCrafted(def, player.name);
   announce(def, player);
 }
@@ -174,8 +182,8 @@ function announce(def: LegendaryDef, player: Player): void {
 }
 
 /** The budget is already spent: take the token back, hand the ingredients over. */
-function refund(def: LegendaryDef, player: Player, container: Container, slot: number): void {
-  container.setItem(slot, undefined);
+function refund(def: LegendaryDef, player: Player, container: Container, put: Put): void {
+  put(undefined);
   for (const [itemId, count] of def.refund) {
     returnToPlayer(player, container, new ItemStack(itemId, count));
   }
