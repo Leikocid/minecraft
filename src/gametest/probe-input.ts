@@ -226,3 +226,37 @@ registerAsync("andrew", "probe_input_creative", async (test: Test): Promise<void
   .structureName(STRUCTURE)
   .maxTicks(2000)
   .tag("andrew");
+
+/** Raw BlockRaycastHit for a horizontal aim in each direction, 4 blocks out. */
+registerAsync("andrew", "probe_input_face_location", async (test: Test): Promise<void> => {
+  const player = test.spawnSimulatedPlayer(STAND, `${NAME_PREFIX}_face`, GameMode.Survival);
+  await test.idle(4);
+  const dimension = test.getDimension();
+  const aims: Array<[string, Vector3]> = [
+    ["north", { x: STAND.x, y: EYE_ROW, z: STAND.z - 4 }],
+    ["south", { x: STAND.x, y: EYE_ROW, z: STAND.z + 4 }],
+    ["west", { x: STAND.x - 4, y: EYE_ROW, z: STAND.z }],
+    ["east", { x: STAND.x + 4, y: EYE_ROW, z: STAND.z }],
+  ];
+  for (const [label, rel] of aims) {
+    const abs = test.worldBlockLocation(rel);
+    dimension.setBlockType(abs, "minecraft:stone");
+    player.lookAtBlock(rel);
+    await test.idle(4);
+    const eye = player.getHeadLocation();
+    for (const opts of [{ maxDistance: ORBITAL_RANGE }, undefined]) {
+      const hit = opts === undefined ? player.getBlockFromViewDirection() : player.getBlockFromViewDirection(opts);
+      log(
+        `INPUT FACE ${label} opts=${opts === undefined ? "none" : "max10"} eye=${eye.x.toFixed(2)},${eye.y.toFixed(2)},${eye.z.toFixed(2)} ` +
+          `block=${hit === undefined ? "none" : fmt(hit.block.location)} face=${hit?.face ?? "-"} ` +
+          `faceLocation=${hit === undefined ? "-" : `${hit.faceLocation.x.toFixed(3)},${hit.faceLocation.y.toFixed(3)},${hit.faceLocation.z.toFixed(3)}`}`
+      );
+    }
+    dimension.setBlockType(abs, "minecraft:air");
+    await test.idle(2);
+  }
+  test.succeed();
+})
+  .structureName(STRUCTURE)
+  .maxTicks(200)
+  .tag("andrew");
