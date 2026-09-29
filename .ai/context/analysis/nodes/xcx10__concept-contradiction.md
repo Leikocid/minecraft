@@ -3,17 +3,21 @@ type: "concept-contradiction"
 node_id: "L0-xcx10"
 source_channel: "rollout"
 analysis_version: 3
-title: "CX-L0-10 · \"Legendaries are not destroyed\" vs the as-built \"destroyed means returned\""
+title: "CX-L0-10 · \\"Legendaries are not destroyed\\" vs the as-built \\"destroyed means returned\\""
 aliases: ["L0-xcx10"]
 is_a: ["contradiction"]
 part_of: ["L0"]
-relates_to: ["L0", "L0-lgnd", "L0-pntr", "L0-ring"]
+relates_to: ["L0","L0-lgnd","L0-pntr","L0-ring"]
 see_also: ["orbitalcannonspecv1ruen-part-1"]
 priority: 540
 size_chars: 1478
-tags: ["title:CX-L0-10 · \"Legendaries are not destroyed\" vs the as-built \"destroyed means returned\"", "alias:L0-xcx10", "is_a:contradiction", "relates_to:L0", "relates_to:L0-lgnd", "relates_to:L0-pntr", "relates_to:L0-ring", "see_also:orbitalcannonspecv1ruen-part-1", "category:source-vs-code", "severity:medium", "status:open", "target:L0-lgnd"]
+tags: ["title:CX-L0-10 · \"Legendaries are not destroyed\" vs the as-built \"destroyed means returned\"","alias:L0-xcx10","is_a:contradiction","relates_to:L0","relates_to:L0-lgnd","relates_to:L0-pntr","relates_to:L0-ring","see_also:orbitalcannonspecv1ruen-part-1","category:source-vs-code","severity:medium","status:open","target:L0-lgnd","resolved"]
 level: 1
+closed_at: 2026-09-29
+closed_reason: resolved_by_decision
+closed_by_ref: decision-resolve-l0-xcx10
 ---
+
 # CX-L0-10 · "Legendaries are not destroyed" vs the as-built "destroyed means returned"
 
 **Spec (Orbital §5, a general rule for all legendaries).** A legendary must **not be destroyed** by fire, lava, cactus, TNT, the Orbital Cannon or other ordinary item-entity destruction. When a container holding one is destroyed, the legendary must **survive or drop**, not vanish.

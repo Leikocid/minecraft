@@ -7,13 +7,17 @@ title: "CX-L0-09 · Vanilla /give copies in Survival claim the world's craft"
 aliases: ["L0-xcx9"]
 is_a: ["contradiction"]
 part_of: ["L0"]
-relates_to: ["L0", "L0-lgnd", "L0-orbc"]
-see_also: ["orbitalcannonspecv1ruen-part-1", "orbitalcannonspecv1ruen-part-4"]
+relates_to: ["L0","L0-lgnd","L0-orbc"]
+see_also: ["orbitalcannonspecv1ruen-part-1","orbitalcannonspecv1ruen-part-4"]
 priority: 540
 size_chars: 1340
-tags: ["title:CX-L0-09 · Vanilla /give copies in Survival claim the world's craft", "alias:L0-xcx9", "is_a:contradiction", "relates_to:L0", "relates_to:L0-lgnd", "relates_to:L0-orbc", "see_also:orbitalcannonspecv1ruen-part-1", "see_also:orbitalcannonspecv1ruen-part-4", "category:source-vs-code", "severity:high", "status:open", "target:L0-lgnd"]
+tags: ["title:CX-L0-09 · Vanilla /give copies in Survival claim the world's craft","alias:L0-xcx9","is_a:contradiction","relates_to:L0","relates_to:L0-lgnd","relates_to:L0-orbc","see_also:orbitalcannonspecv1ruen-part-1","see_also:orbitalcannonspecv1ruen-part-4","category:source-vs-code","severity:high","status:open","target:L0-lgnd","resolved"]
 level: 1
+closed_at: 2026-09-29
+closed_reason: resolved_by_decision
+closed_by_ref: decision-resolve-l0-xcx9
 ---
+
 # CX-L0-09 · Vanilla /give copies in Survival claim the world's craft
 
 **Spec (Orbital §4, AC-2).** Copies from Creative and `/give` are allowed and **do not consume or change** the Survival unique-craft flag.

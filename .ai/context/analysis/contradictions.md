@@ -1,12 +1,12 @@
 ---
 title: Contradictions
 type: analysis
-generated_at: "2026-09-29T20:39:59.201Z"
+generated_at: "2026-09-29T22:51:16.958Z"
 source_channel: rollout
 node_id: rollout-contradictions
 aliases: ["rollout-contradictions","contradictions"]
 is_a: ["rollout","contradictions"]
-relates_to: ["L0-lgnd-cx02","L0-lgnd-cx03","L0-lgnd-cx04","L0-lgnd-cx05","L0-lgnd-cx06","L0-lgnd-cx08","L0-lgnd-cx09","L0-lgnd-cx10","L0-xcx10","L0-xcx9"]
+relates_to: ["L0-lgnd-cx02","L0-lgnd-cx03","L0-lgnd-cx04","L0-lgnd-cx05","L0-lgnd-cx06","L0-lgnd-cx10"]
 priority: 540
 ---
 
@@ -141,78 +141,6 @@ relates_to: ["L0-lgnd-ad03", "L0-lgnd-p003", "L0-lgnd-ac12"]
 
 
 
-### CX-lgnd-08 · Hand priority is coded, but neither item can be held in the off hand (L0-lgnd-cx08)
-
----
-is_a: ["contradiction"]
-part_of: ["L0-lgnd"]
-relates_to: ["L0-lgnd-r004", "L0-lgnd-as07", "L0-lgnd-ac04", "L0-lgnd-ac05", "L0-lgnd-ac06", "L0-scyt-r009", "L0-sitm", "cool-ctr3"]
-status: open
-category: source-vs-code
----
-# CX-lgnd-08 · Hand priority is coded, but neither item can be held in the off hand
-
-**Decision/spec.**
-- decision-legendary-hand-priority and decision-resolve-cool-ctr3 require hand priority to be implemented now.
-- `L0-lgnd-r004` and `L0-scyt-r009` require `minecraft:allow_off_hand: true` on both items.
-
-**Code.**
-- `src/legendary/hands.ts` resolves main, then off hand.
-- `hud.ts` renders both hands.
-- `grep -rl allow_off_hand packs/` finds **no** item JSON. Without that component, Bedrock does not let a custom item be placed in the off-hand slot.
-
-**Effect.**
-- The off-hand branch of `resolveActivation` is dead in practice.
-- `ac04` and `ac05` (two-hand press) and `ac06` (two-segment HUD) cannot be set up on a real client.
-- A GameTest can still force the slot through `Equippable.setEquipment(Offhand)`, which would give a false pass.
-
-**Resolution needed.** One of:
-- `L0-sitm`/`L0-webs` add `minecraft:allow_off_hand: true` to both items, and `as07` is then measured on 1.26.50.
-- Or the client confirms that off-hand is out of scope, and the two-hand ACs are dropped.
-
-
-
-
-
-
-### CX-lgnd-09 · Loss return in code: owner instead of last holder, and no generation guard (L0-lgnd-cx09)
-
----
-is_a: ["contradiction"]
-part_of: ["L0-lgnd"]
-relates_to: ["L0-lgnd-p003", "L0-lgnd-r005", "L0-lgnd-ad02", "L0-lgnd-ent2", "L0-lgnd-ent4", "L0-lgnd-cx02", "L0-lgnd-ac08", "L0-lgnd-ac10"]
-status: open
-category: source-vs-code
----
-# CX-lgnd-09 · Loss return in code: owner instead of last holder, and no generation guard
-
-**Spec/design.**
-- Scythe §1: *«возвращается последнему владельцу»* ("returns to the last owner").
-- decision-legendary-rules-obschie: the item goes "последнему владельцу" ("to the last owner").
-- `L0-lgnd-ad02`, `r005`, `ent2`, `ac08` and `ac10` design a `holder` field plus a `gen` bump, so a mis-classified survivor becomes stale.
-
-**Code** (`src/legendary/recovery.ts`, `state.ts`):
-1. The return target is `mark.owner`, which is the crafter or the admin recipient. There is no `holder` field. If a crafter gives the sword to a friend and the friend drops it into the Void, the sword goes back to the crafter.
-2. There is no generation. Mis-classification is reduced by heuristics instead:
-   - an inventory scan of online players;
-   - a scan of the container at or below the spot (hopper);
-   - a check of the other watched entities.
-
-   A pickup that none of these see (an allay, a hopper minecart, a hopper chain that moves the item on within 40 ticks, a fox) is classed as lost. The owner gets a copy with the **same id**, and the survivor stays fully live. That is a real duplicate (C-7), not the harmless stale copy that `cx02` assumed.
-3. `_owed` is a map `ownerId → one mark`. Two losses of different admin copies by the same offline owner overwrite each other, so one debt is lost.
-4. A pickup is also inferred by scanning every online player's inventory at classification time. That is event-scoped and bounded, but it is a scan wider than the "one inventory" wording of C-5.
-
-**Resolution needed.**
-- (a) Implement `holder` and `gen` as designed.
-- (b) Accept the as-built behaviour: owner-return, a small dup window, and a debt-overwrite edge. `ac08` and `ac10` are then rewritten, and `cx02` is re-framed as a dup risk.
-
-Also, the spec's "последнему владельцу" needs a client reading: does it mean the crafter or the last holder?
-
-
-
-
-
-
 ### CX-lgnd-10 · Death retention keeps only one marked copy per weapon, and never the off-hand one (L0-lgnd-cx10)
 
 ---
@@ -242,54 +170,6 @@ In a normal Survival world only one crafted copy exists, so the practical exposu
 **Resolution needed.** Choose one:
 - (a) Array pending plus an off-hand scan, as designed.
 - (b) Accept, and narrow `ac07` to one copy per weapon, main inventory only.
-
-
-
-
-
-
-### CX-L0-10 · \ (L0-xcx10)
-
-# CX-L0-10 · "Legendaries are not destroyed" vs the as-built "destroyed means returned"
-
-**Spec (Orbital §5, a general rule for all legendaries).** A legendary must **not be destroyed** by fire, lava, cactus, TNT, the Orbital Cannon or other ordinary item-entity destruction. When a container holding one is destroyed, the legendary must **survive or drop**, not vanish.
-
-**Code (`src/legendary/recovery.ts` header).** "The stable API has no way to make an item entity indestructible, so the rule is 'destroyed means returned'." A lost instance is re-issued to the owner's inventory, and that happens elsewhere, not where it lay. Container destruction is not handled specially. Vanilla drops container contents, and recovery watches the resulting item entity.
-
-**Conflict.**
-- Spec: the item stays in the world.
-- Code: it teleports to a player.
-
-The Orbital effects make this worse:
-- LMB deletes containers "with contents", so the vanilla contents drop never happens.
-- RMB drop suppression (`L0-adr-ochg`) could delete a legendary that a container spilled.
-
-**Proposed resolution for `lgnd`:**
-- Keep "destroyed → returned" as the stable fallback for fire, lava, cactus and the Void.
-- Add a pre-emptive `protectLegendariesIn(dim, volume)` that the Cannon calls before it removes blocks. It pulls legendaries out of containers in the volume and re-drops them at a safe spot outside the blast, which keeps the "survive/drop" semantics.
-
-It is recorded as a deviation (C-16).
-
-
-
-
-
-
-### CX-L0-09 · Vanilla /give copies in Survival claim the world's craft (L0-xcx9)
-
-# CX-L0-09 · Vanilla /give copies in Survival claim the world's craft
-
-**Spec (Orbital §4, AC-2).** Copies from Creative and `/give` are allowed and **do not consume or change** the Survival unique-craft flag.
-
-**Code (`src/legendary/craftgate.ts` + `rules.ts:41`).** The gate reacts to *any* unmarked legendary that appears in a player's inventory. `craftDecision` ignores the stack only when the player is in Creative or Spectator, or the stack is marked. A vanilla `/give @p andrew:orbital_cannon` (or `andrew:web_sword`) to a **Survival** player produces an unmarked stack, so the gate returns `claim`. The world's single craft is then spent on a test copy, and a later real craft gets refunded. Only the custom `/andrew:<weapon> give` produces a correctly marked admin copy.
-
-**Impact.** AC-2 fails as built, for all three weapons.
-
-**The gate cannot tell a craft from a `/give`.** Stable 2.10.0 has no craft event; that is why the gate is after-the-fact.
-
-**Candidate fixes for the `lgnd` delta:**
-- Only claim when the stack appeared in the crafting-output flow. Heuristic: the event's `beforeItemStack` was empty and the slot is the cursor or inventory slot fed by crafting. This needs a probe.
-- Or restrict `/give` of legendaries through a `beforeEvents` command hook, and document `/andrew:<weapon> give` as the supported path.
 
 
 

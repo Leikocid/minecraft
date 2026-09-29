@@ -1,12 +1,12 @@
 ---
 title: Decisions
 type: analysis
-generated_at: "2026-09-29T20:40:09.081Z"
+generated_at: "2026-09-29T22:51:16.978Z"
 source_channel: rollout
 node_id: rollout-decisions
 aliases: ["rollout-decisions","decisions"]
 is_a: ["rollout","decisions"]
-relates_to: ["decision-completion-flow-quick","decision-merge-policy-autopilot","decision-namespace-addona-andrew-asm-002-q-002","decision-tselevaya-versiya-bedrock-1-26-51-asm-001-q-001","decision-verification-approach-automatic","decision-windows-pk-ne-nuzhen-q-004","decision-yazyk-skriptov-typescript-asm-003-q-003","decision-zacharovanie-bez-durability-proverit-pervoy-zada","decision-q-006-web-sword-provenance-yes-metka-ekzemplyara","decision-q-007-enchantable-without-durability-podtverzhde","decision-q-008-blocked-craft-refund-a-obnaruzhit-i-vernut","decision-q-009-cooldown-persistence-sohranyat-mezhdu-vyho","decision-q-010-main-hand-off-hand-priority-otlozheno","decision-q-011-cube-geometry-27-kletok-tsentr-sosednyaya-","decision-q-012-two-player-dod-gametest-s-dvumya-simulated","decision-q-013-protected-blocks-zakrytyy-spisok-posture-s","decision-q-014-budget-after-destruction-pravo-ostaetsya-p","decision-q-015-gate-game-modes-survival-i-adventure","decision-q-016-sword-unlootable-podtverzhdeno-kak-zaduman","decision-q-017-zero-cells-proval-s-lokalizovannym-soobsch","decision-resolve-l0","decision-resolve-l0-keep-ctr006","decision-resolve-l0-once","decision-resolve-l0-qatg-ctr1","decision-resolve-l0-trap-ct07","decision-resolve-l0-trap-ct08","decision-web-sword-item-values-uron-kak-u-vanilnogo-almaz","decision-legendary-hand-priority-realizuem-seychas-osnovn","decision-legendary-ready-hud-gotovo-pokazyvaetsya-postoya","decision-legendary-rules-obschie-dlya-vseh-legendarnyh-vk","decision-resolve-cool-ctr3","decision-resolve-l0-sprj-cx02","decision-resolve-l0-xcx3","decision-scythe-enchantments-slot-sword","decision-scythe-hidden-target-dynamic-property-andrew-hid","decision-scythe-launch-applyknockback-s-kalibrovannoy-ver","decision-scythe-melee-damage-8-proveryaetsya-zamerom-prot","decision-scythe-projectiles-virtualnye-bez-suschnostey-ri","decision-scythe-true-damage-pryamoe-umenshenie-zdorovya-d","decision-scythe-targets-mobs-moby-tozhe-tseli-igrok-v-pri","decision-ad-wrdn-01-l0-wrdn-ad01-podtverzhdeno-vanilnaya-","decision-adr-bast-02-l0-bast-ad02-podtverzhdeno-vanilnye-","decision-adr-l0-adr-strc-accepted-generatsiya-skriptom-pr","decision-adr-l0-adr-strs-accepted-s-ogovorkoy-q5-zond-str","decision-adr-l0-adr-tmpl-accepted-zond-strf-p006-q1-q2-q3","decision-adr-l0-wind-ad01-accepted-s-ogovorkoy-o-razmere-","decision-adr-strf-01-l0-strf-d001-accepted-determinirovan","decision-adr-strf-02-l0-strf-d002-accepted-spavnery-vanil","decision-l0-airs-cx01-zagruzka-chankov-koltsa-privyazanno","decision-l0-xcx6-edinstvennyy-istochnik-pravdy-po-generat","decision-l0-xcx7-kanal-dokazatelstva-u-kazhdogo-kriteriya","decision-l0-xq2-plotnost-struktur-shansy-na-chank-rovno-k","decision-l0-xq3-vozvrat-poteryannogo-oruzhiya-kraftivshem","decision-l0-xq4-melnitsa-u-spavna-bez-suhoy-zemli-mira-be","decision-dirizhabl-udlinyaetsya-protiv-razmera-v-speke-ra","decision-gorod-hranitelya-rastet-vchetvero-po-ploschadi-i","decision-legendarnoe-vozvraschaetsya-poslednemu-derzhavsh","decision-resolve-cool-ctr1","decision-resolve-cool-ctr2","decision-resolve-cool-ctr4","decision-resolve-l0-airs-cx01","decision-resolve-l0-lgnd-cx01","decision-resolve-l0-lgnd-cx07","decision-resolve-l0-orbc-cx02","decision-resolve-l0-strf-cx01","decision-resolve-l0-strf-cx02","decision-resolve-l0-wind-cx01","decision-resolve-l0-wind-cx02","decision-resolve-l0-xcx11","decision-resolve-l0-xcx12","decision-resolve-l0-xcx13","decision-resolve-l0-xcx14","decision-resolve-l0-xcx5","decision-resolve-l0-xcx6","decision-resolve-l0-xcx7","decision-resolve-l0-xcx8","decision-vvod-orbitalnoy-pushki-udar-po-playerswingstart-"]
+relates_to: ["decision-completion-flow-quick","decision-merge-policy-autopilot","decision-namespace-addona-andrew-asm-002-q-002","decision-tselevaya-versiya-bedrock-1-26-51-asm-001-q-001","decision-verification-approach-automatic","decision-windows-pk-ne-nuzhen-q-004","decision-yazyk-skriptov-typescript-asm-003-q-003","decision-zacharovanie-bez-durability-proverit-pervoy-zada","decision-q-006-web-sword-provenance-yes-metka-ekzemplyara","decision-q-007-enchantable-without-durability-podtverzhde","decision-q-008-blocked-craft-refund-a-obnaruzhit-i-vernut","decision-q-009-cooldown-persistence-sohranyat-mezhdu-vyho","decision-q-010-main-hand-off-hand-priority-otlozheno","decision-q-011-cube-geometry-27-kletok-tsentr-sosednyaya-","decision-q-012-two-player-dod-gametest-s-dvumya-simulated","decision-q-013-protected-blocks-zakrytyy-spisok-posture-s","decision-q-014-budget-after-destruction-pravo-ostaetsya-p","decision-q-015-gate-game-modes-survival-i-adventure","decision-q-016-sword-unlootable-podtverzhdeno-kak-zaduman","decision-q-017-zero-cells-proval-s-lokalizovannym-soobsch","decision-resolve-l0","decision-resolve-l0-keep-ctr006","decision-resolve-l0-once","decision-resolve-l0-qatg-ctr1","decision-resolve-l0-trap-ct07","decision-resolve-l0-trap-ct08","decision-web-sword-item-values-uron-kak-u-vanilnogo-almaz","decision-legendary-hand-priority-realizuem-seychas-osnovn","decision-legendary-ready-hud-gotovo-pokazyvaetsya-postoya","decision-legendary-rules-obschie-dlya-vseh-legendarnyh-vk","decision-resolve-cool-ctr3","decision-resolve-l0-sprj-cx02","decision-resolve-l0-xcx3","decision-scythe-enchantments-slot-sword","decision-scythe-hidden-target-dynamic-property-andrew-hid","decision-scythe-launch-applyknockback-s-kalibrovannoy-ver","decision-scythe-melee-damage-8-proveryaetsya-zamerom-prot","decision-scythe-projectiles-virtualnye-bez-suschnostey-ri","decision-scythe-true-damage-pryamoe-umenshenie-zdorovya-d","decision-scythe-targets-mobs-moby-tozhe-tseli-igrok-v-pri","decision-ad-wrdn-01-l0-wrdn-ad01-podtverzhdeno-vanilnaya-","decision-adr-bast-02-l0-bast-ad02-podtverzhdeno-vanilnye-","decision-adr-l0-adr-strc-accepted-generatsiya-skriptom-pr","decision-adr-l0-adr-strs-accepted-s-ogovorkoy-q5-zond-str","decision-adr-l0-adr-tmpl-accepted-zond-strf-p006-q1-q2-q3","decision-adr-l0-wind-ad01-accepted-s-ogovorkoy-o-razmere-","decision-adr-strf-01-l0-strf-d001-accepted-determinirovan","decision-adr-strf-02-l0-strf-d002-accepted-spavnery-vanil","decision-l0-airs-cx01-zagruzka-chankov-koltsa-privyazanno","decision-l0-xcx6-edinstvennyy-istochnik-pravdy-po-generat","decision-l0-xcx7-kanal-dokazatelstva-u-kazhdogo-kriteriya","decision-l0-xq2-plotnost-struktur-shansy-na-chank-rovno-k","decision-l0-xq3-vozvrat-poteryannogo-oruzhiya-kraftivshem","decision-l0-xq4-melnitsa-u-spavna-bez-suhoy-zemli-mira-be","decision-dirizhabl-udlinyaetsya-protiv-razmera-v-speke-ra","decision-gorod-hranitelya-rastet-vchetvero-po-ploschadi-i","decision-legendarnoe-vozvraschaetsya-poslednemu-derzhavsh","decision-resolve-cool-ctr1","decision-resolve-cool-ctr2","decision-resolve-cool-ctr4","decision-resolve-l0-airs-cx01","decision-resolve-l0-lgnd-cx01","decision-resolve-l0-lgnd-cx07","decision-resolve-l0-lgnd-cx08","decision-resolve-l0-lgnd-cx09","decision-resolve-l0-orbc-cx02","decision-resolve-l0-scyt-cx03","decision-resolve-l0-scyt-cx04","decision-resolve-l0-scyt-cx05","decision-resolve-l0-strf-cx01","decision-resolve-l0-strf-cx02","decision-resolve-l0-wind-cx01","decision-resolve-l0-wind-cx02","decision-resolve-l0-xcx11","decision-resolve-l0-xcx12","decision-resolve-l0-xcx13","decision-resolve-l0-xcx14","decision-resolve-l0-xcx5","decision-resolve-l0-xcx6","decision-resolve-l0-xcx7","decision-resolve-l0-xcx8","decision-resolve-l0-xcx9","decision-vvod-orbitalnoy-pushki-udar-po-playerswingstart-"]
 priority: 540
 ---
 
@@ -747,12 +747,67 @@ _Decided: 2026-09-29_
 
 
 
+## Resolved L0-lgnd-cx08: Починено задачей LGND-OFFHAND-01-AA (6 … (decision-resolve-l0-lgnd-cx08)
+
+_Decided: 2026-09-29_
+
+
+Починено задачей LGND-OFFHAND-01-AA (6 критериев из 6). В JSON обоих легендарных предметов добавлен minecraft:allow_off_hand, поэтому движок теперь допускает их во вторую руку, и написанная ранее ветка приоритета рук (hands.ts, hud.ts) перестала быть мёртвой. Заодно вторую руку начали читать сохранение при смерти и гейт крафта. Ложный зелёный через setEquipment(Offhand) исключён: проверка построена так, что без компонента она красная — три красных артефакта до правки (1.red, 2.red, 3.red, все с ненулевым кодом) и четыре зелёных после, включая полный bds:gametest и bds:check на отдельном экземпляре bds-offhand.
+
+
+
+
+
+## Resolved L0-lgnd-cx09: Починено задачей LGND-GEN-01-AA (5 крит… (decision-resolve-l0-lgnd-cx09)
+
+_Decided: 2026-09-29_
+
+
+Починено задачей LGND-GEN-01-AA (5 критериев из 5), пункты 2-3 утверждения. В метку добавлено поколение: при выдаче возвратной копии оно растёт, и уцелевшая копия становится устаревшей, поэтому незамеченный подбор больше не оставляет двух живых экземпляров. Долги хранятся списком, две потери одного офлайн-владельца больше не затирают друг друга; старое значение с одной меткой читается как список из одного. Пункт 1 (кому возвращать) решён отдельно: последнему державшему, см. decision-legendarnoe-vozvraschaetsya-poslednemu-derzhavshemu и узел L0-xcx11. Пункт 4 закрыт решением L0-adr-wpn2.
+
+
+
+
+
 ## Resolved L0-orbc-cx02: Закрыто решением decision-vvod-orbitaln… (decision-resolve-l0-orbc-cx02)
 
 _Decided: 2026-09-29_
 
 
 Закрыто решением decision-vvod-orbitalnoy-pushki: удар ловится через playerSwingStart, применение через itemUse, цель — блок события с лучом (maxDistance 10) как запасным. Посылки опровергнуты измерением: сервер дальность не режет (22/22 на всех дистанциях), playerSwingStart стабилен и приходит при ударе в пустоту, луч находит блок при 9.5 и не находит при 10.5. Маркер спекой не запрещён, а объявлен ненужным; частица добавляется только если подсветка на iPad не достанет. Остаток — наблюдение раскладки управления на устройстве — идёт критерием приёмки демо Пушки.
+
+
+
+
+
+## Resolved L0-scyt-cx03: Вытеснено полным анализом версии 3 от 2… (decision-resolve-l0-scyt-cx03)
+
+_Decided: 2026-09-29_
+
+
+Вытеснено полным анализом версии 3 от 2026-09-29: узлы, на которые это утверждение ссылалось, перевыпущены, и их содержимое пересобрано из кода. Во frontmatter уже стояла причина replaced_by_pipeline, но формального закрытия не было. Закрывается как устаревшее; всё, что в нём было живого, разобрано заново в очереди противоречий 2026-09-29 (25 разборов) — в частности про допуск во вторую руку задачей LGND-OFFHAND-01-AA.
+
+
+
+
+
+## Resolved L0-scyt-cx04: Вытеснено полным анализом версии 3 от 2… (decision-resolve-l0-scyt-cx04)
+
+_Decided: 2026-09-29_
+
+
+Вытеснено полным анализом версии 3 от 2026-09-29: узлы, на которые это утверждение ссылалось, перевыпущены, и их содержимое пересобрано из кода. Во frontmatter уже стояла причина replaced_by_pipeline, но формального закрытия не было. Закрывается как устаревшее; всё, что в нём было живого, разобрано заново в очереди противоречий 2026-09-29 (25 разборов) — в частности про допуск во вторую руку задачей LGND-OFFHAND-01-AA.
+
+
+
+
+
+## Resolved L0-scyt-cx05: Вытеснено полным анализом версии 3 от 2… (decision-resolve-l0-scyt-cx05)
+
+_Decided: 2026-09-29_
+
+
+Вытеснено полным анализом версии 3 от 2026-09-29: узлы, на которые это утверждение ссылалось, перевыпущены, и их содержимое пересобрано из кода. Во frontmatter уже стояла причина replaced_by_pipeline, но формального закрытия не было. Закрывается как устаревшее; всё, что в нём было живого, разобрано заново в очереди противоречий 2026-09-29 (25 разборов) — в частности про допуск во вторую руку задачей LGND-OFFHAND-01-AA.
 
 
 
@@ -885,6 +940,17 @@ _Decided: 2026-09-29_
 
 
 Закрыто решением decision-vvod-orbitalnoy-pushki: удар ловится через playerSwingStart, применение через itemUse, цель — блок события с лучом (maxDistance 10) как запасным. Посылки опровергнуты измерением: сервер дальность не режет (22/22 на всех дистанциях), playerSwingStart стабилен и приходит при ударе в пустоту, луч находит блок при 9.5 и не находит при 10.5. Маркер спекой не запрещён, а объявлен ненужным; частица добавляется только если подсветка на iPad не достанет. Остаток — наблюдение раскладки управления на устройстве — идёт критерием приёмки демо Пушки.
+
+
+
+
+
+## Resolved L0-xcx9: Починено задачей LGND-CRAFTGATE-01-AA (… (decision-resolve-l0-xcx9)
+
+_Decided: 2026-09-29_
+
+
+Починено задачей LGND-CRAFTGATE-01-AA (5 критериев из 5). Выдача легендарного командой игроку в выживании больше не объявляется крафтом и не тратит единственный крафт мира; настоящий крафт по-прежнему тратит его ровно один раз. Доказано красной проверкой до правки (артефакт 1.red.json, код 1) и зелёной после (1.json, код 0), плюс сквозной прогон на отдельном сервере (3.json, npm test и bds:gametest, код 0).
 
 
 

@@ -10,9 +10,13 @@ part_of: ["L0-lgnd"]
 relates_to: ["L0-lgnd"]
 priority: 530
 size_chars: 1439
-tags: ["is_a:contradiction", "source-vs-code", "retention", "status:open"]
+tags: ["is_a:contradiction","source-vs-code","retention","status:open","resolved"]
 level: 2
+closed_at: 2026-09-29
+closed_reason: resolved_by_decision
+closed_by_ref: decision-resolve-l0-lgnd-cx10
 ---
+
 ---
 is_a: ["contradiction"]
 part_of: ["L0-lgnd"]
