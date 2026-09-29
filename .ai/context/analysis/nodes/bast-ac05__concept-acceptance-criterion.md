@@ -9,7 +9,7 @@ part_of: ["L0-bast"]
 relates_to: ["L0-bast"]
 priority: 530
 size_chars: 225
-tags: ["is_a:acceptance-criterion", "spec-test:55", "chests"]
+tags: ["is_a:acceptance-criterion", "spec-test:55", "chests", "verify:unit", "verify:bds"]
 level: 2
 ---
 **AC-bast-05** (spec test 55)

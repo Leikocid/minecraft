@@ -23,8 +23,8 @@ relates_to: ["L0-lgnd-ent3", "L0-lgnd-r009", "L0-sprj", "L0-sprj-cx01"]
 **Context.** The Scythe volley spans many ticks (Scythe §4–5): while it flies, a second Use must do nothing, and a cooldown starts only if at least one projectile hit. The Web Sword cooldown must survive reconnect and restart (Web Sword §12, shipped behaviour).
 
 **Decision.** Two separate stores:
-- Cooldown deadline: player dynamic property `andrew:<p>_cooldown_until`, epoch ms (`Date.now()`), durable.
-- Busy: an in-memory `Set<"playerId|abilityKey">` in the cooldown module, cleared on resolution and on `playerLeave`, empty after restart.
+- Cooldown deadline: player dynamic property `andrew:cd_<abilityKey>` (as built, `ad07` §3), epoch ms (`Date.now()`), durable.
+- Busy: a durable `andrew:busy_<abilityKey>` deadline (`ad07` §2, `cooldown.ts:61-71`), cleared on resolution and on `playerLeave`.
 
 **Rejected.**
 - (a) Persist busy as a dynamic property. A crash or restart mid-volley would leave the ability stuck "active" until an operator cleared it, and the projectiles it refers to no longer exist.

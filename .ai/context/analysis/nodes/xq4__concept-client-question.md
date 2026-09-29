@@ -10,7 +10,7 @@ part_of: ["L0"]
 relates_to: ["L0"]
 priority: 530
 size_chars: 1070
-tags: ["title:Spawn Windmill when there is no dry land near spawn", "SHOULD_ASK", "non-blocking", "reduce", "relates_to:L0-wind", "relates_to:L0-strf", "relates_to:L0-airs", "relates_to:L0-wind-cx01", "relates_to:L0-adr-spwn"]
+tags: ["title:Spawn Windmill when there is no dry land near spawn", "answered:decision-l0-xq4", "non-blocking", "reduce", "relates_to:L0-wind", "relates_to:L0-strf", "relates_to:L0-airs", "relates_to:L0-wind-cx01", "relates_to:L0-adr-spwn"]
 level: 1
 ---
 # Q-L0-4 · The spec says a Windmill always appears near spawn. What if the world starts on a tiny island or in the middle of the ocean?

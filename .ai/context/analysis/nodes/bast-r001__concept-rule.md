@@ -12,7 +12,7 @@ size_chars: 750
 tags: ["is_a:rule", "generation", "candidate"]
 level: 2
 ---
-**Rule:** A Nether chunk becomes a Mini Bastion candidate with 5% probability, evaluated once per suitable chunk. A successful roll is discarded (not relocated) if: (a) the site is over a lava ocean, (b) the site lacks solid supporting ground for the template, or (c) the site physically intersects any other detected structure — custom (Windmill, Airship, Mini Warden City) or vanilla (including a genuine Bastion Remnant). Existing structures are never damaged or removed to accommodate a Mini Bastion candidate. All Nether biomes are eligible provided the physical site passes these checks.
+**Rule:** Governed by `L0-strf-r001` (5% roll per suitable chunk), `L0-strf-r002` (cancel-outright, no relocation, with `pending` deferral per §2), `L0-strf-p001` (chunk discovery), `L0-strf-r006` (overlap-cancellation against custom or vanilla structures, including a genuine Bastion Remnant), and profile `netherFloor` (`L0-xasm4` §3) for lava-ocean/solid-support suitability. Body: dimension Nether, candidate chance 0.05. All Nether biomes are eligible provided the physical site passes these checks.
 
 **Rationale:** Keeps generation rare and predictable, and guarantees no other content is ever destroyed by Mini Bastion placement.
 

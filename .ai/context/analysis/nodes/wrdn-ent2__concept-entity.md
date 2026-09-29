@@ -14,14 +14,13 @@ level: 2
 ---
 ## WrdnChest
 
-Exactly 10 per `MiniWardenCityInstance` (`L0-wrdn-ent1`).
+Exactly 40 per `MiniWardenCityInstance` (`L0-wrdn-ent1`).
 
 **Attributes**
-- `chestId` — 1..10, fixed slot in the template.
-- `zone` — `central` (exactly 3) or `outer` (exactly 7).
+- `chestId` — 1..40, fixed slot in the template.
+- `zone` — `central` (exactly 12) or `outer` (exactly 28).
 - `positionOffset` — position relative to the template anchor, rotated with the instance.
 - `lootTableRef` — always the vanilla Ancient City loot table; never the shared Windmill/Airship weighted table (`L0-wrdn-rul6`).
-- `filled` — boolean, set true on first open (or first script-driven fill, whichever the implementation uses); once true, contents never regenerate.
-- `filledAtTimestamp` — for persistence auditing, mirrors `L0-wrdn-ent1.placedAtTimestamp` pattern.
+- fill state = registry `looted`; the container itself is the loot state (`L0-strf-r008` §4).
 
-**Invariant:** `zone=central` count is always exactly 3 and `zone=outer` count is always exactly 7, for every instance (`L0-wrdn-rul6`, raw AC 48).
+**Invariant:** `zone=central` count is always exactly 12 and `zone=outer` count is always exactly 28, for every instance (`L0-wrdn-rul6`, raw AC 48).

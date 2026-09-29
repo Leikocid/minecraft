@@ -38,7 +38,7 @@ tags: ["is_a:component", "structures", "contract-layer", "relates_to:L0-loot", "
 - Player positions and dimensions, once per ≥20 ticks.
 - `StructureDef[]` registered by body components at startup.
 - Templates under `packs/behavior/structures/andrew/*.mcstructure` (from `infr`).
-- World dynamic properties: `andrew:st:salt`, `andrew:st:<dim>:<rx>:<rz>`, and `andrew:st:spawnWindmill`, the last owned by `wind` but stored through the `strf` store API.
+- World dynamic properties: `andrew:st:salt`, `andrew:st:<dim>:<rx>:<rz>`, and `andrew:st:spawn`, the last owned by `wind` but stored through the `strf` store API.
 
 ## Outputs
 - Placed structures and `InstanceRecord`s.
@@ -53,5 +53,5 @@ tags: ["is_a:component", "structures", "contract-layer", "relates_to:L0-loot", "
 
 ## Key dependencies and risks
 - **Stable API only** (C-2). Nothing notifies scripts about generated chunks, and structures cannot be queried. That is why generation happens on discovery, not during worldgen (`L0-adr-strc`). The deviation report must record it.
-- **Per-pack dynamic properties.** A second pack running `strf` has its own registry and would double-generate structures (`L0-strf-cx01`).
+- **Per-pack dynamic properties.** A second pack running `strf` has its own registry and would double-generate structures; so no test pack runs world-wide discovery, and the release pack enables nothing in a fresh world (`L0-adr-own`).
 - The collision heuristic is incomplete by nature. That limitation goes in the deviation report.

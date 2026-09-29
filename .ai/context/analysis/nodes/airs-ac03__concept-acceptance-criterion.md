@@ -10,7 +10,7 @@ part_of: ["L0-airs"]
 relates_to: ["L0-airs"]
 priority: 530
 size_chars: 439
-tags: ["is_a:acceptance-criterion", "interior", "lighting"]
+tags: ["is_a:acceptance-criterion", "interior", "lighting", "verify:unit", "verify:bds"]
 level: 2
 ---
 # AC — interior corridor + 4 rooms, one lamp per room

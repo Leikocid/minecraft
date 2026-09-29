@@ -10,7 +10,7 @@ part_of: ["L0-airs"]
 relates_to: ["L0-airs"]
 priority: 530
 size_chars: 669
-tags: ["is_a:acceptance-criterion", "altitude", "validity"]
+tags: ["is_a:acceptance-criterion", "altitude", "validity", "verify:bds"]
 level: 2
 ---
 # AC — altitude clearance and rejection over water / near the world ceiling

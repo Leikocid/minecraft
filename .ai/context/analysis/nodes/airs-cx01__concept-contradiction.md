@@ -10,7 +10,7 @@ part_of: ["L0-airs"]
 relates_to: ["L0-airs"]
 priority: 530
 size_chars: 2789
-tags: ["is_a:contradiction", "category:invariant-violation", "severity:medium", "status:open", "target:L0-airs", "relates_to:L0-strf-r007", "relates_to:L0-wind", "title:\"Check the linked Airship once\" vs the loaded-footprint guarantee"]
+tags: ["is_a:contradiction", "category:invariant-violation", "severity:medium", "status:resolved", "target:L0-airs", "relates_to:L0-strf-r007", "relates_to:L0-wind", "title:\"Check the linked Airship once\" vs the loaded-footprint guarantee"]
 level: 2
 ---
 # Contradiction — "check the linked Airship once" (§7) vs the loaded-footprint guarantee (C-12)
@@ -26,6 +26,6 @@ level: 2
 - (b) Defer the whole `tryLinked` attempt (not just a candidate) until every chunk in the full [40,100] ring is loaded, then run it once. Matches §7's "once" but may never fire for a Windmill a player never fully circles.
 - (c) Amend §7 for this case only: "once" means one *attempt*, not one *validation pass* — unloaded candidates are retried opportunistically the next time discovery revisits that chunk, capped at a small number of total tries, reusing `strf`'s existing `pending` deferral (`L0-strf-r007`).
 
-**Recommendation.** (c) — it needs no new mechanism, only reusing the existing deferral path for the ring's individual candidates while keeping the *outer* `linkedTried` flag set only once the attempt fully resolves (found, or ring exhausted with everything loaded).
+**Recommendation.** Superseded: the ring is loaded by temporary ticking areas (decision-l0-airs-cx01). (c)'s `pending` survives only as the fallback when an area cannot be added or loaded.
 
-**Needs.** Confirmation this reading of "один раз" (once) is acceptable, or an explicit bound on how many discovery cycles a deferred linked search may span. Note: `wind`'s own component narrative already anticipated this exact tension under the id `L0-wind-cx02`, but that artifact was never written — this filing supersedes that forward reference and targets `L0-airs`, since `airs` owns the ring search's resolution.
+**Needs.** Confirmation this reading of "один раз" (once) is acceptable, or an explicit bound on how many discovery cycles a deferred linked search may span. Note: `L0-wind-cx02` exists; one issue (L0-adr-link:20-22).

@@ -10,7 +10,7 @@ part_of: ["L0"]
 relates_to: ["L0"]
 priority: 520
 size_chars: 970
-tags: ["target:L0-lgnd","status:open","category:source-vs-decision","title:Off-hand priority deferred vs required","resolved"]
+tags: ["target:L0-lgnd","status:resolved","category:source-vs-decision","title:Off-hand priority deferred vs required","resolved"]
 closed_at: 2026-09-24
 closed_reason: resolved_by_decision
 closed_by_ref: decision-resolve-cool-ctr3

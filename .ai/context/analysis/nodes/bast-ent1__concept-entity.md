@@ -25,7 +25,7 @@ The root record for one generated Mini Bastion instance.
 - `footprint` — ~20×20 blocks (fixed by template).
 - `height` — ~10-12 blocks (fixed by template).
 - `level_count` — 2-3 (fixed by template).
-- `initialized_flag` — bool; drives the idempotency guard in P-bast-002 (see ASM-bast-03).
+- init state = the state of the `L0-strf-e002` InstanceRecord (`L0-strf-r008`).
 - `chest_refs` — exactly 10 `BastionChest` records.
 - `guard_refs` — 9-12 `BastionGuard` records (7-10 Piglins + exactly 2 Piglin Brutes).
 - `treasure_room` — position/boundary of the central lower room, its surrounding-lava footprint, and its `gold_block_count` (2-4, random, set once).

@@ -19,5 +19,5 @@ level: 2
 
 GIVEN a world whose spawn Windmill is `done`
 WHEN the server is restarted 3 times, including one kill (`SIGKILL`) during the search on a second fresh world
-THEN each world has exactly one `windmill:S`; block counts in its AABB show 25 chests and 3 spawners; tagged guards ≤ 10
+THEN each world has exactly one `windmill:spawn`; block counts in its AABB show 25 chests and 3 spawners; tagged guards ≤ 10
 AND the killed-mid-search world completes the search after restart with one Windmill only.

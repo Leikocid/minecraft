@@ -10,10 +10,12 @@ part_of: ["L0-strf"]
 relates_to: ["L0-strf"]
 priority: 530
 size_chars: 1111
-tags: ["is_a:architecture-decision", "status:proposed", "collision", "relates_to:L0-strf-r006", "relates_to:L0-airs"]
+tags: ["is_a:architecture-decision", "status:accepted", "collision", "relates_to:L0-strf-r006", "relates_to:L0-airs"]
 level: 2
 ---
 # ADR-strf-04 — Collision is a 3D AABB test with a 2-block margin, not a 2D footprint test
+
+**Status:** accepted as built: 3D `collisionBox`, `COLLISION_MARGIN = 2` (`src/structures/collision.ts:73`, `registry.ts:118`).
 
 **Context.** §2/§5.5 forbid "физическое пересечение" and structures that "разрезать друг друга". The Airship floats 40–70 blocks up, and Warden City lies at Y −35…−45. A 2D test would forbid any Airship above any structure and any Warden City under a Windmill.
 

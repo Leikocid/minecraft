@@ -12,4 +12,4 @@ size_chars: 350
 tags: ["is_a:acceptance-criterion", "channel:bds", "relates_to:L0-pick-r002"]
 level: 2
 ---
-GIVEN a fresh `andrew:miners_pickaxe` ItemStack, WHEN queried in-engine, THEN `ItemEnchantableComponent.canAddEnchantment === true`, `EnchantmentSlot.Pickaxe` is among its enchantable slots, and `minecraft:durability` is absent. [channel: bds; src: `SELFTEST-01-AA` / `src/selftest/main.ts` `pickaxe-enchantable` + `pickaxe-no-durability`, L127-150]
+GIVEN a fresh `andrew:miners_pickaxe` ItemStack, WHEN queried in-engine, THEN `ItemEnchantableComponent.canAddEnchantment === true`, `canAddEnchantment` accepts unbreaking and efficiency and refuses sharpness, and `minecraft:durability` is absent. [channel: bds; src: `SELFTEST-01-AA` / `src/selftest/main.ts` `pickaxe-enchantable`]

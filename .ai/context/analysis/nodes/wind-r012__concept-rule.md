@@ -19,8 +19,8 @@ level: 2
 
 **Source:** §5.6, §7 bullet 4, test 33.
 
-- Every Windmill instance — normal and spawn — requests one linked Airship from `airs` in its `afterInit` hook, after chests and guards.
-- **Once:** the attempt is recorded in `InstanceRecord.x.linkedTried` with its outcome. It is never repeated, whether it placed an Airship or found no valid site.
+- Every Windmill instance — normal and spawn — requests one linked Airship from `airs` in the Placer's `finish` step (linked hook, place.ts:205-211), after chests and guards.
+- **Once:** `la=true` is written before the attempt; the outcome is in `ls`. A pending attempt is resumed, never restarted as a second attempt.
 - **Not satisfied by others:** an independent 2 % Airship already within 100 blocks does not count; two nearby Windmills each request their own; linked Airships are not merged or deduplicated.
 - `wind` passes only the parent (id, centre, plot AABB). Ring 40–100 blocks from the Windmill centre, "not over the Windmill/fields", validity, altitude, and "no widening beyond 100" belong to `airs`.
 - The linked attempt does not consume any chunk's independent Airship roll (`L0-strf-r002` §6).

@@ -10,13 +10,13 @@ part_of: ["L0-wind"]
 relates_to: ["L0-wind"]
 priority: 530
 size_chars: 2275
-tags: ["is_a:architecture-decision", "spawn-windmill", "ticking-area", "chunk-loading", "status:proposed", "relates_to:L0-wind-p002", "relates_to:L0-strf-r007", "relates_to:L0-adr-strc"]
+tags: ["is_a:architecture-decision", "spawn-windmill", "ticking-area", "chunk-loading", "status:accepted", "relates_to:L0-wind-p002", "relates_to:L0-strf-r007", "relates_to:L0-adr-strc"]
 level: 2
 ---
 # ADR — The spawn search loads terrain with temporary ticking areas, window by window
 
 **Links:** `part_of: ["L0-wind"]` · `is_a: ["architecture-decision"]` · `relates_to: [L0-wind-p002, L0-strf-r007, L0-adr-strc, L0-wind-as11]`
-**Status:** proposed. Must pass the `strf` probe (`L0-strf-p006`) on BDS 1.26.51.1.
+**Status:** accepted with a proviso on the area size (`decision-adr-l0-wind-ad01-accepted-s-ogovorkoy-o-razmere-`).
 
 ## Context
 - §4.7 requires the spawn Windmill on the *first start*, searching up to 500 blocks (≈ 63×63 chunks). C-12: never read validity from or write into unloaded chunks.

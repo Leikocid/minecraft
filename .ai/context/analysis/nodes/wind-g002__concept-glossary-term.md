@@ -14,6 +14,6 @@ level: 2
 ---
 **Spawn Windmill (стартовая Мельница)**
 
-The one guaranteed Windmill per world, found by the spawn-area search (5×5 chunks → nearest ≤ 500 blocks → forced site preparation). Registry id `windmill:S`; search state in `andrew:st:spawnWindmill`. The only structure allowed to relocate its candidate and to terraform.
+The one guaranteed Windmill per world, found by the spawn-area search (5×5 chunks → nearest ≤ 500 blocks → forced site preparation). Registry id `windmill:spawn`; search state in `andrew:st:spawnWindmill`. The only structure allowed to relocate its candidate and to terraform.
 
 **Synonyms:** guaranteed Windmill, starter Windmill. **Contrast:** *normal Windmill* — a 1 %-per-chunk instance that is cancelled, never moved or terraformed.

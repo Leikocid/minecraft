@@ -9,10 +9,10 @@ part_of: ["L0-lgnd"]
 relates_to: ["L0-lgnd"]
 priority: 520
 size_chars: 557
-tags: ["assumption", "CAN_ASSUME", "Q-020"]
+tags: ["assumption", "decided", "Q-020"]
 level: 2
 ---
-**ASM-lgnd-01: Q-020 default (a) applies to both weapons.**
+**ASM-lgnd-01 — decided 2026-09-24 (decision-legendary-rules-obschie-dlya-vseh-legendarnyh-vk): loss return applies to all legendaries, shipped in ed7558b.**
 
 Indestructibility and Void return cover the Web Sword as well as the Scythe ("по общим правилам", by the general rules). The craft right is still not reopened.
 

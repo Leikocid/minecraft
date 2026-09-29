@@ -22,15 +22,15 @@ level: 2
 - `L0-airs-cx01`. It says `wind-cx02` "was never written". That is wrong: both exist in this run. `airs-cx01` does not supersede `wind-cx02`; they are one issue.
 
 Their proposals agree:
-- `wind-ad03`: `tryLinked` returns `placed | none | deferred`, and `x.linkedTried` is set only on `placed`/`none`.
+- `wind-ad03`: `LinkedAirships.start` (airship.ts:93). `la=true` is written before the attempt. The outcome is `ls` (airship.ts:32).
 - `airs-cx01`, option (c): unloaded candidates stay `pending` and are retried on later discovery.
 
 **Decision.**
-1. **Once = one resolved attempt per Windmill**, recorded once in `x.linkedTried`. Retries touch only the ring candidates that were `pending`. The Windmill is never re-rolled or re-searched, and there is no scan: a retry happens only when `strf` discovery next evaluates a chunk that holds a pending candidate (`strf-r007`'s existing path).
-2. **The candidate order is fixed at the first call.** It is seeded from the parent's instance id, so a retry cannot pick a different "first valid" site than a fully loaded run would. The first candidate in order that validates wins. A candidate earlier in order that is still `pending` blocks a later valid one. This keeps the result independent of player movement.
-3. **No retry cap.** A pending attempt costs one record field and no ticks. If the player never loads the ring, the linked Airship simply never exists. This is recorded in the deviation report (`strf-r012`).
-4. **Spawn Windmill.** Its linked attempt runs inside the one-time tickingarea sweep (`L0-adr-spwn`), so it normally resolves at world start.
+1. **Once = one resolved attempt per Windmill**: one attempt (`la`). A pending attempt reruns the seeded ring every 600 ticks and after restart. A resume is not an attempt (`strf-r007`'s existing path).
+2. **The candidate order is fixed at the first call.** It is seeded from the parent's instance id, so a retry cannot pick a different "first valid" site than a fully loaded run would. The first candidate in the seeded order that loads and validates wins. A pending one does not block later ones (search-ring.ts:132-141). Loading does not depend on the player.
+3. **No retry cap.** A pending attempt costs one retry per 600 ticks. It resolves without the player, because the ring is loaded by ticking areas. This is recorded in the deviation report (`strf-r012`).
+4. **Spawn Windmill.** Its linked attempt starts from the same Placer hook when the spawn search places `windmill:spawn`. The ring loader loads its ring after the sweep's areas are released.
 5. **Ownership.** `wind` owns *when* and *once* (`wind-r012`, `wind-ad03`). `airs` owns the ring order, validation and the "not over the Windmill" exclusion (`airs-d001`). `strf` owns `pending`.
-6. The linked Airship's id is `airship:L:<parentId>` (`wind-ad03`). A replay cannot create a second one.
+6. The linked Airship's id is `airship:linked:<parentId>:<slot>` (`wind-ad03`); replay-safe via `la` and the reserved spot `lo` (airship.ts:29,151-159).
 
 **Closes:** `L0-wind-cx02` and `L0-airs-cx01`.

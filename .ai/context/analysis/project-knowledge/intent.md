@@ -1,12 +1,12 @@
 ---
 title: Intent
 type: project-knowledge
-generated_at: "2026-09-26T08:34:28.640Z"
+generated_at: "2026-09-29T21:19:00.072Z"
 source_channel: rollout
 node_id: rollout-intent
 aliases: ["rollout-intent","intent","project-knowledge/intent"]
 is_a: ["rollout","intent"]
-priority: 530
+priority: 540
 ---
 
 # Intent

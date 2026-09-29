@@ -22,7 +22,7 @@ relates_to: ["L0-lgnd-r006", "L0-lgnd-ent1"]
 
 **Context.** ADR-021 requires that 0.3.0 worlds keep the Web Sword flag and marks. The framework needs namespaced keys for N weapons.
 
-**Decision.** Keys are `andrew:<markPrefix>_<name>`. The Web Sword's prefix is `ws`, so the derived names are byte-identical to the shipped ones. Legacy *formats* (single-object pending, no gen or holder) are tolerated on read. There is no startup migration pass.
+**Decision.** Keys are `andrew:<markPrefix>_<name>`. The Web Sword's prefix is `ws`, so the derived item/world/pending names are byte-identical to the shipped ones. The cooldown key is not (`andrew:cd_web_sword` replaced `andrew:ws_cooldown_until`, `cx07`/`wpn2`). Legacy *formats* (single-object pending, no gen or holder) are tolerated on read. There is no startup migration pass.
 
 **Rejected.**
 - (a) Generic keys (`andrew:legendary_<id>_*`) plus a one-time copy migration. A crash could leave it half-run, it needs a "migrated" flag, and a downgrade to 0.3.0 would lose state.

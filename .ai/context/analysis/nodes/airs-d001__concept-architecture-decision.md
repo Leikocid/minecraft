@@ -10,12 +10,12 @@ part_of: ["L0-airs"]
 relates_to: ["L0-airs"]
 priority: 530
 size_chars: 2440
-tags: ["is_a:architecture-decision", "status:proposed", "collision", "linked-search", "relates_to:L0-strf-d004", "relates_to:L0-wind"]
+tags: ["is_a:architecture-decision", "status:accepted", "collision", "linked-search", "relates_to:L0-strf-d004", "relates_to:L0-wind"]
 level: 2
 ---
 # ADR-airs-01 — The "not above the Windmill" exclusion is a cheap 2D AABB pre-filter on `airs`'s own footprint, using the parent's stored footprint
 
-**Status:** proposed (L0-airs, v1).
+**Status:** accepted as built: `overParent` 2D pre-filter through `overlaps2d` (`bodies/airship.ts:41-42,169`; `search-ring.ts:80`).
 
 ## Context
 - §5.6 requires the linked Airship to never hang directly over the Windmill or its fields, but independent Airships are explicitly allowed to (`L0-strf-d004` consequences).

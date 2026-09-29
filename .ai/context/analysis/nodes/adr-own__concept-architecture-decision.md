@@ -19,17 +19,17 @@ level: 2
 
 **Context.**
 - `L0-strf-cx01`. Dynamic properties are per pack, and the project's test convention arms production modules inside the gametest pack. So two `strf` instances would generate the same world twice (C-7).
-- `strf-d003` proposes `startStrf({owner, testHooks})` and a `scriptevent andrew:strf_claim` handshake. It needs `infr` to accept it.
+- `strf-d003` resolved without a handshake (see items 1–3 as amended).
 - **Cross-family effect** that neither child saw: since 0.4.1 the Scythe targets mobs (`scyt-ad04`, `scyt-r001`). Its GameTests use a test cow as the target. If `strf` runs discovery in the same gametest world, it can spawn structures with guards (Zombie Villagers, Piglins) or spawners near the test area. A nearer mob then becomes the Scythe's target and the tests fail. This happened already with a real LAN player (`302fba4`).
 
 **Decision.**
-1. **Accept `strf-d003`.** Exactly one pack owns `strf` in a world. The gametest pack claims ownership, and the release pack yields. Test hooks are compiled only into the gametest bundle. `infr`'s release-size check asserts they are absent.
+1. **Accept `strf-d003`.** Exactly one pack owns `strf` in a world. The release pack keeps its runtime and generates nothing in a world with no stored enabled set; the gametest world is recreated each run. Test hooks are compiled only into the gametest bundle. `infr`'s release-size check asserts they are absent.
 2. **`infr` harness changes** (`infr-p006`, `infr-p007`):
    - Structure lanes run on the dedicated `gametest` world.
-   - A startup assertion checks that exactly one `strf: owner=` log line appears.
-   - The restart lane checks the owner again after the restart.
-3. **Discovery is off by default in the gametest pack.** `startStrf({owner:"gametest", discovery:false})`. Structure tests drive generation only through `evaluateChunk` / `queueFromPositions` hooks at a test-chosen location. Weapon tests never see a structure or guard they did not ask for.
-4. **Backup.** If the handshake proves racy on BDS (the release pack starts before the claim arrives), structure lanes use a separate BDS world profile without the release pack. `strf-d003` rejects that variant only because it loses one signal.
+   - A startup assertion checks `[andrew] structures enabled: none` and a spawn-search stand-down line (`bds-gametest.mjs:449-455`).
+   - The restart lanes run in `bds:check` (selftest `windmill-restart`/`bastion-restart` over `ScopedStore`), not in the gametest world.
+3. **Discovery is off by default in the gametest pack.** The gametest pack has no world-wide discovery loop; tests call `Discovery.evaluateChunk`/`discover` on their own runtime at a test-chosen site. Weapon tests never see a structure or guard they did not ask for.
+4. **Backup.** Not needed: no handshake, nothing can race.
 5. **Operational.** Every `bds:*` structure lane obeys the rule in memory "BDS runs vs LAN server": the LAN server is stopped during runs, and run-check artifacts use absolute paths.
 
 **Closes:** `L0-strf-cx01`.

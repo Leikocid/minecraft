@@ -10,7 +10,7 @@ part_of: ["L0-airs"]
 relates_to: ["L0-airs"]
 priority: 530
 size_chars: 561
-tags: ["is_a:acceptance-criterion", "worldgen", "rate"]
+tags: ["is_a:acceptance-criterion", "worldgen", "rate", "verify:unit", "verify:bds"]
 level: 2
 ---
 # AC — independent generation at 2 % on suitable land chunks only

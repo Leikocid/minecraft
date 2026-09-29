@@ -9,7 +9,7 @@ part_of: ["L0-bast"]
 relates_to: ["L0-bast"]
 priority: 530
 size_chars: 151
-tags: ["is_a:acceptance-criterion", "spec-test:56", "gold-blocks"]
+tags: ["is_a:acceptance-criterion", "spec-test:56", "gold-blocks", "verify:unit", "verify:bds"]
 level: 2
 ---
 **AC-bast-06** (spec test 56)

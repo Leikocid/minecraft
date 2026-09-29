@@ -9,7 +9,7 @@ part_of: ["L0-bast"]
 relates_to: ["L0-bast"]
 priority: 530
 size_chars: 270
-tags: ["is_a:acceptance-criterion", "spec-test:57", "guards", "piglin"]
+tags: ["is_a:acceptance-criterion", "spec-test:57", "guards", "piglin", "verify:bds"]
 level: 2
 ---
 **AC-bast-07** (spec test 57)
