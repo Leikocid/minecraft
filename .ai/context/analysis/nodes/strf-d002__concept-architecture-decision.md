@@ -10,7 +10,7 @@ part_of: ["L0-strf"]
 relates_to: ["L0-strf"]
 priority: 530
 size_chars: 1393
-tags: ["is_a:architecture-decision", "status:proposed", "spawner", "relates_to:L0-strf-r010", "relates_to:L0-adr-tmpl"]
+tags: ["is_a:architecture-decision", "status:accepted", "spawner", "relates_to:L0-strf-r010", "relates_to:L0-adr-tmpl"]
 level: 2
 ---
 # ADR-strf-02 — Spawners are vanilla block entities from the template; a script pseudo-spawner is the fallback only

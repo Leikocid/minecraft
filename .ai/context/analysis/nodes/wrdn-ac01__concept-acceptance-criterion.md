@@ -9,7 +9,7 @@ part_of: ["L0-wrdn"]
 relates_to: ["L0-wrdn"]
 priority: 530
 size_chars: 243
-tags: ["is_a:acceptance-criterion", "raw-ac:41"]
+tags: ["is_a:acceptance-criterion", "raw-ac:41", "verify:unit", "verify:bds"]
 level: 2
 ---
-GIVEN a statistically sufficient sample of new, suitable Overworld chunks, WHEN candidate generation runs on each, THEN the observed Mini Warden City candidate rate converges to 5% — exact match is not required on a small sample. (Raw AC 41.)
+The rate belongs to `L0-strf-r002` §1 and is proven by `tests/structures-roll.test.mjs:148`. GIVEN a statistically sufficient sample of new, suitable Overworld chunks, WHEN candidate generation runs on each, THEN `StructureDef.chance = 0.05` (`src/structures/config.ts:26`) — exact match is not required on a small sample. (Raw AC 41.)

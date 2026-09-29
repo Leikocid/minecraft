@@ -25,10 +25,10 @@ level: 2
 |---|---|
 | placed → looted | `def.chests`: 25 template-local points, floor-tagged 1/2/3 (5/8/12), all `table: "shared"` (`L0-loot`). Floor does not change quality (§3.3 last bullet). |
 | looted → guarded | `def.spawnGuards(ctx)` returns 10 entries `{type:"minecraft:zombie_villager_v2", localPos, spawnEvent:"minecraft:spawn_adult"?}` from fixed field positions; per-def extra = infinite particle-less `fire_resistance` (`L0-wind-r004`, `L0-strf-as04`). |
-| guarded → done | `def.afterInit(ctx)`: if `record.x.linkedTried` is not set, call `airs.tryLinked(record)` once, then set `x.linkedTried = true` with outcome (`placed`/`none`) (`L0-wind-r012`). |
+| guarded → done | `body.linked(ctx)` when `la` is unset: first `la=true`, then `LinkedAirships.start`. The outcome is in `ls` (`L0-wind-r012`). |
 
 ## Notes
 - Spawners need no step: their mob type is in the template block entity (`L0-strf-r010`).
 - Wheat, water, fence and decay are template blocks; nothing is added by script.
-- The spawn Windmill (`windmill:S`) runs the identical hooks. Its linked Airship is part of the same first-start job, while the ticking area is still active (see `L0-wind-cx02`).
+- The spawn Windmill (`windmill:spawn`, spawn-search.ts:23) runs the identical hooks. Its ring is loaded by the ring loader after the spawn search released its own areas (see `L0-wind-cx02`).
 - Deaths, cures and looting after `done` never touch the record.

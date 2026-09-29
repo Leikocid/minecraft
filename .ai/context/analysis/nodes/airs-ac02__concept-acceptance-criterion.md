@@ -10,7 +10,7 @@ part_of: ["L0-airs"]
 relates_to: ["L0-airs"]
 priority: 530
 size_chars: 406
-tags: ["is_a:acceptance-criterion", "access", "doors"]
+tags: ["is_a:acceptance-criterion", "access", "doors", "verify:unit", "verify:bds"]
 level: 2
 ---
 # AC — two opposite doors, no assisted ground access

@@ -18,8 +18,8 @@ level: 2
 **Links:** `part_of: ["L0-airs"]` · `is_a: ["entity"]`
 
 ```ts
-function tryLinked(parentInstance: InstanceRecord): void
-// called exactly once by wind's afterPlace hook (L0-strf-p003 step 7)
+LinkedAirships.start(parent: Instance): void
+// called by the Placer's `linked` hook after `la=true`
 
 interface LinkedSearchState {
   windmillInstanceId: string;
@@ -32,5 +32,5 @@ interface LinkedSearchState {
 
 - `tryLinked` calls `strf.searchRing(airshipDef, centre, 40, 100)`, which yields candidate `(x, z, rot)` triples inside the annulus (`L0-strf-r002` item 5; sampling pattern is an assumption, `L0-airs-as02`).
 - Each candidate is validated exactly like an independent Airship (`L0-airs-r003`), then filtered by `excludeAABB`: any candidate whose 2D footprint intersects `excludeAABB` is skipped before the expensive footprint probe runs, as a cheap early-out (`L0-strf-d004`).
-- The search stops at the first `valid` candidate and places it, or exhausts the ring and returns "not created" — there is no partial/deferred state persisted for a failed search (contrast `L0-strf-p003`'s `pending` for a single placement). See `L0-airs-cx01` for the tension this creates with the loaded-footprint guarantee.
+- The search stops at the first `valid` candidate and places it, or exhausts the ring and returns "not created" — an unreadable ring persists `ls=pending` and is resumed. Only a fully read ring with no valid spot ends `none` (contrast `L0-strf-p003`'s `pending` for a single placement).
 - `parentInstance` is carried only for the deviation report / debug logging; `strf`'s registry and collision test key purely on the placed Airship's own AABB, with no link back to the Windmill (`L0-strf-r006`).

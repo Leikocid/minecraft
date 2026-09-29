@@ -33,7 +33,7 @@ This re-states `L0-lgnd-cx01` at system level. It cannot be resolved inside the 
 - **Scythe** (`scytheofcalamityspecv1ruen-part-1` §6): *«Когда готова: Ready / «Готово»»*, shown continuously while held, in either hand. It sits next to the common legendary rules.
 
 **Cross-component effect.**
-- The single HUD (`L0-lgnd-r007`) needs a per-weapon `readyMode` for as long as the two answers differ.
+- Resolved by decision-resolve-l0-xcx3: continuous for both weapons; `readyMode` not built.
 - A continuous Ready also competes with transient texts. That is why `L0-adr-cast` puts a hold into `hud.notify`, which the Scythe's no-target message relies on (`L0-scyt-r003`, CTR-017).
 
-**Interim (autopilot, not blocking):** `readyMode = "once"` for the Web Sword, which keeps it byte-identical to 0.3.0, and `"while-held"` for the Scythe. The question goes to the client as `L0-xq1`.
+**Interim (autopilot, not blocking):** Resolved by decision-resolve-l0-xcx3: continuous for both weapons; `readyMode` not built.

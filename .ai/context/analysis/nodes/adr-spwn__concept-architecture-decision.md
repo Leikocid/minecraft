@@ -34,8 +34,8 @@ level: 2
      - Wall-clock cap: 60 s.
      - On timeout, it falls back to the best site in the chunks already evaluated: the same order as §4.7, forced preparation included.
      - Every chunk it touches is still evaluated only while loaded (C-12 holds).
-2. **Deviation-report rows:** the sweep itself, and whether the result came from the full ring or from the fallback (`stage` in `andrew:st:spawnWindmill`).
-3. **No dry site anywhere in the swept area** (`wind-cx01`). Interim default: option (a). Record `status:"failed", reason:"noDryLand"`, create no spawn Windmill, and log a deviation. This keeps "dry land" and "never damage structures". It is escalated as `L0-xq4`. Test 14 runs on normal seeds, so this does not block the build.
+2. **Deviation-report rows:** the sweep itself, and whether the result came from the full ring or from the fallback (`stage` in `andrew:st:spawn`).
+3. **No dry site anywhere in the swept area** (`wind-cx01`). Option (a), decided by `L0-xq4` (2026-09-26): `status "failed", reason "no-dry-land"`, create no spawn Windmill, and log a deviation. This keeps "dry land" and "never damage structures". Test 14 runs on normal seeds, so this does not block the build.
 4. The spawn Windmill's linked-Airship attempt runs while the sweep's areas still cover its ring (`L0-adr-link` §4).
 5. **Tests.** `infr` asserts the following on a fresh world (`wind-ac01`):
    - no `andrew_ws_*` ticking area remains;
@@ -43,4 +43,4 @@ level: 2
 
 **If probe item 11 fails** (ticking areas do not load distant chunks through `runCommand`): only the fallback in §1 remains. That is the 9×9 area loaded around spawn plus forced preparation, recorded as a deviation.
 
-**Closes:** `L0-xcx4` and `L0-strf-cx02`. It gives `L0-wind-cx01` an interim answer.
+**Closes:** `L0-xcx4` and `L0-strf-cx02`. `L0-wind-cx01` is closed by `L0-xq4`.

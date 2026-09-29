@@ -3,7 +3,7 @@ type: "concept-assumption"
 node_id: "L0-infr-as05"
 source_channel: "rollout"
 analysis_version: 2
-title: "Assumption (CAN_ASSUME) — structure template source files live under `src/structures/templates/`"
+title: "Confirmed as built — structure template source files live under `src/structures/templates/`"
 aliases: ["L0-infr-as05"]
 is_a: ["assumption"]
 part_of: ["L0-infr"]
@@ -13,7 +13,7 @@ size_chars: 863
 tags: ["is_a:assumption", "kind:CAN_ASSUME", "relates_to:L0-adr-tmpl", "relates_to:L0-infr-e005", "relates_to:L0-infr-p005", "v2-delta"]
 level: 2
 ---
-# Assumption (CAN_ASSUME) — structure template source files live under `src/structures/templates/`
+# Confirmed as built — structure template source files live under `src/structures/templates/`
 
 **Links:** `part_of: ["L0-infr"]` · `is_a: ["assumption"]` · `relates_to: ["L0-adr-tmpl", "L0-infr-e005", "L0-infr-p005"]`
 

@@ -9,7 +9,7 @@ part_of: ["L0-bast"]
 relates_to: ["L0-bast"]
 priority: 530
 size_chars: 279
-tags: ["is_a:acceptance-criterion", "spec-test:52", "biome", "lava-ocean"]
+tags: ["is_a:acceptance-criterion", "spec-test:52", "biome", "lava-ocean", "verify:bds"]
 level: 2
 ---
 **AC-bast-02** (spec test 52)

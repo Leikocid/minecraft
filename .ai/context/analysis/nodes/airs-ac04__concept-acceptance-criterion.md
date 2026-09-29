@@ -10,7 +10,7 @@ part_of: ["L0-airs"]
 relates_to: ["L0-airs"]
 priority: 530
 size_chars: 418
-tags: ["is_a:acceptance-criterion", "chests"]
+tags: ["is_a:acceptance-criterion", "chests", "verify:unit", "verify:bds"]
 level: 2
 ---
 # AC — exactly 10 chests at fixed positions

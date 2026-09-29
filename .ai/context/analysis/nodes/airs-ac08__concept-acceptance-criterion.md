@@ -10,7 +10,7 @@ part_of: ["L0-airs"]
 relates_to: ["L0-airs"]
 priority: 530
 size_chars: 592
-tags: ["is_a:acceptance-criterion", "linked-search", "no-dedup"]
+tags: ["is_a:acceptance-criterion", "linked-search", "no-dedup", "verify:bds"]
 level: 2
 ---
 # AC — the Windmill-linked attempt runs regardless of a nearby independent Airship

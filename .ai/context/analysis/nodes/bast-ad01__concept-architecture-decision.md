@@ -14,9 +14,11 @@ level: 2
 ---
 **ADR-bast-01 — Script-API-driven candidate generation and template placement, not vanilla structure sets**
 
+**Status:** superseded by `L0-adr-strc`.
+
 **Context:** Mini Bastion (and its three siblings) need per-chunk candidate rolls, custom suitability checks (lava-ocean rejection, overlap-with-any-structure rejection), and bespoke one-time post-placement population (chests/gold/guards) with idempotency — all while §15 mandates "prefer stable Bedrock Add-On/Script API without Experiments."
 
-**Chosen:** Implement generation as script-driven logic (per-chunk roll → site validation → template block placement → one-time population), keyed off world-generation/chunk-load events, entirely on stable `@minecraft/server` APIs.
+**Chosen:** Implement generation as script-driven logic (per-chunk roll → site validation → template block placement → one-time population), driven by the player-position discovery pass `L0-strf-p001`, entirely on stable `@minecraft/server` APIs.
 
 **Rejected alternative:** Author Mini Bastion as a vanilla `structure_set`/jigsaw feature definition. Rejected because jigsaw-based custom structure generation typically needs experimental toggles or offers far less control over the required one-time, idempotent guard/chest population and overlap-with-real-Bastion-Remnant detection that §14 demands.
 

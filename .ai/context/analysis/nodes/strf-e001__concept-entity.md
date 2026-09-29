@@ -37,5 +37,5 @@ interface StructureDef {
 ```
 
 - The registry is populated once at `worldLoad` (script start) and is immutable afterwards.
-- `chests.length` and guard counts are asserted by the template test against the spec counts: Windmill 25 (5/8/12), Airship 10, Warden City 10 (3 central), Bastion 10 (3 treasure).
+- `chests.length` and guard counts are asserted by the template test against the spec counts: Windmill 25 (5/8/12), Airship 10, Warden City 40 (12 central), Bastion 10 (3 treasure).
 - Local points are in **unrotated template space** and are converted only by `rotateLocal` (`L0-strf-r004`).

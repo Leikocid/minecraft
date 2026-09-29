@@ -15,7 +15,7 @@ level: 2
 ---
 # ADR — Sparse instance registry + deterministic rolls; guards made persistent by tag/name, not by overriding vanilla entities
 
-**Status:** proposed (L0, v2).
+**Status:** accepted 2026-09-26 (strf-p006), with a Q5 proviso. See `decision-adr-l0-adr-strs-accepted-s-ogovorkoy-q5-zond-str`.
 
 ## Context
 - §6: each structure needs a durable init marker. The Windmill needs a separate "initial guards spawned" flag that deaths do not reset. Loot must be persisted by the container state. Nothing regenerates.
@@ -24,7 +24,7 @@ level: 2
 
 ## Decision
 - **Rolls are deterministic** (`L0-adr-strc` §2). State is stored only where outcomes happen: dynamic properties keyed by region, `andrew:st:<dim>:<rx>:<rz>` for a 32×32-chunk region. Each value holds the evaluated-chunk bitset plus compact instance records `{id, origin, rot, placed, lootFilled, guardsSpawned}`. Before placing, the record is written with `placed=false`, then flipped once. A crash mid-place resumes; it never places twice.
-- **Spawn-area Windmill** result: one key `andrew:st:spawnWindmill` with `{status, origin}`. It is written once and never retried (§4.7.13).
+- **Spawn-area Windmill** result: one key `andrew:st:spawn` with `{status, origin}`. It is written once and never retried (§4.7.13).
 - **Guards:** spawned by script. Each gets the tag `andrew:guard:<instanceId>` and a name tag. Named mobs do not despawn in Bedrock. Windmill guards also get an infinite, particle-less `fire_resistance`, which prevents sun burning. Curing yields a new `minecraft:villager` entity without the tag or effect, so it is "ordinary" (§9).
 - **Loot:** filled once into the placed chests. After that, the container is the state (§6). There is no loot bookkeeping beyond `lootFilled`.
 

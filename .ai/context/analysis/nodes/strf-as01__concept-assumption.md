@@ -15,7 +15,7 @@ level: 2
 ---
 # Assumption (CAN_ASSUME) — Where the candidate footprint sits relative to its chunk
 
-**Gap.** The spec gives a chance "per chunk", but the Windmill (35×35), Warden City (30×30) and Bastion (20×20) are larger than a chunk. It never says where the footprint lies.
+**Gap.** The spec gives a chance "per chunk", but the Windmill (35×35), Warden City (63×63) and Bastion (20×20) are larger than a chunk. It never says where the footprint lies.
 
 **Assumption.** The **centre** of the rotated footprint is at the centre of the rolled chunk (`cx*16+8`, `cz*16+8`), with no jitter. The origin is `centre − floor(size'/2)`. The footprint therefore spills into neighbouring chunks symmetrically. Two adjacent positive rolls for large structures always collide, and the later one in discovery order is cancelled.
 

@@ -27,4 +27,4 @@ level: 2
 
 **Rejected alternative**: verify structure placement only visually on the iPad. Rejected — `L0-adr-strc`/`L0-adr-strs` exist precisely because placement, rotation, one-time init and idempotency are provable from engine state; `C-9` reserves the iPad for what genuinely can't be (visual identity only).
 
-**Status**: proposed (mirrors `L0-adr-tmpl`'s status) — accepted once the `strf` probe (per the L0 v2 decomposition plan) confirms `structureManager.place` preserves block-entity and rotation data on BDS 1.26.51.1.
+**Status**: accepted (mirrors `L0-adr-tmpl`, accepted 2026-09-26) — the `strf` probe confirmed `structureManager.place` preserves block-entity and rotation data on BDS 1.26.51.1.

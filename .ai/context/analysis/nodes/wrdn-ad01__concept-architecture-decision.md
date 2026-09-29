@@ -16,6 +16,6 @@ level: 2
 
 **Context:** the other Overworld structures (Windmill, Airship) share a custom weighted loot system (spec §3) so their chests feel consistent with each other. Mini Warden City is explicitly meant to feel like a real Ancient City encounter.
 
-**Decision:** all 10 Mini Warden City chests roll against the real vanilla Ancient City loot table, unmodified (categories, quantities, rarities, including Enchanted Golden Apple / Swift Sneak odds).
+**Decision:** all 10 Mini Warden City chests roll against the real vanilla Ancient City loot table, unmodified (categories, quantities, rarities, including Enchanted Golden Apple / Swift Sneak odds); the mechanism is `L0-loot-p002`.
 
 **Rejected alternative:** applying the shared §3 weighted-category loot system uniformly across all four structures for implementation consistency. Rejected explicitly by the spec (§15: "Mini Warden City и Mini Bastion используют только соответствующие ванильные loot tables") — thematic fidelity to Ancient City loot outweighs implementation uniformity.

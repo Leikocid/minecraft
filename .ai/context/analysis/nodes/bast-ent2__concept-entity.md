@@ -23,7 +23,7 @@ One of the 10 fixed chest slots inside a `MiniBastionStructure`.
 - `position` — fixed by template.
 - `kind` — `treasure` (3 per instance, central room) | `regular` (7 per instance, distributed).
 - `loot_table` — the real vanilla Bastion Remnant loot table matching `kind` (treasure variant or regular variant) — not the shared Windmill/Airship custom weighted system.
-- `filled_flag` — set once during P-bast-002; loot is never re-rolled or refilled afterward.
+- registry `looted`; the container is the loot state (`L0-strf-r008` §4).
 - `is_destroyed` — bool; once true, the chest is never restored.
 
 **Source:** §14.4.

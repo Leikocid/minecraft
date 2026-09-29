@@ -23,8 +23,8 @@ closed_by_ref: decision-resolve-l0-xcx5
 - §14 "Размер 20×20 заменяет более раннюю черновую идею 30×30" and §4.7.6 "прежний 50% шанс отменён; теперь шанс 100%" point to earlier drafts that are **not in the KV**.
 - §12 says "RU and EN sections are equally normative; when wording differs, preserve numeric rules". There is no English equivalent for most of §2–§6 detail, only the §12 summary.
 
-**Risk.** A later re-import of an earlier or later draft could silently change numbers (sizes, chances). The version marker "v1" does not distinguish this document from its predecessor.
+**Risk.** A later re-import of an earlier or later draft could silently change numbers (sizes, chances). The file's own docProps subject reads "Windmill, Airship, Mini Warden City, Mini Bastion — RU/EN v2". KV raw priority follows import order, not the header's version.
 
-**Interim handling.** This document (priority 530) is authoritative in full, including §13–§16. The numbers in §13/§14 override anything earlier. If the RU body and the EN summary disagree, the RU body wins, keeping the numbers.
+**Interim handling.** Structure numbers: operator decisions override the spec; the spec (all §1–§16) overrides nothing else, because no other draft exists. As built: `src/structures/config.ts` and `templates/*_SIZE`, pinned by `tests/structures-sizes.test.mjs`.
 
-**Ask.** Confirm the document version (e.g. "v2 — four structures") so that future imports can supersede it cleanly.
+**Ask.** The file's own docProps subject reads "Windmill, Airship, Mini Warden City, Mini Bastion — RU/EN v2". KV raw priority follows import order, not the header's version.

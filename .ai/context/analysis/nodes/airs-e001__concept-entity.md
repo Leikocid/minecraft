@@ -26,7 +26,7 @@ const airshipDef: StructureDef = {
   dimension: "minecraft:overworld",
   chance: 0.02,
   priority: 2,                          // after "windmill" (1), before "warden_city" (3) — L0-strf-r002 item 4
-  size: { x: 15, y: 11, z: 7 },          // unrotated; height ~10-12, nominal 11
+  size: [75, 18, 13],                    // AIRSHIP_SIZE, templates/airship.ts:20; unrotated
   validity: { profile: "dryLand", maxLiquidShare: 0.10 },  // L0-strf-as02
   verticalMode: "altitude",              // clearance solved by strf, L0-strf-r005/-r003
   clearVolume: true,                     // L0-strf-p003 step 2 - the Airship needs this for its whole volume

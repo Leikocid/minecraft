@@ -15,16 +15,13 @@ level: 2
 ---
 # P-bast-001 — Candidate roll, site validation, and template placement
 
-GIVEN a Nether chunk is generated/loaded and has not yet been evaluated for Mini Bastion:
+GIVEN the `strf` discovery worker dequeues a Nether chunk (`L0-strf-p001`) and it has not yet been evaluated for Mini Bastion:
 
-1. Roll 5% chance for that chunk to become a Mini Bastion candidate.
-2. If the roll fails, do nothing (the chunk is not re-rolled later).
-3. If the roll succeeds, evaluate physical suitability: reject if the candidate site sits over a lava ocean, or lacks solid supporting terrain for the ~20×20 footprint, or physically intersects any other already-detected structure (custom: Windmill/Airship/Mini Warden City, or vanilla, including a real Bastion Remnant).
-4. If site validation fails, cancel generation outright — do **not** search neighboring chunks or retry elsewhere.
-5. If site validation passes, pick a random rotation (0/90/180/270) and place the single fixed template (~20×20 footprint, ~10-12 height, 2-3 connected levels) without damaging any pre-existing structure.
-6. Hand off to P-bast-002 for one-time population (chests, gold, guards).
+1. Steps `L0-strf-p001` → `p002` → `p003`; the body supplies the `StructureDef` (5% chance, lava-ocean/support rejection, overlap rejection against custom or vanilla structures including a real Bastion Remnant, ~20×20 footprint) and the template (random rotation, placement without damaging pre-existing structures).
+2. Except `pending` (footprint not loaded): the same origin and rotation are retried (`L0-strf-r002` §2, `L0-strf-r007`).
+3. Hand off to P-bast-002 for one-time population (chests, gold, guards).
 
 Applies in all Nether biomes; biome identity is not a gating factor beyond physical suitability.
 
-**Rules invoked:** R-bast-001 (roll/rejection), R-bast-002 (footprint/shape).
+**Rules invoked:** `L0-strf-r001`, `L0-strf-r002`, `L0-strf-p001` (roll/rejection), R-bast-002 (footprint/shape).
 **Source:** §14.1-14.2.

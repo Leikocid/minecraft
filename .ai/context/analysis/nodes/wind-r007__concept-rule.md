@@ -25,4 +25,4 @@ level: 2
 4. **Stage 3:** only if stages 1–2 have none. Take the best **dry-land** position within 500 blocks and force-prepare it (`L0-wind-p003`).
 5. A stage is never skipped: a forced-prep site is never chosen while a natural site exists within 500 blocks, even a farther one.
 6. Collision rules are identical to normal generation. Unlike a normal candidate, a colliding spawn candidate is not "cancelled" — the search moves on to the next position (§6 last bullet).
-7. No dry position at all → undefined by spec (`L0-wind-cx01`).
+7. No dry position at all → `failed`/`no-dry-land`, no Windmill, reasons logged (`L0-xq4`).

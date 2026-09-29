@@ -9,7 +9,7 @@ part_of: ["L0-bast"]
 relates_to: ["L0-bast"]
 priority: 530
 size_chars: 250
-tags: ["is_a:acceptance-criterion", "spec-test:53", "footprint", "rotation"]
+tags: ["is_a:acceptance-criterion", "spec-test:53", "footprint", "rotation", "verify:unit", "verify:bds"]
 level: 2
 ---
 **AC-bast-03** (spec test 53)

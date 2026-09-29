@@ -24,7 +24,7 @@ Stage 0's own 5 closing criteria are unchanged and already green [src: stage-0-i
 
 ## Inputs
 - `src/**/*.ts`, `packs/behavior/`, `packs/resource/`, `packs/gametest/`, `packs/selftest/`, `scripts/targets.mjs` — unchanged from Stage 0.
-- **New**: structure template layout sources (per-structure TS/JSON builder definitions), consumed by `scripts/build-structures.mjs`; exact repo path not yet fixed by any ADR (`L0-infr-as05`).
+- **New**: structure template layout sources (per-structure TS/JSON builder definitions): `src/structures/templates/*.ts`, read by `scripts/build-structures.mjs` (`templatesDir`, :22).
 - Operator-supplied facts: the iPad's installed Bedrock version.
 
 ## Outputs
@@ -47,8 +47,7 @@ Stage 0's own 5 closing criteria are unchanged and already green [src: stage-0-i
 - **ipad** — human-eyes-only; now also covers the four structures' visual identity (rendering, silhouette, texture) — a green `bds` structural-count proof never closes an `ipad` criterion [C-6/C-9].
 
 ## Known open issues
-- CTR-4 (open, target `L0-infr`) — version-target wording drift in old raw specs; unchanged, not re-filed.
-- Structure template **source layout** is not fixed by any ADR yet (`L0-infr-as05`).
+- CTR-4 — closed 2026-09-24 by `decision-resolve-cool-ctr4`.
 - Statistical-check sample size/tolerance and the exact restart mechanism for the idempotency check are infra's own defaults, not spec'd (`L0-infr-as03`, `L0-infr-as04`).
 
 ## Boundary

@@ -23,11 +23,11 @@ level: 1
    | Family | Keys | Stored on |
    |---|---|---|
    | Weapons | `andrew:<prefix>_*` (`ws`, `sc`), `andrew:cd_*`, `andrew:busy_*`, `andrew:hidden_until` | players, plus world-level craft flags |
-   | Structures | `andrew:st:*` (`salt`, `<dim>:<rx>:<rz>`, `spawnWindmill`) | world only |
+   | Structures | `andrew:st:*` (`salt`, `<dim>:<rx>:<rz>`, `spawn`) | world only |
 
    `st` is reserved. No `LegendaryDef.keyPrefix` may be `st`.
 2. **One budget.** The probe item 8 result (`strf-p006`) is the budget for the whole pack. The weapons' world-level use is a few short keys and negligible. The region shards (`L0-adr-strs`) are sized against that result minus a fixed 4 KB headroom for weapons.
 3. **Durable deadlines** in structure records, if any appear (for example a sweep start time), are epoch ms, following `L0-xasm1`.
-4. **Only one pack** writes `andrew:st:*` in any world (`L0-adr-own`).
+4. Only the release pack's store is the world's structure registry; test packs write `andrew:st:*` only into their own per-pack store, for runtimes they drive at chosen sites (`L0-adr-own`).
 
 **If wrong.** If the probe shows the engine enforces a total per-pack limit near the shard design, the structure shards must shrink or compress, and the weapons stay unaffected. A prefix collision would corrupt state silently, so `infr`'s validate step adds a check that no `keyPrefix` equals `st`.

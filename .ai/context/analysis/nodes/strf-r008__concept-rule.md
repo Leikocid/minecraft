@@ -22,4 +22,4 @@ level: 2
 3. The "initial guards spawned" state (`guarded`) is set once and **never reset**, whatever happens to the guards (§6).
 4. The chest container itself is the loot state after `looted` (§6). `strf` keeps no copy of loot.
 5. Records are never deleted, even when a player levels the structure. A missing structure is a permanent world change (§2, §6, §9), and the record keeps blocking new candidates on that spot. That spot keeps what the player built.
-6. Registry writes are synchronous within the job step (`world.setDynamicProperty`). No two jobs run, so there are no concurrent writers inside one pack. Across packs, see `L0-strf-cx01`.
+6. Registry writes are synchronous within the job step (`world.setDynamicProperty`). No two jobs run, so there are no concurrent writers inside one pack. Across packs: stores are per pack; only the release pack's store is the world registry, test packs use private runtimes (`L0-adr-own`).

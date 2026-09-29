@@ -10,7 +10,7 @@ part_of: ["L0-strf"]
 relates_to: ["L0-strf"]
 priority: 530
 size_chars: 1057
-tags: ["is_a:architecture-decision", "status:proposed", "relates_to:L0-adr-strc", "relates_to:L0-strf-r001"]
+tags: ["is_a:architecture-decision", "status:accepted", "relates_to:L0-adr-strc", "relates_to:L0-strf-r001"]
 level: 2
 ---
 # ADR-strf-01 — Stateless deterministic rolls plus an evaluated bitset, instead of a stored per-chunk outcome

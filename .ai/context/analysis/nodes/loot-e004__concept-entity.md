@@ -20,6 +20,6 @@ Identifies which vanilla Bedrock loot table a `L0-loot-p002` chest draws from. S
 **Attributes:**
 - `tableId` — one of `chests/ancient_city`, `chests/bastion_treasure`, `chests/bastion_other`
 - `structure` — wrdn (Mini Warden City) or bast (Mini Bastion)
-- `chestRole` — for bast: treasure (3 chests, central) or other (7 chests, distributed); for wrdn: n/a, all 10 chests use the same table
+- `chestRole` — for bast: treasure (3 chests, central) or other (7 chests, distributed); for wrdn: n/a, all 40 chests use the same table
 
 **Relationships:** consumed by `L0-loot-p002`; chest count/position is owned by `L0-wrdn`/`L0-bast`, not this component.

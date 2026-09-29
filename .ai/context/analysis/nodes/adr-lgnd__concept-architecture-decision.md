@@ -30,7 +30,7 @@ These contradictions were filed inside `L0-lgnd`. Each one needs an L0 reading b
 | `L0-lgnd-cx04`: "tests unchanged" | ADR-021 reads as **"no edits to assertions"**. Harness wiring in `src/gametest/main.ts` (calling `registerLegendaryFramework()` in place of the self-subscribing `registerTrap()`) is allowed. `L0-lgnd-ac11` is the gate. | The GameTest harness belongs to `L0-infr`. The code it calls belongs to `L0-webs`. |
 | `L0-lgnd-cx06`: the loss watcher vs C-5 | **The wording of C-5 is widened:** *"short-lived tick loops are allowed only while temporary objects exist: Scythe volleys, or marked legendary item entities on the ground. Each such loop iterates only those objects."* Before `L0-lgnd-ad03` ships, `L0-lgnd-as03` must be measured on BDS 1.26.51.1. If `beforeEvents.entityRemove` reliably fires on a Void kill, the watcher is dropped. | C-5 is an L0 constraint. `webs` and `scyt` also cite it. |
 
-**Not re-ruled here:** CTR-1 (Void/lava return for the Web Sword) and CTR-3 (off-hand priority). Both stay open at L0 and run on their autopilot defaults (Q-020 a, Q-019 a), which `lgnd` implements. The operator may still reverse them at DEMO acceptance.
+**Not re-ruled here:** CTR-1 (Void/lava return for the Web Sword) is closed by `decision-resolve-cool-ctr1` (2026-09-24) and shipped in `src/legendary/recovery.ts`.
 
 **Consequences.**
 - `lgnd-cx02`, `cx03`, `cx04` and `cx06` are resolved by this ADR. `cx05` is resolved by `L0-adr-scope` §5.

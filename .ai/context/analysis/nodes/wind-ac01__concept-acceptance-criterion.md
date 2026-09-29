@@ -18,8 +18,8 @@ level: 2
 **Spec:** test 14, §4.7.
 
 GIVEN a fresh BDS world with the add-on and no player online
-WHEN the server has run until `andrew:st:spawnWindmill.status` is terminal (≤ 5 min)
-THEN status is `done`, the registry has exactly one `windmill:S`
+WHEN the server has run until `andrew:st:spawn.status` is terminal (≤ 5 min)
+THEN status is `done`, the registry has exactly one `windmill:spawn`
 AND its plot centre is inside the spawn chunk ±2 chunks, OR (only if no valid site existed there) within 500 blocks of spawn (horizontal)
 AND `stage` in the record matches where it was found
 AND no `andrew_ws_*` ticking area remains.

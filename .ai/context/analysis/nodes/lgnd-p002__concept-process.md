@@ -20,7 +20,7 @@ relates_to: ["L0-lgnd-r008", "L0-lgnd-ent4", "L0-lgnd-p003"]
 ---
 # P-lgnd-002: Death retention and restore (all registered weapons)
 
-Generalised from `src/websword/retention.ts`. The two-path design is kept because the engine timing is undocumented.
+Lives in `src/legendary/retention.ts` (moved from `src/websword/` in 392253d). The two-path design is kept because the engine timing is undocumented.
 
 **Retain (on `entityDie`, player only):**
 1. Capture `location` and `dimension` before any deferral.

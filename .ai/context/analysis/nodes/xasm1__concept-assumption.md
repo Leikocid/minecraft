@@ -27,7 +27,7 @@ status: CAN_ASSUME
 - `getAbsoluteTime()` stops when `dodaylightcycle` is false.
 - `currentTick` restarts at 0 with the script engine.
 
-A tick-based durable deadline is therefore wrong after a restart. `L0-lgnd-r006` already reads legacy tick-era `ws_cooldown_until` values as expired.
+A tick-based durable deadline is therefore wrong after a restart. Legacy `ws_cooldown_until` values are not read at all (`cx07`).
 
 **Amends.** The wording of ASM-020 changes from "`hidden_until` > the current tick" to "`hidden_until` > `Date.now()`". The contract (a read-only predicate, false when absent) does not change. The future Shadow Blade spec must write ms.
 
