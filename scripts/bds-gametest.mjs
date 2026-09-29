@@ -94,6 +94,9 @@ const EXPECTED_TESTS = [
   'andrew:websword_creative_ignored',
   'andrew:websword_death_returns',
   'andrew:websword_unmarked_drops',
+  // CX-lgnd-10 — src/gametest/probe-retention.ts
+  'andrew:probe_retention_two_copies',
+  'andrew:probe_retention_offhand',
   'andrew:websword_cube_placed',
   'andrew:websword_protected_skipped',
   'andrew:websword_out_of_reach_noop',
@@ -133,6 +136,12 @@ const EXPECTED_TESTS = [
   'andrew:probe_loot_bastion_other',
   'andrew:probe_loot_control_known_table',
   'andrew:probe_loot_full_chest',
+  // CX-L0-09 — src/gametest/probe-give.ts; verdict read by docs/feedback/diagnose-CNTR-XCX9-AA.repro.sh
+  'andrew:probe_xcx9_give_websword',
+  'andrew:probe_xcx9_give_scythe',
+  'andrew:probe_xcx9_give_then_craft',
+  'andrew:probe_xcx9_give_after_craft',
+  'andrew:probe_xcx9_creative_copy_pickup',
   // STRF-REG-01 — src/gametest/strf-registry.ts
   'andrew:strf_registry_steps_idempotent',
   // STRF-ROLL-01 — src/gametest/structures.ts
@@ -200,6 +209,10 @@ const EXPECTED_TESTS = [
   // BAST-BODY-01 — src/gametest/bastion-body.ts
   'andrew:bastion_body_generate',
   'andrew:bastion_body_site',
+  // CX-L0-14 — src/gametest/probe-input.ts
+  'andrew:probe_input_survival',
+  'andrew:probe_input_creative',
+  'andrew:probe_input_face_location',
 ];
 
 // FLAT is not cosmetic: see the LEVEL_TYPE comment in docker/bds/compose.yaml.

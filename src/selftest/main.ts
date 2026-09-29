@@ -17,7 +17,6 @@
 // [src: concept-constraint C-2]
 
 import {
-  EnchantmentSlot,
   EnchantmentType,
   EnchantmentTypes,
   ItemStack,
@@ -87,34 +86,46 @@ function check(name: string, fn: () => void): void {
 }
 
 /**
- * Resolve the Unbreaking enchantment type.
+ * Resolve an enchantment type by id.
  *
  * Both the bare and the namespaced id are tried because the docs give the
  * namespaced form ("minecraft:flame") while item JSON uses the bare one, and an
  * unresolvable id would otherwise be reported as "the engine refuses to
  * enchant" — the wrong conclusion from the right observation.
  */
-function unbreakingType(): EnchantmentType {
-  const type =
-    EnchantmentTypes.get("unbreaking") ?? EnchantmentTypes.get("minecraft:unbreaking");
+function enchantmentType(id: string): EnchantmentType {
+  const type = EnchantmentTypes.get(id) ?? EnchantmentTypes.get(`minecraft:${id}`);
   assert(
     type !== undefined,
-    'EnchantmentTypes.get returned undefined for both "unbreaking" and "minecraft:unbreaking" — ' +
+    `EnchantmentTypes.get returned undefined for both "${id}" and "minecraft:${id}" — ` +
       "the enchantment id is wrong for this engine version, so the probe is inconclusive"
   );
   return type;
 }
 
-/** Resolve the Sharpness enchantment type — same bare/namespaced fallback as unbreakingType(). */
-function sharpnessType(): EnchantmentType {
-  const type =
-    EnchantmentTypes.get("sharpness") ?? EnchantmentTypes.get("minecraft:sharpness");
-  assert(
-    type !== undefined,
-    'EnchantmentTypes.get returned undefined for both "sharpness" and "minecraft:sharpness" — ' +
-      "the enchantment id is wrong for this engine version, so the probe is inconclusive"
-  );
-  return type;
+/**
+ * Prove an item's enchant slot by what the engine lets onto it.
+ *
+ * On BDS 1.26.51.1 with @minecraft/server 2.10.0 the EnchantmentSlot enum is an
+ * empty object at runtime and ItemEnchantableComponent.slots reads [undefined]
+ * for every item, so `slots.includes(EnchantmentSlot.X)` is true for any X.
+ * A pair that one slot accepts and its neighbours refuse is what tells them apart.
+ */
+function assertEnchantSet(itemId: string, accepts: readonly string[], refuses: readonly string[]): void {
+  const enchantable = new ItemStack(itemId).getComponent("minecraft:enchantable");
+  assert(enchantable !== undefined, "minecraft:enchantable component is absent from the item");
+  for (const id of accepts) {
+    assert(
+      enchantable.canAddEnchantment({ type: enchantmentType(id), level: 1 }),
+      `the engine refuses ${id} 1 on ${itemId}`
+    );
+  }
+  for (const id of refuses) {
+    assert(
+      !enchantable.canAddEnchantment({ type: enchantmentType(id), level: 1 }),
+      `the engine accepts ${id} 1 on ${itemId} — the item is not on the enchant slot it declares`
+    );
+  }
 }
 
 /** Async twin of check(): the chunk probes have to wait for ticks. */
@@ -305,19 +316,7 @@ function run(): void {
   //    not a defect in this script — it means the pickaxe spec has to change.
   //    [src: decision-zacharovanie-bez-durability-pro]
   check("pickaxe-enchantable", () => {
-    const pickaxe = new ItemStack(PICKAXE_ID);
-    const enchantable = pickaxe.getComponent("minecraft:enchantable");
-    assert(
-      enchantable !== undefined,
-      "minecraft:enchantable component is absent from the item"
-    );
-    const slots = enchantable.slots;
-    assert(
-      slots.includes(EnchantmentSlot.Pickaxe),
-      `enchantable slots ${JSON.stringify(slots)} do not include ${EnchantmentSlot.Pickaxe}`
-    );
-    const canAdd = enchantable.canAddEnchantment({ type: unbreakingType(), level: 1 });
-    assert(canAdd, "предмет без durability не зачаровывается");
+    assertEnchantSet(PICKAXE_ID, ["unbreaking", "efficiency"], ["sharpness"]);
   });
 
   // 3. Infinite durability is implemented by omitting the component, not by a
@@ -345,16 +344,7 @@ function run(): void {
   // repeats the same shape (slot "sword", no durability component).
   // [src: decision-q-007-enchantable-without-durability-podtverzhde]
   check("web-sword-enchantable", () => {
-    const sword = new ItemStack(WEB_SWORD_ID);
-    const enchantable = sword.getComponent("minecraft:enchantable");
-    assert(enchantable !== undefined, "minecraft:enchantable component is absent from the item");
-    const slots = enchantable.slots;
-    assert(
-      slots.includes(EnchantmentSlot.Sword),
-      `enchantable slots ${JSON.stringify(slots)} do not include ${EnchantmentSlot.Sword}`
-    );
-    const canAdd = enchantable.canAddEnchantment({ type: sharpnessType(), level: 1 });
-    assert(canAdd, "предмет без durability не зачаровывается (sharpness 1)");
+    assertEnchantSet(WEB_SWORD_ID, ["sharpness"], ["efficiency"]);
   });
 
   check("web-sword-no-durability", () => {
@@ -380,16 +370,7 @@ function run(): void {
   // Netherite-sword-parity combat, and mattock chants have nothing to do with
   // combat). [src: decision-scythe-enchantments-slot-sword]
   check("scythe-enchantable", () => {
-    const scythe = new ItemStack(SCYTHE_ID);
-    const enchantable = scythe.getComponent("minecraft:enchantable");
-    assert(enchantable !== undefined, "minecraft:enchantable component is absent from the item");
-    const slots = enchantable.slots;
-    assert(
-      slots.includes(EnchantmentSlot.Sword),
-      `enchantable slots ${JSON.stringify(slots)} do not include ${EnchantmentSlot.Sword}`
-    );
-    const canAdd = enchantable.canAddEnchantment({ type: sharpnessType(), level: 1 });
-    assert(canAdd, "предмет без durability не зачаровывается (sharpness 1)");
+    assertEnchantSet(SCYTHE_ID, ["sharpness"], ["efficiency"]);
   });
 
   check("scythe-no-durability", () => {

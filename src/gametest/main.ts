@@ -54,6 +54,8 @@ import "./probe-place";
 import "./probe-chunk";
 import "./probe-mobs";
 import "./probe-loot";
+import "./probe-give";
+import "./probe-retention";
 import "./strf-registry";
 import "./structures";
 import "./structures-site";
@@ -69,6 +71,7 @@ import "./warden";
 import "./warden-body";
 import "./bastion";
 import "./bastion-body";
+import "./probe-input";
 import { SPAWN_EVENT } from "../structures/spawn-search";
 
 const WEB_SWORD_ID = WEB_SWORD.itemId;
