@@ -71,34 +71,60 @@ function fillBox(dim: Dimension, box: Box, block: string): void {
   for (const s of sliceBox(box)) dim.fillBlocks(new BlockVolume(v(s.min), v(s.max)), block);
 }
 
-/** One ticking area over every chunk under the box plus margin; resolves once all are loaded, returns its remover. */
+/** Ticking areas over every chunk under the box; resolves once all are loaded, returns their remover. */
 export async function loadBox(test: Test, dim: Dimension, name: string, box: Box): Promise<() => void> {
   const chunks = coveredChunks(box.min[0], box.min[2], box.max[0] - box.min[0] + 1, box.max[2] - box.min[2] + 1);
   const xs = chunks.map(([x]) => x);
   const zs = chunks.map(([, z]) => z);
-  const [x0, x1, z0, z1] = [Math.min(...xs) * CHUNK, Math.max(...xs) * CHUNK + 15, Math.min(...zs) * CHUNK, Math.max(...zs) * CHUNK + 15];
-  const add = (): number => dim.runCommand(`tickingarea add ${x0} 0 ${z0} ${x1} 0 ${z1} ${name}`).successCount;
-  if (add() === 0) {
+  const [cx0, cx1, cz0, cz1] = [Math.min(...xs), Math.max(...xs), Math.min(...zs), Math.max(...zs)];
+  // One ticking area may not exceed 100 chunks, and the engine snaps each one outward to
+  // chunk bounds — so a box that measures 10×10 becomes 11×11 and is refused for its size,
+  // which no amount of freeing slots fixes. Tiles of 8 stay clear of both effects.
+  const TILE = 8;
+  const tiles: { x0: number; x1: number; z0: number; z1: number; name: string }[] = [];
+  for (let a = cx0; a <= cx1; a += TILE)
+    for (let b = cz0; b <= cz1; b += TILE)
+      tiles.push({
+        x0: a * CHUNK,
+        x1: Math.min(a + TILE - 1, cx1) * CHUNK + 15,
+        z0: b * CHUNK,
+        z1: Math.min(b + TILE - 1, cz1) * CHUNK + 15,
+        name: tiles.length === 0 ? name : `${name}${tiles.length}`,
+      });
+
+  const remove = (): void => {
+    for (const tile of tiles) {
+      try {
+        dim.runCommand(`tickingarea remove ${tile.name}`);
+      } catch (e) {
+        log(`strf place: tickingarea remove ${tile.name} threw ${String(e)}`);
+      }
+    }
+  };
+
+  const add = (tile: (typeof tiles)[number]): number =>
+    dim.runCommand(`tickingarea add ${tile.x0} 0 ${tile.z0} ${tile.x1} 0 ${tile.z1} ${tile.name}`).successCount;
+  for (const tile of tiles) {
+    if (add(tile) !== 0) continue;
     // The engine caps how many ticking areas a world may hold — measured at ten by the
     // strf probe (Q11). Every test releases its own, but `tickingarea remove` does not
     // free the slot in the same tick, so a back-to-back suite can meet the cap without
     // anything leaking. Clear the leftovers once and retry; the log keeps a real leak
     // visible instead of hiding behind the retry.
-    log(`strf place: tickingarea add ${name} refused — clearing leftover areas and retrying once`);
+    log(`strf place: tickingarea add ${tile.name} refused — clearing leftover areas and retrying once`);
     try {
       dim.runCommand("tickingarea remove_all");
     } catch (e) {
       log(`strf place: tickingarea remove_all threw ${String(e)}`);
     }
-    if (add() === 0) throw new Error(`tickingarea add ${name} refused twice, after remove_all`);
-  }
-  const remove = (): void => {
-    try {
-      dim.runCommand(`tickingarea remove ${name}`);
-    } catch (e) {
-      log(`strf place: tickingarea remove ${name} threw ${String(e)}`);
+    if (add(tile) === 0) {
+      remove();
+      throw new Error(
+        `tickingarea add ${tile.name} refused twice, after remove_all — ${tiles.length} tile(s) for ${cx1 - cx0 + 1}×${cz1 - cz0 + 1} chunks`
+      );
     }
-  };
+  }
+
   for (let t = 0; t < 300; t++) {
     if (chunks.every(([cx, cz]) => dim.isChunkLoaded({ x: cx * CHUNK, y: 0, z: cz * CHUNK }))) return remove;
     await test.idle(1);
