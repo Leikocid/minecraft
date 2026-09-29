@@ -42,7 +42,7 @@
 
 ## REPRO / CAUSE / PROOF / RULED OUT
 
-- **REPRO:** `bash docs/feedback/diagnose-CNTR-XCX7-AA.sh`. Результат детерминирован: 33 замера, все PASS.
+- **REPRO:** `bash docs/feedback/diagnose-CNTR-XCX7-AA.sh`. Результат детерминирован: 29 замеров, все PASS.
 - **CAUSE** (вред из примечания). В ai-kit 3.7.5 три пути, по которым manual-критерий закрывается без доказательства:
   - `dist/tasks/board.js:960`: для manual/static любое не-null значение даёт `verification_status: "verified"`;
   - `dist/tasks/board.js:958`: любая строка-артефакт закрывает manual-критерий без проверки файла;
@@ -76,7 +76,7 @@
 
 ## GREEN / LIVE
 
-- **GREEN:** `.ai/verify/CNTR-XCX7-AA/2.json`, exit 0, 33 PASS. Каждый регэксп сначала проверен на заведомом совпадении, так что зелёный не от слепого прибора:
+- **GREEN:** `.ai/verify/CNTR-XCX7-AA/2.json`, exit 0, 29 PASS (в артефакте хранится хвост вывода, `stdout_tail`). Каждый регэксп сначала проверен на заведомом совпадении, так что зелёный не от слепого прибора:
   - M3 ловит `wrdn__concept-component.md:20`;
   - M4 ловит `airs__concept-component.md:20`;
   - M5 на `nodes/` находит 108 файлов.
@@ -84,7 +84,7 @@
 
 ## Резолюция для refine resolve
 
-> L0-xcx7 закрыт (исход 3, подчистка знания). Перемерено 2026-09-29 скриптом `docs/feedback/diagnose-CNTR-XCX7-AA.sh` (артефакт `.ai/verify/CNTR-XCX7-AA/2.json`, 33 PASS).
+> L0-xcx7 закрыт (исход 3, подчистка знания). Перемерено 2026-09-29 скриптом `docs/feedback/diagnose-CNTR-XCX7-AA.sh` (артефакт `.ai/verify/CNTR-XCX7-AA/2.json`, 29 PASS).
 > - KV: `wind-ac` 17 узлов — 14 `verify:bds`, 4 `verify:ipad`. `airs-ac` 8, `wrdn-ac` 10, `bast-ac` 9 — 0 тегов канала.
 > - Инвариант выполнен в карточках, как велит `decision-l0-xcx7-kanal-dokazatelstva-u-kazhdogo-kriteriya` (2026-09-26). 14 задач структур — 122 критерия, тип есть у всех. Все 16 визуальных — `type:manual`, 11 из них приняты оператором (`accepted`).
 > - Тег канала в KV не читает ни ai-kit 3.7.5 (0 файлов), ни `/plan`.
