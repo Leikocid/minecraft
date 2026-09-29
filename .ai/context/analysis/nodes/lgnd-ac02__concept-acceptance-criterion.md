@@ -2,26 +2,27 @@
 type: "concept-acceptance-criterion"
 node_id: "L0-lgnd-ac02"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 3
 aliases: ["L0-lgnd-ac02"]
 is_a: ["acceptance-criterion"]
 part_of: ["L0-lgnd"]
 relates_to: ["L0-lgnd"]
-priority: 520
-size_chars: 677
-tags: ["acceptance-criterion", "channel:bds", "craft-gate"]
+priority: 540
+size_chars: 745
+tags: ["v3-delta", "reconciled"]
 level: 2
 ---
 ---
 is_a: ["acceptance-criterion"]
 part_of: ["L0-lgnd"]
-relates_to: ["L0-lgnd-r002"]
+relates_to: ["L0-lgnd-r002", "L0-lgnd-r014", "L0-lgnd-ac17"]
 ---
 **AC-lgnd-02: Craft budgets are independent per weapon.** Channel: `bds`.
 
-GIVEN the Web Sword flag is claimed and the Scythe flag is unset
+GIVEN the Web Sword flag is claimed and the Scythe and Cannon flags are unset
 WHEN a Survival player crafts the Scythe
-THEN the craft succeeds, exactly one broadcast naming the crafter and the Scythe is sent, and the Scythe flag is set,
-AND a second Survival Scythe craft (by any player, also after restart) is refunded with 2 golden apples, 2 obsidian and 1 diamond hoe,
-AND `/andrew:legendary reset scythe_of_calamity` leaves the Web Sword flag set,
-AND a Creative-mode Scythe craft neither claims the flag nor is refunded.
+THEN the craft succeeds, and exactly one broadcast names the crafter and the Scythe,
+AND the Scythe flag is set,
+AND a second Survival Scythe craft (by any player, also after a restart) is refunded with 2 golden apples, 2 obsidian and 1 diamond hoe,
+AND `/andrew:scythe reset` leaves the Web Sword flag set. The as-built command is per weapon; there is no `/andrew:legendary` (`ad07`).
+AND the Cannon flag stays unset throughout.

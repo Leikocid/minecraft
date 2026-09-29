@@ -3,16 +3,20 @@ type: "concept-contradiction"
 node_id: "L0-xcx5"
 source_channel: "rollout"
 analysis_version: 2
-title: "Contradiction — the spec's header, its scope, and \"earlier drafts\""
+title: "Contradiction — the spec's header, its scope, and \\"earlier drafts\\""
 aliases: ["L0-xcx5"]
 is_a: ["contradiction"]
 part_of: ["L0"]
 relates_to: ["L0"]
 priority: 530
 size_chars: 1309
-tags: ["title:Four Structures spec version and overridden drafts", "alias:L0-xcx5", "is_a:contradiction", "target:L0", "status:open", "category:source-vs-source", "severity:low", "relates_to:L0-wind", "relates_to:L0-bast", "relates_to:L0-wrdn", "see_also:fourstructuresspecruencopy"]
+tags: ["title:Four Structures spec version and overridden drafts","alias:L0-xcx5","is_a:contradiction","target:L0","status:open","category:source-vs-source","severity:low","relates_to:L0-wind","relates_to:L0-bast","relates_to:L0-wrdn","see_also:fourstructuresspecruencopy","resolved"]
 level: 1
+closed_at: 2026-09-29
+closed_reason: resolved_by_decision
+closed_by_ref: decision-resolve-l0-xcx5
 ---
+
 # Contradiction — the spec's header, its scope, and "earlier drafts"
 
 - The header reads *"Мельница / Windmill + Дирижабль / Airship • RU/EN • v1"*, and the Executive Summary table (§1) covers only those two. But the Purpose line and §2 say "четырёх структур". §13 (Mini Warden City) and §14 (Mini Bastion) are "нормативное дополнение", and "при конфликте с более ранними черновыми решениями правила ниже имеют приоритет".

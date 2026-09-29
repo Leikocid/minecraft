@@ -10,9 +10,13 @@ part_of: ["L0-scyt"]
 relates_to: ["L0-scyt"]
 priority: 520
 size_chars: 1193
-tags: ["is_a:contradiction", "category:adr-vs-impl", "severity:low", "target:L0", "tuning", "delta:2026-09-26"]
+tags: ["is_a:contradiction","category:adr-vs-impl","severity:low","target:L0","tuning","delta:2026-09-26","resolved"]
 level: 2
+closed_at: 2026-09-29
+closed_reason: resolved_by_decision
+closed_by_ref: decision-resolve-l0-scyt-cx05
 ---
+
 # CX-scyt-05 · `L0-adr-scyt` tuning (0.5 b/t, 5-tick stagger, `SCYTHE_TUNING`) is not what shipped (0.8 b/t, 10-tick stagger)
 
 **Links:** `part_of: ["L0-scyt"]` · `is_a: ["contradiction"]` · `relates_to: ["L0-adr-scyt", "L0-scyt-cx02", "L0-scyt-p002"]`

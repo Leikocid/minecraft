@@ -2,7 +2,7 @@
 type: "concept-process"
 node_id: "L0-lgnd-p004"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 3
 title: "P-lgnd-004: Use dispatch with hand priority"
 aliases: ["L0-lgnd-p004"]
 is_a: ["process"]

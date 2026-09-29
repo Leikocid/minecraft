@@ -2,37 +2,44 @@
 type: "concept-entity"
 node_id: "L0-lgnd-ent2"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 3
 title: "LegendaryInstanceMark"
 aliases: ["L0-lgnd-ent2"]
 is_a: ["entity"]
 part_of: ["L0-lgnd"]
 relates_to: ["L0-lgnd"]
-priority: 520
-size_chars: 1523
-tags: ["entity", "instance-mark", "anti-dup"]
+priority: 540
+size_chars: 2373
+tags: ["v3-delta"]
 level: 2
 ---
 ---
 is_a: ["entity"]
 part_of: ["L0-lgnd"]
-relates_to: ["L0-lgnd-ent4", "L0-lgnd-r005", "L0-lgnd-r006"]
+relates_to: ["L0-lgnd-ent4", "L0-lgnd-r005", "L0-lgnd-r006", "L0-lgnd-ad11", "L0-adr-hold", "L0-xcx11"]
 ---
 # LegendaryInstanceMark
 
-Dynamic properties on an `ItemStack` that make one physical legendary distinguishable from an ordinary (Creative, vanilla `/give`) copy (ADR-016, Q-006). Generalised from `Mark` in `src/websword/rules.ts` / `state.ts`.
+Dynamic properties on an `ItemStack` that distinguish one protected legendary from an ordinary copy (ADR-016, Q-006). As built, `Mark` is `{origin, owner, id, ownerName?}` in `rules.ts`. v3 adds `gen` (carried over from `wpn2`, unbuilt) and `holder`.
 
 | Attribute | Key suffix | Type | Notes |
 |---|---|---|---|
-| `origin` | `_origin` | `"craft" \| "admin"` | Unchanged. An unmarked stack is an ordinary item and gets no protection. |
-| `owner` | `_owner` | player id | Crafter or admin recipient. Informational. **Not** the return target. |
-| `ownerName` | `_owner_name` | string? | `origin: craft` only. Used by the broadcast. |
-| `id` | `_id` | string | Instance id, `<absTime>-<rand36>` (shipped `makeMark`). Stable across re-issues. |
-| `gen` | `_gen` | integer ≥ 0 | **New.** Generation. Absent on 0.3.0 stacks, read as 0. |
-| `holder` | `_holder` | player id | **New.** Last player whose inventory contained this stack. Absent means `owner`. |
+| `origin` | `_origin` | `"craft" \| "admin"` | `craft` is stamped only when a **craft token** is swapped (`r014`). `admin` is stamped by `/andrew:<cmd> give`. An unmarked stack is ordinary (`as11`). |
+| `owner` | `_owner` | player id | The crafter or admin recipient. Informational, and the fallback return target. |
+| `ownerName` | `_owner_name` | string? | `craft` only, for the broadcast. |
+| `id` | `_id` | string | Instance id. Stable across re-issues. |
+| `gen` | `_gen` | int ≥ 0 | Absent reads as 0 (0.3.0 and v2 stacks). |
+| `holder` | `_holder` | player id? | **v3.** The last player whose inventory, hotbar or off hand held this stack. |
+| `holderName` | `_holder_name` | string? | **v3.** Used in logs and in the owed entry, so an offline holder is readable. |
 
 ## Rules
-- *Live* iff `mark.gen == ledger.gen(prefix, id)` (`L0-lgnd-ent4`). Only live stacks cast (when marked), are retained or are returned (`L0-lgnd-r005`).
-- Stamping always clones and then sets the properties (`markSword` semantics). The input stack is never mutated.
-- `holder` is written only from `playerInventoryItemChange` for that stack, never by scanning (C-4).
-- `parseMark` must accept 0.3.0 serialisations, which lack `gen` and `holder` (`L0-lgnd-r006`).
+- **Return target** = `holder ?? owner` (`ad11`). A container, hopper, allay or item entity never becomes the holder.
+- **When holder is written:**
+  - `holder` is rewritten when `playerInventoryItemChange` reports this marked stack in a player's container, and when `retain`/restore or a loss return hands the stack to a player.
+  - The write is skipped when `holder` already equals that player. Writing a slot raises another change event, and the equality check stops the loop.
+  - The Equippable off-hand slot raises no inventory event. The off hand is read at the points where it matters: death retention, and a swap back into the container.
+- **Parsing:**
+  - `parseMark` accepts v2 marks, which have no `gen`/`holder`, and v3 marks.
+  - A `holder` that is present but not a string makes the mark **malformed** (undefined), the same as a bad `ownerName` today.
+- Stamping clones the stack and never mutates the input (`markSword` semantics).
+- A stale `gen` means the stack is not live: it cannot cast, is not retained, is not returned, and is deleted on its next player-inventory event (`r005`).

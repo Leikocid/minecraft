@@ -2,21 +2,28 @@
 type: "concept-intent"
 node_id: "L0"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 3
 title: "Project Intent"
-aliases: ["L0"]
+aliases: ["L0-intent", "Intent"]
 is_a: ["intent"]
 part_of: ["L0"]
 relates_to: ["L0"]
-priority: 530
-size_chars: 1760
-tags: ["title:Project Intent", "alias:L0-intent", "alias:Intent", "is_a:intent", "relates_to:L0", "see_also:fourstructuresspecruencopy", "see_also:webswordspecv1ruen", "see_also:scytheofcalamityspecv1ruen", "supersedes:L0-intent@v1"]
+see_also: ["orbitalcannonspecv1ruen-part-1", "orbitalcannonspecv1ruen-part-2", "orbitalcannonspecv1ruen-part-3", "orbitalcannonspecv1ruen-part-4", "webswordspecv1ruen-part-1", "scytheofcalamityspecv1ruen-part-1", "fourstructuresspecruencopy-part-1"]
+supersedes: ["L0-intent@v2"]
+priority: 540
+size_chars: 1515
+tags: ["title:Project Intent", "alias:L0-intent", "alias:Intent", "is_a:intent", "relates_to:L0", "see_also:orbitalcannonspecv1ruen-part-1", "see_also:orbitalcannonspecv1ruen-part-2", "see_also:orbitalcannonspecv1ruen-part-3", "see_also:orbitalcannonspecv1ruen-part-4", "see_also:webswordspecv1ruen-part-1", "see_also:scytheofcalamityspecv1ruen-part-1", "see_also:fourstructuresspecruencopy-part-1", "supersedes:L0-intent@v2"]
 level: 0
 ---
 # Project Intent
 
-1. **Primary goal — weapons.** Give the user a PvP add-on for Minecraft Bedrock on iPad with a set of *legendary* weapons: unique per world (one Survival craft), undroppable, with a server-side active ability on a cooldown. Web Sword and Scythe of Calamity are shipped. More are expected (Shadow Blade, Dragon Katana are referenced by other specs but not specified).
-2. **Primary goal — world content (new in v2).** Make the world worth exploring. Four custom structures (Windmill, Airship, Mini Warden City, Mini Bastion) appear in the world with their own loot, spawners and one-time guards. A Windmill is guaranteed near world spawn, so every new world starts with a reachable raid target and a linked Airship nearby. Sources: Four Structures spec §1, §4.7, §11.
-3. **De-risking goal.** Prove the toolchain end-to-end on the available hardware (Mac mini + iPad, no Windows, no macOS Bedrock client) and the stable-API stack on the installed game version before building features (Stage 0, Stage 1). For structures, the same logic applies: prove that stable-API placement, rotation, block-entity (chest/spawner) preservation and seeded per-chunk rolls work on BDS **before** authoring four full templates.
-4. **Delivery goal.** Each weapon and each structure is a self-contained module that is developed, tested and accepted on its own before moving to the next.
-5. **Quality goal.** No duplication exploits (craft, death, reconnect, restart). Nothing regenerates: loot, spawners, guards and structures appear once and player changes are permanent. No dependency on Experiments/Preview. Safe on a dedicated multiplayer server. Every place where stable Bedrock forced an approximation is recorded in a technical deviation report (spec §11).
+1. **Weapons.** A PvP add-on for Minecraft Bedrock on iPad with a growing set of *legendary* weapons. Each one is unique per world (one Survival craft), survives death, is protected from ordinary destruction and has a server-side ability on a cooldown. Shipped: Web Sword and Scythe of Calamity. **New:** the Orbital Cannon, a strategic, terrain-changing weapon with two area attacks (Orbital §1).
+2. **Portability.** The Orbital spec asks for a *standalone, testable module that can later be moved into the full PvP add-on* (Orbital §1). In this repo the "full add-on" already exists. The intent is read as: a self-contained module (`src/orbital/`) plugged into the shared legendary framework, testable alone through the gametest pack (`L0-xasm9`).
+3. **World content.** Four custom structures make the world worth exploring (v2, shipped v1.2.0).
+4. **Reliability first.** The Orbital spec §16 ranks conflicts. This ranking is adopted project-wide:
+   1. no duplication or save corruption;
+   2. correct gameplay;
+   3. multiplayer sync and performance;
+   4. visual fidelity.
+5. **Stable APIs, documented compromises.** No Experiments or Preview. Where stable Bedrock cannot express a rule exactly (LMB input, TNT physics, indestructible items), implement the closest stable equivalent and write the compromise next to the code (Orbital §12, §15).
+6. **Delivery.** Each weapon and structure is developed, tested (with ≥2 players for weapons) and accepted on its own before the next one starts.

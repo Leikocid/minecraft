@@ -3,16 +3,20 @@ type: "concept-contradiction"
 node_id: "L0-airs-cx01"
 source_channel: "rollout"
 analysis_version: 2
-title: "Contradiction — \"check the linked Airship once\" (§7) vs the loaded-footprint guarantee (C-12)"
+title: "Contradiction — \\"check the linked Airship once\\" (§7) vs the loaded-footprint guarantee (C-12)"
 aliases: ["L0-airs-cx01"]
 is_a: ["contradiction"]
 part_of: ["L0-airs"]
 relates_to: ["L0-airs"]
 priority: 530
 size_chars: 2789
-tags: ["is_a:contradiction", "category:invariant-violation", "severity:medium", "status:open", "target:L0-airs", "relates_to:L0-strf-r007", "relates_to:L0-wind", "title:\"Check the linked Airship once\" vs the loaded-footprint guarantee"]
+tags: ["is_a:contradiction","category:invariant-violation","severity:medium","status:open","target:L0-airs","relates_to:L0-strf-r007","relates_to:L0-wind","title:\"Check the linked Airship once\" vs the loaded-footprint guarantee","resolved"]
 level: 2
+closed_at: 2026-09-29
+closed_reason: resolved_by_decision
+closed_by_ref: decision-resolve-l0-airs-cx01
 ---
+
 # Contradiction — "check the linked Airship once" (§7) vs the loaded-footprint guarantee (C-12)
 
 **Statement A (spec §7, performance strategy).** "Проверку связанных Дирижаблей выполнять один раз после успешной генерации конкретной Мельницы." The linked-Airship check runs exactly once, right after the Windmill's own generation succeeds.

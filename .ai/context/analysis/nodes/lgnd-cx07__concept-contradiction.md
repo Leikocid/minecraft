@@ -2,7 +2,7 @@
 type: "concept-contradiction"
 node_id: "L0-lgnd-cx07"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 3
 title: "CX-lgnd-07 · The 0.3.0 Web Sword cooldown key is orphaned on upgrade"
 aliases: ["L0-lgnd-cx07"]
 is_a: ["contradiction"]
@@ -10,9 +10,13 @@ part_of: ["L0-lgnd"]
 relates_to: ["L0-lgnd"]
 priority: 530
 size_chars: 1356
-tags: ["is_a:contradiction", "source-vs-code", "migration", "status:open"]
+tags: ["is_a:contradiction","source-vs-code","migration","status:open","resolved"]
 level: 2
+closed_at: 2026-09-29
+closed_reason: resolved_by_decision
+closed_by_ref: decision-resolve-l0-lgnd-cx07
 ---
+
 ---
 is_a: ["contradiction"]
 part_of: ["L0-lgnd"]

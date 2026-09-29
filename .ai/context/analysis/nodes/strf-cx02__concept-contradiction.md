@@ -10,9 +10,13 @@ part_of: ["L0-strf"]
 relates_to: ["L0-strf"]
 priority: 530
 size_chars: 1592
-tags: ["is_a:contradiction", "category:invariant-violation", "severity:medium", "status:open", "target:L0", "relates_to:L0-wind", "relates_to:L0-xcx4", "title:Spawn Windmill search up to 500 blocks vs C-5b/C-12 player-driven loading"]
+tags: ["is_a:contradiction","category:invariant-violation","severity:medium","status:open","target:L0","relates_to:L0-wind","relates_to:L0-xcx4","title:Spawn Windmill search up to 500 blocks vs C-5b/C-12 player-driven loading","resolved"]
 level: 2
+closed_at: 2026-09-29
+closed_reason: resolved_by_decision
+closed_by_ref: decision-resolve-l0-strf-cx02
 ---
+
 # Contradiction — the spawn-area search radius (§4.7) vs discovery-only loading (C-5b, C-12)
 
 **Statement A (§4.7.7–9, test 14).** On a new world's first start, search 5×5 chunks around world spawn, then outward up to **500 blocks**, choose the *nearest* valid site, and only then fall back to forced preparation. The Windmill "всё равно появится" (100 %).

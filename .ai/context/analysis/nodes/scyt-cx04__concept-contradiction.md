@@ -10,9 +10,13 @@ part_of: ["L0-scyt"]
 relates_to: ["L0-scyt"]
 priority: 520
 size_chars: 1296
-tags: ["is_a:contradiction", "category:stale-sibling", "severity:medium", "target:L0-sprj", "delta:2026-09-26"]
+tags: ["is_a:contradiction","category:stale-sibling","severity:medium","target:L0-sprj","delta:2026-09-26","resolved"]
 level: 2
+closed_at: 2026-09-29
+closed_reason: resolved_by_decision
+closed_by_ref: decision-resolve-l0-scyt-cx04
 ---
+
 # CX-scyt-04 · `L0-sprj` children still say players-only, a 3D leash and event-driven invalidation; the code differs
 
 **Links:** `part_of: ["L0-scyt"]` · `is_a: ["contradiction"]` · `relates_to: ["L0-sprj", "L0-scyt-cx01", "L0-scyt-ad04", "L0-scyt-ad05", "L0-scyt-ad06"]`

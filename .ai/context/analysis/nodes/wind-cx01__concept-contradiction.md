@@ -3,16 +3,20 @@ type: "concept-contradiction"
 node_id: "L0-wind-cx01"
 source_channel: "rollout"
 analysis_version: 2
-title: "CX-wind-01 · The spawn Windmill is \"100 %\" but must be on dry land — undefined when there is no dry land within 500 blocks"
+title: "CX-wind-01 · The spawn Windmill is \\"100 %\\" but must be on dry land — undefined when there is no dry land within 500 blocks"
 aliases: ["L0-wind-cx01"]
 is_a: ["contradiction"]
 part_of: ["L0-wind"]
 relates_to: ["L0-wind"]
 priority: 530
 size_chars: 1300
-tags: ["is_a:contradiction", "category:assumption-gap", "severity:medium", "status:open", "target:L0-wind", "spawn-windmill", "relates_to:L0-wind-r007", "relates_to:L0-wind-p002"]
+tags: ["is_a:contradiction","category:assumption-gap","severity:medium","status:open","target:L0-wind","spawn-windmill","relates_to:L0-wind-r007","relates_to:L0-wind-p002","resolved"]
 level: 2
+closed_at: 2026-09-29
+closed_reason: resolved_by_decision
+closed_by_ref: decision-resolve-l0-wind-cx01
 ---
+
 # CX-wind-01 · The spawn Windmill is "100 %" but must be on dry land — undefined when there is no dry land within 500 blocks
 
 **Links:** `part_of: ["L0-wind"]` · `is_a: ["contradiction"]` · `relates_to: [L0-wind-r007, L0-wind-p002, L0-wind-e002]`

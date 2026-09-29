@@ -2,7 +2,7 @@
 type: "concept-contradiction"
 node_id: "L0-lgnd-cx06"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 3
 title: "CX-lgnd-06 · The loss watcher is a tick loop outside the letter of C-5"
 aliases: ["L0-lgnd-cx06"]
 is_a: ["contradiction"]
