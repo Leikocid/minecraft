@@ -1,12 +1,12 @@
 ---
 title: Risks
 type: analysis
-generated_at: "2026-09-29T22:51:16.969Z"
+generated_at: "2026-09-29T23:30:38.833Z"
 source_channel: rollout
 node_id: rollout-risks
 aliases: ["rollout-risks","risks"]
 is_a: ["rollout","risks"]
-relates_to: ["L0-lgnd-cx02","L0-lgnd-cx03","L0-lgnd-cx04","L0-lgnd-cx05","L0-lgnd-cx06","L0-lgnd-cx10"]
+relates_to: ["L0-lgnd-cx02","L0-lgnd-cx03","L0-lgnd-cx04","L0-lgnd-cx05","L0-lgnd-cx06"]
 priority: 540
 ---
 
@@ -139,42 +139,6 @@ relates_to: ["L0-lgnd-ad03", "L0-lgnd-p003", "L0-lgnd-ac12"]
 **Conflict.** The loop is not global and not permanent, so it keeps the spirit of C-5. But C-5 names Scythe projectiles as the only allowed case. A legendary dropped in an unloaded-but-ticking area, or left on the ground for the 5-minute despawn window, keeps the loop alive for minutes.
 
 **Resolution needed.** Either widen C-5 to "while temporary objects **or dropped legendary items** exist", or drop the watcher and rely only on `beforeEvents.entityRemove` (`L0-lgnd-as03` must then be measured on BDS 1.26.51.1 to confirm the Void kill raises it).
-
-
-
-
-
-
-
-### CX-lgnd-10 · Death retention keeps only one marked copy per weapon, and never the off-hand one (L0-lgnd-cx10)
-
----
-is_a: ["contradiction"]
-part_of: ["L0-lgnd"]
-relates_to: ["L0-lgnd-p002", "L0-lgnd-r008", "L0-lgnd-ent4", "L0-lgnd-ac07"]
-status: open
-category: source-vs-code
----
-# CX-lgnd-10 · Death retention keeps only one marked copy per weapon, and never the off-hand one
-
-**Design** (`p002`, `ent4`, `ac07`):
-- Every live marked stack of every weapon is retained, from both the container and the off hand.
-- `pending` is a JSON array.
-
-**Code** (`src/legendary/retention.ts` `retain`, `state.ts`):
-- `findMarked(def, container)` returns the **first** marked stack per weapon.
-- `setPending` stores one serialized mark.
-- The Equippable off-hand slot is not read (no `Offhand` reference outside `hands.ts`).
-
-**Effect.**
-- A player carrying two marked copies of the same weapon (for example the crafted Web Sword plus an admin `give` copy) keeps one. The second drops as an item entity. Path B only saves it if the single pending slot is free. Otherwise it is swept or left behind, and loss return would then re-issue it to the owner.
-- An off-hand legendary, once `cx08` is fixed, would drop on death and go through loss return instead of retention.
-
-In a normal Survival world only one crafted copy exists, so the practical exposure is limited to admin copies and to `cx08`.
-
-**Resolution needed.** Choose one:
-- (a) Array pending plus an off-hand scan, as designed.
-- (b) Accept, and narrow `ac07` to one copy per weapon, main inventory only.
 
 
 

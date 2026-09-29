@@ -1,12 +1,12 @@
 ---
 title: Decisions
 type: analysis
-generated_at: "2026-09-29T22:51:16.978Z"
+generated_at: "2026-09-29T23:30:38.842Z"
 source_channel: rollout
 node_id: rollout-decisions
 aliases: ["rollout-decisions","decisions"]
 is_a: ["rollout","decisions"]
-relates_to: ["decision-completion-flow-quick","decision-merge-policy-autopilot","decision-namespace-addona-andrew-asm-002-q-002","decision-tselevaya-versiya-bedrock-1-26-51-asm-001-q-001","decision-verification-approach-automatic","decision-windows-pk-ne-nuzhen-q-004","decision-yazyk-skriptov-typescript-asm-003-q-003","decision-zacharovanie-bez-durability-proverit-pervoy-zada","decision-q-006-web-sword-provenance-yes-metka-ekzemplyara","decision-q-007-enchantable-without-durability-podtverzhde","decision-q-008-blocked-craft-refund-a-obnaruzhit-i-vernut","decision-q-009-cooldown-persistence-sohranyat-mezhdu-vyho","decision-q-010-main-hand-off-hand-priority-otlozheno","decision-q-011-cube-geometry-27-kletok-tsentr-sosednyaya-","decision-q-012-two-player-dod-gametest-s-dvumya-simulated","decision-q-013-protected-blocks-zakrytyy-spisok-posture-s","decision-q-014-budget-after-destruction-pravo-ostaetsya-p","decision-q-015-gate-game-modes-survival-i-adventure","decision-q-016-sword-unlootable-podtverzhdeno-kak-zaduman","decision-q-017-zero-cells-proval-s-lokalizovannym-soobsch","decision-resolve-l0","decision-resolve-l0-keep-ctr006","decision-resolve-l0-once","decision-resolve-l0-qatg-ctr1","decision-resolve-l0-trap-ct07","decision-resolve-l0-trap-ct08","decision-web-sword-item-values-uron-kak-u-vanilnogo-almaz","decision-legendary-hand-priority-realizuem-seychas-osnovn","decision-legendary-ready-hud-gotovo-pokazyvaetsya-postoya","decision-legendary-rules-obschie-dlya-vseh-legendarnyh-vk","decision-resolve-cool-ctr3","decision-resolve-l0-sprj-cx02","decision-resolve-l0-xcx3","decision-scythe-enchantments-slot-sword","decision-scythe-hidden-target-dynamic-property-andrew-hid","decision-scythe-launch-applyknockback-s-kalibrovannoy-ver","decision-scythe-melee-damage-8-proveryaetsya-zamerom-prot","decision-scythe-projectiles-virtualnye-bez-suschnostey-ri","decision-scythe-true-damage-pryamoe-umenshenie-zdorovya-d","decision-scythe-targets-mobs-moby-tozhe-tseli-igrok-v-pri","decision-ad-wrdn-01-l0-wrdn-ad01-podtverzhdeno-vanilnaya-","decision-adr-bast-02-l0-bast-ad02-podtverzhdeno-vanilnye-","decision-adr-l0-adr-strc-accepted-generatsiya-skriptom-pr","decision-adr-l0-adr-strs-accepted-s-ogovorkoy-q5-zond-str","decision-adr-l0-adr-tmpl-accepted-zond-strf-p006-q1-q2-q3","decision-adr-l0-wind-ad01-accepted-s-ogovorkoy-o-razmere-","decision-adr-strf-01-l0-strf-d001-accepted-determinirovan","decision-adr-strf-02-l0-strf-d002-accepted-spavnery-vanil","decision-l0-airs-cx01-zagruzka-chankov-koltsa-privyazanno","decision-l0-xcx6-edinstvennyy-istochnik-pravdy-po-generat","decision-l0-xcx7-kanal-dokazatelstva-u-kazhdogo-kriteriya","decision-l0-xq2-plotnost-struktur-shansy-na-chank-rovno-k","decision-l0-xq3-vozvrat-poteryannogo-oruzhiya-kraftivshem","decision-l0-xq4-melnitsa-u-spavna-bez-suhoy-zemli-mira-be","decision-dirizhabl-udlinyaetsya-protiv-razmera-v-speke-ra","decision-gorod-hranitelya-rastet-vchetvero-po-ploschadi-i","decision-legendarnoe-vozvraschaetsya-poslednemu-derzhavsh","decision-resolve-cool-ctr1","decision-resolve-cool-ctr2","decision-resolve-cool-ctr4","decision-resolve-l0-airs-cx01","decision-resolve-l0-lgnd-cx01","decision-resolve-l0-lgnd-cx07","decision-resolve-l0-lgnd-cx08","decision-resolve-l0-lgnd-cx09","decision-resolve-l0-orbc-cx02","decision-resolve-l0-scyt-cx03","decision-resolve-l0-scyt-cx04","decision-resolve-l0-scyt-cx05","decision-resolve-l0-strf-cx01","decision-resolve-l0-strf-cx02","decision-resolve-l0-wind-cx01","decision-resolve-l0-wind-cx02","decision-resolve-l0-xcx11","decision-resolve-l0-xcx12","decision-resolve-l0-xcx13","decision-resolve-l0-xcx14","decision-resolve-l0-xcx5","decision-resolve-l0-xcx6","decision-resolve-l0-xcx7","decision-resolve-l0-xcx8","decision-resolve-l0-xcx9","decision-vvod-orbitalnoy-pushki-udar-po-playerswingstart-"]
+relates_to: ["decision-completion-flow-quick","decision-merge-policy-autopilot","decision-namespace-addona-andrew-asm-002-q-002","decision-tselevaya-versiya-bedrock-1-26-51-asm-001-q-001","decision-verification-approach-automatic","decision-windows-pk-ne-nuzhen-q-004","decision-yazyk-skriptov-typescript-asm-003-q-003","decision-zacharovanie-bez-durability-proverit-pervoy-zada","decision-q-006-web-sword-provenance-yes-metka-ekzemplyara","decision-q-007-enchantable-without-durability-podtverzhde","decision-q-008-blocked-craft-refund-a-obnaruzhit-i-vernut","decision-q-009-cooldown-persistence-sohranyat-mezhdu-vyho","decision-q-010-main-hand-off-hand-priority-otlozheno","decision-q-011-cube-geometry-27-kletok-tsentr-sosednyaya-","decision-q-012-two-player-dod-gametest-s-dvumya-simulated","decision-q-013-protected-blocks-zakrytyy-spisok-posture-s","decision-q-014-budget-after-destruction-pravo-ostaetsya-p","decision-q-015-gate-game-modes-survival-i-adventure","decision-q-016-sword-unlootable-podtverzhdeno-kak-zaduman","decision-q-017-zero-cells-proval-s-lokalizovannym-soobsch","decision-resolve-l0","decision-resolve-l0-keep-ctr006","decision-resolve-l0-once","decision-resolve-l0-qatg-ctr1","decision-resolve-l0-trap-ct07","decision-resolve-l0-trap-ct08","decision-web-sword-item-values-uron-kak-u-vanilnogo-almaz","decision-legendary-hand-priority-realizuem-seychas-osnovn","decision-legendary-ready-hud-gotovo-pokazyvaetsya-postoya","decision-legendary-rules-obschie-dlya-vseh-legendarnyh-vk","decision-resolve-cool-ctr3","decision-resolve-l0-sprj-cx02","decision-resolve-l0-xcx3","decision-scythe-enchantments-slot-sword","decision-scythe-hidden-target-dynamic-property-andrew-hid","decision-scythe-launch-applyknockback-s-kalibrovannoy-ver","decision-scythe-melee-damage-8-proveryaetsya-zamerom-prot","decision-scythe-projectiles-virtualnye-bez-suschnostey-ri","decision-scythe-true-damage-pryamoe-umenshenie-zdorovya-d","decision-scythe-targets-mobs-moby-tozhe-tseli-igrok-v-pri","decision-ad-wrdn-01-l0-wrdn-ad01-podtverzhdeno-vanilnaya-","decision-adr-bast-02-l0-bast-ad02-podtverzhdeno-vanilnye-","decision-adr-l0-adr-strc-accepted-generatsiya-skriptom-pr","decision-adr-l0-adr-strs-accepted-s-ogovorkoy-q5-zond-str","decision-adr-l0-adr-tmpl-accepted-zond-strf-p006-q1-q2-q3","decision-adr-l0-wind-ad01-accepted-s-ogovorkoy-o-razmere-","decision-adr-strf-01-l0-strf-d001-accepted-determinirovan","decision-adr-strf-02-l0-strf-d002-accepted-spavnery-vanil","decision-l0-airs-cx01-zagruzka-chankov-koltsa-privyazanno","decision-l0-xcx6-edinstvennyy-istochnik-pravdy-po-generat","decision-l0-xcx7-kanal-dokazatelstva-u-kazhdogo-kriteriya","decision-l0-xq2-plotnost-struktur-shansy-na-chank-rovno-k","decision-l0-xq3-vozvrat-poteryannogo-oruzhiya-kraftivshem","decision-l0-xq4-melnitsa-u-spavna-bez-suhoy-zemli-mira-be","decision-dirizhabl-udlinyaetsya-protiv-razmera-v-speke-ra","decision-gorod-hranitelya-rastet-vchetvero-po-ploschadi-i","decision-legendarnoe-vozvraschaetsya-poslednemu-derzhavsh","decision-resolve-cool-ctr1","decision-resolve-cool-ctr2","decision-resolve-cool-ctr4","decision-resolve-l0-airs-cx01","decision-resolve-l0-lgnd-cx01","decision-resolve-l0-lgnd-cx07","decision-resolve-l0-lgnd-cx08","decision-resolve-l0-lgnd-cx09","decision-resolve-l0-lgnd-cx10","decision-resolve-l0-orbc-cx02","decision-resolve-l0-scyt-cx03","decision-resolve-l0-scyt-cx04","decision-resolve-l0-scyt-cx05","decision-resolve-l0-strf-cx01","decision-resolve-l0-strf-cx02","decision-resolve-l0-wind-cx01","decision-resolve-l0-wind-cx02","decision-resolve-l0-xcx10","decision-resolve-l0-xcx11","decision-resolve-l0-xcx12","decision-resolve-l0-xcx13","decision-resolve-l0-xcx14","decision-resolve-l0-xcx5","decision-resolve-l0-xcx6","decision-resolve-l0-xcx7","decision-resolve-l0-xcx8","decision-resolve-l0-xcx9","decision-vvod-orbitalnoy-pushki-udar-po-playerswingstart-"]
 priority: 540
 ---
 
@@ -384,7 +384,7 @@ _Decided: 2026-09-24_
 _Decided: 2026-09-24_
 
 
-Решение (автопилот): minecraft:enchantable slot=sword, хотя база предмета — алмазная мотыга. Обоснование: спека §1 требует урона как у незеритового меча и разрешает совместимые чары базового предмета «если они не конфликтуют с механикой»; боевое назначение делает осмысленными именно мечевые чары (Sharpness, Unbreaking), а мотыжные к бою отношения не имеют. Закрывает CTR-2.
+Решение (автопилот): minecraft:enchantable slot=sword, хотя база предмета — алмазная мотыга. Обоснование: спека §1 требует урона как у незеритового меча и разрешает совместимые чары базового предмета «если они не конфликтуют с механикой»; боевое назначение делает осмысленными именно мечевые чары (Sharpness, Smite, Fire Aspect, Knockback, Looting), а мотыжные к бою отношения не имеют. Закрывает CTR-2.
 
 
 
@@ -555,8 +555,8 @@ _Decided: 2026-09-26_
 
 Противоречие: привязанный к Мельнице Дирижабль ищется в кольце 40-100 блоков, но чанки там могут быть не загружены, а правило L0-airs-r004 запрещает 'форсировать размещение любой ценой' — в отличие от поиска Мельницы у спавна, где загрузка принудительная.
 Решение: **загружать чанки кольца временной ticking area можно**, расширять кольцо и править рельеф — нельзя.
-Обоснование, почему это не нарушает правило. 'Не форсировать' в L0-airs-r004 означает две конкретные вещи, названные там же: не расширять поиск за 100 блоков и не готовить площадку насильно, как это делает Мельница у спавна. Загрузка чанка — не то и не другое: она не меняет ни одного блока и не двигает границы поиска, она лишь даёт прочитать то, что в мире уже есть. Без неё привязанный Дирижабль не появился бы почти никогда: кольцо 40-100 блоков это до 7 чанков от центра, а вокруг только что поставленной Мельницы загружено заметно меньше — зонд измерил, что вокруг игрока держится около 4 чанков. То есть механика, прямо предусмотренная спекой (§5.6, у каждой Мельницы свой Дирижабль в 40-100 блоках), молча не работала бы в игре.
-Ограничения, которые остаются в силе: 1. Область загрузки временная: добавил, дождался, снял. Предел движка измерен зондом — 10 областей одновременно, и сорить ими нельзя. 2. Кольцо 40-100 не расширяется ни при каких условиях. Не нашлось места — привязанного Дирижабля у этой Мельницы нет, и это нормальный исход. 3. Рельеф не правится никогда. Асимметрия с Мельницей у спавна сохранена намеренно: там выравнивание разрешено спекой, здесь нет. 4. Попытка одна на экземпляр Мельницы, по флагу linkedTried в её записи. 5. Если чанки кольца не удалось загрузить (например исчерпан предел областей), кандидат уходит в pending механизмом каркаса, а не теряется и не считается провалившейся попыткой.
+Обоснование, почему это не нарушает правило. 'Не форсировать' в L0-airs-r004 означает две конкретные вещи, названные там же: не расширять поиск за 100 блоков и не готовить площадку насильно, как это делает Мельница у спавна. Загрузка чанка — не то и не другое: она не меняет ни одного блока и не двигает границы поиска, она лишь даёт прочитать то, что в мире уже есть. Без неё привязанный Дирижабль не появился бы почти никогда: центры кандидатов — до 100 блоков (7 чанков), а читаемая область кандидата — до 140 блоков (9 чанков) от центра Мельницы, а вокруг только что поставленной Мельницы загружено заметно меньше — зонд измерил, что вокруг игрока держится около 4 чанков. То есть механика, прямо предусмотренная спекой (§5.6, у каждой Мельницы свой Дирижабль в 40-100 блоках), молча не работала бы в игре.
+Ограничения, которые остаются в силе: 1. Область загрузки временная: добавил, дождался, снял. Предел движка измерен зондом — 10 областей одновременно, и сорить ими нельзя. 2. Кольцо 40-100 не расширяется ни при каких условиях. Не нашлось места — привязанного Дирижабля у этой Мельницы нет, и это нормальный исход. 3. Рельеф не правится никогда. Асимметрия с Мельницей у спавна сохранена намеренно: там выравнивание разрешено спекой, здесь нет. 4. Попытка одна на экземпляр Мельницы, по флагу `la` (исход — `ls`) в её записи. 5. Если чанки кольца не удалось загрузить (например исчерпан предел областей), кандидат уходит в pending механизмом каркаса, а не теряется и не считается провалившейся попыткой.
 Target: L0-airs-cx01.
 
 
@@ -583,9 +583,9 @@ _Decided: 2026-09-26_
 _Decided: 2026-09-26_
 
 
-Противоречие: критерии приёмки структур 14-59 разделены по каналам только у Мельницы (14 bds + 4 ipad). У Дирижабля (8), Города Стража (10) и Бастиона (9) канал не указан вообще, хотя часть из них заведомо только для глаз: «выглядит современно», «читается как Древний город», «читается как Бастион», «почти полностью темно».
+Противоречие: критерии приёмки структур 14-59 разделены по каналам только у Мельницы (14 bds + 4 ipad). У Дирижабля (8), Города Стража (10) и Бастиона (9) канал не указан вообще, хотя iPad-часть есть у airs-ac01 (облик) и wrdn-ac09 (темнота); узнаваемость Города и Бастиона записана правилами wrdn-rul2 и bast-r002, а на доске проверяется критериями DEMO-S4-01-AA AC#8 и AC#9.
 Решение: принимаю промежуточное правило разбора как обязательное. Критерий, у которого следствие говорит о внешности, узнаваемости, освещении, настроении или «читается как», имеет канал ipad. Всё остальное — bds. Разделение проставляется при планировании, в карточках задач, и без канала ни один критерий структур в план не попадает.
-Почему это не мелочь: без канала оркестратор при мерже эпика помечает проверенным визуальный критерий на основании зелёного счётчика блоков. Это не гипотеза — это уже случалось дважды на этом проекте (DEMO-S2-AA и DEMO-S3-AA), оба раза пришлось возвращать критерии в открытое состояние вручную. C-6 и C-9 это прямо запрещают.
+Почему это не мелочь: критерии DEMO-S2-AA и DEMO-S3-AA были type:manual — канал стоял; ai-kit закрывает manual-критерий любым не-null значением исполнителя или инспектора, и канал это не предотвращает (CNTR-XCX7-AA, П-1). C-9 (нумерация L0, `concept-constraint.md:20`) это запрещает.
 Практическое следствие для оператора: глазами на iPad ему придётся смотреть только на внешность — что постройка похожа на то, чем должна быть. Всё счётное (сколько сундуков, где спавнеры, какие состояния блоков, статистика шанса) доказывается движком без него. Target: L0-xcx7.
 
 
@@ -602,6 +602,7 @@ _Decided: 2026-09-26_
 Обоснование: спека говорит именно это. Домыслить «на регион» вместо написанного — подмена требования, а не его уточнение.
 Важное следствие, которое оператор обязан знать (посчитано разбором, а не на глаз): при 5% на чанк мини-Город Стража с пятном 30x30 выходит примерно один на 20 чанков — один на ~72 блока. Игрок, прошедший 1000 блоков Обычного мира, минует 10-15 городов. Это не редкое сокровище, это обои; ванильные Древние города несравнимо реже. Дирижабль при 2% — один на ~113 блоков, и это сверх одного привязанного к каждой Мельнице. Вдобавок при такой плотности соседние кандидаты часто сталкиваются пятнами, поэтому фактическая плотность будет ниже заявленной и неровной — то есть числа не дадут даже того, что обещают.
 Влияние: ответ оператора после первой прогулки по готовому миру стоит одну правку конфига, а не переделку. Target: L0-xq2.
+Примечание (2026-09-29): расчёт «пятно 30x30 → один на ~72 блока» верен только для 30×30. Город Хранителя построен 63×63 (решение оператора, decision-gorod-hranitelya-rastet-vchetvero-po-ploschadi-i); при 63×63 столкновения кандидатов чаще, и эти числа плотности не переиспользовать без пересчёта.
 
 
 
@@ -649,6 +650,7 @@ _Decided: 2026-09-27_
 Решение оператора 2026-09-27: **удлинить постройку** (вариант 1 из трёх предложенных) — примерно до 25–30 блоков, чтобы оболочка получила нормальную длину, а гондола осталась достаточной для четырёх комнат. Отвергнуты: сокращение начинки (потеря 4 комнат) и «оставить как есть» (потеря узнаваемости).
 Цена и последствия: прямой отход от «≈15» в §5.1 — это осознанное отклонение, а не недосмотр. Точные размеры берутся из разведки пропорций настоящих дирижаблей. Затрагивает: AIRSHIP_SIZE и всю разметку шаблона, тесты размера, проверку пригодности места (большее пятно — больше чанков должно быть загружено до первой записи), а также поиск привязанного Дирижабля в кольце 40-100 от Мельницы: кольцо не меняется, но кандидатов с большим пятном будет отвергаться больше.
 Как это вскрылось, и это стоит запомнить: дефект нашёлся не прогоном, а тем, что постройку **посмотрели глазами** — отрисовали из данных пакета. Ни один из 92 тестов его не видел, потому что все они считают блоки, а не смотрят на силуэт. Оператор: «Хорошо что просмотрели».
+Superseded 2026-09-27 by the operator's Zeppelin NT choice: 75×18×13 (AIRS-SCALE-01-AA, c5a1c27).
 
 
 
@@ -659,9 +661,10 @@ _Decided: 2026-09-27_
 _Decided: 2026-09-27_
 
 
-Оператор 2026-09-27: «город расширяем в 4 раза». Принято прочтение вчетверо по площади — 62x62 в плане вместо 31x31, вдвое по каждой стороне. Отброшено: 124x124 (вчетверо по стороне) почти не находит себе ровного сухого места и проверка отвергала бы почти всех кандидатов; 49x49 (вчетверо по объёму) не даёт заметной глазом разницы.
+Оператор 2026-09-27: «город расширяем в 4 раза». Принято прочтение вчетверо по площади — 62x62 в плане вместо 31x31, вдвое по каждой стороне (как построено: 63×63 — нечётная сторона, центр шаблона отображается сам в себя при повороте). Отброшено: 124x124 (вчетверо по стороне) почти не находит себе ровного сухого места и проверка отвергала бы почти всех кандидатов; 49x49 (вчетверо по объёму) не даёт заметной глазом разницы.
 Высота растёт с 13 до 20. Потолок по спеке прежний (верх на Y от -35 до -45), значит низ опускается к -55...-65 и дно мира -64 становится настоящей границей: место без нужной глубины должно отвергаться, а не обрезать город.
 Отклонение от спеки §6: содержимое растёт пропорционально площади — 10 сундуков становятся 40 (12 из них в центральном зале вместо 3), 2 визгуна становятся 8. Причина: при вчетверо большей площади прежние числа дают вчетверо меньшую плотность, то есть пустые залы, а пустота и была тем, из-за чего оператор смотрел отрисовки. Восемь визгунов призывают Хранителя заметно быстрее двух, поэтому их разводят по дальним углам, а не собирают в центре.
+Как построено: `[63, 20, 63]`.
 
 
 
@@ -769,6 +772,17 @@ _Decided: 2026-09-29_
 
 
 
+## Resolved L0-lgnd-cx10: Починено задачей LGND-RETAIN-01-AA (4 к… (decision-resolve-l0-lgnd-cx10)
+
+_Decided: 2026-09-29_
+
+
+Починено задачей LGND-RETAIN-01-AA (4 критерия из 4). Сохранение при смерти теперь удерживает каждую помеченную копию, а не первую: pending стал списком, добавлено чтение второй руки (она допускается в игру задачей LGND-OFFHAND-01-AA). Старое значение с одной меткой читается как список из одного элемента, поэтому уже лежащее в мирах не теряется. Это закрывает лишнюю живую копию: раньше вторая помеченная копия выпадала предметом, и система возврата потом выдавала владельцу ещё одну. Доказано красными артефактами до правки (1.red.json и 3.red.json, оба с кодом 1) и зелёными после (1.json, 3.json — юнит-тесты и полный bds:gametest на отдельном экземпляре bds-retain).
+
+
+
+
+
 ## Resolved L0-orbc-cx02: Закрыто решением decision-vvod-orbitaln… (decision-resolve-l0-orbc-cx02)
 
 _Decided: 2026-09-29_
@@ -852,6 +866,17 @@ _Decided: 2026-09-29_
 
 
 > Resolved by `decision-l0-airs-cx01` (2026-09-26), implemented in `b619e55`, and re-measured on 2026-09-29 against `src/` at `32f4aca` (unchanged through `250a720`). > > "Once" = one attempt per Windmill. `la=true` is written before the attempt (`place.ts:207-210`). The outcome is `ls` ∈ searching/pending/none/placed/skipped, where `none` and `placed` are terminal. > > The ring is read only after each candidate's chunks are loaded by a temporary ticking area: > - the pool has 4 names per dimension, with 2 loaded at once; > - each area covers 10–12 chunks; > - the engine's cap is 10 areas (pro
+
+
+
+
+
+## Resolved L0-xcx10: Починено двумя задачами. LGND-FIREPROOF… (decision-resolve-l0-xcx10)
+
+_Decided: 2026-09-29_
+
+
+Починено двумя задачами. LGND-FIREPROOF-01-AA: легендарные предметы получили огнестойкость, поэтому в огне и лаве они остаются лежать, а не уничтожаются с последующей выдачей владельцу — это и есть «не уничтожается» из спеки, а не обход через возврат. LGND-PROTECT-01-AA (6 критериев из 6): перед первой записью в мир постановка структуры прогоняет защитный проход по коробке и вынимает помеченные легендарные предметы из контейнеров; в список защищённых блоков добавлены забытые воронка, раздатчик, выбрасыватель, шалкеры, крафтер, декоративный горшок и рамки. Это закрывает найденный разбором живой дефект поставки 1.2.0: placeAt поверх воронки с помеченным мечом стирал его молча, потому что fillBlocks и structureManager.place уничтожают содержимое без выпадения предметов, а система возврата смотрит именно на выпавшую сущность. Возврат остаётся запасным путём для Бездны и кактуса; остаток записан отклонением по C-16.
 
 
 

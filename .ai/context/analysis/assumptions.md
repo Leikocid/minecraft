@@ -1,7 +1,7 @@
 ---
 title: Assumptions
 type: analysis
-generated_at: "2026-09-29T20:38:15.059Z"
+generated_at: "2026-09-29T23:30:38.824Z"
 source_channel: rollout
 node_id: rollout-assumptions
 aliases: ["rollout-assumptions","assumptions"]
@@ -16,7 +16,7 @@ priority: 540
 
 ### Lgnd as01 concept assumption (L0-lgnd-as01)
 
-**ASM-lgnd-01: Q-020 default (a) applies to both weapons.**
+**ASM-lgnd-01 — decided 2026-09-24 (decision-legendary-rules-obschie-dlya-vseh-legendarnyh-vk): loss return applies to all legendaries, shipped in ed7558b.**
 
 Indestructibility and Void return cover the Web Sword as well as the Scythe ("по общим правилам", by the general rules). The craft right is still not reopened.
 
