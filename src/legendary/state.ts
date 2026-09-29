@@ -16,10 +16,11 @@ import {
   type MarkOrigin,
   type OwedLedger,
   isGen,
-  parseMark,
   parseOwed,
-  serializeMark,
+  parsePending,
   serializeOwed,
+  serializePending,
+  withPending,
 } from "./rules";
 
 export function isItemOf(def: LegendaryDef, stack: ItemStack | undefined): stack is ItemStack {
@@ -111,18 +112,18 @@ export function resetCrafted(def: LegendaryDef): void {
   world.setDynamicProperty(keys.craftedBy, undefined);
 }
 
-/** The mark awaiting return to `player` after death, if any. */
-export function getPending(def: LegendaryDef, player: Player): Mark | undefined {
-  const raw = player.getDynamicProperty(keysFor(def).pending);
-  return typeof raw === "string" ? parseMark(raw) : undefined;
+/** The marks awaiting return to `player` after death, oldest first. */
+export function readPending(def: LegendaryDef, player: Player): Mark[] {
+  return parsePending(player.getDynamicProperty(keysFor(def).pending));
 }
 
-export function setPending(def: LegendaryDef, player: Player, mark: Mark): void {
-  player.setDynamicProperty(keysFor(def).pending, serializeMark(mark));
+export function writePending(def: LegendaryDef, player: Player, marks: readonly Mark[]): void {
+  player.setDynamicProperty(keysFor(def).pending, marks.length > 0 ? serializePending(marks) : undefined);
 }
 
-export function clearPending(def: LegendaryDef, player: Player): void {
-  player.setDynamicProperty(keysFor(def).pending, undefined);
+/** Appends `marks` to `player`'s pending list, one entry per instance. */
+export function addPending(def: LegendaryDef, player: Player, marks: readonly Mark[]): void {
+  writePending(def, player, marks.reduce<Mark[]>(withPending, readPending(def, player)));
 }
 
 /** Instances lost while their return target could not take them, by target id. */
@@ -140,20 +141,25 @@ export interface MarkedSlot {
   mark: Mark;
 }
 
-/** The first marked instance of `def` found in `container`, if any. */
-export function findMarked(def: LegendaryDef, container: Container): MarkedSlot | undefined {
+/** Every marked instance of `def` in `container`, in slot order. */
+export function findAllMarked(def: LegendaryDef, container: Container): MarkedSlot[] {
+  const found: MarkedSlot[] = [];
   for (let slot = 0; slot < container.size; slot++) {
     const stack = container.getItem(slot);
     if (!isItemOf(def, stack)) {
       continue;
     }
     const mark = getMark(def, stack);
-    if (mark === undefined) {
-      continue;
+    if (mark !== undefined) {
+      found.push({ slot, stack, mark });
     }
-    return { slot, stack, mark };
   }
-  return undefined;
+  return found;
+}
+
+/** The first marked instance of `def` found in `container`, if any. */
+export function findMarked(def: LegendaryDef, container: Container): MarkedSlot | undefined {
+  return findAllMarked(def, container)[0];
 }
 
 /** The player's off-hand stack. `minecraft:inventory` does not include the off hand. */

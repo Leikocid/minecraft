@@ -10,7 +10,7 @@
 // (deviation, C-16): a marked instance lying on the ground is watched, and
 // when it vanishes without having reached an inventory, its owner (the mark's
 // `owner`) gets it back, at once when online and alive, otherwise from the
-// owed list on their next spawn — the same pending mark death retention uses.
+// owed list on their next spawn.
 // The Void is not a deviation — §5 itself prescribes returning a legendary
 // that falls in, and that path also runs through this module. The craft right
 // is never reopened (Q-014).

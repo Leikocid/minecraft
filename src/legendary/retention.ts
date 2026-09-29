@@ -14,21 +14,23 @@
 // fires, or whether the engine has already spat the contents out as item
 // entities — and the answer is an engine fact, not a type. So both are handled:
 //
-//   path A — the item is still in the inventory or the off hand: stash the
-//            mark and blank the slot, so there is nothing left for the engine
-//            to drop;
+//   path A — the items are still in the inventory or the off hand: stash every
+//            marked one and blank its slot, so there is nothing left for the
+//            engine to drop;
 //   path B — next tick, sweep the death spot for dropped item entities carrying
-//            a marked item, stash the mark and delete them.
+//            a marked item, stash each mark and delete them.
 //
 // Whichever fired says so in the server log, so a run tells you which one this
-// engine actually uses.
+// engine actually uses. On BDS 1.26.51.1 the death drops spawn before
+// entityDie, so path B does all the work (CNTR-LGND-CX10-AA).
 //
-// The restore half is guarded by the pending mark, which is a durable dynamic
-// property on the player: it is the idempotency token. An item is handed back
-// only when a pending mark exists, the mark is cleared the moment it is, and a
-// player who somehow already carries that exact instance id gets nothing and has the
-// pending cleared instead. That is what makes a doubled event, a reconnect and
-// a restart all converge on exactly one item.
+// The restore half is guarded by the pending list, a durable dynamic property
+// on the player holding one mark per retained instance: each entry is the
+// idempotency token for its item. An item is handed back only while its entry
+// exists, the entry is removed the moment it is, and a player who somehow
+// already carries that exact instance id gets nothing and loses the entry
+// instead. That is what makes a doubled event, a reconnect and a restart all
+// converge on exactly one item per instance.
 
 import {
   type Container,
@@ -42,21 +44,21 @@ import {
 } from "@minecraft/server";
 import { forgetWatched } from "./recovery";
 import { LEGENDARIES, type LegendaryDef, defForStack } from "./registry";
-import { type Mark } from "./rules";
+import { type Mark, withoutPending } from "./rules";
 import {
+  addPending,
   carriesInstance,
-  clearPending,
-  findMarked,
+  findAllMarked,
   getMark,
-  getPending,
   isItemOf,
   isLive,
   isStale,
   markItem,
   offhandOf,
+  readPending,
   setOffhand,
-  setPending,
   voidStale,
+  writePending,
 } from "./state";
 
 /**
@@ -88,15 +90,15 @@ export function registerRetention(): void {
 
   // Not filtered on `initialSpawn`: both halves matter. A normal respawn is
   // initialSpawn=false, and a player who died and then quit before respawning
-  // comes back as initialSpawn=true — the pending mark is the same token for
-  // both, so the handler simply asks whether one is owed.
+  // comes back as initialSpawn=true — the pending list is the same token for
+  // both, so the handler simply asks whether anything is owed.
   world.afterEvents.playerSpawn.subscribe((event) => {
     const player: Player | undefined = event.player;
-    if (player === undefined || !LEGENDARIES.some((def) => getPending(def, player) !== undefined)) {
+    if (player === undefined || !LEGENDARIES.some((def) => readPending(def, player).length > 0)) {
       return;
     }
     // Deferred a tick: at spawn time the inventory is not reliably writable
-    // yet, and the pending mark is durable, so nothing is lost by waiting.
+    // yet, and the pending list is durable, so nothing is lost by waiting.
     system.run(() => {
       for (const def of LEGENDARIES) {
         restore(def, player);
@@ -107,7 +109,7 @@ export function registerRetention(): void {
   console.warn("[andrew] legendary death retention armed");
 }
 
-/** Death: take the marked item out of the world and record who is owed it. */
+/** Death: take every marked item out of the world and record who is owed it. */
 function retain(player: Player): void {
   // Read before deferring — the dead entity's location and dimension are what
   // the next-tick sweep needs, and by then the player may have respawned.
@@ -125,32 +127,30 @@ function retain(player: Player): void {
     if (voided > 0) {
       console.warn(`[andrew] legendary retention: path A — voided ${voided} stale ${def.itemId} on ${player.name}'s death`);
     }
-    // Pending holds one mark per weapon: the inventory copy first, the off
-    // hand only when the inventory had none. A copy left over goes to path B.
-    const found = container === undefined ? undefined : findMarked(def, container);
+    const found = container === undefined ? [] : findAllMarked(def, container);
     const offhand = offhandOf(player);
     const offMark = isItemOf(def, offhand) ? getMark(def, offhand) : undefined;
-    if (found !== undefined) {
-      // Order: the mark is durable before the slot is blanked, so a throw in
-      // between loses the item to the drop rather than to nothing at all.
-      setPending(def, player, found.mark);
-      container?.setItem(found.slot, undefined);
-      console.warn(
-        `[andrew] legendary retention: path A — ${player.name} still held ${def.itemId} id ${found.mark.id} ` +
-          `in slot ${found.slot} at entityDie; slot blanked before the engine could drop it`
-      );
-    } else if (offMark !== undefined) {
-      setPending(def, player, offMark);
-      setOffhand(player, undefined);
-      console.warn(
-        `[andrew] legendary retention: path A — ${player.name} still held ${def.itemId} id ${offMark.id} ` +
-          "in the off hand at entityDie; off hand emptied before the engine could drop it"
-      );
-    } else {
+    const marks = [...found.map((f) => f.mark), ...(offMark === undefined ? [] : [offMark])];
+    if (marks.length === 0) {
       console.warn(
         `[andrew] legendary retention: path A — ${player.name} had no marked ${def.itemId} in inventory or off hand at entityDie`
       );
+      continue;
     }
+    // Order: the marks are durable before the slots are blanked, so a throw in
+    // between loses an item to the drop rather than to nothing at all.
+    addPending(def, player, marks);
+    for (const f of found) {
+      container?.setItem(f.slot, undefined);
+    }
+    if (offMark !== undefined) {
+      setOffhand(player, undefined);
+    }
+    const where = [...found.map((f) => `slot ${f.slot}`), ...(offMark === undefined ? [] : ["the off hand"])];
+    console.warn(
+      `[andrew] legendary retention: path A — ${player.name} still held ${marks.length} marked ${def.itemId} ` +
+        `(ids ${marks.map((m) => m.id).join(", ")}; ${where.join(", ")}) at entityDie; emptied before the engine could drop them`
+    );
   }
 }
 
@@ -197,8 +197,8 @@ function sweep(player: Player, dimension: Dimension, location: Vector3): void {
       continue;
     }
     const live = isLive(def, mark);
-    if (live && getPending(def, player) === undefined) {
-      setPending(def, player, mark);
+    if (live) {
+      addPending(def, player, [mark]);
     }
     // Order: unwatched before removal, or recovery reads this removal as a
     // loss and owes the mark a second time.
@@ -218,12 +218,12 @@ function sweep(player: Player, dimension: Dimension, location: Vector3): void {
   );
 }
 
-/** Hand the item retained on death back, once. Called on respawn/join; `messageKey` is what the owner is told. */
+/** Hand every item retained on death back, each once. Called on respawn/join; `messageKey` is what the owner is told. */
 export function restore(def: LegendaryDef, player: Player, messageKey = `${def.textPrefix}.returned`): void {
   if (!player.isValid) {
     return;
   }
-  // A dead player's inventory is emptied by the engine; the pending mark waits
+  // A dead player's inventory is emptied by the engine; the pending list waits
   // for the respawn handler instead.
   const health = player.getComponent("minecraft:health");
   if (health !== undefined && health.currentValue <= 0) {
@@ -231,37 +231,35 @@ export function restore(def: LegendaryDef, player: Player, messageKey = `${def.t
   }
 
   // Re-read rather than trusting the value the subscriber saw a tick ago.
-  const mark = getPending(def, player);
-  if (mark === undefined) {
+  const marks = readPending(def, player);
+  if (marks.length === 0) {
     return;
   }
 
   const container = player.getComponent("minecraft:inventory")?.container;
   if (container === undefined) {
-    // The mark is durable; the next spawn will try again.
+    // The list is durable; the next spawn will try again.
     return;
   }
 
-  if (!isLive(def, mark)) {
-    // A loss return superseded this instance while the token waited.
-    clearPending(def, player);
-    console.warn(
-      `[andrew] legendary retention: pending ${def.itemId} id ${mark.id} gen ${mark.gen} is stale, cleared without a copy`
-    );
-    return;
+  for (const mark of marks) {
+    if (!isLive(def, mark)) {
+      // A loss return superseded this instance while the token waited.
+      console.warn(
+        `[andrew] legendary retention: pending ${def.itemId} id ${mark.id} gen ${mark.gen} is stale, cleared without a copy`
+      );
+    } else if (carriesInstance(def, player, container, mark)) {
+      console.warn(
+        `[andrew] legendary retention: ${player.name} already carries ${def.itemId} id ${mark.id}, ` +
+          "pending entry cleared without issuing a second copy"
+      );
+    } else {
+      grant(def, player, container, mark, messageKey);
+    }
+    // Order: the entry goes after its grant, so a throw in between leaves a
+    // token the next spawn drops as already carried, never a lost return.
+    writePending(def, player, withoutPending(readPending(def, player), mark));
   }
-
-  if (carriesInstance(def, player, container, mark)) {
-    clearPending(def, player);
-    console.warn(
-      `[andrew] legendary retention: ${player.name} already carries ${def.itemId} id ${mark.id}, ` +
-        "pending cleared without issuing a second copy"
-    );
-    return;
-  }
-
-  grant(def, player, container, mark, messageKey);
-  clearPending(def, player);
 }
 
 /**

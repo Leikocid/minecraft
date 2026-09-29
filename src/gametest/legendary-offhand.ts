@@ -177,7 +177,7 @@ registerAsync("andrew", "legendary_offhand_death_returns", async (test: Test): P
   const ground = dimension
     .getEntities({ type: "minecraft:item", location: deathAt, maxDistance: GROUND_RADIUS })
     .filter((entity) => isOurs(entity.getComponent("minecraft:item")?.itemStack)).length;
-  const pending = state.getPending(WEB_SWORD, player)?.id === mark.id;
+  const pending = state.readPending(WEB_SWORD, player).some((m) => m.id === mark.id);
   const owed = (state.readOwed(WEB_SWORD)[player.id] ?? []).some((entry) => entry.mark.id === mark.id);
 
   log(`death RESULT died=${died} held=${held} ground=${ground} pending=${pending} owed=${owed}`);
