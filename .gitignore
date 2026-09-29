@@ -19,6 +19,7 @@ docker/bds-ci/data/
 .gemini/
 .chatgpt/
 .codex/
+.kimi-code/
 .serena/
 .agents/
 .obsidian/

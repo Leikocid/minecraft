@@ -16,7 +16,8 @@ current_versions_by_node:
   L0-pntr: 3
   L0-orbc: 3
   L0-ring: 3
-pending_revisions: []
+pending_revisions:
+  - L0
 last_run:
   started_at: '2026-09-29T18:44:27.410Z'
   completed_at: '2026-09-29T19:09:13.569Z'
@@ -76,17 +77,17 @@ last_run:
 last_rollout_hashes:
   project-knowledge/glossary.md: 825c1021d33e942e
   project-knowledge/business-rules.md: ee27f716ce5399c3
-  project-knowledge/boundaries.md: a65577e12b849e76
+  project-knowledge/boundaries.md: 52130c6cd83d1194
   project-knowledge/intent.md: 07cff0e1a496ae82
   project-knowledge/domain-model.md: f00f536d8be51b72
   project-knowledge/architecture.md: f8290ab0d88f380b
-  assumptions.md: cbe126568ce4181f
-  contradictions.md: e97679f585a7bda9
-  client-questions.md: 9a04c139e75beb91
+  assumptions.md: 22abdf3e14285f94
+  contradictions.md: 9f789678babeb549
+  client-questions.md: d66956366f545063
   summary.md: d3bb69a73ecfb912
   scope.md: 6168ee4cf1be604c
-  risks.md: e34753667b586e10
-  decisions.md: b656378471e427f7
+  risks.md: fabcadd181dd01ce
+  decisions.md: b15675e6ef8a8b5f
 runtime_vocabulary:
   concept-boundary:
     description: Seen at runtime
@@ -207,6 +208,10 @@ Runtime state for the analyst pipeline (analyse runs, vocabulary, slug map, roll
 - Current artifacts: 274 (1128 KB total)
 - LLM calls: 6 (3% budget)
 - Open contradictions: 23
+
+## Pending Revisions
+
+- L0
 
 ## Changelog
 
