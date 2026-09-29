@@ -190,9 +190,10 @@ test('Web Sword recipe', async (t) => {
     assert.strictEqual(webCount, 4, 'exactly 4 web ingredients are required');
   });
 
-  await t.test('result is exactly one andrew:web_sword', () => {
+  // The craft token, not the weapon: the craft gate swaps it for andrew:web_sword (AD-lgnd-08).
+  await t.test('result is exactly one andrew:web_sword_crafted', () => {
     const result = recipeJson['minecraft:recipe_shaped'].result;
-    assert.strictEqual(result.item, 'andrew:web_sword', 'result item must be andrew:web_sword');
+    assert.strictEqual(result.item, 'andrew:web_sword_crafted', 'result item must be the craft token andrew:web_sword_crafted');
     assert.strictEqual(result.count ?? 1, 1, 'result count must be 1');
   });
 

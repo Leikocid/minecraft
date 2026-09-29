@@ -55,6 +55,7 @@ import "./probe-chunk";
 import "./probe-mobs";
 import "./probe-loot";
 import "./probe-give";
+import "./legendary-craftgate";
 import "./probe-retention";
 import "./strf-registry";
 import "./structures";
@@ -82,7 +83,6 @@ const makeMark = state.makeMark;
 const findMarkedSword = (container: Container) => state.findMarked(WEB_SWORD, container);
 const getPending = (player: Player) => state.getPending(WEB_SWORD, player);
 const isCrafted = () => state.isCrafted(WEB_SWORD);
-const setCrafted = (byName: string) => state.setCrafted(WEB_SWORD, byName);
 const resetCrafted = () => state.resetCrafted(WEB_SWORD);
 const isReady = (player: Player) => cooldown.isReady(player, WEB_SWORD.abilityKey);
 const remainingTicks = (player: Player) => cooldown.remainingTicks(player, WEB_SWORD.abilityKey);
@@ -283,10 +283,10 @@ register(
 // ------------------------------------------------- Web Sword: one per world
 //
 // A SimulatedPlayer cannot operate a crafting grid, so the craft is imitated by
-// putting an *unmarked* andrew:web_sword into the player's inventory. That is
-// not a shortcut around the gate — it is the same path a real craft takes: the
-// gate has no "before craft" event to hook and reacts to an unmarked sword
-// appearing in an inventory, whatever put it there.
+// putting the recipe's output — the craft token — into the player's inventory.
+// The gate has no "before craft" event to hook and reacts to a token appearing
+// in an inventory, whatever put it there (AD-lgnd-08). The recipe itself is run
+// by a Crafter in legendary-craftgate.ts.
 // [src: decision-q-008-blocked-craft-refund-a-obnaruzhit-i-vernut]
 //
 // The gate itself lives in the *release* behavior pack, which this world loads
@@ -316,9 +316,9 @@ function countOf(container: Container, itemId: string): number {
   return countByType(container).get(itemId) ?? 0;
 }
 
-/** Hand the player an unmarked sword — the stand-in for a completed craft. */
+/** Hand the player a craft token — the stand-in for a completed craft. */
 function fakeCraft(player: Player): void {
-  inventoryOf(player).addItem(new ItemStack(WEB_SWORD_ID, 1));
+  inventoryOf(player).addItem(new ItemStack(WEB_SWORD.craftTokenId, 1));
 }
 
 // The world flag is durable by design, so it survives from one test to the
@@ -429,9 +429,7 @@ register("andrew", "websword_creative_ignored", (test: Test): void => {
 // The sword handed out here is marked with origin "admin", the same stamp
 // /andrew:websword give writes. That is deliberate: it is retained on death
 // exactly like a crafted one, but it does not spend the world's single craft,
-// so these scenarios cannot interfere with the gate ones above — and it also
-// walks straight past the gate, which would otherwise treat an *unmarked*
-// sword handed to a Survival player as a craft.
+// so these scenarios cannot interfere with the gate ones above.
 // [src: decision-q-006-web-sword-provenance-yes-metka-ekzemplyara]
 
 /** Must agree with DROP_SEARCH_RADIUS in src/legendary/retention.ts. */
@@ -524,28 +522,13 @@ register("andrew", "websword_death_returns", (test: Test): void => {
 // retention must not latch onto it: no pending mark, and nothing handed back.
 // [src: decision-q-006-web-sword-provenance-yes-metka-ekzemplyara]
 //
-// The player starts in Creative and dies in Survival, and both halves are
-// load-bearing:
-//
-//   Creative when the sword arrives, because that is the one game mode the
-//   craft gate exempts — in Survival an unmarked sword is by definition a
-//   craft, and the gate would mark it or take it back before it could be the
-//   control for anything;
-//
-//   Survival when the killing happens, because a Creative player cannot be
-//   killed. Measured on BDS 1.26.51.1: the first version of this scenario
-//   stayed Creative throughout, went green, and proved nothing — kill() raised
-//   no entityDie at all, so retention was never asked the question. The death
-//   witness below is what makes the negative claim mean something.
+// The player starts in Creative and dies in Survival. The Survival half is
+// load-bearing: a Creative player cannot be killed. Measured on BDS 1.26.51.1:
+// the first version of this scenario stayed Creative throughout, went green,
+// and proved nothing — kill() raised no entityDie at all, so retention was
+// never asked the question. The death witness below is what makes the
+// negative claim mean something.
 register("andrew", "websword_unmarked_drops", (test: Test): void => {
-  // Pin the gate into its refund branch for the whole scenario. After
-  // respawning, the player may well walk back over their own drop; with the
-  // world's craft budget spent the gate takes the sword back rather than
-  // stamping a mark on it, so the assertions below cannot be tripped by the
-  // gate doing its own job.
-  // [src: decision-q-008-blocked-craft-refund-a-obnaruzhit-i-vernut]
-  setCrafted("andrew_control");
-
   const player = test.spawnSimulatedPlayer(STAND_B, "andrew_bystander", GameMode.Creative);
 
   let died = false;
@@ -601,11 +584,7 @@ register("andrew", "websword_unmarked_drops", (test: Test): void => {
 
 // ----------------------------------------------- Web Sword: the trap ability
 //
-// The sword handed out below is marked "admin", for the same two reasons the
-// retention scenarios use that stamp: it does not spend the world's single
-// craft, and it walks past the craft gate, which would otherwise treat an
-// unmarked sword appearing in a Survival inventory as a craft and confiscate
-// it mid-scenario.
+// The sword handed out below is marked "admin", as in the retention scenarios.
 //
 // Coordinates: everything below is structure-relative, including the arguments
 // to lookAtBlock/lookAtLocation.
@@ -1117,16 +1096,7 @@ function meleeHit(
 }
 
 
-/**
- * A Scythe the craft gate will leave alone.
- *
- * The Scythe is a registered legendary, so an *unmarked* one appearing in a
- * Survival player's inventory is a craft: the first is claimed and marked, and
- * every later one is confiscated and refunded — which is what silently emptied
- * this test's hand and made every dig measurement read bare-hand speed
- * (16 ticks on hay, 7 on leaves, both exactly hand). Handing over an
- * admin-marked instance is the same thing `/andrew:websword give` does.
- */
+/** An admin-marked Scythe — the same thing `/andrew:scythe give` hands out. */
 function giveMarkedScythe(player: SimulatedPlayer): void {
   const stack = state.markItem(
     SCYTHE_OF_CALAMITY,

@@ -31,7 +31,7 @@ export interface CraftDecisionInput {
 }
 
 /**
- * What a survival-craft-shaped event should do with the resulting item.
+ * What a craft should do with the resulting item.
  *
  * Creative/Spectator and already-marked results are left alone (Q-015):
  * admin/dev copies and existing instances never trigger the one-per-world
@@ -46,6 +46,19 @@ export function craftDecision({ crafted, gameMode, marked }: CraftDecisionInput)
     return "ignore";
   }
   return crafted ? "refund" : "claim";
+}
+
+/**
+ * What the gate does with a craft token that reached a player's inventory
+ * (AD-lgnd-08): swap it for the marked weapon and spend the world's craft,
+ * swap it for the ingredients, or — where craftDecision ignores the result —
+ * swap it for an ordinary unmarked weapon. A token is never left in place.
+ */
+export type TokenDecision = "claim" | "refund" | "unwrap";
+
+export function tokenDecision(crafted: boolean, gameMode: GameMode): TokenDecision {
+  const decision = craftDecision({ crafted, gameMode, marked: false });
+  return decision === "ignore" ? "unwrap" : decision;
 }
 
 /** Ticks remaining until `until`, clamped to zero — never negative. */

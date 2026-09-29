@@ -193,9 +193,10 @@ test('Scythe of Calamity recipe', async (t) => {
     assert.strictEqual(flat.filter((c) => c === 'H').length, 1, 'exactly 1 diamond hoe is required');
   });
 
-  await t.test('result is exactly one andrew:scythe_of_calamity', () => {
+  // The craft token, not the weapon: the craft gate swaps it for andrew:scythe_of_calamity (AD-lgnd-08).
+  await t.test('result is exactly one andrew:scythe_of_calamity_crafted', () => {
     const result = recipeJson['minecraft:recipe_shaped'].result;
-    assert.strictEqual(result.item, 'andrew:scythe_of_calamity', 'result item must be andrew:scythe_of_calamity');
+    assert.strictEqual(result.item, 'andrew:scythe_of_calamity_crafted', 'result item must be the craft token andrew:scythe_of_calamity_crafted');
     assert.strictEqual(result.count ?? 1, 1, 'result count must be 1');
   });
 

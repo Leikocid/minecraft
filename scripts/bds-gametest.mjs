@@ -142,6 +142,10 @@ const EXPECTED_TESTS = [
   'andrew:probe_xcx9_give_then_craft',
   'andrew:probe_xcx9_give_after_craft',
   'andrew:probe_xcx9_creative_copy_pickup',
+  // LGND-CRAFTGATE-01 — src/gametest/legendary-craftgate.ts
+  'andrew:legendary_give_then_craft_web_sword',
+  'andrew:legendary_give_then_craft_scythe',
+  'andrew:legendary_second_real_craft_refunded',
   // STRF-REG-01 — src/gametest/strf-registry.ts
   'andrew:strf_registry_steps_idempotent',
   // STRF-ROLL-01 — src/gametest/structures.ts
