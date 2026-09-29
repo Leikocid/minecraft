@@ -94,6 +94,9 @@ const EXPECTED_TESTS = [
   'andrew:websword_creative_ignored',
   'andrew:websword_death_returns',
   'andrew:websword_unmarked_drops',
+  // CX-lgnd-10 — src/gametest/probe-retention.ts
+  'andrew:probe_retention_two_copies',
+  'andrew:probe_retention_offhand',
   'andrew:websword_cube_placed',
   'andrew:websword_protected_skipped',
   'andrew:websword_out_of_reach_noop',
