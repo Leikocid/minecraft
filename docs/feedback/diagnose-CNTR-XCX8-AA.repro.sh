@@ -32,6 +32,14 @@ node -e '
   fs.writeFileSync(f, s.replace(marker, marker + "\n  \"andrew:probe_xcx8_swing\","));
 ' || exit 1
 
+# tsc resolves the probe against the pinned stable typings only; the gametest
+# world below runs with the Beta APIs experiment on, so it cannot prove this.
+d=node_modules/@minecraft/server
+echo "@minecraft/server $(node -p "require('./$d/package.json').version")"
+grep -nE "readonly (playerSwingStart|playerButtonInput):|^    Attack = 'Attack'|^export (class PlayerSwingStartAfterEvent|enum EntitySwingSource) " "$d/index.d.ts"
+npx tsc --noEmit -p . || exit 1
+echo "tsc: probe compiles against the stable typings"
+
 node scripts/bds-gametest.mjs --only andrew:probe_xcx8_swing || exit 1
 grep -E "\[probe\] XCX8" "$log" | sed 's/.*\[probe\] //'
 grep -q "XCX8 RESULT .*verdict=attack-swing-fires-without-a-hit" "$log"
