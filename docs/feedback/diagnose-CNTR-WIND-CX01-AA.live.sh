@@ -52,7 +52,10 @@ wait_for() { # pattern, seconds
   done
 }
 
-docker exec "$NAME" send-command "andrew:structure enable windmill"
+# The image's send-command finds no server under Rosetta; same stdin write as scripts/bds-gametest.mjs sendCommand.
+PID="$(docker exec "$NAME" sh -c 'for p in /proc/[0-9]*; do c=$(tr "\0" " " < $p/cmdline); case "$c" in *mc-server-runner*) continue;; *bedrock_server-*) basename $p; break;; esac; done')"
+[[ "$PID" =~ ^[0-9]+$ ]] || { echo "FAIL: no bedrock_server process in $NAME (got '$PID')"; exit 1; }
+docker exec "$NAME" sh -c "echo 'andrew:structure enable windmill' > /proc/$PID/fd/0"
 wait_for 'spawn windmill: search finished' 900
 echo "--- live log (spawn search) ---"
 logs | grep -E 'Difficulty:|Pack Stack - \[00\]|spawn windmill:|windmill:spawn placement threw' | sed -n '1,40p'
