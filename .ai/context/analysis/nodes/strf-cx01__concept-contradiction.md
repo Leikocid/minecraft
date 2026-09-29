@@ -10,7 +10,7 @@ part_of: ["L0-strf"]
 relates_to: ["L0-strf"]
 priority: 530
 size_chars: 1621
-tags: ["is_a:contradiction", "category:invariant-violation", "severity:high", "status:open", "target:L0-strf", "relates_to:L0-infr", "relates_to:L0-strf-d003", "title:Per-pack dynamic properties vs the arm-in-gametest-pack test convention"]
+tags: ["is_a:contradiction", "category:invariant-violation", "severity:high", "status:resolved", "resolved_by:L0-adr-own", "target:L0-strf", "relates_to:L0-infr", "relates_to:L0-strf-d003", "title:Per-pack dynamic properties vs the arm-in-gametest-pack test convention"]
 level: 2
 ---
 # Contradiction — the test convention "arm production modules inside the gametest pack" vs the single-registry invariant (C-7)
@@ -21,6 +21,4 @@ level: 2
 
 **Conflict.** If both the release pack and the gametest pack run `strf` discovery in the same BDS world, each has its **own** salt and registry. Both would generate structures on the same chunks, placing different rotations over each other, filling chests twice and doubling guards. Also, the release pack's discovery reads `getAllPlayers()` entries that are unreadable for SimulatedPlayers. So the GameTest cannot drive the release pack's `strf` at all.
 
-**Proposed resolution** (see `L0-strf-d003`). `strf` exposes `startStrf({ owner })`. The release pack calls it only if the gametest pack is **not** present. Detection uses a `scriptevent andrew:strf_owner` handshake at startup: the gametest pack claims ownership, and the release pack yields. BDS structure tests therefore run the gametest pack's copy exclusively.
-
-**Needs.** Confirmation that the handshake is acceptable for `infr`'s harness. Alternative: a separate BDS world profile without the release pack for structure tests.
+**As built:** see resolution — release gated by `EnabledTypes`, test packs use per-test runtimes; no handshake.

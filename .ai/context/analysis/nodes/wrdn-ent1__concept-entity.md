@@ -14,19 +14,19 @@ level: 2
 ---
 ## MiniWardenCityInstance
 
-One per generated city. Written once at successful placement; read for idempotency checks on every subsequent chunk load.
+One per generated city. Written once at successful placement; the instance is an `L0-strf-e002` InstanceRecord, and idempotency is `L0-strf-r008`.
 
 **Attributes**
 - `instanceId` — stable key derived from anchor chunk coordinates (dimension is always Overworld, so no dimension field needed).
 - `anchorPosition` — world position of the template's placement anchor (pre-rotation origin).
 - `rotation` — one of `0 | 90 | 180 | 270`, chosen once at generation.
 - `topY` — integer in `[-45, -35]`, chosen once at generation, independent of the candidate roll.
-- `footprintApprox` — fixed constant, ≈30×30×(10–15), documented for reference (not stored per instance; same for every city).
+- `footprintApprox` — fixed constant, `[63, 20, 63]` (`WARDEN_CITY_SIZE`), documented for reference (not stored per instance; same for every city).
 - `surfaceMarkerPosition` — surface coordinate of the ~5×5 sculk patch, derived from `anchorPosition` + `rotation`.
 - `centralHallBounds` / `monumentBounds` — derived from the fixed template + rotation; used for the "digging down from marker hits the hall" guarantee (`L0-wrdn-rul3`).
-- `state` — `candidate → placed | cancelled`. Cancelled instances are not persisted (no relocation, per `L0-wrdn-rul1`).
+- `state` — `L0-strf-e002` states; the candidate is `L0-strf-e003` and is never persisted (no relocation, per `L0-wrdn-rul1`).
 - `placedAtTick` / `placedAtTimestamp` — for persistence/idempotency auditing.
 
 **Relates to:** `L0-wrdn-ent2` (chests), `L0-wrdn-ent3` (shriekers) — both keyed by `instanceId`.
 
-**Invariant:** exactly one `MiniWardenCityInstance` per anchor chunk; a reload must find the existing record and skip re-placement (`L0-wrdn-rul7`).
+**Invariant:** exactly one `MiniWardenCityInstance` per anchor chunk; a reload must find the existing record and skip re-placement (`L0-strf-r008`, `L0-strf-r002` §3).

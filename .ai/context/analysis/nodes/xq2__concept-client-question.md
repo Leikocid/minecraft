@@ -19,7 +19,7 @@ level: 1
 - Mini Warden City and Mini Bastion at 5 % ≈ one candidate per 20 chunks, i.e. one every ~72 blocks on average, before cancellations. A player crossing 1 000 blocks of Overworld passes near roughly 10–15 Warden Cities. Vanilla Ancient Cities are far rarer.
 - Airship at 2 % ≈ one per 50 chunks (~113 blocks), on top of one linked Airship per Windmill.
 - Windmill at 1 % ≈ one per 100 chunks (~160 blocks).
-- The 30×30 city footprint spans 2–3 chunks. At 5 %, neighbouring candidates collide often, so the effective density is lower than 5 % and uneven.
+- The 63×63 city footprint spans 4–5 chunks per axis. At 5 %, neighbouring candidates collide often, so the effective density is lower than 5 % and uneven.
 
 **Question.** Are these numbers per chunk, as written? Or were they meant as "per suitable region" or relative to vanilla rarity (e.g. comparable to villages)?
 

@@ -12,7 +12,7 @@ size_chars: 986
 tags: ["CAN_ASSUME", "is_a:assumption", "mobs"]
 level: 2
 ---
-**ASM-wrdn-02 · No mobs beyond the 2 Shriekers (and Warden via their mechanic) are placed**
+**ASM-wrdn-02 · No mobs beyond the 8 Shriekers (and Warden via their mechanic) are placed**
 
 §13 never mentions spawners or one-time guard mobs for Mini Warden City, unlike Windmill (3 vanilla-like spawners + 10 persistent Zombie Villagers) and Mini Bastion (7–10 Piglins + 2 Piglin Brutes, explicitly "спавнеры не требуются, охрана — одноразовый набор").
 

@@ -9,7 +9,7 @@ part_of: ["L0-bast"]
 relates_to: ["L0-bast"]
 priority: 530
 size_chars: 358
-tags: ["is_a:acceptance-criterion", "spec-test:54", "treasure-room", "lava"]
+tags: ["is_a:acceptance-criterion", "spec-test:54", "treasure-room", "lava", "verify:bds"]
 level: 2
 ---
 **AC-bast-04** (spec test 54)

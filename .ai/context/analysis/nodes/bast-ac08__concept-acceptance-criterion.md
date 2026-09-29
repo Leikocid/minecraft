@@ -9,7 +9,7 @@ part_of: ["L0-bast"]
 relates_to: ["L0-bast"]
 priority: 530
 size_chars: 277
-tags: ["is_a:acceptance-criterion", "spec-test:58", "persistence"]
+tags: ["is_a:acceptance-criterion", "spec-test:58", "persistence", "verify:bds"]
 level: 2
 ---
 **AC-bast-08** (spec test 58)

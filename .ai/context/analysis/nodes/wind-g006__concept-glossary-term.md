@@ -14,6 +14,6 @@ level: 2
 ---
 **Linked Airship (связанный Дирижабль)**
 
-The Airship that each Windmill tries once to create 40–100 blocks from its centre, not over its plot. Recorded on the Windmill as `x.linkedTried`; the Airship's registry id is `airship:L:<windmillId>`. An independent 2 % Airship nearby never counts as linked.
+The Airship that each Windmill tries once to create 40–100 blocks from its centre, not over its plot. Recorded as `la` (tried) + `ls` (outcome); id `airship:linked:<windmillId>:<slot>`. An independent 2 % Airship nearby never counts as linked.
 
 **Contrast:** *independent Airship* — the 2 %-per-chunk roll.

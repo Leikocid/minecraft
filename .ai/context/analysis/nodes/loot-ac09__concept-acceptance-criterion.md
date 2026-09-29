@@ -12,6 +12,6 @@ size_chars: 341
 tags: ["is_a:acceptance-criterion", "relates_to:L0-loot-p002", "relates_to:L0-wrdn", "source:spec-13.6-AC48"]
 level: 2
 ---
-GIVEN Mini Warden City's 10 chests, WHEN their contents are inspected, THEN all 10 use the real vanilla `chests/ancient_city` loot table unmodified — including the normal possibility of rare vanilla drops such as Enchanted Golden Apple or Swift Sneak books — and the custom weighted table is never applied to them.
+GIVEN Mini Warden City's 40 chests, WHEN their contents are inspected, THEN all 40 use the real vanilla `chests/ancient_city` loot table unmodified — including the normal possibility of rare vanilla drops such as Enchanted Golden Apple or Swift Sneak books — and the custom weighted table is never applied to them.
 
 Source: spec §13.6, AC48.

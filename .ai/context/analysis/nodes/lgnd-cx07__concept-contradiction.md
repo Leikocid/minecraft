@@ -10,19 +10,21 @@ part_of: ["L0-lgnd"]
 relates_to: ["L0-lgnd"]
 priority: 530
 size_chars: 1356
-tags: ["is_a:contradiction", "source-vs-code", "migration", "status:open"]
+tags: ["is_a:contradiction", "source-vs-code", "migration", "status:resolved"]
 level: 2
 ---
 ---
 is_a: ["contradiction"]
 part_of: ["L0-lgnd"]
 relates_to: ["L0-lgnd-ad01", "L0-lgnd-ac01", "L0-lgnd-r006", "L0-lgnd-ent3"]
-status: open
+status: resolved
 category: source-vs-code
 ---
 # CX-lgnd-07 · The 0.3.0 Web Sword cooldown key is orphaned on upgrade
 
-**Design.** `L0-lgnd-ad01`, `ent3` and `ac01` say the Web Sword keeps `andrew:ws_cooldown_until`, so a sword that is cooling at upgrade time is still cooling afterwards. `ac01` asserts: "P's HUD shows the Web Sword cooling with ≤ 20 s".
+Resolved by `L0-adr-wpn2` (accepted), option (a).
+
+**Design.** `L0-lgnd-ad01`, `ent3` and `ac01` say the Web Sword keeps `andrew:ws_cooldown_until`, so a sword that is cooling at upgrade time is still cooling afterwards. `ac01` asserted "P's HUD shows the Web Sword cooling with ≤ 20 s" — no longer true of live `ac01`, which now carries the `wpn2` ruling.
 
 **Code.**
 - 0.3.0 (`git show 392253d^:src/websword/state.ts`) wrote `DP_COOLDOWN_UNTIL = "andrew:ws_cooldown_until"`.

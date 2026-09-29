@@ -10,7 +10,7 @@ part_of: ["L0"]
 relates_to: ["L0"]
 priority: 520
 size_chars: 729
-tags: ["target:L0-infr","status:open","category:source-vs-source","severity:low","title:API/engine version targets differ","resolved"]
+tags: ["target:L0-infr","status:resolved","category:source-vs-source","severity:low","title:API/engine version targets differ","resolved"]
 closed_at: 2026-09-24
 closed_reason: resolved_by_decision
 closed_by_ref: decision-resolve-cool-ctr4
@@ -22,4 +22,4 @@ closed_by_ref: decision-resolve-cool-ctr4
 - `stage-0-infrastructure`: 2.9.0, "if needed 2.10.0".
 - `analysis/constraints.md` + `scripts/targets.mjs` + `package.json`: pinned **2.10.0**, engine **[1,26,50]**, BDS 1.26.51.1.
 
-The code follows `decision-tselevaya-versiya-bedrock-1-26-51-asm-001-q-001`, which also matches the pickaxe spec's rule to retarget from the actual game version. The contradiction is between raw sources only; no code change is needed. Keep it open until the raw specs are annotated, so later readers don't retarget back to 2.9.0.
+The code follows `decision-tselevaya-versiya-bedrock-1-26-51-asm-001-q-001`, which also matches the pickaxe spec's rule to retarget from the actual game version. The contradiction is between raw sources only; no code change is needed. Closed by `decision-resolve-cool-ctr4`; a retarget back to 2.9.0 turns `validate`/`gametest-pack`/`selftest-pack` tests red.

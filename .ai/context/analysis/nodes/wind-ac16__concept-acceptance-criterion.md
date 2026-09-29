@@ -18,7 +18,7 @@ level: 2
 **Spec:** test 33, §5.6.
 
 GIVEN the spawn Windmill and a forced normal Windmill that already has an independent Airship within 100 blocks
-THEN each Windmill's record has `x.linkedTried` set once with an outcome
-AND where the outcome is `placed`, an `airship:L:<windmillId>` exists 40–100 blocks from the Windmill centre and not over its plot
+THEN each Windmill's record has `la=true` once, with `ls` ∈ {placed, none}
+AND where the outcome is `placed`, an `airship:linked:<windmillId>:<slot>` exists 40–100 blocks from the Windmill centre and not over its plot
 AND the independent Airship did not stop the linked attempt
 AND restarts do not create a second linked Airship.

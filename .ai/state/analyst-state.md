@@ -74,19 +74,19 @@ last_run:
     - stage: rollout
       entered_at: '2026-09-29T19:09:13.581Z'
 last_rollout_hashes:
-  project-knowledge/glossary.md: 825c1021d33e942e
-  project-knowledge/business-rules.md: ee27f716ce5399c3
-  project-knowledge/boundaries.md: a65577e12b849e76
-  project-knowledge/intent.md: 07cff0e1a496ae82
-  project-knowledge/domain-model.md: f00f536d8be51b72
-  project-knowledge/architecture.md: f8290ab0d88f380b
-  assumptions.md: cbe126568ce4181f
-  contradictions.md: e97679f585a7bda9
-  client-questions.md: 9a04c139e75beb91
-  summary.md: d3bb69a73ecfb912
-  scope.md: 6168ee4cf1be604c
-  risks.md: e34753667b586e10
-  decisions.md: b656378471e427f7
+  project-knowledge/glossary.md: d0c0d97d3339ecc4
+  project-knowledge/business-rules.md: a019822ab8958070
+  project-knowledge/boundaries.md: 52130c6cd83d1194
+  project-knowledge/intent.md: f3fd26f46ed66ec4
+  project-knowledge/domain-model.md: 01256ef385138194
+  project-knowledge/architecture.md: 0c9e6607c0413135
+  assumptions.md: a8fc7fce5cbdfbdd
+  contradictions.md: 046bc083c999792e
+  client-questions.md: 1a227ea7261dc1dd
+  summary.md: 7e82ac0ca52ab410
+  scope.md: de7383b11a2baf63
+  risks.md: 3d57d6e55e31f021
+  decisions.md: 157178718b21fa00
 runtime_vocabulary:
   concept-boundary:
     description: Seen at runtime

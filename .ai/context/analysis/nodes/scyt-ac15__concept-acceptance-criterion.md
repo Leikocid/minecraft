@@ -20,6 +20,6 @@ level: 2
 - **BDS** (`scythe_melee_matches_netherite`, green): a melee hit on a cow removes as much health as a vanilla netherite sword.
 - **BDS:** a melee hit starts no cooldown, spawns no volley and does not set busy.
 - **BDS:** there is no durability component, so repeated hits cause no loss.
-- **BDS:** the enchanting table and anvil accept sword enchantments (Sharpness, Fire Aspect).
-- **Open (`L0-scyt-cx03`):** the item carries `is_hoe`/`is_tool` tags and a hoe digger. Whether Use on grass tills, and whether hoe enchantments such as Efficiency apply, is **not verified**. Do not assert "does not till" until `cx03` is decided.
+- **BDS:** selftest `scythe-enchantable`: engine accepts `sharpness` and refuses `efficiency` (`canAddEnchantment`); the enchanting-table and anvil UI are not exercised on BDS.
+- **Open (`L0-scyt-cx03`):** the item carries `is_hoe`/`is_tool` tags and a hoe digger. Whether Use on grass tills is **not verified**; hoe-only enchantments (efficiency, fortune, silk_touch) are refused by the engine (measured 2026-09-29). Do not assert "does not till" until `cx03` is decided.
 - **iPad (C-9):** the item appears in Creative under Equipment → **Hoes** (group `itemGroup.name.hoe`) and in search. The names are «Коса бедствия» / "Scythe of Calamity". The icon renders. `/andrew:scythe` gives a copy.

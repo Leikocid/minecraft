@@ -10,7 +10,7 @@ part_of: ["L0-airs"]
 relates_to: ["L0-airs"]
 priority: 530
 size_chars: 372
-tags: ["is_a:acceptance-criterion", "spawner"]
+tags: ["is_a:acceptance-criterion", "spawner", "verify:bds"]
 level: 2
 ---
 # AC — exactly one iron-axe Vindicator spawner at the corridor centre

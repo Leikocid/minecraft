@@ -1,13 +1,13 @@
 ---
 title: Decisions
 type: analysis
-generated_at: "2026-09-26T08:34:28.670Z"
+generated_at: "2026-09-29T21:19:00.100Z"
 source_channel: rollout
 node_id: rollout-decisions
 aliases: ["rollout-decisions","decisions"]
 is_a: ["rollout","decisions"]
-relates_to: ["decision-completion-flow-quick","decision-merge-policy-autopilot","decision-namespace-addona-andrew-asm-002-q-002","decision-tselevaya-versiya-bedrock-1-26-51-asm-001-q-001","decision-verification-approach-automatic","decision-windows-pk-ne-nuzhen-q-004","decision-yazyk-skriptov-typescript-asm-003-q-003","decision-zacharovanie-bez-durability-proverit-pervoy-zada","decision-q-006-web-sword-provenance-yes-metka-ekzemplyara","decision-q-007-enchantable-without-durability-podtverzhde","decision-q-008-blocked-craft-refund-a-obnaruzhit-i-vernut","decision-q-009-cooldown-persistence-sohranyat-mezhdu-vyho","decision-q-010-main-hand-off-hand-priority-otlozheno","decision-q-011-cube-geometry-27-kletok-tsentr-sosednyaya-","decision-q-012-two-player-dod-gametest-s-dvumya-simulated","decision-q-013-protected-blocks-zakrytyy-spisok-posture-s","decision-q-014-budget-after-destruction-pravo-ostaetsya-p","decision-q-015-gate-game-modes-survival-i-adventure","decision-q-016-sword-unlootable-podtverzhdeno-kak-zaduman","decision-q-017-zero-cells-proval-s-lokalizovannym-soobsch","decision-resolve-l0","decision-resolve-l0-keep-ctr006","decision-resolve-l0-once","decision-resolve-l0-qatg-ctr1","decision-resolve-l0-trap-ct07","decision-resolve-l0-trap-ct08","decision-web-sword-item-values-uron-kak-u-vanilnogo-almaz","decision-legendary-hand-priority-realizuem-seychas-osnovn","decision-legendary-ready-hud-gotovo-pokazyvaetsya-postoya","decision-legendary-rules-obschie-dlya-vseh-legendarnyh-vk","decision-resolve-cool-ctr1","decision-resolve-cool-ctr2","decision-resolve-cool-ctr3","decision-resolve-cool-ctr4","decision-resolve-l0-lgnd-cx01","decision-resolve-l0-sprj-cx02","decision-resolve-l0-xcx3","decision-scythe-enchantments-slot-sword","decision-scythe-hidden-target-dynamic-property-andrew-hid","decision-scythe-launch-applyknockback-s-kalibrovannoy-ver","decision-scythe-melee-damage-8-proveryaetsya-zamerom-prot","decision-scythe-projectiles-virtualnye-bez-suschnostey-ri","decision-scythe-true-damage-pryamoe-umenshenie-zdorovya-d","decision-scythe-targets-mobs-moby-tozhe-tseli-igrok-v-pri"]
-priority: 530
+relates_to: ["decision-completion-flow-quick","decision-merge-policy-autopilot","decision-namespace-addona-andrew-asm-002-q-002","decision-tselevaya-versiya-bedrock-1-26-51-asm-001-q-001","decision-verification-approach-automatic","decision-windows-pk-ne-nuzhen-q-004","decision-yazyk-skriptov-typescript-asm-003-q-003","decision-zacharovanie-bez-durability-proverit-pervoy-zada","decision-q-006-web-sword-provenance-yes-metka-ekzemplyara","decision-q-007-enchantable-without-durability-podtverzhde","decision-q-008-blocked-craft-refund-a-obnaruzhit-i-vernut","decision-q-009-cooldown-persistence-sohranyat-mezhdu-vyho","decision-q-010-main-hand-off-hand-priority-otlozheno","decision-q-011-cube-geometry-27-kletok-tsentr-sosednyaya-","decision-q-012-two-player-dod-gametest-s-dvumya-simulated","decision-q-013-protected-blocks-zakrytyy-spisok-posture-s","decision-q-014-budget-after-destruction-pravo-ostaetsya-p","decision-q-015-gate-game-modes-survival-i-adventure","decision-q-016-sword-unlootable-podtverzhdeno-kak-zaduman","decision-q-017-zero-cells-proval-s-lokalizovannym-soobsch","decision-resolve-l0","decision-resolve-l0-keep-ctr006","decision-resolve-l0-once","decision-resolve-l0-qatg-ctr1","decision-resolve-l0-trap-ct07","decision-resolve-l0-trap-ct08","decision-web-sword-item-values-uron-kak-u-vanilnogo-almaz","decision-legendary-hand-priority-realizuem-seychas-osnovn","decision-legendary-ready-hud-gotovo-pokazyvaetsya-postoya","decision-legendary-rules-obschie-dlya-vseh-legendarnyh-vk","decision-resolve-cool-ctr1","decision-resolve-cool-ctr2","decision-resolve-cool-ctr3","decision-resolve-cool-ctr4","decision-resolve-l0-lgnd-cx01","decision-resolve-l0-sprj-cx02","decision-resolve-l0-xcx3","decision-scythe-enchantments-slot-sword","decision-scythe-hidden-target-dynamic-property-andrew-hid","decision-scythe-launch-applyknockback-s-kalibrovannoy-ver","decision-scythe-melee-damage-8-proveryaetsya-zamerom-prot","decision-scythe-projectiles-virtualnye-bez-suschnostey-ri","decision-scythe-true-damage-pryamoe-umenshenie-zdorovya-d","decision-scythe-targets-mobs-moby-tozhe-tseli-igrok-v-pri","decision-ad-wrdn-01-l0-wrdn-ad01-podtverzhdeno-vanilnaya-","decision-adr-bast-02-l0-bast-ad02-podtverzhdeno-vanilnye-","decision-adr-l0-adr-strc-accepted-generatsiya-skriptom-pr","decision-adr-l0-adr-strs-accepted-s-ogovorkoy-q5-zond-str","decision-adr-l0-adr-tmpl-accepted-zond-strf-p006-q1-q2-q3","decision-adr-l0-wind-ad01-accepted-s-ogovorkoy-o-razmere-","decision-adr-strf-01-l0-strf-d001-accepted-determinirovan","decision-adr-strf-02-l0-strf-d002-accepted-spavnery-vanil","decision-l0-airs-cx01-zagruzka-chankov-koltsa-privyazanno","decision-l0-xcx6-edinstvennyy-istochnik-pravdy-po-generat","decision-l0-xcx7-kanal-dokazatelstva-u-kazhdogo-kriteriya","decision-l0-xq2-plotnost-struktur-shansy-na-chank-rovno-k","decision-l0-xq3-vozvrat-poteryannogo-oruzhiya-kraftivshem","decision-l0-xq4-melnitsa-u-spavna-bez-suhoy-zemli-mira-be","decision-dirizhabl-udlinyaetsya-protiv-razmera-v-speke-ra","decision-gorod-hranitelya-rastet-vchetvero-po-ploschadi-i"]
+priority: 540
 ---
 
 # Decisions
@@ -428,7 +428,7 @@ _Decided: 2026-09-24_
 _Decided: 2026-09-24_
 
 
-Решение (автопилот): minecraft:enchantable slot=sword, хотя база предмета — алмазная мотыга. Обоснование: спека §1 требует урона как у незеритового меча и разрешает совместимые чары базового предмета «если они не конфликтуют с механикой»; боевое назначение делает осмысленными именно мечевые чары (Sharpness, Unbreaking), а мотыжные к бою отношения не имеют. Закрывает CTR-2.
+Решение (автопилот): minecraft:enchantable slot=sword, хотя база предмета — алмазная мотыга. Обоснование: спека §1 требует урона как у незеритового меча и разрешает совместимые чары базового предмета «если они не конфликтуют с механикой»; боевое назначение делает осмысленными именно мечевые чары (Sharpness, Smite, Fire Aspect, Knockback, Looting), а мотыжные к бою отношения не имеют. Закрывает CTR-2.
 
 
 
@@ -499,6 +499,216 @@ _Decided: 2026-09-25_
 Приоритет: игрок побеждает любого моба в радиусе, как бы близко моб ни стоял. Иначе случайный зомби перехватывал бы залп, предназначенный противнику. Это один ключ сортировки в чистых правилах — если оператор захочет «побеждает ближайший, кто бы это ни был», меняется одна строка.
 Сообщение о промахе изменено по смыслу: «Здесь нет игрока» → «Здесь нет цели» (There is no target here). Скрытность (Shadow Blade) по-прежнему только про игроков.
 Замерено на BDS 1.26.51.1: игрок + более близкая корова → выбран игрок; в одиночку с коровой → выбрана корова, здоровье 10 → 7; только скрытый игрок → цели нет, кулдаун не тронут.
+
+
+
+
+
+## AD-wrdn-01 (L0-wrdn-ad01) подтверждено: ванильная таблица chests/ancient_city работает (зонд strf-p006, Q4) (decision-ad-wrdn-01-l0-wrdn-ad01-podtverzhdeno-vanilnaya-)
+
+_Decided: 2026-09-26_
+
+
+Узел L0-wrdn-ad01. Решение (все 10 сундуков Мини-Города Стража — ванильная таблица Ancient City) подтверждено измерением. Основание — docs/structures/probe-results.md, пункт Q4, новое измерение после исправления ошибки координат в зонде: dimension.runCommand('loot insert x y z loot "chests/ancient_city"') дважды заполнил сундук разным ванильным содержимым. Движок принимает голый id в кавычках, без loot_tables/ и без .json. В полный сундук команда возвращает successCount=1, но ничего не кладёт, поэтому заполнение проверяется по содержимому контейнера. Первый вывод FAIL из PRB-LOOT-01-AA ложный и отозван.
+
+
+
+
+
+## ADR-bast-02 (L0-bast-ad02) подтверждено: ванильные bastion_treasure / bastion_other работают (зонд strf-p006, Q4) (decision-adr-bast-02-l0-bast-ad02-podtverzhdeno-vanilnye-)
+
+_Decided: 2026-09-26_
+
+
+Узел L0-bast-ad02. Решение (сундуки Мини-Бастиона — ванильные таблицы Bastion Remnant: treasure для 3 центральных, other для 7 внешних) подтверждено измерением. Основание — docs/structures/probe-results.md, пункт Q4, новое измерение: loot insert … loot "chests/bastion_treasure" и "chests/bastion_other" через dimension.runCommand дважды дали разное ванильное содержимое (netherite_ingot и netherite_upgrade_smithing_template в treasure). Переход на нашу взвешенную таблицу, предложенный по ложному FAIL первого прогона, отменён.
+
+
+
+
+
+## ADR L0-adr-strc = accepted: генерация скриптом при обнаружении чанка (зонд strf-p006, Q2/Q7/Q9/Q10) (decision-adr-l0-adr-strc-accepted-generatsiya-skriptom-pr)
+
+_Decided: 2026-09-26_
+
+
+Узел L0-adr-strc. Статус меняется с proposed на accepted. Основание — docs/structures/probe-results.md. Q9 PASS: dimension.isChunkLoaded есть в 2.10.0 и 0 раз расходится с getBlock; в незагруженном чанке getBlock=undefined, а getTopmostBlock/setBlockType бросают LocationInUnloadedChunkError. Поэтому валидация (шаг 3) сначала вызывает isChunkLoaded, потом getTopmostBlock. Q7 PASS: place 35×30×35 = 38 мс (каждая клетка меняется) / 23 мс, 64 getBlock = 0,560 мс — укладывается в тик. Q2 PASS: поворот и начало координат верны. Q10: fillBlocks работает через границы чанков, но берёт не больше 32 768 клеток за вызов; объёмы больше режутся на куски — это деталь реализации, схему она не меняет.
+
+
+
+
+
+## ADR L0-adr-strs = accepted с оговоркой Q5 (зонд strf-p006, Q5/Q6/Q8) (decision-adr-l0-adr-strs-accepted-s-ogovorkoy-q5-zond-str)
+
+_Decided: 2026-09-26_
+
+
+Узел L0-adr-strs. Статус ADR (разреженный реестр; стражи по тегу и имени) меняется с proposed на accepted. Основание — docs/structures/probe-results.md. Q8: предел ключа 32 767 байт, записи региона помещаются. Q5 (bds:check, разгрузка + рестарт): выжили 10/10 именованных зомби-жителей, имена сохранили 10/10; контрольная группа без имени — тоже 10/10. Без игрока онлайн ничто не исчезает, поэтому доказана сохранность через разгрузку и перезапуск, а не то, что nameTag защищает от исчезновения по расстоянию. Эта часть остаётся предположением, её закрывает приёмочный тест Мельницы с игроком; запасной путь — список id стражей в динамическом свойстве мира и досоздание при загрузке чанка. Q6: бесконечная fire_resistance через runCommand держит ОЗ 20→20 в полдень (у контрольного 19→4) и переживает рестарт на 20/20. Вылеченный житель теряет эффект и тег, но сохраняет имя — именно этого требуют L0-wind-r005 и AC-wind-08; запасной путь зонда (вернуть эффект и тег) отвергнут как противоречащий спеке.
+
+
+
+
+
+## ADR L0-adr-tmpl = accepted (зонд strf-p006, Q1/Q2/Q3) (decision-adr-l0-adr-tmpl-accepted-zond-strf-p006-q1-q2-q3)
+
+_Decided: 2026-09-26_
+
+
+Узел L0-adr-tmpl. Статус ADR L0-adr-tmpl (шаблоны .mcstructure генерируются Node-скриптом из исходников в репо) меняется с proposed на accepted. Основание — docs/structures/probe-results.md, пункты Q1, Q2, Q3 (BDS 1.26.51.1, прогон 2026-09-26, артефакт .ai/verify/PRB-REPORT-01-AA/6.json). Q1 PASS: после structureManager.place сундуки остались сундуками с инвентарём, mob_spawner с EntityIdentifier выдал minecraft:zombie за 40 тиков. Q2 PASS: состояния (cardinal_direction, direction двери, weirdo_direction ступени, can_summon) и позиции верны при 0/90/180/270, а начало координат — минимальный угол. Q3 PASS: визгун с can_summon=true из шаблона вызвал Хранителя после 4 визгов (тик 694). Поправка: регистрацию пакетной структуры проверять через structureManager.get(id), потому что getPackStructureIds() пакетных структур не видит.
+
+
+
+
+
+## ADR L0-wind-ad01 = accepted с оговоркой о размере области (зонд strf-p006, Q9/Q11) (decision-adr-l0-wind-ad01-accepted-s-ogovorkoy-o-razmere-)
+
+_Decided: 2026-09-26_
+
+
+Узел L0-wind-ad01. Статус (поиск места для Мельницы у спавна через временные ticking area) меняется с proposed на accepted. Основание — docs/structures/probe-results.md, пункты Q11 и Q9. Q11 PASS: runCommand('tickingarea add circle … 2') в 500 блоках в мире без игрока загружает чанк за 17–19 тиков (759–853 мс), remove разгружает за 1 тик, предел — 10 областей (11-я: successCount=0). Q9: в мире без игрока не загружено ничего, спавн тоже, так что без ticking area поиск невозможен. Оговорка: предел одной области в 100 чанков (L0-wind-as11) зонд не мерил — проверен только круг радиуса 2 (5×5 чанков). Окно поиска не должно превышать проверенного размера, пока тело Мельницы не измерит его само.
+
+
+
+
+
+## ADR-strf-01 (L0-strf-d001) = accepted: детерминированные броски + битсет (зонд strf-p006, Q8) (decision-adr-strf-01-l0-strf-d001-accepted-determinirovan)
+
+_Decided: 2026-09-26_
+
+
+Узел L0-strf-d001. Статус ADR-strf-01 меняется с proposed на accepted. Основание — docs/structures/probe-results.md, пункт Q8 PASS (GameTest andrew:probe_dynamic_property_budget): одна строка динамического свойства — до 32 767 байт UTF-8 (32 767 ASCII / 16 383 кириллических символов, 32 768 → ArgumentOutOfBoundsError). Всего 1024 ключа × 32 767 = 33 574 826 байт записались без ошибки и без предупреждения движка. Битсет региона 32×32 чанка (128 байт) и компактные записи экземпляров укладываются с большим запасом.
+
+
+
+
+
+## ADR-strf-02 (L0-strf-d002) = accepted: спавнеры — ванильные блок-сущности из шаблона (зонд strf-p006, Q1) (decision-adr-strf-02-l0-strf-d002-accepted-spavnery-vanil)
+
+_Decided: 2026-09-26_
+
+
+Узел L0-strf-d002. Статус ADR-strf-02 меняется с proposed на accepted. Основание — docs/structures/probe-results.md, пункт Q1 PASS (GameTest andrew:probe_place_block_entities): mob_spawner с EntityIdentifier=minecraft:zombie из .mcstructure после place остаётся mob_spawner и выдаёт зомби за 40 тиков (2 с), а в контрольной коробке мобов нет. Запасной путь (скриптовый псевдо-спавнер) не нужен и не реализуется.
+
+
+
+
+
+## L0-airs-cx01 загрузка чанков кольца привязанного Дирижабля = временная область загрузки, но кольцо не расширяется и рельеф не правится (decision-l0-airs-cx01-zagruzka-chankov-koltsa-privyazanno)
+
+_Decided: 2026-09-26_
+
+
+Противоречие: привязанный к Мельнице Дирижабль ищется в кольце 40-100 блоков, но чанки там могут быть не загружены, а правило L0-airs-r004 запрещает 'форсировать размещение любой ценой' — в отличие от поиска Мельницы у спавна, где загрузка принудительная.
+Решение: **загружать чанки кольца временной ticking area можно**, расширять кольцо и править рельеф — нельзя.
+Обоснование, почему это не нарушает правило. 'Не форсировать' в L0-airs-r004 означает две конкретные вещи, названные там же: не расширять поиск за 100 блоков и не готовить площадку насильно, как это делает Мельница у спавна. Загрузка чанка — не то и не другое: она не меняет ни одного блока и не двигает границы поиска, она лишь даёт прочитать то, что в мире уже есть. Без неё привязанный Дирижабль не появился бы почти никогда: центры кандидатов — до 100 блоков (7 чанков), а читаемая область кандидата — до 140 блоков (9 чанков) от центра Мельницы, а вокруг только что поставленной Мельницы загружено заметно меньше — зонд измерил, что вокруг игрока держится около 4 чанков. То есть механика, прямо предусмотренная спекой (§5.6, у каждой Мельницы свой Дирижабль в 40-100 блоках), молча не работала бы в игре.
+Ограничения, которые остаются в силе: 1. Область загрузки временная: добавил, дождался, снял. Предел движка измерен зондом — 10 областей одновременно, и сорить ими нельзя. 2. Кольцо 40-100 не расширяется ни при каких условиях. Не нашлось места — привязанного Дирижабля у этой Мельницы нет, и это нормальный исход. 3. Рельеф не правится никогда. Асимметрия с Мельницей у спавна сохранена намеренно: там выравнивание разрешено спекой, здесь нет. 4. Попытка одна на экземпляр Мельницы, по флагу `la` (исход — `ls`) в её записи. 5. Если чанки кольца не удалось загрузить (например исчерпан предел областей), кандидат уходит в pending механизмом каркаса, а не теряется и не считается провалившейся попыткой.
+Target: L0-airs-cx01.
+
+
+
+
+
+## L0-xcx6 единственный источник правды по генерации/хранению/луту = strf и loot; пересказы в wrdn и bast недействительны (decision-l0-xcx6-edinstvennyy-istochnik-pravdy-po-generat)
+
+_Decided: 2026-09-26_
+
+
+Противоречие: Город Стража и Бастион пересказывают контракт структур своими словами вместо ссылок на strf-* / loot-*, и пересказ уже разошёлся с оригиналом.
+Решение: strf и loot — единственный источник правды по генерации, хранению состояния и луту. Любая формулировка в wrdn или bast, расходящаяся с ними, недействительна. Конкретно объявляю недействительными:
+1. bast-ad01 — утверждает, что генерация вешается на события генерации мира / загрузки чанка. Такого события в стабильном API нет вообще (L0-adr-strc, strf-p001). Обход идёт от позиции игрока с троттлингом. Это самый опасный пересказ из всех: агент, реализующий Бастион по этому узлу, пошёл бы искать несуществующее событие. 2. bast-as03 — вводит собственную метку экземпляра (динамическое свойство или тег блока/сущности) и тем создаёт второй источник правды для «уже инициализировано», конкурирующий с единым реестром по регионам (strf-r008, L0-adr-strs). Нарушает C-7. 3. bast-p001 шаг 2 — верен, но упускает отложенное состояние pending (strf-r002 §2, strf-r007). 4. Ссылки bast на несуществующих соседей L0-mill и L0-arsh читать как L0-wind и L0-airs. 5. wrdn-ad02 считает L0-xcx4 открытым; он закрыт в этом же прогоне через strf-p005 и L0-adr-spwn.
+Зависимости от зонда, которые wrdn и bast не назвали сами: wrdn зависит от пунктов 1, 2, 3, 4; bast — от 1, 2, 4, 5. Кроссворк в L0-adr-body.
+Порядок действий: запускаю analyze --incremental, чтобы пересказы в узлах заменились ссылками — потому что агенты-исполнители читают узлы KV, а не этот чат, и оставленный пересказ про несуществующее событие сработал бы как инструкция. Плюс те же поправки дублирую в описания карточек. Target: L0-xcx6.
+
+
+
+
+
+## L0-xcx7 канал доказательства у каждого критерия структур = внешность на iPad, всё остальное на BDS (decision-l0-xcx7-kanal-dokazatelstva-u-kazhdogo-kriteriya)
+
+_Decided: 2026-09-26_
+
+
+Противоречие: критерии приёмки структур 14-59 разделены по каналам только у Мельницы (14 bds + 4 ipad). У Дирижабля (8), Города Стража (10) и Бастиона (9) канал не указан вообще, хотя iPad-часть есть у airs-ac01 (облик) и wrdn-ac09 (темнота); узнаваемость Города и Бастиона записана правилами wrdn-rul2 и bast-r002, а на доске проверяется критериями DEMO-S4-01-AA AC#8 и AC#9.
+Решение: принимаю промежуточное правило разбора как обязательное. Критерий, у которого следствие говорит о внешности, узнаваемости, освещении, настроении или «читается как», имеет канал ipad. Всё остальное — bds. Разделение проставляется при планировании, в карточках задач, и без канала ни один критерий структур в план не попадает.
+Почему это не мелочь: критерии DEMO-S2-AA и DEMO-S3-AA были type:manual — канал стоял; ai-kit закрывает manual-критерий любым не-null значением исполнителя или инспектора, и канал это не предотвращает (CNTR-XCX7-AA, П-1). C-9 (нумерация L0, `concept-constraint.md:20`) это запрещает.
+Практическое следствие для оператора: глазами на iPad ему придётся смотреть только на внешность — что постройка похожа на то, чем должна быть. Всё счётное (сколько сундуков, где спавнеры, какие состояния блоков, статистика шанса) доказывается движком без него. Target: L0-xcx7.
+
+
+
+
+
+## L0-xq2 плотность структур = шансы на чанк ровно как в спеке, одной конфигурационной таблицей (decision-l0-xq2-plotnost-struktur-shansy-na-chank-rovno-k)
+
+_Decided: 2026-09-26_
+
+
+Вопрос: 1% Мельница / 2% Дирижабль / 5% Город Стража / 5% Бастион — это правда на чанк, или имелось в виду «на подходящий регион»?
+Решение (автопилот, default CAN_ASSUME): реализуем ровно как написано — на чанк. Все четыре числа живут константами в одной конфигурационной таблице strf; статистические тесты меряют против этих же констант, а не против зашитых чисел. Смена любого шанса = правка одной строки.
+Обоснование: спека говорит именно это. Домыслить «на регион» вместо написанного — подмена требования, а не его уточнение.
+Важное следствие, которое оператор обязан знать (посчитано разбором, а не на глаз): при 5% на чанк мини-Город Стража с пятном 30x30 выходит примерно один на 20 чанков — один на ~72 блока. Игрок, прошедший 1000 блоков Обычного мира, минует 10-15 городов. Это не редкое сокровище, это обои; ванильные Древние города несравнимо реже. Дирижабль при 2% — один на ~113 блоков, и это сверх одного привязанного к каждой Мельнице. Вдобавок при такой плотности соседние кандидаты часто сталкиваются пятнами, поэтому фактическая плотность будет ниже заявленной и неровной — то есть числа не дадут даже того, что обещают.
+Влияние: ответ оператора после первой прогулки по готовому миру стоит одну правку конфига, а не переделку. Target: L0-xq2.
+Примечание (2026-09-29): расчёт «пятно 30x30 → один на ~72 блока» верен только для 30×30. Город Хранителя построен 63×63 (решение оператора, decision-gorod-hranitelya-rastet-vchetvero-po-ploschadi-i); при 63×63 столкновения кандидатов чаще, и эти числа плотности не переиспользовать без пересчёта.
+
+
+
+
+
+## L0-xq3 возврат потерянного оружия = крафтившему, как сейчас в коде (decision-l0-xq3-vozvrat-poteryannogo-oruzhiya-kraftivshem)
+
+_Decided: 2026-09-26_
+
+
+Вопрос: когда легендарное оружие пропало (Пустота, лава, despawn), кому оно возвращается — тому, кто его скрафтил, или тому, кто держал его последним? Обе спеки говорят «последнему владельцу», код возвращает крафтившему.
+Решение (автопилот, default): оставляем текущее поведение — возврат крафтившему.
+Обоснование: этапы 2 и 3 отгружены и только что приняты оператором глазами на iPad. Менять принятое поведение отгруженного оружия по своей инициативе внутри эпика про структуры — расширение рамок задачи, а не её исполнение. Расхождение со спекой при этом настоящее и я его не прячу: по букве спеки прав вариант «последнему державшему».
+Переключение стоит недорого: это одна точка в общем каркасе src/legendary/recovery.ts, и оба оружия меняются одинаково. Предлагается оператору как отдельная мелкая доработка, когда он захочет — не как часть Stage 4.
+Связано: L0-lgnd-cx09 (в коде возврат идёт владельцу, а не последнему державшему, и без защиты от повторного возврата — вторая половина этого противоречия, защита от повторного возврата, дефект настоящий и его я проверю измерением отдельно). Target: L0-xq3.
+
+
+
+
+
+## L0-xq4 Мельница у спавна без сухой земли = мира без неё, с записью причины в лог (decision-l0-xq4-melnitsa-u-spavna-bez-suhoy-zemli-mira-be)
+
+_Decided: 2026-09-26_
+
+
+Вопрос: спека требует гарантированную Мельницу у спавна на сухой земле. Что делать на сиде, где рядом со спавном сухого места нет — остров или посреди океана?
+Решение (автопилот, default (a)): в таком мире Мельницы у спавна нет, а серверный лог пишет, почему именно — сколько мест проверено и чем каждое не подошло. Поиск остаётся одноразовым, в радиусе 500 блоков, и не расширяется.
+Обоснование: два других варианта каждый платит чем-то настоящим. Досыпать мелководье (до ~3 блоков) — это правка рельефа у самого спавна, а спека отдельным правилом требует не вредить чужим структурам, и цена ошибки здесь максимальная: это место, куда игрок попадает первым и всегда. Искать дальше 500 блоков — это задержка при первом создании мира, то есть плата в каждом нормальном мире за редкий случай.
+Вариант (a) не ломает ничего и остаётся наблюдаемым: причина в логе, а не молчаливое отсутствие.
+Чего это стоит и я этого не скрываю: на океанском старте обещание «Мельница всегда рядом со спавном» не выполняется. Если оператор захочет держать обещание любой ценой — это вариант (b), досыпка мелководья, и он небольшой. Решается его словом, не моим.
+Влияние: L0-adr-spwn (одноразовый поиск у спавна) и через него привязанный Дирижабль Мельницы — на таком сиде не будет и его. Нормальные сиды не затронуты, тесты идут на нормальных сидах. Target: L0-xq4.
+
+
+
+
+
+## Дирижабль удлиняется против размера в спеке ради узнаваемого силуэта (decision-dirizhabl-udlinyaetsya-protiv-razmera-v-speke-ra)
+
+_Decided: 2026-09-27_
+
+
+Проблема, увиденная глазами на отрисовке постройки (2026-09-27): Дирижабль читается как серая коробка с плоской плитой сверху, а не как дирижабль.
+Причина в пропорциях, а не в отрисовке. В нынешней постройке гондола занимает 6 блоков высоты из 12, баллон тоже 6 — пополам. И гондола при этом такая же длинная и широкая, как баллон: 15x7, во всё пятно. У настоящего дирижабля оболочка составляет почти весь объём, а гондола — небольшая коробка под ней.
+Корень глубже: спека требует двух несовместимых вещей одновременно. Размер задан как ≈15x7x10–12 (§5.1), а внутри гондолы должны поместиться коридор, 4 комнаты, 10 сундуков и спавнер Разорителя (§5.1, AC-airs-03, AC-airs-04). Чтобы силуэт читался, гондола обязана стать короткой и низкой — тогда начинка в неё не влезает. Нынешняя постройка разрешила спор в пользу начинки и перестала быть похожей на дирижабль.
+Решение оператора 2026-09-27: **удлинить постройку** (вариант 1 из трёх предложенных) — примерно до 25–30 блоков, чтобы оболочка получила нормальную длину, а гондола осталась достаточной для четырёх комнат. Отвергнуты: сокращение начинки (потеря 4 комнат) и «оставить как есть» (потеря узнаваемости).
+Цена и последствия: прямой отход от «≈15» в §5.1 — это осознанное отклонение, а не недосмотр. Точные размеры берутся из разведки пропорций настоящих дирижаблей. Затрагивает: AIRSHIP_SIZE и всю разметку шаблона, тесты размера, проверку пригодности места (большее пятно — больше чанков должно быть загружено до первой записи), а также поиск привязанного Дирижабля в кольце 40-100 от Мельницы: кольцо не меняется, но кандидатов с большим пятном будет отвергаться больше.
+Как это вскрылось, и это стоит запомнить: дефект нашёлся не прогоном, а тем, что постройку **посмотрели глазами** — отрисовали из данных пакета. Ни один из 92 тестов его не видел, потому что все они считают блоки, а не смотрят на силуэт. Оператор: «Хорошо что просмотрели».
+Superseded 2026-09-27 by the operator's Zeppelin NT choice: 75×18×13 (AIRS-SCALE-01-AA, c5a1c27).
+
+
+
+
+
+## Город Хранителя растёт вчетверо по площади, и начинка растёт вместе с ним (decision-gorod-hranitelya-rastet-vchetvero-po-ploschadi-i)
+
+_Decided: 2026-09-27_
+
+
+Оператор 2026-09-27: «город расширяем в 4 раза». Принято прочтение вчетверо по площади — 62x62 в плане вместо 31x31, вдвое по каждой стороне (как построено: 63×63 — нечётная сторона, центр шаблона отображается сам в себя при повороте). Отброшено: 124x124 (вчетверо по стороне) почти не находит себе ровного сухого места и проверка отвергала бы почти всех кандидатов; 49x49 (вчетверо по объёму) не даёт заметной глазом разницы.
+Высота растёт с 13 до 20. Потолок по спеке прежний (верх на Y от -35 до -45), значит низ опускается к -55...-65 и дно мира -64 становится настоящей границей: место без нужной глубины должно отвергаться, а не обрезать город.
+Отклонение от спеки §6: содержимое растёт пропорционально площади — 10 сундуков становятся 40 (12 из них в центральном зале вместо 3), 2 визгуна становятся 8. Причина: при вчетверо большей площади прежние числа дают вчетверо меньшую плотность, то есть пустые залы, а пустота и была тем, из-за чего оператор смотрел отрисовки. Восемь визгунов призывают Хранителя заметно быстрее двух, поэтому их разводят по дальним углам, а не собирают в центре.
+Как построено: `[63, 20, 63]`.
 
 
 
