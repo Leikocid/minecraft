@@ -122,13 +122,49 @@ function act(player: SimulatedPlayer, action: Action, slot: number, target: Vect
   }
 }
 
+/**
+ * Performs `action` and records what the engine raised within 3 ticks.
+ *
+ * SimulatedPlayer swallows every second useItemInSlot / attack /
+ * useItemInSlotOnBlock call (returns false, raises nothing; measured on
+ * 1.26.51.1), so a silent first call is repeated once and the line says which
+ * attempt produced the events.
+ */
+async function fire(test: Test, player: SimulatedPlayer, action: Action, slot: number, target: Vector3): Promise<string> {
+  let result = "";
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    seen.length = 0;
+    recording = true;
+    const tick = system.currentTick;
+    let returned: string;
+    try {
+      returned = String(act(player, action, slot, target));
+    } catch (err) {
+      returned = `threw ${err instanceof Error ? err.message : String(err)}`;
+    }
+    await test.idle(3);
+    if (action === "break") player.stopBreakingBlock();
+    recording = false;
+    result = `attempt=${attempt} tick=${tick} returned=${returned} events=[${seen.join(" ")}]`;
+    if (returned !== "false" || seen.length > 0) break;
+    await test.idle(2);
+  }
+  return result;
+}
+
+/** Blocks that answer interact(): stone does not, at any distance. */
+function targetFor(action: Action): string {
+  return action === "interact" ? "minecraft:noteblock" : "minecraft:stone";
+}
+
 /** One placement, one aim, one action; prints what the engine raised for it. */
 async function step(test: Test, player: SimulatedPlayer, action: Action, slot: number, d: number): Promise<void> {
   const rel: Vector3 = { x: STAND.x, y: EYE_ROW, z: STAND.z - d };
   const abs = test.worldBlockLocation(rel);
   const dimension = test.getDimension();
+  const blockId = targetFor(action);
   try {
-    dimension.setBlockType(abs, "minecraft:stone");
+    dimension.setBlockType(abs, blockId);
   } catch (err) {
     log(`INPUT ${action} d=${d} SKIP could not place: ${err instanceof Error ? err.message : String(err)}`);
     return;
@@ -138,23 +174,9 @@ async function step(test: Test, player: SimulatedPlayer, action: Action, slot: n
 
   const eye = player.getHeadLocation();
   const face = Math.hypot(abs.x + 0.5 - eye.x, abs.y + 0.5 - eye.y, abs.z + 1 - eye.z);
-  seen.length = 0;
-  recording = true;
-  const tick = system.currentTick;
-  let returned: string;
-  try {
-    returned = String(act(player, action, slot, rel));
-  } catch (err) {
-    returned = `threw ${err instanceof Error ? err.message : String(err)}`;
-  }
-  await test.idle(3);
-  if (action === "break") player.stopBreakingBlock();
-  recording = false;
+  const outcome = await fire(test, player, action, slot, rel);
   const still = dimension.getBlock(abs)?.typeId ?? "unloaded";
-  log(
-    `INPUT ${player.name} ${action} d=${d} face=${face.toFixed(2)} tick=${tick} returned=${returned} ` +
-      `target_after=${still} events=[${seen.join(" ")}]`
-  );
+  log(`INPUT ${player.name} ${action} d=${d} face=${face.toFixed(2)} target=${blockId} after=${still} ${outcome}`);
   dimension.setBlockType(abs, "minecraft:air");
   await test.idle(2);
 }
@@ -183,12 +205,7 @@ async function measure(test: Test, mode: GameMode, name: string): Promise<void> 
   player.lookAtLocation({ x: STAND.x + 0.5, y: STAND.y + 40, z: STAND.z + 0.5 });
   await test.idle(4);
   for (const action of ["air-use", "attack", "interact"] as const) {
-    seen.length = 0;
-    recording = true;
-    const returned = String(act(player, action, slot, STAND));
-    await test.idle(3);
-    recording = false;
-    log(`INPUT ${name} ${action} sky returned=${returned} events=[${seen.join(" ")}]`);
+    log(`INPUT ${name} ${action} sky ${await fire(test, player, action, slot, STAND)}`);
     await test.idle(2);
   }
   log(`INPUT ${name} RESULT done`);
@@ -199,7 +216,7 @@ registerAsync("andrew", "probe_input_survival", async (test: Test): Promise<void
   test.succeed();
 })
   .structureName(STRUCTURE)
-  .maxTicks(1200)
+  .maxTicks(2000)
   .tag("andrew");
 
 registerAsync("andrew", "probe_input_creative", async (test: Test): Promise<void> => {
@@ -207,5 +224,5 @@ registerAsync("andrew", "probe_input_creative", async (test: Test): Promise<void
   test.succeed();
 })
   .structureName(STRUCTURE)
-  .maxTicks(1200)
+  .maxTicks(2000)
   .tag("andrew");
