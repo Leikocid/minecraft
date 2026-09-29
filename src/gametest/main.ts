@@ -54,6 +54,7 @@ import "./probe-place";
 import "./probe-chunk";
 import "./probe-mobs";
 import "./probe-loot";
+import "./probe-retention";
 import "./strf-registry";
 import "./structures";
 import "./structures-site";
