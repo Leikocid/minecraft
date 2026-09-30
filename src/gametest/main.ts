@@ -77,6 +77,8 @@ import "./bastion-body";
 import "./legendary-recovery";
 import "./probe-input";
 import "./orbital-item";
+import "./orbital-core";
+import { registerOrbitalCannon } from "../orbital";
 import { SPAWN_EVENT } from "../structures/spawn-search";
 
 const WEB_SWORD_ID = WEB_SWORD.itemId;
@@ -151,6 +153,10 @@ registerTrap();
 // Same binding problem: armed here so a SimulatedPlayer holding a legendary
 // drives the real Action Bar path, and a rejected message reaches the log.
 registerLegendaryHud();
+
+// Same binding problem: the release pack's Cannon handlers receive no
+// SimulatedPlayer, so src/gametest/orbital-core.ts drives this copy.
+registerOrbitalCannon();
 
 // Which use-event a press actually produces on BDS 1.26.51.1 is an engine fact,
 // not a documented one, and src/websword/trap.ts subscribes to both. This
