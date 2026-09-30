@@ -6,7 +6,6 @@
 import {
   type Block,
   type Direction,
-  type Entity,
   EntitySwingSource,
   EquipmentSlot,
   type ItemStack,
@@ -19,46 +18,17 @@ import { isReady, startCooldown } from "../legendary/cooldown";
 import { resolveActivation } from "../legendary/hands";
 import { ORBITAL_CANNON, defForStack } from "../legendary/registry";
 import { type Effect, type Mode, effectFor, isContact } from "./charge";
+import { type Attack, type Charge, launch, newAttackId, removeCharges } from "./flight";
 import { spawnCharge, spawnY } from "./spawn";
 import { type TargetLock, lockTarget } from "./target";
 
-export interface Charge {
-  entity: Entity;
-  /** Index in the effect's layout. */
-  slot: number;
-  x: number;
-  z: number;
-  /** Feet Y. */
-  y: number;
-}
-
-/** L0-orbc-ent2. In memory only; nothing here is persisted. */
-export interface Attack {
-  attackId: string;
-  mode: Mode;
-  ownerId: string;
-  dimensionId: string;
-  target: Vector3;
-  face: Direction | undefined;
-  spawnY: number;
-  charges: Charge[];
-  createdTick: number;
-}
-
 export type AttackObserver = (attack: Attack) => void;
 
-const attacks = new Map<string, Attack>();
 const lastActivationTick = new Map<string, number>();
 const observers = new Set<AttackObserver>();
-let attackSeq = 0;
 
 const log = (msg: string): void => console.warn(`[andrew] orbital: ${msg}`);
 const at = (v: Vector3): string => `${v.x},${v.y},${v.z}`;
-
-/** Attacks with at least one charge still in the world. */
-export function activeAttacks(): ReadonlyMap<string, Attack> {
-  return attacks;
-}
 
 /**
  * Calls `observer` with every committed attack, in its activation tick, after
@@ -67,23 +37,6 @@ export function activeAttacks(): ReadonlyMap<string, Attack> {
 export function observeAttacks(observer: AttackObserver): () => void {
   observers.add(observer);
   return () => observers.delete(observer);
-}
-
-/** Removes the attack and every charge it still holds. There is no path back to the cooldown (C-17). */
-export function endAttack(attackId: string): void {
-  const attack = attacks.get(attackId);
-  attacks.delete(attackId);
-  removeAll(attack?.charges ?? []);
-}
-
-function removeAll(charges: Charge[]): void {
-  for (const charge of charges) {
-    try {
-      if (charge.entity.isValid) charge.entity.remove();
-    } catch (err) {
-      log(`could not remove a charge: ${String(err)}`);
-    }
-  }
 }
 
 /** r008 at spawn: a charge whose cell is a contact block goes off there, in this tick, and never falls. */
@@ -102,7 +55,7 @@ function detonateInsideSolid(attack: Attack, effect: Effect, lock: TargetLock): 
     } catch (err) {
       log(`attack ${attack.attackId}: onDetonate at ${at(point)} threw ${String(err)}`);
     }
-    removeAll([charge]);
+    removeCharges([charge]);
   }
   attack.charges = falling;
 }
@@ -120,7 +73,7 @@ function commit(player: Player, owner: Owner, mode: Mode, effect: Effect, lock: 
   startCooldown(player, ORBITAL_CANNON.abilityKey);
   lastActivationTick.set(owner.id, tick);
   const attack: Attack = {
-    attackId: `oc-${tick}-${++attackSeq}`,
+    attackId: newAttackId(tick),
     mode,
     ownerId: owner.id,
     dimensionId: lock.dimensionId,
@@ -140,7 +93,7 @@ function commit(player: Player, owner: Owner, mode: Mode, effect: Effect, lock: 
     });
   } catch (err) {
     // p001 step 8: the cooldown stays, and no half-spawned attack is left.
-    removeAll(attack.charges);
+    removeCharges(attack.charges);
     log(`attack ${attack.attackId} by ${owner.name} failed to spawn, cooldown kept: ${String(err)}`);
     return undefined;
   }
@@ -154,7 +107,7 @@ function commit(player: Player, owner: Owner, mode: Mode, effect: Effect, lock: 
   }
   const spawned = attack.charges.length;
   detonateInsideSolid(attack, effect, lock);
-  if (attack.charges.length > 0) attacks.set(attack.attackId, attack);
+  launch(attack);
   log(
     `${owner.name} fired ${mode} at ${at(lock.location)} in ${lock.dimensionId}: attack ${attack.attackId}, ` +
       `${spawned} charge(s) at y=${attack.spawnY}, ${spawned - attack.charges.length} inside a solid block`

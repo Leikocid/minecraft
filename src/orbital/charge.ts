@@ -36,8 +36,21 @@ export function effectFor(mode: Mode): Effect | undefined {
 export const CHARGE_ENTITY_ID = "andrew:orbital_charge";
 export const CHARGE_TAG = "andrew:oc_charge";
 
+const ATTACK_TAG_PREFIX = "andrew:oc_attack:";
+
 export function attackTag(attackId: string): string {
-  return `andrew:oc_attack:${attackId}`;
+  return `${ATTACK_TAG_PREFIX}${attackId}`;
+}
+
+/** The attack id an `andrew:oc_attack:<id>` tag names, or undefined for any other tag. */
+export function attackIdOfTag(tag: string): string | undefined {
+  return tag.startsWith(ATTACK_TAG_PREFIX) ? tag.slice(ATTACK_TAG_PREFIX.length) : undefined;
+}
+
+/** Attack ids are `<scope>-<tick>-<seq>`; the scope names the script runtime that fired it. */
+export function scopeOfAttack(attackId: string): string {
+  const dash = attackId.indexOf("-");
+  return dash < 0 ? attackId : attackId.slice(0, dash);
 }
 
 /** Spawn events of packs/behavior/entities/orbital_charge.json, indexed by `Effect.scale`. */
@@ -154,4 +167,42 @@ export function isContact(block: ContactProbe): boolean {
   if (block.isAir || block.isLiquid) return false;
   if (block.typeId === SNOW_LAYER) return block.permutation.getState("height") !== 0;
   return !PASS_THROUGH.has(block.typeId);
+}
+
+/** Blocks per tick, constant (L0-orbc-as02). A tuning value: the sweep keeps contact exact at any speed. */
+export const FALL_SPEED = 1.0;
+
+/**
+ * The cells a charge enters when its feet go from `y` down to `ny`, top
+ * first: `floor(y) − 1` down to `floor(ny)` (L0-orbc-p002 step 3). Cells
+ * below `minY` do not exist and are never listed.
+ */
+export function sweepCells(y: number, ny: number, minY: number): number[] {
+  const cells: number[] = [];
+  const last = Math.max(Math.floor(ny), minY);
+  for (let cell = Math.floor(y) - 1; cell >= last; cell--) cells.push(cell);
+  return cells;
+}
+
+export type CellRead = "contact" | "clear" | "unloaded";
+
+export type FallStep =
+  | { kind: "contact"; cellY: number }
+  | { kind: "lost"; cellY: number }
+  | { kind: "void" }
+  | { kind: "move"; y: number };
+
+/**
+ * One tick of one charge (L0-orbc-p002 steps 2–7) over a cell reader. The
+ * first contact cell top-down wins; an unloaded cell met before one makes
+ * the charge lost, since what lies in it is unknown.
+ */
+export function fallStep(y: number, minY: number, read: (cellY: number) => CellRead, speed: number = FALL_SPEED): FallStep {
+  const ny = y - speed;
+  for (const cellY of sweepCells(y, ny, minY)) {
+    const cell = read(cellY);
+    if (cell === "contact") return { kind: "contact", cellY };
+    if (cell === "unloaded") return { kind: "lost", cellY };
+  }
+  return ny < minY ? { kind: "void" } : { kind: "move", y: ny };
 }
