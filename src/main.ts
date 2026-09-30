@@ -22,6 +22,8 @@ import { registerScytheVolley } from "./scythe/volley";
 import { registerStructureCommands } from "./structures/commands";
 import { DISCOVER_INTERVAL_TICKS, EnabledTypes, enabledLine } from "./structures/config";
 import type { PlayerPos } from "./structures/discovery";
+import { isBastionGuard } from "./structures/bodies/bastion";
+import { makeFireproof } from "./structures/place";
 import { StrfRuntime, engineStrf } from "./structures/runtime";
 import { SPAWN_EVENT, SPAWN_STATE_EVENT, SpawnSearch, engineSpawnHost } from "./structures/spawn-search";
 import { DynamicPropertyStore } from "./structures/store";
@@ -106,6 +108,13 @@ world.afterEvents.worldLoad.subscribe(() => {
     runtime.discover(playerPositions(), (job) => system.runJob(job));
     runtime.pumpPlacement();
   }, DISCOVER_INTERVAL_TICKS);
+});
+
+// A garrison guard spawned without fire_resistance gets it when its chunk loads,
+// and a script restart reloads every entity through this event too.
+world.afterEvents.entityLoad.subscribe(({ entity }) => {
+  if (!entity.isValid || !isBastionGuard(entity.typeId, entity.getTags())) return;
+  if (makeFireproof(entity)) strfLog(`bastion: guard ${entity.id} ${entity.typeId} made fireproof on load`);
 });
 
 // "skip" stops a search that has not written a block yet (the GameTest world

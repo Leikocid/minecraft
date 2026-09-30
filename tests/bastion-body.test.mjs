@@ -202,6 +202,7 @@ test('AC3: every roster has 7–10 piglins and exactly 2 brutes, one on the trea
     assert.equal(brutes.length, 2);
     assert.ok(!g.some((x) => /hoglin/.test(x.entity)));
     assert.ok(g.every((x) => x.tags.includes(guardTag(id)) && x.name !== undefined), 'untagged or unnamed guard');
+    assert.ok(g.every((x) => x.fireproof === true), 'a guard that burns in the moat');
     assert.deepEqual(brutes.map((b) => b.tags.find((t) => t.startsWith('andrew:bastion_role:'))), [roleTag('treasure'), roleTag('other')]);
     // The same id always gives the same roster: a resume continues it, never re-rolls it.
     assert.deepEqual(garrison(id), g);
@@ -378,7 +379,10 @@ test('engineSpawnGuard: a named guard is summoned by command with its name, then
   const made = [];
   const commands = [];
   const entity = (id, name) => {
-    const e = { id, name, tags: [], runs: [], addTag: (t) => e.tags.push(t), runCommand: (c) => (e.runs.push(c), { successCount: 1 }) };
+    const e = {
+      id, name, tags: [], runs: [], addTag: (t) => e.tags.push(t), runCommand: (c) => (e.runs.push(c), { successCount: 1 }),
+      getEffect: (type) => (type === 'fire_resistance' && e.runs.some((r) => r.startsWith('effect @s fire_resistance infinite')) ? { duration: -1 } : undefined),
+    };
     return e;
   };
   const dim = {
@@ -398,6 +402,7 @@ test('engineSpawnGuard: a named guard is summoned by command with its name, then
   const e = spawn({ ...g, instance: inst, index: 0, pos: [10, 46, -3] });
   assert.deepEqual(commands, [`summon ${BRUTE} "${g.name}" 10.5 46 -2.5`]);
   assert.deepEqual(e.tags, g.tags);
+  assert.deepEqual(e.runs, ['effect @s fire_resistance infinite 0 true']);
   // A second guard of the same name next to the first is told apart by id.
   const e2 = spawn({ ...garrison(inst.id)[1], name: g.name, instance: inst, index: 1, pos: [10, 46, -2] });
   assert.notEqual(e2.id, e.id);
@@ -412,4 +417,22 @@ test('engineSpawnGuard: a named guard is summoned by command with its name, then
   const u = spawn({ entity: PIGLIN, local: [0, 0, 0], tags: ['t'], instance: inst, index: 4, pos: [2, 3, 4] });
   assert.equal(u.id.startsWith('s'), true);
   assert.deepEqual(u.tags, ['t']);
+});
+
+// ------------------------------------------------------------------ a guard spawned before guards were fireproof
+
+test('isBastionGuard + makeFireproof: a garrison guard without fire_resistance gets it once, nothing else is touched', () => {
+  const { isBastionGuard, makeFireproof } = m;
+  assert.equal(isBastionGuard(PIGLIN, [guardTag('bastion:n:1:2'), roleTag('piglin')]), true);
+  assert.equal(isBastionGuard(BRUTE, [roleTag('treasure')]), true);
+  assert.equal(isBastionGuard(PIGLIN, [guardTag('bastion:n:1:2')]), false, 'a guard tag alone is not a bastion role');
+  assert.equal(isBastionGuard(PIGLIN, []), false, 'a wild piglin');
+  assert.equal(isBastionGuard('minecraft:zombie_villager_v2', [roleTag('piglin')]), false);
+  const runs = [];
+  let effect;
+  const e = { getEffect: (t) => (t === 'fire_resistance' ? effect : undefined), runCommand: (c) => (runs.push(c), (effect = { duration: -1 }), { successCount: 1 }) };
+  effect = { duration: 600 };
+  assert.equal(makeFireproof(e), true, 'a finite fire_resistance is not enough');
+  assert.equal(makeFireproof(e), false, 'an infinite one is not given twice');
+  assert.deepEqual(runs, ['effect @s fire_resistance infinite 0 true']);
 });

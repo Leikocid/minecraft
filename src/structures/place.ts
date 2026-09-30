@@ -47,7 +47,7 @@ export interface GuardPoint {
   local: Vec3;
   tags: readonly string[];
   name?: string;
-  /** Infinite fire_resistance: immune to sunlight. */
+  /** Infinite fire_resistance: immune to sunlight, fire and lava. */
   fireproof?: boolean;
 }
 
@@ -261,10 +261,18 @@ export function engineSpawnGuard(
       e = made[0];
     }
     for (const t of ctx.tags) e.addTag(t);
-    // 2.10.0 caps addEffect's duration: "infinite" exists only as a command (probe Q6).
-    if (ctx.fireproof === true) e.runCommand("effect @s fire_resistance infinite 0 true");
+    if (ctx.fireproof === true) makeFireproof(e);
     return e;
   };
+}
+
+/** Gives `e` fire_resistance with no end, unless it has it already; true when it was given. */
+export function makeFireproof(e: Pick<Entity, "getEffect" | "runCommand">): boolean {
+  // getEffect reports an infinite effect as duration -1.
+  if (e.getEffect("fire_resistance")?.duration === -1) return false;
+  // 2.10.0 caps addEffect's duration: "infinite" exists only as a command (probe Q6).
+  e.runCommand("effect @s fire_resistance infinite 0 true");
+  return true;
 }
 
 export interface PlaceEngineApi {
