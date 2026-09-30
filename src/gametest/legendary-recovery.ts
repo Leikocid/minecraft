@@ -23,6 +23,7 @@ import {
 import { type SimulatedPlayer, type Test, registerAsync } from "@minecraft/server-gametest";
 import { WEB_SWORD } from "../legendary/registry";
 import type { Mark } from "../legendary/rules";
+import { type BlockBox, protectLegendariesIn } from "../legendary/recovery";
 import * as state from "../legendary/state";
 
 const STRUCTURE = "andrew:platform";
@@ -404,4 +405,147 @@ registerAsync("andrew", "probe_xasm11_frames", async (test: Test): Promise<void>
 })
   .structureName(STRUCTURE)
   .maxTicks(200)
+  .tag("andrew");
+
+// ------------------------------------------------ protectLegendariesIn on the engine (L0-lgnd-p008 steps 2b and 3)
+
+/** Records what the modules under test print, so a missing loss line is an observation, not an inference. */
+function captureWarnings(): { lines: string[]; stop(): void } {
+  const original = console.warn;
+  const lines: string[] = [];
+  console.warn = (...args: unknown[]): void => {
+    lines.push(args.map(String).join(" "));
+    original(...args);
+  };
+  return { lines, stop: () => void (console.warn = original) };
+}
+
+function worldBox(test: Test, min: Vector3, max: Vector3): BlockBox {
+  return { min: test.worldBlockLocation(min), max: test.worldBlockLocation(max) };
+}
+
+const insideBox = (at: Vector3, box: BlockBox): boolean =>
+  (["x", "y", "z"] as const).every((a) => Math.floor(at[a]) >= box.min[a] && Math.floor(at[a]) <= box.max[a]);
+
+interface Whereabouts {
+  onGround: Array<{ at: Vector3; gen: number }>;
+  inInventories: number;
+  text: string;
+}
+
+/** Every copy of `id` on the ground near the test and in the players' inventories. */
+function whereabouts(test: Test, id: string, players: Player[]): Whereabouts {
+  const onGround = test
+    .getDimension()
+    .getEntities({ type: "minecraft:item", location: test.worldLocation({ x: 3, y: 2, z: 3 }), maxDistance: 32 })
+    .flatMap((e) => {
+      const stack = e.getComponent("minecraft:item")?.itemStack;
+      return isInstance(stack, id) ? [{ at: e.location, gen: stackGen(stack) }] : [];
+    });
+  const inInventories = players.reduce((n, p) => n + (gensIn(inventoryOf(p), id)?.length ?? 0), 0);
+  const ground = onGround.map((g) => `${g.at.x.toFixed(1)},${g.at.y.toFixed(1)},${g.at.z.toFixed(1)}@${g.gen}`).join(" ");
+  return { onGround, inInventories, text: `ground [${ground}] inventories ${inInventories} ledger gen ${ledgerGen(id)}` };
+}
+
+/** Exactly one copy, on the ground outside `volume`, at generation 0 on the stack and in the ledger. */
+function assertMovedOnce(test: Test, id: string, volume: BlockBox, players: Player[], when: string): string {
+  const w = whereabouts(test, id, players);
+  test.assert(w.onGround.length + w.inInventories === 1, `${when}: ws_id ${id} exists ${w.onGround.length + w.inInventories} times, expected once (${w.text})`);
+  test.assert(w.onGround.length === 1, `${when}: ws_id ${id} is not on the ground (${w.text})`);
+  test.assert(!insideBox(w.onGround[0].at, volume), `${when}: ws_id ${id} is still inside the protected volume (${w.text})`);
+  test.assert(w.onGround[0].gen === 0 && ledgerGen(id) === 0, `${when}: ws_id ${id} changed generation (${w.text})`);
+  return w.text;
+}
+
+/** Lines in which recovery reads `id` as lost: every loss path prints "now gen" or "already stale". */
+const lossLines = (lines: string[], id: string): string[] =>
+  lines.filter((l) => l.includes("legendary recovery:") && l.includes(`id ${id}`) && (l.includes("now gen") || l.includes("already stale")));
+
+// P-lgnd-008 step 3 / L0-ring-ac16: a legendary lying inside the volume exists
+// exactly once afterwards, outside the volume, same id and generation, and the
+// removal is never read as a loss.
+registerAsync("andrew", "legendary_protect_ground_item", async (test: Test): Promise<void> => {
+  const owner = test.spawnSimulatedPlayer(STAND_A, "protect_ground_owner", GameMode.Survival);
+  const other = test.spawnSimulatedPlayer(STAND_B, "protect_ground_other", GameMode.Survival);
+  const players = [owner, other];
+  await test.idle(4);
+  const id = dropMarked(test, owner, { x: 3.5, y: 2.2, z: 2.5 });
+  // Watched and settled before the call, as a legendary dropped earlier would be.
+  await test.idle(10);
+  const volume = worldBox(test, { x: 1, y: 2, z: 1 }, { x: 5, y: 4, z: 3 });
+  const before = whereabouts(test, id, players);
+  test.assert(before.onGround.length === 1 && insideBox(before.onGround[0].at, volume), `setup: the sword is not lying inside the volume (${before.text})`);
+
+  const capture = captureWarnings();
+  try {
+    const result = protectLegendariesIn(test.getDimension(), volume, { reason: "gametest ground item" });
+    const now = assertMovedOnce(test, id, volume, players, "same tick");
+    log(`protect_ground_item: ws_id ${id} moved=${result.moved} handedBack=${result.handedBack}; same tick: ${now}`);
+    test.assert(result.moved === 1 && result.handedBack === 0, `expected moved=1 handedBack=0, got ${JSON.stringify(result)}`);
+
+    await test.idle(WAIT_TICKS);
+    const later = assertMovedOnce(test, id, volume, players, `after ${WAIT_TICKS} ticks`);
+    const losses = lossLines(capture.lines, id);
+    const protectLines = capture.lines.filter((l) => l.includes(`legendary protect: moved ${WEB_SWORD.itemId} id ${id}`));
+    log(`protect_ground_item: after ${WAIT_TICKS} ticks: ${later}; recovery loss lines: ${losses.length}; protect lines seen: ${protectLines.length}`);
+    test.assert(protectLines.length === 1, `the capture missed protect's own line, so it cannot vouch for silence (${protectLines.length})`);
+    test.assert(losses.length === 0, `recovery read the move as a loss: ${losses.join(" | ")}`);
+  } finally {
+    capture.stop();
+  }
+  test.succeed();
+})
+  .structureName(STRUCTURE)
+  .maxTicks(WAIT_TICKS + 80)
+  .tag("andrew");
+
+// L0-adr-oprt §3 (p008 step 2b), path chosen by probe P1: a legendary in a
+// frame or glow frame inside the volume ends up once, outside it; the call
+// does not throw, and the frame is gone.
+registerAsync("andrew", "legendary_protect_framed", async (test: Test): Promise<void> => {
+  const owner = test.spawnSimulatedPlayer(STAND_A, "protect_frame_owner", GameMode.Survival);
+  const other = test.spawnSimulatedPlayer(STAND_B, "protect_frame_other", GameMode.Survival);
+  const players = [owner, other];
+  await test.idle(4);
+  const volume = worldBox(test, { x: 1, y: 2, z: 2 }, { x: 3, y: 3, z: 4 });
+
+  const capture = captureWarnings();
+  try {
+    const ids: string[] = [];
+    for (const frameType of FRAME_TYPES) {
+      const mark = state.makeMark("admin", owner);
+      const { inserted, via } = await frameASword(test, owner, frameType, mark);
+      test.assert(inserted, `${frameType}: the sword did not go into the frame (${via})`);
+      const framed = whereabouts(test, mark.id, players);
+      test.assert(framed.onGround.length + framed.inInventories === 0, `${frameType}: the sword is not only in the frame (${framed.text})`);
+
+      let result;
+      try {
+        result = protectLegendariesIn(test.getDimension(), volume, { reason: `gametest ${frameType}` });
+      } catch (e) {
+        throw new Error(`${frameType}: protectLegendariesIn threw: ${String(e)}`);
+      }
+      const block = test.getBlock(FRAME_AT).typeId;
+      const now = assertMovedOnce(test, mark.id, volume, players, `${frameType}, same tick`);
+      log(`protect_framed: ${frameType} ws_id ${mark.id} moved=${result.moved} handedBack=${result.handedBack} block now ${block}; ${now}`);
+      test.assert(result.moved === 1 && result.handedBack === 0, `${frameType}: expected moved=1 handedBack=0, got ${JSON.stringify(result)}`);
+      test.assert(block === "minecraft:air", `${frameType}: the frame is still there (${block})`);
+      ids.push(mark.id);
+      await test.idle(4);
+    }
+
+    await test.idle(WAIT_TICKS);
+    for (const id of ids) {
+      const later = assertMovedOnce(test, id, volume, players, `after ${WAIT_TICKS} ticks`);
+      const losses = lossLines(capture.lines, id);
+      log(`protect_framed: ws_id ${id} after ${WAIT_TICKS} ticks: ${later}; recovery loss lines: ${losses.length}`);
+      test.assert(losses.length === 0, `recovery read the move as a loss: ${losses.join(" | ")}`);
+    }
+  } finally {
+    capture.stop();
+  }
+  test.succeed();
+})
+  .structureName(STRUCTURE)
+  .maxTicks(WAIT_TICKS + 120)
   .tag("andrew");

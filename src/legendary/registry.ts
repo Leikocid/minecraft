@@ -25,6 +25,13 @@ export interface LegendaryDef {
   textPrefix: string;
   /** Operator command: `<command> give [player]` / `<command> reset`. */
   command: string;
+  /**
+   * The weapon's own HUD lang keys, rendered with the shared keys' arguments
+   * (L0-adr-oded §1); absent keeps `andrew.legendary.ready|cooldown`.
+   * A def field rather than "own key if it exists": `translate` resolves on the
+   * client, so the script cannot tell whether a key exists (C-16).
+   */
+  hudKeys?: { ready: string; cooldown: string };
 }
 
 export const WEB_SWORD: LegendaryDef = {
