@@ -75,6 +75,26 @@ last_run:
       done: 5
     - stage: rollout
       entered_at: '2026-09-29T19:09:13.581Z'
+    - stage: collect-decisions
+      entered_at: '2026-09-30T15:21:33.649Z'
+    - stage: load-model
+      entered_at: '2026-09-30T15:21:33.662Z'
+    - stage: audit
+      entered_at: '2026-09-30T15:21:33.669Z'
+    - stage: delta 1/2
+      entered_at: '2026-09-30T15:21:33.674Z'
+    - stage: delta 2/2
+      entered_at: '2026-09-30T15:21:39.301Z'
+    - stage: collect-decisions
+      entered_at: '2026-09-30T15:23:06.900Z'
+    - stage: load-model
+      entered_at: '2026-09-30T15:23:06.917Z'
+    - stage: audit
+      entered_at: '2026-09-30T15:23:06.923Z'
+    - stage: delta 1/2
+      entered_at: '2026-09-30T15:23:06.929Z'
+    - stage: delta 2/2
+      entered_at: '2026-09-30T15:23:12.656Z'
 last_rollout_hashes:
   project-knowledge/glossary.md: 825c1021d33e942e
   project-knowledge/business-rules.md: a7eb3efd4cabe881
