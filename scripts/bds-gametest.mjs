@@ -111,6 +111,10 @@ const EXPECTED_TESTS = [
   'andrew:legendary_cx09_hopper_minecart',
   'andrew:legendary_cx09_owed_two_losses',
   'andrew:legendary_cx09_owed_redeemed_on_respawn',
+  // LGND-DELTA-01 — src/gametest/legendary-recovery.ts (L0-xasm11 P1, L0-lgnd-p008 steps 2b and 3)
+  'andrew:probe_xasm11_frames',
+  'andrew:legendary_protect_ground_item',
+  'andrew:legendary_protect_framed',
   'andrew:scythe_melee_matches_netherite',
   'andrew:scythe_no_target_no_cooldown',
   'andrew:scythe_prefers_player_over_mob',
@@ -246,7 +250,64 @@ const EXPECTED_TESTS = [
   'andrew:websword_wall_edge_e',
   'andrew:websword_wall_edge_s',
   'andrew:websword_wall_edge_w',
+  // ORBC-ITEM-01 — src/gametest/orbital-item.ts
+  'andrew:orbital_item_components',
+  'andrew:orbital_punch_matches_hand',
+  'andrew:orbital_charge_inert',
+  // ORBC-CORE-01 — src/gametest/orbital-core.ts
+  'andrew:orbital_no_target_silent',
+  'andrew:orbital_spawn_dimensions',
+  'andrew:orbital_dedup_lock_faces',
+  'andrew:orbital_shared_cooldown',
+  'andrew:orbital_hud',
+  'andrew:orbital_input_survival',
+  'andrew:orbital_input_creative',
+  'andrew:orbital_inside_solid',
+  'andrew:probe_orbital_contact',
+  // ORBC-FLIGHT-01 — src/gametest/orbital-flight.ts
+  'andrew:orbital_flight_through_entities',
+  'andrew:orbital_flight_air_control',
+  'andrew:orbital_flight_void_end',
+  'andrew:orbital_flight_owner_events',
+  'andrew:orbital_flight_unload',
+  'andrew:orbital_flight_load_480',
+  'andrew:orbital_flight_restart_fire',
+  'andrew:orbital_flight_restart_check',
+  // PNTR-JOB-01 — src/gametest/penetrator.ts
+  'andrew:probe_pntr_runjob',
+  'andrew:probe_pntr_holders',
+  'andrew:probe_pntr_native_cost',
+  'andrew:probe_pntr_det_tick',
+  'andrew:pntr_column_overworld',
+  'andrew:pntr_nether_end_waterlogged',
+  'andrew:pntr_hard_blocks_no_drops',
+  'andrew:pntr_no_direct_damage',
+  'andrew:pntr_one_sound_one_wave',
+  'andrew:pntr_budget_measured',
+  'andrew:pntr_chunk_edge',
+  'andrew:pntr_legendary_two_columns',
+  'andrew:pntr_legendary_restart_check',
+  // RING-BLAST-01 — src/gametest/ring.ts
+  'andrew:probe_ring_drops',
+  'andrew:ring_layout_craters',
+  'andrew:ring_independent_stepped',
+  'andrew:ring_tnt_damage',
+  'andrew:ring_resistance_no_drops',
+  'andrew:ring_underwater_damage_only',
+  'andrew:ring_legendaries_survive',
+  'andrew:ring_three_budget',
+  'andrew:ring_no_leftovers_vanilla_drops',
 ];
+
+/**
+ * A test that ends in a server restart: once it reports, BDS is stopped (the
+ * world is saved on stop) and started again on the same world, and the test
+ * named here runs next. Each needs the other, so --only takes both or neither.
+ */
+const RESTART_AFTER = new Map([
+  ['andrew:orbital_flight_restart_fire', 'andrew:orbital_flight_restart_check'],
+  ['andrew:pntr_legendary_two_columns', 'andrew:pntr_legendary_restart_check'],
+]);
 
 // FLAT is not cosmetic: see the LEVEL_TYPE comment in docker/bds/compose.yaml.
 // A default world put the platform under an ocean and the run was intermittent.
@@ -275,6 +336,11 @@ function parseArgs(argv) {
   }
   const unknown = opts.only.filter((n) => !EXPECTED_TESTS.includes(n));
   if (unknown.length > 0) throw new Error(`--only: not in EXPECTED_TESTS: ${unknown.join(' ')}`);
+  for (const [before, after] of RESTART_AFTER) {
+    const i = opts.only.indexOf(before);
+    const j = opts.only.indexOf(after);
+    if ((i < 0) !== (j < 0) || j < i) throw new Error(`--only: ${before} and ${after} go together, in that order`);
+  }
   return opts;
 }
 
@@ -422,6 +488,23 @@ function up() {
 function verdictCount(text, name) {
   const esc = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   return (text.match(new RegExp(`onTest(?:Passed|Failed):\\s*${esc}(?![\\w:])`, 'g')) ?? []).length;
+}
+
+const count = (text, needle) => text.split('\n').filter((l) => (typeof needle === 'string' ? l.includes(needle) : needle.test(l))).length;
+
+/** Stop BDS, which saves the world, and start it again on the same world and packs. */
+function restart(deadline) {
+  const before = readLog();
+  const started = count(before, /^\[.*INFO\] Server started\.\s*$/);
+  const loaded = count(before, SCRIPT_LOADED);
+  log('▶ restart: stopping BDS (the world is saved on stop) and starting it again on the same world');
+  compose(['stop', '-t', '60'], { stdio: 'inherit' });
+  up();
+  waitFor(
+    'the gametest script to load after the restart',
+    (t) => count(t, /^\[.*INFO\] Server started\.\s*$/) > started && count(t, SCRIPT_LOADED) > loaded,
+    deadline
+  );
 }
 
 /** Wait until the log satisfies `done`, or the deadline passes. */
@@ -595,6 +678,7 @@ function main() {
         log(`✗ ${err.message}`);
         break;
       }
+      if (RESTART_AFTER.has(name)) restart(deadline);
     }
     text = readLog();
   } finally {

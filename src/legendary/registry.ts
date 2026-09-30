@@ -25,6 +25,13 @@ export interface LegendaryDef {
   textPrefix: string;
   /** Operator command: `<command> give [player]` / `<command> reset`. */
   command: string;
+  /**
+   * The weapon's own HUD lang keys, rendered with the shared keys' arguments
+   * (L0-adr-oded §1); absent keeps `andrew.legendary.ready|cooldown`.
+   * A def field rather than "own key if it exists": `translate` resolves on the
+   * client, so the script cannot tell whether a key exists (C-16).
+   */
+  hudKeys?: { ready: string; cooldown: string };
 }
 
 export const WEB_SWORD: LegendaryDef = {
@@ -60,7 +67,24 @@ export const SCYTHE_OF_CALAMITY: LegendaryDef = {
   command: "andrew:scythe",
 };
 
-export const LEGENDARIES: ReadonlyArray<LegendaryDef> = [WEB_SWORD, SCYTHE_OF_CALAMITY];
+export const ORBITAL_CANNON: LegendaryDef = {
+  itemId: "andrew:orbital_cannon",
+  keyPrefix: "oc",
+  abilityKey: "orbital_cannon",
+  nameKey: "item.andrew:orbital_cannon",
+  cooldownTicks: 600,
+  craftGate: true,
+  craftTokenId: "andrew:orbital_cannon_crafted",
+  refund: [
+    ["minecraft:tnt", 4],
+    ["minecraft:fishing_rod", 1],
+  ],
+  textPrefix: "andrew.orbital",
+  command: "andrew:orbital",
+  hudKeys: { ready: "andrew.orbital.hud_ready", cooldown: "andrew.orbital.hud_cooldown" },
+};
+
+export const LEGENDARIES: ReadonlyArray<LegendaryDef> = [WEB_SWORD, SCYTHE_OF_CALAMITY, ORBITAL_CANNON];
 
 export function defFor(itemId: string): LegendaryDef | undefined {
   return LEGENDARIES.find((def) => def.itemId === itemId);

@@ -77,6 +77,12 @@ import "./bastion-body";
 import "./legendary-recovery";
 import "./probe-input";
 import "./websword-trap";
+import "./orbital-item";
+import "./orbital-core";
+import "./orbital-flight";
+import { parkPenetrator } from "./penetrator";
+import { parkRing } from "./ring";
+import { registerOrbitalCannon } from "../orbital";
 import { SPAWN_EVENT } from "../structures/spawn-search";
 
 const WEB_SWORD_ID = WEB_SWORD.itemId;
@@ -151,6 +157,18 @@ registerTrap();
 // Same binding problem: armed here so a SimulatedPlayer holding a legendary
 // drives the real Action Bar path, and a rejected message reaches the log.
 registerLegendaryHud();
+
+// Same binding problem: the release pack's Cannon handlers receive no
+// SimulatedPlayer, so src/gametest/orbital-core.ts drives this copy. Its own
+// scope keeps the release copy's orphan sweep off this copy's charges: both
+// runtimes see every charge entity, each knows only its own attacks.
+registerOrbitalCannon("gt");
+// The core and flight scenarios were written against the stub effects: a real
+// LMB digs out the floor they stand on and the targets of their next shot, a
+// real RMB craters it. src/gametest/penetrator.ts and src/gametest/ring.ts put
+// the real effects back for their own scenarios.
+parkPenetrator();
+parkRing();
 
 // Which use-event a press actually produces on BDS 1.26.51.1 is an engine fact,
 // not a documented one, and src/websword/trap.ts subscribes to both. This

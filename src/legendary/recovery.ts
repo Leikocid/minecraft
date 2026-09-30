@@ -32,6 +32,16 @@
 // (playerInventoryItemChange) since the entity was watched, is in an online
 // player's inventory now, lies on the ground as another watched entity, or sits
 // in a container right at the spot (a hopper). Only then is nothing owed.
+//
+// Deviations of the destruction policy (C-16) added by L0-adr-oprt / L0-adr-oded:
+// - Item frames have no script inventory. protectLegendariesIn breaks every
+//   frame in its volume with `setblock … air destroy`, whatever the frame
+//   holds; the engine spills the frame and its item as item entities in the
+//   same tick with the mark intact (probe L0-xasm11 P1, BDS 1.26.51.1), and the
+//   ground sweep then moves a spilled legendary like any other.
+// - A weapon's own HUD wording is `LegendaryDef.hudKeys`, not a lookup of
+//   "the weapon's key, else the shared one" (L0-adr-oded §1): `translate`
+//   resolves on the client, so the script cannot tell whether a key exists.
 
 import {
   BlockTypes,
@@ -68,6 +78,12 @@ const watched = new Map<string, Watched>();
 
 /** Instance ids that entered a player inventory since they were last watched. */
 const seenInInventory = new Set<string>();
+
+/**
+ * Item entities protectLegendariesIn removed before their entitySpawn arrived
+ * (a frame spilled them this tick); the late event must not start watching one.
+ */
+const removedByProtect = new Set<string>();
 
 let intervalId: number | undefined;
 
@@ -134,6 +150,10 @@ export function registerRecovery(): void {
 }
 
 function watch(entity: Entity, via: string): void {
+  // Checked before isValid, which can still read true a tick after remove().
+  if (removedByProtect.delete(entity.id)) {
+    return;
+  }
   if (entity.typeId !== "minecraft:item" || !entity.isValid) {
     return;
   }
@@ -344,11 +364,14 @@ export const HOLDER_TYPES: readonly string[] = [
   "decorated_pot", "frame", "glow_frame",
 ].map((id) => `minecraft:${id}`);
 
+/** Holders with no script inventory that protection breaks open instead (P-lgnd-008 step 2b). */
+const FRAME_TYPES: ReadonlySet<string> = new Set(["minecraft:frame", "minecraft:glow_frame"]);
+
 /** Per-call cap of an engine volume query, the fillBlocks cap (structures probe Q10). */
 const QUERY_CELLS = 32768;
 
-/** How far outside the protected box the drop spot is searched, in blocks. */
-const SPOT_RINGS = 16;
+/** The fewest rings the drop-spot search walks outside the protected box. */
+const MIN_SPOT_RINGS = 16;
 
 /** Items on these burn or break; a spot above them is not safe. */
 const UNSAFE_FLOOR = new Set(["minecraft:cactus", "minecraft:magma_block", "minecraft:fire", "minecraft:soul_fire", "minecraft:campfire", "minecraft:soul_campfire"]);
@@ -374,39 +397,57 @@ function holderIds(): string[] {
 const fmt = (v: Vector3): string => `${v.x},${v.y},${v.z}`;
 
 /**
- * Takes every live marked legendary out of the holders in `volume` and drops
- * it outside `volume` and `avoid`, same id and generation; recovery then
- * watches it through entitySpawn. fillBlocks and structureManager.place erase
- * a holder's contents with no spill (CNTR-XCX10-AA F2), so script writers call
- * this in the same synchronous step as, and before, their first block change.
+ * Takes every live marked legendary out of the holders in `volume` and off the
+ * ground there, and drops it outside `volume` and `avoid`, same id and
+ * generation; recovery then watches it through entitySpawn. fillBlocks and
+ * structureManager.place erase a holder's contents with no spill
+ * (CNTR-XCX10-AA F2), so script writers call this in the same synchronous step
+ * as, and before, their first block change.
  *
- * Throws before moving anything when the volume is not loaded or holds a
- * holder with no script inventory (crafter, item frames: C-16), so the caller
- * writes nothing rather than erase blind. With no safe spot within SPOT_RINGS
- * the stack goes to its owner, owed if offline (P-lgnd-008 step 6).
+ * Item frames in `volume` are broken open with `setblock … air destroy`, which
+ * spills with drops only while doTileDrops is on: a caller that toggles it
+ * calls this outside that window (L0-adr-oprt §3).
+ *
+ * Throws before moving anything when the volume is not loaded, holds a holder
+ * with no script inventory (crafter: C-16), or holds a frame the command could
+ * not break, so the caller writes nothing rather than erase blind. With no safe
+ * spot within spotSearchLimit the stack goes to its owner, owed if offline
+ * (P-lgnd-008 step 6).
  */
 export function protectLegendariesIn(dimension: Dimension, volume: BlockBox, opts: { avoid?: BlockBox; reason?: string } = {}): ProtectResult {
   const { min: floor, max: ceiling } = dimension.heightRange;
   const y0 = Math.max(volume.min.y, floor);
   const y1 = Math.min(volume.max.y, ceiling - 1);
-  const ids = holderIds();
-  if (y0 > y1 || ids.length === 0) {
+  if (y0 > y1) {
     return { moved: 0, handedBack: 0 };
   }
+  const reason = opts.reason ?? "no reason given";
 
+  const ids = holderIds();
   const holders: Array<{ at: Vector3; typeId: string; container: Container }> = [];
+  const frames: Vector3[] = [];
   const area = (volume.max.x - volume.min.x + 1) * (volume.max.z - volume.min.z + 1);
   const slab = Math.max(1, Math.floor(QUERY_CELLS / area));
-  for (let y = y0; y <= y1; y += slab) {
+  for (let y = y0; ids.length > 0 && y <= y1; y += slab) {
     const query = new BlockVolume({ x: volume.min.x, y, z: volume.min.z }, { x: volume.max.x, y: Math.min(y1, y + slab - 1), z: volume.max.z });
     for (const at of dimension.getBlocks(query, { includeTypes: ids }, false).getBlockLocationIterator()) {
       const block = dimension.getBlock(at);
+      if (block !== undefined && FRAME_TYPES.has(block.typeId)) {
+        frames.push({ x: at.x, y: at.y, z: at.z });
+        continue;
+      }
       const container = block?.getComponent("minecraft:inventory")?.container;
       if (block === undefined || container === undefined) {
-        throw new Error(`legendary protect: ${block?.typeId ?? "an unloaded block"} at ${fmt(at)} has no script-readable inventory; not writing over it (${opts.reason ?? "no reason given"})`);
+        throw new Error(`legendary protect: ${block?.typeId ?? "an unloaded block"} at ${fmt(at)} has no script-readable inventory; not writing over it (${reason})`);
       }
       holders.push({ at: { x: at.x, y: at.y, z: at.z }, typeId: block.typeId, container });
     }
+  }
+
+  // Order: frames break before any holder is emptied, so a frame that will
+  // not break throws with nothing taken out yet.
+  for (const at of frames) {
+    breakFrame(dimension, at, reason);
   }
 
   const found: Array<{ def: LegendaryDef; mark: Mark; stack: ItemStack; from: string }> = [];
@@ -422,6 +463,22 @@ export function protectLegendariesIn(dimension: Dimension, volume: BlockBox, opt
       found.push({ def, mark, stack, from: `${h.typeId} at ${fmt(h.at)}` });
       h.container.setItem(slot, undefined);
     }
+  }
+
+  // Order: after the frames broke — what they spilled is on the ground now.
+  const ground = dimension.getEntities({
+    type: "minecraft:item",
+    location: { x: volume.min.x, y: y0, z: volume.min.z },
+    volume: { x: volume.max.x - volume.min.x, y: y1 - y0, z: volume.max.z - volume.min.z },
+  });
+  for (const entity of ground) {
+    const legendary = liveLegendaryOn(entity);
+    if (legendary === undefined) {
+      continue;
+    }
+    const cell = { x: Math.floor(entity.location.x), y: Math.floor(entity.location.y), z: Math.floor(entity.location.z) };
+    takeOffGround(entity);
+    found.push({ ...legendary, from: `the ground at ${fmt(cell)}` });
   }
   if (found.length === 0) {
     return { moved: 0, handedBack: 0 };
@@ -440,6 +497,46 @@ export function protectLegendariesIn(dimension: Dimension, volume: BlockBox, opt
   }
   console.warn(`[andrew] legendary protect: moved=${result.moved} handedBack=${result.handedBack} reason=${opts.reason ?? "unspecified"}`);
   return result;
+}
+
+/** An item entity carrying a live marked legendary: what protectLegendariesIn moves (P-lgnd-008 step 3). */
+export function isLegendaryItemEntity(entity: Entity): boolean {
+  return liveLegendaryOn(entity) !== undefined;
+}
+
+function liveLegendaryOn(entity: Entity): { def: LegendaryDef; mark: Mark; stack: ItemStack } | undefined {
+  if (!entity.isValid || entity.typeId !== "minecraft:item") {
+    return undefined;
+  }
+  const stack = entity.getComponent("minecraft:item")?.itemStack;
+  const def = defForStack(stack);
+  const mark = def === undefined || stack === undefined ? undefined : getMark(def, stack);
+  if (def === undefined || stack === undefined || mark === undefined || !isLive(def, mark)) {
+    return undefined;
+  }
+  return { def, mark, stack };
+}
+
+/** Removed to be re-dropped, not lost: recovery must not watch it or return it. */
+function takeOffGround(entity: Entity): void {
+  if (watched.has(entity.id)) {
+    forgetWatched(entity.id);
+  } else {
+    removedByProtect.add(entity.id);
+  }
+  entity.remove();
+}
+
+function breakFrame(dimension: Dimension, at: Vector3, reason: string): void {
+  let why = "successCount 0";
+  try {
+    if (dimension.runCommand(`setblock ${at.x} ${at.y} ${at.z} air destroy`).successCount > 0) {
+      return;
+    }
+  } catch (e) {
+    why = String(e);
+  }
+  throw new Error(`legendary protect: could not break the frame at ${fmt(at)} (${why}); not writing over it (${reason})`);
 }
 
 function drop(dimension: Dimension, stack: ItemStack, at: Vector3): boolean {
@@ -463,13 +560,24 @@ function union(a: BlockBox, b: BlockBox | undefined): BlockBox {
 }
 
 /**
- * The first cell an item can rest on in rings 2..SPOT_RINGS blocks outside
- * `box`'s XZ footprint, leaving a free block between the drop and the box.
+ * How many rings outside `box`'s XZ footprint the drop-spot search walks:
+ * max(16, halfExtent + 4) (L0-adr-oprt §2). The walk starts at the edge of the
+ * box, so the rings are counted from there.
+ */
+export function spotSearchLimit(box: BlockBox): number {
+  const halfExtent = Math.max(box.max.x - box.min.x + 1, box.max.z - box.min.z + 1) / 2;
+  return Math.max(MIN_SPOT_RINGS, halfExtent + 4);
+}
+
+/**
+ * The first cell an item can rest on in rings 2..spotSearchLimit blocks
+ * outside `box`'s XZ footprint, leaving a free block between the drop and the box.
  */
 function safeSpot(dimension: Dimension, box: BlockBox): Vector3 | undefined {
   const { min: floor, max: ceiling } = dimension.heightRange;
   const top = Math.min(box.max.y + 1, ceiling - 1);
-  for (let r = 2; r <= SPOT_RINGS; r++) {
+  const limit = spotSearchLimit(box);
+  for (let r = 2; r <= limit; r++) {
     const [x0, x1, z0, z1] = [box.min.x - r, box.max.x + r, box.min.z - r, box.max.z + r];
     const ring: Array<[number, number]> = [];
     for (let x = x0; x <= x1; x++) ring.push([x, z0], [x, z1]);

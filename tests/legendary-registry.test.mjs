@@ -22,6 +22,7 @@ const minecraftServerStub = {
     pluginBuild.onLoad({ filter: /.*/, namespace: 'mc-stub' }, () => ({
       contents: [
         'export const world = { getDynamicProperty() {} };',
+        'export const system = { runInterval() {} };',
         'export const EntityComponentTypes = { Equippable: "minecraft:equippable" };',
         'export const EquipmentSlot = { Mainhand: "Mainhand", Offhand: "Offhand" };',
       ].join('\n'),
@@ -36,6 +37,7 @@ const bundle = await build({
       "export * from './src/legendary/registry.ts';",
       "export * from './src/legendary/hands.ts';",
       "export * from './src/legendary/cooldown.ts';",
+      "export { hudMessage } from './src/legendary/hud.ts';",
     ].join('\n'),
     resolveDir: projectRoot,
     loader: 'ts',
@@ -59,6 +61,8 @@ const {
   resolveActivation,
   startCooldown,
   setBusy,
+  hudMessage,
+  SCYTHE_OF_CALAMITY,
 } = await import(
   'data:text/javascript;base64,' + Buffer.from(bundle.outputFiles[0].text, 'utf-8').toString('base64')
 );
@@ -248,5 +252,68 @@ test('lang: shared legendary keys, and the same key set in en_US and ru_RU', () 
     for (const suffix of ['first_craft', 'craft_blocked', 'returned', 'admin_given', 'reset']) {
       assert.ok(en.has(`${def.textPrefix}.${suffix}`), `missing ${def.textPrefix}.${suffix}`);
     }
+    for (const key of Object.values(def.hudKeys ?? {})) {
+      assert.ok(en.has(key), `missing HUD key ${key}`);
+    }
   }
+});
+
+test('hudMessage: shared keys unless the def names its own (L0-adr-oded §1)', async (t) => {
+  const unmarked = (typeId) => ({ typeId, getDynamicProperty: () => undefined });
+  const sword = unmarked(WEB_SWORD.itemId);
+  const scythe = unmarked(SCYTHE_OF_CALAMITY.itemId);
+
+  // The Action Bar payloads the accepted Web Sword and Scythe HUDs send, as JSON.
+  const golden = {
+    swordReady: '{"rawtext":[{"translate":"andrew.legendary.ready","with":{"rawtext":[{"translate":"item.andrew:web_sword.name"}]}}]}',
+    swordCooldown:
+      '{"rawtext":[{"translate":"andrew.legendary.cooldown","with":{"rawtext":[{"translate":"item.andrew:web_sword.name"},{"text":"27"}]}}]}',
+    scytheReady: '{"rawtext":[{"translate":"andrew.legendary.ready","with":{"rawtext":[{"translate":"item.andrew:scythe_of_calamity.name"}]}}]}',
+    both:
+      '{"rawtext":[{"translate":"andrew.legendary.cooldown","with":{"rawtext":[{"translate":"item.andrew:web_sword.name"},{"text":"27"}]}},' +
+      '{"text":"   "},{"translate":"andrew.legendary.ready","with":{"rawtext":[{"translate":"item.andrew:scythe_of_calamity.name"}]}}]}',
+  };
+
+  await t.test('Web Sword and Scythe render exactly as before, ready and on cooldown', () => {
+    globalThis.__nowMs = 1_000_000;
+    assert.strictEqual(JSON.stringify(hudMessage(makePlayer(sword, undefined))), golden.swordReady);
+    assert.strictEqual(JSON.stringify(hudMessage(makePlayer(scythe, undefined))), golden.scytheReady);
+
+    const cooling = makePlayer(sword, scythe);
+    startCooldown(cooling, WEB_SWORD.abilityKey);
+    globalThis.__nowMs = 1_000_000 + 3_001;
+    assert.strictEqual(JSON.stringify(hudMessage(cooling)), golden.both);
+    assert.strictEqual(JSON.stringify(hudMessage(makePlayer(sword, undefined))), golden.swordReady);
+    const swordOnly = makePlayer(sword, undefined);
+    globalThis.__nowMs = 1_000_000;
+    startCooldown(swordOnly, WEB_SWORD.abilityKey);
+    globalThis.__nowMs = 1_000_000 + 3_001;
+    assert.strictEqual(JSON.stringify(hudMessage(swordOnly)), golden.swordCooldown);
+  });
+
+  await t.test('nothing held, nothing sent', () => {
+    assert.strictEqual(hudMessage(makePlayer(unmarked('minecraft:stick'), undefined)), undefined);
+  });
+
+  await t.test('a def with hudKeys renders its own keys, with the same arguments', () => {
+    const own = { ...OTHER, hudKeys: { ready: 'andrew.test_legendary.ready', cooldown: 'andrew.test_legendary.cooldown' } };
+    LEGENDARIES.push(own);
+    t.after(() => LEGENDARIES.splice(LEGENDARIES.indexOf(own), 1));
+    const item = unmarked(own.itemId);
+
+    globalThis.__nowMs = 5_000_000;
+    assert.deepStrictEqual(hudMessage(makePlayer(item, undefined)), {
+      rawtext: [{ translate: 'andrew.test_legendary.ready', with: { rawtext: [{ translate: 'item.andrew:test_legendary.name' }] } }],
+    });
+    const cooling = makePlayer(item, sword);
+    startCooldown(cooling, own.abilityKey);
+    globalThis.__nowMs = 5_000_000 + 1_500;
+    assert.deepStrictEqual(hudMessage(cooling), {
+      rawtext: [
+        { translate: 'andrew.test_legendary.cooldown', with: { rawtext: [{ translate: 'item.andrew:test_legendary.name' }, { text: '29' }] } },
+        { text: '   ' },
+        { translate: 'andrew.legendary.ready', with: { rawtext: [{ translate: 'item.andrew:web_sword.name' }] } },
+      ],
+    });
+  });
 });

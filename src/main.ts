@@ -18,6 +18,7 @@ import { registerHideCommand } from "./legendary/hidden";
 import { registerLegendaryHud } from "./legendary/hud";
 import { protectLegendariesIn, registerRecovery } from "./legendary/recovery";
 import { registerRetention } from "./legendary/retention";
+import { registerOrbitalCannon } from "./orbital";
 import { registerScytheVolley } from "./scythe/volley";
 import { registerStructureCommands } from "./structures/commands";
 import { DISCOVER_INTERVAL_TICKS, EnabledTypes, enabledLine } from "./structures/config";
@@ -36,6 +37,7 @@ registerRecovery();
 registerLegendaryHud();
 registerTrap();
 registerScytheVolley();
+registerOrbitalCannon();
 // Must run at script load: custom commands can only be registered during the
 // engine's startup phase, which is over by the time the world exists.
 registerLegendaryCommands();

@@ -1,0 +1,31 @@
+{
+  "format_version": "1.21.0",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "andrew:orbital_cannon"
+    },
+    "tags": ["crafting_table"],
+    "pattern": [
+      " T ",
+      "TRT",
+      " T "
+    ],
+    "key": {
+      "T": {
+        "item": "minecraft:tnt"
+      },
+      "R": {
+        "item": "minecraft:fishing_rod"
+      }
+    },
+    "result": {
+      "item": "andrew:orbital_cannon_crafted",
+      "count": 1
+    },
+    "unlock": [
+      {
+        "item": "minecraft:tnt"
+      }
+    ]
+  }
+}
