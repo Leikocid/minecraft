@@ -418,6 +418,12 @@ function up() {
   if (res.status !== 0) throw new Error('docker compose up failed');
 }
 
+/** onTestPassed/onTestFailed lines of `name` in the log; a longer name sharing the prefix is not counted. */
+function verdictCount(text, name) {
+  const esc = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return (text.match(new RegExp(`onTest(?:Passed|Failed):\\s*${esc}(?![\\w:])`, 'g')) ?? []).length;
+}
+
 /** Wait until the log satisfies `done`, or the deadline passes. */
 function waitFor(label, done, deadline) {
   for (;;) {
@@ -500,12 +506,21 @@ function analyzeLog(text, expected) {
   if (enabledLine?.includes(ENABLED_NONE)) evidence.push(enabledLine.trim());
   else problems.push(`"${ENABLED_NONE}" is absent on a fresh world (got ${JSON.stringify(enabledLine?.trim() ?? null)})`);
 
+  // A repeated test keeps its first failure: a later pass must not hide it.
+  const runs = new Map();
   for (const line of lines) {
     const passed = line.match(/onTestPassed:\s*(\S+)/);
-    if (passed) results.set(passed[1], { ok: true, line: line.trim() });
     const failed = line.match(/onTestFailed:\s*(\S+)\s*-?\s*(.*)$/);
-    if (failed) results.set(failed[1], { ok: false, line: line.trim() });
+    const name = passed?.[1] ?? failed?.[1];
+    if (name === undefined) continue;
+    const r = runs.get(name) ?? { passed: 0, failed: 0 };
+    if (failed) r.failed++;
+    else r.passed++;
+    runs.set(name, r);
+    if (failed && results.get(name)?.ok !== false) results.set(name, { ok: false, line: line.trim() });
+    if (passed && !results.has(name)) results.set(name, { ok: true, line: line.trim() });
   }
+  for (const [name, r] of runs) if (r.passed + r.failed > 1) evidence.push(`${name}: ${r.passed + r.failed} runs, ${r.failed} failed`);
 
   for (const name of expected) {
     const result = results.get(name);
@@ -566,16 +581,14 @@ function main() {
     );
 
     for (const name of selected) {
+      // A name given to --only more than once runs again: its earlier verdict is already in the log.
+      const seen = verdictCount(readLog(), name);
       // Remove the previous test's structure, so the next one is placed on the
       // same clear ground instead of being pushed aside by the leftovers.
       sendCommand('gametest clearall');
       sendCommand(`gametest run ${name}`);
       try {
-        waitFor(
-          `${name} to report`,
-          (t) => t.includes(`onTestPassed: ${name}`) || t.includes(`onTestFailed: ${name}`),
-          deadline
-        );
+        waitFor(`${name} to report`, (t) => verdictCount(t, name) > seen, deadline);
       } catch (err) {
         // A timeout is a result, not a crash: the log still says how far the run
         // got, and analyzeLog turns that into a named problem.

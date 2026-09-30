@@ -4,9 +4,10 @@
 // Bastion Remnant cancel the candidate before any write; 3 treasure chests
 // and 7 others judged by their contents; the one-time garrison of 7–10
 // piglins and 2 brutes, no hoglin, no spawner; re-running the guard step,
-// killing guards and a script restart change nothing; the guards outlast a
-// player standing past the despawn distance. Every test restores the Nether
-// it built on.
+// killing guards and a script restart change nothing; the guards are
+// fireproof, outlast a player standing past the despawn distance and a chunk
+// reload, and an old guard without the effect gets it on load. Every test
+// restores the Nether it built on.
 
 import {
   BlockTypes,
@@ -23,7 +24,7 @@ import {
 } from "@minecraft/server";
 import { Test, registerAsync } from "@minecraft/server-gametest";
 import { protectLegendariesIn } from "../legendary/recovery";
-import { BRUTE, PIGLIN, PIGLIN_MAX, PIGLIN_MIN, goldKept, guardTag, piglinCount, roleTag } from "../structures/bodies/bastion";
+import { BRUTE, PIGLIN, PIGLIN_MAX, PIGLIN_MIN, PIGLIN_NAME, PIGLIN_POINTS, goldKept, guardTag, piglinCount, roleTag } from "../structures/bodies/bastion";
 import { BODIES } from "../structures/bodies";
 import { type Box, boxOf, sliceBox } from "../structures/clear";
 import type { RollDef } from "../structures/config";
@@ -47,6 +48,8 @@ const SITE_TOP = 112;
 const SITE_BOTTOM = 25;
 /** Past the 128-block instant-despawn distance of vanilla mobs. */
 const FAR = 160;
+/** Guards that stroll into the moat die over minutes, not in the first ten seconds. */
+const FAR_TICKS = 1500;
 const SIZE: Vec3 = [...BASTION_SIZE];
 
 const log = (msg: string): void => console.warn(`[gametest] ${msg}`);
@@ -65,6 +68,8 @@ function fillBox(dim: Dimension, box: Box, block: string): void {
   for (const s of sliceBox(box)) dim.fillBlocks(new BlockVolume(v(s.min), v(s.max)), block);
 }
 
+/** Each run of bastion_body_generate in one server session builds on its own chunk, so repeats see different ground. */
+let generateRuns = 0;
 const unique = (label: string): string => `gt-bb-${label}-${Date.now()}`;
 
 /** A Nether chunk far from anything the other Nether tests build. */
@@ -180,6 +185,9 @@ function generate(rt: StrfRuntime, dim: "o" | "n", cx: number, cz: number): { ou
 }
 
 /** Living guards of an instance, by the tag the roster carries. */
+/** getEffect reports an infinite effect as duration -1. */
+const fireproof = (e: Entity): boolean => e.getEffect("fire_resistance")?.duration === -1;
+
 const guardsOf = (dim: Dimension, id: string): Entity[] => dim.getEntities({ tags: [guardTag(id)] }).filter((e) => e.isValid);
 
 function census(dim: Dimension, id: string): { piglins: number; brutes: number; hoglins: number; named: number; total: number } {
@@ -200,19 +208,23 @@ const onIsland = (inst: Instance, p: Vector3): boolean => {
   return p.x >= x0 && p.x <= x1 && p.z >= z0 && p.z <= z1;
 };
 
+const fmt = (p: Vector3): string => `${p.x.toFixed(1)},${p.y.toFixed(1)},${p.z.toFixed(1)}`;
+const inBox = (box: Box, p: Vector3): boolean =>
+  p.x >= box.min[0] && p.x < box.max[0] + 1 && p.y >= box.min[1] && p.y < box.max[1] + 1 && p.z >= box.min[2] && p.z < box.max[2] + 1;
+
 const dist = (p: Vector3, q: Vec3): number => Math.hypot(p.x - (q[0] + 0.5), p.y - q[1], p.z - (q[2] + 0.5));
 
 // ------------------------------------------------ AC1 – AC4, AC6, AC7: one bastion, start to restart
 
 registerAsync("andrew", "bastion_body_generate", async (test: Test): Promise<void> => {
   const dim = nether();
-  const [cx, cz] = farChunk(test, 600);
+  const [cx, cz] = farChunk(test, 660 + 4 * (generateRuns++ % 10));
   const watch = newWatch();
   const store = new MemoryStore();
   const rt = runtime(unique("gen"), watch, store);
   const cand = buildCandidate(rt.registry.salt(), "n", cx, cz, bastionDef(rt));
   const area = areaOf(cand);
-  const unload = await loadBox(test, dim, "andrew_gt_bb_gen", area);
+  let unload = await loadBox(test, dim, "andrew_gt_bb_gen", area);
   let inst: Instance | undefined;
   let player: ReturnType<Test["spawnSimulatedPlayer"]> | undefined;
   let unloadFar: (() => void) | undefined;
@@ -282,6 +294,9 @@ registerAsync("andrew", "bastion_body_generate", async (test: Test): Promise<voi
     test.assert(c0.piglins === n && n >= PIGLIN_MIN && n <= PIGLIN_MAX, `${c0.piglins} piglins, planned ${n}`);
     test.assert(c0.brutes === 2 && c0.hoglins === 0 && hoglinsNear === 0, `brutes ${c0.brutes} hoglins ${c0.hoglins}/${hoglinsNear}`);
     test.assert(c0.named === c0.total, "an unnamed guard");
+    const burnable = guardsOf(dim, b.id).filter((e) => !fireproof(e)).map((e) => e.typeId);
+    log(`bastion garrison fire RESULT guards without infinite fire_resistance: ${burnable.join(",") || "none"} of ${c0.total}`);
+    test.assert(burnable.length === 0, `guards that burn in the moat: ${burnable.join(",")}`);
     test.assert(tSpawn !== undefined && onIsland(b, tSpawn) && tIsland, "the treasure brute is not on the island");
     test.assert(oSpawnDist >= 0 && oSpawnDist <= 1, `the other brute spawned ${oSpawnDist} from its slot`);
 
@@ -344,16 +359,65 @@ registerAsync("andrew", "bastion_body_generate", async (test: Test): Promise<voi
     fillBox(dim, { min: pad.min, max: [pad.max[0], far[1] - 1, pad.max[2]] }, "minecraft:netherrack");
     player = test.spawnSimulatedPlayer({ x: 1, y: 2, z: 1 }, "andrew_bastion_far", GameMode.Creative);
     player.teleport({ x: far[0] + 0.5, y: far[1], z: far[2] + 0.5 }, { dimension: dim });
-    await test.idle(200);
+    const trail = new Map(guardsOf(dim, b.id).map((e) => [e.id, `${e.typeId.replace("minecraft:", "")}@${fmt(e.location)}`]));
+    const fates = new Map<string, string>();
+    const onDie = world.afterEvents.entityDie.subscribe((ev) => {
+      const id = ev.deadEntity.id;
+      if (trail.has(id)) fates.set(id, `died of ${ev.damageSource.cause} by ${ev.damageSource.damagingEntity?.typeId ?? "-"} at ${fmt(ev.deadEntity.location)}`);
+    });
+    const onRemove = world.beforeEvents.entityRemove.subscribe((ev) => {
+      const e = ev.removedEntity;
+      if (trail.has(e.id) && !fates.has(e.id)) fates.set(e.id, `removed at ${fmt(e.location)} (${inBox(area, e.location) ? "inside" : "OUTSIDE"} the loaded area)`);
+    });
+    try {
+      for (let t = 0; t < FAR_TICKS / 20; t++) {
+        await test.idle(20);
+        for (const e of guardsOf(dim, b.id)) trail.set(e.id, `${e.typeId.replace("minecraft:", "")}@${fmt(e.location)}`);
+      }
+    } finally {
+      world.afterEvents.entityDie.unsubscribe(onDie);
+      world.beforeEvents.entityRemove.unsubscribe(onRemove);
+    }
     const c4 = census(dim, b.id);
+    const present = new Set(guardsOf(dim, b.id).map((e) => e.id));
+    const lost = [...trail].filter(([id]) => !present.has(id)).map(([id, last]) => `${id} last seen ${last}: ${fates.get(id) ?? "no die/remove event"}`);
     const pd = player.dimension.id === dim.id ? Math.round(Math.hypot(player.location.x - (box.min[0] + 10), player.location.z - (box.min[2] + 10))) : -1;
     log(
-      `bastion distance RESULT player in ${player.dimension.id} ${pd} blocks from the bastion for 200 ticks; guards ${c3.total} -> ${c4.total}; ` +
-        `unnamed control piglin ${control.isValid ? "still there" : "despawned"}`
+      `bastion distance RESULT player in ${player.dimension.id} ${pd} blocks from the bastion for ${FAR_TICKS} ticks; guards ${c3.total} -> ${c4.total}; ` +
+        `unnamed control piglin ${control.isValid ? "still there" : "despawned"}; lost ${lost.join(" | ") || "none"}`
     );
     test.assert(pd > 128, `the player stands ${pd} blocks away`);
-    test.assert(c4.total === c3.total, `guards ${c3.total} -> ${c4.total} with a far player`);
-    test.succeed();
+    test.assert(c4.total === c3.total, `guards ${c3.total} -> ${c4.total} with a far player; lost ${lost.join(" | ")}`);
+
+    // Chunk reload with the player still far: the garrison and its fire_resistance come back, and a
+    // guard summoned the way a pre-fireproof build did (name and role, no effect) is made fireproof on load.
+    const oldCell = at(b, PIGLIN_POINTS[PIGLIN_POINTS.length - 1]);
+    const oldGuard = dim.getEntities({ type: PIGLIN, name: PIGLIN_NAME, location: v(oldCell), maxDistance: 2 }).map((e) => e.id);
+    dim.runCommand(`summon ${PIGLIN} "${PIGLIN_NAME}" ${oldCell[0] + 0.5} ${oldCell[1]} ${oldCell[2] + 0.5}`);
+    const legacy = dim.getEntities({ type: PIGLIN, name: PIGLIN_NAME, location: v(oldCell), maxDistance: 2 }).find((e) => !oldGuard.includes(e.id));
+    test.assert(legacy !== undefined, "the old-style guard was not summoned");
+    legacy!.addTag(roleTag("piglin"));
+    const legacyId = legacy!.id;
+    await test.idle(2);
+    const legacyBefore = fireproof(legacy!);
+    unload();
+    let unloadedAfter = -1;
+    for (let t = 0; t < 30 && unloadedAfter < 0; t++) {
+      await test.idle(10);
+      if (guardsOf(dim, b.id).length === 0) unloadedAfter = (t + 1) * 10;
+    }
+    unload = await loadBox(test, dim, "andrew_gt_bb_gen2", area);
+    await test.idle(20);
+    const c5 = census(dim, b.id);
+    const reloaded = guardsOf(dim, b.id);
+    const legacyAfter = dim.getEntities({ type: PIGLIN, name: PIGLIN_NAME }).find((e) => e.id === legacyId);
+    log(
+      `bastion reload RESULT chunks unloaded after ${unloadedAfter} ticks; guards ${c4.total} -> ${c5.total}, fireproof ${reloaded.filter(fireproof).length}/${reloaded.length}; ` +
+        `old-style guard fireproof before unload ${legacyBefore}, after reload ${legacyAfter === undefined ? "missing" : fireproof(legacyAfter)}`
+    );
+    test.assert(unloadedAfter > 0, "the bastion's chunks never unloaded");
+    test.assert(c5.total === c4.total && reloaded.every(fireproof), `after a chunk reload: guards ${c4.total} -> ${c5.total}, fireproof ${reloaded.filter(fireproof).length}`);
+    test.assert(!legacyBefore && legacyAfter !== undefined && fireproof(legacyAfter), `old-style guard: before ${legacyBefore}, after ${legacyAfter === undefined ? "missing" : fireproof(legacyAfter)}`);
   } finally {
     if (player !== undefined) test.removeSimulatedPlayer(player);
     unloadFar?.();
@@ -361,9 +425,11 @@ registerAsync("andrew", "bastion_body_generate", async (test: Test): Promise<voi
     world.setDifficulty(difficultyBefore);
     unload();
   }
+  // After succeed() every Test method throws, and the cleanup above would stop at removeSimulatedPlayer.
+  test.succeed();
 })
   .structureName(STRUCTURE)
-  .maxTicks(3000)
+  .maxTicks(6000)
   .tag("andrew");
 
 // ------------------------------------------------ AC1: only the Nether, only a fit floor

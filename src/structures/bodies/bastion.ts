@@ -24,6 +24,9 @@ export const PIGLIN_NAME = "Пиглин бастиона";
 export const BRUTE_NAME = "Брут бастиона";
 /** `andrew:bastion_role:<treasure|other|piglin>`: which post a guard was spawned for. */
 export const roleTag = (role: "treasure" | "other" | "piglin"): string => `andrew:bastion_role:${role}`;
+/** A garrison piglin or brute, by its role tag. */
+export const isBastionGuard = (typeId: string, tags: readonly string[]): boolean =>
+  (typeId === PIGLIN || typeId === BRUTE) && tags.some((t) => t.startsWith("andrew:bastion_role:"));
 
 export { guardTag };
 
@@ -54,12 +57,13 @@ export function piglinCount(instanceId: string): number {
 /**
  * The whole one-time roster in spawn order: the two brutes first, then the
  * piglins. The index is the Placer's per-guard progress, so the order is fixed.
- * No hoglin is ever part of it (§14.5).
+ * No hoglin is ever part of it (§14.5). Every guard is fireproof: the hall's
+ * moat is flush with the floor, and a piglin that strolls into it dies there.
  */
 export function garrison(instanceId: string): GuardPoint[] {
   const tag = guardTag(instanceId);
-  const brutes = BRUTE_SLOTS.map((b): GuardPoint => ({ entity: BRUTE, local: [...b.at] as Vec3, tags: [tag, roleTag(b.slot)], name: BRUTE_NAME }));
-  const piglins = PIGLIN_POINTS.slice(0, piglinCount(instanceId)).map((local): GuardPoint => ({ entity: PIGLIN, local, tags: [tag, roleTag("piglin")], name: PIGLIN_NAME }));
+  const brutes = BRUTE_SLOTS.map((b): GuardPoint => ({ entity: BRUTE, local: [...b.at] as Vec3, tags: [tag, roleTag(b.slot)], name: BRUTE_NAME, fireproof: true }));
+  const piglins = PIGLIN_POINTS.slice(0, piglinCount(instanceId)).map((local): GuardPoint => ({ entity: PIGLIN, local, tags: [tag, roleTag("piglin")], name: PIGLIN_NAME, fireproof: true }));
   return [...brutes, ...piglins];
 }
 
