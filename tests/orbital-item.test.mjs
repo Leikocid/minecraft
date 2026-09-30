@@ -328,6 +328,9 @@ test('charge entity: summonable by script only, inert, indestructible', () => {
   const d = charge.description;
   const c = charge.components;
   assert.equal(d.identifier, 'andrew:orbital_charge');
+  // BDS 1.26.51.1 ticks an entity with no runtime class as a generic actor that pushes every pushable
+  // entity its box overlaps, 0×0 box or not (a cow 0.51 in 20 ticks); the snowball class pushes nothing.
+  assert.equal(d.runtime_identifier, 'minecraft:snowball');
   assert.equal(d.is_summonable, true);
   assert.equal(d.is_spawnable, false);
   assert.ok(!('spawn_egg' in (clientCharge.description ?? {})), 'no spawn egg');

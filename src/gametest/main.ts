@@ -78,6 +78,7 @@ import "./legendary-recovery";
 import "./probe-input";
 import "./orbital-item";
 import "./orbital-core";
+import "./orbital-flight";
 import { registerOrbitalCannon } from "../orbital";
 import { SPAWN_EVENT } from "../structures/spawn-search";
 
@@ -155,8 +156,10 @@ registerTrap();
 registerLegendaryHud();
 
 // Same binding problem: the release pack's Cannon handlers receive no
-// SimulatedPlayer, so src/gametest/orbital-core.ts drives this copy.
-registerOrbitalCannon();
+// SimulatedPlayer, so src/gametest/orbital-core.ts drives this copy. Its own
+// scope keeps the release copy's orphan sweep off this copy's charges: both
+// runtimes see every charge entity, each knows only its own attacks.
+registerOrbitalCannon("gt");
 
 // Which use-event a press actually produces on BDS 1.26.51.1 is an engine fact,
 // not a documented one, and src/websword/trap.ts subscribes to both. This

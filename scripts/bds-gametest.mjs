@@ -248,7 +248,23 @@ const EXPECTED_TESTS = [
   'andrew:orbital_input_creative',
   'andrew:orbital_inside_solid',
   'andrew:probe_orbital_contact',
+  // ORBC-FLIGHT-01 — src/gametest/orbital-flight.ts
+  'andrew:orbital_flight_through_entities',
+  'andrew:orbital_flight_air_control',
+  'andrew:orbital_flight_void_end',
+  'andrew:orbital_flight_owner_events',
+  'andrew:orbital_flight_unload',
+  'andrew:orbital_flight_load_480',
+  'andrew:orbital_flight_restart_fire',
+  'andrew:orbital_flight_restart_check',
 ];
+
+/**
+ * A test that ends in a server restart: once it reports, BDS is stopped (the
+ * world is saved on stop) and started again on the same world, and the test
+ * named here runs next. Each needs the other, so --only takes both or neither.
+ */
+const RESTART_AFTER = new Map([['andrew:orbital_flight_restart_fire', 'andrew:orbital_flight_restart_check']]);
 
 // FLAT is not cosmetic: see the LEVEL_TYPE comment in docker/bds/compose.yaml.
 // A default world put the platform under an ocean and the run was intermittent.
@@ -277,6 +293,11 @@ function parseArgs(argv) {
   }
   const unknown = opts.only.filter((n) => !EXPECTED_TESTS.includes(n));
   if (unknown.length > 0) throw new Error(`--only: not in EXPECTED_TESTS: ${unknown.join(' ')}`);
+  for (const [before, after] of RESTART_AFTER) {
+    const i = opts.only.indexOf(before);
+    const j = opts.only.indexOf(after);
+    if ((i < 0) !== (j < 0) || j < i) throw new Error(`--only: ${before} and ${after} go together, in that order`);
+  }
   return opts;
 }
 
@@ -418,6 +439,23 @@ function readLog() {
 function up() {
   const res = compose(['up', '-d'], { stdio: 'inherit', env });
   if (res.status !== 0) throw new Error('docker compose up failed');
+}
+
+const count = (text, needle) => text.split('\n').filter((l) => (typeof needle === 'string' ? l.includes(needle) : needle.test(l))).length;
+
+/** Stop BDS, which saves the world, and start it again on the same world and packs. */
+function restart(deadline) {
+  const before = readLog();
+  const started = count(before, /^\[.*INFO\] Server started\.\s*$/);
+  const loaded = count(before, SCRIPT_LOADED);
+  log('▶ restart: stopping BDS (the world is saved on stop) and starting it again on the same world');
+  compose(['stop', '-t', '60'], { stdio: 'inherit' });
+  up();
+  waitFor(
+    'the gametest script to load after the restart',
+    (t) => count(t, /^\[.*INFO\] Server started\.\s*$/) > started && count(t, SCRIPT_LOADED) > loaded,
+    deadline
+  );
 }
 
 /** Wait until the log satisfies `done`, or the deadline passes. */
@@ -584,6 +622,7 @@ function main() {
         log(`✗ ${err.message}`);
         break;
       }
+      if (RESTART_AFTER.has(name)) restart(deadline);
     }
     text = readLog();
   } finally {

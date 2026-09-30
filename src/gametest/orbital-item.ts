@@ -22,6 +22,7 @@ import {
 import { type SimulatedPlayer, type Test, registerAsync } from "@minecraft/server-gametest";
 import { ORBITAL_CANNON, WEB_SWORD } from "../legendary/registry";
 import * as state from "../legendary/state";
+import { attackTag } from "../orbital/charge";
 
 const STRUCTURE = "andrew:platform";
 const CHARGE_ID = "andrew:orbital_charge";
@@ -202,6 +203,9 @@ registerAsync("andrew", "orbital_charge_inert", async (test: Test): Promise<void
   try {
     const charge = dim.spawnEntity(CHARGE_ID, test.worldLocation(CHARGE_CELL), { spawnEvent: "andrew:scale_lmb" });
     const rmbCharge = dim.spawnEntity(CHARGE_ID, test.worldLocation(RMB_CHARGE_CELL), { spawnEvent: "andrew:scale_rmb" });
+    // A charge no attack holds is an orphan and is swept at once; a scope no runtime owns keeps these two.
+    charge.addTag(attackTag("probe-inert"));
+    rmbCharge.addTag(attackTag("probe-inert"));
     const faller = dim.spawnEntity("minecraft:armor_stand", test.worldLocation(FALLER_CELL));
     leftovers.push(charge, rmbCharge, faller);
     const at = charge.location;

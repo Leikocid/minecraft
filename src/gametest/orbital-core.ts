@@ -28,8 +28,9 @@ import { type SimulatedPlayer, type Test, registerAsync } from "@minecraft/serve
 import * as cooldown from "../legendary/cooldown";
 import { hudMessage } from "../legendary/hud";
 import { ORBITAL_CANNON, cooldownKey } from "../legendary/registry";
-import { type Attack, activate, activeAttacks, endAttack, observeAttacks } from "../orbital/activation";
+import { activate, observeAttacks } from "../orbital/activation";
 import { CHARGE_ENTITY_ID, CHARGE_TAG, type Effect, type Mode, PASS_THROUGH, attackTag, effectFor, isContact, registerEffect } from "../orbital/charge";
+import { type Attack, activeAttacks, endAttack } from "../orbital/flight";
 import { spawnY } from "../orbital/spawn";
 import { distanceToBlock } from "../orbital/target";
 import { loadBox } from "./structures-place";
@@ -137,6 +138,15 @@ function watchShots(players: Player[]): { shots: Shot[]; stop: () => void; clear
 
 const shotsOf = (shots: Shot[], player: Player): Shot[] => shots.filter((s) => s.attack.ownerId === player.id);
 
+/** Charge entities spawned anywhere from now until stop(). */
+function countChargeSpawns(): { count: () => number; stop: () => void } {
+  let n = 0;
+  const handler = world.afterEvents.entitySpawn.subscribe((e) => {
+    if (e.entity.isValid && e.entity.typeId === CHARGE_ENTITY_ID) n++;
+  });
+  return { count: () => n, stop: () => world.afterEvents.entitySpawn.unsubscribe(handler) };
+}
+
 function chargesIn(dim: Dimension): number {
   return dim.getEntities({ type: CHARGE_ENTITY_ID }).length;
 }
@@ -145,14 +155,14 @@ function chargesOfAttack(dim: Dimension, attackId: string): number {
   return dim.getEntities({ type: CHARGE_ENTITY_ID, tags: [attackTag(attackId)] }).length;
 }
 
-function sweepCharges(): void {
+export function sweepCharges(): void {
   for (const id of ["overworld", "nether", "the_end"]) {
     for (const e of world.getDimension(id).getEntities({ type: CHARGE_ENTITY_ID, tags: [CHARGE_TAG] })) e.remove();
   }
 }
 
 /** Blocks set by a scenario, each put back to what it was. */
-class Blocks {
+export class Blocks {
   private readonly placed: Array<{ dim: Dimension; at: Vector3; was: BlockPermutation | undefined }> = [];
   constructor(private readonly test: Test) {}
 
@@ -181,14 +191,14 @@ class Blocks {
   }
 }
 
-function arm(player: Player, slot: number = CANNON_SLOT): void {
+export function arm(player: Player, slot: number = CANNON_SLOT): void {
   const container = player.getComponent(EntityComponentTypes.Inventory)?.container;
   if (container === undefined) throw new Error(`${player.name} has no inventory`);
   container.setItem(slot, new ItemStack(ORBITAL_CANNON.itemId, 1));
   player.selectedSlotIndex = slot;
 }
 
-async function untilTick(test: Test, tick: number): Promise<void> {
+export async function untilTick(test: Test, tick: number): Promise<void> {
   while (system.currentTick < tick) await test.idle(1);
 }
 
@@ -349,7 +359,7 @@ function buildRoom(dim: Dimension, x0: number, floorY: number, z0: number, topY:
   return { dim, stand: { x: x0 + 3, y: floorY + 1, z: z0 + 5 }, target, shell };
 }
 
-async function goTo(test: Test, player: SimulatedPlayer, dim: Dimension, stand: Vector3): Promise<void> {
+export async function goTo(test: Test, player: SimulatedPlayer, dim: Dimension, stand: Vector3): Promise<void> {
   player.teleport({ x: stand.x + 0.5, y: stand.y, z: stand.z + 0.5 }, { dimension: dim, forceProvidedPositionOnDimensionChange: true });
   for (let t = 0; t < 200; t++) {
     await test.idle(1);
@@ -466,7 +476,7 @@ registerAsync("andrew", "orbital_dedup_lock_faces", async (test: Test): Promise<
     test.assert(watch.shots.length === 1, `lock: ${watch.shots.length} attacks, not 1`);
     const locked = watch.shots[0].attack;
     const charge = locked.charges[0].entity;
-    const firedAt = { ...charge.location };
+    const firedAt = watch.shots[0].at[0];
     player.teleport(test.worldLocation({ x: 6.5, y: 2, z: 1.5 }));
     player.lookAtLocation({ x: 6.5, y: 3.5, z: 9 });
     await test.idle(4);
@@ -478,7 +488,9 @@ registerAsync("andrew", "orbital_dedup_lock_faces", async (test: Test): Promise<
     );
     test.assert(view !== undefined && same(view.block.location, decoy), "lock: after the turn the player does not see the other block — a re-read would go unnoticed");
     test.assert(live !== undefined && same(live.target, side), `lock: the attack's target moved to ${live === undefined ? "nothing" : fmt(live.target)}`);
-    test.assert(charge.isValid && near(charge.location, firedAt) && near(firedAt, { x: side.x + 0.5, y: locked.spawnY, z: side.z + 0.5 }), `lock: the charge column is ${charge.isValid ? fmt(charge.location) : "gone"}, not the target's`);
+    // The charge falls, so the lock is its column: x and z stay the target's while y drops.
+    const inColumn = charge.isValid && Math.abs(charge.location.x - firedAt.x) < 1e-6 && Math.abs(charge.location.z - firedAt.z) < 1e-6 && charge.location.y < firedAt.y;
+    test.assert(inColumn && near(firedAt, { x: side.x + 0.5, y: locked.spawnY, z: side.z + 0.5 }), `lock: the charge column is ${charge.isValid ? fmt(charge.location) : "gone"}, not the target's`);
     watch.clear();
     watch.shots.length = 0;
     player.teleport(test.worldLocation({ x: 3.5, y: 2, z: 5.5 }));
@@ -565,20 +577,26 @@ registerAsync("andrew", "orbital_shared_cooldown", async (test: Test): Promise<v
     log(`cooldown RESULT P rmb at tick ${t}: remainingTicks in that tick ${first.remainingTicks}`);
     test.assert(first.remainingTicks !== undefined && first.remainingTicks >= 599 && first.remainingTicks <= 600, `remainingTicks in the firing tick is ${first.remainingTicks}, not 599..600`);
 
+    // P's first charges land around t+30, so a count of charges in the world moves on its own: spawns are counted instead.
     await untilTick(test, t + 20);
-    const charges = chargesIn(dim);
+    const spawned = countChargeSpawns();
     const pShots = shotsOf(watch.shots, p).length;
     const lmb = await press(test, p, { kind: "attack" });
     const rmb = await press(test, p, { kind: "use" });
     await test.idle(2);
-    log(`cooldown RESULT t+20 P lmb raised [${lmb.join(",")}], rmb raised [${rmb.join(",")}]: new P attacks ${shotsOf(watch.shots, p).length - pShots}, charges ${charges} -> ${chargesIn(dim)}`);
+    const onCooldown = spawned.count();
+    log(`cooldown RESULT t+20 P lmb raised [${lmb.join(",")}], rmb raised [${rmb.join(",")}]: new P attacks ${shotsOf(watch.shots, p).length - pShots}, charges spawned ${onCooldown}`);
     test.assert(shotsOf(watch.shots, p).length === pShots, `t+20: P fired ${shotsOf(watch.shots, p).length - pShots} more attack(s) on cooldown`);
-    test.assert(chargesIn(dim) === charges, `t+20: the charge count moved ${charges} -> ${chargesIn(dim)}`);
+    test.assert(onCooldown === 0, `t+20: ${onCooldown} charge(s) spawned while P was on cooldown`);
 
     await press(test, q, { kind: "use" });
+    await test.idle(2);
     const qShot = shotsOf(watch.shots, q)[0];
-    log(`cooldown RESULT t+20 Q rmb: ${qShot === undefined ? "blocked" : `fired at ${qShot.tick}, ${qShot.at.length} charges`}`);
+    const qSpawned = spawned.count() - onCooldown;
+    spawned.stop();
+    log(`cooldown RESULT t+20 Q rmb: ${qShot === undefined ? "blocked" : `fired at ${qShot.tick}, ${qShot.at.length} charges`}; spawn witness saw ${qSpawned}`);
     test.assert(qShot !== undefined, "Q's RMB was blocked by P's cooldown");
+    test.assert(qSpawned === qShot.at.length, `control: the spawn witness saw ${qSpawned} of Q's ${qShot.at.length} charges — it proves nothing about P`);
 
     // Real milliseconds (cooldown.ts), so 600 ticks is 30 s only at 20 TPS: wait for the clock, bounded.
     await untilTick(test, t + 600);
@@ -809,15 +827,17 @@ registerAsync("andrew", "orbital_input_creative", (test: Test) => inputPaths(tes
 
 // ---------------------------------------------------------------- AC#9: spawned inside a solid block
 
-interface Detonation {
+export interface Detonation {
   mode: Mode;
   point: Vector3;
   attackId: string;
+  ownerId: string;
+  dimensionId: string;
   tick: number;
 }
 
 /** Records every onDetonate of `mode` while passing it on to the registered effect. */
-function recordDetonations(mode: Mode): { calls: Detonation[]; restore: () => void } {
+export function recordDetonations(mode: Mode): { calls: Detonation[]; restore: () => void } {
   const effect = effectFor(mode);
   if (effect === undefined) throw new Error(`no ${mode} effect registered`);
   const calls: Detonation[] = [];
@@ -825,7 +845,7 @@ function recordDetonations(mode: Mode): { calls: Detonation[]; restore: () => vo
     layout: (target) => effect.layout(target),
     scale: effect.scale,
     onDetonate(d, point, ownerId, m, attackId) {
-      calls.push({ mode: m, point: { ...point }, attackId, tick: system.currentTick });
+      calls.push({ mode: m, point: { ...point }, attackId, ownerId, dimensionId: d.id, tick: system.currentTick });
       effect.onDetonate(d, point, ownerId, m, attackId);
     },
   };
