@@ -155,10 +155,14 @@ function activate(player: Player, stack: ItemStack, via: string): void {
  * The cube's centre cell, or undefined when nothing is in reach.
  *
  * Two rays, because the reaches differ: entities out to 3 blocks, blocks out
- * to 5 (Q-011). An entity wins a tie, but a block that is strictly closer
- * wins outright — `getEntitiesFromViewDirection` does not stop at walls, and
- * without the comparison the ability would reach an entity through one
- * [src: webswordspecv1ruen §12 — 'не атаковать сквозь стены'].
+ * to 5 (Q-011). An entity wins a tie, a block that is strictly closer wins.
+ *
+ * The wall rule itself is kept by the entity ray: getEntitiesFromViewDirection
+ * stops at the first colliding block unless given `ignoreBlockCollision`, so it
+ * never returns an entity behind the face the block ray hit — 0 of 21 block
+ * types on BDS 1.26.51.1 (websword_ray_stoppers). The distance comparison is
+ * a backstop behind it.
+ * [src: webswordspecv1ruen §12 — 'не атаковать сквозь стены']
  */
 function findCenter(player: Player): Vector3 | undefined {
   const head = player.getHeadLocation();
@@ -209,7 +213,14 @@ function firstLivingEntity(player: Player): LivingHit | undefined {
   return undefined;
 }
 
-/** Absolute position of a block-ray hit: the block's corner plus the face offset. */
+/**
+ * Absolute position of a block-ray hit: the block's corner plus faceLocation.
+ *
+ * faceLocation is the hit point's fractional part, so a hit on the block's +1
+ * plane — a full South, East or Up face — reads 0 along the normal and this
+ * lands one block deep (BDS 1.26.51.1, websword_face_location). findCenter's
+ * outcome does not change: the entity ray has already stopped at that face.
+ */
 function hitPoint(block: Block, faceLocation: Vector3): Vector3 {
   return {
     x: block.location.x + faceLocation.x,
