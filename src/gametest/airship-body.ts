@@ -613,13 +613,14 @@ registerAsync("andrew", "airship_linked_ring_invalid", async (test: Test): Promi
     const vetoed = o.result?.rejects[OVER_PARENT] ?? 0;
     test.assert(o.result?.checked === ring.length - vetoed && (o.result?.rejects.liquid ?? 0) === ring.length - vetoed, "not every ring candidate was vetoed or checked and refused on water");
     test.assert(changed.length === 0, `${changed.length} land blocks changed`);
-    test.succeed();
   } finally {
     world.setDifficulty(difficulty);
     if (w !== undefined) removeWindmill(dim, w);
     if (flooded) await eachQuad((q) => fillBox(dim, { min: [q.min[0], ground, q.min[2]], max: [q.max[0], ground, q.max[2]] }, "minecraft:grass_block"));
     unloadW();
   }
+  // After succeed() every Test method throws, and the un-flooding above needs test.idle.
+  test.succeed();
 })
   .structureName(STRUCTURE)
   .maxTicks(9000)

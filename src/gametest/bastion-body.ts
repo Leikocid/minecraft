@@ -47,6 +47,8 @@ const SITE_TOP = 112;
 const SITE_BOTTOM = 25;
 /** Past the 128-block instant-despawn distance of vanilla mobs. */
 const FAR = 160;
+/** Guards that stroll into the moat die over minutes, not in the first ten seconds. */
+const FAR_TICKS = 1500;
 const SIZE: Vec3 = [...BASTION_SIZE];
 
 const log = (msg: string): void => console.warn(`[gametest] ${msg}`);
@@ -65,6 +67,8 @@ function fillBox(dim: Dimension, box: Box, block: string): void {
   for (const s of sliceBox(box)) dim.fillBlocks(new BlockVolume(v(s.min), v(s.max)), block);
 }
 
+/** Each run of bastion_body_generate in one server session builds on its own chunk, so repeats see different ground. */
+let generateRuns = 0;
 const unique = (label: string): string => `gt-bb-${label}-${Date.now()}`;
 
 /** A Nether chunk far from anything the other Nether tests build. */
@@ -200,13 +204,17 @@ const onIsland = (inst: Instance, p: Vector3): boolean => {
   return p.x >= x0 && p.x <= x1 && p.z >= z0 && p.z <= z1;
 };
 
+const fmt = (p: Vector3): string => `${p.x.toFixed(1)},${p.y.toFixed(1)},${p.z.toFixed(1)}`;
+const inBox = (box: Box, p: Vector3): boolean =>
+  p.x >= box.min[0] && p.x < box.max[0] + 1 && p.y >= box.min[1] && p.y < box.max[1] + 1 && p.z >= box.min[2] && p.z < box.max[2] + 1;
+
 const dist = (p: Vector3, q: Vec3): number => Math.hypot(p.x - (q[0] + 0.5), p.y - q[1], p.z - (q[2] + 0.5));
 
 // ------------------------------------------------ AC1 – AC4, AC6, AC7: one bastion, start to restart
 
 registerAsync("andrew", "bastion_body_generate", async (test: Test): Promise<void> => {
   const dim = nether();
-  const [cx, cz] = farChunk(test, 600);
+  const [cx, cz] = farChunk(test, 660 + 4 * (generateRuns++ % 10));
   const watch = newWatch();
   const store = new MemoryStore();
   const rt = runtime(unique("gen"), watch, store);
@@ -344,16 +352,35 @@ registerAsync("andrew", "bastion_body_generate", async (test: Test): Promise<voi
     fillBox(dim, { min: pad.min, max: [pad.max[0], far[1] - 1, pad.max[2]] }, "minecraft:netherrack");
     player = test.spawnSimulatedPlayer({ x: 1, y: 2, z: 1 }, "andrew_bastion_far", GameMode.Creative);
     player.teleport({ x: far[0] + 0.5, y: far[1], z: far[2] + 0.5 }, { dimension: dim });
-    await test.idle(200);
+    const trail = new Map(guardsOf(dim, b.id).map((e) => [e.id, `${e.typeId.replace("minecraft:", "")}@${fmt(e.location)}`]));
+    const fates = new Map<string, string>();
+    const onDie = world.afterEvents.entityDie.subscribe((ev) => {
+      const id = ev.deadEntity.id;
+      if (trail.has(id)) fates.set(id, `died of ${ev.damageSource.cause} by ${ev.damageSource.damagingEntity?.typeId ?? "-"} at ${fmt(ev.deadEntity.location)}`);
+    });
+    const onRemove = world.beforeEvents.entityRemove.subscribe((ev) => {
+      const e = ev.removedEntity;
+      if (trail.has(e.id) && !fates.has(e.id)) fates.set(e.id, `removed at ${fmt(e.location)} (${inBox(area, e.location) ? "inside" : "OUTSIDE"} the loaded area)`);
+    });
+    try {
+      for (let t = 0; t < FAR_TICKS / 20; t++) {
+        await test.idle(20);
+        for (const e of guardsOf(dim, b.id)) trail.set(e.id, `${e.typeId.replace("minecraft:", "")}@${fmt(e.location)}`);
+      }
+    } finally {
+      world.afterEvents.entityDie.unsubscribe(onDie);
+      world.beforeEvents.entityRemove.unsubscribe(onRemove);
+    }
     const c4 = census(dim, b.id);
+    const present = new Set(guardsOf(dim, b.id).map((e) => e.id));
+    const lost = [...trail].filter(([id]) => !present.has(id)).map(([id, last]) => `${id} last seen ${last}: ${fates.get(id) ?? "no die/remove event"}`);
     const pd = player.dimension.id === dim.id ? Math.round(Math.hypot(player.location.x - (box.min[0] + 10), player.location.z - (box.min[2] + 10))) : -1;
     log(
-      `bastion distance RESULT player in ${player.dimension.id} ${pd} blocks from the bastion for 200 ticks; guards ${c3.total} -> ${c4.total}; ` +
-        `unnamed control piglin ${control.isValid ? "still there" : "despawned"}`
+      `bastion distance RESULT player in ${player.dimension.id} ${pd} blocks from the bastion for ${FAR_TICKS} ticks; guards ${c3.total} -> ${c4.total}; ` +
+        `unnamed control piglin ${control.isValid ? "still there" : "despawned"}; lost ${lost.join(" | ") || "none"}`
     );
     test.assert(pd > 128, `the player stands ${pd} blocks away`);
-    test.assert(c4.total === c3.total, `guards ${c3.total} -> ${c4.total} with a far player`);
-    test.succeed();
+    test.assert(c4.total === c3.total, `guards ${c3.total} -> ${c4.total} with a far player; lost ${lost.join(" | ")}`);
   } finally {
     if (player !== undefined) test.removeSimulatedPlayer(player);
     unloadFar?.();
@@ -361,9 +388,11 @@ registerAsync("andrew", "bastion_body_generate", async (test: Test): Promise<voi
     world.setDifficulty(difficultyBefore);
     unload();
   }
+  // After succeed() every Test method throws, and the cleanup above would stop at removeSimulatedPlayer.
+  test.succeed();
 })
   .structureName(STRUCTURE)
-  .maxTicks(3000)
+  .maxTicks(6000)
   .tag("andrew");
 
 // ------------------------------------------------ AC1: only the Nether, only a fit floor
