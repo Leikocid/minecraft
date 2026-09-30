@@ -9,8 +9,8 @@
 //    follows from the queue. The first drain runs from a microtask queued by
 //    onDetonate — the contact tick, after the flight step that landed it — and
 //    the rest one shared interval drains, ≤ RING_MAX_BLASTS_PER_TICK a tick
-//    across all attacks, FIFO. A 145-charge attack on flat ground needs 4
-//    ticks, three need 10 (RG-2).
+//    across all attacks, FIFO. A 201-charge attack on flat ground needs 5
+//    ticks, three need 13 (RG-2).
 // 2. The doTileDrops gate (L0-ring-ad01, L0-adr-odrp §5). One queue step sets
 //    the world rule false around its createExplosion calls and puts back the
 //    value it read, in `finally`, inside one synchronous stack. This file is

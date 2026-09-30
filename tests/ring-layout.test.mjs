@@ -56,16 +56,22 @@ function sameRingDegree(cell, set) {
 
 // ------------------------------------------------------------------ AC#1: count, no duplicates
 
-test('layout(target): one centre + four rings, 140-160 columns, no duplicates', () => {
+test('layout(target): one centre + four rings, 190-215 columns, no duplicates', () => {
   const columns = layout({ x: 0, y: 64, z: 0 });
-  assert.ok(columns.length >= 140 && columns.length <= 160, `count ${columns.length} outside 140-160`);
+  assert.ok(columns.length >= 190 && columns.length <= 215, `count ${columns.length} outside 190-215`);
   const unique = new Set(columns.map(key));
   assert.equal(unique.size, columns.length, 'duplicate columns');
 });
 
 test('layout(target): exact column count is pinned', () => {
   const columns = layout({ x: 0, y: 64, z: 0 });
-  assert.equal(columns.length, 145);
+  assert.equal(columns.length, 201);
+});
+
+test('layout(target): the footprint reaches 14 blocks out in x and z', () => {
+  const columns = layout({ x: 0, y: 64, z: 0 });
+  const reach = Math.max(...columns.map((c) => Math.max(Math.abs(c.x), Math.abs(c.z))));
+  assert.equal(reach, 14);
 });
 
 // ------------------------------------------------------------------ AC#2: closed, 8-connected rings
@@ -113,7 +119,28 @@ test('layout(target): the offset table and slot order are the same for every tar
   }
 });
 
-test('RING_MAX_CHARGES is 200, and building past it fails loudly', () => {
-  assert.equal(RING_MAX_CHARGES, 200);
+test('RING_MAX_CHARGES drains in at most 6 ticks, and building past it fails loudly', () => {
+  // ring drains the blast queue at RING_MAX_BLASTS_PER_TICK = 48 a tick; importing
+  // it here would pull @minecraft/server into this pure-geometry bundle.
+  assert.equal(Math.ceil(RING_MAX_CHARGES / 48), 6);
+  assert.ok(RING_MAX_CHARGES >= layout({ x: 0, y: 64, z: 0 }).length, 'the shipped table does not fit under its own cap');
   assert.throws(() => buildColumns([1000]), /RING_MAX_CHARGES/);
+});
+
+// ------------------------------------------------------------------ AC#5: centre-outward order
+
+test('layout(target): columns run centre first, then ring by ring outwards', () => {
+  const columns = layout({ x: 0, y: 64, z: 0 });
+  assert.deepStrictEqual(columns[0], { x: 0, z: 0 }, 'the first column is not the centre');
+  const ringOf = new Map();
+  RING_LAYOUT.rings.forEach((ring, i) => {
+    for (const cell of ring.cells) ringOf.set(key(cell), i + 1);
+  });
+  let previous = 0;
+  for (const cell of columns.slice(1)) {
+    const i = ringOf.get(key(cell));
+    assert.notEqual(i, undefined, `column (${cell.x},${cell.z}) belongs to no ring`);
+    assert.ok(i >= previous, `column (${cell.x},${cell.z}) of ring #${i} comes after ring #${previous}: the order is not centre-outward`);
+    previous = i;
+  }
 });
