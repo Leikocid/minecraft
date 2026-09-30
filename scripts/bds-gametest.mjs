@@ -271,6 +271,16 @@ const EXPECTED_TESTS = [
   'andrew:pntr_chunk_edge',
   'andrew:pntr_legendary_two_columns',
   'andrew:pntr_legendary_restart_check',
+  // RING-BLAST-01 — src/gametest/ring.ts
+  'andrew:probe_ring_drops',
+  'andrew:ring_layout_craters',
+  'andrew:ring_independent_stepped',
+  'andrew:ring_tnt_damage',
+  'andrew:ring_resistance_no_drops',
+  'andrew:ring_underwater_damage_only',
+  'andrew:ring_legendaries_survive',
+  'andrew:ring_three_budget',
+  'andrew:ring_no_leftovers_vanilla_drops',
 ];
 
 /**
