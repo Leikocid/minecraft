@@ -234,6 +234,10 @@ const EXPECTED_TESTS = [
   'andrew:probe_input_survival',
   'andrew:probe_input_creative',
   'andrew:probe_input_face_location',
+  // ORBC-ITEM-01 — src/gametest/orbital-item.ts
+  'andrew:orbital_item_components',
+  'andrew:orbital_punch_matches_hand',
+  'andrew:orbital_charge_inert',
 ];
 
 // FLAT is not cosmetic: see the LEVEL_TYPE comment in docker/bds/compose.yaml.

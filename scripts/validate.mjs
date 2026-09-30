@@ -2,7 +2,7 @@
 // Each error names the offending file and field — see ValidationError below.
 
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
-import { join, extname } from 'node:path';
+import { join, extname, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname } from 'node:path';
 import { MIN_ENGINE_VERSION, SERVER_API_VERSION } from './targets.mjs';
@@ -51,6 +51,108 @@ function checkEqual(file, field, actual, expected, errors) {
   const e = JSON.stringify(expected);
   if (a !== e) {
     errors.push(new ValidationError(file, field, `must equal ${e}, got ${a}`));
+  }
+}
+
+/** Parsed JSON files that live under `dir`. */
+function parsedUnder(parsed, dir) {
+  const prefix = dir + sep;
+  return [...parsed].filter(([file]) => file.startsWith(prefix));
+}
+
+/**
+ * Cross-checks behavior-pack `entities/` against resource-pack `entity/`,
+ * `models/` and `render_controllers/`.
+ *
+ * BDS never loads the resource pack, so an entity whose client half is missing
+ * or points at a geometry or render controller that does not exist is
+ * invisible on every device while every server-side check stays green. A
+ * misspelt component group or property in an event is dropped the same way.
+ * Only `andrew.`-namespaced geometry and controller ids are resolved; vanilla
+ * ones live in the game, not in this repository.
+ */
+function checkEntities({ behaviorDir, resourceDir, parsed, errors }) {
+  const serverIds = new Map();
+  for (const [file, json] of parsedUnder(parsed, join(behaviorDir, 'entities'))) {
+    const entity = json?.['minecraft:entity'];
+    const id = entity?.description?.identifier;
+    if (typeof id !== 'string') {
+      errors.push(new ValidationError(file, 'minecraft:entity.description.identifier', 'missing entity identifier'));
+      continue;
+    }
+    if (!id.startsWith('andrew:')) {
+      errors.push(new ValidationError(file, 'minecraft:entity.description.identifier', `${id} must carry the andrew: namespace`));
+    }
+    serverIds.set(id, file);
+
+    const groups = new Set(Object.keys(entity.component_groups ?? {}));
+    const properties = new Set(Object.keys(entity.description.properties ?? {}));
+    for (const [eventName, event] of Object.entries(entity.events ?? {})) {
+      for (const op of ['add', 'remove']) {
+        for (const group of event?.[op]?.component_groups ?? []) {
+          if (!groups.has(group)) {
+            errors.push(new ValidationError(file, `events.${eventName}.${op}`, `component group ${group} is not defined`));
+          }
+        }
+      }
+      for (const property of Object.keys(event?.set_property ?? {})) {
+        if (!properties.has(property)) {
+          errors.push(new ValidationError(file, `events.${eventName}.set_property`, `property ${property} is not declared`));
+        }
+      }
+    }
+  }
+
+  const geometries = new Set();
+  for (const [, json] of parsedUnder(parsed, join(resourceDir, 'models'))) {
+    for (const geometry of json?.['minecraft:geometry'] ?? []) {
+      if (typeof geometry?.description?.identifier === 'string') geometries.add(geometry.description.identifier);
+    }
+  }
+  const controllers = new Set();
+  for (const [, json] of parsedUnder(parsed, join(resourceDir, 'render_controllers'))) {
+    for (const id of Object.keys(json?.render_controllers ?? {})) controllers.add(id);
+  }
+
+  const clientIds = new Set();
+  for (const [file, json] of parsedUnder(parsed, join(resourceDir, 'entity'))) {
+    const description = json?.['minecraft:client_entity']?.description;
+    const id = description?.identifier;
+    if (typeof id !== 'string') {
+      errors.push(new ValidationError(file, 'minecraft:client_entity.description.identifier', 'missing client entity identifier'));
+      continue;
+    }
+    clientIds.add(id);
+    if (!serverIds.has(id)) {
+      errors.push(
+        new ValidationError(file, 'minecraft:client_entity.description.identifier', `${id} has no behavior-pack entity under entities/`)
+      );
+    }
+    for (const [key, geometry] of Object.entries(description.geometry ?? {})) {
+      if (String(geometry).startsWith('geometry.andrew.') && !geometries.has(geometry)) {
+        errors.push(new ValidationError(file, `description.geometry.${key}`, `${geometry} is not defined under models/`));
+      }
+    }
+    for (const entry of description.render_controllers ?? []) {
+      const controller = typeof entry === 'string' ? entry : Object.keys(entry ?? {})[0];
+      if (String(controller).startsWith('controller.render.andrew.') && !controllers.has(controller)) {
+        errors.push(
+          new ValidationError(file, 'description.render_controllers', `${controller} is not defined under render_controllers/`)
+        );
+      }
+    }
+  }
+
+  for (const [id, file] of serverIds) {
+    if (!clientIds.has(id)) {
+      errors.push(
+        new ValidationError(
+          file,
+          'minecraft:entity.description.identifier',
+          `${id} has no client entity under the resource pack's entity/ — it would be invisible`
+        )
+      );
+    }
   }
 }
 
@@ -172,6 +274,8 @@ export function validatePacks({ behaviorDir, resourceDir, requireScriptEntry = f
       );
     }
   }
+
+  checkEntities({ behaviorDir, resourceDir, parsed, errors });
 
   // After build, the script module's entry file must exist.
   if (requireScriptEntry) {
