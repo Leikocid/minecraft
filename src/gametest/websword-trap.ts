@@ -315,6 +315,18 @@ registerAsync("andrew", "websword_entity_ray_distance", async (test: Test): Prom
   const player = test.spawnSimulatedPlayer(MIDDLE, "wsface_eprobe", GameMode.Survival);
   await test.idle(8);
 
+  // A just-spawned entity's pick bounds are narrower than its settled ones for
+  // the first ticks: measured 0.345 against 0.400 in 1 run of 5, and in that
+  // run the next ray missed the mob outright. Wait for two consecutive hits
+  // before measuring, so the probe reads the settled box and not the spawn.
+  const mobAt0 = test.relativeLocation(mob.location);
+  player.lookAtLocation({ x: mobAt0.x, y: mobAt0.y + 1.0, z: mobAt0.z });
+  for (let settled = 0, waited = 0; settled < 2; waited++) {
+    await test.idle(2);
+    settled = mobRay(player, mob) === undefined ? 0 : settled + 1;
+    test.assert(waited < 40, `the entity ray never settled on the ${MOB} at ${f3(mob.location)}`);
+  }
+
   const mobAt = test.relativeLocation(mob.location);
   const points: Vector3[] = [
     { x: mobAt.x, y: mobAt.y + 1.0, z: mobAt.z },
