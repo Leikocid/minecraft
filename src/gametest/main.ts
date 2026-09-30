@@ -80,6 +80,7 @@ import "./orbital-item";
 import "./orbital-core";
 import "./orbital-flight";
 import { parkPenetrator } from "./penetrator";
+import { parkRing } from "./ring";
 import { registerOrbitalCannon } from "../orbital";
 import { SPAWN_EVENT } from "../structures/spawn-search";
 
@@ -162,9 +163,11 @@ registerLegendaryHud();
 // runtimes see every charge entity, each knows only its own attacks.
 registerOrbitalCannon("gt");
 // The core and flight scenarios were written against the stub effects: a real
-// LMB digs out the floor they stand on and the targets of their next shot.
-// src/gametest/penetrator.ts puts the penetrator back for its own scenarios.
+// LMB digs out the floor they stand on and the targets of their next shot, a
+// real RMB craters it. src/gametest/penetrator.ts and src/gametest/ring.ts put
+// the real effects back for their own scenarios.
 parkPenetrator();
+parkRing();
 
 // Which use-event a press actually produces on BDS 1.26.51.1 is an engine fact,
 // not a documented one, and src/websword/trap.ts subscribes to both. This
