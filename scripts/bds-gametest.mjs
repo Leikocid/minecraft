@@ -111,6 +111,10 @@ const EXPECTED_TESTS = [
   'andrew:legendary_cx09_hopper_minecart',
   'andrew:legendary_cx09_owed_two_losses',
   'andrew:legendary_cx09_owed_redeemed_on_respawn',
+  // LGND-DELTA-01 — src/gametest/legendary-recovery.ts (L0-xasm11 P1, L0-lgnd-p008 steps 2b and 3)
+  'andrew:probe_xasm11_frames',
+  'andrew:legendary_protect_ground_item',
+  'andrew:legendary_protect_framed',
   'andrew:scythe_melee_matches_netherite',
   'andrew:scythe_no_target_no_cooldown',
   'andrew:scythe_prefers_player_over_mob',

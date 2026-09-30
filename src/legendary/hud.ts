@@ -8,6 +8,8 @@ import { heldLegendaries } from "./hands";
 
 const HUD_INTERVAL_TICKS = 10;
 
+const SHARED_KEYS = { ready: "andrew.legendary.ready", cooldown: "andrew.legendary.cooldown" };
+
 export function registerLegendaryHud(): void {
   system.runInterval(() => {
     for (const entry of world.getAllPlayers()) {
@@ -40,6 +42,7 @@ export function hudMessage(player: Player): RawMessage | undefined {
     seen.add(def.abilityKey);
 
     const name: RawMessage = { translate: `${def.nameKey}.name` };
+    const keys = def.hudKeys ?? SHARED_KEYS;
     const remaining = remainingMs(player, def.abilityKey);
     if (parts.length > 0) {
       parts.push({ text: "   " });
@@ -47,10 +50,10 @@ export function hudMessage(player: Player): RawMessage | undefined {
     parts.push(
       remaining > 0
         ? {
-            translate: "andrew.legendary.cooldown",
+            translate: keys.cooldown,
             with: { rawtext: [name, { text: String(Math.ceil(remaining / 1000)) }] },
           }
-        : { translate: "andrew.legendary.ready", with: { rawtext: [name] } }
+        : { translate: keys.ready, with: { rawtext: [name] } }
     );
   }
   return parts.length === 0 ? undefined : { rawtext: parts };
