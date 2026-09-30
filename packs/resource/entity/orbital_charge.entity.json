@@ -1,0 +1,26 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "andrew:orbital_charge",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "side": "textures/blocks/tnt_side",
+        "top": "textures/blocks/tnt_top",
+        "bottom": "textures/blocks/tnt_bottom"
+      },
+      "geometry": {
+        "side": "geometry.andrew.orbital_charge.side",
+        "top": "geometry.andrew.orbital_charge.top",
+        "bottom": "geometry.andrew.orbital_charge.bottom"
+      },
+      "render_controllers": [
+        "controller.render.andrew.orbital_charge.side",
+        "controller.render.andrew.orbital_charge.top",
+        "controller.render.andrew.orbital_charge.bottom"
+      ]
+    }
+  }
+}

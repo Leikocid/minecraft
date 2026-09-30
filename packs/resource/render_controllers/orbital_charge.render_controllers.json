@@ -1,0 +1,20 @@
+{
+  "format_version": "1.8.0",
+  "render_controllers": {
+    "controller.render.andrew.orbital_charge.side": {
+      "geometry": "Geometry.side",
+      "materials": [{ "*": "Material.default" }],
+      "textures": ["Texture.side"]
+    },
+    "controller.render.andrew.orbital_charge.top": {
+      "geometry": "Geometry.top",
+      "materials": [{ "*": "Material.default" }],
+      "textures": ["Texture.top"]
+    },
+    "controller.render.andrew.orbital_charge.bottom": {
+      "geometry": "Geometry.bottom",
+      "materials": [{ "*": "Material.default" }],
+      "textures": ["Texture.bottom"]
+    }
+  }
+}
