@@ -146,7 +146,8 @@ test('planColumn: a trigger at or below the floor gives a one-layer column', () 
 
 // ------------------------------------------------------------------ AC#4: PENETRATOR_KEEP (xasm6)
 
-test('PENETRATOR_KEEP is exactly the xasm6 list', () => {
+// xasm6 names the light block once; a placed one is light_block_<level> on BDS 1.26.51.1 (probe_pntr_holders).
+test('PENETRATOR_KEEP is exactly the xasm6 list, light blocks by the ids the engine places', () => {
   const expected = [
     'bedrock',
     'end_portal_frame',
@@ -154,6 +155,7 @@ test('PENETRATOR_KEEP is exactly the xasm6 list', () => {
     'end_gateway',
     'barrier',
     'light_block',
+    ...Array.from({ length: 16 }, (_, level) => `light_block_${level}`),
     'command_block',
     'chain_command_block',
     'repeating_command_block',

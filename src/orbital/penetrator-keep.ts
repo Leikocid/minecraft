@@ -3,6 +3,10 @@
 // "unbreakable" query, so this fixed list is the only way to keep engine-
 // protected blocks. Obsidian, Reinforced Deepslate and Ancient Debris are
 // deliberately absent: they are hard, but a Survival player can break them.
+// A placed light block is light_block_<level> on BDS 1.26.51.1: setting
+// minecraft:light_block reads back as light_block_0.
+
+const LIGHT_LEVELS = Array.from({ length: 16 }, (_, level) => `light_block_${level}`);
 
 const IDS = [
   "bedrock",
@@ -11,6 +15,7 @@ const IDS = [
   "end_gateway",
   "barrier",
   "light_block",
+  ...LIGHT_LEVELS,
   "command_block",
   "chain_command_block",
   "repeating_command_block",

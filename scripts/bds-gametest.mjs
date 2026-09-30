@@ -257,6 +257,20 @@ const EXPECTED_TESTS = [
   'andrew:orbital_flight_load_480',
   'andrew:orbital_flight_restart_fire',
   'andrew:orbital_flight_restart_check',
+  // PNTR-JOB-01 — src/gametest/penetrator.ts
+  'andrew:probe_pntr_runjob',
+  'andrew:probe_pntr_holders',
+  'andrew:probe_pntr_native_cost',
+  'andrew:probe_pntr_det_tick',
+  'andrew:pntr_column_overworld',
+  'andrew:pntr_nether_end_waterlogged',
+  'andrew:pntr_hard_blocks_no_drops',
+  'andrew:pntr_no_direct_damage',
+  'andrew:pntr_one_sound_one_wave',
+  'andrew:pntr_budget_measured',
+  'andrew:pntr_chunk_edge',
+  'andrew:pntr_legendary_two_columns',
+  'andrew:pntr_legendary_restart_check',
 ];
 
 /**
@@ -264,7 +278,10 @@ const EXPECTED_TESTS = [
  * world is saved on stop) and started again on the same world, and the test
  * named here runs next. Each needs the other, so --only takes both or neither.
  */
-const RESTART_AFTER = new Map([['andrew:orbital_flight_restart_fire', 'andrew:orbital_flight_restart_check']]);
+const RESTART_AFTER = new Map([
+  ['andrew:orbital_flight_restart_fire', 'andrew:orbital_flight_restart_check'],
+  ['andrew:pntr_legendary_two_columns', 'andrew:pntr_legendary_restart_check'],
+]);
 
 // FLAT is not cosmetic: see the LEVEL_TYPE comment in docker/bds/compose.yaml.
 // A default world put the platform under an ocean and the run was intermittent.
