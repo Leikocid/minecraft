@@ -10,14 +10,17 @@
 import {
   BlockPermutation,
   type Container,
+  Direction,
+  type Dimension,
   type Entity,
   GameMode,
   ItemStack,
   type Player,
   type Vector3,
+  system,
   world,
 } from "@minecraft/server";
-import { type Test, registerAsync } from "@minecraft/server-gametest";
+import { type SimulatedPlayer, type Test, registerAsync } from "@minecraft/server-gametest";
 import { WEB_SWORD } from "../legendary/registry";
 import type { Mark } from "../legendary/rules";
 import * as state from "../legendary/state";
@@ -298,4 +301,107 @@ registerAsync("andrew", "legendary_cx09_owed_redeemed_on_respawn", async (test: 
 })
   .structureName(STRUCTURE)
   .maxTicks(WAIT_TICKS + 100)
+  .tag("andrew");
+
+// ------------------------------------------------ probe L0-xasm11 P1: item frames spill on `setblock … destroy`
+
+const FRAME_AT: Vector3 = { x: 2, y: 2, z: 3 };
+const FRAME_TYPES = ["minecraft:frame", "minecraft:glow_frame"] as const;
+
+const probe = (msg: string): void => console.warn(`[probe] xasm11 ${msg}`);
+
+function itemsNear(dimension: Dimension, at: Vector3, radius: number): Entity[] {
+  return dimension.getEntities({ type: "minecraft:item", location: { x: at.x + 0.5, y: at.y + 0.5, z: at.z + 0.5 }, maxDistance: radius });
+}
+
+/** "typeId[ws_id@gen]" per item entity; the mark is read back so a lost mark shows. */
+function describeItems(entities: Entity[]): string {
+  const parts = entities.map((e) => {
+    const stack = e.getComponent("minecraft:item")?.itemStack;
+    if (stack === undefined) return "?";
+    const mark = state.isItemOf(WEB_SWORD, stack) ? state.getMark(WEB_SWORD, stack) : undefined;
+    return mark === undefined ? stack.typeId : `${stack.typeId}[${mark.id}@${stackGen(stack)}]`;
+  });
+  return `${entities.length}{${parts.join(",")}}`;
+}
+
+/** Places a frame on the floor and has `player` put a marked sword into it; true when the hand emptied. */
+async function frameASword(test: Test, player: SimulatedPlayer, frameType: string, mark: Mark): Promise<{ inserted: boolean; via: string }> {
+  try {
+    test.setBlockPermutation(BlockPermutation.resolve(frameType, { facing_direction: 1 }), FRAME_AT);
+  } catch {
+    test.setBlockType(frameType, FRAME_AT);
+  }
+  const inventory = inventoryOf(player);
+  inventory?.setItem(0, state.markItem(WEB_SWORD, new ItemStack(WEB_SWORD.itemId, 1), mark));
+  player.selectedSlotIndex = 0;
+  await test.idle(4);
+  const routes: Array<[string, () => boolean]> = [
+    ["useItemInSlotOnBlock", () => player.useItemInSlotOnBlock(0, FRAME_AT, Direction.Up)],
+    ["interactWithBlock", () => player.interactWithBlock(FRAME_AT, Direction.Up)],
+  ];
+  for (const [via, use] of routes) {
+    const answered = use();
+    await test.idle(4);
+    if (isInstance(inventory?.getItem(0), mark.id) === false) {
+      return { inserted: true, via: `${via} (returned ${answered})` };
+    }
+  }
+  return { inserted: false, via: "neither route emptied the hand" };
+}
+
+// P1 of L0-xasm11 (L0-adr-oprt §3): does `setblock x y z air destroy` spill a
+// frame and the item in it as item entities, keeping the item's dynamic
+// properties, and when can getEntities see them? The answers are the RESULT
+// lines; the test fails only when the harness could not frame the sword.
+registerAsync("andrew", "probe_xasm11_frames", async (test: Test): Promise<void> => {
+  const player = test.spawnSimulatedPlayer(STAND_A, "xasm11_framer", GameMode.Survival);
+  const dimension = test.getDimension();
+  await test.idle(4);
+
+  for (const frameType of FRAME_TYPES) {
+    const mark = state.makeMark("admin", player);
+    const { inserted, via } = await frameASword(test, player, frameType, mark);
+    const cell = test.worldBlockLocation(FRAME_AT);
+    const placed = test.getBlock(FRAME_AT).typeId;
+    const before = describeItems(itemsNear(dimension, cell, 3));
+    test.assert(inserted, `${frameType}: the sword did not go into the frame (${via}; block ${placed}; items ${before})`);
+
+    const result = dimension.runCommand(`setblock ${cell.x} ${cell.y} ${cell.z} air destroy`);
+    const sameTick = describeItems(itemsNear(dimension, cell, 3));
+    const afterBlock = dimension.getBlock(cell)?.typeId ?? "unloaded";
+    let afterRun = "(system.run never ran)";
+    system.run(() => {
+      afterRun = describeItems(itemsNear(dimension, cell, 3));
+    });
+    await test.idle(1);
+    const tick1 = describeItems(itemsNear(dimension, cell, 3));
+    await test.idle(4);
+    const tick5 = describeItems(itemsNear(dimension, cell, 3));
+    probe(
+      `P1 RESULT ${frameType}: framed via ${via}; before=${before} setblock successCount=${result.successCount} ` +
+        `block after=${afterBlock} sameTick=${sameTick} afterSystemRun=${afterRun} tick+1=${tick1} tick+5=${tick5} (ws_id ${mark.id})`
+    );
+    for (const e of itemsNear(dimension, cell, 4)) e.remove();
+    await test.idle(2);
+  }
+
+  // How getEntities reads `volume`: one item resting in cell (4,2,3), queried
+  // from cell (2,2,3) with the extent max−min and with max−min+1.
+  const resting = dimension.spawnItem(new ItemStack("minecraft:stick", 1), test.worldLocation({ x: 4.5, y: 2.05, z: 3.5 }));
+  resting.clearVelocity();
+  await test.idle(10);
+  const from = test.worldBlockLocation({ x: 2, y: 2, z: 3 });
+  const seen = (volume: Vector3): boolean => dimension.getEntities({ type: "minecraft:item", location: from, volume }).some((e) => e.id === resting.id);
+  const at = resting.location;
+  probe(
+    `P1 RESULT volume: item at ${at.x.toFixed(2)},${at.y.toFixed(2)},${at.z.toFixed(2)} (cell ${Math.floor(at.x)},${Math.floor(at.y)},${Math.floor(at.z)}), ` +
+      `query from ${from.x},${from.y},${from.z}: volume(2,0,0)=${seen({ x: 2, y: 0, z: 0 })} volume(3,1,1)=${seen({ x: 3, y: 1, z: 1 })} ` +
+      `volume(1,0,0)=${seen({ x: 1, y: 0, z: 0 })} volume(2,1,1)=${seen({ x: 2, y: 1, z: 1 })}`
+  );
+  resting.remove();
+  test.succeed();
+})
+  .structureName(STRUCTURE)
+  .maxTicks(200)
   .tag("andrew");

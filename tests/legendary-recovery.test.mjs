@@ -722,3 +722,28 @@ test('protectLegendariesIn: a live marked legendary leaves the holder before the
     assert.deepStrictEqual(owedOf(owner), []);
   });
 });
+
+test('protectLegendariesIn: the drop spot clears a 37×37 avoid box (L0-adr-oprt §2)', async (t) => {
+  const owner = makePlayer('ring-owner');
+  online();
+  // ring-cx02: one ring queue step protects blast centres ± 8 and avoids the
+  // whole ring footprint, 37 × 37 around the target.
+  const avoid = { min: { x: -18, y: 56, z: -18 }, max: { x: 18, y: 72, z: 18 } };
+  const volume = { min: { x: -8, y: 56, z: -8 }, max: { x: 8, y: 72, z: 8 } };
+
+  await t.test('a legendary at the centre of the step lands outside the 37×37 footprint, same stack and generation', () => {
+    const w = protectWorld();
+    const hopper = makeContainer(5);
+    const sword = markedSword(owner);
+    const { id } = lg.getMark(WEB_SWORD, sword);
+    hopper.setItem(0, sword);
+    w.put({ x: 0, y: 64, z: 0 }, 'minecraft:hopper', hopper);
+    assert.deepStrictEqual(lg.protectLegendariesIn(w, volume, { avoid, reason: 'ring step' }), { moved: 1, handedBack: 0 });
+    const [drop] = w.drops;
+    assert.strictEqual(drop.stack, sword);
+    assert.ok(outsideXZ(drop.at, avoid), `dropped at ${JSON.stringify(drop.at)}, inside the 37×37 avoid box`);
+    assert.strictEqual(drop.at.y, 64);
+    assert.strictEqual(lg.ledgerGen(WEB_SWORD, id), 0);
+    assert.strictEqual(lg.isLive(WEB_SWORD, lg.getMark(WEB_SWORD, sword)), true);
+  });
+});
