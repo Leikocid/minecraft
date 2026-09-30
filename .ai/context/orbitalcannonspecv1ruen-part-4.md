@@ -5,7 +5,7 @@ source_channel: "raw-import"
 level: null
 aliases: ["orbitalcannonspecv1ruen-part-4", "orbitalcannonspecv1ruen"]
 is_a: ["raw-fragment"]
-priority: 540
+priority: 550
 size_chars: 2598
 tags: ["digest", "performance", "architecture", "domain"]
 source: "docs/Orbital_Cannon_Spec_v1_RU_EN.docx"
@@ -20,7 +20,7 @@ embed_slice: "5-50"
 
 10. LMB destruction is immediate; particle wave lasts about 1 second; only one main explosion sound.
 
-11. RMB creates five continuous rings with approximate diameters 1/5/10/15/20.
+11. RMB creates five continuous rings with approximate diameters 1/7/14/21/28.
 
 12. RMB charges are independent from each other and each produces its own explosion sound.
 

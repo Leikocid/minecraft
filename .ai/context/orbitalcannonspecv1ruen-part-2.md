@@ -5,7 +5,7 @@ source_channel: "raw-import"
 level: null
 aliases: ["orbitalcannonspecv1ruen-part-2", "orbitalcannonspecv1ruen"]
 is_a: ["raw-fragment"]
-priority: 540
+priority: 550
 size_chars: 4790
 tags: ["infrastructure", "performance", "architecture", "monitoring"]
 source: "docs/Orbital_Cannon_Spec_v1_RU_EN.docx"
@@ -88,7 +88,7 @@ embed_slice: "9-85"
 
 - ПКМ/Use создаёт пять концентрических СПЛОШНЫХ колец TNT вокруг выбранного центрального блока.
 
-- Примерные диаметры колец: 1, 5, 10, 15 и 20 блоков. Диаметр 1 означает центральный TNT точно над выбранным блоком.
+- Примерные диаметры колец: 1, 7, 14, 21 и 28 блоков. Диаметр 1 означает центральный TNT точно над выбранным блоком.
 
 - TNT располагаются максимально непрерывно по окружностям без специально оставленных промежутков. Реализация окружности может быть дискретной по блочной сетке.
 
