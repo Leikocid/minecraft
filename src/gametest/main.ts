@@ -76,6 +76,7 @@ import "./bastion";
 import "./bastion-body";
 import "./legendary-recovery";
 import "./probe-input";
+import "./websword-trap";
 import { SPAWN_EVENT } from "../structures/spawn-search";
 
 const WEB_SWORD_ID = WEB_SWORD.itemId;

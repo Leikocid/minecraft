@@ -230,6 +230,22 @@ const EXPECTED_TESTS = [
   'andrew:probe_input_survival',
   'andrew:probe_input_creative',
   'andrew:probe_input_face_location',
+  // WSWD-FACE-01 — src/gametest/websword-trap.ts
+  'andrew:websword_face_location',
+  'andrew:websword_entity_ray_distance',
+  'andrew:websword_ray_stoppers',
+  'andrew:websword_wall_front_n',
+  'andrew:websword_wall_front_e',
+  'andrew:websword_wall_front_s',
+  'andrew:websword_wall_front_w',
+  'andrew:websword_wall_behind_n',
+  'andrew:websword_wall_behind_e',
+  'andrew:websword_wall_behind_s',
+  'andrew:websword_wall_behind_w',
+  'andrew:websword_wall_edge_n',
+  'andrew:websword_wall_edge_e',
+  'andrew:websword_wall_edge_s',
+  'andrew:websword_wall_edge_w',
 ];
 
 // FLAT is not cosmetic: see the LEVEL_TYPE comment in docker/bds/compose.yaml.
