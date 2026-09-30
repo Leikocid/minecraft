@@ -338,11 +338,13 @@ test('each blast: centre from the contact cell, underwater read from the centre 
 
 test('a throwing createExplosion is logged and skipped; the rest explode; doTileDrops comes back in the same call (RG-5)', async () => {
   await reset();
-  const bad = new Set(['0.5,65.5,0.5', '5.5,65.5,0.5']);
+  const target = { x: 0, y: 64, z: 0 };
+  // The centre and the outermost column: one failure in the first drain step, one in the last.
+  const throwers = [layout(target)[0], layout(target).at(-1)];
+  const bad = new Set(throwers.map((c) => key(c.x + 0.5, 65.5, c.z + 0.5)));
   const dim = dimension({ explodeThrows: (l) => bad.has(key(l.x, l.y, l.z)) });
   const { reports, stop } = watch();
   const attackId = newId();
-  const target = { x: 0, y: 64, z: 0 };
   commit(attackId, target);
   const cols = detonateAll(dim, attackId, target);
   assert.equal(events.length, 0, 'onDetonate only queues: no engine call, no rule write inside it');
@@ -442,7 +444,7 @@ test('an empty drain opens no window: no rule write without an explosion in it (
 
 // ------------------------------------------------------------------ p003 / ad02 — the queue, RG-1, RG-2
 
-test('one flat-ground attack: the contact tick explodes 48, then 48 a tick; 4 ticks; the interval goes when the queue empties (RG-1, RG-2, C-5a′)', async () => {
+test('one flat-ground attack: the contact tick explodes 48, then 48 a tick; 5 ticks; the interval goes when the queue empties (RG-1, RG-2, C-5a′)', async () => {
   await reset();
   const dim = dimension();
   const { reports, stop } = watch();
@@ -470,14 +472,14 @@ test('one flat-ground attack: the contact tick explodes 48, then 48 a tick; 4 ti
   assert.equal(r.blasts, cols.length);
   assert.equal(r.maxBlastsInTick, RING_MAX_BLASTS_PER_TICK);
   assert.equal(r.ticksToDrain, expectTicks);
-  assert.ok(r.ticksToDrain <= 4, `RG-2: ${r.ticksToDrain} ticks for one attack`);
+  assert.ok(r.ticksToDrain <= 5, `RG-2: ${r.ticksToDrain} ticks for one attack`);
   assert.equal(r.maxQueueTicks, expectTicks - 1);
   assert.deepEqual(r.blastsByTick.reduce((a, b) => a + b, 0), cols.length);
   assert.equal(r.itemsSuppressed, 0);
   assert.equal(r.protectCalls, expectTicks, 'one protection per step');
 });
 
-test('three attacks in one tick: FIFO across attacks, ≤ 48 a tick, drained in ≤ 10 ticks (RG-1, RG-2)', async () => {
+test('three attacks in one tick: FIFO across attacks, ≤ 48 a tick, drained in ≤ 13 ticks (RG-1, RG-2)', async () => {
   await reset();
   const dim = dimension();
   const { reports, stop } = watch();
@@ -497,13 +499,13 @@ test('three attacks in one tick: FIFO across attacks, ≤ 48 a tick, drained in 
   const perTick = new Map();
   for (const e of dim.explosions) perTick.set(e.tick, (perTick.get(e.tick) ?? 0) + 1);
   assert.ok([...perTick.values()].every((n) => n <= RING_MAX_BLASTS_PER_TICK));
-  assert.ok(perTick.size <= 10, `${perTick.size} ticks for three attacks`);
+  assert.ok(perTick.size <= 13, `${perTick.size} ticks for three attacks`);
   for (const id of ids) {
     const r = reports.find((x) => x.attackId === id);
     assert.equal(r.maxBlastsInTick, RING_MAX_BLASTS_PER_TICK, 'counted across every attack in the tick');
     assert.equal(r.blasts, RING_LAYOUT.count);
   }
-  assert.ok(Math.max(...ids.map((id) => reports.find((x) => x.attackId === id).lastTick)) - Math.min(...ids.map((id) => reports.find((x) => x.attackId === id).firstTick)) + 1 <= 10);
+  assert.ok(Math.max(...ids.map((id) => reports.find((x) => x.attackId === id).lastTick)) - Math.min(...ids.map((id) => reports.find((x) => x.attackId === id).firstTick)) + 1 <= 13);
 });
 
 test('the per-tick cap holds across the microtask drain and an interval drain in the same tick', async () => {
@@ -598,7 +600,7 @@ test('one protection per dimension per step: union of centres ± 8, avoid = the 
     max: { x: Math.max(...xs) + 8, y: 65 + 8, z: Math.max(...zs) + 8 },
   });
   const reach = Math.max(...RING_LAYOUT.columns.map((c) => Math.max(Math.abs(c.x), Math.abs(c.z))));
-  assert.equal(reach, 10);
+  assert.equal(reach, 14);
   const avoid = calls[0].opts.avoid;
   assert.ok(avoid.min.x <= target.x - reach - 8 && avoid.max.x >= target.x + reach + 8, `avoid x ${avoid.min.x}..${avoid.max.x}`);
   assert.ok(avoid.min.z <= target.z - reach - 8 && avoid.max.z >= target.z + reach + 8, `avoid z ${avoid.min.z}..${avoid.max.z}`);

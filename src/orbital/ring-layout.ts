@@ -15,8 +15,12 @@ export interface Ring {
   cells: RingColumn[];
 }
 
-/** Guards orbc's flight-sweep budget and ring's blast budget (L0-ring-as06). */
-export const RING_MAX_CHARGES = 200;
+/**
+ * Guards orbc's flight-sweep budget and ring's blast budget (L0-ring-as06).
+ * The bound is the tick budget, not the shipped table: at ring's 48 blasts a
+ * tick this many charges drain in 6 ticks.
+ */
+export const RING_MAX_CHARGES = 256;
 
 // Math.round(-0) and -x at x = 0 both produce -0; normalize so offsets compare
 // equal to +0 (assert.deepStrictEqual distinguishes -0 from 0).
@@ -71,8 +75,8 @@ export function buildColumns(diameters: number[]): { rings: Ring[]; columns: Rin
   return { rings, columns };
 }
 
-/** d = 1/5/10/15/20 → r = d/2 (Orbital §10). */
-const DIAMETERS = [1, 5, 10, 15, 20];
+/** d = 1/7/14/21/28 → r = d/2 (Orbital §10). */
+const DIAMETERS = [1, 7, 14, 21, 28];
 const { rings: RINGS, columns: COLUMNS } = buildColumns(DIAMETERS);
 
 export const RING_LAYOUT = {
