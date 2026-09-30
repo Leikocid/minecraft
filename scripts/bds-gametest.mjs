@@ -238,6 +238,16 @@ const EXPECTED_TESTS = [
   'andrew:orbital_item_components',
   'andrew:orbital_punch_matches_hand',
   'andrew:orbital_charge_inert',
+  // ORBC-CORE-01 — src/gametest/orbital-core.ts
+  'andrew:orbital_no_target_silent',
+  'andrew:orbital_spawn_dimensions',
+  'andrew:orbital_dedup_lock_faces',
+  'andrew:orbital_shared_cooldown',
+  'andrew:orbital_hud',
+  'andrew:orbital_input_survival',
+  'andrew:orbital_input_creative',
+  'andrew:orbital_inside_solid',
+  'andrew:probe_orbital_contact',
 ];
 
 // FLAT is not cosmetic: see the LEVEL_TYPE comment in docker/bds/compose.yaml.
