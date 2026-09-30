@@ -4,9 +4,10 @@
 // Bastion Remnant cancel the candidate before any write; 3 treasure chests
 // and 7 others judged by their contents; the one-time garrison of 7–10
 // piglins and 2 brutes, no hoglin, no spawner; re-running the guard step,
-// killing guards and a script restart change nothing; the guards outlast a
-// player standing past the despawn distance. Every test restores the Nether
-// it built on.
+// killing guards and a script restart change nothing; the guards are
+// fireproof, outlast a player standing past the despawn distance and a chunk
+// reload, and an old guard without the effect gets it on load. Every test
+// restores the Nether it built on.
 
 import {
   BlockTypes,
@@ -23,7 +24,7 @@ import {
 } from "@minecraft/server";
 import { Test, registerAsync } from "@minecraft/server-gametest";
 import { protectLegendariesIn } from "../legendary/recovery";
-import { BRUTE, PIGLIN, PIGLIN_MAX, PIGLIN_MIN, goldKept, guardTag, piglinCount, roleTag } from "../structures/bodies/bastion";
+import { BRUTE, PIGLIN, PIGLIN_MAX, PIGLIN_MIN, PIGLIN_NAME, PIGLIN_POINTS, goldKept, guardTag, piglinCount, roleTag } from "../structures/bodies/bastion";
 import { BODIES } from "../structures/bodies";
 import { type Box, boxOf, sliceBox } from "../structures/clear";
 import type { RollDef } from "../structures/config";
@@ -184,6 +185,9 @@ function generate(rt: StrfRuntime, dim: "o" | "n", cx: number, cz: number): { ou
 }
 
 /** Living guards of an instance, by the tag the roster carries. */
+/** getEffect reports an infinite effect as duration -1. */
+const fireproof = (e: Entity): boolean => e.getEffect("fire_resistance")?.duration === -1;
+
 const guardsOf = (dim: Dimension, id: string): Entity[] => dim.getEntities({ tags: [guardTag(id)] }).filter((e) => e.isValid);
 
 function census(dim: Dimension, id: string): { piglins: number; brutes: number; hoglins: number; named: number; total: number } {
@@ -220,7 +224,7 @@ registerAsync("andrew", "bastion_body_generate", async (test: Test): Promise<voi
   const rt = runtime(unique("gen"), watch, store);
   const cand = buildCandidate(rt.registry.salt(), "n", cx, cz, bastionDef(rt));
   const area = areaOf(cand);
-  const unload = await loadBox(test, dim, "andrew_gt_bb_gen", area);
+  let unload = await loadBox(test, dim, "andrew_gt_bb_gen", area);
   let inst: Instance | undefined;
   let player: ReturnType<Test["spawnSimulatedPlayer"]> | undefined;
   let unloadFar: (() => void) | undefined;
@@ -290,6 +294,9 @@ registerAsync("andrew", "bastion_body_generate", async (test: Test): Promise<voi
     test.assert(c0.piglins === n && n >= PIGLIN_MIN && n <= PIGLIN_MAX, `${c0.piglins} piglins, planned ${n}`);
     test.assert(c0.brutes === 2 && c0.hoglins === 0 && hoglinsNear === 0, `brutes ${c0.brutes} hoglins ${c0.hoglins}/${hoglinsNear}`);
     test.assert(c0.named === c0.total, "an unnamed guard");
+    const burnable = guardsOf(dim, b.id).filter((e) => !fireproof(e)).map((e) => e.typeId);
+    log(`bastion garrison fire RESULT guards without infinite fire_resistance: ${burnable.join(",") || "none"} of ${c0.total}`);
+    test.assert(burnable.length === 0, `guards that burn in the moat: ${burnable.join(",")}`);
     test.assert(tSpawn !== undefined && onIsland(b, tSpawn) && tIsland, "the treasure brute is not on the island");
     test.assert(oSpawnDist >= 0 && oSpawnDist <= 1, `the other brute spawned ${oSpawnDist} from its slot`);
 
@@ -381,6 +388,36 @@ registerAsync("andrew", "bastion_body_generate", async (test: Test): Promise<voi
     );
     test.assert(pd > 128, `the player stands ${pd} blocks away`);
     test.assert(c4.total === c3.total, `guards ${c3.total} -> ${c4.total} with a far player; lost ${lost.join(" | ")}`);
+
+    // Chunk reload with the player still far: the garrison and its fire_resistance come back, and a
+    // guard summoned the way a pre-fireproof build did (name and role, no effect) is made fireproof on load.
+    const oldCell = at(b, PIGLIN_POINTS[PIGLIN_POINTS.length - 1]);
+    const oldGuard = dim.getEntities({ type: PIGLIN, name: PIGLIN_NAME, location: v(oldCell), maxDistance: 2 }).map((e) => e.id);
+    dim.runCommand(`summon ${PIGLIN} "${PIGLIN_NAME}" ${oldCell[0] + 0.5} ${oldCell[1]} ${oldCell[2] + 0.5}`);
+    const legacy = dim.getEntities({ type: PIGLIN, name: PIGLIN_NAME, location: v(oldCell), maxDistance: 2 }).find((e) => !oldGuard.includes(e.id));
+    test.assert(legacy !== undefined, "the old-style guard was not summoned");
+    legacy!.addTag(roleTag("piglin"));
+    const legacyId = legacy!.id;
+    await test.idle(2);
+    const legacyBefore = fireproof(legacy!);
+    unload();
+    let unloadedAfter = -1;
+    for (let t = 0; t < 30 && unloadedAfter < 0; t++) {
+      await test.idle(10);
+      if (guardsOf(dim, b.id).length === 0) unloadedAfter = (t + 1) * 10;
+    }
+    unload = await loadBox(test, dim, "andrew_gt_bb_gen2", area);
+    await test.idle(20);
+    const c5 = census(dim, b.id);
+    const reloaded = guardsOf(dim, b.id);
+    const legacyAfter = dim.getEntities({ type: PIGLIN, name: PIGLIN_NAME }).find((e) => e.id === legacyId);
+    log(
+      `bastion reload RESULT chunks unloaded after ${unloadedAfter} ticks; guards ${c4.total} -> ${c5.total}, fireproof ${reloaded.filter(fireproof).length}/${reloaded.length}; ` +
+        `old-style guard fireproof before unload ${legacyBefore}, after reload ${legacyAfter === undefined ? "missing" : fireproof(legacyAfter)}`
+    );
+    test.assert(unloadedAfter > 0, "the bastion's chunks never unloaded");
+    test.assert(c5.total === c4.total && reloaded.every(fireproof), `after a chunk reload: guards ${c4.total} -> ${c5.total}, fireproof ${reloaded.filter(fireproof).length}`);
+    test.assert(!legacyBefore && legacyAfter !== undefined && fireproof(legacyAfter), `old-style guard: before ${legacyBefore}, after ${legacyAfter === undefined ? "missing" : fireproof(legacyAfter)}`);
   } finally {
     if (player !== undefined) test.removeSimulatedPlayer(player);
     unloadFar?.();
