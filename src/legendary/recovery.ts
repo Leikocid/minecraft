@@ -85,6 +85,30 @@ const seenInInventory = new Set<string>();
  */
 const removedByProtect = new Set<string>();
 
+/**
+ * An instance that left a player's slot and has not been accounted for yet. An
+ * item entity destroyed in the same tick it appears is never watched at all —
+ * entitySpawn arrives after the removal and watch() cannot read an invalid
+ * entity (measured: legendary_pickup_sighting_not_consumed) — so the departure
+ * is what this module tracks, not only the entity.
+ */
+interface InFlight {
+  def: LegendaryDef;
+  mark: Mark;
+  dimension: Dimension;
+  /** Where the player stood: the drop point, and where a container that took it stands. */
+  location: Vector3;
+  tick: number;
+}
+
+const inFlight = new Map<string, InFlight>();
+
+/** Ticks before a departure is resolved: entitySpawn and an instant re-pickup both land well inside it. */
+const IN_FLIGHT_GRACE_TICKS = 10;
+
+/** How far around the drop point a container could have taken the instance. */
+const IN_FLIGHT_SEARCH_HALF = 6;
+
 let intervalId: number | undefined;
 
 /** Stops watching an entity this module must not treat as lost (retention path B). */
@@ -104,34 +128,14 @@ export function registerRecovery(): void {
   });
 
   world.afterEvents.playerInventoryItemChange.subscribe((event) => {
-    const stack = event.itemStack;
-    const def = defForStack(stack);
-    if (def === undefined || stack === undefined) {
-      return;
-    }
-    const mark = getMark(def, stack);
-    if (mark === undefined) {
-      return;
-    }
     const player: Player | undefined = event.player;
     const container = player?.getComponent("minecraft:inventory")?.container;
     if (player === undefined || container === undefined) {
       return;
     }
-    // The event also fires for the drop that created the entity, still
-    // naming the stack; only a slot that holds the instance now counts.
     const now = container.getItem(event.slot);
-    const there = isItemOf(def, now) ? getMark(def, now) : undefined;
-    if (there === undefined || there.id !== mark.id) {
-      return;
-    }
-    if (!isLive(def, there)) {
-      voidStaleSlot(def, player, container, event.slot, there);
-      return;
-    }
-    if ([...watched.values()].some((w) => w.mark.id === mark.id)) {
-      seenInInventory.add(mark.id);
-    }
+    noteDeparture(player, container, event.beforeItemStack, now);
+    noteArrival(player, container, event.slot, event.itemStack, now);
   });
 
   world.afterEvents.playerSpawn.subscribe((event) => {
@@ -147,6 +151,64 @@ export function registerRecovery(): void {
   });
 
   console.warn("[andrew] legendary loss recovery armed");
+}
+
+/** An instance the slot no longer holds: tracked until check() finds where it went. */
+function noteDeparture(player: Player, container: Container, before: ItemStack | undefined, now: ItemStack | undefined): void {
+  const def = defForStack(before);
+  if (def === undefined || before === undefined) {
+    return;
+  }
+  const mark = getMark(def, before);
+  if (mark === undefined || !isLive(def, mark)) {
+    return;
+  }
+  const still = isItemOf(def, now) ? getMark(def, now) : undefined;
+  if (still?.id === mark.id || carriesInstance(def, player, container, mark)) {
+    // The slot still holds it, or it only moved to another slot or the off hand.
+    return;
+  }
+  const at = player.location;
+  inFlight.set(mark.id, {
+    def,
+    mark,
+    dimension: player.dimension,
+    location: { x: Math.floor(at.x), y: Math.floor(at.y), z: Math.floor(at.z) },
+    tick: system.currentTick,
+  });
+  startChecking();
+}
+
+/** An instance the slot holds now: the sighting that tells a pickup from a loss. */
+function noteArrival(player: Player, container: Container, slot: number, stack: ItemStack | undefined, now: ItemStack | undefined): void {
+  const def = defForStack(stack);
+  if (def === undefined || stack === undefined) {
+    return;
+  }
+  const mark = getMark(def, stack);
+  if (mark === undefined) {
+    return;
+  }
+  // The event also fires for the drop that created the entity, still naming the
+  // stack; only a slot that holds the instance now counts.
+  const there = isItemOf(def, now) ? getMark(def, now) : undefined;
+  if (there === undefined || there.id !== mark.id) {
+    return;
+  }
+  if (!isLive(def, there)) {
+    voidStaleSlot(def, player, container, slot, there);
+    return;
+  }
+  inFlight.delete(mark.id);
+  if ([...watched.values()].some((w) => w.mark.id === mark.id)) {
+    seenInInventory.add(mark.id);
+  }
+}
+
+function startChecking(): void {
+  if (intervalId === undefined) {
+    intervalId = system.runInterval(check, CHECK_INTERVAL_TICKS);
+  }
 }
 
 function watch(entity: Entity, via: string): void {
@@ -174,14 +236,13 @@ function watch(entity: Entity, via: string): void {
   }
   watched.set(entity.id, { entity, def, mark, dimension: entity.dimension, location: entity.location });
   seenInInventory.delete(mark.id);
+  inFlight.delete(mark.id);
   console.warn(`[andrew] legendary recovery: watching ${def.itemId} id ${mark.id} on the ground (via ${via})`);
-  if (intervalId === undefined) {
-    intervalId = system.runInterval(check, CHECK_INTERVAL_TICKS);
-  }
+  startChecking();
 }
 
 function stopIfIdle(): void {
-  if (watched.size === 0 && intervalId !== undefined) {
+  if (watched.size === 0 && inFlight.size === 0 && intervalId !== undefined) {
     system.clearRun(intervalId);
     intervalId = undefined;
   }
@@ -216,6 +277,21 @@ function check(): void {
     }
     lost(w, "vanished from the ground");
   }
+  for (const [id, f] of [...inFlight]) {
+    if (system.currentTick - f.tick < IN_FLIGHT_GRACE_TICKS) {
+      continue;
+    }
+    inFlight.delete(id);
+    if (!isLive(f.def, f.mark)) {
+      continue;
+    }
+    const where = whereIs(f, IN_FLIGHT_SEARCH_HALF);
+    if (where !== undefined) {
+      console.warn(`[andrew] legendary recovery: ${f.def.itemId} id ${id} left an inventory and is ${where}`);
+      continue;
+    }
+    lost(f, "left an inventory and was nowhere to be found");
+  }
   stopIfIdle();
 }
 
@@ -232,10 +308,18 @@ function liveLocation(entity: Entity): Vector3 | undefined {
   }
 }
 
-/** Where the instance went if it was not destroyed, or undefined. */
-function whereIs(w: Watched): string | undefined {
+/**
+ * Where the instance went if it was not destroyed, or undefined. `half` is how
+ * far around `w.location` a container could have taken it: 0 for an entity that
+ * vanished off the ground (only the spot and a hopper under it can take one
+ * without a player), wider for an instance that left a player's slot, which any
+ * container within reach could have taken.
+ */
+function whereIs(w: { def: LegendaryDef; mark: Mark; dimension: Dimension; location: Vector3 }, half = 0): string | undefined {
   const id = w.mark.id;
-  if (seenInInventory.delete(id)) {
+  // A sighting is only evidence for the entity it was recorded against: a
+  // departure is resolved by where the instance is now, never by where it was.
+  if (half === 0 && seenInInventory.delete(id)) {
     return "seen entering an inventory (playerInventoryItemChange)";
   }
   for (const other of watched.values()) {
@@ -259,10 +343,7 @@ function whereIs(w: Watched): string | undefined {
       return `in ${player.name}'s off hand`;
     }
   }
-  // A hopper pulls items from the block above it, so the spot and the cell
-  // below are the only containers that can take an item without a player.
-  for (const dy of [0, -1]) {
-    const at = { x: w.location.x, y: w.location.y + dy, z: w.location.z };
+  for (const at of holderCells(w, half)) {
     const container = w.dimension.getBlock(at)?.getComponent("minecraft:inventory")?.container;
     if (container === undefined) {
       continue;
@@ -270,11 +351,36 @@ function whereIs(w: Watched): string | undefined {
     for (let slot = 0; slot < container.size; slot++) {
       const stack = container.getItem(slot);
       if (isItemOf(w.def, stack) && getMark(w.def, stack)?.id === id) {
-        return "in a container at the spot";
+        return `in a container at ${fmt(at)}`;
       }
     }
   }
   return undefined;
+}
+
+/**
+ * Cells whose container could be holding the instance. A hopper pulls items from
+ * the block above it, so for an entity that vanished off the ground the spot and
+ * the cell below are the only two; an instance that left a slot can be in any
+ * container the player could reach, which is a box.
+ */
+function holderCells(w: { dimension: Dimension; location: Vector3 }, half: number): Vector3[] {
+  if (half === 0) {
+    return [0, -1].map((dy) => ({ x: w.location.x, y: w.location.y + dy, z: w.location.z }));
+  }
+  const { min: floor, max: ceiling } = w.dimension.heightRange;
+  const min = { x: w.location.x - half, y: Math.max(w.location.y - half, floor), z: w.location.z - half };
+  const max = { x: w.location.x + half, y: Math.min(w.location.y + half, ceiling - 1), z: w.location.z + half };
+  try {
+    return [...w.dimension.getBlocks(new BlockVolume(min, max), { includeTypes: holderIds() }, true).getBlockLocationIterator()].map((at) => ({
+      x: at.x,
+      y: at.y,
+      z: at.z,
+    }));
+  } catch (err) {
+    console.warn(`[andrew] legendary recovery: holder scan around ${fmt(w.location)} threw ${String(err)}`);
+    return [];
+  }
 }
 
 function voidStaleSlot(def: LegendaryDef, player: Player, container: Container, slot: number, mark: Mark): void {
@@ -296,7 +402,7 @@ function reachable(playerId: string): { player: Player; container: Container } |
   return { player, container };
 }
 
-function lost(w: Watched, how: string): void {
+function lost(w: { def: LegendaryDef; mark: Mark }, how: string): void {
   if (!isLive(w.def, w.mark)) {
     console.warn(`[andrew] legendary recovery: ${w.def.itemId} id ${w.mark.id} ${how}, but it was already stale`);
     return;

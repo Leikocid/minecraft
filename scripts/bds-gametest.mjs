@@ -104,6 +104,12 @@ const EXPECTED_TESTS = [
   'andrew:legendary_returns_from_void',
   'andrew:legendary_survives_lava',
   'andrew:legendary_survives_fire',
+  'andrew:legendary_returns_from_tnt',
+  'andrew:probe_cactus_items',
+  'andrew:legendary_returns_from_cactus',
+  'andrew:legendary_returns_when_it_vanishes',
+  'andrew:legendary_pickup_sighting_not_consumed',
+  'andrew:legendary_in_a_chest_stays_there',
   'andrew:legendary_pickup_no_duplicate',
   // CX-lgnd-09 items 2–3 — src/gametest/legendary-recovery.ts
   'andrew:legendary_cx09_hopper_to_chest',
