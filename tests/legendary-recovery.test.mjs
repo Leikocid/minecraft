@@ -81,6 +81,7 @@ export const EntityComponentTypes = { Equippable: 'minecraft:equippable' };
 export const EquipmentSlot = { Mainhand: 'Mainhand', Offhand: 'Offhand' };
 // This engine has no shelves: an id it does not know must never reach a query.
 export const BlockTypes = { get: (id) => (id.endsWith('_shelf') ? undefined : { id }) };
+export const EntitySwingSource = { Attack: 'Attack', DropItem: 'DropItem' };
 export class BlockVolume {
   constructor(from, to) {
     this.from = from;

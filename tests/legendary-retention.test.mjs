@@ -80,6 +80,7 @@ mc.Player = Player;
 export const EntityComponentTypes = { Equippable: 'minecraft:equippable' };
 export const EquipmentSlot = { Mainhand: 'Mainhand', Offhand: 'Offhand' };
 export const BlockTypes = { get: (id) => ({ id }) };
+export const EntitySwingSource = { Attack: 'Attack', DropItem: 'DropItem' };
 export class BlockVolume {}
 `;
 
