@@ -46,6 +46,7 @@
 import {
   BlockTypes,
   BlockVolume,
+  EntitySwingSource,
   type Container,
   type Dimension,
   type Entity,
@@ -98,10 +99,23 @@ interface InFlight {
   dimension: Dimension;
   /** Where the player stood: the drop point, and where a container that took it stands. */
   location: Vector3;
+  playerId: string;
   tick: number;
 }
 
 const inFlight = new Map<string, InFlight>();
+
+/**
+ * Last tick each player swung to throw something away. A slot losing an
+ * instance is not enough to call it dropped: moving it into a shulker item or an
+ * ender chest looks the same from the inventory, and neither is readable from a
+ * script, so a return invented for one of those would quietly unstore it. Only a
+ * departure the player swung for is a drop.
+ */
+const lastDropSwing = new Map<string, number>();
+
+/** How far a drop swing may sit from the departure it belongs to. */
+const DROP_SWING_WINDOW_TICKS = 2;
 
 /** Ticks before a departure is resolved: entitySpawn and an instant re-pickup both land well inside it. */
 const IN_FLIGHT_GRACE_TICKS = 10;
@@ -125,6 +139,12 @@ export function registerRecovery(): void {
   // restart empties it; either way they come back through entityLoad.
   world.afterEvents.entityLoad.subscribe((event) => {
     watch(event.entity, "entityLoad");
+  });
+
+  world.afterEvents.playerSwingStart.subscribe((event) => {
+    if (event.swingSource === EntitySwingSource.DropItem) {
+      lastDropSwing.set(event.player.id, system.currentTick);
+    }
   });
 
   world.afterEvents.playerInventoryItemChange.subscribe((event) => {
@@ -174,6 +194,7 @@ function noteDeparture(player: Player, container: Container, before: ItemStack |
     mark,
     dimension: player.dimension,
     location: { x: Math.floor(at.x), y: Math.floor(at.y), z: Math.floor(at.z) },
+    playerId: player.id,
     tick: system.currentTick,
   });
   startChecking();
@@ -283,6 +304,12 @@ function check(): void {
     }
     inFlight.delete(id);
     if (!isLive(f.def, f.mark)) {
+      continue;
+    }
+    const swung = lastDropSwing.get(f.playerId);
+    if (swung === undefined || Math.abs(swung - f.tick) > DROP_SWING_WINDOW_TICKS) {
+      // Not thrown away: moved into storage this script cannot read, or wiped by
+      // a command. Either way, not a loss to invent a return for.
       continue;
     }
     const where = whereIs(f, IN_FLIGHT_SEARCH_HALF);

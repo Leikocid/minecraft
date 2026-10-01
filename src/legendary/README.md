@@ -41,10 +41,24 @@ is recorded with the player's cell, and the next check asks where it is now —
 a watched entity, any player's inventory or off hand, or a container within
 `IN_FLIGHT_SEARCH_HALF` of the cell. Nowhere ⇒ lost ⇒ returned.
 
-Two consequences worth keeping in mind:
+A departure alone is not a loss, though. **It must be one the player swung for**
+(`EntitySwingSource.DropItem`, within `DROP_SWING_WINDOW_TICKS` of the
+departure). Moving an instance into a shulker-box *item*, a bundle or an ender
+chest empties the slot exactly the same way, and a script can read none of those
+three — so without the swing a return would quietly unstore the weapon. The same
+gate is why `/clear` and a scripted `clearAll()` do not resurrect a legendary,
+which `probe_retention_two_copies` holds.
+
+Two more things worth keeping in mind:
 
 - Storing a legendary in a chest is a departure too, and must not recall it. The
-  container search is what keeps it on the shelf (`legendary_in_a_chest_stays_there`).
+  swing gate and the container search both keep it on the shelf
+  (`legendary_in_a_chest_stays_there`).
 - A sighting of a pickup is evidence only for the entity it was recorded against.
   A departure is resolved by where the instance **is**, never by where it was —
   that is why `whereIs` only consults the sighting set on the entity path.
+
+What this leaves open, named rather than hidden: a legendary thrown away and
+destroyed in that same tick is covered, but one that leaves an inventory into
+storage no script can read and is destroyed *there* (the shulker item burns with
+its holder) is not, because nothing can tell that case from ordinary storage.
