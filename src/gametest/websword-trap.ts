@@ -148,6 +148,19 @@ function mobRay(player: Player, mob: Entity) {
   return player.getEntitiesFromViewDirection({ maxDistance: ENTITY_REACH }).find((h) => h.entity.id === mob.id);
 }
 
+/**
+ * How far the bounds' south face sits from the mob's centre, read off the
+ * engine's own hit distance — undefined on a miss. A just-spawned entity reads
+ * narrower here for the first ticks, so this is also the settling signal.
+ */
+function impliedHalfWidth(player: Player, mob: Entity): number | undefined {
+  const hit = mobRay(player, mob);
+  if (hit === undefined) {
+    return undefined;
+  }
+  return along(player.getHeadLocation(), player.getViewDirection(), hit.distance).z - mob.location.z;
+}
+
 // ------------------------------------------------ probe: faceLocation per face
 
 interface FaceAim {
@@ -316,16 +329,24 @@ registerAsync("andrew", "websword_entity_ray_distance", async (test: Test): Prom
   await test.idle(8);
 
   // A just-spawned entity's pick bounds are narrower than its settled ones for
-  // the first ticks: measured 0.345 against 0.400 in 1 run of 5, and in that
-  // run the next ray missed the mob outright. Wait for two consecutive hits
-  // before measuring, so the probe reads the settled box and not the spawn.
+  // the first ticks: 0.345 against 0.400, measured. Two consecutive hits do not
+  // prove they have settled — the narrow box still answers an aim at the centre,
+  // and the run that caught this measured 0.345 and then missed the next,
+  // off-centre aim. Wait for the reading itself to stop changing.
   const mobAt0 = test.relativeLocation(mob.location);
   player.lookAtLocation({ x: mobAt0.x, y: mobAt0.y + 1.0, z: mobAt0.z });
-  for (let settled = 0, waited = 0; settled < 2; waited++) {
+  let previous: number | undefined;
+  for (let settled = false, waited = 0; !settled; waited += 2) {
     await test.idle(2);
-    settled = mobRay(player, mob) === undefined ? 0 : settled + 1;
-    test.assert(waited < 40, `the entity ray never settled on the ${MOB} at ${f3(mob.location)}`);
+    const reading = impliedHalfWidth(player, mob);
+    settled = reading !== undefined && previous !== undefined && Math.abs(reading - previous) <= 0.005;
+    previous = reading;
+    test.assert(
+      waited < 60,
+      `the entity pick box never settled on the ${MOB} at ${f3(mob.location)} (last reading ${previous?.toFixed(3) ?? "a miss"})`
+    );
   }
+  log(`ENTITY settled at impliedHalfWidth=${previous?.toFixed(3) ?? "?"}`);
 
   const mobAt = test.relativeLocation(mob.location);
   const points: Vector3[] = [
