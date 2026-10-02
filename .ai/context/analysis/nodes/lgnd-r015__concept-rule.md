@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-lgnd-r015"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 aliases: ["L0-lgnd-r015"]
 is_a: ["rule"]
 part_of: ["L0-lgnd"]

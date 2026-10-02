@@ -2,7 +2,7 @@
 type: "concept-constraint"
 node_id: "L0-ring-cons"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "Ring NFRs (refining C-5a′, C-12, C-15, C-16 and C-19)"
 aliases: ["L0-ring-cons"]
 is_a: ["constraint"]

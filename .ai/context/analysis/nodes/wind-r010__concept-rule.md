@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-wind-r010"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Rule: fill only shallow voids directly under the plot; never fill a deep cave or ravine"
 aliases: ["L0-wind-r010"]
 is_a: ["rule"]

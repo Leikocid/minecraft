@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-orbc-r013"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "Rule · Deviation notes live next to the code"
 aliases: ["L0-orbc-r013"]
 is_a: ["rule"]

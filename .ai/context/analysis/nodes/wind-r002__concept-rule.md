@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-wind-r002"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Rule: decay (vines, cobwebs) never blocks the door, the stairs or any chest"
 aliases: ["L0-wind-r002"]
 is_a: ["rule"]

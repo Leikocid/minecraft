@@ -2,7 +2,7 @@
 type: "concept-contradiction"
 node_id: "L0-wind-cx02"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "CX-wind-02 · \\"Check the linked Airship once, right after the Windmill\\" vs never touching unloaded chunks"
 aliases: ["L0-wind-cx02"]
 is_a: ["contradiction"]

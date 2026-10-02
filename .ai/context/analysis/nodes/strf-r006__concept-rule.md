@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-strf-r006"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Rule: collision cancels the candidate. Existing structures and spawners are never damaged."
 aliases: ["L0-strf-r006"]
 is_a: ["rule"]

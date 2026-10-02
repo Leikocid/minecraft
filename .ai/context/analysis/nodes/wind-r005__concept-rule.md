@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-wind-r005"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Rule: a cured field Zombie Villager becomes an ordinary Villager"
 aliases: ["L0-wind-r005"]
 is_a: ["rule"]

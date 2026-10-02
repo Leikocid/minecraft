@@ -2,7 +2,7 @@
 type: "concept-process"
 node_id: "L0-loot-p001"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "P-loot-001 · Custom weighted-table chest fill (Windmill & Airship)"
 aliases: ["L0-loot-p001"]
 is_a: ["process"]

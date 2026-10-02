@@ -2,7 +2,7 @@
 type: "concept-contradiction"
 node_id: "L0-lgnd-cx10"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "CX-lgnd-10 · Death retention keeps only one marked copy per weapon, and never the off-hand one"
 aliases: ["L0-lgnd-cx10"]
 is_a: ["contradiction"]

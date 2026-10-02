@@ -2,7 +2,7 @@
 type: "concept-entity"
 node_id: "L0-wind-e001"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Entity — `WindmillDef` (the Windmill's `StructureDef` + template contract)"
 aliases: ["L0-wind-e001"]
 is_a: ["entity"]

@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-strf-as01"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Assumption (CAN_ASSUME) — Where the candidate footprint sits relative to its chunk"
 aliases: ["L0-strf-as01"]
 is_a: ["assumption"]

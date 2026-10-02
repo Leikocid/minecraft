@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-strf-d004"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "ADR-strf-04 — Collision is a 3D AABB test with a 2-block margin, not a 2D footprint test"
 aliases: ["L0-strf-d004"]
 is_a: ["architecture-decision"]

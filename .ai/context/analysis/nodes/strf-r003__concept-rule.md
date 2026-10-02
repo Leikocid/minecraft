@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-strf-r003"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Rule: dimension lock and build-height bounds"
 aliases: ["L0-strf-r003"]
 is_a: ["rule"]

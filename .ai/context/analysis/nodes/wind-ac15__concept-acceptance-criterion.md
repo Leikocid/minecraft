@@ -2,7 +2,7 @@
 type: "concept-acceptance-criterion"
 node_id: "L0-wind-ac15"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "AC-wind-15 · Forced preparation never damages a structure, a spawner or a player build"
 aliases: ["L0-wind-ac15"]
 is_a: ["acceptance-criterion"]

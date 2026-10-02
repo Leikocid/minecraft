@@ -2,7 +2,7 @@
 type: "concept-acceptance-criterion"
 node_id: "L0-wind-ac07"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "AC-wind-07 · 10 field guards: once, sun-immune, persistent, never restored"
 aliases: ["L0-wind-ac07"]
 is_a: ["acceptance-criterion"]

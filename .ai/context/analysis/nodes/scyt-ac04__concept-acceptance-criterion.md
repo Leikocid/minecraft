@@ -2,7 +2,7 @@
 type: "concept-acceptance-criterion"
 node_id: "L0-scyt-ac04"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 5
 title: "AC-scyt-04 — Near-equal distance (within 0.5): the gaze decides (§8 test 4)"
 aliases: ["L0-scyt-ac04"]
 is_a: ["acceptance-criterion"]

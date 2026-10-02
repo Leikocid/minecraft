@@ -2,7 +2,7 @@
 type: "concept-contradiction"
 node_id: "L0-pntr-cx01"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "CX-pntr-01 · Legendary in an item frame: \"never destroyed\" vs no stable item-frame API"
 aliases: ["L0-pntr-cx01"]
 is_a: ["contradiction"]

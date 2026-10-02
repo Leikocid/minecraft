@@ -2,7 +2,7 @@
 type: "concept-acceptance-criterion"
 node_id: "L0-orbc-ac16"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "AC-16 · The shared 30 s cooldown starts at once and blocks both modes `[bds]`"
 aliases: ["L0-orbc-ac16"]
 is_a: ["acceptance-criterion"]

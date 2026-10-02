@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-scyt-ad05"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 5
 title: "ADR-scyt-05 — The pursuit leash is horizontal (XZ) only"
 aliases: ["L0-scyt-ad05"]
 is_a: ["architecture-decision"]

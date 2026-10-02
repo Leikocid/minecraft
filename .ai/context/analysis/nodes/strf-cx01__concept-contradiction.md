@@ -2,7 +2,7 @@
 type: "concept-contradiction"
 node_id: "L0-strf-cx01"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Contradiction — the test convention \\"arm production modules inside the gametest pack\\" vs the single-registry invariant (C-7)"
 aliases: ["L0-strf-cx01"]
 is_a: ["contradiction"]

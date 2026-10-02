@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-wind-r012"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Rule: every Windmill triggers exactly one linked-Airship attempt"
 aliases: ["L0-wind-r012"]
 is_a: ["rule"]

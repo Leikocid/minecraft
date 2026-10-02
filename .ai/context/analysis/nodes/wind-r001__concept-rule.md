@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-wind-r001"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Rule: one fixed Windmill template; only rotation varies"
 aliases: ["L0-wind-r001"]
 is_a: ["rule"]

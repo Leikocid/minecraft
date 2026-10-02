@@ -2,7 +2,7 @@
 type: "concept-constraint"
 node_id: "L0-pntr-cons"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "Penetrator NFRs (refining C-5a′, C-14, C-15, C-16 and C-19)"
 aliases: ["L0-pntr-cons"]
 is_a: ["constraint"]

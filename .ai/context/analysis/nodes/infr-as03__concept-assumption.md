@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-infr-as03"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Assumption (CAN_ASSUME) — statistical chunk-roll check sample size and tolerance are infra's to pick"
 aliases: ["L0-infr-as03"]
 is_a: ["assumption"]

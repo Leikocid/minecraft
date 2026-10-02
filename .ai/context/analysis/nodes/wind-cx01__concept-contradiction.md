@@ -2,7 +2,7 @@
 type: "concept-contradiction"
 node_id: "L0-wind-cx01"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "CX-wind-01 · The spawn Windmill is \\"100 %\\" but must be on dry land — undefined when there is no dry land within 500 blocks"
 aliases: ["L0-wind-cx01"]
 is_a: ["contradiction"]

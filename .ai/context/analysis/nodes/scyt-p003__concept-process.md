@@ -2,7 +2,7 @@
 type: "concept-process"
 node_id: "L0-scyt-p003"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 5
 title: "P-scyt-003 — Invalidation and cleanup (polled, not event-driven)"
 aliases: ["L0-scyt-p003"]
 is_a: ["process"]

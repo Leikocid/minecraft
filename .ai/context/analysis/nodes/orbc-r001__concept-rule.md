@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-orbc-r001"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "Rule · Item identity: a rod icon with no rod behaviour"
 aliases: ["L0-orbc-r001"]
 is_a: ["rule"]

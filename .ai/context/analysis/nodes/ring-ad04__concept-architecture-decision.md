@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-ring-ad04"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "AD-ring-04 · One legendary-protection call per queue step, not per charge"
 aliases: ["L0-ring-ad04"]
 is_a: ["architecture-decision"]

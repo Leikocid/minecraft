@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-wind-r013"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Rule: the spawn search completes before normal discovery may place anything near spawn"
 aliases: ["L0-wind-r013"]
 is_a: ["rule"]

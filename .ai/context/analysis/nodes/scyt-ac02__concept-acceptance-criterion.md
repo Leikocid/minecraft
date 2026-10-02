@@ -2,7 +2,7 @@
 type: "concept-acceptance-criterion"
 node_id: "L0-scyt-ac02"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 5
 title: "AC-scyt-02 — The nearest visible player wins over any mob; occluded and hidden players are skipped (§8 test 2, amended)"
 aliases: ["L0-scyt-ac02"]
 is_a: ["acceptance-criterion"]

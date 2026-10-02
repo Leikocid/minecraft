@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-wind-ad02"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "ADR — Forced site preparation is a script-computed plan applied by `setPermutation` in a budgeted job"
 aliases: ["L0-wind-ad02"]
 is_a: ["architecture-decision"]

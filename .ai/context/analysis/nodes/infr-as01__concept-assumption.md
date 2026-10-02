@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-infr-as01"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Assumption: the GameTest harness is not one of Stage 0's five closing criteria"
 aliases: ["L0-infr-as01"]
 is_a: ["assumption"]

@@ -2,7 +2,7 @@
 type: "concept-process"
 node_id: "L0-wind-p003"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Process — forced site preparation (spawn Windmill only)"
 aliases: ["L0-wind-p003"]
 is_a: ["process"]

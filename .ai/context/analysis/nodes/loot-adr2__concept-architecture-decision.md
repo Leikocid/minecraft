@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-loot-adr2"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "ADR-loot-2 · Windmill/Airship loot is script-authored ItemStacks, not a Bedrock loot_table JSON"
 aliases: ["L0-loot-adr2"]
 is_a: ["architecture-decision"]

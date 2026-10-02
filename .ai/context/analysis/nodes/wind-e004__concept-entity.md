@@ -2,7 +2,7 @@
 type: "concept-entity"
 node_id: "L0-wind-e004"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Entity — `SitePrepPlan` (transient, reproducible)"
 aliases: ["L0-wind-e004"]
 is_a: ["entity"]

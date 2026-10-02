@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-scyt-ad01"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 5
 title: "ADR-scyt-01 — Candidates: every player, plus a 20-block entity query for mobs, once per press"
 aliases: ["L0-scyt-ad01"]
 is_a: ["architecture-decision"]

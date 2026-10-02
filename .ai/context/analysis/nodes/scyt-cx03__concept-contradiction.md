@@ -2,7 +2,7 @@
 type: "concept-contradiction"
 node_id: "L0-scyt-cx03"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 5
 title: "CX-scyt-03 · The shipped item JSON is a hoe and has no `allow_off_hand`, against `L0-sitm-adr2`, `L0-sitm-asm3`, `L0-adr-scyt` and AC-16"
 aliases: ["L0-scyt-cx03"]
 is_a: ["contradiction"]

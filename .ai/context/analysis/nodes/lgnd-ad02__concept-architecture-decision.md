@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-lgnd-ad02"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "AD-lgnd-02: Loss recovery by re-issue with a generation bump"
 aliases: ["L0-lgnd-ad02"]
 is_a: ["architecture-decision"]

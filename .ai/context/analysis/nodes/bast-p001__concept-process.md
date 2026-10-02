@@ -2,7 +2,7 @@
 type: "concept-process"
 node_id: "L0-bast-p001"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "P-bast-001 — Candidate roll, site validation, and template placement"
 aliases: ["L0-bast-p001"]
 is_a: ["process"]

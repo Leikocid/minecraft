@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-scyt-ad03"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 5
 title: "ADR-scyt-03 — Trigger on `itemUse` **and** `playerInteractWithBlock`, de-duplicated per player per tick"
 aliases: ["L0-scyt-ad03"]
 is_a: ["architecture-decision"]

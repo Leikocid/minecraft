@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-strf-r004"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Rule: rotation is chosen once, and one transform maps every template-local point"
 aliases: ["L0-strf-r004"]
 is_a: ["rule"]

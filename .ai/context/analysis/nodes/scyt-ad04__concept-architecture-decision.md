@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-scyt-ad04"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 5
 title: "ADR-scyt-04 — Mobs are targets too; any visible player outranks any mob"
 aliases: ["L0-scyt-ad04"]
 is_a: ["architecture-decision"]

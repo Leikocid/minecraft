@@ -2,7 +2,7 @@
 type: "concept-acceptance-criterion"
 node_id: "L0-scyt-ac17"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 5
 title: "AC-scyt-17 — A lone mob is targeted, visibly hurt, and takes the full volley"
 aliases: ["L0-scyt-ac17"]
 is_a: ["acceptance-criterion"]

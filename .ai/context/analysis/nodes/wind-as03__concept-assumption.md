@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-wind-as03"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Assumption — blend band B = 6 blocks (grows to Bmax = 12), slope ≤ 1 block per block"
 aliases: ["L0-wind-as03"]
 is_a: ["assumption"]

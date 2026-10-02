@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-orbc-r004"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "Rule · With no target, nothing happens"
 aliases: ["L0-orbc-r004"]
 is_a: ["rule"]

@@ -2,7 +2,7 @@
 type: "concept-component"
 node_id: "L0-webs"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 level: 1
 title: "Web Sword: Targeting & 3×3×3 Cobweb Trap"
 aliases: ["L0-webs"]

@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-orbc-as04"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "ASM-orbc-04 · All charges of one attack spawn at the same Y, derived from the target"
 aliases: ["L0-orbc-as04"]
 is_a: ["assumption"]

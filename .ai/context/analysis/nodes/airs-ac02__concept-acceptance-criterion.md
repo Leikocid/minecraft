@@ -2,7 +2,7 @@
 type: "concept-acceptance-criterion"
 node_id: "L0-airs-ac02"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "AC — two opposite doors, no assisted ground access"
 aliases: ["L0-airs-ac02"]
 is_a: ["acceptance-criterion"]

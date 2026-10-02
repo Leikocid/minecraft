@@ -2,7 +2,7 @@
 type: "concept-process"
 node_id: "L0-orbc-p002"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "Process · Charge flight and detonation"
 aliases: ["L0-orbc-p002"]
 is_a: ["process"]

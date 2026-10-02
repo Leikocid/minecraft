@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-pntr-ad01"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "ADR-pntr-1 · Per-cell scan + `setType` in one top-down `runJob`"
 aliases: ["L0-pntr-ad01"]
 is_a: ["architecture-decision"]

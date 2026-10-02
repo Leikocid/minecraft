@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-ring-r004"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 aliases: ["L0-ring-r004"]
 is_a: ["rule"]
 part_of: ["L0-ring"]

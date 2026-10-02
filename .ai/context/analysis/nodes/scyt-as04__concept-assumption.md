@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-scyt-as04"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 5
 title: "ASM-scyt-04 — \"Mob\" = any entity with a health component, including passive animals, villagers, pets and armour stands `CAN_ASSUME`"
 aliases: ["L0-scyt-as04"]
 is_a: ["assumption"]

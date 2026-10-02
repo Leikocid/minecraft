@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-lgnd-ad09"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "AD-lgnd-09: `resolveActivation(player, mode)` with a per-def `activations` list; attack reads the main hand only"
 aliases: ["L0-lgnd-ad09"]
 is_a: ["architecture-decision"]

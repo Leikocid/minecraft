@@ -2,7 +2,7 @@
 type: "concept-acceptance-criterion"
 node_id: "L0-wrdn-ac09"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 aliases: ["L0-wrdn-ac09"]
 is_a: ["acceptance-criterion"]
 part_of: ["L0-wrdn"]

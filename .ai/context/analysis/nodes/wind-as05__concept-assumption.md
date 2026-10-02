@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-wind-as05"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Assumption — \"best available dry land position\" = lowest earthwork score, ties broken by distance to spawn"
 aliases: ["L0-wind-as05"]
 is_a: ["assumption"]

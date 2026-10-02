@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-strf-r009"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Rule: one-time persistent mobs (\"guards\")"
 aliases: ["L0-strf-r009"]
 is_a: ["rule"]

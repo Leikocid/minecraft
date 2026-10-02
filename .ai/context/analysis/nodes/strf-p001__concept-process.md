@@ -2,7 +2,7 @@
 type: "concept-process"
 node_id: "L0-strf-p001"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Process — chunk discovery and the seeded per-chunk roll"
 aliases: ["L0-strf-p001"]
 is_a: ["process"]

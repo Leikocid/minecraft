@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-wrdn-ad01"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 aliases: ["L0-wrdn-ad01"]
 is_a: ["architecture-decision"]
 part_of: ["L0-wrdn"]

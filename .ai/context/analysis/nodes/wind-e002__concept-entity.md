@@ -2,7 +2,7 @@
 type: "concept-entity"
 node_id: "L0-wind-e002"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Entity — `SpawnWindmillRecord` (`andrew:st:spawn`)"
 aliases: ["L0-wind-e002"]
 is_a: ["entity"]

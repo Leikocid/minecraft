@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-wind-r008"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Rule: forced preparation touches natural blocks only, and aborts before touching a structure or spawner"
 aliases: ["L0-wind-r008"]
 is_a: ["rule"]

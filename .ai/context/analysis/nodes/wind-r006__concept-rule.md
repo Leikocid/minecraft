@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-wind-r006"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Rule: normal generation — 1 %, dry flat land only, cancel instead of fix"
 aliases: ["L0-wind-r006"]
 is_a: ["rule"]

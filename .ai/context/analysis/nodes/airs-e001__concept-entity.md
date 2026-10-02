@@ -2,7 +2,7 @@
 type: "concept-entity"
 node_id: "L0-airs-e001"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Entity — the Airship's `StructureDef` values"
 aliases: ["L0-airs-e001"]
 is_a: ["entity"]

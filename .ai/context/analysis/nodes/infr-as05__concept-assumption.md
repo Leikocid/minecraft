@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-infr-as05"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Confirmed as built — structure template source files live under `src/structures/templates/`"
 aliases: ["L0-infr-as05"]
 is_a: ["assumption"]

@@ -2,7 +2,7 @@
 type: "concept-entity"
 node_id: "L0-loot-e004"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Entity: VanillaLootTableRef"
 aliases: ["L0-loot-e004"]
 is_a: ["entity"]

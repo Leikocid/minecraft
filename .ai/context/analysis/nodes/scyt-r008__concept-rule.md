@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-scyt-r008"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 5
 title: "R-scyt-008 — Only the locked target can be hit"
 aliases: ["L0-scyt-r008"]
 is_a: ["rule"]

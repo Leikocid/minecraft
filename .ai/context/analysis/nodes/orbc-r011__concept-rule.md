@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-orbc-r011"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "Rule · On unload or restart, in-flight charges are lost"
 aliases: ["L0-orbc-r011"]
 is_a: ["rule"]

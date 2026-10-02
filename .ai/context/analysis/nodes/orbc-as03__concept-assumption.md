@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-orbc-as03"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "ASM-orbc-03 · What a \"block\" is for contact"
 aliases: ["L0-orbc-as03"]
 is_a: ["assumption"]

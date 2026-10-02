@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-orbc-as05"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "ASM-orbc-05 · Blocks stay unbreakable while the Cannon is in the main hand"
 aliases: ["L0-orbc-as05"]
 is_a: ["assumption"]

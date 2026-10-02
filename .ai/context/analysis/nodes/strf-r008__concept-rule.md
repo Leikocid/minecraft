@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-strf-r008"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Rule: the registry is the only source of truth for \"this structure exists / is initialised\""
 aliases: ["L0-strf-r008"]
 is_a: ["rule"]

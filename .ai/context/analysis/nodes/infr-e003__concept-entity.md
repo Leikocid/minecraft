@@ -2,7 +2,7 @@
 type: "concept-entity"
 node_id: "L0-infr-e003"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Entity: GameTest pack (`packs/gametest`)"
 aliases: ["L0-infr-e003"]
 is_a: ["entity"]

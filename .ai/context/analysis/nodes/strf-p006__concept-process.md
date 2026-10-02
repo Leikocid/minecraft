@@ -2,7 +2,7 @@
 type: "concept-process"
 node_id: "L0-strf-p006"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Process — the `strf` probe (Stage-1-style spike on BDS 1.26.51.1)"
 aliases: ["L0-strf-p006"]
 is_a: ["process"]

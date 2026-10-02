@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-strf-r005"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Rule: footprint-validity profiles (the whole footprint, never only the centre)"
 aliases: ["L0-strf-r005"]
 is_a: ["rule"]

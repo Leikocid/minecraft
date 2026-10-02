@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-airs-r004"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Rule: the Windmill-linked search is a hard 40–100-block ring, tried once, never widened, never forced, never deduplicated against an independent Airship"
 aliases: ["L0-airs-r004"]
 is_a: ["rule"]

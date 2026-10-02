@@ -2,7 +2,7 @@
 type: "concept-acceptance-criterion"
 node_id: "L0-wind-ac06"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "AC-wind-06 · The decorative lighting does not disable any spawner"
 aliases: ["L0-wind-ac06"]
 is_a: ["acceptance-criterion"]

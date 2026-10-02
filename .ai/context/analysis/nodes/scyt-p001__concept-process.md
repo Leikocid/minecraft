@@ -2,7 +2,7 @@
 type: "concept-process"
 node_id: "L0-scyt-p001"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 5
 title: "P-scyt-001 — Activation and target acquisition (as shipped)"
 aliases: ["L0-scyt-p001"]
 is_a: ["process"]

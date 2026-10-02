@@ -2,7 +2,7 @@
 type: "concept-entity"
 node_id: "L0-airs-e002"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Entity — `tryLinked` request and ring candidate"
 aliases: ["L0-airs-e002"]
 is_a: ["entity"]

@@ -1,13 +1,13 @@
 ---
 title: Project Summary
 type: analysis
-generated_at: "2026-09-29T19:09:13.639Z"
+generated_at: "2026-10-02T19:14:06.012Z"
 source_channel: rollout
 node_id: rollout-summary
 aliases: ["rollout-summary","summary"]
 is_a: ["rollout","summary"]
 relates_to: ["L0"]
-priority: 540
+priority: 580
 ---
 
 # Project Summary
@@ -18,111 +18,128 @@ priority: 540
 
 _node: L0_
 
-# Project Overview: «Andrew» Minecraft Bedrock add-on (v3: + Orbital Cannon, after deep-dive)
+---
+title: "Project Overview: «Andrew» Minecraft Bedrock add-on (v5: the UFO Magnet event fully analysed)"
+aliases: ["L0", "Project Overview"]
+is_a: ["system-overview"]
+part_of: []
+relates_to: ["L0-infr", "L0-pick", "L0-lgnd", "L0-webs", "L0-scyt", "L0-orbc", "L0-pntr", "L0-ring", "L0-strf", "L0-loot", "L0-wind", "L0-airs", "L0-wrdn", "L0-bast", "L0-ufoc", "L0-sauc", "L0-magn", "L0-adr-ufoi", "L0-adr-ufom", "L0-adr-ufpc", "L0-adr-ufnd", "L0-adr-ufht", "L0-adr-ufrs", "L0-adr-ufsd", "L0-ufoc-cx01", "L0-xcx15", "L0-xcx16", "L0-xcx17", "L0-xcx19", "L0-xcx20", "L0-xasm16", "L0-xasm17"]
+requires: ["L0-adr-ufpc", "L0-adr-ufom"]
+see_also: ["ufomagnetspecv1ruen-part-1", "ufomagnetspecv1ruen-part-2", "ufomagnetspecv1ruen-part-3", "ufomagnetspecv1ruen-part-4", "orbitalcannonspecv1ruen-part-1", "orbitalcannonspecv1ruen-part-3", "constraints"]
+supersedes: ["L0@v4"]
+---
+# Project Overview: «Andrew» Minecraft Bedrock add-on (v5)
 
 **What it is.**
-- A Minecraft **Bedrock** add-on: one behavior pack and one resource pack, namespace `andrew:`, shipped as `dist/andrew.mcaddon`.
-- It uses only the stable Script API: `@minecraft/server` 2.10.0, BDS 1.26.51.1.
-- It is played on an iPad and verified on a Mac mini. Bedrock Dedicated Server runs in Docker (`bds` channel), and the iPad is the only proof of what renders (`ipad` channel).
-- It has two feature families:
-  - **legendary weapons**: Web Sword and Scythe shipped; the Orbital Cannon is new in v3 and not started as of 2026-09-29;
-  - **four world structures**: shipped in v1.2.0, carried at v2, with a scan-code reconcile owed (`xcx12`).
+- A Minecraft **Bedrock** add-on: one behavior pack and one resource pack, namespace `andrew:`, shipped as `dist/andrew.mcaddon`. The as-built version is **1.4.4**.
+- It uses only the stable Script API: `@minecraft/server` 2.10.0 on BDS 1.26.51.1.
+- It is played on an iPad and verified on a Mac mini.
+  - The `bds` channel is BDS in Docker: production 19132, QA 19134, checks 19136.
+  - The iPad is the only proof of what renders (`ipad` channel).
 
-## The Orbital Cannon, as the four components now see it
-A third legendary that looks like a fishing rod. It is crafted once per world from a Fishing Rod and 4 TNT. Two attacks share one 30 s per-player cooldown. Both lock a block and drop charges from above (+30 in the Overworld and End, +10 in the Nether, clamped to the ceiling).
-- **LMB** cores an irregular ~5×5 column down to the world floor, with no drops.
-- **RMB** drops ~145–160 independent TNT charges in five rings, with TNT damage and TNT-resistance breaking but no drops.
+| Family | Members | State (2026-10-02) |
+|---|---|---|
+| Legendary weapons | Web Sword, Scythe of Calamity, Orbital Cannon | All shipped. The Cannon was tuned in v1.4.1–1.4.4. The v3 Orbital nodes are stale (`xcx16`). |
+| World structures | Windmill, Warden City, Bastion, Airship | Shipped in v1.2.0. A scan-code reconcile is owed (`xcx12`). |
+| **World events** | **UFO Magnet** | **All four nodes are now analysed** (`lgnd` v4 carried forward; `ufoc`, `sauc` and `magn` analysed in v5). Nothing is built yet: as read during reduce v5 there was no `src/ufo/`, only the probe branch `probe/ufo-magnet`. |
 
-The deep-dive turned the L0 sketch into a four-layer pipeline with **one-way dependencies**:
+## The UFO Magnet as one system
 
 ```
-lgnd (rules, registry, gate, holder, protection)  ←─ called by all three
-  ↑
-orbc (item, input, target lock, cooldown, HUD, charge spawn/fall/detonate, lifecycle)
-  │  onDetonate(dim, point, ownerId, mode, attackId)   ── charge contract orbc-r014
-  ├─→ pntr (LMB column: plan → keep/remove → protect → batched setType → sound + particle wave)
-  └─→ ring (RMB layout → queued createExplosion under a scoped doTileDrops=false → protect)
+lgnd (carried, v4) ── isLegendaryStack (ad13) · never-pulled r016 · death retention ac22
+   ▲ predicate only; magn cites by id
+   │
+ufoc  the only clock and only state machine
+  │ next_ms (epoch ms; 0 = in flight, adr-ufrs) + ufo_enabled  ← the only durable state (C-23)
+  │ first arrival 10–20 min after first join; +15 min after any end or a restart; waits for an Overworld player
+  │ centre frozen at arrival; hoverY = min(centre+40, ceiling−4)                         (adr-ufht)
+  │ ONE runInterval: latch → advance → saucerStep → magnetStep → downed-end              (adr-ufpc, adr-ufsd)
+  │ /andrew:ufo come|stop|enable|disable · arrival notice ≤150 blocks RU/EN · env seam (xasm13)
+  │ restart sweep at worldLoad + entityLoad, keyed by eventId                            (xasm17)
+  │
+  ├─ onPhase / saucerStep ─→ sauc  andrew:ufo_saucer (snowball runtime id, 0×0 box, damage_sensor none, family andrew_ufo)
+  │                                path 90 → hover → 90 opposite, legs at min(hoverY+10, ceiling−4); beam = bone + property
+  │                                registerInterceptor(attack,…) on orbc flight → outcome "intercepted"   (adr-ufoi)
+  │     ◄── requestMagnetOff("shot") [latched] + reportShotDown ──┘  fall ≤ 60 ticks, harmless blast, 8♦ + totem, broadcast
+  │
+  └─ onPhase / magnetStep ─→ magn  one zone scan at magnet-on (r 50, loaded chunks only) → ≤10 elements, nearest first
+                                    containers give iron stacks; hopper is never a block (adr-ufnd); block → air + 1 item
+                                    players: applyKnockback ≤0.6/tick to −6; elements: ring r 5 at −3, away from players
+                                    reads saucerPosition() inside magnetStep; one-tick simultaneous release (magn-prel)
 ```
 
-| Node | Owns (v3) | Publishes | Key ADRs | State |
-|---|---|---|---|---|
-| `L0-lgnd` | the third `LegendaryDef`; `resolveActivation(player, "use"\|"attack")`; craft **tokens** (`/give` and Creative never claim); `holder` in the mark and last-holder return; prevent → spill → return policy; `protectLegendariesIn` | `LegendaryDef.activations`, `craftTokenId`; `protectLegendariesIn(dim, volume, {avoid})`; `isLegendaryItemEntity`; HUD, now with per-weapon key lookup | `lgnd-ad08/09/10/11`, amended by `L0-adr-wpn3`, `L0-adr-oprt` | shipped framework; the `wpn2` backlog is **unshipped** and is now v3 step 1 |
-| `L0-orbc` | item JSON, recipe, lang; LMB/RMB and touch input; 10-block target lock; cooldown write; HUD strings; charge entity, fall, contact, Void; in-memory attacks with orphan sweep | `onDetonate` contract (`r014`), `registerEffect(mode, …)`, spawn-height rule | `orbc-ad01` (target source, proposed), `ad02` charge motion, `ad03` lifecycle | not started; **blocked** by `L0-xcx14`/`L0-xq5` |
-| `L0-pntr` | column mask (seeded, 3×3 core), the `xasm6` keep set, no-drop removal in one top-down `runJob`, one sound + 20-tick particle wave, no direct damage | a per-attack report | `pntr-ad01/02/03` | analysis only |
-| `L0-ring` | ring rasterisation (`xasm8`), a global bounded detonation queue, `createExplosion(power 4)` with owner damage and no fire, underwater damage-only, drop suppression, cleanup | a per-attack report | `ring-ad01` → `L0-adr-odrp`; `ad02` queue cap; `ad03`; `ad04` batched protection | analysis only |
+**How the children fit together.**
+- **`ufoc` publishes exactly the contract `L0-adr-ufpc` fixed at v4.** The re-run consumes it as written: `onPhase`, `saucerStep`, `magnetStep`, the latched `requestMagnetOff`, an idempotent `reportShotDown`, and `saucerPosition()` read only inside `magnetStep`. No child needed a different signal, and `xcx20` (ufoc missing) is satisfied by this run.
+- **The shoot-down is the one three-way flow.** Read in tick order across `sauc-p002`, `ufoc-p002` and `magn-prel`, it showed two seams no single child could see:
+  - the release keyed on the current phase, which a shot has already moved to `downed`;
+  - the end of `downed` came before the saucer's tick-60 step.
 
-**What ties them together.**
-- `pntr` and `ring` share exactly two things: the `orbc` charge contract and `lgnd`'s protection call. They have *opposite* block rules: `pntr` ignores TNT resistance and keeps liquids and unbreakables, while `ring` delegates to the engine.
-- The legendary rules are never restated below `lgnd`. `orbc`, `pntr` and `ring` reference `lgnd-*` by id (invariant checked).
-- Web Sword and Scythe inherit the `lgnd` delta with no re-run (`L0-adr-wpn3`).
+  `L0-adr-ufsd` fixes both and reconciles `ufoc-p002`/`ent2` in place.
+- **The restart path is one chain.**
+  - `ufoc-p003` removes everything tagged `andrew:ufo` or in the `andrew_ufo` family whose `andrew:ufo_event` is not live (`sauc-ent1` stamps it).
+  - It strips `andrew:ufo_iron` from held entities. This is `magn`'s cleanup hook, and `magn` owns no subscription for it.
+  - It rewrites the in-flight marker `next_ms = 0` to now + 15 min (`L0-adr-ufrs`, which resolves `ufoc-cx01`).
+- **`lgnd` answers first.** `magn-rleg` calls `isLegendaryStack` at every call site. For the rules it cites `lgnd-ad13`, `lgnd-r016`, `lgnd-as15` and `lgnd-ac22` by id, and states "`lgnd` wins" where they differ.
+  - Its holder check reads hand **and** armour slots, while `lgnd-r016` §3 names hand slots only. That is a harmless superset, because legendaries are not wearable.
+- **`sauc` owns the only change to shipped `orbc`.** The interceptor is additive, and its gate is the full Orbital suite unchanged, plus the whole suite (`sauc-ac04`).
+- **One budget.** `L0-xasm16` (≤ 2 ms mean per active tick) is shared by `saucerStep` and `magnetStep`. `ufoc`'s idle cost is one counter per tick plus one property read per 100 ticks (`ufoc-ac08`). No `runJob` is used and there is no second interval (C-5d).
 
-## Cross-component decisions made in this reduce
-- **`L0-adr-wpn3`** amends `wpn2`:
-  - return goes to the last holder (answers `xq3`);
-  - craft tokens;
-  - the destruction policy;
-  - nested shulker/bundle legendaries are a documented limit;
-  - the unshipped `wpn2` backlog is step 1 of the `lgnd` v3 task.
+## AC routing (UFO 1–18): checked, it holds
 
-  `xcx9`–`xcx11` close when that task merges green.
-- **`L0-adr-odrp`** withdraws `adr-ochg` §3 (the item snapshot-diff deleted death drops and mob loot) in favour of `ring-ad01`'s scoped `doTileDrops` toggle. Only `ring` writes the gamerule.
-- **`L0-adr-oprt`** sets one protection contract for both effects:
-  - the caller sizes the volume (`ring` ± 2·power);
-  - the safe-spot search starts at the `avoid` edge;
-  - `lgnd` owns item frames through a vanilla-spill `setblock … destroy`.
-
-  It fixes `ring-cx02` and `pntr-cx01`, which turned out to be one gap shared by both effects.
-- **`L0-adr-oded`**:
-  - the HUD uses per-weapon lang keys, so the spec wording holds and the other weapons are unchanged;
-  - the Nether roof clamp is kept literal, with a C-16 note.
-
-## Acceptance routing (checked)
-| Orbital AC | Node | `bds` | `ipad` |
+| UFO AC | Owner | `bds` | `ipad` (separate, reopened after every epic merge) |
 |---|---|---|---|
-| 1, 2, 17, 20 | `lgnd` | `ac17`, `ac15`, `ac16`, `ac18`–`ac20` | `ac15` (crafting preview) |
-| 3–6, 16, 18, 19 | `orbc` | `ac03`–`ac07`, `ac09`–`ac11`, `ac16`, `ac18`, `ac19` | `ac02` look, `ac08` touch |
-| 7–10 | `pntr` | `ac01`–`ac07`, `ac09` | `ac08` |
-| 11–15 | `ring` | `ac11`–`ac18` | `ai11`, `ai12`, `ai15` |
+| 1, 2 (timing), 3, 17, 18 | `ufoc` | `ac01`–`ac06`, `ac08`: GameTest on the scaled clock; `ac04` keeps real durations. Restart cases run as `bds-check` on 19136 (`ac03`, `ac05`) | `ac07` (the RU notice in chat) |
+| 2 (path and look), 15, 16 | `sauc` | `ac01`–`ac05` | `ac06` (DoD visuals) |
+| 4–12, 14 | `magn` | `a04`–`a14`, `atps` | `aipd`: smooth lift, visible cloud, visible fall. This satisfies `xcx19`. |
+| 13 | `lgnd-ac21` (rule), `magn-a13` (call site) | `bds` + a `build` unit test | — |
 
-**Verification-order note.** `lgnd-ac19` ("the Cannon never destroys a legendary") and `ring-ac16` exercise LMB and RMB. They can only go green after `pntr` and `ring` merge, even though `lgnd` owns the rule. The `lgnd` task ships with a stub-effect version of `ac19`, and the full `ac19` is re-run as the `ring` task's last gate. `ring-ac16` overlaps the RMB half of `lgnd-ac19` on purpose: `ring` asserts its own call site, and `lgnd` asserts the policy.
+The restart and real-time ACs are automated under the reading proposed in `xcx17`, which is still awaiting operator acceptance.
 
-## Stage 5 (binding order)
-1. The `lgnd` v3 task, in five ordered steps (`L0-adr-wpn3`), with the shared engine probes `L0-xasm11` run first in step 5.
-2. `orbc` with a stub effect. **Gated** on `L0-xcx14` (an iPad observation) and the client's answer to the rewritten `L0-xq5`, whose default is option 1.
-3. `pntr`.
-4. `ring`, whose load ceiling is `L0-xasm12`.
+## Decided at this reduce (v5)
+- **`L0-adr-ufrs`:** the in-flight marker is `next_ms = 0`. It amends `L0-adr-ufom` §4 and keeps C-23 literal. It resolves `ufoc-cx01` and accepts `ufoc-ad03`.
+- **`L0-adr-ufsd`:** the shoot-down handshake. The release keys on `magnetOn`, and `downed` ends after `saucerStep` with a completion guarantee to `sauc`. New proof obligations go onto `sauc-ac03`.
 
-Every acceptance run uses ≥ 2 players. After each merge, re-open auto-closed `ipad` criteria.
+## Open at L0 after v5
+- **Satisfied by this run; formal closure is up to the operator's resolve:**
+  - `xcx20` (`ufoc` re-run done);
+  - `xcx19` (`magn-aipd`).
+- **Still open:**
+  - `xcx15`: the interceptor is designed, not built;
+  - `xcx16`: the Orbital v1.4.4 reconcile;
+  - `xcx17`: the restart and real-time automation reading;
+  - `lgnd-cx09`/`cx11`/`cx12`, carried with `lgnd`;
+  - carried: `xcx3`, `xcx5`–`xcx8`, `xcx12`–`xcx14`.
+- **Autopilot defaults the operator may overturn:**
+  - `adr-ufnd` (hopper / dependant pops);
+  - `magn-aslh` (legendary holders are skipped);
+  - `adr-ufrs` (marker encoding; this one is internal only);
+  - `xcx17`.
 
-## Deviations to tell the client (C-16)
-- A legendary nested in a shulker-box item or bundle is not protected (`lgnd-cx12`).
-- Item frames: spill-then-sweep if probe P1 passes. Otherwise frames are kept by LMB, and a framed legendary is lost to RMB.
-- Nether roof: RMB aimed at Y ≥ 113 detonates in the roof.
-- On default touch, reach is limited to arm's length (`xq5`).
-- Destroyed-then-returned is used in place of "not destroyed" for vanilla fire, lava, cactus, TNT and the Void (`lgnd-ad10` tier 3).
+## Stage 6 order (unchanged)
+1. `lgnd` v4 (`isLegendaryStack` and the `ufo:legendary_*` GameTests).
+2. `ufoc` with a stub saucer; no longer blocked.
+3. `sauc` with the `orbc` interceptor, the full Orbital re-run, and the `adr-ufsd` assertions.
+4. `magn`.
 
-## Open at L0
-- **New:** `L0-xcx14` (touch range and aim, blocking), `L0-xq5` (rewritten), `L0-xasm11` (probe set), `L0-xasm12`.
-- **Closing on merge:** `L0-xcx9`, `L0-xcx10`, `L0-xcx11`.
-- **Carried:** `L0-xcx5`, `L0-xcx6`, `L0-xcx7`, `L0-xcx8` (extended by `xcx14`), `L0-xcx12`, `L0-xcx13`, `L0-xq2`, `L0-xq4`, `L0-xasm5`.
+After each merge, run the full suite, then reopen the auto-closed `ipad` criteria.
 
 
 ## Statistics
 
-- **Total artifacts:** 855
-- **concept-aggregate:** 62 (154 KB)
-- **concept-atomic:** 626 (547 KB)
-- **concept-special:** 50 (66 KB)
-- **raw:** 23 (90 KB)
-- **decision:** 60 (27 KB)
-- **other:** 34 (373 KB)
+- **Total artifacts:** 1040
+- **concept-aggregate:** 76 (195 KB)
+- **concept-atomic:** 747 (680 KB)
+- **concept-special:** 60 (85 KB)
+- **raw:** 27 (107 KB)
+- **decision:** 91 (60 KB)
+- **other:** 39 (706 KB)
 
 ### By level
 
 - L0: 14 artifacts
-- L1: 39 artifacts
-- L2: 658 artifacts
+- L1: 61 artifacts
+- L2: 789 artifacts
 - L3: 6 artifacts
 
 
-_Analysis version: 3_
+_Analysis version: 5_

@@ -2,7 +2,7 @@
 type: "concept-entity"
 node_id: "L0-lgnd-ent4"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "LegendaryLedger: pending (death), generation, owed (loss)"
 aliases: ["L0-lgnd-ent4"]
 is_a: ["entity"]

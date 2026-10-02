@@ -2,7 +2,7 @@
 type: "concept-acceptance-criterion"
 node_id: "L0-orbc-ac05"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "AC-5 · A charge spawned inside a solid block detonates at once `[bds]`"
 aliases: ["L0-orbc-ac05"]
 is_a: ["acceptance-criterion"]

@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-orbc-r005"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "Rule · One shared 30 s cooldown, started on activation"
 aliases: ["L0-orbc-r005"]
 is_a: ["rule"]

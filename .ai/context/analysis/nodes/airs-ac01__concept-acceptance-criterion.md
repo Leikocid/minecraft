@@ -2,7 +2,7 @@
 type: "concept-acceptance-criterion"
 node_id: "L0-airs-ac01"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "AC — fixed modern appearance, size and randomized rotation"
 aliases: ["L0-airs-ac01"]
 is_a: ["acceptance-criterion"]

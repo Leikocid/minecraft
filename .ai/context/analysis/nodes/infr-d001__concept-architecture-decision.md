@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-infr-d001"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "ADR: run BDS in Docker (Rosetta/amd64) on the Mac mini, not a Windows VM"
 aliases: ["L0-infr-d001"]
 is_a: ["architecture-decision"]

@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-webs-ad01"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 level: 2
 title: "AD-webs-01 — Detect unloaded cells with a defensive stable-API block read, not an experimental chunk-ticking query"
 aliases: ["L0-webs-ad01"]

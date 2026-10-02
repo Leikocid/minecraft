@@ -2,7 +2,7 @@
 type: "concept-contradiction"
 node_id: "L0-ring-cx02"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "CX-ring-02 · The `lgnd` protection volume and safe-spot search are too small for RMB"
 aliases: ["L0-ring-cx02"]
 is_a: ["contradiction"]

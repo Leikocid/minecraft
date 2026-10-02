@@ -5,13 +5,19 @@ source_channel: "raw-import"
 level: null
 aliases: ["ufomagnetspecv1ruen-part-3", "ufomagnetspecv1ruen"]
 is_a: ["raw-fragment"]
-priority: 580
-size_chars: 4952
-tags: ["monitoring", "performance", "digest", "architecture", "infrastructure", "security"]
+priority: 590
+size_chars: 4849
+tags: ["architecture", "monitoring", "infrastructure", "performance", "frontend", "domain"]
 source: "docs/UFO_Magnet_Spec_v1_RU_EN.docx"
-embed_lines: "117-191"
+embed_lines: "115-189"
 embed_slice: "9-83"
 ---
+- Руда даёт 1 raw_iron (как обычная добыча без удачи), а не рудный блок.
+
+- Предметы из-под земли летят сквозь камень (U3). Пустоты на месте руды остаются.
+
+# 6. Удержание и отпускание / Hold and release
+
 - Игроки тянутся к точке на 6 блоков ниже тарелки со скоростью до 0.6 блока за тик через applyKnockback и держатся там до отпускания.
 
 - Остальные элементы летят к своим местам в облаке под тарелкой и кружат: кольцо радиусом 5 блоков на 3 блока ниже тарелки. Кольцо держится в стороне от игроков, потому что висящий игрок подбирает предметы в радиусе \~2 блоков (U11).
@@ -94,12 +100,6 @@ embed_slice: "9-83"
 
 1.  First arrival happens 10--20 minutes after the first player joins; each next one exactly 15 minutes after departure or shoot-down; the timer survives a server restart.
 
-2.  The saucer appears 90 blocks out, reaches the hover point (centre + 40) in 20 s, the magnet lasts 60 s, departure 15 s, then the saucer is gone.
+2.  The saucer appears 90 blocks out, reaches the hover point (centre + 40, at most ceiling − 15) in 20 s, the magnet lasts 60 s, departure 15 s, then the saucer is gone.
 
 3.  No event in the Nether or the End; no event while no player is in the Overworld; at most one saucer in the world.
-
-4.  A Survival player holding iron in the main or off hand inside the zone is lifted under the saucer and held there.
-
-5.  A player with iron only in the inventory or worn armour is not pulled.
-
-6.  Dropping the iron item (or switching to a non-iron slot) stops the pull at once; the player falls and the dropped item is pulled.

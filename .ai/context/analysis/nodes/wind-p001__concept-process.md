@@ -2,7 +2,7 @@
 type: "concept-process"
 node_id: "L0-wind-p001"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Process — normal 1 % Windmill generation"
 aliases: ["L0-wind-p001"]
 is_a: ["process"]

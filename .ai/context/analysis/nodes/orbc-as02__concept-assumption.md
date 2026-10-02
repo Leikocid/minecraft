@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-orbc-as02"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "ASM-orbc-02 · Fall speed is a constant 1 block per tick"
 aliases: ["L0-orbc-as02"]
 is_a: ["assumption"]

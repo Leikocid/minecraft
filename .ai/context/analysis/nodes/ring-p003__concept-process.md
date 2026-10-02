@@ -2,7 +2,7 @@
 type: "concept-process"
 node_id: "L0-ring-p003"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "Process · Detonation queue and load shaping"
 aliases: ["L0-ring-p003"]
 is_a: ["process"]

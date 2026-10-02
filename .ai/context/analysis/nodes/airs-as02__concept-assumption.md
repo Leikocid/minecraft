@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-airs-as02"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Assumption (CAN_ASSUME) — the 40–100 ring is sampled at several seeded angles/radii, not a single point"
 aliases: ["L0-airs-as02"]
 is_a: ["assumption"]

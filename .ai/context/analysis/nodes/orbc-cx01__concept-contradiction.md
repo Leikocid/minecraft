@@ -2,7 +2,7 @@
 type: "concept-contradiction"
 node_id: "L0-orbc-cx01"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "CX-orbc-01 · Spec HUD wording \"Orbital Cannon — Ready / 27s\" vs the shared keys \"%s: Ready / %s: %s s\""
 aliases: ["L0-orbc-cx01"]
 is_a: ["contradiction"]

@@ -2,7 +2,7 @@
 type: "concept-acceptance-criterion"
 node_id: "L0-scyt-ac16"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "AC-scyt-16 — Action Bar state in either hand, and hand priority (§6)"
 aliases: ["L0-scyt-ac16"]
 is_a: ["acceptance-criterion"]

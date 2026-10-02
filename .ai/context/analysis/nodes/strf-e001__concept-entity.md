@@ -2,7 +2,7 @@
 type: "concept-entity"
 node_id: "L0-strf-e001"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Entity — `StructureDef` (the contract a body component registers)"
 aliases: ["L0-strf-e001"]
 is_a: ["entity"]

@@ -2,7 +2,7 @@
 type: "concept-acceptance-criterion"
 node_id: "L0-wind-ac17"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "AC-wind-17 · Overworld only, and all four rotations occur"
 aliases: ["L0-wind-ac17"]
 is_a: ["acceptance-criterion"]

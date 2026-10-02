@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-pntr-as07"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "AS-pntr-07 · Liquids and gravity blocks react to script `setType`"
 aliases: ["L0-pntr-as07"]
 is_a: ["assumption"]

@@ -2,7 +2,7 @@
 type: "concept-acceptance-criterion"
 node_id: "L0-airs-ac06"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "AC — altitude clearance and rejection over water / near the world ceiling"
 aliases: ["L0-airs-ac06"]
 is_a: ["acceptance-criterion"]

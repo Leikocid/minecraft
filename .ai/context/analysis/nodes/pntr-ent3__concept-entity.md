@@ -2,7 +2,7 @@
 type: "concept-entity"
 node_id: "L0-pntr-ent3"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "CellClass (penetrator block classifier)"
 aliases: ["L0-pntr-ent3"]
 is_a: ["entity"]

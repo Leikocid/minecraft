@@ -2,7 +2,7 @@
 type: "concept-acceptance-criterion"
 node_id: "L0-wind-ac10"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "AC-wind-10 · Vines and cobwebs present, main route never blocked"
 aliases: ["L0-wind-ac10"]
 is_a: ["acceptance-criterion"]

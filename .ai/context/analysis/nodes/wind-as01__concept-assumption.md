@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-wind-as01"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Assumption — \"within 5×5 chunks\" means the plot centre lies in the 5×5-chunk square around the spawn chunk"
 aliases: ["L0-wind-as01"]
 is_a: ["assumption"]

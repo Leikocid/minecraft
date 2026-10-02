@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-pntr-ad02"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "ADR-pntr-2 · Deterministic seeded band mask for irregularity"
 aliases: ["L0-pntr-ad02"]
 is_a: ["architecture-decision"]

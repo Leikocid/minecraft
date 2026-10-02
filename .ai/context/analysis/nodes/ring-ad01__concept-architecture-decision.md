@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-ring-ad01"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "AD-ring-01 · Suppress block drops with a scoped `doTileDrops` toggle, not a snapshot-diff of item entities"
 aliases: ["L0-ring-ad01"]
 is_a: ["architecture-decision"]

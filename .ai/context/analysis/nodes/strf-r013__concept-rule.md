@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-strf-r013"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Rule: the Nether floor probe (a lava ocean is never a floor)"
 aliases: ["L0-strf-r013"]
 is_a: ["rule"]

@@ -2,7 +2,7 @@
 type: "concept-entity"
 node_id: "L0-pick-ent1"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Entity: MinersPickaxeItem"
 aliases: ["L0-pick-ent1"]
 is_a: ["entity"]

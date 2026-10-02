@@ -2,7 +2,7 @@
 type: "concept-entity"
 node_id: "L0-wrdn-ent3"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 aliases: ["L0-wrdn-ent3"]
 is_a: ["entity"]
 part_of: ["L0-wrdn"]

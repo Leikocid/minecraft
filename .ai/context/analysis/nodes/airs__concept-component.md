@@ -2,7 +2,7 @@
 type: "concept-component"
 node_id: "L0-airs"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Airship (`airs`) — Дирижабль"
 aliases: ["L0-airs"]
 is_a: ["component"]
@@ -12,6 +12,7 @@ priority: 530
 size_chars: 5110
 tags: ["is_a:component", "structures", "airship", "worldgen", "altitude", "linked-search", "relates_to:L0-strf", "relates_to:L0-loot", "relates_to:L0-wind", "relates_to:L0-infr", "relates_to:L0-adr-strc", "relates_to:L0-adr-tmpl"]
 level: 1
+needs_rebuild_marked_at: 2026-10-02T18:41:56.506Z
 ---
 # Airship (`airs`) — Дирижабль
 

@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-strf-r011"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Rule: placed structures are ordinary world. Nothing is protected, nothing is restored."
 aliases: ["L0-strf-r011"]
 is_a: ["rule"]

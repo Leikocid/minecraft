@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-strf-as03"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Assumption (CAN_ASSUME) — How loaded chunks are detected, and the discovery radius"
 aliases: ["L0-strf-as03"]
 is_a: ["assumption"]

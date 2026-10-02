@@ -2,7 +2,7 @@
 type: "concept-process"
 node_id: "L0-infr-p006"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Process: Worldgen/placement GameTest lane + statistical chunk-roll check"
 aliases: ["L0-infr-p006"]
 is_a: ["process"]

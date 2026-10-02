@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-wrdn-rul4"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 aliases: ["L0-wrdn-rul4"]
 is_a: ["rule"]
 part_of: ["L0-wrdn"]

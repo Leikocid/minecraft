@@ -2,7 +2,7 @@
 type: "concept-component"
 node_id: "L0-orbc"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "L0-orbc · Orbital Cannon core"
 aliases: ["L0-orbc"]
 is_a: ["component"]
@@ -12,6 +12,7 @@ priority: 540
 size_chars: 3055
 tags: ["is_a:component", "relates_to:L0-lgnd", "relates_to:L0-pntr", "relates_to:L0-ring", "relates_to:L0-adr-orbc", "relates_to:L0-adr-ochg", "relates_to:L0-xcx8", "relates_to:L0-xcx13", "relates_to:L0-xq5", "orbital", "stage5", "not-implemented", "blocked:L0-xq5"]
 level: 1
+needs_rebuild_marked_at: 2026-10-02T18:41:56.507Z
 ---
 # L0-orbc · Orbital Cannon core
 

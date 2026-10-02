@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-scyt-r002"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 5
 title: "R-scyt-002 — Player tier first, then nearest, then the owner's gaze within ε 0.5"
 aliases: ["L0-scyt-r002"]
 is_a: ["rule"]

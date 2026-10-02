@@ -2,7 +2,7 @@
 type: "concept-acceptance-criterion"
 node_id: "L0-orbc-ac03"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "AC-3 · With no block within 10, nothing fires and no cooldown starts `[bds]`"
 aliases: ["L0-orbc-ac03"]
 is_a: ["acceptance-criterion"]

@@ -2,7 +2,7 @@
 type: "concept-process"
 node_id: "L0-infr-p005"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Process: Structure template compilation & packing (`scripts/build-structures.mjs`)"
 aliases: ["L0-infr-p005"]
 is_a: ["process"]

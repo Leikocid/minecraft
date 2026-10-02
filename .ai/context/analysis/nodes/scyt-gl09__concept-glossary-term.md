@@ -2,7 +2,7 @@
 type: "concept-glossary-term"
 node_id: "L0-scyt-gl09"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 5
 aliases: ["L0-scyt-gl09"]
 is_a: ["glossary-term"]
 part_of: ["L0-scyt"]

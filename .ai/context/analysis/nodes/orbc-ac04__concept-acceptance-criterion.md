@@ -2,7 +2,7 @@
 type: "concept-acceptance-criterion"
 node_id: "L0-orbc-ac04"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "AC-4 · Spawn height is +30 in the Overworld and End and +10 in the Nether, with the ceiling clamped `[bds]`"
 aliases: ["L0-orbc-ac04"]
 is_a: ["acceptance-criterion"]

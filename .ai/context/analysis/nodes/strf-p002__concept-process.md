@@ -2,7 +2,7 @@
 type: "concept-process"
 node_id: "L0-strf-p002"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Process — footprint validation of a candidate"
 aliases: ["L0-strf-p002"]
 is_a: ["process"]

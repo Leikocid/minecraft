@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-orbc-ad02"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "ADR-orbc-02 · Charges are teleported by one shared run-while-live interval with a cell sweep"
 aliases: ["L0-orbc-ad02"]
 is_a: ["architecture-decision"]

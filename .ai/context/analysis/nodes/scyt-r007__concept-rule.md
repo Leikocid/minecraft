@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-scyt-r007"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 5
 title: "R-scyt-007 — 20-block horizontal pursuit radius around the frozen launch point"
 aliases: ["L0-scyt-r007"]
 is_a: ["rule"]

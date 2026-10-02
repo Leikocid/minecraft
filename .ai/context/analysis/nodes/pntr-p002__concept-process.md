@@ -2,7 +2,7 @@
 type: "concept-process"
 node_id: "L0-pntr-p002"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "P-pntr-2 · Batched top-down removal job"
 aliases: ["L0-pntr-p002"]
 is_a: ["process"]

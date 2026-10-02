@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-strf-r007"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Rule: loaded-footprint guarantee and revalidation of deferred candidates"
 aliases: ["L0-strf-r007"]
 is_a: ["rule"]

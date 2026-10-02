@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-wind-as06"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Assumption — a spawner-produced Vindicator carries an iron axe by vanilla default"
 aliases: ["L0-wind-as06"]
 is_a: ["assumption"]

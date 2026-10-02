@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-strf-r001"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Rule: every random choice in generation is a pure function of the world salt and the candidate key"
 aliases: ["L0-strf-r001"]
 is_a: ["rule"]

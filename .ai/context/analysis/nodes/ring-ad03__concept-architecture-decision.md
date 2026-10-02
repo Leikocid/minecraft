@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-ring-ad03"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "AD-ring-03 · The script classifies underwater and sets explicit flags"
 aliases: ["L0-ring-ad03"]
 is_a: ["architecture-decision"]

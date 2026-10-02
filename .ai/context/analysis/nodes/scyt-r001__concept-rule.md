@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-scyt-r001"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 5
 title: "R-scyt-001 — Candidate filter (players and living mobs)"
 aliases: ["L0-scyt-r001"]
 is_a: ["rule"]

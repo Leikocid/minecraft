@@ -2,7 +2,7 @@
 type: "concept-acceptance-criterion"
 node_id: "L0-orbc-ac09"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "AC-orbc-09 · One activation per tick; the target is locked; hits count on any face `[bds]`"
 aliases: ["L0-orbc-ac09"]
 is_a: ["acceptance-criterion"]

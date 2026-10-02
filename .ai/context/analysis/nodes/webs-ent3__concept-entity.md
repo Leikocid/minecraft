@@ -2,7 +2,7 @@
 type: "concept-entity"
 node_id: "L0-webs-ent3"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 level: 2
 title: "TrapCube"
 aliases: ["L0-webs-ent3"]

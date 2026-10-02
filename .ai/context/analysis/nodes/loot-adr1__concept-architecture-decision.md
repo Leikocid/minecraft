@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-loot-adr1"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "ADR-loot-1 · Cumulative-weight roll per attempt, not per-category independent chance"
 aliases: ["L0-loot-adr1"]
 is_a: ["architecture-decision"]

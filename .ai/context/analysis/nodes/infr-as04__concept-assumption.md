@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-infr-as04"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Assumption (CAN_ASSUME) — \"restart\" for the idempotency check means a same-volume server restart, not `bds:down`/`bds:up`"
 aliases: ["L0-infr-as04"]
 is_a: ["assumption"]

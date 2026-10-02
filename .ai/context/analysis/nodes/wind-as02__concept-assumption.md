@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-wind-as02"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Assumption — \"≤ 500 blocks\" and \"nearest\" use horizontal Euclidean distance from world spawn (x,z) to the plot centre"
 aliases: ["L0-wind-as02"]
 is_a: ["assumption"]

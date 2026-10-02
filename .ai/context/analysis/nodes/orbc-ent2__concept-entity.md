@@ -2,7 +2,7 @@
 type: "concept-entity"
 node_id: "L0-orbc-ent2"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "Entity · Attack (with its Target Lock)"
 aliases: ["L0-orbc-ent2"]
 is_a: ["entity"]

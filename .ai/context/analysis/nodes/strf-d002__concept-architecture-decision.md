@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-strf-d002"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "ADR-strf-02 — Spawners are vanilla block entities from the template; a script pseudo-spawner is the fallback only"
 aliases: ["L0-strf-d002"]
 is_a: ["architecture-decision"]

@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-scyt-r003"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 5
 title: "R-scyt-003 — A miss costs nothing"
 aliases: ["L0-scyt-r003"]
 is_a: ["rule"]

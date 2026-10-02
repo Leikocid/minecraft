@@ -2,7 +2,7 @@
 type: "concept-acceptance-criterion"
 node_id: "L0-orbc-ac08"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "AC-orbc-08 · Touch input and aim on the iPad `[ipad]` (manual)"
 aliases: ["L0-orbc-ac08"]
 is_a: ["acceptance-criterion"]

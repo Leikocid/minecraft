@@ -2,7 +2,7 @@
 type: "concept-entity"
 node_id: "L0-bast-ent3"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "BastionGuard"
 aliases: ["L0-bast-ent3"]
 is_a: ["entity"]

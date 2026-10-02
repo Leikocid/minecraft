@@ -5,21 +5,26 @@ source_channel: "raw-import"
 level: null
 aliases: ["ufomagnetspecv1ruen-part-4", "ufomagnetspecv1ruen"]
 is_a: ["raw-fragment"]
-priority: 580
-size_chars: 3006
-tags: ["digest", "architecture", "requirements", "domain", "security"]
+priority: 590
+size_chars: 3410
+tags: ["digest", "requirements", "security"]
 source: "docs/UFO_Magnet_Spec_v1_RU_EN.docx"
-embed_lines: "191-240"
-embed_slice: "8-57"
+embed_lines: "188-244"
+embed_slice: "6-62"
 ---
-Shot down               %s сбил НЛО!            %s shot down the UFO!
+-----------------------------------------------------------------------
+  Key / Meaning           RU                      EN
+  ----------------------- ----------------------- -----------------------
+  Arrival                 В небе НЛО!             A UFO is in the sky!
+
+  Shot down               %s сбил НЛО!            %s shot down the UFO!
   -----------------------------------------------------------------------
 
 # 13. Acceptance tests / Приёмочные тесты
 
 1.  First arrival happens 10--20 minutes after the first player joins; each next one exactly 15 minutes after departure or shoot-down; the timer survives a server restart.
 
-2.  The saucer appears 90 blocks out, reaches the hover point (centre + 40) in 20 s, the magnet lasts 60 s, departure 15 s, then the saucer is gone.
+2.  The saucer appears 90 blocks out, reaches the hover point (centre + 40, at most ceiling − 15) in 20 s, the magnet lasts 60 s, departure 15 s, then the saucer is gone.
 
 3.  No event in the Nether or the End; no event while no player is in the Overworld; at most one saucer in the world.
 
@@ -35,7 +40,7 @@ Shot down               %s сбил НЛО!            %s shot down the UFO!
 
 9.  Iron stacks are extracted from chests, double chests, barrels, hoppers, furnaces, shulker boxes and the other listed containers; non-iron contents stay.
 
-10. A pulled block becomes air and exactly one item; a door goes as a whole; ore yields one raw iron; nothing else drops.
+10. A pulled block becomes air and exactly one item of its own; a door goes as a whole; ore yields one raw iron; blocks resting on it pop by vanilla rules; a hopper with contents keeps its place and only its iron stacks are taken.
 
 11. Ore 20 blocks underground flies up through stone.
 

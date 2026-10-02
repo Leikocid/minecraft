@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-orbc-ad01"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "ADR-orbc-01 · Target source: the event's block when there is one, else the view-direction raycast"
 aliases: ["L0-orbc-ad01"]
 is_a: ["architecture-decision"]

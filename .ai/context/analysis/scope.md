@@ -1,13 +1,13 @@
 ---
 title: Scope
 type: analysis
-generated_at: "2026-09-29T19:09:13.644Z"
+generated_at: "2026-10-02T19:12:17.161Z"
 source_channel: rollout
 node_id: rollout-scope
 aliases: ["rollout-scope","scope"]
 is_a: ["rollout","scope"]
-relates_to: ["L0-lgnd-ac01","L0-lgnd-ac02","L0-lgnd-ac03","L0-lgnd-ac04","L0-lgnd-ac05","L0-lgnd-ac06","L0-lgnd-ac07","L0-lgnd-ac08","L0-lgnd-ac09","L0-lgnd-ac10","L0-lgnd-ac11","L0-lgnd-ac12","L0-lgnd-ac13","L0-lgnd-ac14","L0-lgnd-ac15","L0-lgnd-ac16","L0-lgnd-ac17","L0-lgnd-ac18","L0-lgnd-ac19","L0-lgnd-ac20","L0-orbc-ac01","L0-orbc-ac02","L0-orbc-ac03","L0-orbc-ac04","L0-orbc-ac05","L0-orbc-ac06","L0-orbc-ac07","L0-orbc-ac08","L0-orbc-ac09","L0-orbc-ac10","L0-orbc-ac11","L0-orbc-ac16","L0-orbc-ac18","L0-orbc-ac19","L0-pntr-ac01","L0-pntr-ac02","L0-pntr-ac03","L0-pntr-ac04","L0-pntr-ac05","L0-pntr-ac06","L0-pntr-ac07","L0-pntr-ac08","L0-pntr-ac09","L0-ring-ac11","L0-ring-ac12","L0-ring-ac13","L0-ring-ac14","L0-ring-ac15","L0-ring-ac16","L0-ring-ac17","L0-ring-ac18","L0-ring-ai11","L0-ring-ai12","L0-ring-ai15"]
-priority: 540
+relates_to: ["L0-airs-ac01","L0-airs-ac02","L0-airs-ac03","L0-airs-ac04","L0-airs-ac05","L0-airs-ac06","L0-airs-ac07","L0-airs-ac08","L0-bast-ac01","L0-bast-ac02","L0-bast-ac03","L0-bast-ac04","L0-bast-ac05","L0-bast-ac06","L0-bast-ac07","L0-bast-ac08","L0-bast-ac09","L0-infr-ac01","L0-infr-ac02","L0-infr-ac03","L0-infr-ac04","L0-infr-ac05","L0-infr-ac06","L0-infr-ac07","L0-infr-ac08","L0-infr-ac09","L0-infr-ac10","L0-infr-ac11","L0-lgnd-ac01","L0-lgnd-ac02","L0-lgnd-ac03","L0-lgnd-ac04","L0-lgnd-ac05","L0-lgnd-ac06","L0-lgnd-ac07","L0-lgnd-ac08","L0-lgnd-ac09","L0-lgnd-ac10","L0-lgnd-ac11","L0-lgnd-ac12","L0-lgnd-ac13","L0-lgnd-ac14","L0-lgnd-ac15","L0-lgnd-ac16","L0-lgnd-ac17","L0-lgnd-ac18","L0-lgnd-ac19","L0-lgnd-ac20","L0-lgnd-ac21","L0-lgnd-ac22","L0-loot-ac01","L0-loot-ac02","L0-loot-ac03","L0-loot-ac04","L0-loot-ac05","L0-loot-ac06","L0-loot-ac07","L0-loot-ac08","L0-loot-ac09","L0-loot-ac10","L0-magn-a04","L0-magn-a05","L0-magn-a06","L0-magn-a07","L0-magn-a08","L0-magn-a09","L0-magn-a10","L0-magn-a11","L0-magn-a12","L0-magn-a13","L0-magn-a14","L0-magn-aipd","L0-magn-atps","L0-orbc-ac01","L0-orbc-ac02","L0-orbc-ac03","L0-orbc-ac04","L0-orbc-ac05","L0-orbc-ac06","L0-orbc-ac07","L0-orbc-ac08","L0-orbc-ac09","L0-orbc-ac10","L0-orbc-ac11","L0-orbc-ac16","L0-orbc-ac18","L0-orbc-ac19","L0-pick-ac01","L0-pick-ac02","L0-pick-ac03","L0-pick-ac04","L0-pick-ac05","L0-pick-ac06","L0-pick-ac07","L0-pntr-ac01","L0-pntr-ac02","L0-pntr-ac03","L0-pntr-ac04","L0-pntr-ac05","L0-pntr-ac06"]
+priority: 580
 ---
 
 # Scope
@@ -15,6 +15,343 @@ priority: 540
 > Автогенерация из Knowledge Vault. Ручное редактирование — установи `status: manual` в frontmatter.
 
 ## _other
+
+### AC — fixed modern appearance, size and randomized rotation (L0-airs-ac01)
+
+# AC — fixed modern appearance, size and randomized rotation
+
+**Links:** `part_of: ["L0-airs"]` · `is_a: ["acceptance-criterion"]`
+
+**GIVEN** a placed Airship instance, **WHEN** it is inspected, **THEN**:
+- Its palette is grey/light-grey concrete with intact glass windows and working lights; there is no vine, cobweb, crack, or other decay decoration anywhere on it.
+- Its upper hull is a single decorative oval volume containing no chest and no spawner.
+- Its overall footprint is 75×13×18 (L×W×H), template `[75, 18, 13]`.
+- Across a sample of generated instances, the placed rotation is drawn from {0°, 90°, 180°, 270°} and is not fixed to a single value.
+
+(Spec §5.1; raw tests 24, 25.)
+
+
+- **level**: 2
+
+### AC — two opposite doors, no assisted ground access (L0-airs-ac02)
+
+# AC — two opposite doors, no assisted ground access
+
+**Links:** `part_of: ["L0-airs"]` · `is_a: ["acceptance-criterion"]`
+
+**GIVEN** a placed Airship, **WHEN** its lower hull is inspected, **THEN** it has exactly 2 doors on opposite sides, and there is no ladder, staircase, lift, waterfall, or teleporter connecting it to the ground. Reaching it is left entirely to the player.
+
+(Spec §5.2; raw test 26.)
+
+
+- **level**: 2
+
+### AC — interior corridor + 4 rooms, one lamp per room (L0-airs-ac03)
+
+# AC — interior corridor + 4 rooms, one lamp per room
+
+**Links:** `part_of: ["L0-airs"]` · `is_a: ["acceptance-criterion"]`
+
+**GIVEN** a placed Airship, **WHEN** its interior is inspected, **THEN** it has exactly 1 central corridor and 4 small rooms, each room has exactly 1 ceiling lamp, and the spawner cell's light level stays within the engine's spawner-suppression threshold despite the decorative lighting.
+
+(Spec §5.2; raw test 27.)
+
+
+- **level**: 2
+
+### AC — exactly 10 chests at fixed positions (L0-airs-ac04)
+
+# AC — exactly 10 chests at fixed positions
+
+**Links:** `part_of: ["L0-airs"]` · `is_a: ["acceptance-criterion"]`
+
+**GIVEN** a placed Airship, **WHEN** its chests are counted, **THEN** there are exactly 10: 2 in each of the 4 rooms (8 total) and 2 in the corridor, all at the same template-local positions (rotated per instance) across every instance, each reachable without breaking blocks.
+
+(Spec §5.3; raw test 28.)
+
+
+- **level**: 2
+
+### AC — exactly one iron-axe Vindicator spawner at the corridor centre (L0-airs-ac05)
+
+# AC — exactly one iron-axe Vindicator spawner at the corridor centre
+
+**Links:** `part_of: ["L0-airs"]` · `is_a: ["acceptance-criterion"]`
+
+**GIVEN** a placed Airship, **WHEN** its spawner is inspected, **THEN** there is exactly 1 `mob_spawner`, positioned at the corridor's centre, and it produces Vindicators equipped with a vanilla iron axe.
+
+(Spec §5.3; raw test 29.)
+
+
+- **level**: 2
+
+### AC — altitude clearance and rejection over water / near the world ceiling (L0-airs-ac06)
+
+# AC — altitude clearance and rejection over water / near the world ceiling
+
+**Links:** `part_of: ["L0-airs"]` · `is_a: ["acceptance-criterion"]`
+
+**GIVEN** a rolled Airship candidate, **WHEN** its footprint is validated, **THEN**:
+- Its bottom sits at least 40 blocks above the highest terrain point (including trees) under its whole rotated footprint, with a target clearance of 40–70 blocks where the build height allows it.
+- A candidate whose footprint is significantly over open water is rejected.
+- A candidate that cannot fit below the world ceiling even at the minimum 40-block clearance is rejected, with no downgrade below 40.
+
+(Spec §5.4; raw tests 30, 31.)
+
+
+- **level**: 2
+
+### AC — independent generation at 2 % on suitable land chunks only (L0-airs-ac07)
+
+# AC — independent generation at 2 % on suitable land chunks only
+
+**Links:** `part_of: ["L0-airs"]` · `is_a: ["acceptance-criterion"]`
+
+**GIVEN** a large enough sample of newly discovered Overworld chunks with no Windmill involved, **WHEN** independent Airship generation is measured statistically, **THEN** the observed rate on suitable chunks (land, valid footprint, no collision) is consistent with a 2 % per-chunk roll, and no Airship appears on an unsuitable chunk (open water, colliding, or failing the altitude/ceiling check).
+
+(Spec §5.5; raw test 32.)
+
+
+- **level**: 2
+
+### AC — the Windmill-linked attempt runs regardless of a nearby independent Airship (L0-airs-ac08)
+
+# AC — the Windmill-linked attempt runs regardless of a nearby independent Airship
+
+**Links:** `part_of: ["L0-airs"]` · `is_a: ["acceptance-criterion"]`
+
+**GIVEN** a Windmill instance that already has an independent Airship within 100 blocks of it, **WHEN** that Windmill's `afterPlace` hook runs, **THEN** `airs` still performs its own linked-attempt search in the 40–100-block ring — the existing independent Airship does not substitute for, skip, or block the linked attempt — and the two Airships, if the linked attempt also succeeds, do not physically overlap.
+
+(Spec §5.6; raw test 33.)
+
+
+- **level**: 2
+
+### Bast ac01 concept acceptance criterion (L0-bast-ac01)
+
+**AC-bast-01** (spec test 51)
+
+The rate belongs to `L0-strf-r002` §1 and is proven by `tests/structures-roll.test.mjs:148`.
+
+GIVEN a statistically sufficient sample of suitable Nether chunks,
+WHEN candidate generation runs,
+THEN `StructureDef.chance = 0.05` (`src/structures/config.ts:27`) — no exact-match requirement is imposed on small samples.
+
+**Source:** §14.7 test 51.
+
+
+- **level**: 2
+
+### Bast ac02 concept acceptance criterion (L0-bast-ac02)
+
+**AC-bast-02** (spec test 52)
+
+GIVEN suitable terrain in any Nether biome,
+WHEN a candidate rolls,
+THEN generation proceeds regardless of biome identity;
+AND GIVEN a candidate site over a lava ocean,
+WHEN evaluated,
+THEN generation never occurs there.
+
+**Source:** §14.7 test 52.
+
+
+- **level**: 2
+
+### Bast ac03 concept acceptance criterion (L0-bast-ac03)
+
+**AC-bast-03** (spec test 53)
+
+GIVEN a generated Mini Bastion,
+WHEN measured,
+THEN its footprint is ~20×20, height ~10-12, with 2-3 levels;
+AND across multiple instances, all four rotations (0°/90°/180°/270°) are observed.
+
+**Source:** §14.7 test 53.
+
+
+- **level**: 2
+
+### Bast ac04 concept acceptance criterion (L0-bast-ac04)
+
+**AC-bast-04** (spec test 54)
+
+GIVEN a generated Mini Bastion,
+WHEN the treasure room is inspected,
+THEN it sits centrally/low with ordinary vanilla lava behavior (bucketable, blockable, water-reactive);
+AND both access methods work: building/routing a safe path through the lava area, and descending/falling from the level above.
+
+**Source:** §14.7 test 54.
+
+
+- **level**: 2
+
+### Bast ac05 concept acceptance criterion (L0-bast-ac05)
+
+**AC-bast-05** (spec test 55)
+
+GIVEN a generated Mini Bastion,
+WHEN all chests are counted,
+THEN there are exactly 10: 3 treasure chests in the center + 7 regular chests elsewhere in the structure.
+
+**Source:** §14.7 test 55.
+
+
+- **level**: 2
+
+### Bast ac06 concept acceptance criterion (L0-bast-ac06)
+
+**AC-bast-06** (spec test 56)
+
+GIVEN the treasure room,
+WHEN inspected,
+THEN it contains a random count of 2-4 Gold Blocks.
+
+**Source:** §14.7 test 56.
+
+
+- **level**: 2
+
+### Bast ac07 concept acceptance criterion (L0-bast-ac07)
+
+**AC-bast-07** (spec test 57)
+
+GIVEN a freshly initialized Mini Bastion,
+WHEN the guard roster is counted,
+THEN there are 7-10 regular Piglins + exactly 2 Piglin Brutes, zero Hoglins,
+AND one Brute is positioned at/guarding the treasure room.
+
+**Source:** §14.7 test 57.
+
+
+- **level**: 2
+
+### Bast ac08 concept acceptance criterion (L0-bast-ac08)
+
+**AC-bast-08** (spec test 58)
+
+GIVEN a Mini Bastion with guards killed, loot taken, and lava altered,
+WHEN the server restarts,
+THEN none of those changes revert — guards are not respawned, loot is not refilled, and altered lava/blocks stay altered.
+
+**Source:** §14.7 test 58.
+
+
+- **level**: 2
+
+### Bast ac09 concept acceptance criterion (L0-bast-ac09)
+
+**AC-bast-09** (spec test 59)
+
+GIVEN a candidate site that physically intersects another detected structure (custom or vanilla, including a real Bastion Remnant),
+WHEN the candidate is evaluated,
+THEN generation is cancelled outright with no relocation attempt and no damage to the existing structure (`L0-strf-r006`).
+
+**Source:** §14.7 test 59, §15.
+
+
+- **level**: 2
+
+### Infr ac01 concept acceptance criterion (L0-infr-ac01)
+
+**Links:** `part_of: ["L0-infr"]` · `is_a: ["acceptance-criterion"]`
+
+GIVEN a clean clone of the repository, WHEN `npm run build` is run, THEN it produces `dist/andrew.mcaddon` and `tsc` compiles `src/` with no errors against the installed `@minecraft/server` types. [src: stage-0-infrastructure criterion 1]
+
+
+- **level**: 2
+
+### Infr ac02 concept acceptance criterion (L0-infr-ac02)
+
+**Links:** `part_of: ["L0-infr"]` · `is_a: ["acceptance-criterion"]`
+
+GIVEN the built packs, WHEN `npm run validate` (or the validate step inside `npm run build`) runs, THEN every manifest and every item/JSON file under `packs/**` passes structural validation (`validatePacks`/`validateSelfTestPack`) with zero `ValidationError`s. [src: stage-0-infrastructure criterion 2]
+
+
+- **level**: 2
+
+### Infr ac03 concept acceptance criterion (L0-infr-ac03)
+
+**Links:** `part_of: ["L0-infr"]` · `is_a: ["acceptance-criterion"]`
+
+GIVEN `dist/andrew.mcaddon` staged into a BDS world in Docker, WHEN `npm run bds:check` runs, THEN the server log shows no manifest/dependency errors naming the add-on's packs, a `Pack Stack` line names the behavior and selftest pack uuids, and `SCRIPT_LOADED` appears in the log. [src: stage-0-infrastructure criterion 3]
+
+
+- **level**: 2
+
+### Infr ac04 concept acceptance criterion (L0-infr-ac04)
+
+**Links:** `part_of: ["L0-infr"]` · `is_a: ["acceptance-criterion"]`
+
+GIVEN the built `.mcaddon` imported on the iPad (or delivered via the LAN server) with both packs enabled in a world, WHEN the player spawns, THEN a chat message appears at `initialSpawn`, and the test item is visible in Creative with both RU and EN names. This criterion is typed `manual`/`ipad`-channel and does not block autopilot merge — a green `bds` run never closes it. [src: stage-0-infrastructure criterion 4; C-6; decision-verification-approach-automatic]
+
+
+- **level**: 2
+
+### Infr ac05 concept acceptance criterion (L0-infr-ac05)
+
+**Links:** `part_of: ["L0-infr"]` · `is_a: ["acceptance-criterion"]`
+
+GIVEN the Stage 0 deliverable is complete, WHEN the repository is inspected, THEN the project exists in git with a first commit covering the minimal add-on. [src: stage-0-infrastructure criterion 5]
+
+
+- **level**: 2
+
+### Infr ac06 concept acceptance criterion (L0-infr-ac06)
+
+**Links:** `part_of: ["L0-infr"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-infr-as01"]`
+
+GIVEN a built add-on plus the `packs/gametest` beta pack, WHEN `npm run bds:gametest` runs, THEN a `SimulatedPlayer` completes the registered scenario on a dedicated `gametest` world with the Beta APIs experiment enabled, without a human or an iPad, and the run's log-derived verdict is PASS/FAIL with exit code 0/1 accordingly. [src: scripts/bds-gametest.mjs; decision-q-012]
+
+Note: see `L0-infr-as01` — this criterion is treated as an additional verification lane, not one of Stage 0's five original closing criteria.
+
+
+- **level**: 2
+
+### Infr ac07 concept acceptance criterion (L0-infr-ac07)
+
+**Links:** `part_of: ["L0-infr"]` · `is_a: ["acceptance-criterion"]`
+
+GIVEN `docker/bds/compose.yaml`'s `VERSION` and `scripts/targets.mjs`'s `BDS_VERSION` disagree, WHEN `npm run bds:check` or `npm run bds:up` is run, THEN `assertComposePinsVersion()` fails the run immediately, before any Docker or build work happens. [src: scripts/bds-lib.mjs assertComposePinsVersion; C-2/C-3]
+
+
+- **level**: 2
+
+### Infr ac08 concept acceptance criterion (L0-infr-ac08)
+
+**Links:** `part_of: ["L0-infr"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-infr-p005"]`
+
+GIVEN checked-in structure layout sources, WHEN the structure-compilation step of `npm run build` runs, THEN it emits one `.mcstructure` file per structure under `packs/behavior/structures/andrew/`, and a round-trip unit test confirms each file's chest/spawner/shrieker/door counts and footprint bounds match its source definition, for all four structures. [src: L0-adr-tmpl; L0-infr-p005]
+
+
+- **level**: 2
+
+### Infr ac09 concept acceptance criterion (L0-infr-ac09)
+
+**Links:** `part_of: ["L0-infr"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-infr-p006"]`
+
+GIVEN a template built into the pack, WHEN the BDS/GameTest placement test places it via `structureManager.place` in each of the 4 rotations (0/90/180/270) in the `gametest` world, THEN in-world block-entity counts and states (chest count, spawner `EntityIdentifier`, shrieker `can_summon`) match the compiled template in every rotation. [src: L0-adr-tmpl; L0-infr-p006]
+
+
+- **level**: 2
+
+### Infr ac10 concept acceptance criterion (L0-infr-ac10)
+
+**Links:** `part_of: ["L0-infr"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-infr-p006", "L0-infr-as03"]`
+
+GIVEN the statistical chunk-roll check drives `strf`'s roll formula over a large synthetic sample of chunk coordinates per structure, WHEN the harness tallies successful rolls, THEN the observed rate falls inside the configured tolerance band of that structure's chance constant, and the run exits 0/1 by that verdict alone, with no human eye needed. [src: L0-adr-strc; L0-infr-p006; L0-infr-as03]
+
+
+- **level**: 2
+
+### Infr ac11 concept acceptance criterion (L0-infr-ac11)
+
+**Links:** `part_of: ["L0-infr"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-infr-p007", "L0-infr-as04"]`
+
+GIVEN a `gametest` world where at least one structure has completed one-time init, WHEN the BDS server process is restarted without re-staging the world, THEN no chest/spawner/guard/marker is duplicated and the instance registry's `placed`/`lootFilled`/`guardsSpawned` flags are byte-identical before and after the restart. [src: L0-adr-strs; C-7; L0-infr-p007; L0-infr-as04]
+
+
+- **level**: 2
 
 ### Lgnd ac01 concept acceptance criterion (L0-lgnd-ac01)
 
@@ -466,6 +803,376 @@ A Cannon inside a **shulker-box item** is outside this AC (`cx12`).
 
 - **level**: 2
 
+### Lgnd ac21 concept acceptance criterion (L0-lgnd-ac21)
+
+---
+is_a: ["acceptance-criterion"]
+part_of: ["L0-lgnd"]
+relates_to: ["L0-lgnd-r016", "L0-lgnd-ad13", "L0-magn", "ufomagnetspecv1ruen-part-4"]
+---
+**AC-lgnd-21: Legendary weapons are never pulled (UFO AC 13, rule side).** Channel: `build` (node unit test for the predicate) + `bds` (GameTest `ufo:legendary_*`).
+
+**Predicate.** `isLegendaryStack` is true for each of `andrew:web_sword`, `andrew:scythe_of_calamity`, `andrew:orbital_cannon` and their three `_crafted` tokens, whether marked, unmarked or stale. It is false for `iron_sword`, for `undefined` and for an empty slot.
+
+GIVEN, inside a magnet zone with at least 10 iron candidates, the following and a Survival player holding iron:
+- a marked Scythe on the ground;
+- an unmarked Web Sword in a chest next to an iron ingot;
+- a marked Orbital Cannon in a hopper **block**;
+- a chest minecart holding a marked Web Sword and an iron ingot;
+- an armour stand in iron armour holding a marked Scythe
+
+WHEN the magnet runs its full 60 s and releases
+THEN:
+- no legendary stack is ever within 6 blocks of the saucer's hover column;
+- the ground Scythe and the chest's Web Sword have not moved;
+- the hopper block is still in place and the Cannon is still inside it, untouched. A hopper is a container only and never a pulled block (`L0-magn-adhp`, `L0-adr-ufnd`); an iron ingot placed in the same hopper is extracted;
+- the chest minecart and the armour stand were not selected;
+- the iron ingot in the chest was extracted;
+- the world holds exactly one live copy of each marked instance, and neither owed list changed.
+
+Negative control: the same scenario with `isLegendaryStack` stubbed to return `false` must fail the "never within 6 blocks" clause. (Reconciled at reduce v4: the earlier control, a hopper pull without `protectLegendariesIn`, has no code path to exercise once the hopper is never a block.)
+
+
+- **level**: 2
+
+### Lgnd ac22 concept acceptance criterion (L0-lgnd-ac22)
+
+---
+is_a: ["acceptance-criterion"]
+part_of: ["L0-lgnd"]
+relates_to: ["L0-lgnd-p002", "L0-lgnd-r008", "L0-lgnd-ac07", "L0-lgnd-r016", "L0-magn", "L0-lgnd-as16"]
+---
+**AC-lgnd-22: Dying from a magnet fall keeps every held legendary.** Channel: `bds` (GameTest).
+
+UFO §6 makes a fall from the hover height lethal (U2: 33 damage from 37 blocks). Retention is cause-agnostic: `entityDie` path B (`retention.ts:74-152`) does not read the damage source. This AC pins that down for the magnet.
+
+GIVEN Survival player P holds an iron ingot in the main hand, a marked Web Sword in the off hand, and a marked Scythe and a marked Orbital Cannon in the hotbar
+WHEN the magnet lifts P to the hold point, the magnet releases, and P dies from the fall
+THEN on respawn P holds exactly those three instances (same ids, same gen; the Web Sword is in the inventory or off hand),
+AND no item entity of any of them exists at the landing spot, or in the saucer's cloud after the death,
+AND the iron ingot dropped as a vanilla death drop,
+AND no owed entry and no `returned` message was produced.
+
+Variant: the same after `/andrew:ufo stop` mid-hold, and after a server restart between death and respawn.
+
+
+- **level**: 2
+
+### Loot ac01 concept acceptance criterion (L0-loot-ac01)
+
+GIVEN a Windmill or Airship chest is initialized, WHEN the fill algorithm runs, THEN it performs between 5 and 12 fill attempts inclusive, and each individual attempt yields at most one loot category (never zero-or-more-than-one simultaneous categories from a single attempt).
+
+Source: spec AC34.
+
+
+- **level**: 2
+
+### Loot ac02 concept acceptance criterion (L0-loot-ac02)
+
+GIVEN repeated custom-table fills across many chests, WHEN Sticks/Logs/Iron Ingot/Copper Ingot/Gold Ingot/Diamond categories are selected, THEN their quantities fall within 2–8 / 2–6 / 2–8 / 3–10 / 1–5 / 1–3 respectively, on every occurrence.
+
+Source: spec AC35.
+
+
+- **level**: 2
+
+### Loot ac03 concept acceptance criterion (L0-loot-ac03)
+
+GIVEN a statistically sufficient sample of equipment-category rolls (armor, sword, axe; enchanted and unenchanted) across many chests, WHEN material is rolled, THEN iron appears in ~80% and diamond in ~20% of rolls (no exact-match requirement on small samples — statistical tolerance, not a per-roll assertion).
+
+Source: spec AC36.
+
+
+- **level**: 2
+
+### Loot ac04 concept acceptance criterion (L0-loot-ac04)
+
+GIVEN multiple armor-category attempts succeed in the same chest, WHEN slots are rolled, THEN identical armor pieces (e.g. two diamond helmets) are permitted to co-occur in one chest — the implementation must not de-duplicate or reject repeats.
+
+Source: spec AC37.
+
+
+- **level**: 2
+
+### Loot ac05 concept acceptance criterion (L0-loot-ac05)
+
+GIVEN any Enchanted Armor/Sword/Axe roll from the custom table, WHEN its enchantments are inspected, THEN none of them is a curse (Curse of Binding, Curse of Vanishing), and every enchantment level present is within that enchantment's vanilla maximum.
+
+Source: spec AC38, §3.3.
+
+
+- **level**: 2
+
+### Loot ac06 concept acceptance criterion (L0-loot-ac06)
+
+GIVEN a full custom-table chest fill (5–12 attempts), WHEN the resulting contents are inspected, THEN at most one Golden Apple stack exists, its quantity is 1–3, it is always a regular (never Enchanted) Golden Apple, and Enchanted Golden Apple never appears via the custom table.
+
+Source: spec AC39, §3.3.
+
+
+- **level**: 2
+
+### Loot ac07 concept acceptance criterion (L0-loot-ac07)
+
+GIVEN a chest where Diamonds is selected on more than one attempt, WHEN contents are inspected, THEN multiple Diamond stacks/successes are permitted in the same chest (unlike Golden Apple).
+
+Source: spec AC40.
+
+
+- **level**: 2
+
+### Loot ac08 concept acceptance criterion (L0-loot-ac08)
+
+GIVEN any structure chest (custom or vanilla path) whose contents have already been rolled, WHEN the chest is reopened, the chunk is unloaded/reloaded, or the server restarts, THEN its contents are unchanged — no re-roll, no refill.
+
+Source: spec §2, §3 preamble, §13.6/§13.7, §15.
+
+
+- **level**: 2
+
+### Loot ac09 concept acceptance criterion (L0-loot-ac09)
+
+GIVEN Mini Warden City's 40 chests, WHEN their contents are inspected, THEN all 40 use the real vanilla `chests/ancient_city` loot table unmodified — including the normal possibility of rare vanilla drops such as Enchanted Golden Apple or Swift Sneak books — and the custom weighted table is never applied to them.
+
+Source: spec §13.6, AC48.
+
+
+- **level**: 2
+
+### Loot ac10 concept acceptance criterion (L0-loot-ac10)
+
+GIVEN Mini Bastion's 10 chests, WHEN their contents are inspected, THEN the 3 central treasure chests draw from vanilla `chests/bastion_treasure` and the 7 distributed chests draw from vanilla `chests/bastion_other`, with no custom-table influence on either.
+
+Source: spec §14 addendum, AC55 (loot portion — chest counts/gold blocks/guards belong to `L0-bast`, not this component).
+
+
+- **level**: 2
+
+### Magn a04 concept acceptance criterion (L0-magn-a04)
+
+**UFO AC-4 (bds).**
+- **GIVEN** two Survival players in the zone, A with `iron_ingot` in the main hand and B with `shears` in the off hand (`allow_off_hand` via `/replaceitem`),
+- **WHEN** the magnet turns on,
+- **THEN**:
+  - both rise at ≤ 0.6 blocks per tick (per-tick displacement measured);
+  - within (hover depth / 0.6 + 20) ticks, both are within 0.5 blocks of saucer − (0, 6, 0);
+  - both stay within 0.5 blocks of it until release.
+- An Adventure player behaves the same (`L0-xasm14`).
+
+The iPad check that the lift looks smooth is in `L0-magn-aipd`.
+
+
+- **level**: 2
+
+### Magn a05 concept acceptance criterion (L0-magn-a05)
+
+**UFO AC-5 (bds).**
+- **GIVEN** the following players in the zone during the magnet:
+  - C, in Survival, with a stack of iron_ingot in inventory and empty hands;
+  - D, in Survival, wearing a full iron armour set with a dirt block in hand;
+  - E, in Creative, holding an iron_sword;
+  - F, in Spectator, holding an iron_sword;
+- **WHEN** 60 ticks pass,
+- **THEN** no player's y rises by more than 0.1 blocks, and no player is moved toward the saucer.
+
+
+- **level**: 2
+
+### Magn a06 concept acceptance criterion (L0-magn-a06)
+
+**UFO AC-6 (bds).**
+- **GIVEN** player A held 6 blocks below the saucer with an iron_ingot in the main hand,
+- **WHEN** A runs `dropSelectedItem()`,
+- **THEN**:
+  - from the next tick A's y decreases monotonically until landing;
+  - the dropped ingot entity becomes an `X` element and reaches a ring slot, beyond 10 already-selected elements (the element count becomes 11).
+
+**Second case.**
+- **GIVEN** a player B held the same way,
+- **WHEN** B's selected slot is switched to a non-iron slot,
+- **THEN** B falls, and is pulled again after switching back during the magnet.
+
+**Negative control.** An ingot dropped by a ground player more than 12 blocks from the hover point is not pulled.
+
+
+- **level**: 2
+
+### Magn a07 concept acceptance criterion (L0-magn-a07)
+
+**UFO AC-7 (bds).**
+
+**Case 1.**
+- **GIVEN** a Survival player held at the hover target (≥ 34 blocks above the ground) for the full 60 s,
+- **WHEN** the magnet goes off,
+- **THEN** the player takes vanilla fall damage and dies (with 20 HP and no armour).
+
+**Case 2.**
+- **GIVEN** a player held by the same knockback mechanism for 60 s at a target only 2 blocks above the ground (a test hook lowers the target),
+- **WHEN** the magnet goes off,
+- **THEN** no damage is taken (`entityHurt` with cause fall is never seen). This proves that knockback holding does not accumulate fall distance.
+
+The iPad check that the fall is visible is in `L0-magn-aipd`.
+
+
+- **level**: 2
+
+### Magn a08 concept acceptance criterion (L0-magn-a08)
+
+**UFO AC-8 (bds).**
+- **GIVEN** a zone seeded with:
+  - 3 iron ground items;
+  - a chest with 4 iron stacks;
+  - 2 iron golems and 1 minecart;
+  - 3 iron blocks;
+  - 2 iron ore;
+- **WHEN** the magnet turns on,
+- **THEN** exactly 10 elements are held: 3 ground items, then 4 stacks, then the 3 entities nearest first. No blocks are pulled and the ore is untouched.
+
+**Second scenario.** With 1 ground item and 12 iron blocks at distinct distances, the item and the 9 nearest blocks are pulled, and the 3 farthest remain.
+
+Players held at the same time do not reduce the count.
+
+
+- **level**: 2
+
+### Magn a09 concept acceptance criterion (L0-magn-a09)
+
+**UFO AC-9 (bds).**
+- **GIVEN** these containers, each holding 1 iron stack in slot 0 and 3 dirt in its last slot:
+  - chest, double chest (iron in its second half), trapped chest, barrel, hopper;
+  - furnace, blast furnace, smoker;
+  - dispenser, dropper, brewing stand;
+  - undyed shulker box;
+
+  Across several runs at ≤ 10 per event, every type is covered.
+- **WHEN** the magnet turns on,
+- **THEN**:
+  - each iron stack becomes an item element with the same id and amount;
+  - the slot is empty;
+  - the dirt is unchanged;
+  - every container block, the hopper included, is still in place;
+  - the double chest yields its stack exactly once;
+  - a crafter holding iron is untouched.
+
+
+- **level**: 2
+
+### Magn a10 concept acceptance criterion (L0-magn-a10)
+
+**UFO AC-10 (bds).**
+- **GIVEN** isolated iron_block, iron_bars, rail, anvil, cauldron, chain and lantern, an iron door (2 high), and one iron_ore, with nothing else in the zone,
+- **WHEN** the magnet turns on,
+- **THEN**:
+  - every source position (both door cells included) is air;
+  - exactly one new item entity exists per source: the block's item, one `iron_door`, and one `raw_iron` for the ore;
+  - the total count of new item entities in the zone equals the number of sources (9);
+  - this holds again 10 ticks later.
+
+
+- **level**: 2
+
+### Magn a11 concept acceptance criterion (L0-magn-a11)
+
+**UFO AC-11 (bds).**
+- **GIVEN** iron_ore 20 blocks below the centre, enclosed in stone, and no other iron in the zone,
+- **WHEN** the magnet turns on,
+- **THEN**:
+  - the ore cell becomes air;
+  - one raw_iron entity is spawned there;
+  - within 80 ticks it is within 1 block of its ring slot (saucer − 3, r 5);
+  - the stone between them is unchanged (no other cell becomes air).
+
+
+- **level**: 2
+
+### Magn a12 concept acceptance criterion (L0-magn-a12)
+
+**UFO AC-12 (bds).**
+- **GIVEN** the following in the zone, with no other iron:
+  - an iron golem;
+  - an empty minecart;
+  - a zombie wearing an iron_helmet (`/replaceitem`);
+  - an armour stand wearing iron_leggings;
+  - a bare zombie;
+  - a zombie holding only an iron_sword;
+- **WHEN** the magnet turns on,
+- **THEN**:
+  - the golem, the minecart, the helmeted zombie and the armour stand reach ring slots;
+  - the bare zombie and the sword zombie are never moved toward the saucer;
+  - after release, no entity still carries the tag `andrew:ufo_iron`.
+
+
+- **level**: 2
+
+### Magn a13 concept acceptance criterion (L0-magn-a13)
+
+**UFO AC-13, call-site half (bds; the rule half is in `lgnd`).**
+- **GIVEN** each of the three legendaries placed in the zone:
+  - on the ground;
+  - in a chest together with an iron stack;
+  - in a chest minecart;
+  - held by an armour stand wearing iron armour;
+  - in the off hand of a player whose main hand is empty;
+- **WHEN** the magnet runs its full 60 s,
+- **THEN**:
+  - no legendary entity or stack moves or changes container;
+  - the chest's iron stack is extracted;
+  - the chest minecart and the armour stand are not pulled (`L0-magn-aslh`);
+  - the player is not pulled;
+  - legendary ledger counts are unchanged.
+
+
+- **level**: 2
+
+### Magn a14 concept acceptance criterion (L0-magn-a14)
+
+**UFO AC-14 (bds).**
+- **GIVEN** 10 held elements (items, a golem, a minecart, a zombie) and a held player,
+- **WHEN** the magnet goes off,
+- **THEN**:
+  - in the release tick, every element's velocity is ≈ 0;
+  - from the next tick, every y decreases with no script teleport (no `teleport` calls are logged after release);
+  - every element lands on the ground below its last slot;
+  - the items can be picked up;
+  - the zombie takes fall damage and the golem takes none.
+- Release from a shoot-down and from `/andrew:ufo stop` behaves identically. Both go through the `requestMagnetOff` latch (`L0-adr-ufpc`), so the release runs at the start of the next UFO interval tick, at most one hold step after the request.
+
+The iPad check that the cloud and the fall are visible is in `L0-magn-aipd`.
+
+
+- **level**: 2
+
+### Magn aipd concept acceptance criterion (L0-magn-aipd)
+
+**UFO DoD, iPad eye check for the magnet (ipad, manual).** This is the iPad half of AC-4, AC-7 and AC-14, lifted out of those GameTest criteria (`L0-xcx19`). It is written like `L0-sauc-ac06`.
+
+- **GIVEN** the production world on the iPad, with a second player (or a held sim player on QA) and some iron in the zone: ground items, a chest stack and a golem,
+- **WHEN** a person triggers `/andrew:ufo come` and watches the whole magnet phase and the release,
+- **THEN** that person confirms on the iPad, with screenshots or a short recording attached to the task:
+  1. **Lift (AC-4).** A player holding iron rises smoothly under the saucer, with no visible stutter or rubber-banding while held.
+  2. **Cloud (AC-14).** The pulled iron is visible as a cloud circling under the saucer for the whole hold, and items visibly fly in from the ground, including any that rise through stone.
+  3. **Fall (AC-7, AC-14).** On release the player and every element visibly fall at once.
+
+**Closing rule.**
+- No GameTest can close this criterion. A passing `bds` run of `a04`, `a07` or `a14` is not evidence for it.
+- It is reopened after every epic merge that touches `src/ufo/`.
+
+
+- **level**: 2
+
+### Magn atps concept acceptance criterion (L0-magn-atps)
+
+**UFO DoD, "the event does not drop TPS" (bds).**
+- **GIVEN** a zone with ≥ 200 chests, a full scan type list, 2 players and 10 + 2 elements,
+- **WHEN** a full magnet phase runs,
+- **THEN**:
+  - the magnet-on tick cost (scan + selection + extraction) is logged and is ≤ 12 ms;
+  - the mean per-tick hold step is ≤ 2 ms and p99 ≤ 5 ms;
+  - all three numbers are written to the task's run-check artifact.
+
+
+- **level**: 2
+
 ### AC-orbc-01 · Item components: no durability, not enchantable, punch damage, stack of 1 `[bds]` (L0-orbc-ac01)
 
 # AC-orbc-01 · Item components: no durability, not enchantable, punch damage, stack of 1 `[bds]`
@@ -752,6 +1459,55 @@ Record the actual outcome of each case in the task, and the deviation note (`r01
 
 - **level**: 2
 
+### Pick ac01 concept acceptance criterion (L0-pick-ac01)
+
+GIVEN a clean clone, WHEN `npm run build` runs and the resulting `.mcaddon` is loaded on BDS in Docker and imported on iPad, THEN there are no dependency or manifest errors involving this item's manifest/recipe/item entries. [channel: bds + ipad; src: `minerspickaxetestspec` pass criteria]
+
+
+- **level**: 2
+
+### Pick ac02 concept acceptance criterion (L0-pick-ac02)
+
+GIVEN Creative mode, WHEN the player opens Equipment → pickaxe group or searches Creative inventory, THEN `andrew:miners_pickaxe` is visible with its RU/EN localized name and icon; `/give <player> andrew:miners_pickaxe` also works. [channel: ipad; src: `minerspickaxetestspec` scope + pass criteria]
+
+
+- **level**: 2
+
+### Pick ac03 concept acceptance criterion (L0-pick-ac03)
+
+GIVEN 3× Iron Ingot, 2× Raw Gold, 2× Stick in the exact shape of `L0-pick-r005`, WHEN placed in a crafting table, THEN exactly 1× `andrew:miners_pickaxe` is produced. [channel: bds; src: `packs/behavior/recipes/miners_pickaxe.json`]
+
+
+- **level**: 2
+
+### Pick ac04 concept acceptance criterion (L0-pick-ac04)
+
+GIVEN a Survival player holding `andrew:miners_pickaxe`, WHEN they break any of the 7 allow-listed blocks (`L0-pick-r003`), THEN the smelted product spawns with count 1 and the raw material never drops. Verified in-engine for `minecraft:iron_ore` → `minecraft:iron_ingot` by GameTest `pickaxe_autosmelt`; the other 6 pairs follow the same code path with no per-block special-casing. [channel: bds; src: `src/gametest/main.ts` L189-196]
+
+
+- **level**: 2
+
+### Pick ac05 concept acceptance criterion (L0-pick-ac05)
+
+GIVEN the same pickaxe, WHEN the player breaks `minecraft:stone` (not on the allow-list), THEN it drops vanilla `minecraft:cobblestone`, not an auto-smelt product. [channel: bds; src: `src/gametest/main.ts` `pickaxe_keeps_vanilla_drops`, L198-207]
+
+
+- **level**: 2
+
+### Pick ac06 concept acceptance criterion (L0-pick-ac06)
+
+GIVEN a fresh `andrew:miners_pickaxe` ItemStack, WHEN queried in-engine, THEN `ItemEnchantableComponent.canAddEnchantment === true`, `canAddEnchantment` accepts unbreaking and efficiency and refuses sharpness, and `minecraft:durability` is absent. [channel: bds; src: `SELFTEST-01-AA` / `src/selftest/main.ts` `pickaxe-enchantable`]
+
+
+- **level**: 2
+
+### Pick ac07 concept acceptance criterion (L0-pick-ac07)
+
+GIVEN `copper_ore`, `deepslate`, and `ancient_debris` placed in the GameTest structure, WHEN each is broken with `andrew:miners_pickaxe` vs. a real `minecraft:diamond_pickaxe` in the same run, THEN the pickaxe finishes within `SPEED_TOLERANCE_TICKS` (4) of vanilla and within `BREAK_LIMIT_TICKS` (300). [channel: bds; src: `src/gametest/main.ts` `pickaxe_digs_at_diamond_speed`, L864-962]
+
+
+- **level**: 2
+
 ### AC-7 (bds) · Irregular ~5×5 column to the bottom (L0-pntr-ac01)
 
 **GIVEN** an Overworld test area of stone from y=80 down to bedrock. It contains a 3×3 water pocket at y=40 and a bedrock block placed at y=20 in the column centre, and the column is seeded with a fixed `attackId`.
@@ -857,198 +1613,6 @@ Note: the simulated player is only valid on the gametest pack (memory: Simulated
 - the per-tick call count is ≤ 16;
 - the particle y-coordinates are non-increasing across ticks, and the last tick includes `bottom`;
 - 25 ticks after detonation, no `pntr` job is running, and the entity count in the column AABB equals the pre-attack count minus entities that fell out.
-
-
-- **level**: 2
-
-### AC-10 (bds) · Removal looks instant within budget (L0-pntr-ac07)
-
-**GIVEN** a stone-filled area on the QA BDS (port 19134).
-**WHEN**:
-- (a) one LMB detonates at y=76;
-- (b) one LMB detonates at y=319;
-- (c) three players fire LMB in the same tick at y=76.
-
-**THEN** the removal job reports:
-- the top 16 layers removed in the detonation tick;
-- `ticksUsed ≤ 3` for (a), `≤ 6` for (b), and `≤ 6` for each column in (c);
-- no server tick above 50 ms in (a), and at most 2 consecutive ticks above 50 ms in (b) and (c).
-
-If this fails, the result is recorded against `L0-pntr-as03`, and the deviation path in `L0-pntr-cons` is taken. The criterion is not silently widened.
-
-
-- **level**: 2
-
-### AC-7/AC-10 (ipad) · Looks like a blasted shaft, instant, one boom, ~1 s wave (L0-pntr-ac08)
-
-**GIVEN** the release build on the production BDS (port 19132), joined from the iPad, in Survival with the Cannon.
-**WHEN** the tester fires LMB at grass, then at an ocean floor, then in the Nether.
-**THEN**, judged by the tester on the device (not by a gametest):
-- the shaft appears in the same instant as the boom, with no visible top-to-bottom "unzipping";
-- the walls look ragged, not a clean square;
-- exactly one loud explosion sound is heard;
-- a particle wave visibly runs down the shaft for about 1 s;
-- ocean water pours into the shaft;
-- the owner standing nearby takes no hit.
-
-This criterion must be closed by the human tester only. Orchestrator auto-verification does not count (memory: orchestrator auto-verifies manual criteria).
-
-
-- **level**: 2
-
-### C-14 (bds) · Column at a chunk edge never force-loads (L0-pntr-ac09)
-
-**GIVEN** a detonation cell on the x-edge of a loaded chunk whose neighbour chunk is unloaded (outside the tick range).
-**WHEN** the LMB detonates.
-**THEN**:
-- the cells in the loaded chunk are removed;
-- the cells in the unloaded chunk are unchanged when that chunk is later loaded;
-- `report.skippedUnloaded > 0`;
-- no error propagates out of the job;
-- no ticking area or dynamic property was created.
-
-
-- **level**: 2
-
-### Ring ac11 concept acceptance criterion (L0-ring-ac11)
-
-**AC-ring-11 · Five continuous rings, d ≈ 1/5/10/15/20** (Orbital AC-11; `r001`) · **verify: bds**
-
-- **Unit:** `layout({x:0,y:64,z:0})` returns 1 centre + 4 rings. Each ring is closed and 8-connected (every cell has exactly 2 ring neighbours in its 8-neighbourhood), and each cell satisfies |√(dx²+dz²) − r| ≤ 0.75 for r ∈ {2.5, 5, 7.5, 10}. There are no duplicates, and the count is 140–160.
-- **Gametest:** GIVEN a flat stone pad in the Overworld and an owner holding the Cannon aimed at the pad's centre block, WHEN RMB is used, THEN in the activation tick the `andrew:orbital_charge` count tagged with the attack equals `layout().length`. Every charge has y = target.y + 30 and (x, z) equal to a layout column. After the drain, the pad shows craters whose centres match the layout columns.
-
-
-- **level**: 2
-
-### Ring ac12 concept acceptance criterion (L0-ring-ac12)
-
-**AC-ring-12 · The charges are independent, and every one explodes separately** (Orbital AC-12; `r003`) · **verify: bds**
-
-GIVEN a stepped target: the half of the ring footprint with x < 0 is raised 6 blocks, so the inner charges land 6 ticks or more before the outer ones. WHEN RMB is fired, THEN:
-- each charge's x and z never change during its flight: it is sampled every tick, and the tolerance is 0.001;
-- no charge is removed before its own contact tick, as `orbc` reports;
-- the number of `createExplosion` calls equals the number of charges that detonated, and is never merged;
-- `report.maxBlastsInTick` ≤ 48.
-
-Run it again with a spy on `createExplosion`: the call count per attack equals `layout().length` minus voided and lost charges.
-
-
-- **level**: 2
-
-### Ring ac13 concept acceptance criterion (L0-ring-ac13)
-
-**AC-ring-13 · TNT damage, including to the owner** (Orbital AC-13; `r004`; C-20) · **verify: bds**
-
-GIVEN two SimulatedPlayers in Survival with 20 HP and no armour: owner A stands 2 blocks from the ring-5 line, and B stands 2 blocks from the ring-15 line, plus one zombie on ring 10. WHEN A fires RMB, THEN:
-- A, B and the zombie each lose health in the range a vanilla primed TNT gives at the same distance (reference: a `minecraft:tnt` control run in the same pad);
-- A's death message, if A died, attributes the blast;
-- a control run with A's position switched to another dimension gives no error, and the blasts still happen with no `source`.
-
-
-- **level**: 2
-
-### Ring ac14 concept acceptance criterion (L0-ring-ac14)
-
-**AC-ring-14 · TNT resistance, no block drops, no fire** (Orbital AC-14; `r005`, `r006`) · **verify: bds**
-
-GIVEN a pad of dirt, stone and planks, with Obsidian and Reinforced Deepslate pillars on ring 10 and a chest with 10 cobblestone on ring 15. WHEN RMB is fired, THEN:
-- the dirt, stone and planks around each charge are cratered;
-- every Obsidian and Reinforced Deepslate block remains;
-- the chest is destroyed;
-- the `minecraft:item` count within footprint ± 8 is 0, with no cobblestone, dirt or planks;
-- no `minecraft:fire` or `minecraft:soul_fire` block exists in the area;
-- after the drain, `world.gameRules.doTileDrops` equals its pre-test value. Check this for both `true` and `false` initial values.
-
-
-- **level**: 2
-
-### Ring ac15 concept acceptance criterion (L0-ring-ac15)
-
-**AC-ring-15 · Underwater: damage only** (Orbital AC-15; `r007`) · **verify: bds**
-
-GIVEN a flat pad where the half with x < 0 is covered by 4 blocks of water and the half with x ≥ 0 is dry, with a zombie on the seabed on ring 5 at x < 0. WHEN RMB is fired at the boundary, THEN:
-- every block within footprint ± 6 with x ≤ −2 is identical before and after (`getBlock` type snapshot);
-- the dry half shows craters;
-- the zombie took damage or died.
-
-
-- **level**: 2
-
-### Ring ac16 concept acceptance criterion (L0-ring-ac16)
-
-**AC-ring-16 · RMB never destroys a legendary** (Orbital §5, §10; `r008`) · **verify: bds**
-
-GIVEN a live-marked Web Sword in a chest on ring 5, and a live-marked Scythe as an item entity on the ground 6 blocks outside ring 20. WHEN RMB is fired, THEN:
-- both legendaries exist afterwards as item entities in the same dimension, outside the footprint ± 8, with the same `id` and `gen` (no `gen + 1`);
-- no "returned" log line appears, and `handedBack` is 0;
-- the `lgnd` `ac19` detector reports no unprotected container removal.
-
-This AC fails today by design until `L0-ring-cx02` is resolved.
-
-
-- **level**: 2
-
-### Ring ac17 concept acceptance criterion (L0-ring-ac17)
-
-**AC-ring-17 · Three simultaneous RMBs stay within budget** (Orbital §12, §15; C-5a′; RG-1 to RG-3) · **verify: bds**
-
-GIVEN 3 SimulatedPlayers with their own Cannons over three adjacent flat pads (their footprints overlap by 5 blocks). WHEN all three fire RMB in the same tick, THEN:
-- `maxBlastsInTick` ≤ 48;
-- all queued blasts drain within 10 ticks;
-- server tick time stays above 50 ms for at most 3 consecutive ticks and never exceeds 150 ms;
-- after 60 ticks the ring queue interval is cleared and orbc's flight interval is cleared.
-
-
-- **level**: 2
-
-### Ring ac18 concept acceptance criterion (L0-ring-ac18)
-
-**AC-ring-18 · No leftovers, and vanilla drops preserved** (Orbital §15; C-19; `r006`, `r009`) · **verify: bds**
-
-GIVEN `keepInventory` false, a SimulatedPlayer B holding 5 diamonds on ring 10, 3 zombies on rings 5 and 15, and 4 pre-existing dirt item entities on ring 20. WHEN owner A fires RMB and B and the zombies die, THEN:
-- 0 `andrew:orbital_charge` entities remain;
-- B's 5 diamonds exist as item entities or were destroyed by a later blast, as in vanilla, and never by `ring` code (spy: 0 `remove()` calls on non-container-fallback items);
-- the zombie loot and XP orbs were spawned;
-- no block-drop items exist;
-- the `minecraft:item` count within footprint ± 8 is at most the vanilla drops of what died, plus any surviving pre-existing dirt.
-
-
-- **level**: 2
-
-### Ring ai11 concept acceptance criterion (L0-ring-ai11)
-
-**AC-ring-11i · The rings look like five solid rings falling together** (Orbital AC-11, §10) · **verify: ipad**
-
-GIVEN the iPad player on a hill ≥ 25 blocks from a flat target, WHEN a second player fires RMB, THEN:
-- the player sees normal-size TNT forming a single centre block and four concentric rings, with no visible gaps, that appear at the same moment and fall together;
-- on flat ground they explode within about half a second of each other;
-- the craters afterwards trace the five rings.
-
-The tester records a screen video and attaches a screenshot of the airborne rings.
-
-
-- **level**: 2
-
-### Ring ai12 concept acceptance criterion (L0-ring-ai12)
-
-**AC-ring-12i · Separate explosion sounds and no pushed charges** (Orbital AC-12) · **verify: ipad**
-
-GIVEN the iPad player with sound on, at 20 blocks from an uneven target (a hillside), WHEN RMB is fired, THEN:
-- the player hears a rolling series of separate explosion sounds, not one single boom;
-- no falling TNT is seen to fly sideways or upward after a neighbour explodes;
-- no TNT stays flashing on the ground afterwards.
-
-
-- **level**: 2
-
-### Ring ai15 concept acceptance criterion (L0-ring-ai15)
-
-**AC-ring-15i · The underwater rings are visible and audible but leave the seabed intact** (Orbital AC-15) · **verify: ipad**
-
-GIVEN the iPad player swimming 12 blocks from an ocean-floor target, WHEN a second player fires RMB at the seabed, THEN:
-- the player sees the charges sink through the water and hears the explosions;
-- the player takes damage if inside a ring blast;
-- the seabed afterwards shows no craters.
 
 
 - **level**: 2

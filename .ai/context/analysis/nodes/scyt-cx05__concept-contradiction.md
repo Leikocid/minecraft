@@ -2,7 +2,7 @@
 type: "concept-contradiction"
 node_id: "L0-scyt-cx05"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 5
 title: "CX-scyt-05 · `L0-adr-scyt` tuning (0.5 b/t, 5-tick stagger, `SCYTHE_TUNING`) is not what shipped (0.8 b/t, 10-tick stagger)"
 aliases: ["L0-scyt-cx05"]
 is_a: ["contradiction"]

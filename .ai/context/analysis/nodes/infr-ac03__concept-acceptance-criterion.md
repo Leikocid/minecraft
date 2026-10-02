@@ -2,7 +2,7 @@
 type: "concept-acceptance-criterion"
 node_id: "L0-infr-ac03"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 aliases: ["L0-infr-ac03"]
 is_a: ["acceptance-criterion"]
 part_of: ["L0-infr"]

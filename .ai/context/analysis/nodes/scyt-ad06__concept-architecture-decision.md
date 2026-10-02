@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-scyt-ad06"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 5
 title: "ADR-scyt-06 — Non-lethal hit = `applyDamage(3)` for the feedback, then `setCurrentValue` for the exact value"
 aliases: ["L0-scyt-ad06"]
 is_a: ["architecture-decision"]

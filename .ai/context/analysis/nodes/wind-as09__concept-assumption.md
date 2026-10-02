@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-wind-as09"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Assumption — field guards are adults, and zombie villagers do not convert to drowned in the ditches"
 aliases: ["L0-wind-as09"]
 is_a: ["assumption"]

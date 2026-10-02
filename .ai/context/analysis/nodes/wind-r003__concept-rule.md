@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-wind-r003"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Rule: 25 chests (5/8/12), 3 floor spawners, and dark spawner zones"
 aliases: ["L0-wind-r003"]
 is_a: ["rule"]

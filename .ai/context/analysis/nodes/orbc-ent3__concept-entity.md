@@ -2,7 +2,7 @@
 type: "concept-entity"
 node_id: "L0-orbc-ent3"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "Entity · Orbital Charge (`andrew:orbital_charge`)"
 aliases: ["L0-orbc-ent3"]
 is_a: ["entity"]

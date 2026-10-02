@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-orbc-ad03"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "ADR-orbc-03 · Attacks live in memory only; stale charge entities are swept, never resumed"
 aliases: ["L0-orbc-ad03"]
 is_a: ["architecture-decision"]

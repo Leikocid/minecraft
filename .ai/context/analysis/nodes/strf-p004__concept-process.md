@@ -2,7 +2,7 @@
 type: "concept-process"
 node_id: "L0-strf-p004"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Process — idempotent first initialisation of an instance"
 aliases: ["L0-strf-p004"]
 is_a: ["process"]

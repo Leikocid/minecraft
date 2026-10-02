@@ -2,7 +2,7 @@
 type: "concept-component"
 node_id: "L0-strf"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 level: 1
 title: "Structure framework (`strf`)"
 aliases: ["L0-strf"]
@@ -12,6 +12,7 @@ relates_to: ["L0"]
 priority: 530
 size_chars: 4112
 tags: ["is_a:component", "structures", "contract-layer", "relates_to:L0-loot", "relates_to:L0-wind", "relates_to:L0-airs", "relates_to:L0-wrdn", "relates_to:L0-bast", "relates_to:L0-infr", "relates_to:L0-adr-strc", "relates_to:L0-adr-strs", "relates_to:L0-adr-tmpl"]
+needs_rebuild_marked_at: 2026-10-02T18:41:56.508Z
 ---
 # Structure framework (`strf`)
 

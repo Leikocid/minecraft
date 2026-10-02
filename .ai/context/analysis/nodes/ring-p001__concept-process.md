@@ -2,7 +2,7 @@
 type: "concept-process"
 node_id: "L0-ring-p001"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "Process · Ring rasterisation (`layout`)"
 aliases: ["L0-ring-p001"]
 is_a: ["process"]

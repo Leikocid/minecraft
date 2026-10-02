@@ -1,13 +1,13 @@
 ---
 title: Decisions
 type: analysis
-generated_at: "2026-09-29T23:30:38.842Z"
+generated_at: "2026-10-02T18:59:43.396Z"
 source_channel: rollout
 node_id: rollout-decisions
 aliases: ["rollout-decisions","decisions"]
 is_a: ["rollout","decisions"]
-relates_to: ["decision-completion-flow-quick","decision-merge-policy-autopilot","decision-namespace-addona-andrew-asm-002-q-002","decision-tselevaya-versiya-bedrock-1-26-51-asm-001-q-001","decision-verification-approach-automatic","decision-windows-pk-ne-nuzhen-q-004","decision-yazyk-skriptov-typescript-asm-003-q-003","decision-zacharovanie-bez-durability-proverit-pervoy-zada","decision-q-006-web-sword-provenance-yes-metka-ekzemplyara","decision-q-007-enchantable-without-durability-podtverzhde","decision-q-008-blocked-craft-refund-a-obnaruzhit-i-vernut","decision-q-009-cooldown-persistence-sohranyat-mezhdu-vyho","decision-q-010-main-hand-off-hand-priority-otlozheno","decision-q-011-cube-geometry-27-kletok-tsentr-sosednyaya-","decision-q-012-two-player-dod-gametest-s-dvumya-simulated","decision-q-013-protected-blocks-zakrytyy-spisok-posture-s","decision-q-014-budget-after-destruction-pravo-ostaetsya-p","decision-q-015-gate-game-modes-survival-i-adventure","decision-q-016-sword-unlootable-podtverzhdeno-kak-zaduman","decision-q-017-zero-cells-proval-s-lokalizovannym-soobsch","decision-resolve-l0","decision-resolve-l0-keep-ctr006","decision-resolve-l0-once","decision-resolve-l0-qatg-ctr1","decision-resolve-l0-trap-ct07","decision-resolve-l0-trap-ct08","decision-web-sword-item-values-uron-kak-u-vanilnogo-almaz","decision-legendary-hand-priority-realizuem-seychas-osnovn","decision-legendary-ready-hud-gotovo-pokazyvaetsya-postoya","decision-legendary-rules-obschie-dlya-vseh-legendarnyh-vk","decision-resolve-cool-ctr3","decision-resolve-l0-sprj-cx02","decision-resolve-l0-xcx3","decision-scythe-enchantments-slot-sword","decision-scythe-hidden-target-dynamic-property-andrew-hid","decision-scythe-launch-applyknockback-s-kalibrovannoy-ver","decision-scythe-melee-damage-8-proveryaetsya-zamerom-prot","decision-scythe-projectiles-virtualnye-bez-suschnostey-ri","decision-scythe-true-damage-pryamoe-umenshenie-zdorovya-d","decision-scythe-targets-mobs-moby-tozhe-tseli-igrok-v-pri","decision-ad-wrdn-01-l0-wrdn-ad01-podtverzhdeno-vanilnaya-","decision-adr-bast-02-l0-bast-ad02-podtverzhdeno-vanilnye-","decision-adr-l0-adr-strc-accepted-generatsiya-skriptom-pr","decision-adr-l0-adr-strs-accepted-s-ogovorkoy-q5-zond-str","decision-adr-l0-adr-tmpl-accepted-zond-strf-p006-q1-q2-q3","decision-adr-l0-wind-ad01-accepted-s-ogovorkoy-o-razmere-","decision-adr-strf-01-l0-strf-d001-accepted-determinirovan","decision-adr-strf-02-l0-strf-d002-accepted-spavnery-vanil","decision-l0-airs-cx01-zagruzka-chankov-koltsa-privyazanno","decision-l0-xcx6-edinstvennyy-istochnik-pravdy-po-generat","decision-l0-xcx7-kanal-dokazatelstva-u-kazhdogo-kriteriya","decision-l0-xq2-plotnost-struktur-shansy-na-chank-rovno-k","decision-l0-xq3-vozvrat-poteryannogo-oruzhiya-kraftivshem","decision-l0-xq4-melnitsa-u-spavna-bez-suhoy-zemli-mira-be","decision-dirizhabl-udlinyaetsya-protiv-razmera-v-speke-ra","decision-gorod-hranitelya-rastet-vchetvero-po-ploschadi-i","decision-legendarnoe-vozvraschaetsya-poslednemu-derzhavsh","decision-resolve-cool-ctr1","decision-resolve-cool-ctr2","decision-resolve-cool-ctr4","decision-resolve-l0-airs-cx01","decision-resolve-l0-lgnd-cx01","decision-resolve-l0-lgnd-cx07","decision-resolve-l0-lgnd-cx08","decision-resolve-l0-lgnd-cx09","decision-resolve-l0-lgnd-cx10","decision-resolve-l0-orbc-cx02","decision-resolve-l0-scyt-cx03","decision-resolve-l0-scyt-cx04","decision-resolve-l0-scyt-cx05","decision-resolve-l0-strf-cx01","decision-resolve-l0-strf-cx02","decision-resolve-l0-wind-cx01","decision-resolve-l0-wind-cx02","decision-resolve-l0-xcx10","decision-resolve-l0-xcx11","decision-resolve-l0-xcx12","decision-resolve-l0-xcx13","decision-resolve-l0-xcx14","decision-resolve-l0-xcx5","decision-resolve-l0-xcx6","decision-resolve-l0-xcx7","decision-resolve-l0-xcx8","decision-resolve-l0-xcx9","decision-vvod-orbitalnoy-pushki-udar-po-playerswingstart-"]
-priority: 540
+relates_to: ["decision-completion-flow-quick","decision-merge-policy-autopilot","decision-namespace-addona-andrew-asm-002-q-002","decision-tselevaya-versiya-bedrock-1-26-51-asm-001-q-001","decision-verification-approach-automatic","decision-windows-pk-ne-nuzhen-q-004","decision-yazyk-skriptov-typescript-asm-003-q-003","decision-zacharovanie-bez-durability-proverit-pervoy-zada","decision-q-006-web-sword-provenance-yes-metka-ekzemplyara","decision-q-007-enchantable-without-durability-podtverzhde","decision-q-008-blocked-craft-refund-a-obnaruzhit-i-vernut","decision-q-009-cooldown-persistence-sohranyat-mezhdu-vyho","decision-q-010-main-hand-off-hand-priority-otlozheno","decision-q-011-cube-geometry-27-kletok-tsentr-sosednyaya-","decision-q-012-two-player-dod-gametest-s-dvumya-simulated","decision-q-013-protected-blocks-zakrytyy-spisok-posture-s","decision-q-014-budget-after-destruction-pravo-ostaetsya-p","decision-q-015-gate-game-modes-survival-i-adventure","decision-q-016-sword-unlootable-podtverzhdeno-kak-zaduman","decision-q-017-zero-cells-proval-s-lokalizovannym-soobsch","decision-resolve-l0","decision-resolve-l0-keep-ctr006","decision-resolve-l0-once","decision-resolve-l0-qatg-ctr1","decision-resolve-l0-trap-ct07","decision-resolve-l0-trap-ct08","decision-web-sword-item-values-uron-kak-u-vanilnogo-almaz","decision-legendary-hand-priority-realizuem-seychas-osnovn","decision-legendary-ready-hud-gotovo-pokazyvaetsya-postoya","decision-legendary-rules-obschie-dlya-vseh-legendarnyh-vk","decision-resolve-cool-ctr3","decision-resolve-l0-sprj-cx02","decision-resolve-l0-xcx3","decision-scythe-enchantments-slot-sword","decision-scythe-hidden-target-dynamic-property-andrew-hid","decision-scythe-launch-applyknockback-s-kalibrovannoy-ver","decision-scythe-melee-damage-8-proveryaetsya-zamerom-prot","decision-scythe-projectiles-virtualnye-bez-suschnostey-ri","decision-scythe-true-damage-pryamoe-umenshenie-zdorovya-d","decision-scythe-targets-mobs-moby-tozhe-tseli-igrok-v-pri","decision-ad-wrdn-01-l0-wrdn-ad01-podtverzhdeno-vanilnaya-","decision-adr-bast-02-l0-bast-ad02-podtverzhdeno-vanilnye-","decision-adr-l0-adr-strc-accepted-generatsiya-skriptom-pr","decision-adr-l0-adr-strs-accepted-s-ogovorkoy-q5-zond-str","decision-adr-l0-adr-tmpl-accepted-zond-strf-p006-q1-q2-q3","decision-adr-l0-wind-ad01-accepted-s-ogovorkoy-o-razmere-","decision-adr-strf-01-l0-strf-d001-accepted-determinirovan","decision-adr-strf-02-l0-strf-d002-accepted-spavnery-vanil","decision-l0-airs-cx01-zagruzka-chankov-koltsa-privyazanno","decision-l0-xcx6-edinstvennyy-istochnik-pravdy-po-generat","decision-l0-xcx7-kanal-dokazatelstva-u-kazhdogo-kriteriya","decision-l0-xq2-plotnost-struktur-shansy-na-chank-rovno-k","decision-l0-xq3-vozvrat-poteryannogo-oruzhiya-kraftivshem","decision-l0-xq4-melnitsa-u-spavna-bez-suhoy-zemli-mira-be","decision-dirizhabl-udlinyaetsya-protiv-razmera-v-speke-ra","decision-gorod-hranitelya-rastet-vchetvero-po-ploschadi-i","decision-legendarnoe-vozvraschaetsya-poslednemu-derzhavsh","decision-resolve-cool-ctr1","decision-resolve-cool-ctr2","decision-resolve-cool-ctr4","decision-resolve-l0-airs-cx01","decision-resolve-l0-lgnd-cx01","decision-resolve-l0-lgnd-cx07","decision-resolve-l0-lgnd-cx08","decision-resolve-l0-lgnd-cx09","decision-resolve-l0-lgnd-cx10","decision-resolve-l0-orbc-cx02","decision-resolve-l0-scyt-cx03","decision-resolve-l0-scyt-cx04","decision-resolve-l0-scyt-cx05","decision-resolve-l0-strf-cx01","decision-resolve-l0-strf-cx02","decision-resolve-l0-wind-cx01","decision-resolve-l0-wind-cx02","decision-resolve-l0-xcx10","decision-resolve-l0-xcx11","decision-resolve-l0-xcx12","decision-resolve-l0-xcx13","decision-resolve-l0-xcx14","decision-resolve-l0-xcx5","decision-resolve-l0-xcx6","decision-resolve-l0-xcx7","decision-resolve-l0-xcx8","decision-resolve-l0-xcx9","decision-vvod-orbitalnoy-pushki-udar-po-playerswingstart-","decision-dvizhok-bedrock-chetyre-svoystva-naydennye-otgru","decision-luchi-i-tsel-facelocation-stoppery-i-zhidkosti-z","decision-pushka-predmet-i-zaryad-pravki-po-zameram-otgruz","decision-ring-diameters-1-7-14-21-28-was-1-5-10-15-20","decision-aim-range-25-and-spawn-height-60-the-shooter-get","decision-ring-power-per-ring-4-4-2-1-1-and-a-minimum-aim-"]
+priority: 580
 ---
 
 # Decisions
@@ -991,6 +991,91 @@ _Decided: 2026-09-29_
 Маркер. Спека (part-1:109) говорит, что дополнительный маркер НЕ НУЖЕН, а не что он запрещён. Поэтому: штатно маркера нет; если проверка на iPad покажет, что ванильная подсветка не достаёт до 6-10 блоков, добавляется минимальная частица — это не отклонение от спеки.
 Что остаётся на устройстве: наблюдение на iPad, какая раскладка управления (обычная сенсорная или с прицелом) даёт какую цель и какую предельную дальность касания. Это идёт критерием приёмки демо Пушки, а не блокирует разработку.
 СЛЕДСТВИЕ: запрет на создание задач по orbc снимается.
+
+
+
+
+
+## Движок Bedrock: четыре свойства, найденные отгрузкой Пушки (ring-ent1, ring-as03, ring-as02, pntr-ad01) (decision-dvizhok-bedrock-chetyre-svoystva-naydennye-otgru)
+
+_Decided: 2026-09-30_
+
+
+Замеры стадии 5, каждый с контролем и по одной переменной.
+1. Кастомная сущность БЕЗ runtime_identifier расталкивает всё, с чем пересекается её бокс: collision_box 0×0, has_collision:false и is_pushable:false этого не отменяют. Копия без идентификатора толкнула неподвижную корову на 0.5087 за 20 тиков, та же копия с runtime_identifier minecraft:snowball — 0.0000, без сущности — 0.0000. Заряд Пушки несёт класс снежка. 2. Взрыв не наносит урона сущности, назначенной его источником: зомби источником собственного взрыва остался с 20 здоровья, он же без источника погиб (по два прогона). SimulatedPlayer как source движок вообще отвергает с TypeError. Поэтому ring не ставит source вовсе (ring-as03 подтверждена, r004 требует урона владельцу); цена — в сообщении о смерти нет «взорван таким-то». 3. doTileDrops=false останавливает дроп блоков, но НЕ содержимое разрушенного контейнера (ring-as02 опровергнута замером): откат по контейнерам включён. 4. Постановка любого system.runJob тормозит следующий тик на 15–30 мс на этом хосте даже для пустого задания (64–83 мс против 44–56 мс; контроль со столбом чистого воздуха тормозит так же, значит дело не в блоках и не в освещении). Пробой ЛКМ переведён с runJob на общий бюджетный интервал — это расхождение с pntr-ad01, взятое ради PN-2. 5. Путь «по клетке» из pntr-ad01 провалил PN-1 на замере: 1000–1500 клеток за тик, 7–10 тиков на столбе с y=319 против порога 6. Принят гибрид, который ADR держал про запас: движковые запросы находят сохраняемые, контейнерные и водосодержащие клетки, fillBlocks стирает остальное. Итог после правки: 3 тика на обычном столбе, 4 на глубоком, 4-5 при трёх одновременных. 6. ring-ent1: инвариант «у каждой клетки кольца ровно два соседа того же кольца» неверен для d=5 (r=2.5) — 8 из 16 клеток имеют третьего соседа по диагонали, это следствие самого алгоритма ring-p001, а не ошибка. Верная формулировка: кольцо замкнуто (одна 8-связная компонента) и без отростков (степень не ниже 2); d=10/15/20 дают ровно два. 7. SimulatedPlayer не держит чанки загруженными (400 тиков в 1000 блоках — чанк не загрузился), поэтому в тестах на выгрузку вместо игрока ставят ticking area. system.currentTick продолжает счёт через перезапуск сервера. 8. У только что появившейся сущности короб попадания уже, чем установившийся: у жителя 0.345 против 0.400, и в эти тики луч может промахнуться вовсе (1 падение из 5 прогонов).
+
+
+
+
+
+## Лучи и цель: faceLocation, стопперы и жидкости — замеры вместо посылок (xcx14, trap.ts, orbc-as03) (decision-luchi-i-tsel-facelocation-stoppery-i-zhidkosti-z)
+
+_Decided: 2026-09-30_
+
+
+Разборы WSWD-FACE-01-AA и ORBC-CORE-01-AA перемерили движок и поправили то, что осталось после CNTR-XCX14-AA.
+1. «Нормальная компонента BlockRaycastHit.faceLocation всегда 0» — пересказ частного случая. faceLocation это дробная часть мировой точки попадания: в 0 сворачивается только плоскость +1 полной грани (South, East, Up — 6 из 6), а на вложенных формах он равен истинной глубине: стеклянная панель 0.5625/0.4375, верх плиты 0.5000, забор 0.625, стена 0.750, мёд 0.938 (5 из 5). Восстановление: брать faceLocation и читать 0 как 1 на трёх полных гранях. Плоскость клетки как приближение не годится — ошибка до полублока. 2. Отчёт diagnose-CNTR-XCX14-AA и прибор probe-input.ts печатают ray10 как block.location + faceLocation, то есть завышают расстояние на 1 на этих гранях. 3. Правило Паутинного меча «не бить сквозь стены» на этом НЕ ломается: луч сущностей сам останавливается на первом блоке с коллизией, поэтому возвращённая сущность всегда ближе стены (12 из 12 сценариев на четырёх направлениях, 21 тип блока в зонде стопперов). Кода меча не меняли. 4. includeLiquidBlocks:true в src/websword/trap.ts на 1.26.51.1 ничего не даёт: меч не может нацелиться на поверхность воды или лавы, луч проходит её до дна. Решение оператора — оставить как есть. 5. Луч сущностей останавливается на паутине, траве, лозе, табличке, рыхлом снеге и открытой калитке, а блочный луч их проходит: моба в высокой траве меч целью не выберет. 6. orbc-as03: Block.isSolid в стабильном 2.10.0 нечитаем ни на одном из 99 проверенных типов блоков — запасного пути «!isSolid && !isLiquid» не существует, остаётся список. Луч цели и isContact расходятся на 3 из 99: white_carpet, standing_sign, ladder — заряд на них останавливается, луч их проходит.
+
+
+
+
+
+## Пушка, предмет и заряд: правки по замерам отгрузки (orbc-r002, r012, ent3, adr-oded) (decision-pushka-predmet-i-zaryad-pravki-po-zameram-otgruz)
+
+_Decided: 2026-09-30_
+
+
+Отгрузка Пушки (ORBC-ITEM-01-AA, 1.4.0) опровергла четыре записи KV замерами на BDS 1.26.51.1.
+1. orbc-r002:27 — «рецепт без unlock, как у остальных легендарок»: посылка ложна, packs/behavior/recipes/web_sword.json содержит unlock. Рецепт Пушки несёт unlock: [{item: minecraft:tnt}], как все отгруженные (меч — web, коса — diamond_hoe). 2. orbc-r002:39 и orbc-r012:28 — строки готовности и кулдауна берутся не из общих ключей: у Пушки свои andrew.orbital.hud_ready и andrew.orbital.hud_cooldown. 3. adr-oded:28 — выбор ключей идёт полем LegendaryDef.hudKeys, а НЕ поиском ключа с запасным вариантом: translate разрешается на клиенте, скрипт не может узнать, существует ли ключ. Имена ключей hud_ready/hud_cooldown, а не ready/cooldown: последние уже заняты старыми строками меча. 4. orbc-ent3:25 — сущность заряда действительна только до format_version 1.26.0: на 1.26.50 схема выбрасывает minecraft:pushable и BDS отказывает сущности целиком. 5. orbc-ent3:30 — у ванильного TNT нет ни клиентской сущности, ни геометрии (движок рисует его сам), переиспользовать нечего: свой куб 16 пикселей и три render controller на ванильных текстурах tnt_side|top|bottom. 6. orbc-ent3:31 — масштаб задаётся в BP свойством andrew:scale и группами andrew:scale_rmb/lmb, вход через событие спавна; одним setProperty масштаб не меняется.
+
+
+
+
+
+## ring diameters = 1/7/14/21/28 (was 1/5/10/15/20) (decision-ring-diameters-1-7-14-21-28-was-1-5-10-15-20)
+
+_Decided: 2026-09-30_
+
+
+Решение оператора 2026-09-30 по отзыву Андрея после игры: «кольца надо в 2 раза шире». Таблица диаметров ПКМ-колец меняется с 1/5/10/15/20 на 1/7/14/21/28. Формулировка Андрея читалась двояко (радиусы или диаметры) — оператор подтвердил: диаметры.
+Замер растеризации тем же алгоритмом midpoint-круга, что стоит в src/orbital/ring-layout.ts: 1/5/10/15/20 даёт 145 колонок и охват ±10 блоков; 1/7/14/21/28 даёт 201 колонку и охват ±14. Очередь взрывов разбирает 48 за тик, то есть выстрел разряжается за 5 тиков вместо 4.
+Следствие: RING_MAX_CHARGES = 200 больше не пропускает раскладку — потолок поднимается, и его новое значение подтверждается замером на BDS, а не выбирается на глаз. Охват ±14 вместо ±10 расширяет и обход защиты (рамки, сундуки, легендарки) — площадка GameTest под кольца растёт соответственно.
+Спека правится следом: docs/Orbital_Cannon_Spec_v1_RU_EN.docx §10 («Примерные диаметры колец») и AC-11 в разделе 14.
+Что это отменяет в KV: L0-ring-r001, L0-ring-ac11, L0-xasm8 и производные от них (business-rules.md, glossary.md, domain-model.md, architecture.md) называют d ≈ 1/5/10/15/20 — само число в них устарело. Устройство не меняется: пять сплошных колец, дискретная блочная сетка, диаметр 1 = центральный заряд ровно над выбранным блоком.
+
+
+
+
+
+## aim range 25 and spawn height +60: the shooter gets a chance to run (decision-aim-range-25-and-spawn-height-60-the-shooter-get)
+
+_Decided: 2026-10-02_
+
+
+Решение оператора 2026-10-02 по отзыву Андрея: «взрыв слишком сильный, у игрока который сам стреляет нет шансов убежать». Выбор был между уменьшением мощи и увеличением дальности/задержки; оператор выбрал второе, мощь взрыва остаётся 4.
+Почему не мощь (замер ring_tnt_damage на BDS 1.26.51.1): один взрыв кольца и один ванильный динамит совпадают по урону до второго знака — 29.11 против 29.13 в трёх блоках, 15.29 в пяти, 4.86 в семи. При 20 жизнях обычный динамит в трёх блоках уже смертелен. Внутри поля колец (радиус 14, кольца через 3.5) ближайший взрыв всегда в пределах 1.75 блока, и в его радиус попадает около десятка соседних. По формуле ванильного взрыва, сверенной на этих трёх точках: мощность 4 даёт 39 урона в 1.75 блока, мощность 3 — 25, мощность 2 — 12 (смерть набегает с десятка взрывов), мощность 1 — 0.98 и никакой воронки. Шанс убежать уменьшением заряда не покупается ни при какой мощности.
+Что меняется: TARGET_RANGE 10 -> 25 блоков; SPAWN_OFFSET для Верхнего мира и Края 30 -> 60 блоков, то есть 3 секунды падения вместо 1.5 (FALL_SPEED = 1 блок за тик). Нижний мир остаётся на +10: там потолок на 128, падать негде, и шанс уйти там даёт только дальность прицела.
+Арифметика побега после правки: чтобы выйти из-под удара, нужно оказаться блоках в 22 от цели (14 — внешнее кольцо, плюс 8 до спада урона). Целясь в 10 блоках, игрок проходит 12 блоков за 3 секунды — 4 блока в секунду против 5.6 у бега. Целясь в 25 блоках, он уже вне поля и бежать не должен. Целясь себе под ноги, погибает — это сохраняется намеренно.
+Правится спека docs/Orbital_Cannon_Spec_v1_RU_EN.docx: AC-3 (нет валидного блока в 10 блоках -> нет выстрела и нет кулдауна) и AC-4 (высота спавна +30 в Верхнем и Краю, +10 в Нижнем), плюс соответствующие разделы §6 и §8. Урон владельцу (§10, AC-13) НЕ меняется: владельца по-прежнему бьёт своим выстрелом, если он не ушёл.
+
+
+
+
+
+## ring power per ring 4/4/2/1/1 and a minimum aim range of 7 (decision-ring-power-per-ring-4-4-2-1-1-and-a-minimum-aim-)
+
+_Decided: 2026-10-02_
+
+
+Решение оператора 2026-10-02 по отзыву Андрея «я всё равно умираю от колец». Выбор делался по замерам, а не по модели — и модель дважды оказалась неверной.
+Что принято: сила взрыва по кольцам от центра к краю 4 / 4 / 2 / 1 / 1 вместо 4 у всех; кольца отказывают в выстреле по блоку ближе 7 блоков (тихо, без кулдауна, как за пределом дальности). Пробой ЛКМ минимума не получает — он не наносит урона сущностям. Дальность 25 и высота спавна 60 остаются.
+Замеры, на которых это стоит:
+1. probe_blast_stacking. Равные взрывы в одном тике НЕ складываются: четыре взрыва силы 4 в семи блоках дают один удар 6.1, столько же, сколько один взрыв. Но каждый взрыв СИЛЬНЕЕ предыдущего проходит снова: 7, 5 и 3 блока в один тик дали три удара 6.1 + 10.8 + 14.1 и убили зомби с 20 жизнями.
+2. probe_ring_damage_by_distance, настоящая атака с принятыми силами. Стоящий в 8 блоках от цели теряет 20 за шесть ударов и погибает; в 10 блоках 11.1 за четыре удара; в 12 — 7.2; в 14 — 20 и смерть, потому что клетка кольца оказывается ровно под ним (разбивка ударов 1.9 / 5.6 / 5.3 / 13.0, последний — взрыв под ногами); в 16 — 1.9; с 18 блоков не задевает вовсе. Стрелок в 9 блоках теряет 15.3 и выживает с 2.7.
+Отсюда и минимум 7: он не делает выстрел безопасным для стоящего на месте, а делает его таким, от которого можно уйти — трёх секунд фитиля и нескольких шагов хватает, чтобы оказаться за 18 блоками. Оператор принял этот баланс сознательно: «убежать можно и умереть — баланс».
+3. probe_crater_by_power. Воронка не равна 1.3 × сила, как я считал: на обычном грунте сила 4 выбивает 133 клетки и достаёт на 5.0 блока, сила 2 — 38 клеток, сила 1 — 9 клеток, сила 0.5 — ни одной. В КАМНЕ сила 1 не ломает ничего. Поэтому два внешних кольца оставляют борозду на земле и не оставляют следа на скале, а сценарий воронок переведён на грунт — на то, по чему игра и идёт.
+Почему деление мощности на число точек, которое обсуждалось первым, не годится: сила взрыва это радиус, а не запас энергии. Один динамит, поделённый на 80 точек внешнего кольца, даёт силу 0.05 и радиус 0.1 блока — взрыв не выходит за свою клетку: ни урона, ни следа. И делить не нужно: по игроку приходит не сумма 201 взрыва, а последовательность из двух-шести ударов, так что важна сила ОДНОЙ клетки.
+Что это меняет в спеке: §6 получает минимум для ПКМ, §10 — таблицу сил и оговорку, что сила это радиус, AC-3 — отказ для близкого блока, AC-11 — силы по кольцам, AC-13 — урон силы своего кольца вместо «как обычный TNT» у всех.
 
 
 

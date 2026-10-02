@@ -2,7 +2,7 @@
 type: "concept-acceptance-criterion"
 node_id: "L0-orbc-ac10"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "AC-orbc-10 · The HUD shows Ready or the countdown in either hand"
 aliases: ["L0-orbc-ac10"]
 is_a: ["acceptance-criterion"]

@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-webs-as01"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 level: 2
 title: "ASM-webs-01 — Unloaded-cell detection is \"query fails/returns undefined\", not a chunk-ticking probe `CAN_ASSUME`"
 aliases: ["L0-webs-as01"]

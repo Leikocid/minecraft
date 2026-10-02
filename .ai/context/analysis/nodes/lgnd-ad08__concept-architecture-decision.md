@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-lgnd-ad08"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "AD-lgnd-08: Craft provenance through a recipe-only token item"
 aliases: ["L0-lgnd-ad08"]
 is_a: ["architecture-decision"]

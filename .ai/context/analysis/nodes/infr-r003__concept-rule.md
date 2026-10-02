@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-infr-r003"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Rule: `npm run build` must succeed from a clean clone; fixed file layout and ownership"
 aliases: ["L0-infr-r003"]
 is_a: ["rule"]

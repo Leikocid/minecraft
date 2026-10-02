@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-wind-as12"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Assumption — a naturally valid Windmill sits at the plot's modal surface Y, and the template's foundation skirt absorbs Δ ≤ 3"
 aliases: ["L0-wind-as12"]
 is_a: ["assumption"]

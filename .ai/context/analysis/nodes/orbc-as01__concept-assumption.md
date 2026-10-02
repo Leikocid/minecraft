@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-orbc-as01"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "ASM-orbc-01 · \"N blocks above the chosen point\" is measured from the target block's Y"
 aliases: ["L0-orbc-as01"]
 is_a: ["assumption"]

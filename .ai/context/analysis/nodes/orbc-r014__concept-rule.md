@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-orbc-r014"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "Rule · The charge contract published to `pntr` and `ring`"
 aliases: ["L0-orbc-r014"]
 is_a: ["rule"]

@@ -2,7 +2,7 @@
 type: "concept-contradiction"
 node_id: "L0-scyt-cx01"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "CX-scyt-01 · Scythe sub-scopes have children but no component nodes, and targeting has no nodes at all"
 aliases: ["L0-scyt-cx01"]
 is_a: ["contradiction"]

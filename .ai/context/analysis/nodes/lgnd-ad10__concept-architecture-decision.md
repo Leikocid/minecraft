@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-lgnd-ad10"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "AD-lgnd-10: The \"not destroyed\" policy is prevent → spill → return, and the Cannon's effects must pre-empt it"
 aliases: ["L0-lgnd-ad10"]
 is_a: ["architecture-decision"]

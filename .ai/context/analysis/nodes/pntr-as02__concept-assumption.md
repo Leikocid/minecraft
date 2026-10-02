@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-pntr-as02"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "AS-pntr-02 · `setType` gives no drops or XP"
 aliases: ["L0-pntr-as02"]
 is_a: ["assumption"]

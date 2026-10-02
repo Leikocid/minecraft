@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-scyt-r006"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 5
 title: "R-scyt-006 — Each hit launches the target about 10 blocks (strength 1.35); fall damage is kept"
 aliases: ["L0-scyt-r006"]
 is_a: ["rule"]

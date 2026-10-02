@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-scyt-r009"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 5
 title: "R-scyt-009 — Item stats and recipe (as shipped)"
 aliases: ["L0-scyt-r009"]
 is_a: ["rule"]

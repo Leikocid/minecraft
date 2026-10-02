@@ -2,7 +2,7 @@
 type: "concept-component"
 node_id: "L0-pntr"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "LMB penetrator (`pntr`)"
 aliases: ["L0-pntr"]
 is_a: ["component"]
@@ -12,6 +12,7 @@ priority: 540
 size_chars: 3728
 tags: ["title:LMB penetrator — the ~5×5 column effect", "is_a:component", "relates_to:L0-orbc", "relates_to:L0-lgnd", "relates_to:L0-ring", "relates_to:L0-adr-ochg", "relates_to:L0-xasm6", "relates_to:L0-xcx10", "see_also:orbitalcannonspecv1ruen-part-2", "see_also:orbitalcannonspecv1ruen-part-3", "see_also:orbitalcannonspecv1ruen-part-4", "not-implemented", "stage5"]
 level: 1
+needs_rebuild_marked_at: 2026-10-02T18:41:56.508Z
 ---
 # LMB penetrator (`pntr`)
 

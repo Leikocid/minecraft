@@ -2,7 +2,7 @@
 type: "concept-acceptance-criterion"
 node_id: "L0-orbc-ac19"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "AC-19 · Unload and shutdown discard in-flight charges and refund nothing `[bds]`"
 aliases: ["L0-orbc-ac19"]
 is_a: ["acceptance-criterion"]

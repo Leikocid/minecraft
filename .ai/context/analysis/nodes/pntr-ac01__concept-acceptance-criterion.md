@@ -2,7 +2,7 @@
 type: "concept-acceptance-criterion"
 node_id: "L0-pntr-ac01"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 aliases: ["L0-pntr-ac01"]
 is_a: ["acceptance-criterion"]
 part_of: ["L0-pntr"]

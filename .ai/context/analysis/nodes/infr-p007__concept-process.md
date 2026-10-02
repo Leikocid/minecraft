@@ -2,7 +2,7 @@
 type: "concept-process"
 node_id: "L0-infr-p007"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Process: Restart/idempotency check on BDS"
 aliases: ["L0-infr-p007"]
 is_a: ["process"]

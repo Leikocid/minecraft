@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-strf-as02"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Assumption (CAN_ASSUME) — What counts as a \"significant part\" of the footprint over water"
 aliases: ["L0-strf-as02"]
 is_a: ["assumption"]

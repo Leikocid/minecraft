@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-wind-as04"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Assumption — \"shallow void\" depth D = 4 blocks below the target surface"
 aliases: ["L0-wind-as04"]
 is_a: ["assumption"]

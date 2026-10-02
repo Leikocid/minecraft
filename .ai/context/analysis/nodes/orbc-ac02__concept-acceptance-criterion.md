@@ -2,7 +2,7 @@
 type: "concept-acceptance-criterion"
 node_id: "L0-orbc-ac02"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "AC-orbc-02 · Look, no fishing, anvil and table refuse it, Creative placement `[ipad]` (manual)"
 aliases: ["L0-orbc-ac02"]
 is_a: ["acceptance-criterion"]

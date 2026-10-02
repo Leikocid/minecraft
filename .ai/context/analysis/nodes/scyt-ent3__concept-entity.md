@@ -2,7 +2,7 @@
 type: "concept-entity"
 node_id: "L0-scyt-ent3"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 5
 title: "ScytheActivationOutcome — press outcomes and volley `EndReason` (as shipped)"
 aliases: ["L0-scyt-ent3"]
 is_a: ["entity"]

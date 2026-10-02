@@ -1,18 +1,560 @@
 ---
 title: Glossary
 type: project-knowledge
-generated_at: "2026-09-29T19:09:13.601Z"
+generated_at: "2026-10-02T19:12:16.990Z"
 source_channel: rollout
 node_id: rollout-glossary
 aliases: ["rollout-glossary","glossary","project-knowledge/glossary"]
 is_a: ["rollout","glossary"]
-relates_to: ["L0-lgnd-ac01","L0-lgnd-ac02","L0-lgnd-ac03","L0-lgnd-ac04","L0-lgnd-ac05","L0-lgnd-ac06","L0-lgnd-ac07","L0-lgnd-ac08","L0-lgnd-ac09","L0-lgnd-ac10","L0-lgnd-ac11","L0-lgnd-ac12","L0-lgnd-ac13","L0-lgnd-ac14","L0-lgnd-ac15","L0-lgnd-ac16","L0-lgnd-ac17","L0-lgnd-ac18","L0-lgnd-ac19","L0-lgnd-ac20","L0-lgnd-gl01","L0-lgnd-gl02","L0-lgnd-gl03","L0-lgnd-gl04","L0-lgnd-gl05","L0-lgnd-gl06","L0-lgnd-gl07","L0-lgnd-gl08","L0-lgnd-gl09","L0-lgnd-gl10","L0-lgnd-gl11","L0-lgnd-gl12","L0-orbc-ac01","L0-orbc-ac02","L0-orbc-ac03","L0-orbc-ac04","L0-orbc-ac05","L0-orbc-ac06","L0-orbc-ac07","L0-orbc-ac08","L0-orbc-ac09","L0-orbc-ac10","L0-orbc-ac11","L0-orbc-ac16","L0-orbc-ac18","L0-orbc-ac19","L0-orbc-gloss-activ","L0-orbc-gloss-charge","L0-orbc-gloss-cont","L0-orbc-gloss-lock","L0-orbc-gloss-mode","L0-orbc-gloss-orph","L0-pntr-ac01","L0-pntr-ac02","L0-pntr-ac03","L0-pntr-ac04","L0-pntr-ac05","L0-pntr-ac06","L0-pntr-ac07","L0-pntr-ac08","L0-pntr-ac09","L0-pntr-gl01","L0-pntr-gl02","L0-pntr-gl03","L0-pntr-gl04","L0-pntr-gl05","L0-ring-ac11","L0-ring-ac12","L0-ring-ac13","L0-ring-ac14","L0-ring-ac15","L0-ring-ac16","L0-ring-ac17","L0-ring-ac18","L0-ring-ai11","L0-ring-ai12","L0-ring-ai15","L0-ring-gl01","L0-ring-gl02","L0-ring-gl03","L0-ring-gl04","L0-ring-gl05"]
-priority: 540
+relates_to: ["L0-airs-ac01","L0-airs-ac02","L0-airs-ac03","L0-airs-ac04","L0-airs-ac05","L0-airs-ac06","L0-airs-ac07","L0-airs-ac08","L0-airs-g001","L0-airs-g002","L0-airs-g003","L0-airs-g004","L0-airs-g005","L0-bast-ac01","L0-bast-ac02","L0-bast-ac03","L0-bast-ac04","L0-bast-ac05","L0-bast-ac06","L0-bast-ac07","L0-bast-ac08","L0-bast-ac09","L0-bast-gl01","L0-bast-gl02","L0-bast-gl03","L0-bast-gl04","L0-bast-gl05","L0-infr-ac01","L0-infr-ac02","L0-infr-ac03","L0-infr-ac04","L0-infr-ac05","L0-infr-ac06","L0-infr-ac07","L0-infr-ac08","L0-infr-ac09","L0-infr-ac10","L0-infr-ac11","L0-infr-g001","L0-infr-g002","L0-infr-g003","L0-infr-g004","L0-infr-g005","L0-infr-g006","L0-infr-g007","L0-infr-g008","L0-infr-g009","L0-lgnd-ac01","L0-lgnd-ac02","L0-lgnd-ac03","L0-lgnd-ac04","L0-lgnd-ac05","L0-lgnd-ac06","L0-lgnd-ac07","L0-lgnd-ac08","L0-lgnd-ac09","L0-lgnd-ac10","L0-lgnd-ac11","L0-lgnd-ac12","L0-lgnd-ac13","L0-lgnd-ac14","L0-lgnd-ac15","L0-lgnd-ac16","L0-lgnd-ac17","L0-lgnd-ac18","L0-lgnd-ac19","L0-lgnd-ac20","L0-lgnd-ac21","L0-lgnd-ac22","L0-lgnd-gl01","L0-lgnd-gl02","L0-lgnd-gl03","L0-lgnd-gl04","L0-lgnd-gl05","L0-lgnd-gl06","L0-lgnd-gl07","L0-lgnd-gl08","L0-lgnd-gl09","L0-lgnd-gl10","L0-lgnd-gl11","L0-lgnd-gl12","L0-lgnd-gl13","L0-lgnd-gl14","L0-lgnd-gl15","L0-loot-ac01","L0-loot-ac02","L0-loot-ac03","L0-loot-ac04","L0-loot-ac05","L0-loot-ac06","L0-loot-ac07","L0-loot-ac08","L0-loot-ac09","L0-loot-ac10","L0-loot-gl01","L0-loot-gl02","L0-loot-gl03","L0-loot-gl04","L0-loot-gl05","L0-magn-a04"]
+priority: 580
 ---
 
 # Glossary
 
 > Автогенерация из Knowledge Vault. Ручное редактирование — установи `status: manual` в frontmatter.
+
+### AC — fixed modern appearance, size and randomized rotation (L0-airs-ac01)
+
+# AC — fixed modern appearance, size and randomized rotation
+
+**Links:** `part_of: ["L0-airs"]` · `is_a: ["acceptance-criterion"]`
+
+**GIVEN** a placed Airship instance, **WHEN** it is inspected, **THEN**:
+- Its palette is grey/light-grey concrete with intact glass windows and working lights; there is no vine, cobweb, crack, or other decay decoration anywhere on it.
+- Its upper hull is a single decorative oval volume containing no chest and no spawner.
+- Its overall footprint is 75×13×18 (L×W×H), template `[75, 18, 13]`.
+- Across a sample of generated instances, the placed rotation is drawn from {0°, 90°, 180°, 270°} and is not fixed to a single value.
+
+(Spec §5.1; raw tests 24, 25.)
+
+
+- **node**: L0-airs-ac01
+
+### AC — two opposite doors, no assisted ground access (L0-airs-ac02)
+
+# AC — two opposite doors, no assisted ground access
+
+**Links:** `part_of: ["L0-airs"]` · `is_a: ["acceptance-criterion"]`
+
+**GIVEN** a placed Airship, **WHEN** its lower hull is inspected, **THEN** it has exactly 2 doors on opposite sides, and there is no ladder, staircase, lift, waterfall, or teleporter connecting it to the ground. Reaching it is left entirely to the player.
+
+(Spec §5.2; raw test 26.)
+
+
+- **node**: L0-airs-ac02
+
+### AC — interior corridor + 4 rooms, one lamp per room (L0-airs-ac03)
+
+# AC — interior corridor + 4 rooms, one lamp per room
+
+**Links:** `part_of: ["L0-airs"]` · `is_a: ["acceptance-criterion"]`
+
+**GIVEN** a placed Airship, **WHEN** its interior is inspected, **THEN** it has exactly 1 central corridor and 4 small rooms, each room has exactly 1 ceiling lamp, and the spawner cell's light level stays within the engine's spawner-suppression threshold despite the decorative lighting.
+
+(Spec §5.2; raw test 27.)
+
+
+- **node**: L0-airs-ac03
+
+### AC — exactly 10 chests at fixed positions (L0-airs-ac04)
+
+# AC — exactly 10 chests at fixed positions
+
+**Links:** `part_of: ["L0-airs"]` · `is_a: ["acceptance-criterion"]`
+
+**GIVEN** a placed Airship, **WHEN** its chests are counted, **THEN** there are exactly 10: 2 in each of the 4 rooms (8 total) and 2 in the corridor, all at the same template-local positions (rotated per instance) across every instance, each reachable without breaking blocks.
+
+(Spec §5.3; raw test 28.)
+
+
+- **node**: L0-airs-ac04
+
+### AC — exactly one iron-axe Vindicator spawner at the corridor centre (L0-airs-ac05)
+
+# AC — exactly one iron-axe Vindicator spawner at the corridor centre
+
+**Links:** `part_of: ["L0-airs"]` · `is_a: ["acceptance-criterion"]`
+
+**GIVEN** a placed Airship, **WHEN** its spawner is inspected, **THEN** there is exactly 1 `mob_spawner`, positioned at the corridor's centre, and it produces Vindicators equipped with a vanilla iron axe.
+
+(Spec §5.3; raw test 29.)
+
+
+- **node**: L0-airs-ac05
+
+### AC — altitude clearance and rejection over water / near the world ceiling (L0-airs-ac06)
+
+# AC — altitude clearance and rejection over water / near the world ceiling
+
+**Links:** `part_of: ["L0-airs"]` · `is_a: ["acceptance-criterion"]`
+
+**GIVEN** a rolled Airship candidate, **WHEN** its footprint is validated, **THEN**:
+- Its bottom sits at least 40 blocks above the highest terrain point (including trees) under its whole rotated footprint, with a target clearance of 40–70 blocks where the build height allows it.
+- A candidate whose footprint is significantly over open water is rejected.
+- A candidate that cannot fit below the world ceiling even at the minimum 40-block clearance is rejected, with no downgrade below 40.
+
+(Spec §5.4; raw tests 30, 31.)
+
+
+- **node**: L0-airs-ac06
+
+### AC — independent generation at 2 % on suitable land chunks only (L0-airs-ac07)
+
+# AC — independent generation at 2 % on suitable land chunks only
+
+**Links:** `part_of: ["L0-airs"]` · `is_a: ["acceptance-criterion"]`
+
+**GIVEN** a large enough sample of newly discovered Overworld chunks with no Windmill involved, **WHEN** independent Airship generation is measured statistically, **THEN** the observed rate on suitable chunks (land, valid footprint, no collision) is consistent with a 2 % per-chunk roll, and no Airship appears on an unsuitable chunk (open water, colliding, or failing the altitude/ceiling check).
+
+(Spec §5.5; raw test 32.)
+
+
+- **node**: L0-airs-ac07
+
+### AC — the Windmill-linked attempt runs regardless of a nearby independent Airship (L0-airs-ac08)
+
+# AC — the Windmill-linked attempt runs regardless of a nearby independent Airship
+
+**Links:** `part_of: ["L0-airs"]` · `is_a: ["acceptance-criterion"]`
+
+**GIVEN** a Windmill instance that already has an independent Airship within 100 blocks of it, **WHEN** that Windmill's `afterPlace` hook runs, **THEN** `airs` still performs its own linked-attempt search in the 40–100-block ring — the existing independent Airship does not substitute for, skip, or block the linked attempt — and the two Airships, if the linked attempt also succeeds, do not physically overlap.
+
+(Spec §5.6; raw test 33.)
+
+
+- **node**: L0-airs-ac08
+
+### Airs g001 concept glossary term (L0-airs-g001)
+
+**Gondola / Гондола**
+
+The Airship's lower hull: an elongated oval volume of grey/light-grey concrete containing the 1 corridor + 4 rooms, 10 chests, 1 Vindicator spawner, and the 2 opposite doors. Everything script-relevant (chests, spawner, doors) lives in the gondola, never in the balloon.
+
+**Synonyms:** lower hull, hull.
+
+
+- **node**: L0-airs-g001
+
+### Airs g002 concept glossary term (L0-airs-g002)
+
+**Balloon / Аэростат** (upper hull)
+
+The Airship's decorative upper volume: a large oval shape in grey/light-grey concrete sitting above the gondola. Contains no chests, no spawner, and is not part of any script contract (`L0-airs-e001`) — purely template geometry for visual identity.
+
+**Synonyms:** upper hull, envelope.
+
+
+- **node**: L0-airs-g002
+
+### Airs g003 concept glossary term (L0-airs-g003)
+
+**Linked Airship**
+
+An Airship instance created by a Windmill's own one-time `afterPlace` trigger (`L0-airs-r004`), searched inside a hard 40–100-block ring around that Windmill's centre. Every Windmill instance — including the guaranteed spawn Windmill — attempts exactly one. Distinct from an **Independent Airship**; the two never substitute for or deduplicate against each other.
+
+**Synonyms:** Windmill-linked Airship.
+
+
+- **node**: L0-airs-g003
+
+### Airs g004 concept glossary term (L0-airs-g004)
+
+**Independent Airship**
+
+An Airship instance created by `strf`'s ordinary per-chunk discovery roll (2 % chance, `L0-airs-r003`), with no relationship to any Windmill. It is validated and placed exactly like a Linked Airship but through the normal discovery queue rather than a Windmill's trigger.
+
+**Synonyms:** normal Airship, chunk-roll Airship.
+
+
+- **node**: L0-airs-g004
+
+### Airs g005 concept glossary term (L0-airs-g005)
+
+**Ring search (hard ring)**
+
+`strf.searchRing(def, centre, rMin, rMax)`: the relocating-candidate-generation mode used only by `wind`'s guaranteed spawn Windmill (0–500 blocks, forced fallback) and by `airs`'s linked-Airship attempt (40–100 blocks, no forced fallback). Contrasts with the ordinary per-chunk roll, which never relocates a candidate (`L0-strf-r002` item 5).
+
+**Synonyms:** annulus search, 40–100 search (for the Airship's case specifically).
+
+
+- **node**: L0-airs-g005
+
+### Bast ac01 concept acceptance criterion (L0-bast-ac01)
+
+**AC-bast-01** (spec test 51)
+
+The rate belongs to `L0-strf-r002` §1 and is proven by `tests/structures-roll.test.mjs:148`.
+
+GIVEN a statistically sufficient sample of suitable Nether chunks,
+WHEN candidate generation runs,
+THEN `StructureDef.chance = 0.05` (`src/structures/config.ts:27`) — no exact-match requirement is imposed on small samples.
+
+**Source:** §14.7 test 51.
+
+
+- **node**: L0-bast-ac01
+
+### Bast ac02 concept acceptance criterion (L0-bast-ac02)
+
+**AC-bast-02** (spec test 52)
+
+GIVEN suitable terrain in any Nether biome,
+WHEN a candidate rolls,
+THEN generation proceeds regardless of biome identity;
+AND GIVEN a candidate site over a lava ocean,
+WHEN evaluated,
+THEN generation never occurs there.
+
+**Source:** §14.7 test 52.
+
+
+- **node**: L0-bast-ac02
+
+### Bast ac03 concept acceptance criterion (L0-bast-ac03)
+
+**AC-bast-03** (spec test 53)
+
+GIVEN a generated Mini Bastion,
+WHEN measured,
+THEN its footprint is ~20×20, height ~10-12, with 2-3 levels;
+AND across multiple instances, all four rotations (0°/90°/180°/270°) are observed.
+
+**Source:** §14.7 test 53.
+
+
+- **node**: L0-bast-ac03
+
+### Bast ac04 concept acceptance criterion (L0-bast-ac04)
+
+**AC-bast-04** (spec test 54)
+
+GIVEN a generated Mini Bastion,
+WHEN the treasure room is inspected,
+THEN it sits centrally/low with ordinary vanilla lava behavior (bucketable, blockable, water-reactive);
+AND both access methods work: building/routing a safe path through the lava area, and descending/falling from the level above.
+
+**Source:** §14.7 test 54.
+
+
+- **node**: L0-bast-ac04
+
+### Bast ac05 concept acceptance criterion (L0-bast-ac05)
+
+**AC-bast-05** (spec test 55)
+
+GIVEN a generated Mini Bastion,
+WHEN all chests are counted,
+THEN there are exactly 10: 3 treasure chests in the center + 7 regular chests elsewhere in the structure.
+
+**Source:** §14.7 test 55.
+
+
+- **node**: L0-bast-ac05
+
+### Bast ac06 concept acceptance criterion (L0-bast-ac06)
+
+**AC-bast-06** (spec test 56)
+
+GIVEN the treasure room,
+WHEN inspected,
+THEN it contains a random count of 2-4 Gold Blocks.
+
+**Source:** §14.7 test 56.
+
+
+- **node**: L0-bast-ac06
+
+### Bast ac07 concept acceptance criterion (L0-bast-ac07)
+
+**AC-bast-07** (spec test 57)
+
+GIVEN a freshly initialized Mini Bastion,
+WHEN the guard roster is counted,
+THEN there are 7-10 regular Piglins + exactly 2 Piglin Brutes, zero Hoglins,
+AND one Brute is positioned at/guarding the treasure room.
+
+**Source:** §14.7 test 57.
+
+
+- **node**: L0-bast-ac07
+
+### Bast ac08 concept acceptance criterion (L0-bast-ac08)
+
+**AC-bast-08** (spec test 58)
+
+GIVEN a Mini Bastion with guards killed, loot taken, and lava altered,
+WHEN the server restarts,
+THEN none of those changes revert — guards are not respawned, loot is not refilled, and altered lava/blocks stay altered.
+
+**Source:** §14.7 test 58.
+
+
+- **node**: L0-bast-ac08
+
+### Bast ac09 concept acceptance criterion (L0-bast-ac09)
+
+**AC-bast-09** (spec test 59)
+
+GIVEN a candidate site that physically intersects another detected structure (custom or vanilla, including a real Bastion Remnant),
+WHEN the candidate is evaluated,
+THEN generation is cancelled outright with no relocation attempt and no damage to the existing structure (`L0-strf-r006`).
+
+**Source:** §14.7 test 59, §15.
+
+
+- **node**: L0-bast-ac09
+
+### Bast gl01 concept glossary term (L0-bast-gl01)
+
+**Mini Bastion**
+
+The custom Nether structure this component describes: a compact (not full-size) Bastion Remnant-styled structure with a fixed ~20×20×10-12 template, one central lava treasure room, 10 loot chests, and a one-time Piglin/Piglin-Brute garrison.
+
+**Synonyms:** none (distinct from vanilla "Bastion Remnant").
+
+
+- **node**: L0-bast-gl01
+
+### Bast gl02 concept glossary term (L0-bast-gl02)
+
+**Bastion Remnant**
+
+The vanilla Minecraft structure Mini Bastion visually and mechanically references. Supplies the real loot tables (treasure + regular) and material palette (Blackstone family) that Mini Bastion reuses directly (R-bast-003, ADR-bast-02) rather than reimplementing.
+
+
+- **node**: L0-bast-gl02
+
+### Bast gl03 concept glossary term (L0-bast-gl03)
+
+**Piglin Brute**
+
+The elevated-tier vanilla Piglin variant used as Mini Bastion's dedicated guards. Exactly 2 spawn per instance (versus 7-10 regular Piglins), and unlike regular Piglins they are explicitly assigned fixed roles: one guards the treasure room, the other roams a second fixed position elsewhere in the template.
+
+
+- **node**: L0-bast-gl03
+
+### Bast gl04 concept glossary term (L0-bast-gl04)
+
+**Candidate (structure-generation candidate)**
+
+A chunk that has won the per-chunk generation roll (5% for Mini Bastion) and is being evaluated for physical suitability before a structure is actually placed. A candidate that fails suitability checks is simply discarded, never relocated to a neighboring chunk. Same term used across all four custom structures (Windmill, Airship, Mini Warden City, Mini Bastion). Cite: `L0-strf-e003`, `L0-strf-r002`.
+
+
+- **node**: L0-bast-gl04
+
+### Bast gl05 concept glossary term (L0-bast-gl05)
+
+**One-time persistent (guard/mob)**
+
+The family-wide mob-lifecycle pattern (§15) where an initial set of mobs is spawned exactly once at structure initialization, never despawns from distance/chunk-unload/restart, and is never replenished or respawned after death. Applies to Mini Bastion's Piglins/Piglin Brutes and, with different mob types, to Windmill's field Zombie Villagers. Cite: `L0-strf-r009`.
+
+
+- **node**: L0-bast-gl05
+
+### Infr ac01 concept acceptance criterion (L0-infr-ac01)
+
+**Links:** `part_of: ["L0-infr"]` · `is_a: ["acceptance-criterion"]`
+
+GIVEN a clean clone of the repository, WHEN `npm run build` is run, THEN it produces `dist/andrew.mcaddon` and `tsc` compiles `src/` with no errors against the installed `@minecraft/server` types. [src: stage-0-infrastructure criterion 1]
+
+
+- **node**: L0-infr-ac01
+
+### Infr ac02 concept acceptance criterion (L0-infr-ac02)
+
+**Links:** `part_of: ["L0-infr"]` · `is_a: ["acceptance-criterion"]`
+
+GIVEN the built packs, WHEN `npm run validate` (or the validate step inside `npm run build`) runs, THEN every manifest and every item/JSON file under `packs/**` passes structural validation (`validatePacks`/`validateSelfTestPack`) with zero `ValidationError`s. [src: stage-0-infrastructure criterion 2]
+
+
+- **node**: L0-infr-ac02
+
+### Infr ac03 concept acceptance criterion (L0-infr-ac03)
+
+**Links:** `part_of: ["L0-infr"]` · `is_a: ["acceptance-criterion"]`
+
+GIVEN `dist/andrew.mcaddon` staged into a BDS world in Docker, WHEN `npm run bds:check` runs, THEN the server log shows no manifest/dependency errors naming the add-on's packs, a `Pack Stack` line names the behavior and selftest pack uuids, and `SCRIPT_LOADED` appears in the log. [src: stage-0-infrastructure criterion 3]
+
+
+- **node**: L0-infr-ac03
+
+### Infr ac04 concept acceptance criterion (L0-infr-ac04)
+
+**Links:** `part_of: ["L0-infr"]` · `is_a: ["acceptance-criterion"]`
+
+GIVEN the built `.mcaddon` imported on the iPad (or delivered via the LAN server) with both packs enabled in a world, WHEN the player spawns, THEN a chat message appears at `initialSpawn`, and the test item is visible in Creative with both RU and EN names. This criterion is typed `manual`/`ipad`-channel and does not block autopilot merge — a green `bds` run never closes it. [src: stage-0-infrastructure criterion 4; C-6; decision-verification-approach-automatic]
+
+
+- **node**: L0-infr-ac04
+
+### Infr ac05 concept acceptance criterion (L0-infr-ac05)
+
+**Links:** `part_of: ["L0-infr"]` · `is_a: ["acceptance-criterion"]`
+
+GIVEN the Stage 0 deliverable is complete, WHEN the repository is inspected, THEN the project exists in git with a first commit covering the minimal add-on. [src: stage-0-infrastructure criterion 5]
+
+
+- **node**: L0-infr-ac05
+
+### Infr ac06 concept acceptance criterion (L0-infr-ac06)
+
+**Links:** `part_of: ["L0-infr"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-infr-as01"]`
+
+GIVEN a built add-on plus the `packs/gametest` beta pack, WHEN `npm run bds:gametest` runs, THEN a `SimulatedPlayer` completes the registered scenario on a dedicated `gametest` world with the Beta APIs experiment enabled, without a human or an iPad, and the run's log-derived verdict is PASS/FAIL with exit code 0/1 accordingly. [src: scripts/bds-gametest.mjs; decision-q-012]
+
+Note: see `L0-infr-as01` — this criterion is treated as an additional verification lane, not one of Stage 0's five original closing criteria.
+
+
+- **node**: L0-infr-ac06
+
+### Infr ac07 concept acceptance criterion (L0-infr-ac07)
+
+**Links:** `part_of: ["L0-infr"]` · `is_a: ["acceptance-criterion"]`
+
+GIVEN `docker/bds/compose.yaml`'s `VERSION` and `scripts/targets.mjs`'s `BDS_VERSION` disagree, WHEN `npm run bds:check` or `npm run bds:up` is run, THEN `assertComposePinsVersion()` fails the run immediately, before any Docker or build work happens. [src: scripts/bds-lib.mjs assertComposePinsVersion; C-2/C-3]
+
+
+- **node**: L0-infr-ac07
+
+### Infr ac08 concept acceptance criterion (L0-infr-ac08)
+
+**Links:** `part_of: ["L0-infr"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-infr-p005"]`
+
+GIVEN checked-in structure layout sources, WHEN the structure-compilation step of `npm run build` runs, THEN it emits one `.mcstructure` file per structure under `packs/behavior/structures/andrew/`, and a round-trip unit test confirms each file's chest/spawner/shrieker/door counts and footprint bounds match its source definition, for all four structures. [src: L0-adr-tmpl; L0-infr-p005]
+
+
+- **node**: L0-infr-ac08
+
+### Infr ac09 concept acceptance criterion (L0-infr-ac09)
+
+**Links:** `part_of: ["L0-infr"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-infr-p006"]`
+
+GIVEN a template built into the pack, WHEN the BDS/GameTest placement test places it via `structureManager.place` in each of the 4 rotations (0/90/180/270) in the `gametest` world, THEN in-world block-entity counts and states (chest count, spawner `EntityIdentifier`, shrieker `can_summon`) match the compiled template in every rotation. [src: L0-adr-tmpl; L0-infr-p006]
+
+
+- **node**: L0-infr-ac09
+
+### Infr ac10 concept acceptance criterion (L0-infr-ac10)
+
+**Links:** `part_of: ["L0-infr"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-infr-p006", "L0-infr-as03"]`
+
+GIVEN the statistical chunk-roll check drives `strf`'s roll formula over a large synthetic sample of chunk coordinates per structure, WHEN the harness tallies successful rolls, THEN the observed rate falls inside the configured tolerance band of that structure's chance constant, and the run exits 0/1 by that verdict alone, with no human eye needed. [src: L0-adr-strc; L0-infr-p006; L0-infr-as03]
+
+
+- **node**: L0-infr-ac10
+
+### Infr ac11 concept acceptance criterion (L0-infr-ac11)
+
+**Links:** `part_of: ["L0-infr"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-infr-p007", "L0-infr-as04"]`
+
+GIVEN a `gametest` world where at least one structure has completed one-time init, WHEN the BDS server process is restarted without re-staging the world, THEN no chest/spawner/guard/marker is duplicated and the instance registry's `placed`/`lootFilled`/`guardsSpawned` flags are byte-identical before and after the restart. [src: L0-adr-strs; C-7; L0-infr-p007; L0-infr-as04]
+
+
+- **node**: L0-infr-ac11
+
+### Infr g001 concept glossary term (L0-infr-g001)
+
+**BDS (Bedrock Dedicated Server)**
+
+**Links:** `part_of: ["L0-infr"]` · `is_a: ["glossary-term"]`
+
+The official headless Minecraft Bedrock server binary. Ships Linux x86_64 only — no native macOS build — so on the Mac mini (Apple Silicon) it runs inside Docker under Rosetta 2, via the `itzg/minecraft-bedrock-server` image [C-5]. Two roles in this project: the one-shot automated check (`bds:check`) and the manual LAN dev server the iPad joins (`bds:up`).
+
+**Synonyms**: Bedrock Dedicated Server, "the server", the `bds` verification channel.
+
+
+- **node**: L0-infr-g001
+
+### Infr g002 concept glossary term (L0-infr-g002)
+
+**.mcaddon**
+
+**Links:** `part_of: ["L0-infr"]` · `is_a: ["glossary-term"]`
+
+A zip archive containing one or more Minecraft Bedrock behavior/resource packs — Minecraft's native add-on import format. This project's build produces exactly one, `dist/andrew.mcaddon`, containing only the `behavior` and `resource` pack directories (never the dev-only `selftest`/`gametest` packs). Importing it on the iPad installs both packs; re-importing the same uuid+version is a no-op from the device's point of view.
+
+
+- **node**: L0-infr-g002
+
+### Infr g003 concept glossary term (L0-infr-g003)
+
+**SimulatedPlayer / GameTest harness**
+
+**Links:** `part_of: ["L0-infr"]` · `is_a: ["glossary-term"]`
+
+`@minecraft/server-gametest`'s API for scripting an artificial player inside a running Bedrock world — movement, mining, item use — without a real client. Beta-only (no stable channel), so it's confined to a dev-only pack (`packs/gametest`) and a dedicated, experiments-enabled world (`LEVEL_NAME=gametest`), driven here by `npm run bds:gametest`. Used both for single-player scripted-behavior proof and, per `decision-q-012`, as the accepted stand-in for multiplayer proof (two `SimulatedPlayer`s instead of two physical devices).
+
+
+- **node**: L0-infr-g003
+
+### Infr g004 concept glossary term (L0-infr-g004)
+
+**Content Log (GUI)**
+
+**Links:** `part_of: ["L0-infr"]` · `is_a: ["glossary-term"]`
+
+An in-game overlay on the iPad (Settings → Creator → Content Log) that streams script/engine diagnostics live, in white text on a translucent background, while playing. The device-side counterpart to reading `docker logs`/`bds-check.log` on the Mac — used for debugging import and script errors that only show up once the pack is actually running on the target hardware.
+
+
+- **node**: L0-infr-g004
+
+### Infr g005 concept glossary term (L0-infr-g005)
+
+**"Pack Stack" line**
+
+**Links:** `part_of: ["L0-infr"]` · `is_a: ["glossary-term"]`
+
+A specific line BDS prints to its log at world load, naming each loaded behavior pack and its uuid. `bds-check.mjs`'s log analysis treats its presence (for the release and selftest pack uuids) as positive proof those packs were actually loaded by the engine — resource packs get no such line, so their loading is proven negatively instead (absence of a "Configured pack … was not found and was ignored" warning for that uuid).
+
+
+- **node**: L0-infr-g005
+
+### Infr g006 concept glossary term (L0-infr-g006)
+
+**`.mcstructure` template**
+
+**Links:** `part_of: ["L0-infr"]` · `is_a: ["glossary-term"]`
+
+A little-endian NBT file format Bedrock uses for `structureManager.place()`/structure blocks. This project's four structure bodies (Windmill, Airship, Mini Warden City, Mini Bastion) ship as one file each, generated by `scripts/build-structures.mjs` from repo sources rather than exported from an in-game structure block (no Windows editor, no macOS Bedrock client). Lives at `packs/behavior/structures/andrew/*.mcstructure`, gitignored build output — see `L0-infr-e005`.
+
+
+- **node**: L0-infr-g006
+
+### Infr g007 concept glossary term (L0-infr-g007)
+
+**worldSalt**
+
+**Links:** `part_of: ["L0-infr"]` · `is_a: ["glossary-term"]`
+
+A random value created once per world and stored in a world dynamic property, used as the seed for `strf`'s deterministic per-chunk roll (`hash(worldSalt, dim, cx, cz, structureId) < chance`, `L0-adr-strc`). Makes re-evaluating an already-seen chunk idempotent — the same chunk always rolls the same outcome — so a lost "evaluated" bit can't double-generate a structure. Owned by `L0-strf`; infra's statistical chunk-roll check (`L0-infr-p006`) exercises it but does not generate or store it itself.
+
+
+- **node**: L0-infr-g007
+
+### Infr g008 concept glossary term (L0-infr-g008)
+
+**Chunk-roll statistical check**
+
+**Links:** `part_of: ["L0-infr"]` · `is_a: ["glossary-term"]`
+
+An infra-owned GameTest-lane check that drives `strf`'s roll formula over many synthetic chunk coordinates and asserts the observed generation rate matches the configured per-structure constant (1 % Windmill / 2 % Airship / 5 % Warden City & Bastion) within a tolerance band, because the real rate can't be observed by exploring a normal-sized test world. See `L0-infr-p006`, `L0-infr-r006`.
+
+**Synonyms**: statistical chunk-roll test, rate check.
+
+
+- **node**: L0-infr-g008
+
+### Infr g009 concept glossary term (L0-infr-g009)
+
+**Restart/idempotency check**
+
+**Links:** `part_of: ["L0-infr"]` · `is_a: ["glossary-term"]`
+
+An infra-owned BDS check that restarts the server process mid-lifetime (same world, not a fresh re-stage) and diffs structure-instance state before/after to prove one-time init (loot fill, guard spawn, marker placement) never re-runs — the engine-provable half of the project's no-duplication constraint (C-7). See `L0-infr-p007`.
+
+
+- **node**: L0-infr-g009
 
 ### Lgnd ac01 concept acceptance criterion (L0-lgnd-ac01)
 
@@ -464,6 +1006,61 @@ A Cannon inside a **shulker-box item** is outside this AC (`cx12`).
 
 - **node**: L0-lgnd-ac20
 
+### Lgnd ac21 concept acceptance criterion (L0-lgnd-ac21)
+
+---
+is_a: ["acceptance-criterion"]
+part_of: ["L0-lgnd"]
+relates_to: ["L0-lgnd-r016", "L0-lgnd-ad13", "L0-magn", "ufomagnetspecv1ruen-part-4"]
+---
+**AC-lgnd-21: Legendary weapons are never pulled (UFO AC 13, rule side).** Channel: `build` (node unit test for the predicate) + `bds` (GameTest `ufo:legendary_*`).
+
+**Predicate.** `isLegendaryStack` is true for each of `andrew:web_sword`, `andrew:scythe_of_calamity`, `andrew:orbital_cannon` and their three `_crafted` tokens, whether marked, unmarked or stale. It is false for `iron_sword`, for `undefined` and for an empty slot.
+
+GIVEN, inside a magnet zone with at least 10 iron candidates, the following and a Survival player holding iron:
+- a marked Scythe on the ground;
+- an unmarked Web Sword in a chest next to an iron ingot;
+- a marked Orbital Cannon in a hopper **block**;
+- a chest minecart holding a marked Web Sword and an iron ingot;
+- an armour stand in iron armour holding a marked Scythe
+
+WHEN the magnet runs its full 60 s and releases
+THEN:
+- no legendary stack is ever within 6 blocks of the saucer's hover column;
+- the ground Scythe and the chest's Web Sword have not moved;
+- the hopper block is still in place and the Cannon is still inside it, untouched. A hopper is a container only and never a pulled block (`L0-magn-adhp`, `L0-adr-ufnd`); an iron ingot placed in the same hopper is extracted;
+- the chest minecart and the armour stand were not selected;
+- the iron ingot in the chest was extracted;
+- the world holds exactly one live copy of each marked instance, and neither owed list changed.
+
+Negative control: the same scenario with `isLegendaryStack` stubbed to return `false` must fail the "never within 6 blocks" clause. (Reconciled at reduce v4: the earlier control, a hopper pull without `protectLegendariesIn`, has no code path to exercise once the hopper is never a block.)
+
+
+- **node**: L0-lgnd-ac21
+
+### Lgnd ac22 concept acceptance criterion (L0-lgnd-ac22)
+
+---
+is_a: ["acceptance-criterion"]
+part_of: ["L0-lgnd"]
+relates_to: ["L0-lgnd-p002", "L0-lgnd-r008", "L0-lgnd-ac07", "L0-lgnd-r016", "L0-magn", "L0-lgnd-as16"]
+---
+**AC-lgnd-22: Dying from a magnet fall keeps every held legendary.** Channel: `bds` (GameTest).
+
+UFO §6 makes a fall from the hover height lethal (U2: 33 damage from 37 blocks). Retention is cause-agnostic: `entityDie` path B (`retention.ts:74-152`) does not read the damage source. This AC pins that down for the magnet.
+
+GIVEN Survival player P holds an iron ingot in the main hand, a marked Web Sword in the off hand, and a marked Scythe and a marked Orbital Cannon in the hotbar
+WHEN the magnet lifts P to the hold point, the magnet releases, and P dies from the fall
+THEN on respawn P holds exactly those three instances (same ids, same gen; the Web Sword is in the inventory or off hand),
+AND no item entity of any of them exists at the landing spot, or in the saucer's cloud after the death,
+AND the iron ingot dropped as a vanilla death drop,
+AND no owed entry and no `returned` message was produced.
+
+Variant: the same after `/andrew:ufo stop` mid-hold, and after a server restart between death and respawn.
+
+
+- **node**: L0-lgnd-ac22
+
 ### Lgnd gl01 concept glossary term (L0-lgnd-gl01)
 
 **Legendary weapon** (легендарное оружие)
@@ -641,782 +1238,209 @@ See `L0-lgnd-r012`.
 
 - **node**: L0-lgnd-gl12
 
-### AC-orbc-01 · Item components: no durability, not enchantable, punch damage, stack of 1 `[bds]` (L0-orbc-ac01)
+### Lgnd gl13 concept glossary term (L0-lgnd-gl13)
 
-# AC-orbc-01 · Item components: no durability, not enchantable, punch damage, stack of 1 `[bds]`
+---
+is_a: ["glossary-term"]
+part_of: ["L0-lgnd"]
+relates_to: ["L0-lgnd-ad12", "L0-lgnd-p003"]
+---
+**Departure (in-flight instance)**
 
-**Links:** `part_of: ["L0-orbc"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-orbc-r001", "L0-orbc-ent1"]`
+A live marked legendary that has just left a player's inventory slot or off hand. Recovery records it in `inFlight` (`recovery.ts:106`) and resolves it after a short grace period.
 
-**GIVEN** `new ItemStack("andrew:orbital_cannon")`.
+- If the player swung to drop within ±2 ticks, the instance is searched for: watched ground entities, every player's inventory and off hand, and block containers around the departure cell. Found nowhere means lost, which means returned (v1.4.2 fix `5a68b84`).
+- A departure without a drop swing is a store the script cannot see (a shulker item or the ender chest), and is never a loss.
 
-**THEN**
-- `getComponent("minecraft:durability")` is undefined.
-- `getComponent("minecraft:enchantable")` is undefined, or `canAddEnchantment` is false for sharpness and unbreaking.
-- `maxAmount === 1`.
-- A static JSON test asserts the absence of `damage`, `digger`, `use_modifiers` and `shooter`, and the presence of `icon: fishing_rod` and `menu_category.category: equipment`.
-- **Punch:** P hits a zombie with the Cannon, and the health lost equals the loss from an empty-hand hit in the same setup (1.0). P uses the Cannon 50 times, and the stack is still the same instance with the same mark `id`, with no wear.
-- The recipe JSON matches `r002`'s shape exactly (a static test).
+**Synonyms**: in-flight, left-a-slot.
 
 
-- **node**: L0-orbc-ac01
+- **node**: L0-lgnd-gl13
 
-### AC-orbc-02 · Look, no fishing, anvil and table refuse it, Creative placement `[ipad]` (manual) (L0-orbc-ac02)
+### Lgnd gl14 concept glossary term (L0-lgnd-gl14)
 
-# AC-orbc-02 · Look, no fishing, anvil and table refuse it, Creative placement `[ipad]` (manual)
+---
+is_a: ["glossary-term"]
+part_of: ["L0-lgnd"]
+relates_to: ["L0-lgnd-ad13", "L0-lgnd-r016"]
+---
+**Legendary stack vs. legendary item entity**
 
-**Links:** `part_of: ["L0-orbc"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-xcx13", "L0-orbc-r001"]`
+- **Legendary stack** (`isLegendaryStack(stack)`): any `ItemStack` whose type is a registered legendary `itemId` or craft token, in any mark state (marked, unmarked or stale). It answers "is this a legendary weapon?", and the magnet uses it to never pull one.
+- **Legendary item entity** (`isLegendaryItemEntity(entity)`): a `minecraft:item` entity carrying a **live marked** instance. It answers "is this a protected instance?", and `ring` drop suppression and `protectLegendariesIn` use it.
 
-On the iPad, on the current stable client:
-1. The inventory icon is indistinguishable from a vanilla fishing rod placed beside it.
-2. In hand, it reads as a rod. A screenshot goes into the task, per `xcx13`.
-3. Tapping use in the air or on water casts **no** bobber, and nothing is ever caught.
-4. The enchanting table does not accept it into the slot. In the anvil, the Cannon plus an enchanted book gives no result.
-5. It appears under Creative → Equipment, and search "Orbital" finds it.
-6. The name is shown as "Orbital Cannon" (EN) and "Орбитальная пушка" (RU).
-7. The recipe book shows the TNT-cross recipe.
+An unmarked `/give` copy is a legendary stack but not a legendary item entity.
 
-**Not auto-verifiable.** The orchestrator must not close it from a `bds` run (memory: "Orchestrator auto-verifies manual criteria").
 
+- **node**: L0-lgnd-gl14
 
-- **node**: L0-orbc-ac02
+### Lgnd gl15 concept glossary term (L0-lgnd-gl15)
 
-### AC-3 · With no block within 10, nothing fires and no cooldown starts `[bds]` (L0-orbc-ac03)
+---
+is_a: ["glossary-term"]
+part_of: ["L0-lgnd"]
+relates_to: ["L0-lgnd-p008", "L0-lgnd-as15", "L0-lgnd-cx13"]
+---
+**Holder block vs. entity holder**
 
-# AC-3 · With no block within 10, nothing fires and no cooldown starts `[bds]`
+- **Holder block**: a block type in `HOLDER_TYPES` (`recovery.ts:491`) that can contain a legendary as a stack: chests, barrels, hoppers, droppers, dispensers, the crafter, furnaces, shulker boxes, copper chests, shelves, decorated pots and item frames. `protectLegendariesIn` and the departure search read only these. Writing over one (`setType`, `fillBlocks`, a structure place) erases its contents, so script writers protect first.
+- **Entity holder**: an entity that carries stacks: a chest or hopper minecart, an armour stand or a mob hand. Recovery never reads it. Its contents become watchable only when the entity is destroyed and spills them. The UFO magnet must not select one that carries a legendary (`r016`).
 
-**Links:** `part_of: ["L0-orbc"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-orbc-r004", "L0-orbc-r003"]`
 
-**GIVEN**
-- a SimulatedPlayer P in Survival, holding the Cannon, with no cooldown;
-- P facing open sky, with the nearest block along the view ray 11 or more blocks away. A variant looks at water only, or at tall grass with air behind it within 10.
+- **node**: L0-lgnd-gl15
 
-**WHEN** P uses the item (RMB) and attacks (LMB, a forced `entityHitBlock` path).
+### Loot ac01 concept acceptance criterion (L0-loot-ac01)
 
-**THEN**
-- No `andrew:orbital_charge` exists in the dimension.
-- `andrew:cd_orbital_cannon` on P is unset or unchanged.
-- No chat or title message was sent to P.
-- An immediate retry facing a block at distance 9.5 **succeeds**: one charge exists and the cooldown is set.
+GIVEN a Windmill or Airship chest is initialized, WHEN the fill algorithm runs, THEN it performs between 5 and 12 fill attempts inclusive, and each individual attempt yields at most one loot category (never zero-or-more-than-one simultaneous categories from a single attempt).
 
+Source: spec AC34.
 
-- **node**: L0-orbc-ac03
 
-### AC-4 · Spawn height is +30 in the Overworld and End and +10 in the Nether, with the ceiling clamped `[bds]` (L0-orbc-ac04)
+- **node**: L0-loot-ac01
 
-# AC-4 · Spawn height is +30 in the Overworld and End and +10 in the Nether, with the ceiling clamped `[bds]`
+### Loot ac02 concept acceptance criterion (L0-loot-ac02)
 
-**Links:** `part_of: ["L0-orbc"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-orbc-r007", "L0-orbc-cx03"]`
+GIVEN repeated custom-table fills across many chests, WHEN Sticks/Logs/Iron Ingot/Copper Ingot/Gold Ingot/Diamond categories are selected, THEN their quantities fall within 2–8 / 2–6 / 2–8 / 3–10 / 1–5 / 1–3 respectively, on every occurrence.
 
-**GIVEN** the stub effect, which records `spawnY` and does not break blocks, and a target block T.
+Source: spec AC35.
 
-**THEN**
-| Case | Expected spawn Y |
-|---|---|
-| Overworld, T.y = 64 | 94 |
-| End, T.y = 60 | 90 |
-| Nether, T.y = 40 | 50 |
-| Overworld, T.y = 300 | 319 (clamped) |
-| Nether, T.y = 120 | 127 (clamped) |
 
-- The charge's (x, z) equals T's column centre.
-- Every case is a pure unit test of `spawnY(dimId, T.y, heightRange)`, plus one BDS run per dimension that reads the entity position in the spawn tick.
+- **node**: L0-loot-ac02
 
+### Loot ac03 concept acceptance criterion (L0-loot-ac03)
 
-- **node**: L0-orbc-ac04
+GIVEN a statistically sufficient sample of equipment-category rolls (armor, sword, axe; enchanted and unenchanted) across many chests, WHEN material is rolled, THEN iron appears in ~80% and diamond in ~20% of rolls (no exact-match requirement on small samples — statistical tolerance, not a per-roll assertion).
 
-### AC-5 · A charge spawned inside a solid block detonates at once `[bds]` (L0-orbc-ac05)
+Source: spec AC36.
 
-# AC-5 · A charge spawned inside a solid block detonates at once `[bds]`
 
-**Links:** `part_of: ["L0-orbc"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-orbc-r008", "L0-orbc-p002"]`
+- **node**: L0-loot-ac03
 
-**GIVEN**
-- a stone block placed exactly at the computed spawn cell (T.y + 30) above target T;
-- the stub effect, which records `(point, tick)`.
+### Loot ac04 concept acceptance criterion (L0-loot-ac04)
 
-**WHEN** P fires at T.
+GIVEN multiple armor-category attempts succeed in the same chest, WHEN slots are rolled, THEN identical armor pieces (e.g. two diamond helmets) are permitted to co-occur in one chest — the implementation must not de-duplicate or reject repeats.
 
-**THEN**
-- `onDetonate` is called once, in the activation tick, with `point` equal to the stone block's location.
-- No charge entity remains one tick later.
-- A control run with air at the spawn cell detonates at T (the top contact) after ≥ 1 tick.
+Source: spec AC37.
 
 
-- **node**: L0-orbc-ac05
+- **node**: L0-loot-ac04
 
-### AC-6 · Entities do not stop falling charges `[bds]` (L0-orbc-ac06)
+### Loot ac05 concept acceptance criterion (L0-loot-ac05)
 
-# AC-6 · Entities do not stop falling charges `[bds]`
+GIVEN any Enchanted Armor/Sword/Axe roll from the custom table, WHEN its enchantments are inspected, THEN none of them is a curse (Curse of Binding, Curse of Vanishing), and every enchantment level present is within that enchantment's vanilla maximum.
 
-**Links:** `part_of: ["L0-orbc"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-orbc-r008"]`
+Source: spec AC38, §3.3.
 
-**GIVEN**
-- target T on flat stone.
-- In T's column, between T+5 and T+15, three things lie in the charge's path:
-  - a second SimulatedPlayer Q in Creative flight;
-  - a named `minecraft:cow` (summoned with a name, so it persists) kept in place with a slowness effect;
-  - a boat.
 
-**WHEN** P fires at T with the stub effect.
+- **node**: L0-loot-ac05
 
-**THEN**
-- `onDetonate.point` equals T, not Q's, the cow's or the boat's position.
-- The charge's Y, sampled per tick, decreases monotonically through the entities' Y.
-- Q, the cow and the boat are not displaced by the charge. Their position change is below 0.05 while it passes.
+### Loot ac06 concept acceptance criterion (L0-loot-ac06)
 
-**Variant:** water 5 deep above T. `point` equals T (the stone floor), not the water surface.
+GIVEN a full custom-table chest fill (5–12 attempts), WHEN the resulting contents are inspected, THEN at most one Golden Apple stack exists, its quantity is 1–3, it is always a regular (never Enchanted) Golden Apple, and Enchanted Golden Apple never appears via the custom table.
 
+Source: spec AC39, §3.3.
 
-- **node**: L0-orbc-ac06
 
-### AC-orbc-07 · A charge falling into the Void vanishes with no effect and keeps the cooldown `[bds]` (L0-orbc-ac07)
+- **node**: L0-loot-ac06
 
-# AC-orbc-07 · A charge falling into the Void vanishes with no effect and keeps the cooldown `[bds]`
+### Loot ac07 concept acceptance criterion (L0-loot-ac07)
 
-**Links:** `part_of: ["L0-orbc"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-orbc-r009", "L0-orbc-r005"]`
+GIVEN a chest where Diamonds is selected on more than one attempt, WHEN contents are inspected, THEN multiple Diamond stacks/successes are permitted in the same chest (unlike Golden Apple).
 
-**GIVEN**
-- In the End: a single block T at y = 60 with nothing below it.
-- The test calls the core's `spawnCharge` hook directly at a column offset one block beside T, so the column is empty down to `heightRange.min`.
+Source: spec AC40.
 
-**WHEN** the charge falls.
 
-**THEN**
-- No `onDetonate` is called.
-- The entity is gone once its Y would pass below `heightRange.min`.
-- P's cooldown remaining is still greater than 0.
-- No `andrew:orbital_charge` entity remains in the dimension.
+- **node**: L0-loot-ac07
 
+### Loot ac08 concept acceptance criterion (L0-loot-ac08)
 
-- **node**: L0-orbc-ac07
+GIVEN any structure chest (custom or vanilla path) whose contents have already been rolled, WHEN the chest is reopened, the chunk is unloaded/reloaded, or the server restarts, THEN its contents are unchanged — no re-roll, no refill.
 
-### AC-orbc-08 · Touch input and aim on the iPad `[ipad]` (manual) (L0-orbc-ac08)
+Source: spec §2, §3 preamble, §13.6/§13.7, §15.
 
-# AC-orbc-08 · Touch input and aim on the iPad `[ipad]` (manual)
 
-**Links:** `part_of: ["L0-orbc"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-xcx8", "L0-orbc-cx02", "L0-xasm10", "L0-orbc-ad01"]`
+- **node**: L0-loot-ac08
 
-**Blocked** until `L0-xq5` is answered. The THEN lines below are for option 1 (LMB within reach, RMB up to 10). Rewrite them if the answer is different.
+### Loot ac09 concept acceptance criterion (L0-loot-ac09)
 
-On the iPad with the default touch controls, using the stub effect (one sound at detonation):
-1. **Tap** on a highlighted block 3 blocks away → one RMB attack lands on **that** block, the tapped one.
-2. **Hold** on a highlighted block 3 blocks away → one LMB attack. The block is not mined, even when the hold continues.
-3. A block 8 blocks away with RMB (by the gesture that `cx02` settles) → the attack lands on the block under the crosshair/aim.
-4. Each gesture gives exactly one attack and one cooldown. There is never a double shot from tap-plus-hold (`r006`).
-5. Tapping the sky gives no sound, no text and no HUD change.
+GIVEN Mini Warden City's 40 chests, WHEN their contents are inspected, THEN all 40 use the real vanilla `chests/ancient_city` loot table unmodified — including the normal possibility of rare vanilla drops such as Enchanted Golden Apple or Swift Sneak books — and the custom weighted table is never applied to them.
 
-Record the actual outcome of each case in the task, and the deviation note (`r013`).
+Source: spec §13.6, AC48.
 
 
-- **node**: L0-orbc-ac08
+- **node**: L0-loot-ac09
 
-### AC-orbc-09 · One activation per tick; the target is locked; hits count on any face `[bds]` (L0-orbc-ac09)
+### Loot ac10 concept acceptance criterion (L0-loot-ac10)
 
-# AC-orbc-09 · One activation per tick; the target is locked; hits count on any face `[bds]`
+GIVEN Mini Bastion's 10 chests, WHEN their contents are inspected, THEN the 3 central treasure chests draw from vanilla `chests/bastion_treasure` and the 7 distributed chests draw from vanilla `chests/bastion_other`, with no custom-table influence on either.
 
-**Links:** `part_of: ["L0-orbc"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-orbc-r006", "L0-orbc-r003", "L0-orbc-ent2"]`
+Source: spec §14 addendum, AC55 (loot portion — chest counts/gold blocks/guards belong to `L0-bast`, not this component).
 
-1. **Dedup.** P's handlers receive `itemUse`, `itemUseOn` and `entityHitBlock` for the same tick. The test drives the core's input entry with three synthetic calls. Exactly one attack is registered, and its mode is the first call's.
-2. **Lock.** P fires at T. On the next tick P turns 180° and moves 5 blocks. The charge's (x, z) still equals T's column, and `onDetonate.point` equals T.
-3. **Faces.** P looks at T's bottom face from a cave below, at T's side from 4 blocks, and at the top from above. Each gives `target == T.location`, not the adjacent air block.
-4. **Passable.** Tall grass stands in front of stone S at a distance of 6. The target is S.
 
+- **node**: L0-loot-ac10
 
-- **node**: L0-orbc-ac09
+### Loot gl01 concept glossary term (L0-loot-gl01)
 
-### AC-orbc-10 · The HUD shows Ready or the countdown in either hand (L0-orbc-ac10)
+**Fill Attempt**
 
-# AC-orbc-10 · The HUD shows Ready or the countdown in either hand
+One draw within a chest's 5–12-attempt custom fill run. Selects at most one of the 13 loot categories by relative weight, or none. Distinct from a vanilla loot-table roll, which has no attempt concept — it's a single opaque call into vanilla loot generation.
 
-**Links:** `part_of: ["L0-orbc"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-orbc-r012", "L0-orbc-cx01", "L0-lgnd-cx08"]`
+**Synonyms:** attempt, roll.
 
-**`[bds]`** Call `hudMessage(P)`:
-- The Cannon in the main hand with no cooldown gives rawtext `andrew.legendary.ready` with the Cannon's name.
-- After firing, at t+60, it gives `andrew.legendary.cooldown` with `27`.
-- With the Cannon in the off hand only, the same output. This needs `allow_off_hand` (`lgnd-cx08`).
-- Holding no Cannon gives `undefined`.
-- Player Q, who has not fired, gets Ready at the same moment.
 
-**`[ipad]`** (manual): in EN and RU, the Action Bar text matches the wording `cx01` settles, for example `Orbital Cannon — Ready` and `Орбитальная пушка — 27с`. It updates about twice a second.
+- **node**: L0-loot-gl01
 
+### Loot gl02 concept glossary term (L0-loot-gl02)
 
-- **node**: L0-orbc-ac10
+**Relative Weight**
 
-### AC-orbc-11 · No leftovers and no idle loop `[bds]` (L0-orbc-ac11)
+The unit used in the 13-category table (`L0-loot-e001`). Weights are compared to each other, not to a 0–100 percentage scale — the table's weights intentionally do not sum to 100 and must be normalized at selection time (e.g. a cumulative-weight roll). Not to be confused with "drop chance" in vanilla loot tables, which is a true probability.
 
-# AC-orbc-11 · No leftovers and no idle loop `[bds]`
 
-**Links:** `part_of: ["L0-orbc"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-orbc-p003", "L0-orbc-p002", "L0-orbc-ad02"]`
+- **node**: L0-loot-gl02
 
-**GIVEN** three players each fire RMB in the same tick, using a stub `ring.layout` that returns 160 columns.
+### Loot gl03 concept glossary term (L0-loot-gl03)
 
-**THEN**
-- 480 charges exist in the spawn tick.
-- Once every charge has detonated or voided, the count of `andrew:orbital_charge` is 0, and the core's registry holds 0 attacks.
-- The job handle is released. `system.clearJob` was reached, or the generator returned.
-- The mean added script time per tick while the charges are live stays within the budget `ring` publishes (C-5a′). It is measured with `system.currentTick` deltas against a control run.
-- A world startup with a pre-placed `andrew:orbital_charge`, left over from a crash, removes it within 1 s.
+**Custom Table / Vanilla Table**
 
+**Custom Table** — this add-on's own 13-category weighted loot table (`L0-loot-p001`), used only for Windmill and Airship chests.
 
-- **node**: L0-orbc-ac11
+**Vanilla Table** — an unmodified vanilla Bedrock loot table (`chests/ancient_city`, `chests/bastion_treasure`, `chests/bastion_other`), used only for Mini Warden City and Mini Bastion chests (`L0-loot-p002`). The two are mutually exclusive per chest (`L0-loot-r007`).
 
-### AC-16 · The shared 30 s cooldown starts at once and blocks both modes `[bds]` (L0-orbc-ac16)
 
-# AC-16 · The shared 30 s cooldown starts at once and blocks both modes `[bds]`
+- **node**: L0-loot-gl03
 
-**Links:** `part_of: ["L0-orbc"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-orbc-r005", "L0-orbc-r006"]`
+### Loot gl04 concept glossary term (L0-loot-gl04)
 
-**GIVEN** two SimulatedPlayers, P and Q, each holding a Cannon with no cooldown, and a target within 10.
+**Curse (enchantment)**
 
-**WHEN** P fires RMB at tick t.
+A vanilla enchantment category (Curse of Binding, Curse of Vanishing) explicitly excluded from every custom-table enchanted roll (`L0-loot-r005`). Not excluded from vanilla-table chests, where normal vanilla curse odds apply unmodified.
 
-**THEN**
-- In tick t, before any charge has moved, P's `remainingTicks` is between 599 and 600.
-- At t+20, P's LMB and RMB each create **no** new charge, and the charge count is unchanged.
-- At t+20, Q's RMB succeeds. Q's cooldown is independent (C-20).
-- At t+600, P's LMB succeeds.
-- Reverse order: the first shot is LMB, and RMB is blocked.
-- The cooldown is set even if the charge later voids or its chunk unloads (covered by `ac07` and `ac19`).
 
+- **node**: L0-loot-gl04
 
-- **node**: L0-orbc-ac16
+### Loot gl05 concept glossary term (L0-loot-gl05)
 
-### AC-18 · The owner dying, logging out or changing dimension does not cancel charges `[bds]` (L0-orbc-ac18)
+**One-Time Fill**
 
-# AC-18 · The owner dying, logging out or changing dimension does not cancel charges `[bds]`
+The persistence contract shared by both loot mechanisms (`L0-loot-r006`): a chest's contents are decided exactly once, at structure post-place init, and frozen thereafter regardless of reopen/restart/chunk reload. Enforced by `strf`'s instance registry, not by loot itself.
 
-**Links:** `part_of: ["L0-orbc"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-orbc-r010", "L0-orbc-p003"]`
 
-**GIVEN**
-- P fires RMB at a target 1 block high with the stub effect, so the fall is about 30 ticks.
-- Observer Q stands near the target and keeps the area loaded.
+- **node**: L0-loot-gl05
 
-**WHEN**, in three separate runs, P is killed, disconnected, or teleported to the Nether one tick after firing.
+### Magn a04 concept acceptance criterion (L0-magn-a04)
 
-**THEN**
-- In every run, every charge reaches `onDetonate`, at the same points as a control run where P does nothing.
-- The ownerId passed equals P's id.
-- The detonations happen in the Overworld.
-- No charge appears in P's new dimension.
+**UFO AC-4 (bds).**
+- **GIVEN** two Survival players in the zone, A with `iron_ingot` in the main hand and B with `shears` in the off hand (`allow_off_hand` via `/replaceitem`),
+- **WHEN** the magnet turns on,
+- **THEN**:
+  - both rise at ≤ 0.6 blocks per tick (per-tick displacement measured);
+  - within (hover depth / 0.6 + 20) ticks, both are within 0.5 blocks of saucer − (0, 6, 0);
+  - both stay within 0.5 blocks of it until release.
+- An Adventure player behaves the same (`L0-xasm14`).
 
+The iPad check that the lift looks smooth is in `L0-magn-aipd`.
 
-- **node**: L0-orbc-ac18
 
-### AC-19 · Unload and shutdown discard in-flight charges and refund nothing `[bds]` (L0-orbc-ac19)
-
-# AC-19 · Unload and shutdown discard in-flight charges and refund nothing `[bds]`
-
-**Links:** `part_of: ["L0-orbc"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-orbc-r011", "L0-orbc-p003", "L0-orbc-ad03"]`
-
-**Unload run**
-- **GIVEN** P fires at a target, and in the next tick P and every other player are teleported more than 300 blocks away, so the area unloads.
-- **WHEN** 200 ticks pass and P returns.
-- **THEN**
-  - no `onDetonate` was ever called for that attack;
-  - after the chunk reloads, no `andrew:orbital_charge` entity exists there (the `entityLoad` sweep);
-  - the target block is intact;
-  - P's cooldown was not cleared early.
-
-**Restart run** (BDS `stop`, then restart on the checks instance on port 19136)
-- **GIVEN** P fires, and the server stops within 10 ticks.
-- **THEN**, after the restart:
-  - no charge entity exists in the loaded area;
-  - no late detonation happens in the next 100 ticks;
-  - P's `andrew:cd_orbital_cannon` deadline equals its pre-stop value, so the cooldown persisted.
-
-
-- **node**: L0-orbc-ac19
-
-### Orbc gloss activ concept glossary term (L0-orbc-gloss-activ)
-
-**Successful activation**
-
-A single LMB or RMB press that passes every gate:
-- the Cannon is resolved in a hand;
-- it is the first activation this tick;
-- the cooldown is ready;
-- a valid target lies within 10 blocks.
-
-It then writes the cooldown and spawns the charges in the same tick. It is the only moment the cooldown starts. A press that fails any gate is a **no-op** and leaves no trace.
-
-**Synonyms:** запуск атаки, shot, fire.
-
-
-- **node**: L0-orbc-gloss-activ
-
-### Orbc gloss charge concept glossary term (L0-orbc-gloss-charge)
-
-**Charge (Orbital Charge)**
-
-The TNT-looking, script-moved entity `andrew:orbital_charge` that falls from the spawn height to the target. It has no collision, no physics and no damage, and it is never a real primed TNT. One LMB attack has one charge, at 1.2× scale. One RMB attack has about 160 charges, at 1.0×. The outcomes of a charge are **detonated**, **voided**, **lost** or **timed out**.
-
-**Synonyms:** заряд, projectile (avoid, because "projectile" means the Scythe's entities in `L0-scyt`). **Not:** `minecraft:tnt`.
-
-
-- **node**: L0-orbc-gloss-charge
-
-### Orbc gloss cont concept glossary term (L0-orbc-gloss-cont)
-
-**Contact block / detonation point**
-
-A *contact block* is any block that stops a falling charge: not air, not a liquid, and not in the pass-through set (`L0-orbc-as03`).
-
-The *detonation point* is the integer location of the first contact block the charge sweeps, or of its spawn cell when it spawns inside one. That point is handed to `onDetonate`.
-
-**Synonyms:** точка срабатывания, "actual trigger point" (§9).
-
-
-- **node**: L0-orbc-gloss-cont
-
-### Orbc gloss lock concept glossary term (L0-orbc-gloss-lock)
-
-**Target lock**
-
-The block location, and its dimension, fixed at the moment of a successful activation. It is the block that was hit, on any face. All later computation uses the lock and never the player's current aim or position. The column of an LMB attack, and the centre of an RMB attack's rings, are the locked block's (x, z).
-
-**Synonyms:** зафиксированная цель, locked target.
-
-
-- **node**: L0-orbc-gloss-lock
-
-### Orbc gloss mode concept glossary term (L0-orbc-gloss-mode)
-
-**LMB mode / RMB mode**
-
-The two attacks of the Cannon.
-- **LMB** (Attack / Hit Block, via `entityHitBlock`) fires one penetrator charge, and its effect is `L0-pntr`.
-- **RMB** (Use, via `itemUse`/`itemUseOn`) fires the five-ring TNT volley, and its effect is `L0-ring`.
-
-On touch the mapping is: hold = LMB, tap = RMB (`L0-xasm10`, pending `L0-xq5`).
-
-**Synonyms:** ЛКМ/ПКМ, penetrator/rings, attack/use.
-
-
-- **node**: L0-orbc-gloss-mode
-
-### Orbc gloss orph concept glossary term (L0-orbc-gloss-orph)
-
-**Orphan charge / lost charge**
-
-A *lost* charge is one dropped from its attack because its entity or its next cell became unloaded. It never detonates.
-
-An *orphan* is a charge entity that exists in the world with no live attack in memory: one that was saved in an unloaded chunk or at shutdown, then loaded again. It is removed on load or startup and **never** detonates.
-
-**Related:** *voided*, a charge that fell below `heightRange.min`.
-
-
-- **node**: L0-orbc-gloss-orph
-
-### AC-7 (bds) · Irregular ~5×5 column to the bottom (L0-pntr-ac01)
-
-**GIVEN** an Overworld test area of stone from y=80 down to bedrock. It contains a 3×3 water pocket at y=40 and a bedrock block placed at y=20 in the column centre, and the column is seeded with a fixed `attackId`.
-**WHEN** an LMB charge detonates on the stone at y=80.
-**THEN**, after the removal job reports done:
-- every cell of `planColumn(attackId)` between y=80 and `heightRange.min` that was stone is air;
-- no cell outside the plan changed (except by liquid flow);
-- the 3×3 core is air on every layer, and at least one layer is not a perfect 5×5 square;
-- per-layer removed counts are within 9…33;
-- the placed bedrock at y=20 and the bottom bedrock are still bedrock;
-- the stone directly below the placed bedrock (y=19) is air, so the column did not stop;
-- the water cells are still water or have flowed; none were turned into air by the script.
-
-
-- **node**: L0-pntr-ac01
-
-### AC-7 (bds) · Works in Nether and End; keep list holds (L0-pntr-ac02)
-
-**GIVEN** three test columns:
-- (a) Nether: netherrack from y=100 to 0, with a lava cell at y=50;
-- (b) End: end stone, with an `end_portal_frame` and a `barrier` placed in the column;
-- (c) Overworld: a waterlogged oak fence in the column.
-
-**WHEN** an LMB detonates on the top of each.
-
-**THEN**:
-- (a) all netherrack in the plan down to y=0 is gone, the Nether bottom bedrock and the lava remain, and the column reaches y=0;
-- (b) the frame and the barrier remain, and the end stone below them is gone;
-- (c) the fence cell is `minecraft:water`.
-
-The unit test for `PENETRATOR_KEEP` equals the `xasm6` list exactly.
-
-
-- **node**: L0-pntr-ac02
-
-### AC-8 (bds) · Obsidian, portal, containers, spawners removed with no drops (L0-pntr-ac03)
-
-**GIVEN** the column plan contains:
-- obsidian and crying obsidian;
-- a lit Nether portal (frame and `portal` blocks);
-- a chest filled with 27 cobblestone stacks, a barrel, a placed shulker box with items, and a furnace with output;
-- a `mob_spawner` and reinforced deepslate.
-
-A snapshot of the `minecraft:item` and `minecraft:xp_orb` entity ids in a 9×9 AABB around the column is taken before the LMB.
-
-**WHEN** an LMB detonates above them.
-
-**THEN**:
-- every listed block in the plan is air;
-- the portal blocks outside the plan are gone too (vanilla invalidation);
-- **zero** new item or XP entities exist in the plan cells' AABB after the job plus 20 ticks.
-
-Neighbour pops outside the plan are excluded (`L0-pntr-as06`).
-
-
-- **node**: L0-pntr-ac03
-
-### AC-8 (bds) · Legendary in a column container survives exactly once (L0-pntr-ac04)
-
-**GIVEN** two players, A (the owner) and B.
-- Chest X lies in the column plan and contains a Web Sword crafted by B and ordinary items.
-- Chest Y lies in the column of a *second* LMB fired by B in the same tick, and its column overlaps A's column.
-
-**WHEN** both LMBs detonate.
-
-**THEN**:
-- the world plus all inventories hold exactly **one** instance of the Web Sword, with the same mark id and generation;
-- it lies as an item entity outside every column's footprint, or is delivered by `lgnd`'s rules;
-- the ordinary items are gone;
-- no second copy appears after a restart.
-
-**AND** if `protectLegendariesIn` is mocked to throw, the container cell is **kept** and still holds the sword.
-
-
-- **node**: L0-pntr-ac04
-
-### AC-9 (bds) · No direct damage; environment still harms (L0-pntr-ac05)
-
-**GIVEN**:
-- a zombie and simulated player B standing on the detonation surface inside the plan, each at full health;
-- a cow on a 1-block ledge beside the column but outside the plan;
-- the owner A standing 6 blocks away.
-
-**WHEN** the LMB detonates.
-
-**THEN**:
-- in the detonation tick and the next tick, no entity receives damage (no `entityHurt` event with any cause from `pntr`), and the cow and A do not move;
-- the zombie and B then fall and take fall damage (`entityHurt` with cause `fall`);
-- if lava is placed at the rim, an entity that ends up in it takes `lava` damage.
-
-Note: the simulated player is only valid on the gametest pack (memory: SimulatedPlayer limits). Real-player feel belongs to `L0-pntr-ac08`.
-
-
-- **node**: L0-pntr-ac05
-
-### AC-10 (bds) · One sound, 20-tick wave, nothing left behind (L0-pntr-ac06)
-
-**GIVEN** a spy wrapped around `dimension.playSound` and `dimension.spawnParticle` in the gametest build.
-**WHEN** one LMB detonates on a 140-layer column.
-**THEN**:
-- `playSound` was called exactly once, with `random.explode`, at the detonation point, in the detonation tick;
-- `spawnParticle` calls span exactly 20 consecutive ticks starting at the detonation tick;
-- the per-tick call count is ≤ 16;
-- the particle y-coordinates are non-increasing across ticks, and the last tick includes `bottom`;
-- 25 ticks after detonation, no `pntr` job is running, and the entity count in the column AABB equals the pre-attack count minus entities that fell out.
-
-
-- **node**: L0-pntr-ac06
-
-### AC-10 (bds) · Removal looks instant within budget (L0-pntr-ac07)
-
-**GIVEN** a stone-filled area on the QA BDS (port 19134).
-**WHEN**:
-- (a) one LMB detonates at y=76;
-- (b) one LMB detonates at y=319;
-- (c) three players fire LMB in the same tick at y=76.
-
-**THEN** the removal job reports:
-- the top 16 layers removed in the detonation tick;
-- `ticksUsed ≤ 3` for (a), `≤ 6` for (b), and `≤ 6` for each column in (c);
-- no server tick above 50 ms in (a), and at most 2 consecutive ticks above 50 ms in (b) and (c).
-
-If this fails, the result is recorded against `L0-pntr-as03`, and the deviation path in `L0-pntr-cons` is taken. The criterion is not silently widened.
-
-
-- **node**: L0-pntr-ac07
-
-### AC-7/AC-10 (ipad) · Looks like a blasted shaft, instant, one boom, ~1 s wave (L0-pntr-ac08)
-
-**GIVEN** the release build on the production BDS (port 19132), joined from the iPad, in Survival with the Cannon.
-**WHEN** the tester fires LMB at grass, then at an ocean floor, then in the Nether.
-**THEN**, judged by the tester on the device (not by a gametest):
-- the shaft appears in the same instant as the boom, with no visible top-to-bottom "unzipping";
-- the walls look ragged, not a clean square;
-- exactly one loud explosion sound is heard;
-- a particle wave visibly runs down the shaft for about 1 s;
-- ocean water pours into the shaft;
-- the owner standing nearby takes no hit.
-
-This criterion must be closed by the human tester only. Orchestrator auto-verification does not count (memory: orchestrator auto-verifies manual criteria).
-
-
-- **node**: L0-pntr-ac08
-
-### C-14 (bds) · Column at a chunk edge never force-loads (L0-pntr-ac09)
-
-**GIVEN** a detonation cell on the x-edge of a loaded chunk whose neighbour chunk is unloaded (outside the tick range).
-**WHEN** the LMB detonates.
-**THEN**:
-- the cells in the loaded chunk are removed;
-- the cells in the unloaded chunk are unchanged when that chunk is later loaded;
-- `report.skippedUnloaded > 0`;
-- no error propagates out of the job;
-- no ticking area or dynamic property was created.
-
-
-- **node**: L0-pntr-ac09
-
-### Penetrator column (L0-pntr-gl01)
-
-**Penetrator column**
-
-The vertical shaft that an Orbital Cannon LMB removes. It is about 5×5 with ragged edges and fits in 7×7. It runs from the detonation cell down to the dimension's `heightRange.min`. Its cell set is defined by a `ColumnPlan` (`L0-pntr-ent1`).
-
-**Synonyms:** LMB column, shaft, вертикальная шахта (RU spec). **Not to be confused with** the RMB "rings" (`L0-ring`).
-
-
-- **node**: L0-pntr-gl01
-
-### Detonation point (L0-pntr-gl02)
-
-**Detonation point**
-
-The integer block cell where an Orbital charge triggers. It is either the first solid cell the falling charge touches, or the cell it spawned inside. It is supplied by `orbc` through `onDetonate`. It can differ from the **target block** the player aimed at, for example when a tree canopy or overhang is in the way. The LMB column starts here, not at the target.
-
-**Synonyms:** trigger point, фактическая точка срабатывания (RU spec).
-
-
-- **node**: L0-pntr-gl02
-
-### Survival-unbreakable block (keep list) (L0-pntr-gl03)
-
-**Survival-unbreakable block**
-
-A block a Survival player can never break, such as Bedrock, End Portal Frame, the active End Portal, End Gateway, Barrier and command blocks. The LMB keeps it but continues the column below it. In code it is `PENETRATOR_KEEP`, a fixed list, because stable 2.10.0 has no hardness query (`L0-xasm6`).
-
-**Note:** Obsidian, Reinforced Deepslate and Ancient Debris are *not* in this set. They are hard but breakable.
-
-**Synonyms:** keep list, engine-protected block, неразрушаемый в Survival.
-
-
-- **node**: L0-pntr-gl03
-
-### Particle wave (L0-pntr-gl04)
-
-**Particle wave**
-
-The purely visual effect after an LMB. Explosion particles travel from the top of the penetrator column to its bottom in about 20 ticks (~1 s), whatever the column's depth. It plays *after* the blocks are already gone and carries no sound.
-
-**Synonyms:** визуальная волна частиц (RU spec).
-
-
-- **node**: L0-pntr-gl04
-
-### Band mask (L0-pntr-gl05)
-
-**Band mask**
-
-The 7×7 bit pattern that selects which `(x, z)` cells are removed for a *band* of 4 consecutive layers of the penetrator column. The 3×3 core is always set, and the rim is probabilistic. The pattern is drawn from a PRNG seeded by the attack id, so the same attack always gives the same shape.
-
-**Related:** `ColumnPlan`, `attackId`.
-
-
-- **node**: L0-pntr-gl05
-
-### Ring ac11 concept acceptance criterion (L0-ring-ac11)
-
-**AC-ring-11 · Five continuous rings, d ≈ 1/5/10/15/20** (Orbital AC-11; `r001`) · **verify: bds**
-
-- **Unit:** `layout({x:0,y:64,z:0})` returns 1 centre + 4 rings. Each ring is closed and 8-connected (every cell has exactly 2 ring neighbours in its 8-neighbourhood), and each cell satisfies |√(dx²+dz²) − r| ≤ 0.75 for r ∈ {2.5, 5, 7.5, 10}. There are no duplicates, and the count is 140–160.
-- **Gametest:** GIVEN a flat stone pad in the Overworld and an owner holding the Cannon aimed at the pad's centre block, WHEN RMB is used, THEN in the activation tick the `andrew:orbital_charge` count tagged with the attack equals `layout().length`. Every charge has y = target.y + 30 and (x, z) equal to a layout column. After the drain, the pad shows craters whose centres match the layout columns.
-
-
-- **node**: L0-ring-ac11
-
-### Ring ac12 concept acceptance criterion (L0-ring-ac12)
-
-**AC-ring-12 · The charges are independent, and every one explodes separately** (Orbital AC-12; `r003`) · **verify: bds**
-
-GIVEN a stepped target: the half of the ring footprint with x < 0 is raised 6 blocks, so the inner charges land 6 ticks or more before the outer ones. WHEN RMB is fired, THEN:
-- each charge's x and z never change during its flight: it is sampled every tick, and the tolerance is 0.001;
-- no charge is removed before its own contact tick, as `orbc` reports;
-- the number of `createExplosion` calls equals the number of charges that detonated, and is never merged;
-- `report.maxBlastsInTick` ≤ 48.
-
-Run it again with a spy on `createExplosion`: the call count per attack equals `layout().length` minus voided and lost charges.
-
-
-- **node**: L0-ring-ac12
-
-### Ring ac13 concept acceptance criterion (L0-ring-ac13)
-
-**AC-ring-13 · TNT damage, including to the owner** (Orbital AC-13; `r004`; C-20) · **verify: bds**
-
-GIVEN two SimulatedPlayers in Survival with 20 HP and no armour: owner A stands 2 blocks from the ring-5 line, and B stands 2 blocks from the ring-15 line, plus one zombie on ring 10. WHEN A fires RMB, THEN:
-- A, B and the zombie each lose health in the range a vanilla primed TNT gives at the same distance (reference: a `minecraft:tnt` control run in the same pad);
-- A's death message, if A died, attributes the blast;
-- a control run with A's position switched to another dimension gives no error, and the blasts still happen with no `source`.
-
-
-- **node**: L0-ring-ac13
-
-### Ring ac14 concept acceptance criterion (L0-ring-ac14)
-
-**AC-ring-14 · TNT resistance, no block drops, no fire** (Orbital AC-14; `r005`, `r006`) · **verify: bds**
-
-GIVEN a pad of dirt, stone and planks, with Obsidian and Reinforced Deepslate pillars on ring 10 and a chest with 10 cobblestone on ring 15. WHEN RMB is fired, THEN:
-- the dirt, stone and planks around each charge are cratered;
-- every Obsidian and Reinforced Deepslate block remains;
-- the chest is destroyed;
-- the `minecraft:item` count within footprint ± 8 is 0, with no cobblestone, dirt or planks;
-- no `minecraft:fire` or `minecraft:soul_fire` block exists in the area;
-- after the drain, `world.gameRules.doTileDrops` equals its pre-test value. Check this for both `true` and `false` initial values.
-
-
-- **node**: L0-ring-ac14
-
-### Ring ac15 concept acceptance criterion (L0-ring-ac15)
-
-**AC-ring-15 · Underwater: damage only** (Orbital AC-15; `r007`) · **verify: bds**
-
-GIVEN a flat pad where the half with x < 0 is covered by 4 blocks of water and the half with x ≥ 0 is dry, with a zombie on the seabed on ring 5 at x < 0. WHEN RMB is fired at the boundary, THEN:
-- every block within footprint ± 6 with x ≤ −2 is identical before and after (`getBlock` type snapshot);
-- the dry half shows craters;
-- the zombie took damage or died.
-
-
-- **node**: L0-ring-ac15
-
-### Ring ac16 concept acceptance criterion (L0-ring-ac16)
-
-**AC-ring-16 · RMB never destroys a legendary** (Orbital §5, §10; `r008`) · **verify: bds**
-
-GIVEN a live-marked Web Sword in a chest on ring 5, and a live-marked Scythe as an item entity on the ground 6 blocks outside ring 20. WHEN RMB is fired, THEN:
-- both legendaries exist afterwards as item entities in the same dimension, outside the footprint ± 8, with the same `id` and `gen` (no `gen + 1`);
-- no "returned" log line appears, and `handedBack` is 0;
-- the `lgnd` `ac19` detector reports no unprotected container removal.
-
-This AC fails today by design until `L0-ring-cx02` is resolved.
-
-
-- **node**: L0-ring-ac16
-
-### Ring ac17 concept acceptance criterion (L0-ring-ac17)
-
-**AC-ring-17 · Three simultaneous RMBs stay within budget** (Orbital §12, §15; C-5a′; RG-1 to RG-3) · **verify: bds**
-
-GIVEN 3 SimulatedPlayers with their own Cannons over three adjacent flat pads (their footprints overlap by 5 blocks). WHEN all three fire RMB in the same tick, THEN:
-- `maxBlastsInTick` ≤ 48;
-- all queued blasts drain within 10 ticks;
-- server tick time stays above 50 ms for at most 3 consecutive ticks and never exceeds 150 ms;
-- after 60 ticks the ring queue interval is cleared and orbc's flight interval is cleared.
-
-
-- **node**: L0-ring-ac17
-
-### Ring ac18 concept acceptance criterion (L0-ring-ac18)
-
-**AC-ring-18 · No leftovers, and vanilla drops preserved** (Orbital §15; C-19; `r006`, `r009`) · **verify: bds**
-
-GIVEN `keepInventory` false, a SimulatedPlayer B holding 5 diamonds on ring 10, 3 zombies on rings 5 and 15, and 4 pre-existing dirt item entities on ring 20. WHEN owner A fires RMB and B and the zombies die, THEN:
-- 0 `andrew:orbital_charge` entities remain;
-- B's 5 diamonds exist as item entities or were destroyed by a later blast, as in vanilla, and never by `ring` code (spy: 0 `remove()` calls on non-container-fallback items);
-- the zombie loot and XP orbs were spawned;
-- no block-drop items exist;
-- the `minecraft:item` count within footprint ± 8 is at most the vanilla drops of what died, plus any surviving pre-existing dirt.
-
-
-- **node**: L0-ring-ac18
-
-### Ring ai11 concept acceptance criterion (L0-ring-ai11)
-
-**AC-ring-11i · The rings look like five solid rings falling together** (Orbital AC-11, §10) · **verify: ipad**
-
-GIVEN the iPad player on a hill ≥ 25 blocks from a flat target, WHEN a second player fires RMB, THEN:
-- the player sees normal-size TNT forming a single centre block and four concentric rings, with no visible gaps, that appear at the same moment and fall together;
-- on flat ground they explode within about half a second of each other;
-- the craters afterwards trace the five rings.
-
-The tester records a screen video and attaches a screenshot of the airborne rings.
-
-
-- **node**: L0-ring-ai11
-
-### Ring ai12 concept acceptance criterion (L0-ring-ai12)
-
-**AC-ring-12i · Separate explosion sounds and no pushed charges** (Orbital AC-12) · **verify: ipad**
-
-GIVEN the iPad player with sound on, at 20 blocks from an uneven target (a hillside), WHEN RMB is fired, THEN:
-- the player hears a rolling series of separate explosion sounds, not one single boom;
-- no falling TNT is seen to fly sideways or upward after a neighbour explodes;
-- no TNT stays flashing on the ground afterwards.
-
-
-- **node**: L0-ring-ai12
-
-### Ring ai15 concept acceptance criterion (L0-ring-ai15)
-
-**AC-ring-15i · The underwater rings are visible and audible but leave the seabed intact** (Orbital AC-15) · **verify: ipad**
-
-GIVEN the iPad player swimming 12 blocks from an ocean-floor target, WHEN a second player fires RMB at the seabed, THEN:
-- the player sees the charges sink through the water and hears the explosions;
-- the player takes damage if inside a ring blast;
-- the seabed afterwards shows no craters.
-
-
-- **node**: L0-ring-ai15
-
-### Ring gl01 concept glossary term (L0-ring-gl01)
-
-**Ring Layout**
-
-The constant set of charge columns for one RMB. It has one centre column (d = 1) plus four 8-connected closed rings at d = 5/10/15/20 (r = d/2), de-duplicated: ~145 `{x,z}` offsets. `layout(target)` translates them to the locked target. See `L0-ring-ent1`, `L0-ring-p001`.
-
-**Synonyms:** TNT rings, ring pattern. The spec's name is «пять TNT-колец».
-
-
-- **node**: L0-ring-gl01
-
-### Ring gl02 concept glossary term (L0-ring-gl02)
-
-**Detonation Queue**
-
-`ring`'s global, in-memory FIFO of Queued Blasts. It is filled by `onDetonate` and drained at ≤ `RING_MAX_BLASTS_PER_TICK` explosions per tick by one interval, which runs only while the queue is non-empty. It spreads a same-tick touchdown of hundreds of charges over a few ticks. See `L0-ring-p003`, `L0-ring-ad02`.
-
-**Not to be confused with** the orbc *flight job* (`L0-orbc-ad02`), which moves the charges.
-
-
-- **node**: L0-ring-gl02
-
-### Ring gl03 concept glossary term (L0-ring-gl03)
-
-**Drop-Suppression Window**
-
-The synchronous `try/finally` scope in which `world.gameRules.doTileDrops` is held false while a batch of ring explosions runs. It is then restored to its previous value. It never spans a tick. It removes block and container drops without touching mob loot or death drops. See `L0-ring-ent3`, `L0-ring-ad01`, `L0-ring-r006`.
-
-**Synonyms:** no-drop window, tile-drop window.
-
-
-- **node**: L0-ring-gl03
-
-### Ring gl04 concept glossary term (L0-ring-gl04)
-
-**Underwater Blast**
-
-A ring blast whose centre cell is water, flowing water or a waterlogged block at blast time. It uses `breaksBlocks:false, allowUnderwater:true`: it deals damage and knockback, and changes no block. The classification is per blast, not per attack. Lava does not count. See `L0-ring-r007`, `L0-ring-ad03`.
-
-**Synonyms:** damage-only blast.
-
-
-- **node**: L0-ring-gl04
-
-### Ring gl05 concept glossary term (L0-ring-gl05)
-
-**Blast Centre / Protection Margin**
-
-- **Blast Centre:** the explosion origin derived from the contact `point`. It is the middle of the cell above `point`, or of `point` itself when that cell is solid (`L0-ring-r010`).
-- **Protection Margin:** ±8 blocks (2 × TNT power) around blast centres. It is the volume `protectLegendariesIn` must clear before a blast, because explosions damage item entities that far (`L0-ring-r008`, `L0-ring-cx02`).
-- **Ring Footprint:** the 21 × 21 XZ box of the layout around the target. It is the base of the `avoid` region.
-
-
-- **node**: L0-ring-gl05
+- **node**: L0-magn-a04
 

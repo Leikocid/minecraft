@@ -2,7 +2,7 @@
 type: "concept-acceptance-criterion"
 node_id: "L0-wind-ac08"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "AC-wind-08 · Curing a field guard yields an ordinary Villager that stays ordinary"
 aliases: ["L0-wind-ac08"]
 is_a: ["acceptance-criterion"]

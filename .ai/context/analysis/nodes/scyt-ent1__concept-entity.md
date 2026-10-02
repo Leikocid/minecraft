@@ -2,7 +2,7 @@
 type: "concept-entity"
 node_id: "L0-scyt-ent1"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 5
 title: "ScytheOfCalamity (item plus `LegendaryDef`, as shipped)"
 aliases: ["L0-scyt-ent1"]
 is_a: ["entity"]

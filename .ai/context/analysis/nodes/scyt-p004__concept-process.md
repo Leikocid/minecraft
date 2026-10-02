@@ -2,7 +2,7 @@
 type: "concept-process"
 node_id: "L0-scyt-p004"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 5
 title: "P-scyt-004 — Registration and first Survival craft"
 aliases: ["L0-scyt-p004"]
 is_a: ["process"]

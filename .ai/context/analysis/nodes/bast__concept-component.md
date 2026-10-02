@@ -2,7 +2,7 @@
 type: "concept-component"
 node_id: "L0-bast"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Mini Bastion — Nether custom structure (20×20×10-12, lava treasure room, one-time Piglin garrison)"
 aliases: ["L0-bast"]
 is_a: ["component"]

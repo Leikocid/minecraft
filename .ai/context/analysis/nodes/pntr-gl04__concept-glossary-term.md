@@ -2,7 +2,7 @@
 type: "concept-glossary-term"
 node_id: "L0-pntr-gl04"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 aliases: ["L0-pntr-gl04"]
 is_a: ["glossary-term"]
 part_of: ["L0-pntr"]

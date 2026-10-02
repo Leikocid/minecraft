@@ -2,7 +2,7 @@
 type: "concept-component"
 node_id: "L0-loot"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Loot system — custom weighted table + vanilla loot-table application"
 aliases: ["L0-loot"]
 is_a: ["component"]

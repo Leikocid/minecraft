@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-airs-d001"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "ADR-airs-01 — The \"not above the Windmill\" exclusion is a cheap 2D AABB pre-filter on `airs`'s own footprint, using the parent's stored footprint"
 aliases: ["L0-airs-d001"]
 is_a: ["architecture-decision"]

@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-infr-d005"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "ADR: infra's structure-template compiler and BDS/GameTest verification lanes operationalize `L0-adr-tmpl`/`L0-adr-strc`/`L0-adr-strs`"
 aliases: ["L0-infr-d005"]
 is_a: ["architecture-decision"]

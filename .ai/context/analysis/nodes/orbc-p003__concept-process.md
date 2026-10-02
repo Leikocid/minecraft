@@ -2,7 +2,7 @@
 type: "concept-process"
 node_id: "L0-orbc-p003"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "Process · Attack lifecycle and orphan cleanup"
 aliases: ["L0-orbc-p003"]
 is_a: ["process"]

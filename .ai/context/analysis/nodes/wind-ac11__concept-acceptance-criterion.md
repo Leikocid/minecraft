@@ -2,7 +2,7 @@
 type: "concept-acceptance-criterion"
 node_id: "L0-wind-ac11"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "AC-wind-11 · Looted chests, broken spawners and broken walls stay that way after restart"
 aliases: ["L0-wind-ac11"]
 is_a: ["acceptance-criterion"]

@@ -2,7 +2,7 @@
 type: "concept-acceptance-criterion"
 node_id: "L0-scyt-ac18"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 5
 title: "AC-scyt-18 — A far visible player outranks a near mob; a hidden player drops to the mob tier"
 aliases: ["L0-scyt-ac18"]
 is_a: ["acceptance-criterion"]

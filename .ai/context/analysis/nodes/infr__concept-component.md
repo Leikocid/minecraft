@@ -2,7 +2,7 @@
 type: "concept-component"
 node_id: "L0-infr"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Component: Build & verification infrastructure (Stage 0 closed; v2 delta: structure-template pipeline)"
 aliases: ["L0-infr"]
 is_a: ["component"]

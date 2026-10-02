@@ -2,7 +2,7 @@
 type: "concept-entity"
 node_id: "L0-wind-e003"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Entity — Field Zombie Villager (Windmill guard)"
 aliases: ["L0-wind-e003"]
 is_a: ["entity"]

@@ -2,7 +2,7 @@
 type: "concept-acceptance-criterion"
 node_id: "L0-wind-ac01"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "AC-wind-01 · A new world has exactly one spawn Windmill, in the 5×5 area or within 500 blocks"
 aliases: ["L0-wind-ac01"]
 is_a: ["acceptance-criterion"]

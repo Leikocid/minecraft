@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-orbc-as08"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "ASM-orbc-08 · Omitting `minecraft:damage` gives exactly empty-hand damage"
 aliases: ["L0-orbc-as08"]
 is_a: ["assumption"]

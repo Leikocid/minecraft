@@ -2,7 +2,7 @@
 type: "concept-acceptance-criterion"
 node_id: "L0-scyt-ac03"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 5
 title: "AC-scyt-03 — A hidden player is not chosen (§8 test 3)"
 aliases: ["L0-scyt-ac03"]
 is_a: ["acceptance-criterion"]

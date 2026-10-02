@@ -2,7 +2,7 @@
 type: "concept-process"
 node_id: "L0-strf-p005"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Process — the tick budget and job scheduling (closes `L0-xcx4`)"
 aliases: ["L0-strf-p005"]
 is_a: ["process"]

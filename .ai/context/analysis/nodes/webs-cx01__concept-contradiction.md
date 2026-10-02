@@ -2,7 +2,7 @@
 type: "concept-contradiction"
 node_id: "L0-webs-cx01"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 level: 2
 title: "CX-webs-01 · The \"webs\" component scope (item/recipe + ability) overlaps L0-lgnd, which has already absorbed the item/recipe, craft-gate, retention, void-return, cooldown and HUD pieces"
 aliases: ["L0-webs-cx01"]

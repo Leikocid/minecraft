@@ -2,7 +2,7 @@
 type: "concept-contradiction"
 node_id: "L0-lgnd-cx03"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "CTR-lgnd-03: ASM-020 measures `hidden_until` in ticks, but the shipped code proved ticks are the wrong clock"
 aliases: ["L0-lgnd-cx03"]
 is_a: ["contradiction"]

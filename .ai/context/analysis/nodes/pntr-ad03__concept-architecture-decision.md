@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-pntr-ad03"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "ADR-pntr-3 · Particle wave as a separate 20-tick job"
 aliases: ["L0-pntr-ad03"]
 is_a: ["architecture-decision"]

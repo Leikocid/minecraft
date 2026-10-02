@@ -2,7 +2,7 @@
 type: "concept-glossary-term"
 node_id: "L0-wind-g006"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 aliases: ["L0-wind-g006"]
 is_a: ["glossary-term"]
 part_of: ["L0-wind"]

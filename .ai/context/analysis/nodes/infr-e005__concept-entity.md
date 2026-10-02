@@ -2,7 +2,7 @@
 type: "concept-entity"
 node_id: "L0-infr-e005"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Entity: Structure template source & compiled `.mcstructure`"
 aliases: ["L0-infr-e005"]
 is_a: ["entity"]

@@ -2,7 +2,7 @@
 type: "concept-contradiction"
 node_id: "L0-lgnd-cx12"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "CX-lgnd-12 · A legendary nested in a shulker box or bundle cannot be protected, returned or voided"
 aliases: ["L0-lgnd-cx12"]
 is_a: ["contradiction"]

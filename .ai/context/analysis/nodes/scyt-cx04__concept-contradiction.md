@@ -2,7 +2,7 @@
 type: "concept-contradiction"
 node_id: "L0-scyt-cx04"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 5
 title: "CX-scyt-04 · `L0-sprj` children still say players-only, a 3D leash and event-driven invalidation; the code differs"
 aliases: ["L0-scyt-cx04"]
 is_a: ["contradiction"]

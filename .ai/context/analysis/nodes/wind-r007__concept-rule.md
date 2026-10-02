@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-wind-r007"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Rule: spawn Windmill search order — 5×5 chunks, then nearest ≤ 500 blocks, then forced prep"
 aliases: ["L0-wind-r007"]
 is_a: ["rule"]

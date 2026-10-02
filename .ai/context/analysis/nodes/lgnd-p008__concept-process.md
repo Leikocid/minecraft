@@ -2,7 +2,7 @@
 type: "concept-process"
 node_id: "L0-lgnd-p008"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "P-lgnd-008: `protectLegendariesIn(dimension, volume, opts?)`: move legendaries out of a volume that is about to be destroyed"
 aliases: ["L0-lgnd-p008"]
 is_a: ["process"]

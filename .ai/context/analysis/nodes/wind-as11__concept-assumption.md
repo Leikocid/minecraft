@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-wind-as11"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Assumption — `/tickingarea` works from `runCommand` on BDS 1.26.51.1 with a 10-area / 100-chunk limit"
 aliases: ["L0-wind-as11"]
 is_a: ["assumption"]

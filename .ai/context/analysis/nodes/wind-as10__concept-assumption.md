@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-wind-as10"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Assumption — installing into an existing world runs the spawn search once, with the natural-block whitelist protecting player builds"
 aliases: ["L0-wind-as10"]
 is_a: ["assumption"]

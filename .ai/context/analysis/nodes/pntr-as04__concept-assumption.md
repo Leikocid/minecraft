@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-pntr-as04"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "AS-pntr-04 · Waterlogged cells become water"
 aliases: ["L0-pntr-as04"]
 is_a: ["assumption"]

@@ -2,7 +2,7 @@
 type: "concept-process"
 node_id: "L0-infr-p004"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Process: iPad delivery (two paths)"
 aliases: ["L0-infr-p004"]
 is_a: ["process"]

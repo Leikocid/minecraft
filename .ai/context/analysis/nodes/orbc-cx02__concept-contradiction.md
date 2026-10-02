@@ -2,7 +2,7 @@
 type: "concept-contradiction"
 node_id: "L0-orbc-cx02"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "CX-orbc-02 · On touch, the view-direction target is not the highlighted block"
 aliases: ["L0-orbc-cx02"]
 is_a: ["contradiction"]

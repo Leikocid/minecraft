@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-pntr-as01"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "AS-pntr-01 · Irregularity model and top edge"
 aliases: ["L0-pntr-as01"]
 is_a: ["assumption"]

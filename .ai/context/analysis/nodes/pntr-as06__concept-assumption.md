@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-pntr-as06"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "AS-pntr-06 · Drops from neighbours outside the column are environmental"
 aliases: ["L0-pntr-as06"]
 is_a: ["assumption"]

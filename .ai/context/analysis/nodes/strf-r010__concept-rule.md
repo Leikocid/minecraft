@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-strf-r010"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Rule: spawners are vanilla `mob_spawner` blocks from the template, with no script behaviour"
 aliases: ["L0-strf-r010"]
 is_a: ["rule"]

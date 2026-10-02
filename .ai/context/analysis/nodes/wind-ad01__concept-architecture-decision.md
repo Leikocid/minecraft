@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-wind-ad01"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "ADR — The spawn search loads terrain with temporary ticking areas, window by window"
 aliases: ["L0-wind-ad01"]
 is_a: ["architecture-decision"]

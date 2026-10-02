@@ -2,7 +2,7 @@
 type: "concept-acceptance-criterion"
 node_id: "L0-wind-ac04"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "AC-wind-04 · 25 chests — 5 / 8 / 12 by floor — all reachable without breaking blocks"
 aliases: ["L0-wind-ac04"]
 is_a: ["acceptance-criterion"]

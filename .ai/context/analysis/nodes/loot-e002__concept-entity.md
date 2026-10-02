@@ -2,7 +2,7 @@
 type: "concept-entity"
 node_id: "L0-loot-e002"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Entity: LootAttempt"
 aliases: ["L0-loot-e002"]
 is_a: ["entity"]

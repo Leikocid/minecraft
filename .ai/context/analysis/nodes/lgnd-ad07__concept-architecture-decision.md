@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-lgnd-ad07"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "AD-lgnd-07: As-built framework shape (recorded from code, supersedes parts of ad04/ad05/ad06)"
 aliases: ["L0-lgnd-ad07"]
 is_a: ["architecture-decision"]

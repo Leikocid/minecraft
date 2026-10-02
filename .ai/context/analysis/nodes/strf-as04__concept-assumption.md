@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-strf-as04"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Assumption (CAN_ASSUME) — Guard persistence and sun immunity with stable tools"
 aliases: ["L0-strf-as04"]
 is_a: ["assumption"]

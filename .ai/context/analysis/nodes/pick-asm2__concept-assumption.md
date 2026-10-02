@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-pick-asm2"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 aliases: ["L0-pick-asm2"]
 is_a: ["assumption"]
 part_of: ["L0-pick"]

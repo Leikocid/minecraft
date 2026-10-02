@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-orbc-r003"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "Rule · The target is a block within 10 blocks, on any face"
 aliases: ["L0-orbc-r003"]
 is_a: ["rule"]

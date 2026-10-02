@@ -2,7 +2,7 @@
 type: "concept-acceptance-criterion"
 node_id: "L0-scyt-ac15"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 5
 title: "AC-scyt-15 — Item, melee and durability (§1, §9 DoD, as shipped)"
 aliases: ["L0-scyt-ac15"]
 is_a: ["acceptance-criterion"]

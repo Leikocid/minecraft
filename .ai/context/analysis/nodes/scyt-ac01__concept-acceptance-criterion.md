@@ -2,7 +2,7 @@
 type: "concept-acceptance-criterion"
 node_id: "L0-scyt-ac01"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 5
 title: "AC-scyt-01 — Nothing to target within 20 blocks: message shown, no cooldown (§8 test 1, amended)"
 aliases: ["L0-scyt-ac01"]
 is_a: ["acceptance-criterion"]

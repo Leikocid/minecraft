@@ -2,7 +2,7 @@
 type: "concept-contradiction"
 node_id: "L0-airs-cx01"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Contradiction — \\"check the linked Airship once\\" (§7) vs the loaded-footprint guarantee (C-12)"
 aliases: ["L0-airs-cx01"]
 is_a: ["contradiction"]

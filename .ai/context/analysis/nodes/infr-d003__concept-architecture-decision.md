@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-infr-d003"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "ADR: one module (`scripts/targets.mjs`) is the single source of truth for version targets"
 aliases: ["L0-infr-d003"]
 is_a: ["architecture-decision"]

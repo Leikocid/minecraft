@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-orbc-r010"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "Rule · After firing, the attack does not depend on its owner and stays in its dimension"
 aliases: ["L0-orbc-r010"]
 is_a: ["rule"]

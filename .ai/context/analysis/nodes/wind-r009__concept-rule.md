@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-wind-r009"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Rule: level the ~35×35 plot and blend its edges — no square platform with vertical walls"
 aliases: ["L0-wind-r009"]
 is_a: ["rule"]

@@ -2,7 +2,7 @@
 type: "concept-process"
 node_id: "L0-pntr-p001"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "P-pntr-1 · Detonation → column plan"
 aliases: ["L0-pntr-p001"]
 is_a: ["process"]

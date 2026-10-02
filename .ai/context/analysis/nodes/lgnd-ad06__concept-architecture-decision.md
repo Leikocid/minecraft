@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-lgnd-ad06"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "AD-lgnd-06: Keep the shipped Web Sword module paths and command as thin shims"
 aliases: ["L0-lgnd-ad06"]
 is_a: ["architecture-decision"]

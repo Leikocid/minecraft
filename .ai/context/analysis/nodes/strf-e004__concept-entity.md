@@ -2,7 +2,7 @@
 type: "concept-entity"
 node_id: "L0-strf-e004"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Entity — `DeviationEntry` (one row of `docs/structures/deviations.md`)"
 aliases: ["L0-strf-e004"]
 is_a: ["entity"]

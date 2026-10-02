@@ -2,7 +2,7 @@
 type: "concept-component"
 node_id: "L0-ring"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "RMB rings (`ring`)"
 aliases: ["L0-ring"]
 is_a: ["component"]
@@ -12,6 +12,7 @@ priority: 540
 size_chars: 4322
 tags: ["is_a:component", "orbital-cannon", "rmb", "explosion", "not-implemented", "relates_to:L0-orbc", "relates_to:L0-pntr", "relates_to:L0-lgnd", "relates_to:L0-adr-ochg", "relates_to:L0-xasm7", "relates_to:L0-xasm8", "relates_to:L0-xcx10", "title:RMB rings (ring) — five TNT rings, independent programmatic explosions"]
 level: 1
+needs_rebuild_marked_at: 2026-10-02T18:41:56.508Z
 ---
 # RMB rings (`ring`)
 

@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-airs-r003"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Rule: independent generation is a 2 % roll validated over the whole rotated footprint, never terraformed or relocated"
 aliases: ["L0-airs-r003"]
 is_a: ["rule"]

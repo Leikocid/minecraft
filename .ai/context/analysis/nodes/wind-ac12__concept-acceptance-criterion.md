@@ -2,7 +2,7 @@
 type: "concept-acceptance-criterion"
 node_id: "L0-wind-ac12"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "AC-wind-12 · Normal generation hits ~1 % of chunks and only on suitable dry land"
 aliases: ["L0-wind-ac12"]
 is_a: ["acceptance-criterion"]

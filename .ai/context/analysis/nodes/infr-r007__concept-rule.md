@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-infr-r007"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Rule: structure templates are generated build output, never hand-edited or checked in as binaries"
 aliases: ["L0-infr-r007"]
 is_a: ["rule"]

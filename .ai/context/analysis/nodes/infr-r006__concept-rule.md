@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-infr-r006"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Rule: statistical chunk-roll checks measure `strf`'s roll, they don't implement it"
 aliases: ["L0-infr-r006"]
 is_a: ["rule"]

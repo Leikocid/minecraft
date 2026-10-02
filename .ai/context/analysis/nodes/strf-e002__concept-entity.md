@@ -2,7 +2,7 @@
 type: "concept-entity"
 node_id: "L0-strf-e002"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Entity — `RegionShard` and `InstanceRecord` (the persistent registry)"
 aliases: ["L0-strf-e002"]
 is_a: ["entity"]

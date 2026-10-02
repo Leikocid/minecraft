@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-wind-r004"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Rule: exactly 10 field Zombie Villagers, once, persistent until death, sun-immune"
 aliases: ["L0-wind-r004"]
 is_a: ["rule"]

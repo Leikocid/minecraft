@@ -2,7 +2,7 @@
 type: "concept-glossary-term"
 node_id: "L0-infr-g007"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 aliases: ["L0-infr-g007"]
 is_a: ["glossary-term"]
 part_of: ["L0-infr"]

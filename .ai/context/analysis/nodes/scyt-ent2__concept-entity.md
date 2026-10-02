@@ -2,7 +2,7 @@
 type: "concept-entity"
 node_id: "L0-scyt-ent2"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 5
 title: "Volley (in-memory flight record) — replaces the proposed TargetLock"
 aliases: ["L0-scyt-ent2"]
 is_a: ["entity"]

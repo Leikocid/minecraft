@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-scyt-r005"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 5
 title: "R-scyt-005 — Exactly 3 HP per hit, delivered through the damage pipeline"
 aliases: ["L0-scyt-r005"]
 is_a: ["rule"]

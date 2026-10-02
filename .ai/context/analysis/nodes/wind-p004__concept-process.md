@@ -2,7 +2,7 @@
 type: "concept-process"
 node_id: "L0-wind-p004"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Process — Windmill first initialisation (hooks on the `strf` state machine)"
 aliases: ["L0-wind-p004"]
 is_a: ["process"]

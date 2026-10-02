@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-infr-d002"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "ADR: GameTest stays a separate, beta-only, non-shipping lane"
 aliases: ["L0-infr-d002"]
 is_a: ["architecture-decision"]

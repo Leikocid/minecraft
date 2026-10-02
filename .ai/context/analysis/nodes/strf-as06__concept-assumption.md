@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-strf-as06"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Assumption (CAN_ASSUME) — `structureManager.place` rotation keeps the given location as the min corner"
 aliases: ["L0-strf-as06"]
 is_a: ["assumption"]

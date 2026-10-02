@@ -2,7 +2,7 @@
 type: "concept-acceptance-criterion"
 node_id: "L0-wind-ac13"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "AC-wind-13 · A normal candidate on rough terrain or colliding is cancelled, never moved or terraformed"
 aliases: ["L0-wind-ac13"]
 is_a: ["acceptance-criterion"]

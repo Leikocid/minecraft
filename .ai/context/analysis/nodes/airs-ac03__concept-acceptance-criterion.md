@@ -2,7 +2,7 @@
 type: "concept-acceptance-criterion"
 node_id: "L0-airs-ac03"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "AC — interior corridor + 4 rooms, one lamp per room"
 aliases: ["L0-airs-ac03"]
 is_a: ["acceptance-criterion"]

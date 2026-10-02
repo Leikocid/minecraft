@@ -2,7 +2,7 @@
 type: "concept-entity"
 node_id: "L0-bast-ent1"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "MiniBastionStructure"
 aliases: ["L0-bast-ent1"]
 is_a: ["entity"]

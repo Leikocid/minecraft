@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-strf-r002"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Rule: one roll per (chunk, structure), no relocation, and a fixed priority order within a chunk"
 aliases: ["L0-strf-r002"]
 is_a: ["rule"]

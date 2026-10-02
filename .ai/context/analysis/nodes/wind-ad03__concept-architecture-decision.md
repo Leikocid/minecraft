@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-wind-ad03"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "ADR — The linked Airship is triggered from the Placer's finish step (linked hook) and recorded in `la`/`ls`"
 aliases: ["L0-wind-ad03"]
 is_a: ["architecture-decision"]

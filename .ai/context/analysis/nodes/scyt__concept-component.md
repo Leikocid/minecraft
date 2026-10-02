@@ -2,7 +2,7 @@
 type: "concept-component"
 node_id: "L0-scyt"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 5
 title: "Scythe of Calamity (`andrew:scythe_of_calamity`) — shipped Stage 3, targets mobs too"
 aliases: ["L0-scyt"]
 is_a: ["component"]
@@ -12,6 +12,7 @@ priority: 520
 size_chars: 4620
 tags: ["is_a:component", "scythe-of-calamity", "stage-3", "shipped", "mob-targeting", "relates_to:L0-lgnd", "relates_to:L0-sprj", "relates_to:L0-sitm", "relates_to:L0-infr", "delta:2026-09-26"]
 level: 1
+needs_rebuild_marked_at: 2026-10-02T18:41:56.508Z
 ---
 # Scythe of Calamity (`andrew:scythe_of_calamity`) — shipped Stage 3, targets mobs too
 

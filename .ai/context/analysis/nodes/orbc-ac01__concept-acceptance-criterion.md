@@ -2,7 +2,7 @@
 type: "concept-acceptance-criterion"
 node_id: "L0-orbc-ac01"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "AC-orbc-01 · Item components: no durability, not enchantable, punch damage, stack of 1 `[bds]`"
 aliases: ["L0-orbc-ac01"]
 is_a: ["acceptance-criterion"]

@@ -2,7 +2,7 @@
 type: "concept-process"
 node_id: "L0-bast-p002"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "P-bast-002 — One-time population and idempotent initialization"
 aliases: ["L0-bast-p002"]
 is_a: ["process"]

@@ -2,7 +2,7 @@
 type: "concept-process"
 node_id: "L0-pntr-p003"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "P-pntr-3 · Sound and top-down particle wave"
 aliases: ["L0-pntr-p003"]
 is_a: ["process"]

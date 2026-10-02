@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-orbc-r006"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "Rule · At most one activation per player per tick"
 aliases: ["L0-orbc-r006"]
 is_a: ["rule"]

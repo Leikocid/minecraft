@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-scyt-as01"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 5
 title: "ASM-scyt-01 — Game mode is not a targeting filter (as shipped) `CAN_ASSUME`"
 aliases: ["L0-scyt-as01"]
 is_a: ["assumption"]

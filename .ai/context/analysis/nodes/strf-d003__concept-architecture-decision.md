@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-strf-d003"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "ADR-strf-03 — Exactly one pack owns `strf` in a world, and tests drive it through a hook API"
 aliases: ["L0-strf-d003"]
 is_a: ["architecture-decision"]

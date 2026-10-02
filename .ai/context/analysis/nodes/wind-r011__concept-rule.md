@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-wind-r011"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Rule: the spawn search runs once per world and never repeats after a restart"
 aliases: ["L0-wind-r011"]
 is_a: ["rule"]

@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-wind-as08"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Assumption — on Peaceful, the guard step is deferred until the difficulty is not Peaceful"
 aliases: ["L0-wind-as08"]
 is_a: ["assumption"]

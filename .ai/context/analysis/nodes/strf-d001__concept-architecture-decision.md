@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-strf-d001"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "ADR-strf-01 — Stateless deterministic rolls plus an evaluated bitset, instead of a stored per-chunk outcome"
 aliases: ["L0-strf-d001"]
 is_a: ["architecture-decision"]

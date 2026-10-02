@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-pntr-as03"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "AS-pntr-03 · Per-cell throughput is enough to look instant"
 aliases: ["L0-pntr-as03"]
 is_a: ["assumption"]

@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-airs-r005"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Rule: the Airship has no one-time persistent mobs — the only spawned actor is the vanilla spawner"
 aliases: ["L0-airs-r005"]
 is_a: ["rule"]

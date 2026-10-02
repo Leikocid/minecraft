@@ -2,7 +2,7 @@
 type: "concept-acceptance-criterion"
 node_id: "L0-wind-ac02"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "AC-wind-02 · Restarts never create a second spawn Windmill, chests, spawners or guards"
 aliases: ["L0-wind-ac02"]
 is_a: ["acceptance-criterion"]

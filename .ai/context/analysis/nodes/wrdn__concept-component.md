@@ -2,7 +2,7 @@
 type: "concept-component"
 node_id: "L0-wrdn"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 aliases: ["L0-wrdn"]
 is_a: ["component"]
 part_of: ["L0"]

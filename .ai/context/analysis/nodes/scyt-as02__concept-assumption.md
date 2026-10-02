@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-scyt-as02"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 5
 title: "ASM-scyt-02 — \"About 10 blocks\" = `applyKnockback` vertical 1.35 (model-derived; the apex is not re-measured) `CAN_ASSUME`"
 aliases: ["L0-scyt-as02"]
 is_a: ["assumption"]

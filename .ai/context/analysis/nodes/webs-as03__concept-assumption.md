@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-webs-as03"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 level: 2
 title: "ASM-webs-03 — \"Entities\" in the protected-block filter includes non-player mobs, not only players `CAN_ASSUME`"
 aliases: ["L0-webs-as03"]

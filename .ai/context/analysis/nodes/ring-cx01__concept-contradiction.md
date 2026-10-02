@@ -2,7 +2,7 @@
 type: "concept-contradiction"
 node_id: "L0-ring-cx01"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "CX-ring-01 · The `L0-adr-ochg` §3 drop suppression deletes death drops and mob loot"
 aliases: ["L0-ring-cx01"]
 is_a: ["contradiction"]

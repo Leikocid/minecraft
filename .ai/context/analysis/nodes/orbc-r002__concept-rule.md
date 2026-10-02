@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-orbc-r002"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "Rule · Recipe and lang"
 aliases: ["L0-orbc-r002"]
 is_a: ["rule"]

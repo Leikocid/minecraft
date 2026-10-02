@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-orbc-r007"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "Rule · Charge spawn height per dimension, clamped to the ceiling"
 aliases: ["L0-orbc-r007"]
 is_a: ["rule"]

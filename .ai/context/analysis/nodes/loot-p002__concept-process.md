@@ -2,7 +2,7 @@
 type: "concept-process"
 node_id: "L0-loot-p002"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "P-loot-002 · Vanilla loot-table application (Mini Warden City & Mini Bastion)"
 aliases: ["L0-loot-p002"]
 is_a: ["process"]

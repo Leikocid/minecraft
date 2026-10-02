@@ -2,7 +2,7 @@
 type: "concept-entity"
 node_id: "L0-orbc-ent1"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "Entity · Orbital Cannon item (`andrew:orbital_cannon`)"
 aliases: ["L0-orbc-ent1"]
 is_a: ["entity"]

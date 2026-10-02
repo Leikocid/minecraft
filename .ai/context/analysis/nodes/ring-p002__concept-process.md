@@ -2,7 +2,7 @@
 type: "concept-process"
 node_id: "L0-ring-p002"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "Process · One queue step: protect → suppress → explode → restore"
 aliases: ["L0-ring-p002"]
 is_a: ["process"]

@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-airs-as01"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Assumption (CAN_ASSUME) — the Airship's two doors sit on the short ends of the long axis"
 aliases: ["L0-airs-as01"]
 is_a: ["assumption"]

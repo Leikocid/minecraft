@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-ring-ad02"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "AD-ring-02 · A global FIFO detonation queue with a per-tick cap"
 aliases: ["L0-ring-ad02"]
 is_a: ["architecture-decision"]

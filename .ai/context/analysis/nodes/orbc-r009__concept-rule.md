@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-orbc-r009"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "Rule · The Void destroys a charge without effect"
 aliases: ["L0-orbc-r009"]
 is_a: ["rule"]

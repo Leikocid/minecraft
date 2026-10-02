@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-airs-r002"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Rule: fixed contents — 10 chests, 1 Vindicator spawner, no one-time mobs of its own"
 aliases: ["L0-airs-r002"]
 is_a: ["rule"]

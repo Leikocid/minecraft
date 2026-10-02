@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-infr-r004"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Rule: the selftest pack proves content from inside the engine but never ships"
 aliases: ["L0-infr-r004"]
 is_a: ["rule"]

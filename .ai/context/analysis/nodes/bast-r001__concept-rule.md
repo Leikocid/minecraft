@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-bast-r001"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 aliases: ["L0-bast-r001"]
 is_a: ["rule"]
 part_of: ["L0-bast"]

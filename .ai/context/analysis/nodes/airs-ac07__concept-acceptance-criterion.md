@@ -2,7 +2,7 @@
 type: "concept-acceptance-criterion"
 node_id: "L0-airs-ac07"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "AC — independent generation at 2 % on suitable land chunks only"
 aliases: ["L0-airs-ac07"]
 is_a: ["acceptance-criterion"]

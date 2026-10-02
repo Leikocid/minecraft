@@ -2,7 +2,7 @@
 type: "concept-contradiction"
 node_id: "L0-strf-cx02"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Contradiction — the spawn-area search radius (§4.7) vs discovery-only loading (C-5b, C-12)"
 aliases: ["L0-strf-cx02"]
 is_a: ["contradiction"]

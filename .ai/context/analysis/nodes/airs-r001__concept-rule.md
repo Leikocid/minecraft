@@ -2,7 +2,7 @@
 type: "concept-rule"
 node_id: "L0-airs-r001"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Rule: one fixed Airship template — modern, undamaged, no assisted ground access"
 aliases: ["L0-airs-r001"]
 is_a: ["rule"]

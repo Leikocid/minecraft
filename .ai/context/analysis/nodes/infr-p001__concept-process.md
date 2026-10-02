@@ -2,7 +2,7 @@
 type: "concept-process"
 node_id: "L0-infr-p001"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Process: Build & package (`npm run build`)"
 aliases: ["L0-infr-p001"]
 is_a: ["process"]

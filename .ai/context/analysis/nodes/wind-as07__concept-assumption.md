@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-wind-as07"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Assumption — spawner zones stay at block light ≤ 7 (Lmax)"
 aliases: ["L0-wind-as07"]
 is_a: ["assumption"]

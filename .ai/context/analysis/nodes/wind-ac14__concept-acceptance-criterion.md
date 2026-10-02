@@ -2,7 +2,7 @@
 type: "concept-acceptance-criterion"
 node_id: "L0-wind-ac14"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "AC-wind-14 · Forced preparation levels the plot, blends the edges and leaves deep caves open"
 aliases: ["L0-wind-ac14"]
 is_a: ["acceptance-criterion"]

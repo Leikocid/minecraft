@@ -2,7 +2,7 @@
 type: "concept-contradiction"
 node_id: "L0-lgnd-cx11"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "CX-lgnd-11 · The accepted `wpn2` backlog is not in the code, and v3 builds on it"
 aliases: ["L0-lgnd-cx11"]
 is_a: ["contradiction"]

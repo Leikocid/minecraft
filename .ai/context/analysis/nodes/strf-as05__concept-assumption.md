@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-strf-as05"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Assumption (CAN_ASSUME) — Dynamic-property budget"
 aliases: ["L0-strf-as05"]
 is_a: ["assumption"]

@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-pntr-as08"
 source_channel: "rollout"
-analysis_version: 3
+analysis_version: 5
 title: "AS-pntr-08 · Non-solid breakables are removed too"
 aliases: ["L0-pntr-as08"]
 is_a: ["assumption"]

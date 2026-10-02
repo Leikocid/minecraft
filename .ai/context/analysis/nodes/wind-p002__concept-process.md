@@ -2,7 +2,7 @@
 type: "concept-process"
 node_id: "L0-wind-p002"
 source_channel: "rollout"
-analysis_version: 2
+analysis_version: 5
 title: "Process — guaranteed spawn-area Windmill search"
 aliases: ["L0-wind-p002"]
 is_a: ["process"]

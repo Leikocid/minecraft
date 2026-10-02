@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-scyt-ad02"
 source_channel: "rollout"
-analysis_version: 1
+analysis_version: 5
 title: "ADR-scyt-02 — \"Visible\" = every block cell on the eye-to-eye segment is air or liquid"
 aliases: ["L0-scyt-ad02"]
 is_a: ["architecture-decision"]
