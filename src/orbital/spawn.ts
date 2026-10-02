@@ -5,15 +5,21 @@
 import type { Dimension, Entity, Vector3 } from "@minecraft/server";
 import { CHARGE_ENTITY_ID, CHARGE_TAG, type Column, SCALE_SPAWN_EVENTS, attackTag } from "./charge";
 
-/** Height above the target block, per dimension id. */
+/**
+ * Height above the target block, per dimension id (§8, amended by
+ * decision-aim-range-25-and-spawn-height-60). At FALL_SPEED = 1 block a tick the
+ * offset is also the fuse: 60 blocks give the shooter 3 seconds to leave the
+ * field, 30 gave 1.5 and no escape existed. The Nether keeps 10 — its ceiling at
+ * 128 leaves nowhere to fall from, so there the aim range is the only lever.
+ */
 export const SPAWN_OFFSET: Readonly<Record<string, number>> = {
-  "minecraft:overworld": 30,
-  "minecraft:the_end": 30,
+  "minecraft:overworld": 60,
+  "minecraft:the_end": 60,
   "minecraft:nether": 10,
 };
 
 /** Any dimension missing from SPAWN_OFFSET. */
-export const DEFAULT_SPAWN_OFFSET = 30;
+export const DEFAULT_SPAWN_OFFSET = 60;
 
 /**
  * Feet Y of every charge of an attack locked on a block at `targetY`.

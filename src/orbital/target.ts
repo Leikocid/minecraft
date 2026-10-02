@@ -5,8 +5,12 @@
 import type { Block, Direction, Player, Vector3 } from "@minecraft/server";
 import { isContact } from "./charge";
 
-/** Blocks, eye to the nearest point of the target block (§6). */
-export const TARGET_RANGE = 10;
+/**
+ * Blocks, eye to the nearest point of the target block (§6, amended by
+ * decision-aim-range-25-and-spawn-height-60: at 10 the shooter stood inside his
+ * own ring field, whose outer ring reaches 14).
+ */
+export const TARGET_RANGE = 25;
 
 export interface TargetLock {
   block: Block;

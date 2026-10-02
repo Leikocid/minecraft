@@ -30,6 +30,7 @@ import { CHARGE_ENTITY_ID, type Effect, attackTag, effectFor, registerEffect } f
 import { type Attack, flightLoop, observeChargeEnds } from "../orbital/flight";
 import { RING_EFFECT, RING_MAX_BLASTS_PER_TICK, type RingReport, observeRingReports, ringLoop } from "../orbital/ring";
 import { RING_LAYOUT, layout } from "../orbital/ring-layout";
+import { spawnY } from "../orbital/spawn";
 import { STUB_EFFECTS } from "../orbital/stub-effect";
 import { arm, goTo } from "./orbital-core";
 import { loadBox } from "./structures-place";
@@ -74,6 +75,11 @@ interface Site {
   unload: () => void;
 }
 
+/** Where a charge aimed at `top` appears, by the shipped per-dimension offset. */
+function spawnOf(dim: Dimension, top: number): number {
+  return spawnY(dim.id, top, dim.heightRange);
+}
+
 /** A stone pad at site `k` (each 150 blocks apart on −z), `half` around the centre and `wideX` more on each side in x, loaded with a margin. */
 async function site(test: Test, name: string, k: number, half = PAD, wideX = 0): Promise<Site> {
   const dim = test.getDimension();
@@ -84,7 +90,10 @@ async function site(test: Test, name: string, k: number, half = PAD, wideX = 0):
   const top = min + PAD_LAYERS;
   const unload = await loadBox(test, dim, name, { min: [cx - LOAD - wideX, 0, cz - LOAD], max: [cx + LOAD + wideX, 0, cz + LOAD] });
   fill(dim, { x: cx - half - wideX, y: min + 1, z: cz - half }, { x: cx + half + wideX, y: top, z: cz + half }, "minecraft:stone");
-  fill(dim, { x: cx - half - wideX, y: top + 1, z: cz - half }, { x: cx + half + wideX, y: top + 40, z: cz + half }, "minecraft:air");
+  // The pad lies deep, so natural stone stands where the charges appear: clear
+  // air all the way to the spawn height, read from the shipped offset rather
+  // than from a copy of it, or every charge detonates in rock on spawn.
+  fill(dim, { x: cx - half - wideX, y: top + 1, z: cz - half }, { x: cx + half + wideX, y: spawnOf(dim, top) + 1, z: cz + half }, "minecraft:air");
   return { dim, cx, cz, top, target: { x: cx, y: top, z: cz }, park: { x: cx, y: min + 4, z: cz - 40 }, unload };
 }
 
@@ -563,7 +572,7 @@ registerAsync("andrew", "ring_layout_craters", async (test: Test): Promise<void>
     const got = charges.map((e) => ({ x: Math.floor(e.location.x), z: Math.floor(e.location.z), y: e.location.y }));
     const offColumn = got.filter((g) => !want.has(`${g.x},${g.z}`));
     const distinct = new Set(got.map((g) => `${g.x},${g.z}`)).size;
-    const wrongY = got.filter((g) => g.y !== s.top + 30);
+    const wrongY = got.filter((g) => g.y !== spawnOf(s.dim, s.top));
     const r = await untilReport(test, reports, attack.attackId);
     await test.idle(10);
     const craters = cols.filter((c) => s.dim.getBlock({ x: c.x, y: s.top, z: c.z })?.isAir === true);
@@ -577,12 +586,12 @@ registerAsync("andrew", "ring_layout_craters", async (test: Test): Promise<void>
     ].filter((c) => typeAt(s.dim, cellAt(s, c)) !== "minecraft:stone");
     log(
       `ac1 RESULT attack ${attack.attackId}: in the activation tick ${inTick}, charges ${charges.length}, layout().length ${cols.length}, distinct columns ${distinct}, ` +
-        `off-layout ${offColumn.length}, y != target.y+30 (${s.top + 30}) ${wrongY.length}; ${brief(r)}; cratered columns ${craters.length}/${cols.length}; far corner cells not stone ${far.length}`
+        `off-layout ${offColumn.length}, y != the spawn height (${spawnOf(s.dim, s.top)}) ${wrongY.length}; ${brief(r)}; cratered columns ${craters.length}/${cols.length}; far corner cells not stone ${far.length}`
     );
     test.assert(inTick, "the charges were counted after the activation tick");
     test.assert(charges.length === cols.length && cols.length === RING_LAYOUT.count, `charges ${charges.length}, layout ${cols.length}`);
     test.assert(distinct === cols.length && offColumn.length === 0, `columns: ${distinct} distinct, ${offColumn.length} off the layout`);
-    test.assert(wrongY.length === 0, `${wrongY.length} charge(s) not at y ${s.top + 30}: ${wrongY.slice(0, 3).map((g) => g.y).join(",")}`);
+    test.assert(wrongY.length === 0, `${wrongY.length} charge(s) not at y ${spawnOf(s.dim, s.top)}: ${wrongY.slice(0, 3).map((g) => g.y).join(",")}`);
     test.assert(r.blasts === cols.length && r.lost === 0 && r.failed === 0, brief(r));
     test.assert(craters.length === cols.length, `${cols.length - craters.length} layout column(s) with no crater: ${cols.filter((c) => !craters.includes(c)).slice(0, 5).map((c) => `${c.x - s.cx},${c.z - s.cz}`).join(" ")}`);
     test.assert(far.length === 0, "a cell 16 blocks out on a diagonal changed");

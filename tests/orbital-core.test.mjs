@@ -76,8 +76,8 @@ const HEIGHT = {
 
 test('spawnY: the AC-4 table', () => {
   const cases = [
-    ['minecraft:overworld', 64, 94],
-    ['minecraft:the_end', 60, 90],
+    ['minecraft:overworld', 64, 124],
+    ['minecraft:the_end', 60, 120],
     ['minecraft:nether', 40, 50],
     ['minecraft:overworld', 300, 319],
     ['minecraft:nether', 120, 127],
@@ -87,18 +87,18 @@ test('spawnY: the AC-4 table', () => {
   }
 });
 
-test('spawnY: the offsets are held — +30 Overworld and End, +10 Nether, +30 anywhere else', () => {
-  assert.deepEqual({ ...SPAWN_OFFSET }, { 'minecraft:overworld': 30, 'minecraft:the_end': 30, 'minecraft:nether': 10 });
-  assert.equal(DEFAULT_SPAWN_OFFSET, 30);
-  assert.equal(spawnY('andrew:elsewhere', 10, { min: 0, max: 256 }), 40);
+test('spawnY: the offsets are held — +60 Overworld and End, +10 Nether, +60 anywhere else', () => {
+  assert.deepEqual({ ...SPAWN_OFFSET }, { 'minecraft:overworld': 60, 'minecraft:the_end': 60, 'minecraft:nether': 10 });
+  assert.equal(DEFAULT_SPAWN_OFFSET, 60);
+  assert.equal(spawnY('andrew:elsewhere', 10, { min: 0, max: 256 }), 70);
 });
 
 test('spawnY: the ceiling is max − 1 exactly, and there is no floor clamp', () => {
-  assert.equal(spawnY('minecraft:overworld', 289, HEIGHT['minecraft:overworld']), 319);
-  assert.equal(spawnY('minecraft:overworld', 290, HEIGHT['minecraft:overworld']), 319);
-  assert.equal(spawnY('minecraft:overworld', 288, HEIGHT['minecraft:overworld']), 318);
+  assert.equal(spawnY('minecraft:overworld', 259, HEIGHT['minecraft:overworld']), 319);
+  assert.equal(spawnY('minecraft:overworld', 260, HEIGHT['minecraft:overworld']), 319);
+  assert.equal(spawnY('minecraft:overworld', 258, HEIGHT['minecraft:overworld']), 318);
   assert.equal(spawnY('minecraft:nether', 127, HEIGHT['minecraft:nether']), 127);
-  assert.equal(spawnY('minecraft:overworld', -64, HEIGHT['minecraft:overworld']), -34);
+  assert.equal(spawnY('minecraft:overworld', -64, HEIGHT['minecraft:overworld']), -4);
 });
 
 test('chargeLocation: the column centre at spawnY', () => {
@@ -197,7 +197,7 @@ test('distanceToBlock: eye to the nearest point of the block, by geometry', () =
   assert.ok(Math.abs(distanceToBlock(eye, { x: 5, y: 3, z: 7 }) - Math.hypot(1.5, 1.5)) < 1e-9);
   // Inside the block.
   assert.equal(distanceToBlock(eye, { x: 3, y: 3, z: 5 }), 0);
-  assert.equal(TARGET_RANGE, 10);
+  assert.equal(TARGET_RANGE, 25);
 });
 
 // ------------------------------------------------------------------ contract (r014) and stub
