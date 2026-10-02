@@ -246,6 +246,15 @@ const OUT_OF_RANGE: Vector3 = { x: 3, y: 3, z: 4 - TARGET_RANGE };
 const TOO_CLOSE_FOR_RINGS: Vector3 = { x: 3, y: 3, z: 0 };
 
 /**
+ * A block the rings will accept: its near face is 7.5 away, past
+ * RING_MIN_RANGE. Every RMB scenario aims here instead of at the block beside
+ * the player, which the weapon now refuses on purpose.
+ */
+const RMB_T: Vector3 = { x: 3, y: 3, z: -3 };
+const RMB_T_P: Vector3 = { x: 2, y: 3, z: -3 };
+const RMB_T_Q: Vector3 = { x: 4, y: 3, z: -3 };
+
+/**
  * Air between the player and the two probe blocks, so what the ray meets is the
  * probe and not whatever the world put in the way — at 25 blocks the corridor
  * leaves the test structure entirely.
@@ -485,7 +494,7 @@ registerAsync("andrew", "orbital_spawn_dimensions", async (test: Test): Promise<
 
 // ---------------------------------------------------------------- AC#4: one per tick, lock, faces, passable
 
-const SIDE_T: Vector3 = { x: 3, y: 3, z: 1 };
+const SIDE_T: Vector3 = { x: 3, y: 3, z: -3 };
 
 registerAsync("andrew", "orbital_dedup_lock_faces", async (test: Test): Promise<void> => {
   const dim = test.getDimension();
@@ -549,12 +558,13 @@ registerAsync("andrew", "orbital_dedup_lock_faces", async (test: Test): Promise<
     player.teleport(test.worldLocation({ x: 3.5, y: 2, z: 5.5 }));
     await test.idle(4);
 
-    // 3. Faces: bottom from below, side from 4 blocks, top from above. Ray (swing) and event (use on block).
+    // 3. Faces: bottom from below, side ahead, top from above — all past
+    // RING_MIN_RANGE, since each case fires RMB as well as the ray.
     blocks.restore();
     const faces: Array<{ face: Direction; rel: Vector3; stand: Vector3 }> = [
-      { face: Direction.Down, rel: { x: 3, y: 6, z: 3 }, stand: { x: 3.5, y: 2, z: 5.5 } },
+      { face: Direction.Down, rel: { x: 3, y: 8, z: -3 }, stand: { x: 3.5, y: 2, z: 5.5 } },
       { face: Direction.South, rel: SIDE_T, stand: { x: 3.5, y: 2, z: 5.5 } },
-      { face: Direction.Up, rel: { x: 3, y: 1, z: 3 }, stand: { x: 3.5, y: 2, z: 4.5 } },
+      { face: Direction.Up, rel: { x: 3, y: 1, z: -3 }, stand: { x: 3.5, y: 2, z: 5.5 } },
     ];
     for (const { face, rel, stand } of faces) {
       const t = blocks.set(rel, "minecraft:gold_block");
@@ -615,8 +625,8 @@ registerAsync("andrew", "orbital_shared_cooldown", async (test: Test): Promise<v
     await test.idle(4);
     arm(p);
     arm(q);
-    const tp = { x: 2, y: 3, z: 1 };
-    const tq = { x: 4, y: 3, z: 1 };
+    const tp = RMB_T_P;
+    const tq = RMB_T_Q;
     blocks.set(tp, "minecraft:stone");
     blocks.set(tq, "minecraft:stone");
     p.lookAtBlock(tp);
@@ -789,12 +799,12 @@ async function inputPaths(test: Test, mode: GameMode): Promise<void> {
     await test.idle(2);
 
     // Use on a block: only itemStartUseOn arrives. Aimed at another block, so the lock can only come from the event.
-    const used = blocks.set({ x: 3, y: 3, z: 1 }, "minecraft:stone");
+    const used = blocks.set(RMB_T, "minecraft:stone");
     blocks.set({ x: 1, y: 3, z: 1 }, "minecraft:stone");
     player.lookAtBlock({ x: 1, y: 3, z: 1 });
     await test.idle(4);
     cooldown.clearCooldown(player, KEY);
-    const raisedOn = await press(test, player, { kind: "useOn", block: { x: 3, y: 3, z: 1 }, face: Direction.South });
+    const raisedOn = await press(test, player, { kind: "useOn", block: RMB_T, face: Direction.South });
     await test.idle(2);
     const onShot = watch.shots[0];
     log(`input RESULT ${tag} use on block raised [${raisedOn.join(",")}]: ${watch.shots.length} attack(s), mode ${onShot?.attack.mode ?? "-"}, locked ${onShot === undefined ? "-" : fmt(onShot.attack.target)} (used ${fmt(used)})`);
@@ -894,9 +904,12 @@ export function recordDetonations(mode: Mode): { calls: Detonation[]; restore: (
   const effect = effectFor(mode);
   if (effect === undefined) throw new Error(`no ${mode} effect registered`);
   const calls: Detonation[] = [];
+  // Spread, never field by field: a decorator that copies `layout` and `scale`
+  // by hand drops whatever is added later, and a dropped `minRange` let a
+  // scenario fire from 1.6 blocks and pass while measuring a rule it no longer
+  // had (caught by the suite, 2026-10-02).
   const recording: Effect = {
-    layout: (target) => effect.layout(target),
-    scale: effect.scale,
+    ...effect,
     onDetonate(d, point, ownerId, m, attackId) {
       calls.push({ mode: m, point: { ...point }, attackId, ownerId, dimensionId: d.id, tick: system.currentTick });
       effect.onDetonate(d, point, ownerId, m, attackId);

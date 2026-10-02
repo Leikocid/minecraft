@@ -367,6 +367,19 @@ function longestRunOver(ticks: number[], limit: number): number {
   return longest;
 }
 
+/**
+ * Whether a cell of this power breaks this material at all, measured by
+ * probe_crater_by_power on BDS 1.26.51.1: power 4 breaks 39 cells of stone, 126
+ * of soil and 48 of planks; power 2 breaks 4, 32 and 14; **power 1 breaks soil
+ * only** — nothing in stone and nothing in planks; power 0.5 breaks nothing at
+ * all. So the two outer rings of the shipped table mark the ground people walk
+ * on and leave rock and floors untouched.
+ */
+function breaksMaterial(power: number, material: string): boolean {
+  if (power >= 2) return true;
+  return power >= 1 && (material === "minecraft:dirt" || material === "minecraft:grass_block");
+}
+
 const cellAt = (s: Site, c: { x: number; z: number }, dy = 0): Vector3 => ({ x: s.cx + c.x, y: s.top + dy, z: s.cz + c.z });
 const typeAt = (dim: Dimension, at: Vector3): string => dim.getBlock(at)?.typeId ?? "unloaded";
 
@@ -438,16 +451,16 @@ registerAsync("andrew", "probe_blast_stacking", async (test: Test): Promise<void
  * about 1.3 x power" is folklore until measured.
  */
 registerAsync("andrew", "probe_crater_by_power", async (test: Test): Promise<void> => {
-  const s = await site(test, "andrew_gt_ring_p9", 22, PAD, 120);
+  const s = await site(test, "andrew_gt_ring_p9", 22, PAD, 170);
   const before = world.gameRules.doTileDrops;
   try {
     const { dim, cz, top } = s;
     world.gameRules.doTileDrops = false;
     const rows: string[] = [];
     const powers = [8, 4, 2, 1, 0.5];
-    for (const [m, material] of ["minecraft:stone", "minecraft:dirt"].entries()) {
+    for (const [m, material] of ["minecraft:stone", "minecraft:dirt", "minecraft:oak_planks"].entries()) {
       for (const [i, power] of powers.entries()) {
-        const x = s.cx - 90 + 20 * (m * powers.length + i);
+        const x = s.cx - 140 + 20 * (m * powers.length + i);
         fill(dim, { x: x - 9, y: top - 8, z: cz - 9 }, { x: x + 9, y: top, z: cz + 9 }, material);
         await test.idle(2);
         // One block above the solid top layer: a blast inside a block is damped
@@ -1133,13 +1146,24 @@ async function resistanceRun(test: Test, k: number, initial: boolean): Promise<{
     await test.idle(20);
 
     const skip = new Set([...pillars.map((p) => `${p.c.x},${p.c.z}`), `${chestCol.x},${chestCol.z}`]);
-    const sectors = new Map<string, { cols: number; craters: number }>();
+    // Counted per sector AND per "does this cell's power break this material":
+    // the two outer rings are power 1, which breaks soil and leaves stone and
+    // planks whole, so "a crater under every column" is only true where the
+    // power is enough. Both sides are asserted — no silent hole and no silent
+    // crater.
+    const sectors = new Map<string, { breaks: number; broke: number; spares: number; spared: number }>();
     for (const c of RING_LAYOUT.columns) {
       if (skip.has(`${c.x},${c.z}`)) continue;
       const m = material(c);
-      const row = sectors.get(m) ?? { cols: 0, craters: 0 };
-      row.cols++;
-      if (dim.getBlock(cellAt(s, c))?.isAir === true) row.craters++;
+      const row = sectors.get(m) ?? { breaks: 0, broke: 0, spares: 0, spared: 0 };
+      const air = dim.getBlock(cellAt(s, c))?.isAir === true;
+      if (breaksMaterial(c.power, m)) {
+        row.breaks++;
+        if (air) row.broke++;
+      } else {
+        row.spares++;
+        if (!air) row.spared++;
+      }
       sectors.set(m, row);
     }
     const pillarLeft = pillars.flatMap((p) => [1, 2, 3].map((dy) => typeAt(dim, cellAt(s, p.c, dy)) === p.type)).filter(Boolean).length;
@@ -1149,13 +1173,16 @@ async function resistanceRun(test: Test, k: number, initial: boolean): Promise<{
     const fire = [...dim.getBlocks(box, { includeTypes: ["minecraft:fire", "minecraft:soul_fire"] }, true).getBlockLocationIterator()].length;
     const line =
       `ac4 RESULT doTileDrops initially ${before} (after the drain ${afterDrain}, now ${world.gameRules.doTileDrops}): ${brief(r)}; ` +
-      `craters ${[...sectors].map(([m, x]) => `${m.replace("minecraft:", "")} ${x.craters}/${x.cols}`).join(", ")}; ` +
+      `craters ${[...sectors].map(([m, x]) => `${m.replace("minecraft:", "")} ${x.broke}/${x.breaks} broke, ${x.spared}/${x.spares} left whole by power 1`).join(", ")}; ` +
       `obsidian+reinforced deepslate standing ${pillarLeft}/${pillars.length * 3}; chest cell ${chestNow}; items within ±8 ${items.length} [${countBy(items, (e) => stackOf(e)?.typeId ?? "?")}]; fire blocks ${fire}`;
     const ok: string[] = [];
     if (before !== initial) ok.push(`setup: doTileDrops ${before}, wanted ${initial}`);
     if (afterDrain !== before || world.gameRules.doTileDrops !== before) ok.push(`doTileDrops ${before} -> ${afterDrain} / ${world.gameRules.doTileDrops}`);
     if (r.blasts !== r.charges || r.lost + r.failed > 0) ok.push(brief(r));
-    for (const [m, x] of sectors) if (x.craters !== x.cols) ok.push(`${m}: ${x.cols - x.craters} column(s) without a crater`);
+    for (const [m, x] of sectors) {
+      if (x.broke !== x.breaks) ok.push(`${m}: ${x.breaks - x.broke} column(s) whose power breaks it left no crater`);
+      if (x.spared !== x.spares) ok.push(`${m}: ${x.spares - x.spared} column(s) of power 1 broke it, and power 1 does not break ${m}`);
+    }
     if (sectors.size !== 3) ok.push(`only ${sectors.size} materials under the rings`);
     if (pillarLeft !== pillars.length * 3) ok.push(`${pillars.length * 3 - pillarLeft} resistant block(s) gone`);
     if (chestNow === "minecraft:chest") ok.push("the chest stands");
@@ -1216,22 +1243,24 @@ registerAsync("andrew", "ring_underwater_damage_only", async (test: Test): Promi
     const r = await untilReport(test, reports, attack.attackId);
     await test.idle(20);
     const changed = cells.filter((l, i) => typeAt(dim, l) !== before[i]);
-    const dry = RING_LAYOUT.columns.filter((c) => c.x >= 1);
-    const dryCraters = dry.filter((c) => {
-      const t = typeAt(dim, cellAt(s, c));
-      return t !== "minecraft:stone";
-    });
+    // The dry half is the pad's stone, and power 1 does not break stone — so
+    // only the columns whose power does are expected to leave a crater here.
+    const dry = RING_LAYOUT.columns.filter((c) => c.x >= 1 && breaksMaterial(c.power, "minecraft:stone"));
+    const dryWeak = RING_LAYOUT.columns.filter((c) => c.x >= 1 && !breaksMaterial(c.power, "minecraft:stone"));
+    const dryCraters = dry.filter((c) => typeAt(dim, cellAt(s, c)) !== "minecraft:stone");
+    const dryWeakIntact = dryWeak.filter((c) => typeAt(dim, cellAt(s, c)) === "minecraft:stone");
     const hurt = harm.hurts.filter((h) => h.id === zb.id);
     const died = harm.deaths.get(zb.id);
     const wet = RING_LAYOUT.columns.filter((c) => c.x <= -1).length;
     log(
       `ac5 RESULT ${brief(r)}; wet-half columns ${wet}; cells within ±6 with x ≤ −2 changed ${changed.length}/${cells.length} [${changed.slice(0, 5).map((l) => `${l.x - cx},${l.y - top},${l.z - cz}:${typeAt(dim, l)}`).join(" ")}]; ` +
-        `dry-half ring columns cratered ${dryCraters.length}/${dry.length}; seabed zombie hp ${zHp} -> ${died !== undefined ? `dead (${died.cause})` : health(zb)}, hurt [${hurt.map((h) => `${h.cause}:${h.damage.toFixed(1)}`).join(" ")}]`
+        `dry-half ring columns cratered ${dryCraters.length}/${dry.length}, power-1 columns that left the stone whole ${dryWeakIntact.length}/${dryWeak.length}; seabed zombie hp ${zHp} -> ${died !== undefined ? `dead (${died.cause})` : health(zb)}, hurt [${hurt.map((h) => `${h.cause}:${h.damage.toFixed(1)}`).join(" ")}]`
     );
     test.assert(r.blasts === r.charges && r.lost + r.failed === 0, brief(r));
     test.assert(r.underwater >= wet && r.underwater < r.blasts, `underwater ${r.underwater}: the classification is not per blast (wet columns ${wet})`);
     test.assert(changed.length === 0, `${changed.length} cell(s) under the water changed`);
-    test.assert(dryCraters.length === dry.length, `${dry.length - dryCraters.length} dry column(s) without a crater`);
+    test.assert(dryCraters.length === dry.length, `${dry.length - dryCraters.length} dry column(s) whose power breaks stone left no crater`);
+    test.assert(dryWeakIntact.length === dryWeak.length, `${dryWeak.length - dryWeakIntact.length} power-1 column(s) broke the stone, which power 1 does not break`);
     test.assert(died !== undefined || hurt.length > 0, "the seabed zombie took no damage");
     test.succeed();
   } finally {
@@ -1414,10 +1443,14 @@ registerAsync("andrew", "ring_no_leftovers_vanilla_drops", async (test: Test): P
     await test.idle(4);
     b.getComponent("minecraft:inventory")?.container?.addItem(new ItemStack("minecraft:diamond", 5));
     await goTo(test, b, dim, { x: cx + 5, y: top + 1, z: cz });
-    // Rings by their place from the centre, never by diameter: the table is retuned between releases.
-    const [inner, , third, outer] = RING_LAYOUT.rings;
+    // Rings by their place from the centre, never by diameter: the table is
+    // retuned between releases. The victims stand on the two inner rings, power
+    // 4 and 2, where a cell underfoot kills: on the outer rings power 1 does
+    // 13.0 at zero distance and a zombie walks away with a heart or two, and
+    // this scenario needs deaths to have drops to account for.
+    const [inner, second, , outer] = RING_LAYOUT.rings;
     const pick = <T>(xs: T[], n: number, off: number): T[] => Array.from({ length: n }, (_, i) => xs[(off + Math.floor((i * xs.length) / n)) % xs.length]);
-    const zombies = [...pick(inner.cells, 3, 1), ...pick(third.cells, 3, 2)].map((c) => zombie(dim, { x: cx + c.x + 0.5, y: top + 1, z: cz + c.z + 0.5 }));
+    const zombies = [...pick(inner.cells, 3, 1), ...pick(second.cells, 3, 2)].map((c) => zombie(dim, { x: cx + c.x + 0.5, y: top + 1, z: cz + c.z + 0.5 }));
     extras.push(...zombies);
     const dirt = pick(outer.cells, 4, 3).map((c) => dim.spawnItem(new ItemStack("minecraft:dirt", 1), { x: cx + c.x + 0.5, y: top + 1, z: cz + c.z + 0.5 }));
     dirt.forEach((d) => d.clearVelocity());
@@ -1462,7 +1495,10 @@ registerAsync("andrew", "ring_no_leftovers_vanilla_drops", async (test: Test): P
     );
     test.assert(charges === 0, `${charges} andrew:orbital_charge left`);
     test.assert(r.blasts === r.charges && r.lost + r.failed === 0, brief(r));
-    test.assert(died.includes("B") && died.length === victims.size, `not everything at stake died: [${died.join(",")}]`);
+    test.assert(
+      died.includes("B") && died.length === victims.size,
+      `only ${died.length} of ${victims.size} at stake died [${died.join(",")}]: without every death the drop accounting below proves nothing`
+    );
     test.assert(diamonds === 5, `B's diamonds spawned ${diamonds}, not 5`);
     // XP needs a kill credited to a player, and no ring blast carries a source (README.md, deviation 6; probe_ring_drops xp):
     // the orbs are counted, not required.
