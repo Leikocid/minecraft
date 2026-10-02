@@ -1,8 +1,8 @@
 ---
-current_analysis_version: 3
+current_analysis_version: 5
 current_versions_by_node:
-  L0: 3
-  L0-lgnd: 3
+  L0: 5
+  L0-lgnd: 5
   L0-pick: 2
   L0-infr: 2
   L0-scyt: 2
@@ -16,27 +16,30 @@ current_versions_by_node:
   L0-pntr: 3
   L0-orbc: 3
   L0-ring: 3
-pending_revisions:
-  - L0
-  - L0-lgnd
+  L0-ufoc: 5
+  L0-sauc: 5
+  L0-magn: 5
+pending_revisions: []
 last_run:
-  started_at: '2026-09-29T18:44:27.410Z'
-  completed_at: '2026-09-29T19:09:13.569Z'
-  duration_seconds: 1486
-  total_artifacts_current: 274
-  total_size_kb: 1128
-  open_contradictions: 23
-  llm_calls: 6
-  llm_budget_used_pct: 3
-  input_hash: 2003c93a0c8e159a49272ca4ed4f892abe0eab1e4a27b006a881ac9ae4abca88
-  run_priority: 540
+  started_at: '2026-10-02T19:01:34.929Z'
+  completed_at: '2026-10-02T19:11:04.479Z'
+  duration_seconds: 570
+  total_artifacts_current: 87
+  total_size_kb: 1381
+  open_contradictions: 2
+  llm_calls: 4
+  llm_budget_used_pct: 2
+  input_hash: d3d41ddb15dcffddbe565ac28b09cc57f135c5db2b33e9bffbb93acb2fae5fca
+  run_priority: 580
   run_scope:
-    recorded_at: '2026-09-29T18:44:27.428Z'
-    rule: 'full: every node the decomposition plans name, from L0 down.'
+    recorded_at: '2026-10-02T19:01:34.943Z'
+    rule: 'partial: the queue (pending_revisions ∪ in-flight) plus the ancestors needed to reach it; every other node carrying a version is skipped as done and carried forward. Children named by a plan at runtime that have no version join the run as they are discovered.'
     nodes:
       - L0
+      - L0-ufoc
     reasons:
       L0: root — every run enters the tree here
+      L0-ufoc: queued in pending_revisions — owes a re-analysis
   stages:
     - stage: nodes
       entered_at: '2026-09-24T19:23:43.218Z'
@@ -95,20 +98,40 @@ last_run:
       entered_at: '2026-09-30T15:23:06.929Z'
     - stage: delta 2/2
       entered_at: '2026-09-30T15:23:12.656Z'
+    - stage: collect-decisions
+      entered_at: '2026-10-02T18:41:57.104Z'
+    - stage: load-model
+      entered_at: '2026-10-02T18:41:57.116Z'
+    - stage: audit
+      entered_at: '2026-10-02T18:41:57.121Z'
+    - stage: delta 1/2
+      entered_at: '2026-10-02T18:41:57.127Z'
+    - stage: delta 2/2
+      entered_at: '2026-10-02T18:42:01.976Z'
+    - stage: nodes
+      entered_at: '2026-10-02T18:42:28.055Z'
+      done: 4
+    - stage: rollout
+      entered_at: '2026-10-02T18:59:43.239Z'
+    - stage: nodes
+      entered_at: '2026-10-02T19:01:34.949Z'
+      done: 5
+    - stage: rollout
+      entered_at: '2026-10-02T19:12:16.964Z'
 last_rollout_hashes:
-  project-knowledge/glossary.md: 825c1021d33e942e
-  project-knowledge/business-rules.md: a7eb3efd4cabe881
+  project-knowledge/glossary.md: 0e72d575279fad30
+  project-knowledge/business-rules.md: 59b4ac9d9d059a6c
   project-knowledge/boundaries.md: 52130c6cd83d1194
-  project-knowledge/intent.md: 07cff0e1a496ae82
-  project-knowledge/domain-model.md: 2cb5effad6b97c15
-  project-knowledge/architecture.md: f8290ab0d88f380b
-  assumptions.md: c1b80894a7a8f88c
-  contradictions.md: 77e424d9cdd6af81
-  client-questions.md: d66956366f545063
-  summary.md: d3bb69a73ecfb912
-  scope.md: 6168ee4cf1be604c
-  risks.md: c5204feb6644e76e
-  decisions.md: 09f67273d6466d45
+  project-knowledge/intent.md: f3fd26f46ed66ec4
+  project-knowledge/domain-model.md: 228f3a4363d1b359
+  project-knowledge/architecture.md: 6e52a03e7d64bc0e
+  assumptions.md: cd17aeb85b6a9f6b
+  contradictions.md: 89015612dc777f93
+  client-questions.md: 1a227ea7261dc1dd
+  summary.md: c03cedad0a31c4df
+  scope.md: f57c7c43c5c47db7
+  risks.md: f85650d481618ee7
+  decisions.md: c6debc58501f760e
 runtime_vocabulary:
   concept-boundary:
     description: Seen at runtime
@@ -191,6 +214,10 @@ slug_mappings:
   'Orbital Cannon core. Item JSON: fishing-rod icon, no fishing, no durability, not enchantable, punch damage, Equipment category (`xcx13`). Recipe and lang. Input mapping for LMB/RMB and touch (`xcx8`). 10-block raycast on any face; silent no-op with no cooldown when nothing is hit. Target lock, shared cooldown and HUD. Charge spawn height per dimension with ceiling clamp. A script-driven charge that falls through entities and detonates on first block contact or immediately when inside a solid block; the Void destroys it. Owner-independent lifecycle bound to its dimension; lost on unload or restart.': L0-orbc
   LMB penetrator. Compute the irregular ~5×5 column from the detonation point down to `heightRange.min`. Keep liquids and Survival-unbreakable blocks without stopping below them (`xasm6`). Remove Obsidian, Nether portals, containers and spawners with no drops, but protect legendaries through `lgnd`. Batched removal that looks instant. One sound and a ~1 s top-down particle wave. No direct damage. ACs 7–10.: L0-pntr
   'RMB rings. Rasterise continuous rings at d≈1/5/10/15/20 (`xasm8`). Spawn all charges at once. Each explodes independently (no chain push). TNT-equivalent damage including the owner. TNT-resistance block breaking with no drops (`xasm7`) and no fire. Underwater: damage only. Protect legendaries. Clean up temporaries. Performance under several simultaneous RMBs. ACs 11–15.': L0-ring
+  'Legendary framework, v4 pass. It has two parts. **(1) Reconcile with the as-built v1.4.x code.** The v3 delta has shipped: tokens, holder, owed list, the off-hand read, `protectLegendariesIn`, `isLegendaryItemEntity`, the third def, and the v1.4.2 fix "a legendary cannot be lost in the tick it is dropped". Close `xcx9`–`xcx11` against the code and the GameTests, and retire stale v3 "not started" text. **(2) The UFO delta.** Publish a stack-level `isLegendaryStack(stack)` for `magn`. Make sure `HOLDER_TYPES` watching survives holders that the magnet teleports: chest and hopper minecarts and armour stands. Confirm death retention when a player dies from a magnet fall while holding a legendary. Restate `hidden_until` in ms under C-21. ACs: UFO 13 (rule side).': L0-lgnd
+  'UFO event core. The durable schedule: epoch ms next-arrival, the first arrival 10–20 min after the first join, +15 min after a departure or shoot-down, waiting for an Overworld player, and the enable flag. Target and centre selection; hover height = centre + 40, capped at ceiling − 4. The phase machine (arrival 20 s / magnet 60 s / release / departure 15 s / pause), which publishes phase events to `sauc` and `magn`. One shared `runInterval` (C-5d). Restart cleanup of leftover entities (C-23). The operator command `/andrew:ufo come/stop/enable/disable`. RU/EN messages and the 150-block arrival notice. A testable clock seam (`L0-xasm13`). UFO ACs 1, 2 (timing), 3, 17, 18.': L0-ufoc
+  'Saucer and beam. BP + RP entities: a ~12-block disc, a dome, rim lights and a spin; a translucent green beam cone shown during the magnet. No push, no collision and immune to everything but the Cannon, within the known engine traps (pushable/runtime_identifier). The flight path: in from 90 blocks at hover + 10, out 90 blocks the opposite way, staying ≤ 100 blocks from the centre (U8). Sounds. **Shoot-down:** an interceptor on `orbc` flight (`L0-adr-ufoi`), the hull cylinder r 6 × h 3 in any phase, the charge absorbed, magnet-off through `ufoc`, a 3 s smoking fall, a blast that does no damage (visual and sound only), 8 diamonds + 1 totem, and a broadcast naming the charge owner. UFO ACs 2 (path and look), 15, 16, plus the iPad DoD visuals.': L0-sauc
+  Magnet effect. The iron lists (items, blocks, ore, entities) verified against the 1.26.51 ids (`L0-xasm15`). Mob and armour-stand armour read through `hasitem`, one item at a time (U4b). One `getBlocks`/`includeTypes` zone scan at magnet-on (U7). The ≤ 10 priority selection, nearest first, and the 12-block drop exemption. Container iron-stack extraction (U5), with the hopper ruled by `L0-xcx18`. Block → air + one item, a whole door, ore → `raw_iron` (U6). Underground items fly through stone (U3). Player pull through `applyKnockback` ≤ 0.6 blocks per tick to 6 below the saucer, stopped and resumed by the hand state each tick (U10), never in Creative or Spectator. The cloud ring r 5 at −3, away from players (U11). Simultaneous release with vanilla physics and fall damage from the release point (U2). Legendaries excluded through `lgnd`. UFO ACs 4–14.: L0-magn
 tags:
   - analysis
   - registry
@@ -205,38 +232,38 @@ Runtime state for the analyst pipeline (analyse runs, vocabulary, slug map, roll
 
 | Node | Version |
 |------|---------|
-| L0 | 3 |
+| L0 | 5 |
 | L0-airs | 2 |
 | L0-bast | 2 |
 | L0-infr | 2 |
-| L0-lgnd | 3 |
+| L0-lgnd | 5 |
 | L0-loot | 2 |
+| L0-magn | 5 |
 | L0-orbc | 3 |
 | L0-pick | 2 |
 | L0-pntr | 3 |
 | L0-ring | 3 |
+| L0-sauc | 5 |
 | L0-scyt | 2 |
 | L0-strf | 2 |
+| L0-ufoc | 5 |
 | L0-webs | 2 |
 | L0-wind | 2 |
 | L0-wrdn | 2 |
 
 ## Last Run
 
-- Started: 2026-09-29T18:44:27.410Z
-- Completed: 2026-09-29T19:09:13.569Z
-- Duration: 1486s
-- Current artifacts: 274 (1128 KB total)
-- LLM calls: 6 (3% budget)
-- Open contradictions: 23
-
-## Pending Revisions
-
-- L0
-- L0-lgnd
+- Started: 2026-10-02T19:01:34.929Z
+- Completed: 2026-10-02T19:11:04.479Z
+- Duration: 570s
+- Current artifacts: 87 (1381 KB total)
+- LLM calls: 4 (2% budget)
+- Open contradictions: 2
 
 ## Changelog
 
-_(no entries yet)_
+- 2026-10-02 19:11 — promoted L0-ufoc (v3 → v5) — auto-promoted after refine-driven re-analysis
+- 2026-10-02 18:58 — promoted L0-lgnd (v3 → v4) — auto-promoted after refine-driven re-analysis
+- 2026-10-02 18:58 — promoted L0 (v3 → v4) — auto-promoted after refine-driven re-analysis — incomplete: 3 of 4 planned children have artifacts at v4; never analysed: L0-ufoc
 
 *Auto-generated by `ai-kit analyze`. Manual edit allowed only for forced rollback of `current_versions_by_node`. Other fields overwritten on next run.*
