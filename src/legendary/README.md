@@ -24,7 +24,8 @@ will reopen silently.
 | Cactus | return. Measured: a cactus eats only what rests on its **top face** — an item inside its cell or against its side survives (`probe_cactus_items`) | `legendary_returns_from_cactus` |
 | Despawn after five minutes | return. The scenario models it with `remove()`: to this module a despawn is an entity that is simply gone, and 6000 ticks is past any scenario budget | `legendary_returns_when_it_vanishes` |
 | The Void | return, prescribed by §5 itself | `legendary_returns_from_void` |
-| The owner's death | retention: the stack stays in the inventory | `legendary_offhand_death_returns`, `legendary-retention` units |
+| The owner's death, whatever killed them | retention: the stack stays in the inventory; it never reads the damage cause | `legendary_offhand_death_returns`, `legendary_ufo_fall_death_keeps` (a fall from the UFO's hover height), `legendary-retention` units |
+| A minecart or armour stand holding it is destroyed | return: the holder spills its contents as item entities, which recovery watches like any other — also after the holder was teleported away and back | `legendary_ufo_holder_chest_minecart`, `legendary_ufo_holder_hopper_minecart`, `legendary_ufo_holder_armor_stand` |
 | Our own ring blasts and the penetrator | the instance is moved out of the volume **before** the explosions, item frames broken open for it | `legendary_protect_ground_item`, `legendary_protect_framed` |
 | An entity destroyed in the same tick it appeared | the departure ledger below — `watch()` never sees it, so the entity is not what is tracked | `legendary_pickup_sighting_not_consumed` |
 
@@ -62,3 +63,9 @@ What this leaves open, named rather than hidden: a legendary thrown away and
 destroyed in that same tick is covered, but one that leaves an inventory into
 storage no script can read and is destroyed *there* (the shulker item burns with
 its holder) is not, because nothing can tell that case from ordinary storage.
+
+Also open: a holder *entity* that falls into the Void. A chest minecart
+or an armour stand below the floor is removed by the engine with no death and
+no spill (`probe_ufo_holder_void`), so whatever it held never reaches recovery
+and is gone. The UFO Magnet keeps out of that case by never selecting a holder
+that carries a legendary (`isLegendaryStack`, L0-lgnd-r016 §3).
