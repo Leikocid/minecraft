@@ -64,6 +64,17 @@ function trackY(entity: Entity): { samples: Array<{ tick: number; y: number }>; 
   return { samples, stop: () => system.clearRun(handle) };
 }
 
+/**
+ * Ticks a charge needs to fall from its spawn to `targetY`, plus a margin for the
+ * contact tick and the blast queue. Read from the attack rather than written as a
+ * number: the spawn offset is tuned per release, and a fixed wait that fits one
+ * offset silently measures nothing after the next (measured — a 60-tick wait met
+ * a 60-block fall exactly and the probe read "never detonated").
+ */
+function fallWindow(attack: Attack, targetY: number): number {
+  return attack.spawnY - targetY + 40;
+}
+
 async function untilEnded(test: Test, attackId: string, limit: number): Promise<number> {
   for (let t = 0; t < limit; t++) {
     if (!activeAttacks().has(attackId)) return system.currentTick;
@@ -202,7 +213,7 @@ registerAsync("andrew", "orbital_flight_through_entities", async (test: Test): P
     cooldown.clearCooldown(p, KEY);
     await test.idle(1);
     const wet = fire(p, "lmb", dim, wt);
-    await untilEnded(test, wet.attackId, 60);
+    await untilEnded(test, wet.attackId, fallWindow(wet, wt.y));
     const wetCalls = record.calls.filter((c) => c.attackId === wet.attackId);
     log(`entities RESULT water 5 deep over ${fmt(wt)}: onDetonate at ${wetCalls.map((c) => fmt(c.point)).join(" ")}; water surface at y=${wt.y + 5}`);
     test.assert(wetCalls.length === 1 && same(wetCalls[0].point, wt), `under water: onDetonate at [${wetCalls.map((c) => fmt(c.point)).join(" ")}], not on the stone ${fmt(wt)}`);
@@ -236,7 +247,7 @@ registerAsync("andrew", "orbital_flight_air_control", async (test: Test): Promis
     const entity = attack.charges[0]?.entity;
     test.assert(spawnCell?.isAir === true && entity !== undefined, `the spawn cell at y=${attack.spawnY} is ${spawnCell?.typeId ?? "unloaded"}, not air`);
     let detTick = -1;
-    for (let n = 0; n < 60 && detTick < 0; n++) {
+    for (let n = 0, window = fallWindow(attack, t.y); n < window && detTick < 0; n++) {
       await test.idle(1);
       const call = record.calls.find((c) => c.attackId === attack.attackId);
       if (call !== undefined) detTick = call.tick;

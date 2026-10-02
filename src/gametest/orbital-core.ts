@@ -31,8 +31,8 @@ import { ORBITAL_CANNON, cooldownKey } from "../legendary/registry";
 import { activate, observeAttacks } from "../orbital/activation";
 import { CHARGE_ENTITY_ID, CHARGE_TAG, type Effect, type Mode, PASS_THROUGH, attackTag, effectFor, isContact, registerEffect } from "../orbital/charge";
 import { type Attack, activeAttacks, endAttack } from "../orbital/flight";
-import { spawnY } from "../orbital/spawn";
-import { distanceToBlock } from "../orbital/target";
+import { DEFAULT_SPAWN_OFFSET, SPAWN_OFFSET, spawnY } from "../orbital/spawn";
+import { TARGET_RANGE, distanceToBlock } from "../orbital/target";
 import { loadBox } from "./structures-place";
 
 const STRUCTURE = "andrew:platform";
@@ -230,15 +230,30 @@ function watchMessages(): { count: () => number; restore: () => void } {
   };
 }
 
-// ---------------------------------------------------------------- AC#1: no block within 10
+// ------------------------------------------------- AC#1: no block within the aim range
 
 const WATER: Vector3 = { x: 3, y: 3, z: 1 };
 const GRASS_SUPPORT: Vector3 = { x: 3, y: 2, z: 2 };
 const GRASS_LOWER: Vector3 = { x: 3, y: 3, z: 2 };
 const GRASS_UPPER: Vector3 = { x: 3, y: 4, z: 2 };
-/** Eye at z 5.5: the near face of z=-5 is 9.5 away, of z=-6 is 10.5. */
-const AT_9_5: Vector3 = { x: 3, y: 3, z: -5 };
-const AT_10_5: Vector3 = { x: 3, y: 3, z: -6 };
+// Eye at z 5.5, so the near face of a block at z is 4.5 − z away: the pair below
+// straddles TARGET_RANGE, one just inside it and one just outside. Derived from
+// the constant rather than written beside it, so moving the range moves them.
+const IN_RANGE: Vector3 = { x: 3, y: 3, z: 5 - TARGET_RANGE };
+const OUT_OF_RANGE: Vector3 = { x: 3, y: 3, z: 4 - TARGET_RANGE };
+
+/**
+ * Air between the player and the two probe blocks, so what the ray meets is the
+ * probe and not whatever the world put in the way — at 25 blocks the corridor
+ * leaves the test structure entirely.
+ */
+function clearCorridor(blocks: Blocks): void {
+  for (let z = 4; z >= OUT_OF_RANGE.z - 1; z--) {
+    for (let y = 2; y <= 4; y++) {
+      blocks.set({ x: 3, y, z }, "minecraft:air");
+    }
+  }
+}
 
 function tallGrass(blocks: Blocks): void {
   blocks.set(GRASS_SUPPORT, "minecraft:grass_block");
@@ -285,10 +300,11 @@ registerAsync("andrew", "orbital_no_target_silent", async (test: Test): Promise<
     await test.idle(4);
     await quiet("open sky", [{ kind: "attack" }, { kind: "use" }]);
 
-    blocks.set(AT_10_5, "minecraft:stone");
-    player.lookAtBlock(AT_10_5);
+    clearCorridor(blocks);
+    blocks.set(OUT_OF_RANGE, "minecraft:stone");
+    player.lookAtBlock(OUT_OF_RANGE);
     await test.idle(4);
-    await quiet("stone at face 10.5", [{ kind: "attack" }, { kind: "use" }]);
+    await quiet(`stone at face ${(4.5 - OUT_OF_RANGE.z).toFixed(1)}`, [{ kind: "attack" }, { kind: "use" }]);
     blocks.restore();
 
     // Placed after the aim and fired at once: water flows 5 ticks after it is set.
@@ -311,18 +327,19 @@ registerAsync("andrew", "orbital_no_target_silent", async (test: Test): Promise<
     test.assert(grass === "minecraft:tall_grass", `the held Cannon broke the tall grass (now ${grass})`);
     blocks.restore();
 
-    const stone = blocks.set(AT_9_5, "minecraft:stone");
-    player.lookAtBlock(AT_9_5);
+    clearCorridor(blocks);
+    const stone = blocks.set(IN_RANGE, "minecraft:stone");
+    player.lookAtBlock(IN_RANGE);
     await test.idle(4);
     await press(test, player, { kind: "attack" });
     await test.idle(2);
     const shot = watch.shots[0];
     const remaining = cooldown.remainingTicks(player, KEY);
     log(
-      `silent RESULT retry at face 9.5: attacks ${watch.shots.length}, target ${shot === undefined ? "-" : fmt(shot.attack.target)} (stone ${fmt(stone)}), ` +
+      `silent RESULT retry at the far edge of the range: attacks ${watch.shots.length}, target ${shot === undefined ? "-" : fmt(shot.attack.target)} (stone ${fmt(stone)}), ` +
         `charges ${shot === undefined ? 0 : chargesOfAttack(dim, shot.attack.attackId)}, remaining ${remaining}, messages ${messages.count() - baseMessages}`
     );
-    test.assert(watch.shots.length === 1, `retry at face 9.5: ${watch.shots.length} attacks, not 1`);
+    test.assert(watch.shots.length === 1, `retry at the far edge of the range: ${watch.shots.length} attacks, not 1`);
     test.assert(shot.attack.mode === "lmb" && same(shot.attack.target, stone), `retry locked ${fmt(shot.attack.target)} in ${shot.attack.mode}, not the stone at ${fmt(stone)}`);
     test.assert(chargesOfAttack(dim, shot.attack.attackId) === 1, `retry: ${chargesOfAttack(dim, shot.attack.attackId)} charges, not 1`);
     test.assert(player.getDynamicProperty(cooldownKey(KEY)) !== undefined && remaining > 590, `retry: cooldown not set (${remaining} ticks left)`);
@@ -350,8 +367,15 @@ interface Site {
   shell: string;
 }
 
-/** A closed room around `stand` with a floor, air up to the spawn cell and a target 4 blocks north at eye level. */
-function buildRoom(dim: Dimension, x0: number, floorY: number, z0: number, topY: number, shell: string): Site {
+/**
+ * A closed room around `stand` with a floor, air up to the spawn cell and a
+ * target 4 blocks north at eye level. The room's height comes from the shipped
+ * spawn offset, not from a number beside it: a room shorter than the offset puts
+ * the charge inside its own ceiling, and the scenario then measures a detonation
+ * on spawn instead of a flight.
+ */
+function buildRoom(dim: Dimension, x0: number, floorY: number, z0: number, shell: string): Site {
+  const topY = spawnY(dim.id, floorY + 2, dim.heightRange) + 1;
   dim.fillBlocks(new BlockVolume({ x: x0 - 1, y: floorY - 1, z: z0 - 1 }, { x: x0 + 7, y: topY + 1, z: z0 + 7 }), shell);
   dim.fillBlocks(new BlockVolume({ x: x0, y: floorY + 1, z: z0 }, { x: x0 + 6, y: topY, z: z0 + 6 }), "minecraft:air");
   const target = { x: x0 + 3, y: floorY + 2, z: z0 + 1 };
@@ -390,8 +414,8 @@ registerAsync("andrew", "orbital_spawn_dimensions", async (test: Test): Promise<
 
     const sites: Site[] = [
       { dim: overworld, stand: test.worldBlockLocation(STAND), target: blocks.set({ x: 3, y: 3, z: 1 }, "minecraft:stone"), shell: "-" },
-      buildRoom(nether, origin.x, 38, origin.z, 53, "minecraft:netherrack"),
-      buildRoom(end, endX, 58, origin.z, 93, "minecraft:end_stone"),
+      buildRoom(nether, origin.x, 38, origin.z, "minecraft:netherrack"),
+      buildRoom(end, endX, 58, origin.z, "minecraft:end_stone"),
     ];
 
     const results: string[] = [];
@@ -414,7 +438,8 @@ registerAsync("andrew", "orbital_spawn_dimensions", async (test: Test): Promise<
       test.assert(shot.attack.dimensionId === site.dim.id, `${site.dim.id}: the attack is in ${shot.attack.dimensionId}`);
       test.assert(shot.attack.spawnY === expectedY, `${site.dim.id}: spawnY ${shot.attack.spawnY}, the pure function says ${expectedY}`);
       test.assert(shot.at.length === 1 && near(seen, expected), `${site.dim.id}: the charge was at ${seen === undefined ? "nowhere" : fmt(seen)} in its spawn tick, not ${fmt(expected)}`);
-      test.assert(expectedY === site.target.y + (site.dim.id === "minecraft:nether" ? 10 : 30), `${site.dim.id}: the site is clamped (${expectedY}) — it proves no offset`);
+      const offset = SPAWN_OFFSET[site.dim.id] ?? DEFAULT_SPAWN_OFFSET;
+      test.assert(expectedY === site.target.y + offset, `${site.dim.id}: spawn ${expectedY} is not target ${site.target.y} + the shipped offset ${offset} — the site is clamped and proves no offset`);
     }
     await goTo(test, player, overworld, test.worldBlockLocation(STAND));
     test.succeed();
