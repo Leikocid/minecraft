@@ -294,6 +294,7 @@ const EXPECTED_TESTS = [
   'andrew:pntr_legendary_two_columns',
   'andrew:pntr_legendary_restart_check',
   // RING-BLAST-01 — src/gametest/ring.ts
+  'andrew:probe_blast_stacking',
   'andrew:probe_ring_drops',
   'andrew:ring_layout_craters',
   'andrew:ring_independent_stepped',

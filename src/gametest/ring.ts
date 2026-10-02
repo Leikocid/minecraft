@@ -28,7 +28,7 @@ import * as state from "../legendary/state";
 import { activate } from "../orbital/activation";
 import { CHARGE_ENTITY_ID, type Effect, attackTag, effectFor, registerEffect } from "../orbital/charge";
 import { type Attack, flightLoop, observeChargeEnds } from "../orbital/flight";
-import { RING_EFFECT, RING_MAX_BLASTS_PER_TICK, type RingReport, observeRingReports, ringLoop } from "../orbital/ring";
+import { BLAST_POWER, RING_EFFECT, RING_MAX_BLASTS_PER_TICK, type RingReport, observeRingReports, ringLoop } from "../orbital/ring";
 import { RING_LAYOUT, layout } from "../orbital/ring-layout";
 import { spawnY } from "../orbital/spawn";
 import { STUB_EFFECTS } from "../orbital/stub-effect";
@@ -354,6 +354,66 @@ const cellAt = (s: Site, c: { x: number; z: number }, dy = 0): Vector3 => ({ x: 
 const typeAt = (dim: Dimension, at: Vector3): string => dim.getBlock(at)?.typeId ?? "unloaded";
 
 // ---------------------------------------------------------------- engine facts the README cites (as01–as04)
+
+/**
+ * Does damage from several explosions in the SAME tick add up, or does the
+ * engine's hurt cooldown keep only one of them? The whole RMB attack lands in
+ * five ticks, so this decides what a player standing in the field actually
+ * takes — the sum of every blast in reach, or the strongest one. Zombies, not
+ * players: a simulated player regenerates between readings.
+ */
+registerAsync("andrew", "probe_blast_stacking", async (test: Test): Promise<void> => {
+  const harm = watchHarm();
+  const extras: Entity[] = [];
+  const difficulty = world.getDifficulty();
+  const s = await site(test, "andrew_gt_ring_p8", 21, PAD, 60);
+  try {
+    // A Peaceful world holds no zombies at all, and the runner's world is Peaceful.
+    world.setDifficulty(Difficulty.Easy);
+    await test.idle(4);
+    const { dim, cz, top } = s;
+    // One case per victim, 24 blocks apart so no case reaches the next: a blast
+    // of power 4 reaches 8 blocks (measured).
+    const cases: { name: string; offsets: [number, number][] }[] = [
+      { name: "1 blast at 7", offsets: [[7, 0]] },
+      { name: "2 blasts at 7, same tick", offsets: [[7, 0], [-7, 0]] },
+      { name: "4 blasts at 7, same tick", offsets: [[7, 0], [-7, 0], [0, 7], [0, -7]] },
+      { name: "3 blasts at 7, 5 and 3, same tick", offsets: [[7, 0], [-5, 0], [0, 3]] },
+    ];
+    const rows: string[] = [];
+    for (const [i, c] of cases.entries()) {
+      const x = s.cx - 36 + 24 * i;
+      const victim = zombie(dim, { x: x + 0.5, y: top + 1, z: cz + 0.5 });
+      extras.push(victim);
+      await test.idle(10);
+      const before = health(victim);
+      const tick = system.currentTick;
+      for (const [dx, dz] of c.offsets) {
+        dim.createExplosion({ x: x + dx + 0.5, y: top + 1.5, z: cz + dz + 0.5 }, BLAST_POWER, {
+          breaksBlocks: false,
+          causesFire: false,
+        });
+      }
+      await test.idle(10);
+      const mine = harm.hurts.filter((h) => h.id === victim.id);
+      const died = harm.deaths.has(victim.id);
+      rows.push(
+        `${c.name}: hp ${before} -> ${died ? "dead" : health(victim)}, lost ${blastLoss(mine, victim.id, before, died).toFixed(1)}, ` +
+          `hurt events ${mine.length} [${mine.map((h) => h.damage.toFixed(1)).join(" ")}] all in the fire tick ${mine.every((h) => h.tick - tick <= 1)}`
+      );
+    }
+    log(`[probe] stacking RESULT power ${BLAST_POWER}: ${rows.join(" | ")}`);
+    test.succeed();
+  } finally {
+    world.setDifficulty(difficulty);
+    harm.stop();
+    for (const e of extras) if (e.isValid) e.remove();
+    s.unload();
+  }
+})
+  .structureName(STRUCTURE)
+  .maxTicks(400)
+  .tag("andrew");
 
 registerAsync("andrew", "probe_ring_drops", async (test: Test): Promise<void> => {
   const restore = useRealRmb(test);
