@@ -1,6 +1,6 @@
 // UFO restart checks for bds:check (L0-ufoc-ac03, ac05 AC-18, L0-xcx17).
 //
-// Three product cores, scope "st", each over its own slice of this pack's
+// Three product cores, scopes st1–st3, each over its own slice of this pack's
 // dynamic properties (a pack reads only the properties it wrote, so the
 // release pack's schedule is not visible from here):
 //   timer    — run 1 stores a future next_ms; run 2 reads it back unchanged.
@@ -23,7 +23,6 @@ import { type StubSaucer, createStubSaucer } from "../ufo/stub-saucer";
 import type { Log, Wait } from "./chunk-probe";
 
 const MARKER = "andrew:selftest_ufo";
-const SCOPE = "st";
 const AREA = "andrew_selftest_ufo";
 /** Far outside anything loaded at a player-less start. */
 const FAR: Vector3 = { x: 3000.5, y: 101, z: 3000.5 };
@@ -62,8 +61,9 @@ interface Case {
   loadedAt?: number;
 }
 
-function makeCase(prefix: string, durations: UfoDurations): Case {
-  const store = scopedStore(prefix);
+/** Each case its own scope: a core removes only a saucer of its own scope that no live event holds. */
+function makeCase(scope: string, durations: UfoDurations): Case {
+  const store = scopedStore(`${scope}:`);
   const logs: string[] = [];
   const ceiling = (): number => world.getDimension("overworld").heightRange.max;
   const env: UfoEnv = {
@@ -82,13 +82,13 @@ function makeCase(prefix: string, durations: UfoDurations): Case {
     },
   };
   const saucer = createStubSaucer({ overworld: () => world.getDimension("overworld"), random: () => 0, durations, ceiling });
-  return { store, saucer, logs, core: new UfoCore(env, { scope: SCOPE, saucer }) };
+  return { store, saucer, logs, core: new UfoCore(env, { scope, saucer }) };
 }
 
 const cases = {
-  timer: makeCase("st1:", FLIGHT),
-  flight: makeCase("st2:", FLIGHT),
-  disabled: makeCase("st3:", FLIGHT),
+  timer: makeCase("st1", FLIGHT),
+  flight: makeCase("st2", FLIGHT),
+  disabled: makeCase("st3", FLIGHT),
 };
 
 /** Ids of every entity removed in this run, by any pack's script or by the engine. */
@@ -220,7 +220,7 @@ export async function ufoRestartRun2(wait: Wait, log: Log): Promise<string[]> {
   check(
     "no saucer after its chunk loads",
     ufos.length === 0 && removed.has(m.saucerId) && removal !== undefined,
-    `${ufos.length} UFO entities near the hover point; saucer ${m.saucerId} removed in this run: ${removed.has(m.saucerId)}; by the st core's entityLoad sweep: ${removal ?? "no log line"}`
+    `${ufos.length} UFO entities near the hover point; saucer ${m.saucerId} removed in this run: ${removed.has(m.saucerId)}; by the st2 core's entityLoad sweep: ${removal ?? "no log line"}`
   );
   const stand = world.getEntity(m.standId);
   check("held element released", stand !== undefined && stand.isValid && !stand.hasTag(IRON_TAG), `stand ${m.standId}: ${stand === undefined ? "not found" : `tags ${JSON.stringify(stand.getTags())}`}`);

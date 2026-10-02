@@ -519,6 +519,26 @@ test('the command module registers one enum command at GameDirectors and answers
   assert.equal(fx.core.pendingCommands(), 1);
 });
 
+test('the command refuses a player below GameDirectors itself (Entity.runCommand skips the engine gate); the server, a mob and an operator pass', () => {
+  let fn;
+  const startup = { subscribe: (cb) => cb({ customCommandRegistry: { registerEnum: () => {}, registerCommand: (_c, f) => (fn = f) } }) };
+  const api = { system: { beforeEvents: { startup } }, CommandPermissionLevel: { Any: 0, GameDirectors: 1, Admin: 2 }, CustomCommandParamType: { Enum: 'enum' }, CustomCommandStatus: { Success: 0, Failure: 1 } };
+  const fx = fixture({ players: [player('op'), player('guest')] });
+  registerUfoCommand(api, { core: () => fx.core });
+  const as = (level, id = 'guest') => ({ id, typeId: 'minecraft:player', commandPermissionLevel: level });
+  const cow = { id: 'cow', typeId: 'minecraft:cow' };
+  for (const action of ['come', 'stop', 'enable', 'disable']) {
+    assert.equal(fn({ sourceEntity: as(0) }, action).status, 1, `a level-0 player's ${action} was answered`);
+  }
+  assert.equal(fn({ sourceEntity: cow, initiator: as(0) }, 'disable').status, 1, 'execute-as by a non-operator got through');
+  assert.equal(fx.core.pendingCommands(), 0, 'a non-operator queued an action');
+  assert.equal(fn({ sourceEntity: as(1, 'op') }, 'come').status, 0);
+  assert.equal(fn({ sourceEntity: as(2, 'op') }, 'disable').status, 0);
+  assert.equal(fn({}, 'enable').status, 0, 'the server was refused');
+  assert.equal(fn({ sourceEntity: cow }, 'stop').status, 0, 'a non-player source was refused');
+  assert.equal(fx.core.pendingCommands(), 3);
+});
+
 // ------------------------------------------------------------ sweeps (p003, xasm17)
 
 function fakeEntity({ id, typeId = SAUCER_ID, tags = [] }) {

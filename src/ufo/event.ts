@@ -117,6 +117,7 @@ export function eventOfTags(tags: readonly string[]): string | undefined {
 export const scopeOfEvent = (eventId: string): string => eventId.slice(0, eventId.indexOf("-"));
 
 const fmt = (v: Readonly<Vector3>): string => `${v.x},${v.y},${v.z}`;
+const whenText = (next: number | undefined): string => (next === undefined ? "absent" : next === 0 ? "in flight" : String(next));
 const errText = (err: unknown): string => (err instanceof Error ? `${err.name}: ${err.message}` : String(err)).split("\n")[0];
 
 /** Unique per script load across every core in it. */
@@ -316,7 +317,7 @@ export class UfoCore {
     // A shot already started the pause at reportShotDown (L0-adr-ufpc).
     const next = s.downedHandled ? this.schedule.next() : this.schedule.pauseFromNow();
     this.publish(s, "pause");
-    this.env.log(`ufo ${s.eventId}: ended (${reason}) after ${s.age} ticks; next arrival at ${String(next)}`);
+    this.env.log(`ufo ${s.eventId}: ended (${reason}) after ${s.age} ticks; next arrival at ${whenText(next)}`);
   }
 
   // ------------------------------------------------------------- the contract
@@ -341,12 +342,12 @@ export class UfoCore {
   // ------------------------------------------------------------ world events
 
   firstJoin(): void {
-    if (this.schedule.firstJoin()) this.env.log(`ufo ${this.parts.scope}: first join — first arrival at ${String(this.schedule.next())}`);
+    if (this.schedule.firstJoin()) this.env.log(`ufo ${this.parts.scope}: first join — first arrival at ${whenText(this.schedule.next())}`);
   }
 
   /** L0-ufoc-p003 step 3; runs at worldLoad, before the interval starts. */
   worldLoaded(): void {
-    if (this.schedule.loaded()) this.env.log(`ufo ${this.parts.scope}: an event was live when the server stopped — next arrival at ${String(this.schedule.next())}`);
+    if (this.schedule.loaded()) this.env.log(`ufo ${this.parts.scope}: an event was live when the server stopped — next arrival at ${whenText(this.schedule.next())}`);
   }
 
   /** Stale for this runtime: no event tag, or this runtime's scope with no matching live event. */
@@ -466,7 +467,7 @@ export class UfoCore {
         return;
       case "enable":
         this.schedule.setEnabled(true);
-        this.env.log(`ufo ${this.parts.scope}: enabled in this world; next arrival at ${String(this.schedule.next())}`);
+        this.env.log(`ufo ${this.parts.scope}: enabled in this world; next arrival at ${whenText(this.schedule.next())}`);
         return;
     }
   }
