@@ -109,6 +109,7 @@ const {
   RING_EFFECT,
   RING_MAX_BLASTS_PER_TICK,
   BLAST_POWER,
+  RING_MIN_RANGE,
   PROTECT_MARGIN,
   MAX_QUEUE_AGE_TICKS,
   CONTAINER_FALLBACK,
@@ -272,9 +273,50 @@ test('registerRing puts the ring effect on RMB: the five-ring layout, normal TNT
   assert.equal(RING_EFFECT.scale, 0);
   assert.equal(RING_MAX_BLASTS_PER_TICK, 48);
   assert.equal(BLAST_POWER, 4);
+  // The rings refuse a nearer target: at 7 blocks the shooter already stands
+  // 3.5 from the d=7 ring, whose power-4 cells reach 8.
+  assert.equal(RING_MIN_RANGE, 7);
+  assert.equal(RING_EFFECT.minRange, RING_MIN_RANGE);
+  // The protection margin must cover the strongest ring, not the weakest.
   assert.equal(PROTECT_MARGIN, 8);
   assert.equal(MAX_QUEUE_AGE_TICKS, 200);
   assert.equal(CONTAINER_FALLBACK, true, 'as02 measured: doTileDrops=false does not stop a container spilling');
+});
+
+test('every blast explodes at its own ring power, not one power for all', async () => {
+  await reset();
+  const dim = dimension();
+  const attackId = newId();
+  const target = { x: 0, y: 64, z: 0 };
+  commit(attackId, target);
+  const cols = detonateAll(dim, attackId, target);
+  await drainAll();
+  assert.equal(dim.explosions.length, cols.length);
+
+  const byPower = new Map();
+  for (const e of dim.explosions) byPower.set(e.radius, (byPower.get(e.radius) ?? 0) + 1);
+  // centre 1 + d=7 20 at power 4; d=14 40 at 2; d=21 60 and d=28 80 at 1.
+  assert.deepStrictEqual([...byPower.entries()].sort((a, b) => b[0] - a[0]), [[4, 21], [2, 40], [1, 140]]);
+
+  for (const e of dim.explosions) {
+    const col = cols.find((c) => Math.floor(e.location.x) === c.x && Math.floor(e.location.z) === c.z);
+    assert.notEqual(col, undefined, `a blast at ${e.location.x},${e.location.z} stands on no column`);
+    assert.equal(e.radius, col.power, `blast at ${e.location.x},${e.location.z}`);
+  }
+});
+
+test('a contact the layout does not hold explodes at the strongest power', async () => {
+  await reset();
+  const dim = dimension();
+  const attackId = newId();
+  commit(attackId, { x: 0, y: 64, z: 0 });
+  // 5 blocks out is between the d=7 and d=14 rings: no column, no power of its own.
+  RING_EFFECT.onDetonate(dim, { x: 5, y: 64, z: 0 }, 'owner', 'rmb', attackId);
+  // And an attack nobody registered: the target is unknown.
+  const orphan = newId();
+  RING_EFFECT.onDetonate(dim, { x: 0, y: 64, z: 0 }, 'owner', 'rmb', orphan);
+  await drainAll();
+  assert.deepStrictEqual(dim.explosions.map((e) => e.radius), [BLAST_POWER, BLAST_POWER]);
 });
 
 // ------------------------------------------------------------------ AC#10 — r010 centre, r007 underwater

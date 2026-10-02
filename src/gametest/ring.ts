@@ -29,7 +29,7 @@ import { activate } from "../orbital/activation";
 import { CHARGE_ENTITY_ID, type Effect, attackTag, effectFor, registerEffect } from "../orbital/charge";
 import { type Attack, flightLoop, observeChargeEnds } from "../orbital/flight";
 import { BLAST_POWER, RING_EFFECT, RING_MAX_BLASTS_PER_TICK, type RingReport, observeRingReports, ringLoop } from "../orbital/ring";
-import { RING_LAYOUT, layout } from "../orbital/ring-layout";
+import { RING_LAYOUT, layout, powerAtOffset } from "../orbital/ring-layout";
 import { spawnY } from "../orbital/spawn";
 import { STUB_EFFECTS } from "../orbital/stub-effect";
 import { arm, goTo } from "./orbital-core";
@@ -47,6 +47,8 @@ const REACH = FOOTPRINT + 8;
 const PAD = REACH + 6;
 const LOAD = PAD + 20;
 const PAD_LAYERS = 9;
+/** The crater scenario's pad: soil, because power 1 marks soil and not stone. */
+const PAD_MATERIAL = "minecraft:dirt";
 
 const log = (msg: string): void => console.warn(`[gametest] ring ${msg}`);
 const fmt = (v: Vector3): string => `${v.x},${v.y},${v.z}`;
@@ -80,8 +82,13 @@ function spawnOf(dim: Dimension, top: number): number {
   return spawnY(dim.id, top, dim.heightRange);
 }
 
-/** A stone pad at site `k` (each 150 blocks apart on −z), `half` around the centre and `wideX` more on each side in x, loaded with a margin. */
-async function site(test: Test, name: string, k: number, half = PAD, wideX = 0): Promise<Site> {
+/**
+ * A pad at site `k` (each 150 blocks apart on −z), `half` around the centre and
+ * `wideX` more on each side in x, loaded with a margin. Stone by default; the
+ * material matters now that the outer rings are power 1, which breaks 9 cells of
+ * soil and none of stone (probe_crater_by_power).
+ */
+async function site(test: Test, name: string, k: number, half = PAD, wideX = 0, material = "minecraft:stone"): Promise<Site> {
   const dim = test.getDimension();
   const origin = test.worldBlockLocation({ x: 0, y: 0, z: 0 });
   const cx = origin.x;
@@ -89,7 +96,7 @@ async function site(test: Test, name: string, k: number, half = PAD, wideX = 0):
   const min = dim.heightRange.min;
   const top = min + PAD_LAYERS;
   const unload = await loadBox(test, dim, name, { min: [cx - LOAD - wideX, 0, cz - LOAD], max: [cx + LOAD + wideX, 0, cz + LOAD] });
-  fill(dim, { x: cx - half - wideX, y: min + 1, z: cz - half }, { x: cx + half + wideX, y: top, z: cz + half }, "minecraft:stone");
+  fill(dim, { x: cx - half - wideX, y: min + 1, z: cz - half }, { x: cx + half + wideX, y: top, z: cz + half }, material);
   // The pad lies deep, so natural stone stands where the charges appear: clear
   // air all the way to the spawn height, read from the shipped offset rather
   // than from a copy of it, or every charge detonates in rock on spawn.
@@ -166,6 +173,16 @@ function spyExplosions(): { calls: Blast[]; restore: () => void } {
     return made;
   };
   return { calls, restore: () => void (proto.createExplosion = original) };
+}
+
+/**
+ * Where a shooter may stand: the rings refuse a target nearer than
+ * RING_MIN_RANGE, so every scenario that fires one puts its owner out at this
+ * offset instead of beside the target. Measured from the eye to the nearest
+ * point of the target block, +9 in x is about 8.6 blocks.
+ */
+function standFor(s: { cx: number; cz: number; top: number }, dx = 9, dz = 0): Vector3 {
+  return { x: s.cx + dx, y: s.top + 1, z: s.cz + dz };
 }
 
 async function owner(test: Test, s: Site, name: string, stand: Vector3): Promise<SimulatedPlayer> {
@@ -415,6 +432,119 @@ registerAsync("andrew", "probe_blast_stacking", async (test: Test): Promise<void
   .maxTicks(400)
   .tag("andrew");
 
+/**
+ * What one blast of each power actually destroys. The per-ring power is tuned
+ * from this: a ring whose cells break nothing is 80 silent pops, and "radius is
+ * about 1.3 x power" is folklore until measured.
+ */
+registerAsync("andrew", "probe_crater_by_power", async (test: Test): Promise<void> => {
+  const s = await site(test, "andrew_gt_ring_p9", 22, PAD, 120);
+  const before = world.gameRules.doTileDrops;
+  try {
+    const { dim, cz, top } = s;
+    world.gameRules.doTileDrops = false;
+    const rows: string[] = [];
+    const powers = [8, 4, 2, 1, 0.5];
+    for (const [m, material] of ["minecraft:stone", "minecraft:dirt"].entries()) {
+      for (const [i, power] of powers.entries()) {
+        const x = s.cx - 90 + 20 * (m * powers.length + i);
+        fill(dim, { x: x - 9, y: top - 8, z: cz - 9 }, { x: x + 9, y: top, z: cz + 9 }, material);
+        await test.idle(2);
+        // One block above the solid top layer: a blast inside a block is damped
+        // and breaks only that block (measured — the first run read 1 cell for power 4).
+        dim.createExplosion({ x: x + 0.5, y: top + 1.5, z: cz + 0.5 }, power, { causesFire: false });
+        await test.idle(10);
+        let broken = 0;
+        let reach = 0;
+        for (let dx = -9; dx <= 9; dx++) {
+          for (let dz = -9; dz <= 9; dz++) {
+            for (let dy = -8; dy <= 0; dy++) {
+              if (dim.getBlock({ x: x + dx, y: top + dy, z: cz + dz })?.isAir === true) {
+                broken++;
+                reach = Math.max(reach, Math.hypot(dx, dy, dz));
+              }
+            }
+          }
+        }
+        rows.push(`${material.replace("minecraft:", "")} power ${power}: ${broken} cell(s), farthest ${reach.toFixed(2)} bl`);
+      }
+    }
+    log(`[probe] crater RESULT doTileDrops off: ${rows.join(" | ")}`);
+    test.succeed();
+  } finally {
+    world.gameRules.doTileDrops = before;
+    s.unload();
+  }
+})
+  .structureName(STRUCTURE)
+  .maxTicks(600)
+  .tag("andrew");
+
+/**
+ * What a real RMB attack does to someone standing at each distance from the
+ * target. Modelling it from one blast's falloff understates it badly: the cells
+ * stand at many distances, and the engine lets through every blast stronger than
+ * the previous one inside the hurt window (probe_blast_stacking), so the victim
+ * takes a rising sequence, not the strongest single hit. Measured, not derived —
+ * this profile is what the per-ring powers and RING_MIN_RANGE are chosen from.
+ */
+registerAsync("andrew", "probe_ring_damage_by_distance", async (test: Test): Promise<void> => {
+  const reports = watchReports();
+  const harm = watchHarm();
+  const restore = useRealRmb(test);
+  const difficulty = world.getDifficulty();
+  const extras: Entity[] = [];
+  const s = await site(test, "andrew_gt_ring_pA", 23, PAD, 40);
+  try {
+    world.setDifficulty(Difficulty.Easy);
+    await test.idle(4);
+    const { dim, cz, top } = s;
+    // Victims east of the target; the shooter stands west of it, out of his own
+    // way and no nearer than the rings allow.
+    // 13 and 15 straddle the outer ring at 14: the peak there is the cell the
+    // victim stands on, and the pair shows how narrow it is.
+    const spots = [8, 10, 12, 13, 14, 15, 16, 18, 20, 24];
+    const victims = spots.map((d) => ({ d, mob: zombie(dim, { x: s.cx + d + 0.5, y: top + 1, z: cz + 0.5 }) }));
+    extras.push(...victims.map((v) => v.mob));
+    const hp = new Map(victims.map((v) => [v.d, health(v.mob)]));
+    const a = await owner(test, s, "ring_pA_shooter", standFor(s, -9));
+    const hpShooter = health(a);
+    await test.idle(10);
+    const attack = fireRmb(a, dim, s.target);
+    const r = await untilReport(test, reports, attack.attackId);
+    await test.idle(60);
+
+    const rows = victims.map((v) => {
+      const died = harm.deaths.has(v.mob.id);
+      const mine = harm.hurts.filter((h) => h.id === v.mob.id);
+      const nearest = Math.min(
+        ...RING_LAYOUT.columns.map((c) => Math.hypot(c.x + 0.5 - (v.d + 0.5), c.z + 0.5 - 0.5))
+      );
+      return (
+        `${v.d} (nearest cell ${nearest.toFixed(2)} bl): lost ${blastLoss(mine, v.mob.id, hp.get(v.d) ?? 20, died).toFixed(1)}` +
+        ` in ${mine.length} hit(s) [${mine.map((h) => h.damage.toFixed(1)).join(" ")}]${died ? " DIED" : ""}`
+      );
+    });
+    const shooterDied = harm.deaths.has(a.id);
+    log(
+      `[probe] ring damage RESULT ${brief(r)}; victims east of the target [${rows.join(" | ")}]; ` +
+        `shooter 9 blocks west lost ${blastLoss(harm.hurts, a.id, hpShooter, shooterDied).toFixed(1)}${shooterDied ? " and DIED" : ` and lives on ${health(a)}`}`
+    );
+    test.assert(r.blasts === r.charges && r.lost + r.failed === 0, `the attack did not land whole: ${brief(r)}`);
+    test.succeed();
+  } finally {
+    world.setDifficulty(difficulty);
+    restore();
+    reports.stop();
+    harm.stop();
+    for (const e of extras) if (e.isValid) e.remove();
+    s.unload();
+  }
+})
+  .structureName(STRUCTURE)
+  .maxTicks(600)
+  .tag("andrew");
+
 registerAsync("andrew", "probe_ring_drops", async (test: Test): Promise<void> => {
   const restore = useRealRmb(test);
   const difficulty = world.getDifficulty();
@@ -619,9 +749,12 @@ registerAsync("andrew", "probe_ring_drops", async (test: Test): Promise<void> =>
 registerAsync("andrew", "ring_layout_craters", async (test: Test): Promise<void> => {
   const restore = useRealRmb(test);
   const reports = watchReports();
-  const s = await site(test, "andrew_gt_ring_1", 5);
+  // Soil, not stone: the two outer rings are power 1, which breaks 9 cells of
+  // soil and nothing at all in stone (probe_crater_by_power), and "a crater
+  // under every column" is a claim about the ground people walk on.
+  const s = await site(test, "andrew_gt_ring_1", 5, PAD, 0, PAD_MATERIAL);
   try {
-    const a = await owner(test, s, "ring_ac1_a", { x: s.cx + 2, y: s.top + 1, z: s.cz + 1 });
+    const a = await owner(test, s, "ring_ac1_a", standFor(s));
     const tick = system.currentTick;
     const attack = fireRmb(a, s.dim, s.target);
     const charges = s.dim.getEntities({ type: CHARGE_ENTITY_ID, tags: [attackTag(attack.attackId)] });
@@ -638,15 +771,23 @@ registerAsync("andrew", "ring_layout_craters", async (test: Test): Promise<void>
     const craters = cols.filter((c) => s.dim.getBlock({ x: c.x, y: s.top, z: c.z })?.isAir === true);
     // Corners past everything a blast can touch, still on the stone pad.
     const corner = REACH + 4;
+    const byPower = new Map<number, { cols: number; craters: number }>();
+    for (const c of RING_LAYOUT.columns) {
+      const row = byPower.get(c.power) ?? { cols: 0, craters: 0 };
+      row.cols++;
+      if (s.dim.getBlock(cellAt(s, c))?.isAir === true) row.craters++;
+      byPower.set(c.power, row);
+    }
     const far = [
       { x: corner, z: corner },
       { x: -corner, z: corner },
       { x: corner, z: -corner },
       { x: -corner, z: -corner },
-    ].filter((c) => typeAt(s.dim, cellAt(s, c)) !== "minecraft:stone");
+    ].filter((c) => typeAt(s.dim, cellAt(s, c)) !== PAD_MATERIAL);
     log(
       `ac1 RESULT attack ${attack.attackId}: in the activation tick ${inTick}, charges ${charges.length}, layout().length ${cols.length}, distinct columns ${distinct}, ` +
-        `off-layout ${offColumn.length}, y != the spawn height (${spawnOf(s.dim, s.top)}) ${wrongY.length}; ${brief(r)}; cratered columns ${craters.length}/${cols.length}; far corner cells not stone ${far.length}`
+        `off-layout ${offColumn.length}, y != the spawn height (${spawnOf(s.dim, s.top)}) ${wrongY.length}; ${brief(r)}; cratered columns ${craters.length}/${cols.length}; ` +
+        `by power [${[...byPower].sort((p, q) => q[0] - p[0]).map(([power, x]) => `${power}: ${x.craters}/${x.cols}`).join(", ")}]; far corner cells intact ${far.length === 0}`
     );
     test.assert(inTick, "the charges were counted after the activation tick");
     test.assert(charges.length === cols.length && cols.length === RING_LAYOUT.count, `charges ${charges.length}, layout ${cols.length}`);
@@ -654,6 +795,11 @@ registerAsync("andrew", "ring_layout_craters", async (test: Test): Promise<void>
     test.assert(wrongY.length === 0, `${wrongY.length} charge(s) not at y ${spawnOf(s.dim, s.top)}: ${wrongY.slice(0, 3).map((g) => g.y).join(",")}`);
     test.assert(r.blasts === cols.length && r.lost === 0 && r.failed === 0, brief(r));
     test.assert(craters.length === cols.length, `${cols.length - craters.length} layout column(s) with no crater: ${cols.filter((c) => !craters.includes(c)).slice(0, 5).map((c) => `${c.x - s.cx},${c.z - s.cz}`).join(" ")}`);
+    // Each ring's power leaves its own hole: the claim is that even the weakest
+    // ring marks soil, so no power may be silent here.
+    for (const [power, x] of byPower) {
+      test.assert(x.craters === x.cols, `power ${power}: ${x.cols - x.craters} of ${x.cols} column(s) left the soil intact`);
+    }
     test.assert(far.length === 0, "a cell 16 blocks out on a diagonal changed");
     test.succeed();
   } finally {
@@ -684,7 +830,7 @@ registerAsync("andrew", "ring_independent_stepped", async (test: Test): Promise<
   let sampler: number | undefined;
   try {
     fill(s.dim, { x: s.cx - PAD, y: s.top + 1, z: s.cz - PAD }, { x: s.cx - 1, y: s.top + 6, z: s.cz + PAD }, "minecraft:stone");
-    const a = await owner(test, s, "ring_ac2_a", { x: s.cx + 2, y: s.top + 1, z: s.cz + 1 });
+    const a = await owner(test, s, "ring_ac2_a", standFor(s));
     const attack = fireRmb(a, s.dim, s.target);
     a.teleport(s.park);
     const tracked = new Map<string, { e: Entity; x0: number; z0: number; drift: number; gone: number }>();
@@ -733,7 +879,14 @@ registerAsync("andrew", "ring_independent_stepped", async (test: Test): Promise<
     test.assert(contactTicks.length >= 2 && contactTicks[contactTicks.length - 1] - contactTicks[0] >= 6, `contact ticks [${contactTicks.join(",")}]: the step did not separate them`);
     test.assert(calls.length === detonated.length && r.blasts === detonated.length, `createExplosion ${calls.length}, detonated ${detonated.length}, report ${r.blasts}`);
     test.assert(new Set(callCols).size === calls.length && unmatched.length === 0, "blasts merged or missing: one call per contact column");
-    test.assert(calls.every((c) => c.radius === 4), "a blast is not power 4");
+    const wrongPower = calls.filter((c) => c.radius !== powerAtOffset(Math.floor(c.at.x) - s.target.x, Math.floor(c.at.z) - s.target.z));
+    test.assert(
+      wrongPower.length === 0,
+      `${wrongPower.length} blast(s) did not explode at their ring's power: ${wrongPower
+        .slice(0, 3)
+        .map((c) => `${Math.floor(c.at.x) - s.target.x},${Math.floor(c.at.z) - s.target.z} at ${c.radius}`)
+        .join(" ")}`
+    );
     test.assert(r.maxBlastsInTick <= RING_MAX_BLASTS_PER_TICK && [...perTick.values()].every((n) => n <= RING_MAX_BLASTS_PER_TICK), `maxBlastsInTick ${r.maxBlastsInTick}`);
     test.succeed();
   } finally {
@@ -831,10 +984,15 @@ registerAsync("andrew", "ring_tnt_damage", async (test: Test): Promise<void> => 
     // Run 1: the SimulatedPlayer A fires and stays where the AC puts the owner.
     const s = await site(test, "andrew_gt_ring_3a", 7);
     sites.push(s);
-    const a = await owner(test, s, "ring_ac3_ring_A", { x: s.cx + 5, y: s.top + 1, z: s.cz });
-    const ring = await placeSubjects(test, s, "ring", SUBJECTS, a);
+    // The owner can no longer be one of the close subjects: the rings refuse a
+    // target nearer than RING_MIN_RANGE, so he fires from the nearest spot the
+    // weapon allows and takes what the field does there — which is the whole
+    // claim of AC-13, that his own attack does not spare him.
+    const a = await owner(test, s, "ring_ac3_shooter", standFor(s));
+    const ring = await placeSubjects(test, s, "ring", SUBJECTS);
     zombies(ring);
     const hpRing = new Map([...ring].map(([n, e]) => [n, health(e)]));
+    const hpShooter = health(a);
     const attack = fireRmb(a, s.dim, s.target);
     const r = await untilReport(test, reports, attack.attackId);
     await test.idle(60);
@@ -892,13 +1050,14 @@ registerAsync("andrew", "ring_tnt_damage", async (test: Test): Promise<void> => 
       return { name: sub.name, lr, lt, same: same(lr, lt) };
     });
     const ownLoss = { lr: lossOf(own, hpOwn, "O"), lt: lossOf(control, hpTnt, "OZ") };
+    const shooterLoss = blastLoss(harm.hurts, a.id, hpShooter, harm.deaths.has(a.id));
     const aDeath = harm.deaths.get(a.id);
     const oDeath = harm.deaths.get(ownerZombie.id);
 
     // Run 3: the owner in another dimension — no error, no source, every blast still happens.
     const o = await site(test, "andrew_gt_ring_3c", 9);
     sites.push(o);
-    const a2 = await owner(test, o, "ring_ac3_away", { x: o.cx + 2, y: o.top + 1, z: o.cz + 1 });
+    const a2 = await owner(test, o, "ring_ac3_away", standFor(o));
     const callsBefore = spy.calls.length;
     const linesBefore = warnings.lines.length;
     const away = fireRmb(a2, o.dim, o.target);
@@ -911,7 +1070,7 @@ registerAsync("andrew", "ring_tnt_damage", async (test: Test): Promise<void> => 
     log(
       `ac3 RESULT run 1 (SimulatedPlayer owner) ${brief(r)}, blasts with a source ${spy.calls.filter((c) => c.options?.source !== undefined).length}; health lost ring vs vanilla TNT: ${rows.map((x) => `${x.name} ${x.lr.toFixed(1)}/${x.lt.toFixed(1)}${x.same ? "" : " DIFFERS"}`).join(", ")}; ` +
         `one blast each (${brief(rOne)}), lost ring vs one vanilla TNT: ${one.map((x) => `${x.name} ${x.lr.toFixed(2)}/${x.lt.toFixed(2)}${x.same ? "" : " DIFFERS"} [${x.hr} | ${x.ht}]`).join(", ")}; ` +
-        `A ${aDeath === undefined ? `alive hp ${health(a)}` : `died: ${aDeath.cause}, by ${aDeath.by === a.id ? "A" : aDeath.by}`}; ` +
+        `the shooter at ${standFor(s).x - s.target.x} blocks lost ${shooterLoss.toFixed(1)} and ${aDeath === undefined ? `is alive on hp ${health(a)}` : `died: ${aDeath.cause}, by ${aDeath.by === a.id ? "himself" : aDeath.by}`}; ` +
         `run 2 (zombie owner) ${brief(rOwn)}, blasts with the owner as source ${sourced}/${ownCalls.length}, owner lost ${ownLoss.lr.toFixed(1)} vs a zombie there under vanilla TNT ${ownLoss.lt.toFixed(1)}, ` +
         `owner ${oDeath === undefined ? "alive" : `died: ${oDeath.cause}, by ${oDeath.by === ownerZombie.id ? "itself" : oDeath.by}`}; ` +
         `run 3 owner in ${a2.dimension.id} at the blasts: ${brief(r2)}, calls ${awayCalls.length}, with a source ${awayCalls.filter((c) => c.options?.source !== undefined).length}, ring errors ${awayErrors.length}`
@@ -919,6 +1078,9 @@ registerAsync("andrew", "ring_tnt_damage", async (test: Test): Promise<void> => 
     test.assert(r.blasts === r.charges && r.lost === 0 && r.failed === 0, `run 1 ${brief(r)}`);
     for (const x of rows) test.assert(x.lr > 0, `${x.name} took no damage from the rings`);
     for (const x of rows) test.assert(x.same, `${x.name} lost ${x.lr} to the rings, ${x.lt} to vanilla TNT`);
+    // AC-13: his own attack does not spare the owner. He can only stand at the
+    // range the rings allow, so that is where the claim is measured.
+    test.assert(shooterLoss > 0, `the shooter ${standFor(s).x - s.target.x} blocks from his own target took no damage at all`);
     test.assert(rOne.blasts === SINGLES.length && rOne.lost + rOne.failed === 0, `single blasts ${brief(rOne)}`);
     for (const x of one) test.assert(x.same && (x.lr > 0 || x.lt === 0), `${x.name}: one ring blast took ${x.lr}, one vanilla TNT ${x.lt}`);
     test.assert(rOwn.blasts === RING_LAYOUT.count && rOwn.lost + rOwn.failed === 0, `run 2 ${brief(rOwn)}`);
@@ -963,7 +1125,7 @@ async function resistanceRun(test: Test, k: number, initial: boolean): Promise<{
     dim.getBlock(cellAt(s, chestCol, 1))?.getComponent("minecraft:inventory")?.container?.setItem(0, new ItemStack("minecraft:cobblestone", 10));
     if (!initial) dim.runCommand("gamerule dotiledrops false");
     const before = world.gameRules.doTileDrops;
-    const a = await owner(test, s, `ring_ac4_${initial ? "t" : "f"}`, { x: cx + 2, y: top + 1, z: cz + 1 });
+    const a = await owner(test, s, `ring_ac4_${initial ? "t" : "f"}`, standFor(s));
     const attack = fireRmb(a, dim, s.target);
     a.teleport(s.park);
     const r = await untilReport(test, reports, attack.attackId);
@@ -1043,7 +1205,7 @@ registerAsync("andrew", "ring_underwater_damage_only", async (test: Test): Promi
     const seabed = top - 4;
     const zb = zombie(dim, { x: cx - 3 + 0.5, y: seabed + 1, z: cz + 0.5 });
     extras.push(zb);
-    const a = await owner(test, s, "ring_ac5_a", { x: cx + 2, y: top + 1, z: cz + 1 });
+    const a = await owner(test, s, "ring_ac5_a", standFor(s));
     await test.idle(10);
     const snap = new BlockVolume({ x: cx - 16, y: Math.max(dim.heightRange.min, seabed - 6), z: cz - 16 }, { x: cx - 2, y: top + 6, z: cz + 16 });
     const cells = [...snap.getBlockLocationIterator()].map((l) => ({ x: l.x, y: l.y, z: l.z }));
@@ -1111,7 +1273,7 @@ registerAsync("andrew", "ring_legendaries_survive", async (test: Test): Promise<
   const s = await site(test, "andrew_gt_ring_6", 13);
   try {
     const { dim, cx, cz, top } = s;
-    const a = await owner(test, s, "ring_ac6_a", { x: cx + 2, y: top + 1, z: cz + 1 });
+    const a = await owner(test, s, "ring_ac6_a", standFor(s));
     const chestAt = { x: cx + 3, y: top + 1, z: cz };
     dim.setBlockType(chestAt, "minecraft:chest");
     const chest = dim.getBlock(chestAt)?.getComponent("minecraft:inventory")?.container;
@@ -1179,7 +1341,7 @@ registerAsync("andrew", "ring_three_budget", async (test: Test): Promise<void> =
     // Three targets 16 apart, so the footprints overlap: the queue is shared, not per attack.
     const targets = [-16, 0, 16].map((dx) => ({ x: cx + dx, y: top, z: cz }));
     const players: SimulatedPlayer[] = [];
-    for (const [i, t] of targets.entries()) players.push(await owner(test, s, `ring_ac7_${i}`, { x: t.x + 2, y: top + 1, z: t.z + 1 }));
+    for (const [i, t] of targets.entries()) players.push(await owner(test, s, `ring_ac7_${i}`, { x: t.x + 9, y: top + 1, z: t.z }));
     await test.idle(40);
     const idle = await continuationTicks(test, 200);
     let fired: Attack[] = [];
@@ -1260,7 +1422,7 @@ registerAsync("andrew", "ring_no_leftovers_vanilla_drops", async (test: Test): P
     const dirt = pick(outer.cells, 4, 3).map((c) => dim.spawnItem(new ItemStack("minecraft:dirt", 1), { x: cx + c.x + 0.5, y: top + 1, z: cz + c.z + 0.5 }));
     dirt.forEach((d) => d.clearVelocity());
     const dirtIds = new Set(dirt.map((d) => d.id));
-    const a = await owner(test, s, "ring_ac8_a", { x: cx + 2, y: top + 1, z: cz + 1 });
+    const a = await owner(test, s, "ring_ac8_a", standFor(s));
     await test.idle(10);
     const victims = new Map<string, string>([[b.id, "B"], ...zombies.map((z, i): [string, string] => [z.id, `Z${i}`])]);
 

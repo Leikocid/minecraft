@@ -31,9 +31,10 @@ export function distanceToBlock(eye: Vector3, cell: Vector3): number {
   return Math.hypot(axis(eye.x, cell.x), axis(eye.y, cell.y), axis(eye.z, cell.z));
 }
 
-/** A block that can be the target: in range and a contact block by the charge's own rule. */
-function eligible(eye: Vector3, block: Block): boolean {
-  return distanceToBlock(eye, block.location) <= TARGET_RANGE && isContact(block);
+/** A block that can be the target: within range, no nearer than `minRange`, and a contact block by the charge's own rule. */
+function eligible(eye: Vector3, block: Block, minRange: number): boolean {
+  const d = distanceToBlock(eye, block.location);
+  return d <= TARGET_RANGE && d >= minRange && isContact(block);
 }
 
 function lockOf(block: Block, face: Direction | undefined): TargetLock {
@@ -45,9 +46,9 @@ function lockOf(block: Block, face: Direction | undefined): TargetLock {
  * The block `player` fires at, or undefined when there is none. Reads the
  * player once; the lock is a copy and never follows the player afterwards.
  */
-export function lockTarget(player: Player, eventBlock?: Block, eventFace?: Direction): TargetLock | undefined {
+export function lockTarget(player: Player, eventBlock?: Block, eventFace?: Direction, minRange = 0): TargetLock | undefined {
   const eye = player.getHeadLocation();
-  if (eventBlock?.isValid === true && eventBlock.dimension.id === player.dimension.id && eligible(eye, eventBlock)) {
+  if (eventBlock?.isValid === true && eventBlock.dimension.id === player.dimension.id && eligible(eye, eventBlock, minRange)) {
     return lockOf(eventBlock, eventFace);
   }
   const hit = player.getBlockFromViewDirection({
@@ -55,5 +56,7 @@ export function lockTarget(player: Player, eventBlock?: Block, eventFace?: Direc
     includeLiquidBlocks: false,
     includePassableBlocks: false,
   });
-  return hit !== undefined && eligible(eye, hit.block) ? lockOf(hit.block, hit.face) : undefined;
+  // A nearer block the ray met is not swapped for a farther one: the shot is
+  // refused, as it is for a block out of range (L0-orbc-r004).
+  return hit !== undefined && eligible(eye, hit.block, minRange) ? lockOf(hit.block, hit.face) : undefined;
 }

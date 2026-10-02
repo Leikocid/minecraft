@@ -32,6 +32,7 @@ import { activate, observeAttacks } from "../orbital/activation";
 import { CHARGE_ENTITY_ID, CHARGE_TAG, type Effect, type Mode, PASS_THROUGH, attackTag, effectFor, isContact, registerEffect } from "../orbital/charge";
 import { type Attack, activeAttacks, endAttack } from "../orbital/flight";
 import { DEFAULT_SPAWN_OFFSET, SPAWN_OFFSET, spawnY } from "../orbital/spawn";
+import { RING_MIN_RANGE } from "../orbital/ring";
 import { TARGET_RANGE, distanceToBlock } from "../orbital/target";
 import { loadBox } from "./structures-place";
 
@@ -241,6 +242,8 @@ const GRASS_UPPER: Vector3 = { x: 3, y: 4, z: 2 };
 // the constant rather than written beside it, so moving the range moves them.
 const IN_RANGE: Vector3 = { x: 3, y: 3, z: 5 - TARGET_RANGE };
 const OUT_OF_RANGE: Vector3 = { x: 3, y: 3, z: 4 - TARGET_RANGE };
+/** Inside RING_MIN_RANGE: its near face is 4.5 away, so the rings must refuse it and the penetrator must not. */
+const TOO_CLOSE_FOR_RINGS: Vector3 = { x: 3, y: 3, z: 0 };
 
 /**
  * Air between the player and the two probe blocks, so what the ray meets is the
@@ -340,6 +343,31 @@ registerAsync("andrew", "orbital_no_target_silent", async (test: Test): Promise<
         `charges ${shot === undefined ? 0 : chargesOfAttack(dim, shot.attack.attackId)}, remaining ${remaining}, messages ${messages.count() - baseMessages}`
     );
     test.assert(watch.shots.length === 1, `retry at the far edge of the range: ${watch.shots.length} attacks, not 1`);
+
+    // A block nearer than the rings allow: Use is refused and costs no cooldown,
+    // while the penetrator — which does no entity damage — still fires at it.
+    blocks.restore();
+    cooldown.clearCooldown(player, KEY);
+    await test.idle(2);
+    const close = blocks.set(TOO_CLOSE_FOR_RINGS, "minecraft:stone");
+    player.lookAtBlock(TOO_CLOSE_FOR_RINGS);
+    await test.idle(4);
+    const beforeClose = watch.shots.length;
+    const closeFace = distanceToBlock(player.getHeadLocation(), close).toFixed(1);
+    await press(test, player, { kind: "use" });
+    await test.idle(2);
+    const afterUse = watch.shots.length;
+    const cdAfterUse = player.getDynamicProperty(cooldownKey(KEY));
+    await press(test, player, { kind: "attack" });
+    await test.idle(2);
+    const lmb = watch.shots[watch.shots.length - 1];
+    log(
+      `silent RESULT a block ${closeFace} away, inside the rings' ${RING_MIN_RANGE}: Use raised ${afterUse - beforeClose} attack(s), ` +
+        `${cooldownKey(KEY)}=${String(cdAfterUse)}; then Attack raised ${watch.shots.length - afterUse}, mode ${lmb?.attack.mode ?? "-"}`
+    );
+    test.assert(afterUse === beforeClose, `Use fired at a block ${closeFace} away, inside the rings' minimum ${RING_MIN_RANGE}`);
+    test.assert(cdAfterUse === undefined, `the refused Use wrote ${cooldownKey(KEY)}=${String(cdAfterUse)}`);
+    test.assert(watch.shots.length === afterUse + 1 && lmb?.attack.mode === "lmb", `Attack at ${closeFace} raised ${watch.shots.length - afterUse} attack(s) of mode ${lmb?.attack.mode ?? "-"}: the penetrator has no minimum`);
     test.assert(shot.attack.mode === "lmb" && same(shot.attack.target, stone), `retry locked ${fmt(shot.attack.target)} in ${shot.attack.mode}, not the stone at ${fmt(stone)}`);
     test.assert(chargesOfAttack(dim, shot.attack.attackId) === 1, `retry: ${chargesOfAttack(dim, shot.attack.attackId)} charges, not 1`);
     test.assert(player.getDynamicProperty(cooldownKey(KEY)) !== undefined && remaining > 590, `retry: cooldown not set (${remaining} ticks left)`);

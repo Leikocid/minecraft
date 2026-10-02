@@ -47,12 +47,15 @@ import { type BlockBox, HOLDER_TYPES, isLegendaryItemEntity, protectLegendariesI
 import { observeAttacks } from "./activation";
 import { type ContactProbe, type Effect, isContact, registerEffect } from "./charge";
 import { activeAttacks, observeChargeEnds } from "./flight";
-import { RING_LAYOUT, layout } from "./ring-layout";
+import { RING_LAYOUT, RING_MIN_RANGE, layout, powerAtOffset } from "./ring-layout";
 
 /** RG-1, L0-ring-as05. Lower it (32, then 16) before anything else if RG-3 fails. */
 export const RING_MAX_BLASTS_PER_TICK = 48;
-/** Vanilla TNT (L0-ring-r004). */
+export { RING_MIN_RANGE };
+
+/** Vanilla TNT (L0-ring-r004): the strongest ring's power, and the fallback for a column the layout no longer holds. */
 export const BLAST_POWER = 4;
+
 /** How far a blast reaches item entities: 2 × power (L0-adr-oprt §1). */
 export const PROTECT_MARGIN = 2 * BLAST_POWER;
 /** A guard against a stuck interval, not a mode of work (L0-ring-p003 step 5). */
@@ -81,6 +84,8 @@ interface QueuedBlast {
   dim: Dimension;
   point: Vector3;
   ownerId: string;
+  /** The power of this column's ring, resolved at contact (L0-ring-r004). */
+  power: number;
   enqueuedTick: number;
   /** Exploded, failed or lost: whatever happens to it, it happens once. */
   settled: boolean;
@@ -272,6 +277,19 @@ function stopIfEmpty(): void {
   loop.stops++;
 }
 
+/**
+ * The power of the column this contact cell belongs to. The charge carries no
+ * power of its own: its offset from the attack's target names its column, and
+ * the layout holds the ring's power. A contact outside the layout — the target
+ * is gone, or a restart dropped it — falls back to the strongest, which is what
+ * every column used before the rings were given their own powers.
+ */
+function powerOf(attackId: string, cell: Vector3): number {
+  const target = targets.get(attackId);
+  if (target === undefined) return BLAST_POWER;
+  return powerAtOffset(cell.x - target.x, cell.z - target.z) ?? BLAST_POWER;
+}
+
 /** L0-ring-p003 step 1: enqueue and return; the first drain runs this same tick, after the caller's stack. */
 function enqueue(dim: Dimension, point: Vector3, ownerId: string, attackId: string): void {
   const tick = system.currentTick;
@@ -280,7 +298,7 @@ function enqueue(dim: Dimension, point: Vector3, ownerId: string, attackId: stri
   state.pending++;
   const cell = { x: point.x, y: point.y, z: point.z };
   state.seen = union(state.seen, box(cell, cell));
-  queue.push({ attackId, dim, point: cell, ownerId, enqueuedTick: tick, settled: false });
+  queue.push({ attackId, dim, point: cell, ownerId, power: powerOf(attackId, cell), enqueuedTick: tick, settled: false });
   if (!loop.kicked) {
     loop.kicked = true;
     void Promise.resolve().then(kick);
@@ -467,14 +485,14 @@ function protect(group: Group): void {
 }
 
 /**
- * One engine explosion, power 4, never with a `source`: the source entity is
- * spared the blast's damage (L0-ring-as03, measured), and the owner must not be
- * (L0-ring-r004).
+ * One engine explosion at its ring's power, never with a `source`: the source
+ * entity is spared the blast's damage (L0-ring-as03, measured), and the owner
+ * must not be (L0-ring-r004).
  */
 function explode(r: Ready, tick: number): void {
   const { blast, centre, underwater } = r;
   try {
-    blast.dim.createExplosion(centre, BLAST_POWER, { breaksBlocks: !underwater, allowUnderwater: true, causesFire: false });
+    blast.dim.createExplosion(centre, blast.power, { breaksBlocks: !underwater, allowUnderwater: true, causesFire: false });
   } catch (err) {
     settleBlast(blast, "failed");
     log(`attack ${blast.attackId}: createExplosion at ${fmt(centre)} in ${blast.dim.id} threw ${String(err)}`);
@@ -647,6 +665,7 @@ function step(batch: QueuedBlast[], tick: number): void {
 export const RING_EFFECT: Effect = {
   layout: (target) => layout(target),
   scale: 0,
+  minRange: RING_MIN_RANGE,
   onDetonate(dim, point, ownerId, _mode, attackId) {
     enqueue(dim, point, ownerId, attackId);
   },
