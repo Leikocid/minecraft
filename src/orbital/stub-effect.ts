@@ -4,6 +4,7 @@
 
 import type { Vector3 } from "@minecraft/server";
 import { type Column, type Effect, type Mode, registerEffect } from "./charge";
+import { RING_MIN_RANGE } from "./ring-layout";
 
 /** About the charge count of the real five rings (L0-xasm8). */
 export const STUB_RMB_COLUMNS = 160;
@@ -22,10 +23,11 @@ export function stubGrid(target: Vector3): Column[] {
   return offsets.slice(0, STUB_RMB_COLUMNS).map((o) => ({ x: target.x + o.x, z: target.z + o.z }));
 }
 
-function stub(scale: 0 | 1, layout: (target: Vector3) => Column[]): Effect {
+function stub(scale: 0 | 1, layout: (target: Vector3) => Column[], minRange?: number): Effect {
   return {
     layout,
     scale,
+    minRange,
     onDetonate(dim, point, ownerId, mode: Mode, attackId) {
       console.warn(
         `[andrew] orbital stub ${mode}: detonation at ${point.x},${point.y},${point.z} in ${dim.id}, attack ${attackId}, owner ${ownerId}`
@@ -37,7 +39,10 @@ function stub(scale: 0 | 1, layout: (target: Vector3) => Column[]): Effect {
 
 export const STUB_EFFECTS: Readonly<Record<Mode, Effect>> = {
   lmb: stub(1, (target) => [{ x: target.x, z: target.z }]),
-  rmb: stub(0, stubGrid),
+  // The stub stands in for the rings, so it refuses the same near targets: a
+  // stand-in that accepts a shot the real effect would refuse makes every
+  // scenario built on it measure the wrong rule.
+  rmb: stub(0, stubGrid, RING_MIN_RANGE),
 };
 
 export function registerStubEffect(): void {

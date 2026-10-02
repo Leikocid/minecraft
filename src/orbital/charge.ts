@@ -20,6 +20,13 @@ export interface Effect {
   onDetonate(dim: Dimension, point: Vector3, ownerId: string, mode: Mode, attackId: string): void;
   /** 1.2× TNT for LMB, 1.0× for RMB. */
   scale: 0 | 1;
+  /**
+   * Blocks: a target nearer than this is refused, silently and without a
+   * cooldown, exactly like one out of range. The effect declares it because the
+   * reason is the effect's own blast field — the rings reach the shooter, the
+   * penetrator does no entity damage at all.
+   */
+  minRange?: number;
 }
 
 const effects = new Map<Mode, Effect>();

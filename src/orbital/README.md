@@ -30,7 +30,30 @@ Measured on BDS 1.26.51.1 (Rosetta, the dev Mac); the probes are `probe_pntr_*` 
 
 Measured on BDS 1.26.51.1 (Rosetta, the dev Mac); the probe is `probe_ring_drops` in `src/gametest/ring.ts`. `ring.ts` carries the same list next to the code.
 
-1. **Queue delay** (`L0-ring-ad02`, `L0-ring-p003`). A charge is removed at contact and its blast follows from one FIFO queue shared by every attack, `RING_MAX_BLASTS_PER_TICK` = 48 a tick. The first drain runs from a microtask queued by `onDetonate` — the contact tick, after the flight step that landed it, so all of that tick's contacts share one protection call — and one `runInterval` drains the rest, existing only while the queue is not empty. A 201-charge attack on flat ground takes 5 ticks (48/48/48/48/9); three fired together take 13. A blast queued over 200 ticks is dropped and logged.
+0. **Power per ring, and a minimum range** (§10 and §6, amended by
+   `decision-ring-power-per-ring-4-4-2-1-1`). The rings explode at 4/4/2/1/1
+   from the centre outwards, not all at 4, and the rings refuse a target nearer
+   than `RING_MIN_RANGE` = 7. Three measurements decide these numbers, and all
+   three contradict the arithmetic one would guess:
+   - equal blasts in one tick do not stack — four power-4 blasts 7 blocks away
+     hurt an entity once, for 6.1 — but every blast **stronger than the previous
+     one** lands again (`probe_blast_stacking`), and a ring attack's cells stand
+     at many distances, so a victim takes a rising sequence of 2 to 6 hits;
+   - what that costs, measured with the shipped powers
+     (`probe_ring_damage_by_distance`): 8 blocks from the target 20 in six hits
+     and death, 10 blocks 11, 12 blocks 7, **14 blocks 20 and death** because a
+     cell sits under the victim's feet (a power-1 blast at zero distance does
+     13.0, at one block 4.0), 16 blocks 1.9, and nothing at all from 18 out;
+   - a blast's hole is not 1.3 × power (`probe_crater_by_power`): on soil power 4
+     breaks 133 cells and reaches 5.0, power 2 breaks 38, power 1 breaks 9, power
+     0.5 breaks none; **in stone power 1 breaks nothing at all**, so the two
+     outer rings mark soil and leave rock untouched.
+
+   So the minimum buys a shot one can walk away from, not one that can be watched
+   from the spot: three seconds of fuse and a few steps put the shooter past 18.
+   The penetrator has no minimum — it does no entity damage.
+
+1. **Queue delay** (`L0-ring-ad02`, `L0-ring-p003`). A charge is removed at contact and its blast follows from one FIFO queue shared by every attack, `RING_MAX_BLASTS_PER_TICK` = 48 a tick, each at its own ring's power. The first drain runs from a microtask queued by `onDetonate` — the contact tick, after the flight step that landed it, so all of that tick's contacts share one protection call — and one `runInterval` drains the rest, existing only while the queue is not empty. A 201-charge attack on flat ground takes 5 ticks (48/48/48/48/9); three fired together take 13. A blast queued over 200 ticks is dropped and logged.
 2. **The `doTileDrops` gate and its one owner** (`L0-ring-ad01`, `L0-adr-odrp` §5). Each queue step reads the world rule, sets it false, makes its `createExplosion` calls and writes back the value it read, in `finally`, inside one synchronous stack — so an admin's `false` stays `false` and the world is never saved with the toggled value. `ring.ts` is the only product file that writes the rule (a node test greps `src/` for any other writer; the ring GameTest sets `false` by command to test that start). Measured (as01): a script `createExplosion(…, 4)` with the rule on drops what it breaks (32 dirt from a 9×9 dirt pad) and spills a destroyed chest. Inside the window (as02) the dirt and stone drop nothing, a killed zombie still drops its loot and a killed player its 5 diamonds (`doMobLoot`, `keepInventory` untouched). World TNT a ring blast primes goes off ticks later, after the window, and drops as vanilla TNT (`L0-ring-as07`).
 3. **Item frames** (`L0-ring-r008`, `L0-adr-oprt` §3). `protectLegendariesIn` breaks every frame within ±8 of a step's blasts with `setblock … destroy` before the window opens, so the frame and its item spill as ordinary items (a legendary among them is moved). A frame inside ±8 but beyond the blast's reach is broken too.
 4. **Nested storage** (`L0-lgnd-cx12`). A legendary inside a shulker-box or bundle *item* in a container survives only as far as lgnd reads nested storage; otherwise it goes with the container.

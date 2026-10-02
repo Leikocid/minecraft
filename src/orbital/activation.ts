@@ -136,7 +136,7 @@ export function activate(player: Player, mode: Mode, eventBlock?: Block, eventFa
   }
   const owner: Owner = { id: player.id, name: player.name };
   // No block: no cooldown, and the dedup tick stays free (r004).
-  const lock = lockTarget(player, eventBlock, eventFace);
+  const lock = lockTarget(player, eventBlock, eventFace, effect.minRange ?? 0);
   return lock === undefined ? undefined : commit(player, owner, mode, effect, lock, tick);
 }
 

@@ -22,6 +22,12 @@ const KEY = ORBITAL_CANNON.abilityKey;
 const STAND: Vector3 = { x: 3, y: 2, z: 5 };
 /** The platform's stone floor, two blocks in front of STAND. */
 const FLOOR_T: Vector3 = { x: 3, y: 1, z: 3 };
+/**
+ * A target the rings accept: its near face is 7.5 blocks from the eye, past
+ * RING_MIN_RANGE. The floor cell beside the player is fine for the penetrator,
+ * which has no minimum, but the rings refuse it on purpose.
+ */
+const RMB_T: Vector3 = { x: 3, y: 2, z: -3 };
 const DIMENSIONS = ["overworld", "nether", "the_end"];
 
 const log = (msg: string): void => console.warn(`[gametest] orbital-flight ${msg}`);
@@ -369,7 +375,7 @@ registerAsync("andrew", "orbital_flight_owner_events", async (test: Test): Promi
   const runs = new Map<OwnerRun, { points: string; owners: Set<string>; dims: Set<string>; outcomes: string; pid: string; netherMax: number; effect: string }>();
   try {
     await test.idle(4);
-    const t = blocks.set({ x: 3, y: 2, z: 3 }, "minecraft:stone");
+    const t = blocks.set(RMB_T, "minecraft:stone");
     for (const run of ["control", "death", "leave", "nether"] as OwnerRun[]) {
       const p: SimulatedPlayer = test.spawnSimulatedPlayer(STAND, `${NAME}_own_${run}`, GameMode.Survival);
       await test.idle(4);
@@ -536,10 +542,12 @@ const THREE_STANDS: Vector3[] = [
   { x: 3, y: 2, z: 5 },
   { x: 5, y: 2, z: 5 },
 ];
+// Past RING_MIN_RANGE from the stands above, and off the platform, so each one
+// is placed before the shot rather than found.
 const THREE_TARGETS: Vector3[] = [
-  { x: 1, y: 1, z: 3 },
-  { x: 3, y: 1, z: 3 },
-  { x: 5, y: 1, z: 3 },
+  { x: 1, y: 2, z: -3 },
+  { x: 3, y: 2, z: -3 },
+  { x: 5, y: 2, z: -3 },
 ];
 const CONTROL_TICKS = 40;
 
@@ -568,6 +576,8 @@ registerAsync("andrew", "orbital_flight_load_480", async (test: Test): Promise<v
     const loop0 = flightLoop();
 
     const targets = THREE_TARGETS.map((t) => test.worldBlockLocation(t));
+    for (const t of targets) dim.setBlockType(t, "minecraft:stone");
+    await test.idle(2);
     const tick = system.currentTick;
     const attacks = players.map((pl, i) => fire(pl, "rmb", dim, targets[i]));
     const sameTick = system.currentTick === tick;
@@ -683,7 +693,10 @@ registerAsync("andrew", "orbital_flight_restart_fire", async (test: Test): Promi
   const p = test.spawnSimulatedPlayer(STAND, `${NAME}_rs_p`, GameMode.Survival);
   await test.idle(4);
   arm(p);
-  const t = test.worldBlockLocation(FLOOR_T);
+  // The rings refuse the floor cell beside the player, so the shot goes at a
+  // block past RING_MIN_RANGE and the ticking area follows it.
+  const t = test.worldBlockLocation(RMB_T);
+  dim.setBlockType(t, "minecraft:stone");
   const added = dim.runCommand(`tickingarea add ${t.x - 9} 0 ${t.z - 9} ${t.x + 9} 0 ${t.z + 9} ${RESTART_AREA}`).successCount;
   test.assert(added > 0, "tickingarea add refused: the site would not load after the restart");
   world.setDynamicProperty(RESTART_DP, undefined);

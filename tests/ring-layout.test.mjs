@@ -16,7 +16,7 @@ const bundle = await build({
   platform: 'neutral',
   write: false,
 });
-const { layout, buildColumns, RING_LAYOUT, RING_MAX_CHARGES } = await import(
+const { layout, buildColumns, powerAtOffset, RING_LAYOUT, RING_MAX_CHARGES } = await import(
   'data:text/javascript;base64,' + Buffer.from(bundle.outputFiles[0].text, 'utf-8').toString('base64')
 );
 
@@ -103,8 +103,42 @@ for (const ring of RING_LAYOUT.rings) {
 // ------------------------------------------------------------------ AC#4: d=1, translation, hard cap
 
 test('d = 1 gives exactly {0,0}', () => {
-  assert.deepStrictEqual(buildColumns([1]).columns, [{ x: 0, z: 0 }]);
-  assert.deepStrictEqual(RING_LAYOUT.centre, { x: 0, z: 0 });
+  assert.deepStrictEqual(buildColumns([1], [4]).columns, [{ x: 0, z: 0, power: 4 }]);
+  assert.deepStrictEqual(RING_LAYOUT.centre, { x: 0, z: 0, power: 4 });
+});
+
+// ------------------------------------------------------------------ power per ring
+
+test('every column carries its own ring power, 4/4/2/1/1 from the centre out', () => {
+  assert.deepStrictEqual(
+    [RING_LAYOUT.centre.power, ...RING_LAYOUT.rings.map((r) => r.power)],
+    [4, 4, 2, 1, 1]
+  );
+  for (const ring of RING_LAYOUT.rings) {
+    for (const cell of ring.cells) {
+      assert.equal(cell.power, ring.power, `cell (${cell.x},${cell.z}) of ring d=${ring.d}`);
+    }
+  }
+  const byPower = new Map();
+  for (const c of RING_LAYOUT.columns) byPower.set(c.power, (byPower.get(c.power) ?? 0) + 1);
+  // centre 1 + d=7 20 at power 4; d=14 40 at 2; d=21 60 and d=28 80 at 1.
+  assert.deepStrictEqual([...byPower.entries()].sort((a, b) => b[0] - a[0]), [[4, 21], [2, 40], [1, 140]]);
+});
+
+test('powerAtOffset answers for a column of the layout and nothing else', () => {
+  assert.equal(powerAtOffset(0, 0), 4);
+  const outer = RING_LAYOUT.rings[3];
+  assert.equal(powerAtOffset(outer.cells[0].x, outer.cells[0].z), 1);
+  assert.equal(powerAtOffset(1000, 1000), undefined);
+  // The gaps between rings hold no column, so no power.
+  assert.equal(powerAtOffset(5, 0), undefined);
+});
+
+test('layout(target) carries the power onto the translated columns', () => {
+  const columns = layout({ x: 100, z: -40 });
+  assert.equal(columns[0].power, 4);
+  assert.equal(columns.filter((c) => c.power === 1).length, 140);
+  assert.equal(columns.every((c) => Number.isFinite(c.power)), true);
 });
 
 test('layout(target): the offset table and slot order are the same for every target', () => {
@@ -131,7 +165,7 @@ test('RING_MAX_CHARGES drains in at most 6 ticks, and building past it fails lou
 
 test('layout(target): columns run centre first, then ring by ring outwards', () => {
   const columns = layout({ x: 0, y: 64, z: 0 });
-  assert.deepStrictEqual(columns[0], { x: 0, z: 0 }, 'the first column is not the centre');
+  assert.deepStrictEqual(columns[0], { x: 0, z: 0, power: 4 }, 'the first column is not the centre');
   const ringOf = new Map();
   RING_LAYOUT.rings.forEach((ring, i) => {
     for (const cell of ring.cells) ringOf.set(key(cell), i + 1);

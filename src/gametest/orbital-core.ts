@@ -32,6 +32,7 @@ import { activate, observeAttacks } from "../orbital/activation";
 import { CHARGE_ENTITY_ID, CHARGE_TAG, type Effect, type Mode, PASS_THROUGH, attackTag, effectFor, isContact, registerEffect } from "../orbital/charge";
 import { type Attack, activeAttacks, endAttack } from "../orbital/flight";
 import { DEFAULT_SPAWN_OFFSET, SPAWN_OFFSET, spawnY } from "../orbital/spawn";
+import { RING_MIN_RANGE } from "../orbital/ring";
 import { TARGET_RANGE, distanceToBlock } from "../orbital/target";
 import { loadBox } from "./structures-place";
 
@@ -241,6 +242,17 @@ const GRASS_UPPER: Vector3 = { x: 3, y: 4, z: 2 };
 // the constant rather than written beside it, so moving the range moves them.
 const IN_RANGE: Vector3 = { x: 3, y: 3, z: 5 - TARGET_RANGE };
 const OUT_OF_RANGE: Vector3 = { x: 3, y: 3, z: 4 - TARGET_RANGE };
+/** Inside RING_MIN_RANGE: its near face is 4.5 away, so the rings must refuse it and the penetrator must not. */
+const TOO_CLOSE_FOR_RINGS: Vector3 = { x: 3, y: 3, z: 0 };
+
+/**
+ * A block the rings will accept: its near face is 7.5 away, past
+ * RING_MIN_RANGE. Every RMB scenario aims here instead of at the block beside
+ * the player, which the weapon now refuses on purpose.
+ */
+const RMB_T: Vector3 = { x: 3, y: 3, z: -3 };
+const RMB_T_P: Vector3 = { x: 2, y: 3, z: -3 };
+const RMB_T_Q: Vector3 = { x: 4, y: 3, z: -3 };
 
 /**
  * Air between the player and the two probe blocks, so what the ray meets is the
@@ -340,6 +352,31 @@ registerAsync("andrew", "orbital_no_target_silent", async (test: Test): Promise<
         `charges ${shot === undefined ? 0 : chargesOfAttack(dim, shot.attack.attackId)}, remaining ${remaining}, messages ${messages.count() - baseMessages}`
     );
     test.assert(watch.shots.length === 1, `retry at the far edge of the range: ${watch.shots.length} attacks, not 1`);
+
+    // A block nearer than the rings allow: Use is refused and costs no cooldown,
+    // while the penetrator — which does no entity damage — still fires at it.
+    blocks.restore();
+    cooldown.clearCooldown(player, KEY);
+    await test.idle(2);
+    const close = blocks.set(TOO_CLOSE_FOR_RINGS, "minecraft:stone");
+    player.lookAtBlock(TOO_CLOSE_FOR_RINGS);
+    await test.idle(4);
+    const beforeClose = watch.shots.length;
+    const closeFace = distanceToBlock(player.getHeadLocation(), close).toFixed(1);
+    await press(test, player, { kind: "use" });
+    await test.idle(2);
+    const afterUse = watch.shots.length;
+    const cdAfterUse = player.getDynamicProperty(cooldownKey(KEY));
+    await press(test, player, { kind: "attack" });
+    await test.idle(2);
+    const lmb = watch.shots[watch.shots.length - 1];
+    log(
+      `silent RESULT a block ${closeFace} away, inside the rings' ${RING_MIN_RANGE}: Use raised ${afterUse - beforeClose} attack(s), ` +
+        `${cooldownKey(KEY)}=${String(cdAfterUse)}; then Attack raised ${watch.shots.length - afterUse}, mode ${lmb?.attack.mode ?? "-"}`
+    );
+    test.assert(afterUse === beforeClose, `Use fired at a block ${closeFace} away, inside the rings' minimum ${RING_MIN_RANGE}`);
+    test.assert(cdAfterUse === undefined, `the refused Use wrote ${cooldownKey(KEY)}=${String(cdAfterUse)}`);
+    test.assert(watch.shots.length === afterUse + 1 && lmb?.attack.mode === "lmb", `Attack at ${closeFace} raised ${watch.shots.length - afterUse} attack(s) of mode ${lmb?.attack.mode ?? "-"}: the penetrator has no minimum`);
     test.assert(shot.attack.mode === "lmb" && same(shot.attack.target, stone), `retry locked ${fmt(shot.attack.target)} in ${shot.attack.mode}, not the stone at ${fmt(stone)}`);
     test.assert(chargesOfAttack(dim, shot.attack.attackId) === 1, `retry: ${chargesOfAttack(dim, shot.attack.attackId)} charges, not 1`);
     test.assert(player.getDynamicProperty(cooldownKey(KEY)) !== undefined && remaining > 590, `retry: cooldown not set (${remaining} ticks left)`);
@@ -457,7 +494,7 @@ registerAsync("andrew", "orbital_spawn_dimensions", async (test: Test): Promise<
 
 // ---------------------------------------------------------------- AC#4: one per tick, lock, faces, passable
 
-const SIDE_T: Vector3 = { x: 3, y: 3, z: 1 };
+const SIDE_T: Vector3 = { x: 3, y: 3, z: -3 };
 
 registerAsync("andrew", "orbital_dedup_lock_faces", async (test: Test): Promise<void> => {
   const dim = test.getDimension();
@@ -521,12 +558,13 @@ registerAsync("andrew", "orbital_dedup_lock_faces", async (test: Test): Promise<
     player.teleport(test.worldLocation({ x: 3.5, y: 2, z: 5.5 }));
     await test.idle(4);
 
-    // 3. Faces: bottom from below, side from 4 blocks, top from above. Ray (swing) and event (use on block).
+    // 3. Faces: bottom from below, side ahead, top from above — all past
+    // RING_MIN_RANGE, since each case fires RMB as well as the ray.
     blocks.restore();
     const faces: Array<{ face: Direction; rel: Vector3; stand: Vector3 }> = [
-      { face: Direction.Down, rel: { x: 3, y: 6, z: 3 }, stand: { x: 3.5, y: 2, z: 5.5 } },
+      { face: Direction.Down, rel: { x: 3, y: 8, z: -3 }, stand: { x: 3.5, y: 2, z: 5.5 } },
       { face: Direction.South, rel: SIDE_T, stand: { x: 3.5, y: 2, z: 5.5 } },
-      { face: Direction.Up, rel: { x: 3, y: 1, z: 3 }, stand: { x: 3.5, y: 2, z: 4.5 } },
+      { face: Direction.Up, rel: { x: 3, y: 1, z: -3 }, stand: { x: 3.5, y: 2, z: 5.5 } },
     ];
     for (const { face, rel, stand } of faces) {
       const t = blocks.set(rel, "minecraft:gold_block");
@@ -587,8 +625,8 @@ registerAsync("andrew", "orbital_shared_cooldown", async (test: Test): Promise<v
     await test.idle(4);
     arm(p);
     arm(q);
-    const tp = { x: 2, y: 3, z: 1 };
-    const tq = { x: 4, y: 3, z: 1 };
+    const tp = RMB_T_P;
+    const tq = RMB_T_Q;
     blocks.set(tp, "minecraft:stone");
     blocks.set(tq, "minecraft:stone");
     p.lookAtBlock(tp);
@@ -761,12 +799,12 @@ async function inputPaths(test: Test, mode: GameMode): Promise<void> {
     await test.idle(2);
 
     // Use on a block: only itemStartUseOn arrives. Aimed at another block, so the lock can only come from the event.
-    const used = blocks.set({ x: 3, y: 3, z: 1 }, "minecraft:stone");
+    const used = blocks.set(RMB_T, "minecraft:stone");
     blocks.set({ x: 1, y: 3, z: 1 }, "minecraft:stone");
     player.lookAtBlock({ x: 1, y: 3, z: 1 });
     await test.idle(4);
     cooldown.clearCooldown(player, KEY);
-    const raisedOn = await press(test, player, { kind: "useOn", block: { x: 3, y: 3, z: 1 }, face: Direction.South });
+    const raisedOn = await press(test, player, { kind: "useOn", block: RMB_T, face: Direction.South });
     await test.idle(2);
     const onShot = watch.shots[0];
     log(`input RESULT ${tag} use on block raised [${raisedOn.join(",")}]: ${watch.shots.length} attack(s), mode ${onShot?.attack.mode ?? "-"}, locked ${onShot === undefined ? "-" : fmt(onShot.attack.target)} (used ${fmt(used)})`);
@@ -866,9 +904,12 @@ export function recordDetonations(mode: Mode): { calls: Detonation[]; restore: (
   const effect = effectFor(mode);
   if (effect === undefined) throw new Error(`no ${mode} effect registered`);
   const calls: Detonation[] = [];
+  // Spread, never field by field: a decorator that copies `layout` and `scale`
+  // by hand drops whatever is added later, and a dropped `minRange` let a
+  // scenario fire from 1.6 blocks and pass while measuring a rule it no longer
+  // had (caught by the suite, 2026-10-02).
   const recording: Effect = {
-    layout: (target) => effect.layout(target),
-    scale: effect.scale,
+    ...effect,
     onDetonate(d, point, ownerId, m, attackId) {
       calls.push({ mode: m, point: { ...point }, attackId, ownerId, dimensionId: d.id, tick: system.currentTick });
       effect.onDetonate(d, point, ownerId, m, attackId);
@@ -888,11 +929,12 @@ registerAsync("andrew", "orbital_inside_solid", async (test: Test): Promise<void
   try {
     await test.idle(4);
     arm(player);
-    const target = blocks.set({ x: 3, y: 3, z: 1 }, "minecraft:stone");
+    // Past RING_MIN_RANGE: the RMB half of this scenario fires at it too.
+    const target = blocks.set(RMB_T, "minecraft:stone");
     const cellY = spawnY(dim.id, target.y, dim.heightRange);
     const cell = { x: target.x, y: cellY, z: target.z };
     blocks.setWorld(dim, cell, "minecraft:stone");
-    player.lookAtBlock({ x: 3, y: 3, z: 1 });
+    player.lookAtBlock(RMB_T);
     await test.idle(4);
 
     await press(test, player, { kind: "attack" });
@@ -909,7 +951,9 @@ registerAsync("andrew", "orbital_inside_solid", async (test: Test): Promise<void
 
     // Control: the same shot with air in the spawn cell does not go off.
     blocks.restore();
-    blocks.set({ x: 3, y: 3, z: 1 }, "minecraft:stone");
+    // The same block the player is aimed at: restore() took it away with the
+    // rest, and a control that puts it back somewhere else aims at nothing.
+    blocks.set(RMB_T, "minecraft:stone");
     cooldown.clearCooldown(player, KEY);
     await test.idle(1);
     await press(test, player, { kind: "attack" });
