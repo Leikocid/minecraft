@@ -89,3 +89,5 @@ andrew.structure.state.placed=built
 andrew.structure.state.looted=chests filled
 andrew.structure.state.guarded=guards spawned
 andrew.structure.state.done=done
+andrew.ufo.arrival=A UFO is in the sky!
+entity.andrew:ufo_saucer.name=UFO

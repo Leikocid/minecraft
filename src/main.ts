@@ -28,6 +28,7 @@ import { makeFireproof } from "./structures/place";
 import { StrfRuntime, engineStrf } from "./structures/runtime";
 import { SPAWN_EVENT, SPAWN_STATE_EVENT, SpawnSearch, engineSpawnHost } from "./structures/spawn-search";
 import { DynamicPropertyStore } from "./structures/store";
+import { registerUfo } from "./ufo";
 import { registerTrap } from "./websword/trap";
 
 registerAutoSmelt();
@@ -42,6 +43,7 @@ registerOrbitalCannon();
 // engine's startup phase, which is over by the time the world exists.
 registerLegendaryCommands();
 registerHideCommand();
+registerUfo({ world, system, CommandPermissionLevel, CustomCommandParamType, CustomCommandStatus });
 
 const strfLog = (msg: string): void => console.warn(`[andrew] ${msg}`);
 let strf: StrfRuntime | undefined;
