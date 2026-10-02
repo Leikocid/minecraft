@@ -31,3 +31,6 @@ help/
 help.db
 
 .DS_Store
+
+# ai-kit — правила, добавленные в последующих версиях
+config.yaml.pre-coders*
