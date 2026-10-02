@@ -328,30 +328,34 @@ registerAsync("andrew", "websword_entity_ray_distance", async (test: Test): Prom
   const player = test.spawnSimulatedPlayer(MIDDLE, "wsface_eprobe", GameMode.Survival);
   await test.idle(8);
 
-  // A just-spawned entity's pick bounds are narrower than its settled ones for
-  // the first ticks: 0.345 against 0.400, measured. Two consecutive hits do not
-  // prove they have settled — the narrow box still answers an aim at the centre,
-  // and the run that caught this measured 0.345 and then missed the next,
-  // off-centre aim. Wait for the reading itself to stop changing.
+  // A just-spawned entity grows into its pick bounds over the first ticks, in
+  // every direction at once: measured 0.345 against a settled 0.400 half-width,
+  // which is the same 0.86 of full size that leaves a 1.95-tall villager only
+  // 1.68 tall. So the aim at +1.7 passes over the unsettled box and misses,
+  // while an aim at its middle hits throughout — which is why neither "two
+  // consecutive hits" nor "two agreeing readings" settles this: both are
+  // satisfied by the small box. Settle on the strictest aim the probe will use,
+  // the highest one: once that hits twice, the box is full size by construction.
   const mobAt0 = test.relativeLocation(mob.location);
-  player.lookAtLocation({ x: mobAt0.x, y: mobAt0.y + 1.0, z: mobAt0.z });
-  let previous: number | undefined;
-  for (let settled = false, waited = 0; !settled; waited += 2) {
+  const HIGHEST = 1.7;
+  player.lookAtLocation({ x: mobAt0.x, y: mobAt0.y + HIGHEST, z: mobAt0.z });
+  const samples: string[] = [];
+  for (let settled = 0, waited = 0; settled < 2; waited += 2) {
     await test.idle(2);
     const reading = impliedHalfWidth(player, mob);
-    settled = reading !== undefined && previous !== undefined && Math.abs(reading - previous) <= 0.005;
-    previous = reading;
+    settled = reading === undefined ? 0 : settled + 1;
+    samples.push(`${waited + 2}:${reading?.toFixed(3) ?? "miss"}`);
     test.assert(
       waited < 60,
-      `the entity pick box never settled on the ${MOB} at ${f3(mob.location)} (last reading ${previous?.toFixed(3) ?? "a miss"})`
+      `the top of the ${MOB}'s pick box at ${f3(mob.location)} never came up to +${HIGHEST} [${samples.join(" ")}]`
     );
   }
-  log(`ENTITY settled at impliedHalfWidth=${previous?.toFixed(3) ?? "?"}`);
+  log(`ENTITY settled on the +${HIGHEST} aim after [${samples.join(" ")}]`);
 
   const mobAt = test.relativeLocation(mob.location);
   const points: Vector3[] = [
     { x: mobAt.x, y: mobAt.y + 1.0, z: mobAt.z },
-    { x: mobAt.x, y: mobAt.y + 1.7, z: mobAt.z },
+    { x: mobAt.x, y: mobAt.y + HIGHEST, z: mobAt.z },
     { x: mobAt.x + 0.2, y: mobAt.y + 0.3, z: mobAt.z },
   ];
   for (const point of points) {
