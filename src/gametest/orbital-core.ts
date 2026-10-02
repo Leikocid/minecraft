@@ -929,11 +929,12 @@ registerAsync("andrew", "orbital_inside_solid", async (test: Test): Promise<void
   try {
     await test.idle(4);
     arm(player);
-    const target = blocks.set({ x: 3, y: 3, z: 1 }, "minecraft:stone");
+    // Past RING_MIN_RANGE: the RMB half of this scenario fires at it too.
+    const target = blocks.set(RMB_T, "minecraft:stone");
     const cellY = spawnY(dim.id, target.y, dim.heightRange);
     const cell = { x: target.x, y: cellY, z: target.z };
     blocks.setWorld(dim, cell, "minecraft:stone");
-    player.lookAtBlock({ x: 3, y: 3, z: 1 });
+    player.lookAtBlock(RMB_T);
     await test.idle(4);
 
     await press(test, player, { kind: "attack" });
@@ -950,7 +951,9 @@ registerAsync("andrew", "orbital_inside_solid", async (test: Test): Promise<void
 
     // Control: the same shot with air in the spawn cell does not go off.
     blocks.restore();
-    blocks.set({ x: 3, y: 3, z: 1 }, "minecraft:stone");
+    // The same block the player is aimed at: restore() took it away with the
+    // rest, and a control that puts it back somewhere else aims at nothing.
+    blocks.set(RMB_T, "minecraft:stone");
     cooldown.clearCooldown(player, KEY);
     await test.idle(1);
     await press(test, player, { kind: "attack" });

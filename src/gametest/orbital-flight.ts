@@ -542,10 +542,12 @@ const THREE_STANDS: Vector3[] = [
   { x: 3, y: 2, z: 5 },
   { x: 5, y: 2, z: 5 },
 ];
+// Past RING_MIN_RANGE from the stands above, and off the platform, so each one
+// is placed before the shot rather than found.
 const THREE_TARGETS: Vector3[] = [
-  { x: 1, y: 1, z: 3 },
-  { x: 3, y: 1, z: 3 },
-  { x: 5, y: 1, z: 3 },
+  { x: 1, y: 2, z: -3 },
+  { x: 3, y: 2, z: -3 },
+  { x: 5, y: 2, z: -3 },
 ];
 const CONTROL_TICKS = 40;
 
@@ -574,6 +576,8 @@ registerAsync("andrew", "orbital_flight_load_480", async (test: Test): Promise<v
     const loop0 = flightLoop();
 
     const targets = THREE_TARGETS.map((t) => test.worldBlockLocation(t));
+    for (const t of targets) dim.setBlockType(t, "minecraft:stone");
+    await test.idle(2);
     const tick = system.currentTick;
     const attacks = players.map((pl, i) => fire(pl, "rmb", dim, targets[i]));
     const sameTick = system.currentTick === tick;
