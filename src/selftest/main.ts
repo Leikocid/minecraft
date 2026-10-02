@@ -27,6 +27,7 @@ import { mobProbeCount, mobProbePhase, mobProbeSpawn } from "./mob-probe";
 import { keepGuardsAlive, listenSpawnState, spawnWindmillCheck } from "./spawn-windmill";
 import { windmillRestartPhase, windmillRestartRun1, windmillRestartRun2 } from "./windmill-restart";
 import { bastionRestartPhase, bastionRestartRun1, bastionRestartRun2 } from "./bastion-restart";
+import { ufoRestartLoad, ufoRestartPhase, ufoRestartRun1, ufoRestartRun2 } from "./ufo-restart";
 import { smeltedDropFor } from "../autosmelt";
 import { COOLDOWN_TICKS, cooldownRemaining } from "../legendary/rules";
 import { type DimShort, type Instance, Registry, forcedOutcome, installTestHook, clearTestHook } from "../structures/registry";
@@ -208,6 +209,19 @@ async function runBastionRestart(): Promise<void> {
     await checkAsync("bastion-restart-run1", () => bastionRestartRun1(dim, systemWait, log));
   } else {
     await checkAsync("bastion-restart-run2", () => bastionRestartRun2(dim, systemWait, log));
+  }
+}
+
+/** UFO §10 across the same restart: the timer and the flag persist, an interrupted event leaves no saucer. */
+async function runUfoRestart(): Promise<void> {
+  const log = (msg: string): void => console.warn(`[selftest] ${msg}`);
+  if (ufoRestartPhase() === 1) {
+    await checkAsync("ufo-restart-run1", () => ufoRestartRun1(systemWait, log));
+  } else {
+    await checkAsync("ufo-restart-run2", async () => {
+      const failures = await ufoRestartRun2(systemWait, log);
+      if (failures.length > 0) throw new Error(failures.join("; "));
+    });
   }
 }
 
@@ -525,6 +539,8 @@ async function runSpawnWindmill(n: number): Promise<void> {
 listenSpawnState();
 
 world.afterEvents.worldLoad.subscribe(() => {
+  // First: the UFO cores sweep and read their marker before anything can load a chunk.
+  ufoRestartLoad();
   const n = nextRun();
   console.warn(`[selftest] run ${n}`);
   keepGuardsAlive();
@@ -537,6 +553,6 @@ world.afterEvents.worldLoad.subscribe(() => {
   // bds:check waits for it, so it must follow the async probes.
   void runSpawnWindmill(n)
     .then(runChunkProbes)
-    .then(() => (n <= 2 ? runMobProbe().then(runWindmillRestart).then(runBastionRestart) : undefined))
+    .then(() => (n <= 2 ? runMobProbe().then(runWindmillRestart).then(runBastionRestart).then(runUfoRestart) : undefined))
     .finally(() => console.warn(`[selftest] DONE passed=${passed} failed=${failed}`));
 });

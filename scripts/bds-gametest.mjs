@@ -312,6 +312,13 @@ const EXPECTED_TESTS = [
   'andrew:ring_legendaries_survive',
   'andrew:ring_three_budget',
   'andrew:ring_no_leftovers_vanilla_drops',
+  // UFOC-CORE-01 — src/gametest/ufo-core.ts
+  'andrew:ufo_schedule_scaled_clock',
+  'andrew:ufo_phases_real_durations',
+  'andrew:ufo_overworld_only',
+  'andrew:ufo_commands_operator',
+  'andrew:ufo_arrival_notice',
+  'andrew:ufo_idle_budget',
 ];
 
 /**

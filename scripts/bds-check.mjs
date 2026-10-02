@@ -307,7 +307,7 @@ function main() {
     }
     // Which phase ran is decided by a marker in the saved world: a run 2 that
     // reran phase 1 means the world did not survive the restart.
-    const phases = i < 2 ? [`probe-mobs-restart-run${i + 1}`, `strf-registry-restart-run${i + 1}`, `windmill-restart-run${i + 1}`, `bastion-restart-run${i + 1}`] : [];
+    const phases = i < 2 ? [`probe-mobs-restart-run${i + 1}`, `strf-registry-restart-run${i + 1}`, `windmill-restart-run${i + 1}`, `bastion-restart-run${i + 1}`, `ufo-restart-run${i + 1}`] : [];
     for (const phase of [...phases, `spawn-windmill-run${i + 1}`]) {
       if (result.started && !analysis.selftestLines.some((l) => l.includes(phase))) {
         problems.push(`${run}: the self-check never reported ${phase} — the restart check ran the wrong phase or not at all`);
@@ -315,6 +315,30 @@ function main() {
     }
   });
   if (runs.length < 3) problems.push(`only ${runs.length} of 3 runs happened — a restart never started`);
+
+  // UFO §9 across the restarts (L0-ufoc-ac03 case 3): the self-check runs the
+  // release pack's own /andrew:ufo disable in run 1 and enable in run 2; the
+  // release pack can be read only through its log, so its load line in the
+  // next run is the proof that the flag was stored in the world.
+  const ufoExpect = [
+    { enabled: 'true', command: 'ufo ufo: disabled in this world' },
+    { enabled: 'false', command: 'ufo ufo: enabled in this world' },
+    { enabled: 'true', command: null },
+  ];
+  runs.forEach((result, i) => {
+    if (!result.started) return;
+    const run = `run ${i + 1}`;
+    const loaded = result.text.match(/\[andrew\] ufo ufo: loaded, enabled=(true|false)[^\r\n]*/);
+    if (!loaded) problems.push(`${run}: the release pack printed no "ufo ufo: loaded" line`);
+    else if (loaded[1] !== ufoExpect[i].enabled) {
+      problems.push(`${run}: the release pack loaded with enabled=${loaded[1]}, expected ${ufoExpect[i].enabled} — the previous run's /andrew:ufo did not persist`);
+    } else evidence.push(`${run}: ${loaded[0]}`);
+    const command = ufoExpect[i].command;
+    if (command === null) return;
+    const line = result.text.split('\n').find((l) => l.includes(`[andrew] ${command}`));
+    if (line) evidence.push(`${run}: ${line.slice(line.indexOf('[andrew]')).trim()}`);
+    else problems.push(`${run}: the release pack never logged "${command}" — the self-check's /andrew:ufo did not reach it`);
+  });
 
   // Every self-check line, verbatim, on both verdicts — this is the part a
   // human reads to see what the engine actually said about the content.
