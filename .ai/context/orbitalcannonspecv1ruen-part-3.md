@@ -5,14 +5,18 @@ source_channel: "raw-import"
 level: null
 aliases: ["orbitalcannonspecv1ruen-part-3", "orbitalcannonspecv1ruen"]
 is_a: ["raw-fragment"]
-priority: 560
-size_chars: 4821
-tags: ["digest", "performance"]
+priority: 570
+size_chars: 4908
+tags: ["performance", "digest"]
 source: "docs/Orbital_Cannon_Spec_v1_RU_EN.docx"
-embed_lines: "165-239"
-embed_slice: "9-83"
+embed_lines: "161-231"
+embed_slice: "9-79"
 ---
-- Примерные диаметры колец: 1, 7, 14, 21 и 28 блоков. Диаметр 1 означает центральный TNT точно над выбранным блоком.
+# 10. Режим ПКМ --- пять TNT-колец / RMB --- five TNT rings
+
+- ПКМ/Use создаёт пять концентрических СПЛОШНЫХ колец TNT вокруг выбранного центрального блока.
+
+- Примерные диаметры колец: 1, 7, 14, 21 и 28 блоков. Диаметр 1 означает центральный TNT точно над выбранным блоком. Сила взрыва падает от центра к краю: 4, 4, 2, 1 и 1. Сила взрыва --- это радиус, а не запас энергии: взрыв достаёт на удвоенную силу, то есть на 8, 8, 4, 2 и 2 блока.
 
 - TNT располагаются максимально непрерывно по окружностям без специально оставленных промежутков. Реализация окружности может быть дискретной по блочной сетке.
 
@@ -26,7 +30,7 @@ embed_slice: "9-83"
 
 - Каждый TNT имеет обычный визуальный размер TNT и собственный звук взрыва.
 
-- Взрыв наносит игрокам и мобам обычный TNT-урон, включая владельца Орбитальной пушки.
+- Взрыв наносит игрокам и мобам урон своей силы, включая владельца Орбитальной пушки: кольца силой 4 --- как обычный TNT, более слабые кольца --- пропорционально меньше.
 
 - Разрушение блоков соответствует обычной способности TNT разрушать конкретные блоки. Например, TNT-устойчивые блоки не должны специально пробиваться ПКМ.
 
@@ -34,7 +38,7 @@ embed_slice: "9-83"
 
 - ПКМ не создаёт огонь.
 
-- Под водой взрыв не деформирует/не разрушает блоки, но продолжает наносить сущностям обычный TNT-урон.
+- Под водой взрыв не деформирует/не разрушает блоки, но продолжает наносить сущностям урон своей силы.
 
 - Легендарные оружия не могут быть уничтожены взрывами ПКМ.
 
@@ -82,7 +86,7 @@ embed_slice: "9-83"
 
 2.  Creative and /give copies do not consume the unique Survival craft flag.
 
-3.  No valid block within 25 blocks -\> no shot and no cooldown.
+3.  No valid block within 25 blocks, or a block nearer than 7 for RMB -\> no shot and no cooldown.
 
 4.  Overworld/End spawn height is +60; Nether is +10; world ceiling is clamped safely.
 
@@ -95,11 +99,3 @@ embed_slice: "9-83"
 8.  LMB removes Obsidian and destructible containers/spawners with no ordinary drops.
 
 9.  LMB causes no direct entity damage; environmental consequences still work.
-
-10. LMB destruction is immediate; particle wave lasts about 1 second; only one main explosion sound.
-
-11. RMB creates five continuous rings with approximate diameters 1/7/14/21/28.
-
-12. RMB charges are independent from each other and each produces its own explosion sound.
-
-13. RMB entity damage behaves like normal TNT, including self-damage to owner.

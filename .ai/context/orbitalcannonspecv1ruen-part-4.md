@@ -5,13 +5,23 @@ source_channel: "raw-import"
 level: null
 aliases: ["orbitalcannonspecv1ruen-part-4", "orbitalcannonspecv1ruen"]
 is_a: ["raw-fragment"]
-priority: 560
-size_chars: 2598
-tags: ["digest", "performance", "architecture", "domain"]
+priority: 570
+size_chars: 3043
+tags: ["performance", "digest", "architecture", "domain", "monitoring"]
 source: "docs/Orbital_Cannon_Spec_v1_RU_EN.docx"
-embed_lines: "239-284"
-embed_slice: "5-50"
+embed_lines: "231-284"
+embed_slice: "7-60"
 ---
+2.  Creative and /give copies do not consume the unique Survival craft flag.
+
+3.  No valid block within 25 blocks, or a block nearer than 7 for RMB -\> no shot and no cooldown.
+
+4.  Overworld/End spawn height is +60; Nether is +10; world ceiling is clamped safely.
+
+5.  Charge spawned inside a solid block triggers immediately.
+
+6.  Entities do not stop falling charges.
+
 7.  LMB removes an approximately 5×5 irregular vertical column to the bottom while preserving liquids and Survival-unbreakable blocks.
 
 8.  LMB removes Obsidian and destructible containers/spawners with no ordinary drops.
@@ -20,11 +30,11 @@ embed_slice: "5-50"
 
 10. LMB destruction is immediate; particle wave lasts about 1 second; only one main explosion sound.
 
-11. RMB creates five continuous rings with approximate diameters 1/7/14/21/28.
+11. RMB creates five continuous rings with approximate diameters 1/7/14/21/28 and explosion power 4/4/2/1/1 from the centre outwards.
 
 12. RMB charges are independent from each other and each produces its own explosion sound.
 
-13. RMB entity damage behaves like normal TNT, including self-damage to owner.
+13. RMB entity damage behaves like TNT of each ring's own power, including self-damage to owner.
 
 14. RMB block destruction follows TNT resistance, produces no block drops, and creates no fire.
 
