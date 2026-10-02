@@ -168,6 +168,12 @@ const EXPECTED_TESTS = [
   'andrew:legendary_offhand_resolves',
   'andrew:legendary_offhand_death_returns',
   'andrew:legendary_offhand_token_refused',
+  // LGND-UFO-01 — src/gametest/legendary-ufo.ts
+  'andrew:legendary_ufo_fall_death_keeps',
+  'andrew:legendary_ufo_holder_chest_minecart',
+  'andrew:legendary_ufo_holder_hopper_minecart',
+  'andrew:legendary_ufo_holder_armor_stand',
+  'andrew:probe_ufo_holder_void',
   // STRF-REG-01 — src/gametest/strf-registry.ts
   'andrew:strf_registry_steps_idempotent',
   // STRF-ROLL-01 — src/gametest/structures.ts
