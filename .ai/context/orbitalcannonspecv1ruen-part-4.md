@@ -5,7 +5,7 @@ source_channel: "raw-import"
 level: null
 aliases: ["orbitalcannonspecv1ruen-part-4", "orbitalcannonspecv1ruen"]
 is_a: ["raw-fragment"]
-priority: 550
+priority: 560
 size_chars: 2598
 tags: ["digest", "performance", "architecture", "domain"]
 source: "docs/Orbital_Cannon_Spec_v1_RU_EN.docx"

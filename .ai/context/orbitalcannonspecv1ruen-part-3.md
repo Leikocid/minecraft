@@ -5,7 +5,7 @@ source_channel: "raw-import"
 level: null
 aliases: ["orbitalcannonspecv1ruen-part-3", "orbitalcannonspecv1ruen"]
 is_a: ["raw-fragment"]
-priority: 550
+priority: 560
 size_chars: 4821
 tags: ["digest", "performance"]
 source: "docs/Orbital_Cannon_Spec_v1_RU_EN.docx"
@@ -82,9 +82,9 @@ embed_slice: "9-83"
 
 2.  Creative and /give copies do not consume the unique Survival craft flag.
 
-3.  No valid block within 10 blocks -\> no shot and no cooldown.
+3.  No valid block within 25 blocks -\> no shot and no cooldown.
 
-4.  Overworld/End spawn height is +30; Nether is +10; world ceiling is clamped safely.
+4.  Overworld/End spawn height is +60; Nether is +10; world ceiling is clamped safely.
 
 5.  Charge spawned inside a solid block triggers immediately.
 
