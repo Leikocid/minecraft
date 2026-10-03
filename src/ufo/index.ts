@@ -3,14 +3,18 @@
 // same way the product does.
 
 import type {
+  BlockVolume,
   Dimension,
   EntityLoadAfterEvent,
+  EntitySpawnAfterEvent,
+  ItemStack,
   PlayerSpawnAfterEvent,
   WorldLoadAfterEvent,
 } from "@minecraft/server";
 import { type UfoCommandApi, registerUfoCommand } from "./commands";
 import { type EnvWorld, productEnv } from "./env";
 import { type IntervalHost, UfoCore, runCore } from "./event";
+import { UfoMagnet } from "./magnet";
 import { NEXT_MS } from "./schedule";
 import { createStubSaucer } from "./stub-saucer";
 
@@ -31,8 +35,15 @@ export interface UfoWorld extends EnvWorld {
   afterEvents: {
     playerSpawn: Subscribable<PlayerSpawnAfterEvent>;
     entityLoad: Subscribable<EntityLoadAfterEvent>;
+    entitySpawn: Subscribable<EntitySpawnAfterEvent>;
     worldLoad: Subscribable<WorldLoadAfterEvent>;
   };
+}
+
+/** The engine classes the magnet constructs. */
+export interface UfoClasses {
+  ItemStack: typeof ItemStack;
+  BlockVolume: typeof BlockVolume;
 }
 
 /**
@@ -54,8 +65,8 @@ export function startUfo(core: UfoCore, world: Pick<UfoWorld, "getDimension" | "
   };
 }
 
-export function registerUfo(engine: UfoCommandApi & { world: UfoWorld; system: IntervalHost }, scope: string = DEFAULT_SCOPE): UfoCore {
-  const { world, system } = engine;
+export function registerUfo(engine: UfoCommandApi & UfoClasses & { world: UfoWorld; system: IntervalHost }, scope: string = DEFAULT_SCOPE): UfoCore {
+  const { world, system, ItemStack, BlockVolume } = engine;
   const log = (msg: string): void => console.warn(`[andrew] ${msg}`);
   const env = productEnv(world, log);
   const saucer = createStubSaucer({
@@ -64,7 +75,20 @@ export function registerUfo(engine: UfoCommandApi & { world: UfoWorld; system: I
     durations: env.durations,
     ceiling: env.ceiling,
   });
-  const core = new UfoCore(env, { scope, saucer });
+  const magnet = new UfoMagnet({
+    overworld: () => world.getDimension("overworld"),
+    // Every tick of the magnet: the hold step itself skips the dead and the invalid.
+    players: () => world.getDimension("overworld").getPlayers(),
+    saucerPosition: () => saucer.saucerPosition(),
+    spawns: world.afterEvents.entitySpawn,
+    host: {
+      itemStack: (typeId, amount) => new ItemStack(typeId, amount),
+      volume: (from, to) => new BlockVolume(from, to),
+      now: () => Date.now(),
+      log,
+    },
+  });
+  const core = new UfoCore(env, { scope, saucer, magnet });
   registerUfoCommand(engine, { core: () => core, log });
   world.afterEvents.worldLoad.subscribe(() => {
     startUfo(core, world, system);

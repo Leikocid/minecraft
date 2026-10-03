@@ -328,6 +328,13 @@ const EXPECTED_TESTS = [
   'andrew:ufo_magnet_deep_ore',
   'andrew:ufo_magnet_holders',
   'andrew:ufo_magnet_legendaries',
+  // MAGN-HOLD-01 — src/gametest/ufo-magnet-hold.ts
+  'andrew:ufo_hold_players_lift',
+  'andrew:ufo_hold_players_ignored',
+  'andrew:ufo_hold_drop_exempt',
+  'andrew:ufo_hold_release_fall',
+  'andrew:ufo_hold_release_together',
+  'andrew:ufo_hold_tps_measured',
 ];
 
 /**
@@ -754,6 +761,7 @@ function main() {
     log('FAIL — the simulated-player scenarios did not pass on BDS:');
     for (const p of problems) log(`  ✗ ${p}`);
     log('');
+    printMeasurements(text);
     log(`Full server log: ${logPath}`);
     process.exit(1);
   }
@@ -763,8 +771,21 @@ function main() {
       'trap ability on BDS, with no human involved:'
   );
   for (const e of evidence) log(`  ✓ ${e}`);
+  printMeasurements(text);
   log('');
   log(`Full server log: ${logPath}`);
+}
+
+/**
+ * Costs a scenario measured rather than gated ("[gametest] … MEASURE …"), last
+ * in the output so they stay inside the tail a run-check artifact keeps.
+ */
+function printMeasurements(text) {
+  const lines = text.split('\n').filter((l) => / \[gametest\] .*MEASURE /.test(l));
+  if (lines.length === 0) return;
+  log('');
+  log('Measurements:');
+  for (const l of lines) log(`  ${l.slice(l.indexOf('[gametest]')).trim()}`);
 }
 
 try {

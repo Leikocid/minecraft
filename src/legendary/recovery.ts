@@ -142,15 +142,20 @@ export function registerRecovery(): void {
   });
 
   world.afterEvents.playerSwingStart.subscribe((event) => {
-    if (event.swingSource === EntitySwingSource.DropItem) {
-      lastDropSwing.set(event.player.id, system.currentTick);
+    const player: Player | undefined = event.player;
+    if (player !== undefined && event.swingSource === EntitySwingSource.DropItem) {
+      lastDropSwing.set(player.id, system.currentTick);
     }
   });
 
   world.afterEvents.playerInventoryItemChange.subscribe((event) => {
     const player: Player | undefined = event.player;
-    const container = player?.getComponent("minecraft:inventory")?.container;
-    if (player === undefined || container === undefined) {
+    // Delivered after a removal in the same tick, the player is invalid and every call on it throws.
+    if (player === undefined || !player.isValid) {
+      return;
+    }
+    const container = player.getComponent("minecraft:inventory")?.container;
+    if (container === undefined) {
       return;
     }
     const now = container.getItem(event.slot);

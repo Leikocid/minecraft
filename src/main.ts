@@ -43,7 +43,7 @@ registerOrbitalCannon();
 // engine's startup phase, which is over by the time the world exists.
 registerLegendaryCommands();
 registerHideCommand();
-registerUfo({ world, system, CommandPermissionLevel, CustomCommandParamType, CustomCommandStatus });
+registerUfo({ world, system, CommandPermissionLevel, CustomCommandParamType, CustomCommandStatus, ItemStack, BlockVolume });
 
 const strfLog = (msg: string): void => console.warn(`[andrew] ${msg}`);
 let strf: StrfRuntime | undefined;
