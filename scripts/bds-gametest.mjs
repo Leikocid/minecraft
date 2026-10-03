@@ -26,7 +26,7 @@
 //      instead and the command is written to its stdin.
 //
 //   npm run bds:gametest
-//   npm run bds:gametest -- --no-build --timeout 1800
+//   npm run bds:gametest -- --no-build --timeout 5400
 //   npm run bds:gametest -- --keep-up      # leave the server running to inspect
 //   npm run bds:gametest -- --only andrew:probe_fire_resistance_noon   # one test, for iteration
 
@@ -72,6 +72,14 @@ const SPAWN_SEARCH_STOOD_DOWN = ['[andrew] spawn windmill: not started: windmill
 const ENABLED_NONE = '[andrew] structures enabled: none';
 // The saucer entity and its geometry by id; `\b` keeps the ufo_saucer_* test names out.
 const SAUCER_IDS = /andrew[:.]ufo_saucer\b/;
+// UFO AC-17 across a restart: the seed runs the release pack's own /andrew:ufo
+// disable, the check runs enable. The gametest pack cannot read the release
+// pack's dynamic properties, so the release pack's load line in the boot after
+// the seed is the proof that the flag was stored in the world.
+const UFO_SEED = 'andrew:ufo_restart_seed';
+const UFO_LOADED = /\[andrew\] ufo ufo: loaded, enabled=(true|false)/;
+const UFO_DISABLED = '[andrew] ufo ufo: disabled in this world';
+const UFO_ENABLED = '[andrew] ufo ufo: enabled in this world';
 
 /**
  * Tests registered by src/gametest/main.ts, run one at a time.
@@ -178,9 +186,11 @@ const EXPECTED_TESTS = [
   'andrew:legendary_holder_void_chest_minecart',
   'andrew:legendary_holder_void_hopper_minecart',
   'andrew:probe_ufo_holder_void',
-  // CNTR-LGND-CX14 — src/gametest/probe-stand-void.ts
+  // CNTR-LGND-CX14 — src/gametest/probe-stand-void.ts; LGND-STAND-01 asserts the stand watcher
   'andrew:probe_stand_void',
   'andrew:probe_item_floor_band',
+  'andrew:legendary_stand_void_hands',
+  'andrew:legendary_stand_watch_idle',
   // STRF-REG-01 — src/gametest/strf-registry.ts
   'andrew:strf_registry_steps_idempotent',
   // STRF-ROLL-01 — src/gametest/structures.ts
@@ -353,6 +363,9 @@ const EXPECTED_TESTS = [
   'andrew:ufo_shootdown_magnet',
   'andrew:ufo_shootdown_departure',
   'andrew:ufo_shootdown_once',
+  // UFOC-RESTART-01 — src/gametest/ufo-restart.ts (UFO AC-1 restart half, AC-17, AC-18)
+  'andrew:ufo_restart_seed',
+  'andrew:ufo_restart_check',
 ];
 
 /**
@@ -363,6 +376,7 @@ const EXPECTED_TESTS = [
 const RESTART_AFTER = new Map([
   ['andrew:orbital_flight_restart_fire', 'andrew:orbital_flight_restart_check'],
   ['andrew:pntr_legendary_two_columns', 'andrew:pntr_legendary_restart_check'],
+  ['andrew:ufo_restart_seed', 'andrew:ufo_restart_check'],
 ]);
 
 // FLAT is not cosmetic: see the LEVEL_TYPE comment in docker/bds/compose.yaml.
@@ -377,8 +391,9 @@ const env = {
 // ---------------------------------------------------------------- arguments
 
 function parseArgs(argv) {
-  // The zombie-villager cure alone waits up to 5.5 minutes of game time.
-  const opts = { build: true, timeoutSec: 1800, keepUp: false, only: [] };
+  // The zombie-villager cure alone waits up to 5.5 minutes of game time, and the
+  // whole suite runs 32–48 minutes under Rosetta, past a 30-minute deadline.
+  const opts = { build: true, timeoutSec: 5400, keepUp: false, only: [] };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === '--no-build') opts.build = false;
@@ -674,7 +689,38 @@ function analyzeLog(text, expected) {
     else evidence.push(result.line);
   }
 
+  if (expected.includes(UFO_SEED)) checkReleaseUfoFlag(lines, problems, evidence);
+
   return { problems: [...new Set(problems)], evidence, results };
+}
+
+/** The release pack's /andrew:ufo disable before the restart, enabled=false in its load line after it, enable after that. */
+function checkReleaseUfoFlag(lines, problems, evidence) {
+  const from = (i, pred) => {
+    for (let j = i; j < lines.length; j++) if (pred(lines[j])) return j;
+    return -1;
+  };
+  const quote = (l) => l.slice(l.indexOf('[andrew]')).trim();
+  const seed = from(0, (l) => verdictCount(l, UFO_SEED) > 0);
+  // A seed that never reported is already named by its own missing verdict.
+  if (seed < 0) return;
+  const boot = lines.slice(0, seed).findLastIndex((l) => UFO_LOADED.test(l));
+  const disabled = from(Math.max(boot, 0), (l) => l.includes(UFO_DISABLED));
+  if (disabled < 0 || disabled > seed) problems.push(`${UFO_SEED}: the release pack never logged "${UFO_DISABLED}" before the restart — the seed's /andrew:ufo disable did not reach it`);
+  else evidence.push(`before the restart: ${quote(lines[disabled])}`);
+
+  const load = from(seed + 1, (l) => UFO_LOADED.test(l));
+  if (load < 0) {
+    problems.push(`after ${UFO_SEED} and the restart the release pack printed no "ufo ufo: loaded" line`);
+    return;
+  }
+  const enabled = lines[load].match(UFO_LOADED)[1];
+  if (enabled !== 'false') problems.push(`after the restart the release pack loaded with enabled=${enabled}, expected false — /andrew:ufo disable did not survive the restart`);
+  else evidence.push(`after the restart: ${quote(lines[load])}`);
+
+  const back = from(load + 1, (l) => l.includes(UFO_ENABLED));
+  if (back < 0) problems.push(`the release pack never logged "${UFO_ENABLED}" after the restart — andrew:ufo_restart_check did not give the world its UFO event back`);
+  else evidence.push(`after the check: ${quote(lines[back])}`);
 }
 
 // --------------------------------------------------------------------- main

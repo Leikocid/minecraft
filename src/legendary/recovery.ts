@@ -137,11 +137,13 @@ const VOID_HOLDER_TYPES: ReadonlySet<string> = new Set(["minecraft:chest_minecar
 export function registerRecovery(): void {
   world.afterEvents.entitySpawn.subscribe((event) => {
     watch(event.entity, "entitySpawn");
+    watchStand(event.entity);
   });
   // Items in a chunk that unloaded are dropped from the watch set, and a
   // restart empties it; either way they come back through entityLoad.
   world.afterEvents.entityLoad.subscribe((event) => {
     watch(event.entity, "entityLoad");
+    watchStand(event.entity);
   });
 
   world.afterEvents.playerSwingStart.subscribe((event) => {
@@ -170,7 +172,12 @@ export function registerRecovery(): void {
   // spill, so nothing it held ever becomes an item entity to watch. entityRemove
   // also fires on a chunk unload; only a removal below the floor is a loss.
   world.beforeEvents.entityRemove.subscribe((event) => {
-    const holder = event.removedEntity;
+    // Undefined in a pack without @minecraft/server-gametest when a SimulatedPlayer is removed.
+    const holder: Entity | undefined = event.removedEntity;
+    if (holder === undefined) {
+      return;
+    }
+    stands.delete(holder.id);
     if (!VOID_HOLDER_TYPES.has(holder.typeId) || holder.location.y >= holder.dimension.heightRange.min) {
       return;
     }
@@ -323,7 +330,10 @@ function check(): void {
     }
 
     watched.delete(entityId);
-    if (!w.dimension.isChunkLoaded(w.location)) {
+    // isChunkLoaded answers false below the floor even where the column is
+    // loaded (CNTR-LGND-CX14-AA), so only a spot inside the world can mean "unloaded".
+    const belowFloor = w.location.y < w.dimension.heightRange.min;
+    if (!belowFloor && !w.dimension.isChunkLoaded(w.location)) {
       // Unloaded with its chunk, not destroyed: entityLoad re-watches it.
       console.warn(`[andrew] legendary recovery: ${w.def.itemId} id ${w.mark.id} unloaded with its chunk`);
       continue;
@@ -333,7 +343,7 @@ function check(): void {
       console.warn(`[andrew] legendary recovery: ${w.def.itemId} id ${w.mark.id} picked up — ${holder}`);
       continue;
     }
-    lost(w, "vanished from the ground");
+    lost(w, belowFloor ? "fell into the Void" : "vanished from the ground");
   }
   for (const [id, f] of [...inFlight]) {
     if (system.currentTick - f.tick < IN_FLIGHT_GRACE_TICKS) {
@@ -429,10 +439,13 @@ function whereIs(w: { def: LegendaryDef; mark: Mark; dimension: Dimension; locat
  * container the player could reach, which is a box.
  */
 function holderCells(w: { dimension: Dimension; location: Vector3 }, half: number): Vector3[] {
-  if (half === 0) {
-    return [0, -1].map((dy) => ({ x: w.location.x, y: w.location.y + dy, z: w.location.z }));
-  }
   const { min: floor, max: ceiling } = w.dimension.heightRange;
+  if (half === 0) {
+    // getBlock throws LocationOutOfWorldBoundariesError outside the height range.
+    return [0, -1]
+      .map((dy) => ({ x: w.location.x, y: w.location.y + dy, z: w.location.z }))
+      .filter((at) => at.y >= floor && at.y < ceiling);
+  }
   const min = { x: w.location.x - half, y: Math.max(w.location.y - half, floor), z: w.location.z - half };
   const max = { x: w.location.x + half, y: Math.min(w.location.y + half, ceiling - 1), z: w.location.z + half };
   try {
@@ -508,6 +521,85 @@ function redeemOwed(def: LegendaryDef, player: Player): void {
     // Order: the entry goes after its grant, so a throw in between leaves a
     // token the next spawn drops as already carried, never a lost debt.
     writeOwed(def, withoutOwed(readOwed(def), player.id, mark));
+  }
+}
+
+// ------------------------------------------------ armour stands over the Void (L0-lgnd-cx14)
+//
+// An armour stand has no script inventory and no equippable on 2.10.0, and the
+// engine removes it at y < min − 16 with no death and no spill — 13 ticks after
+// it drops below the floor from rest (a fast entry is not measured). Below the floor
+// `hasitem` still reads its hands, and kill() spills what it holds with the mark
+// intact, which the loss path above then returns. hasitem cannot run in
+// beforeEvents.entityRemove (restricted execution), so the stand is watched
+// every tick instead, only while one is loaded, and asked only below the floor.
+
+const ARMOR_STAND = "minecraft:armor_stand";
+
+/**
+ * hasitem rejects an item hidden from commands (menu_category none), which every
+ * craft token is; only the weapons can be asked for. With no location it misses
+ * the hands, so each hand is named.
+ */
+const HAND_QUERIES: readonly string[] = LEGENDARIES.flatMap((def) =>
+  ["slot.weapon.mainhand", "slot.weapon.offhand"].map((slot) => `testfor @s[hasitem={item=${def.itemId},location=${slot}}]`)
+);
+
+const stands = new Map<string, Entity>();
+
+let standIntervalId: number | undefined;
+
+/** How many armour stands the watcher follows, and whether its interval runs. */
+export function standWatchState(): { stands: number; ticking: boolean } {
+  return { stands: stands.size, ticking: standIntervalId !== undefined };
+}
+
+function watchStand(entity: Entity): void {
+  if (!entity.isValid || entity.typeId !== ARMOR_STAND) {
+    return;
+  }
+  stands.set(entity.id, entity);
+  standIntervalId ??= system.runInterval(checkStands, 1);
+}
+
+function checkStands(): void {
+  for (const [id, stand] of [...stands]) {
+    const at = liveLocation(stand);
+    if (at === undefined) {
+      stands.delete(id);
+      continue;
+    }
+    if (at.y >= stand.dimension.heightRange.min) {
+      continue;
+    }
+    const query = HAND_QUERIES.find((q) => asks(stand, q));
+    if (query === undefined) {
+      continue;
+    }
+    let killed: string;
+    try {
+      killed = String(stand.kill());
+    } catch (err) {
+      killed = `threw ${String(err)}`;
+    }
+    if (killed === "true") {
+      stands.delete(id);
+    }
+    const where = `${at.x.toFixed(1)},${at.y.toFixed(1)},${at.z.toFixed(1)}`;
+    console.warn(`[andrew] legendary recovery: an armour stand below the floor at ${where} answers "${query}"; kill() -> ${killed}`);
+  }
+  if (stands.size === 0 && standIntervalId !== undefined) {
+    system.clearRun(standIntervalId);
+    standIntervalId = undefined;
+  }
+}
+
+function asks(stand: Entity, command: string): boolean {
+  try {
+    return stand.runCommand(command).successCount > 0;
+  } catch (err) {
+    console.warn(`[andrew] legendary recovery: "${command}" on an armour stand threw ${String(err)}`);
+    return false;
   }
 }
 

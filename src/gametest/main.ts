@@ -86,6 +86,7 @@ import "./ufo-magnet-select";
 import "./ufo-magnet-hold";
 import "./ufo-saucer";
 import "./ufo-shootdown";
+import "./ufo-restart";
 import "./probe-stand-void";
 import { parkPenetrator } from "./penetrator";
 import { parkRing } from "./ring";

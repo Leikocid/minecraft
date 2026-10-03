@@ -10,9 +10,13 @@
 //   late  killed 10 ticks after it was first seen below the floor.
 //   band  (probe_item_floor_band) a marked item last seen within one block
 //         above the floor, then gone.
+//
+// The two legendary_stand_* scenarios at the bottom assert what the stand
+// watcher in src/legendary/recovery.ts must and must not do.
 
-import { BlockVolume, type Entity, GameMode, ItemStack, type Player, type Vector3, system, world } from "@minecraft/server";
+import { BlockVolume, type CommandResult, Entity, GameMode, ItemStack, type Player, type Vector3, system, world } from "@minecraft/server";
 import { type SimulatedPlayer, type Test, registerAsync } from "@minecraft/server-gametest";
+import { standWatchState } from "../legendary/recovery";
 import { ORBITAL_CANNON, SCYTHE_OF_CALAMITY, WEB_SWORD, type LegendaryDef, defForStack, genLedgerKey } from "../legendary/registry";
 import type { Mark } from "../legendary/rules";
 import * as state from "../legendary/state";
@@ -283,4 +287,151 @@ registerAsync("andrew", "probe_item_floor_band", async (test: Test): Promise<voi
 })
   .structureName("andrew:platform")
   .maxTicks(300)
+  .tag("andrew");
+
+const ARMOR_STAND = "minecraft:armor_stand";
+
+interface HandCase {
+  name: "marked" | "iron" | "unmarked";
+  cell: Vector3;
+  stack: ItemStack;
+  entity?: Entity;
+}
+
+/**
+ * Three stands fall into the Void: one holding a marked Scythe, one an iron
+ * sword, one an unmarked Web Sword copy. kill() on a stand raises no entityDie
+ * (probe_stand_void), so whether the add-on killed one is read from its spill:
+ * a killed stand drops what it holds as item entities, a stand the engine
+ * removes drops nothing. The release pack runs the same watcher and reads
+ * armour stands, so either pack may be the one that kills.
+ */
+registerAsync("andrew", "legendary_stand_void_hands", async (test: Test): Promise<void> => {
+  const dimension = test.getDimension();
+  const floor = dimension.heightRange.min;
+  const owner = test.spawnSimulatedPlayer({ x: 1, y: 2, z: 1 }, "stand_hands_owner", GameMode.Survival);
+  const mark = state.makeMark("admin", owner);
+  const cases: HandCase[] = [
+    { name: "marked", cell: { x: 5, y: 2, z: 1 }, stack: state.markItem(SCYTHE_OF_CALAMITY, new ItemStack(SCYTHE_OF_CALAMITY.itemId, 1), mark) },
+    { name: "iron", cell: { x: 5, y: 2, z: 5 }, stack: new ItemStack("minecraft:iron_sword", 1) },
+    { name: "unmarked", cell: { x: 1, y: 2, z: 5 }, stack: new ItemStack(WEB_SWORD.itemId, 1) },
+  ];
+  for (const c of cases) c.entity = test.spawn(ARMOR_STAND, c.cell);
+  await test.idle(4);
+
+  const wsLedger = (): string[] => world.getDynamicPropertyIds().filter((k) => k.startsWith(genLedgerKey(WEB_SWORD, "")));
+  const ledgerBefore = new Set(wsLedger());
+  const spills: Array<{ typeId: string; markId: string | undefined }> = [];
+  const spawnSub = world.afterEvents.entitySpawn.subscribe((e) => {
+    if (!e.entity.isValid || e.entity.typeId !== "minecraft:item") return;
+    const stack = e.entity.getComponent("minecraft:item")?.itemStack;
+    if (stack === undefined) return;
+    const def = defForStack(stack);
+    spills.push({ typeId: stack.typeId, markId: def === undefined ? undefined : state.getMark(def, stack)?.id });
+  });
+  const original = console.warn;
+  const warned: string[] = [];
+  console.warn = (...args: unknown[]): void => {
+    warned.push(args.map(String).join(" "));
+    original(...args);
+  };
+
+  try {
+    for (const c of cases) {
+      const how = await handOver(test, owner, c.entity as Entity, c.stack);
+      test.assert(how.endsWith("hasitem true"), `the ${c.name} stand does not hold ${c.stack.typeId} (${how})`);
+    }
+    await test.idle(20);
+    for (const c of cases) {
+      const top = test.worldLocation({ x: c.cell.x, y: c.cell.y - 1, z: c.cell.z });
+      dimension.fillBlocks(new BlockVolume({ x: top.x, y: floor, z: top.z }, top), "minecraft:air");
+    }
+    for (let t = 0; t < FALL_DEADLINE_TICKS && cases.some((c) => c.entity?.isValid); t++) await test.idle(1);
+    await test.idle(120);
+
+    const held = carried(owner);
+    const gens = gensOf(SCYTHE_OF_CALAMITY, held, mark.id);
+    const returns = warned.filter((l) => l.includes("legendary recovery:") && l.includes(mark.id) && l.includes("now gen"));
+    const kills = warned.filter((l) => l.includes("an armour stand below the floor"));
+    const spilled = (typeId: string): number => spills.filter((s) => s.typeId === typeId).length;
+    const newLedger = wsLedger().filter((k) => !ledgerBefore.has(k));
+    log(
+      `hands RESULT marked ${SCYTHE_OF_CALAMITY.itemId} id ${mark.id}: owner holds gens [${gens.join(" ")}], ledger ${ledgerGen(SCYTHE_OF_CALAMITY, mark.id)}, ` +
+        `${returns.length} return line(s), ${spills.filter((s) => s.markId === mark.id).length} marked spill(s); ` +
+        `iron: ${spilled("minecraft:iron_sword")} iron sword spill(s); unmarked: owner holds ${held.filter((s) => s.typeId === WEB_SWORD.itemId).length} ${WEB_SWORD.itemId}, ` +
+        `${spilled(WEB_SWORD.itemId)} spill(s), new ledger keys [${newLedger.join(" ")}]; stands gone: ${cases.map((c) => `${c.name} ${!c.entity?.isValid}`).join(", ")}; ` +
+        `this pack's watcher: ${kills.join(" | ") || "no kill"}`
+    );
+    for (const c of cases) test.assert(!(c.entity as Entity).isValid, `the ${c.name} stand is still in the world`);
+    test.assert(gens.length === 1 && gens[0] === 1, `owner holds Scythe gens [${gens.join(" ")}] after its stand fell into the Void`);
+    test.assert(ledgerGen(SCYTHE_OF_CALAMITY, mark.id) === 1, `Scythe ledger at ${ledgerGen(SCYTHE_OF_CALAMITY, mark.id)}, not 1`);
+    test.assert(returns.length === 1, `${returns.length} return lines for the Scythe: ${returns.join(" | ")}`);
+    test.assert(spills.filter((s) => s.markId === mark.id).length === 1, "the killed stand did not spill the marked Scythe exactly once");
+    test.assert(spilled("minecraft:iron_sword") === 0, "the iron-sword stand was killed: its sword spilled");
+    test.assert(held.every((s) => s.typeId !== WEB_SWORD.itemId), "an unmarked Web Sword copy came back to the owner");
+    test.assert(newLedger.length === 0, `an unmarked copy wrote Web Sword ledger keys [${newLedger.join(" ")}]`);
+  } finally {
+    console.warn = original;
+    world.afterEvents.entitySpawn.unsubscribe(spawnSub);
+    for (const c of cases) if (c.entity?.isValid) c.entity.remove();
+  }
+  test.succeed();
+})
+  .structureName("andrew:platform")
+  .maxTicks(700)
+  .tag("andrew");
+
+/**
+ * 50 stands stand above the floor for 200 ticks: the watcher follows them and
+ * asks none of them anything. Every Entity.runCommand on an armour stand in this
+ * pack is counted; a stand teleported below the floor is the control that the
+ * count sees the watcher's questions. With no stand loaded, its interval stops.
+ */
+registerAsync("andrew", "legendary_stand_watch_idle", async (test: Test): Promise<void> => {
+  const floor = test.getDimension().heightRange.min;
+  const run = Entity.prototype.runCommand;
+  let asked = 0;
+  Entity.prototype.runCommand = function (this: Entity, command: string): CommandResult {
+    if (this.typeId === ARMOR_STAND) asked++;
+    return run.call(this, command);
+  };
+  const spawned: Entity[] = [];
+  try {
+    for (let i = 0; i < 50; i++) spawned.push(test.spawn(ARMOR_STAND, { x: i % 7, y: 2, z: Math.floor(i / 7) % 7 }));
+    await test.idle(4);
+    const armed = standWatchState();
+    test.assert(armed.ticking && armed.stands >= 50, `the watcher follows ${armed.stands} stands, ticking ${armed.ticking}`);
+
+    await test.idle(200);
+    const quiet = asked;
+
+    const control = spawned[0];
+    control.teleport({ x: control.location.x, y: floor - 4, z: control.location.z });
+    await test.idle(3);
+    const below = asked - quiet;
+
+    let leftovers = 0;
+    for (const id of ["overworld", "nether", "the_end"]) {
+      for (const e of world.getDimension(id).getEntities({ type: ARMOR_STAND })) {
+        if (!spawned.some((s) => s.id === e.id)) leftovers++;
+        e.remove();
+      }
+    }
+    await test.idle(2);
+    const idle = standWatchState();
+    log(
+      `idle RESULT 50 stands above the floor for 200 ticks: ${quiet} command(s); control below the floor: ${below} command(s); ` +
+        `armed ${armed.stands} stands ticking ${armed.ticking}; after removal (${leftovers} leftover stand(s) from other tests): ${idle.stands} stands ticking ${idle.ticking}`
+    );
+    test.assert(quiet === 0, `${quiet} commands on stands above the floor`);
+    test.assert(below > 0, "the control stand below the floor was never asked: the count does not see the watcher");
+    test.assert(idle.stands === 0 && !idle.ticking, `with no stand loaded the watcher follows ${idle.stands}, ticking ${idle.ticking}`);
+  } finally {
+    Entity.prototype.runCommand = run;
+    for (const s of spawned) if (s.isValid) s.remove();
+  }
+  test.succeed();
+})
+  .structureName("andrew:platform")
+  .maxTicks(400)
   .tag("andrew");

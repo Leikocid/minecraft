@@ -26,6 +26,7 @@ will reopen silently.
 | The Void | return, prescribed by §5 itself | `legendary_returns_from_void` |
 | The owner's death, whatever killed them | retention: the stack stays in the inventory; it never reads the damage cause | `legendary_offhand_death_returns`, `legendary_ufo_fall_death_keeps` (a fall from the UFO's hover height), `legendary-retention` units |
 | A minecart or armour stand holding it is destroyed | return: the holder spills its contents as item entities, which recovery watches like any other — also after the holder was teleported away and back | `legendary_ufo_holder_chest_minecart`, `legendary_ufo_holder_hopper_minecart`, `legendary_ufo_holder_armor_stand` |
+| A minecart or armour stand holding it falls into the Void | return: the engine removes the holder below the floor with no spill. Recovery reads a minecart's inventory as it is removed, and kills a stand that holds a legendary while it is below the floor, so the stand spills it (below) | `legendary_holder_void_chest_minecart`, `legendary_holder_void_hopper_minecart`, `legendary_stand_void_hands` |
 | Our own ring blasts and the penetrator | the instance is moved out of the volume **before** the explosions, item frames broken open for it | `legendary_protect_ground_item`, `legendary_protect_framed` |
 | An entity destroyed in the same tick it appeared | the departure ledger below — `watch()` never sees it, so the entity is not what is tracked | `legendary_pickup_sighting_not_consumed` |
 
@@ -68,7 +69,13 @@ A holder *entity* that falls into the Void is removed by the engine with no
 death and no spill. For a chest or hopper minecart, recovery reads its inventory
 in `beforeEvents.entityRemove` when the minecart is below the floor and returns
 every live instance through the same loss path (`legendary_holder_void_*`).
-Still open: an armour stand — its hands cannot be read from a script on 2.10.0,
-so a legendary it holds is gone when it falls (`probe_ufo_holder_void`). The UFO
-Magnet keeps out of that case by never selecting a holder that carries a
-legendary (`isLegendaryStack`, L0-lgnd-r016 §3).
+An armour stand has no script inventory or equippable, but `hasitem` reads its
+hands, also below the floor. Recovery follows every loaded stand
+(`entitySpawn`/`entityLoad`, a 1-tick interval that runs only while one is
+loaded), asks a stand only once it is below the floor, and `kill()`s one that
+holds a legendary type in either hand. That stand is already inside the 13-tick
+window before the engine removes it. The spill keeps its mark, so the same loss
+path returns it (`legendary_stand_void_hands`, `probe_stand_void`). An unmarked
+copy spills and is not returned; a stand holding anything else is left to the
+engine. The UFO Magnet still never selects a holder that carries a legendary
+(`isLegendaryStack`, L0-lgnd-r016 §3).
