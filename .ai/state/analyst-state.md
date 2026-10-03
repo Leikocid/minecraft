@@ -1,8 +1,8 @@
 ---
-current_analysis_version: 5
+current_analysis_version: 6
 current_versions_by_node:
-  L0: 5
-  L0-lgnd: 5
+  L0: 6
+  L0-lgnd: 6
   L0-pick: 2
   L0-infr: 2
   L0-scyt: 2
@@ -19,27 +19,26 @@ current_versions_by_node:
   L0-ufoc: 5
   L0-sauc: 5
   L0-magn: 5
+  L0-katn: 6
 pending_revisions: []
 last_run:
-  started_at: '2026-10-02T19:01:34.929Z'
-  completed_at: '2026-10-02T19:11:04.479Z'
-  duration_seconds: 570
-  total_artifacts_current: 87
-  total_size_kb: 1381
-  open_contradictions: 2
+  started_at: '2026-10-03T14:42:44.633Z'
+  completed_at: '2026-10-03T14:58:23.825Z'
+  duration_seconds: 939
+  total_artifacts_current: 96
+  total_size_kb: 1473
+  open_contradictions: 6
   llm_calls: 4
   llm_budget_used_pct: 2
-  input_hash: d3d41ddb15dcffddbe565ac28b09cc57f135c5db2b33e9bffbb93acb2fae5fca
-  run_priority: 580
+  input_hash: ec711c249fb716d68c3bd0f3ae552036eb99775bde14baaa35f8d8ce84f1b8a7
+  run_priority: 600
   run_scope:
-    recorded_at: '2026-10-02T19:01:34.943Z'
-    rule: 'partial: the queue (pending_revisions ∪ in-flight) plus the ancestors needed to reach it; every other node carrying a version is skipped as done and carried forward. Children named by a plan at runtime that have no version join the run as they are discovered.'
+    recorded_at: '2026-10-03T14:42:44.710Z'
+    rule: 'full: every node the decomposition plans name, from L0 down.'
     nodes:
       - L0
-      - L0-ufoc
     reasons:
       L0: root — every run enters the tree here
-      L0-ufoc: queued in pending_revisions — owes a re-analysis
   stages:
     - stage: nodes
       entered_at: '2026-09-24T19:23:43.218Z'
@@ -118,20 +117,27 @@ last_run:
       done: 5
     - stage: rollout
       entered_at: '2026-10-02T19:12:16.964Z'
+    - stage: collect-decisions
+      entered_at: '2026-10-03T14:41:56.084Z'
+    - stage: nodes
+      entered_at: '2026-10-03T14:42:44.718Z'
+      done: 3
+    - stage: rollout
+      entered_at: '2026-10-03T14:58:23.838Z'
 last_rollout_hashes:
-  project-knowledge/glossary.md: 0e72d575279fad30
-  project-knowledge/business-rules.md: 59b4ac9d9d059a6c
+  project-knowledge/glossary.md: e0aae6c94ea183a3
+  project-knowledge/business-rules.md: c5421ce0094aec6d
   project-knowledge/boundaries.md: 52130c6cd83d1194
-  project-knowledge/intent.md: f3fd26f46ed66ec4
-  project-knowledge/domain-model.md: 228f3a4363d1b359
-  project-knowledge/architecture.md: 6e52a03e7d64bc0e
-  assumptions.md: cd17aeb85b6a9f6b
-  contradictions.md: 89015612dc777f93
-  client-questions.md: 1a227ea7261dc1dd
-  summary.md: c03cedad0a31c4df
-  scope.md: f57c7c43c5c47db7
-  risks.md: f85650d481618ee7
-  decisions.md: c6debc58501f760e
+  project-knowledge/intent.md: 9e33cdc9cb428f33
+  project-knowledge/domain-model.md: b03caaa7f283a1bb
+  project-knowledge/architecture.md: 1435041827067b9d
+  assumptions.md: 53cb516655f6ca4d
+  contradictions.md: c06ead1bcf5b7a10
+  client-questions.md: a88a8e2426d7a724
+  summary.md: 4edb368a54522b15
+  scope.md: fd239b52a53018d4
+  risks.md: 88b0909fa5a09946
+  decisions.md: 29ea38366e0a896e
 runtime_vocabulary:
   concept-boundary:
     description: Seen at runtime
@@ -218,6 +224,9 @@ slug_mappings:
   'UFO event core. The durable schedule: epoch ms next-arrival, the first arrival 10–20 min after the first join, +15 min after a departure or shoot-down, waiting for an Overworld player, and the enable flag. Target and centre selection; hover height = centre + 40, capped at ceiling − 4. The phase machine (arrival 20 s / magnet 60 s / release / departure 15 s / pause), which publishes phase events to `sauc` and `magn`. One shared `runInterval` (C-5d). Restart cleanup of leftover entities (C-23). The operator command `/andrew:ufo come/stop/enable/disable`. RU/EN messages and the 150-block arrival notice. A testable clock seam (`L0-xasm13`). UFO ACs 1, 2 (timing), 3, 17, 18.': L0-ufoc
   'Saucer and beam. BP + RP entities: a ~12-block disc, a dome, rim lights and a spin; a translucent green beam cone shown during the magnet. No push, no collision and immune to everything but the Cannon, within the known engine traps (pushable/runtime_identifier). The flight path: in from 90 blocks at hover + 10, out 90 blocks the opposite way, staying ≤ 100 blocks from the centre (U8). Sounds. **Shoot-down:** an interceptor on `orbc` flight (`L0-adr-ufoi`), the hull cylinder r 6 × h 3 in any phase, the charge absorbed, magnet-off through `ufoc`, a 3 s smoking fall, a blast that does no damage (visual and sound only), 8 diamonds + 1 totem, and a broadcast naming the charge owner. UFO ACs 2 (path and look), 15, 16, plus the iPad DoD visuals.': L0-sauc
   Magnet effect. The iron lists (items, blocks, ore, entities) verified against the 1.26.51 ids (`L0-xasm15`). Mob and armour-stand armour read through `hasitem`, one item at a time (U4b). One `getBlocks`/`includeTypes` zone scan at magnet-on (U7). The ≤ 10 priority selection, nearest first, and the 12-block drop exemption. Container iron-stack extraction (U5), with the hopper ruled by `L0-xcx18`. Block → air + one item, a whole door, ore → `raw_iron` (U6). Underground items fly through stone (U3). Player pull through `applyKnockback` ≤ 0.6 blocks per tick to 6 below the saucer, stopped and resumed by the hand state each tick (U10), never in Creative or Spectator. The cloud ring r 5 at −3, away from players (U11). Simultaneous release with vanilla physics and fall damage from the release point (U2). Legendaries excluded through `lgnd`. UFO ACs 4–14.: L0-magn
+  ? 'Dragon Katana (`andrew:dragon_katana`). **Item:** a Diamond Sword clone on the `web_sword.json` template: damage 7, `is_sword`, sword enchant slot, `fire_resistant`, `allow_off_hand`, no durability, Creative "Equipment", RU/EN names. **Recipe:** golden apple / ender pearl ×2 / Diamond Sword, through the framework''s craft token (T01–T03). **Ability:** `itemUse` (and the block-tap path as in `webs`/`scyt`) → `resolveActivation` → server-side trace from the head along the view, capped at 20 blocks (clamp per `L0-xasm18`), with obstacle semantics per `L0-adr-ktob` (water and lava pass, unreadable = solid) → the nearest safe standing cell on the owner''s side (`L0-xasm19`), with no block edits → `teleport` keeping the facing → `startCooldown` 30 s epoch ms. A cooldown attempt is a no-op that does not reset the timer (T05–T10). **Fall:** a one-shot flag per `L0-adr-ktfl` / `L0-xasm20` (T11, T12). **Trail:** a pink cherry-petal trail A→B under C-5e, harmless (T13). **HUD:** the RU/EN ready string and seconds. **GameTests:** T04–T15 with SimulatedPlayers, plus the Katana instances of T16–T18 against the framework. **iPad:** the trail, the HUD, the icon and the Creative placement. Probe first: fall-distance reset and the ray flags (`includePassableBlocks`, liquids).'
+  : L0-katn
+  'Legendary framework, v6 pass. **(1) Reconcile with as-built 1.4.4:** `resolveActivation` and `heldLegendaries` are shipped (`hands.ts`). The Void-minecart holder return has merged (`recovery.ts` `VOID_HOLDER_TYPES`). Re-state what is still open (`holder` for the last owner, `xcx11`; the armour stand). **(2) Katana delta:** def #4 and its craft token, and the uniqueness-flag key. Confirm that `isLegendaryStack`, retention, `protectLegendariesIn` (Orbital blast and rings, T17) and the HUD need no per-weapon code beyond the def. State T17 under C-16 (`L0-xcx21`, `L0-xasm22`). Make sure the Katana''s self-teleport does not trip recovery (a player teleport moves no item entity) and that a teleport into another dimension''s chunks is never attempted (same-dimension only).': L0-lgnd
 tags:
   - analysis
   - registry
@@ -232,11 +241,12 @@ Runtime state for the analyst pipeline (analyse runs, vocabulary, slug map, roll
 
 | Node | Version |
 |------|---------|
-| L0 | 5 |
+| L0 | 6 |
 | L0-airs | 2 |
 | L0-bast | 2 |
 | L0-infr | 2 |
-| L0-lgnd | 5 |
+| L0-katn | 6 |
+| L0-lgnd | 6 |
 | L0-loot | 2 |
 | L0-magn | 5 |
 | L0-orbc | 3 |
@@ -253,12 +263,12 @@ Runtime state for the analyst pipeline (analyse runs, vocabulary, slug map, roll
 
 ## Last Run
 
-- Started: 2026-10-02T19:01:34.929Z
-- Completed: 2026-10-02T19:11:04.479Z
-- Duration: 570s
-- Current artifacts: 87 (1381 KB total)
+- Started: 2026-10-03T14:42:44.633Z
+- Completed: 2026-10-03T14:58:23.825Z
+- Duration: 939s
+- Current artifacts: 96 (1473 KB total)
 - LLM calls: 4 (2% budget)
-- Open contradictions: 2
+- Open contradictions: 6
 
 ## Changelog
 
