@@ -28,7 +28,10 @@ docker logs --tail 40 "$CONTAINER" 2>&1 | tr -d '\r' > "$OUT"
 
 echo "--- tickingarea list after the three scenarios"
 sed -n '/List of all ticking areas/,/ticking areas in use/p' "$OUT"
+grep -o 'No ticking areas exist in any dimension.' "$OUT"
 used=$(sed -n 's/^\([0-9]*\)\/10 ticking areas in use.*/\1/p' "$OUT" | tail -1)
+# With none left the engine answers with a sentence, not a count.
+if [ -z "$used" ] && grep -q 'No ticking areas exist in any dimension' "$OUT"; then used=0; fi
 rm -f "$OUT"
 
 if [ "$suite" -ne 0 ]; then echo "FAIL: the scenarios themselves failed (exit $suite)"; exit 1; fi
