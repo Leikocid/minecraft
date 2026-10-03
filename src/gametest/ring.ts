@@ -1170,7 +1170,8 @@ async function resistanceRun(test: Test, k: number, initial: boolean): Promise<{
     fill(dim, { x: cx, y: top - 2, z: cz + 1 }, { x: cx + PAD, y: top, z: cz + PAD }, "minecraft:oak_planks");
     const material = (c: { x: number; z: number }): string => (c.x < 0 ? "minecraft:dirt" : c.z > 0 ? "minecraft:oak_planks" : "minecraft:stone");
     // Rings by their place from the centre, never by diameter: the table is retuned between releases.
-    const [, second, third] = RING_LAYOUT.rings;
+    // RING_LAYOUT.rings excludes the centre column, so rings[0] is the second ring from the centre.
+    const [second, third] = RING_LAYOUT.rings;
     const pillars = second.cells.filter((_, i) => i % 4 === 0).map((c, i) => ({ c, type: i % 2 === 0 ? "minecraft:obsidian" : "minecraft:reinforced_deepslate" }));
     for (const p of pillars) for (let dy = 1; dy <= 3; dy++) dim.setBlockType(cellAt(s, p.c, dy), p.type);
     const chestCol = third.cells[Math.floor(third.cells.length / 4)];
