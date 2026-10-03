@@ -988,3 +988,16 @@ test('protectLegendariesIn: the spot search walks max(16, halfExtent + 4) rings 
     assert.deepStrictEqual(w.drops, []);
   });
 });
+
+test('recovery events for a player the pack cannot read, or one already removed, are ignored without a throw', () => {
+  // A product pack gets undefined where a SimulatedPlayer stands; an after-event
+  // can arrive for a player removed in the same tick, whose every call throws.
+  const gone = makePlayer('gone');
+  gone.isValid = false;
+  gone.getComponent = () => {
+    throw new Error('InvalidEntityError: Entity being invalid');
+  };
+  assert.doesNotThrow(() => fire('playerSwingStart', { player: undefined, swingSource: 'DropItem' }));
+  assert.doesNotThrow(() => fire('playerSwingStart', { player: gone, swingSource: 'DropItem' }));
+  assert.doesNotThrow(() => fire('playerInventoryItemChange', { player: gone, slot: 0, itemStack: undefined, beforeItemStack: new mc.ItemStack('minecraft:dirt'), inventoryType: 'Hotbar' }));
+});
