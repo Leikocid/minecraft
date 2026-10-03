@@ -1,7 +1,7 @@
 ---
 title: Assumptions
 type: analysis
-generated_at: "2026-10-03T18:06:22.797Z"
+generated_at: "2026-10-03T23:54:07.054Z"
 source_channel: rollout
 node_id: rollout-assumptions
 aliases: ["rollout-assumptions","assumptions"]

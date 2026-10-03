@@ -1,12 +1,12 @@
 ---
 title: Contradictions
 type: analysis
-generated_at: "2026-10-03T17:21:17.745Z"
+generated_at: "2026-10-03T23:54:07.057Z"
 source_channel: rollout
 node_id: rollout-contradictions
 aliases: ["rollout-contradictions","contradictions"]
 is_a: ["rollout","contradictions"]
-relates_to: ["L0-katn-cx01","L0-lgnd-cx02","L0-lgnd-cx03","L0-lgnd-cx04","L0-lgnd-cx05","L0-lgnd-cx06","L0-lgnd-cx14"]
+relates_to: ["L0-katn-cx01","L0-lgnd-cx02","L0-lgnd-cx03","L0-lgnd-cx04","L0-lgnd-cx05","L0-lgnd-cx06"]
 priority: 600
 ---
 
@@ -165,40 +165,6 @@ relates_to: ["L0-lgnd-ad03", "L0-lgnd-p003", "L0-lgnd-ac12"]
 **Conflict.** The loop is not global and not permanent, so it keeps the spirit of C-5. But C-5 names Scythe projectiles as the only allowed case. A legendary dropped in an unloaded-but-ticking area, or left on the ground for the 5-minute despawn window, keeps the loop alive for minutes.
 
 **Resolution needed.** Either widen C-5 to "while temporary objects **or dropped legendary items** exist", or drop the watcher and rely only on `beforeEvents.entityRemove` (`L0-lgnd-as03` must then be measured on BDS 1.26.51.1 to confirm the Void kill raises it).
-
-
-
-
-
-
-### CX-lgnd-14: A legendary held by an armour stand that falls into the Void is lost (L0-lgnd-cx14)
-
----
-is_a: ["contradiction"]
-part_of: ["L0-lgnd"]
-relates_to: ["L0-lgnd-ad12", "L0-lgnd-r016", "L0-lgnd-as15", "L0-xcx11", "L0-katn"]
-see_also: ["dragonkatanaspecv1ruen-part-1", "orbitalcannonspecv1ruen-part-1"]
----
-# CX-lgnd-14: A legendary held by an armour stand that falls into the Void is lost
-
-**Sources.** Katana §3 (and the same rule in the Orbital, Scythe and Web Sword specs): "При падении в Void Катана должна вернуться последнему владельцу" ("If it falls into the Void, the Katana must return to its last owner").
-
-**Code (1.4.4).**
-- `VOID_HOLDER_TYPES` covers `chest_minecart` and `hopper_minecart` only (`recovery.ts:135`).
-- An armour stand's hand slots cannot be read from a script on 2.10.0 (`README.md:71`, `probe_ufo_holder_void`).
-- The engine removes it below the floor with no death and no spill, so the legendary it holds is gone and nothing is returned.
-
-**Exposure.**
-- Nothing in the add-on moves an armour stand: the magnet skips holders that carry a legendary (`r016`).
-- Reaching this case takes a deliberate player setup: an armour stand pushed or placed over the Void, or the stand on a minecart.
-
-**Options (not self-resolved).**
-- (a) Accept it as a C-16 deviation and document it. This is the autopilot default.
-- (b) Probe `/replaceitem`- or `hasitem`-based reads of armour-stand hands (memory: mob armour is readable only via `hasitem`). If `hasitem slot.weapon.mainhand` can detect a legendary *type*, a mark cannot be read anyway, so the return would have to re-issue the ledger's last known instance.
-
-Filed so the operator confirms that it binds the Katana too.
-
-**Resolved at reduce v6** by `L0-adr-ktgr` §3: option (a), a documented C-16 deviation binding all four legendaries. The Katana adds no exposure. Option (b) stays a backlog probe. Operator confirmation is collected via `L0-xq6`.
 
 
 

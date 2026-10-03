@@ -10,9 +10,13 @@ part_of: ["L0-lgnd"]
 relates_to: ["L0-lgnd"]
 priority: 600
 size_chars: 1601
-tags: ["v6", "category:source-vs-code", "severity:low", "status:resolved", "resolved_by:L0-adr-ktgr", "target:L0-lgnd"]
+tags: ["v6","category:source-vs-code","severity:low","status:resolved","resolved_by:L0-adr-ktgr","target:L0-lgnd","resolved"]
 level: 2
+closed_at: 2026-10-03
+closed_reason: resolved_by_decision
+closed_by_ref: decision-resolve-l0-lgnd-cx14
 ---
+
 ---
 is_a: ["contradiction"]
 part_of: ["L0-lgnd"]

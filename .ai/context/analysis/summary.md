@@ -1,7 +1,7 @@
 ---
 title: Project Summary
 type: analysis
-generated_at: "2026-10-03T18:06:22.801Z"
+generated_at: "2026-10-03T23:54:07.060Z"
 source_channel: rollout
 node_id: rollout-summary
 aliases: ["rollout-summary","summary"]
@@ -123,11 +123,11 @@ Each merge needs a green **full** suite on the task branch. After each epic merg
 
 - **Total artifacts:** 1108
 - **concept-aggregate:** 79 (203 KB)
-- **concept-atomic:** 793 (738 KB)
+- **concept-atomic:** 793 (739 KB)
 - **concept-special:** 63 (91 KB)
 - **raw:** 30 (120 KB)
 - **decision:** 103 (68 KB)
-- **other:** 40 (331 KB)
+- **other:** 40 (332 KB)
 
 ### By level
 

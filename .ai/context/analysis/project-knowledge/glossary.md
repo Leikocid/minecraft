@@ -1,7 +1,7 @@
 ---
 title: Glossary
 type: project-knowledge
-generated_at: "2026-10-03T18:06:22.776Z"
+generated_at: "2026-10-03T23:54:07.037Z"
 source_channel: rollout
 node_id: rollout-glossary
 aliases: ["rollout-glossary","glossary","project-knowledge/glossary"]

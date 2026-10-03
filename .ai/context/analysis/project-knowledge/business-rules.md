@@ -1,7 +1,7 @@
 ---
 title: Business Rules
 type: project-knowledge
-generated_at: "2026-10-03T18:06:22.786Z"
+generated_at: "2026-10-03T23:54:07.046Z"
 source_channel: rollout
 node_id: rollout-business-rules
 aliases: ["rollout-business-rules","business-rules","project-knowledge/business-rules"]

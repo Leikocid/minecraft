@@ -4,15 +4,19 @@ node_id: "L0-xcx17"
 source_channel: "rollout"
 analysis_version: 4
 level: 1
-title: "CX-L0-17 · UFO DoD: \"every BDS-checkable AC automated in GameTest\" vs ACs that need 10–20 real minutes or a server restart"
+title: "CX-L0-17 · UFO DoD: \\"every BDS-checkable AC automated in GameTest\\" vs ACs that need 10–20 real minutes or a server restart"
 aliases: ["L0-xcx17"]
 is_a: ["contradiction"]
 part_of: ["L0"]
 relates_to: ["L0"]
 priority: 580
 size_chars: 1532
-tags: ["status:open", "category:assumption-gap", "target:L0-ufoc", "severity:medium", "relates_to:L0-ufoc", "relates_to:L0-xasm13", "relates_to:L0-xcx7", "see_also:ufomagnetspecv1ruen-part-4", "v4"]
+tags: ["status:open","category:assumption-gap","target:L0-ufoc","severity:medium","relates_to:L0-ufoc","relates_to:L0-xasm13","relates_to:L0-xcx7","see_also:ufomagnetspecv1ruen-part-4","v4","resolved"]
+closed_at: 2026-10-03
+closed_reason: resolved_by_decision
+closed_by_ref: decision-resolve-l0-xcx17
 ---
+
 ---
 title: "CX-L0-17 · UFO DoD: \"every BDS-checkable AC automated in GameTest\" vs ACs that need 10–20 real minutes or a server restart"
 aliases: ["L0-xcx17"]

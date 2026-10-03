@@ -1,7 +1,7 @@
 ---
 title: Scope
 type: analysis
-generated_at: "2026-10-03T18:06:22.806Z"
+generated_at: "2026-10-03T23:54:07.065Z"
 source_channel: rollout
 node_id: rollout-scope
 aliases: ["rollout-scope","scope"]

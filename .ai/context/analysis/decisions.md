@@ -1,7 +1,7 @@
 ---
 title: Decisions
 type: analysis
-generated_at: "2026-10-03T18:06:22.823Z"
+generated_at: "2026-10-03T23:54:07.078Z"
 source_channel: rollout
 node_id: rollout-decisions
 aliases: ["rollout-decisions","decisions"]
