@@ -8,6 +8,8 @@
 //         shipped recovery returns what it held.
 //   first killed on the first tick it is seen below the floor.
 //   late  killed 10 ticks after it was first seen below the floor.
+//   band  (probe_item_floor_band) a marked item last seen within one block
+//         above the floor, then gone.
 
 import { BlockVolume, type Entity, GameMode, ItemStack, type Player, type Vector3, system, world } from "@minecraft/server";
 import { type SimulatedPlayer, type Test, registerAsync } from "@minecraft/server-gametest";
@@ -235,4 +237,50 @@ registerAsync("andrew", "probe_stand_void", async (test: Test): Promise<void> =>
 })
   .structureName("andrew:platform")
   .maxTicks(700)
+  .tag("andrew");
+
+// The floor band: a marked item entity recovery last saw less than one block
+// above the floor (mid-fall in the End, where the floor is open), then gone.
+// Held there by teleport in a shaft through the bedrock until a 40-tick check
+// has recorded it, then removed.
+registerAsync("andrew", "probe_item_floor_band", async (test: Test): Promise<void> => {
+  const dimension = test.getDimension();
+  const floor = dimension.heightRange.min;
+  const owner = test.spawnSimulatedPlayer({ x: 1, y: 2, z: 1 }, "floor_band_owner", GameMode.Survival);
+  await test.idle(4);
+  const top = test.worldLocation({ x: 5, y: 1, z: 5 });
+  dimension.fillBlocks(new BlockVolume({ x: top.x, y: floor, z: top.z }, top), "minecraft:air");
+  const band = { x: top.x + 0.5, y: floor + 0.5, z: top.z + 0.5 };
+  const mark = state.makeMark("admin", owner);
+  const item = dimension.spawnItem(state.markItem(WEB_SWORD, new ItemStack(WEB_SWORD.itemId, 1), mark), band);
+  const original = console.warn;
+  const warned: string[] = [];
+  console.warn = (...args: unknown[]): void => {
+    warned.push(args.map(String).join(" "));
+    original(...args);
+  };
+  try {
+    let held = "not measured";
+    for (let t = 0; t < 50; t++) {
+      item.teleport(band);
+      item.clearVelocity();
+      await test.idle(1);
+      held = item.isValid ? fmt(item.location) : "gone";
+    }
+    item.remove();
+    const removed = system.currentTick;
+    await test.idle(120);
+    const loss = warned.filter((l) => l.includes("legendary recovery:") && l.includes(mark.id));
+    log(
+      `band RESULT ${WEB_SWORD.itemId} id ${mark.id}: owner holds gens [${gensOf(WEB_SWORD, carried(owner), mark.id).join(" ")}], ledger ${ledgerGen(WEB_SWORD, mark.id)}; ` +
+        `held at ${held} (floor ${floor}), removed t${removed}; recovery: ${loss.join(" | ") || "none"}`
+    );
+  } finally {
+    console.warn = original;
+    if (item.isValid) item.remove();
+  }
+  test.succeed();
+})
+  .structureName("andrew:platform")
+  .maxTicks(300)
   .tag("andrew");
