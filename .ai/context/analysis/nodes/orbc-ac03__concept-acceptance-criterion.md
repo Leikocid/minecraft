@@ -3,7 +3,7 @@ type: "concept-acceptance-criterion"
 node_id: "L0-orbc-ac03"
 source_channel: "rollout"
 analysis_version: 5
-title: "AC-3 · With no block within 10, nothing fires and no cooldown starts `[bds]`"
+title: "AC-3 · With no block within 25, nothing fires and no cooldown starts `[bds]`"
 aliases: ["L0-orbc-ac03"]
 is_a: ["acceptance-criterion"]
 part_of: ["L0-orbc"]
@@ -13,13 +13,13 @@ size_chars: 801
 tags: ["is_a:acceptance-criterion", "channel:bds", "orbital-ac-3", "relates_to:L0-orbc-r004"]
 level: 2
 ---
-# AC-3 · With no block within 10, nothing fires and no cooldown starts `[bds]`
+# AC-3 · With no block within 25, nothing fires and no cooldown starts `[bds]`
 
 **Links:** `part_of: ["L0-orbc"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-orbc-r004", "L0-orbc-r003"]`
 
 **GIVEN**
 - a SimulatedPlayer P in Survival, holding the Cannon, with no cooldown;
-- P facing open sky, with the nearest block along the view ray 11 or more blocks away. A variant looks at water only, or at tall grass with air behind it within 10.
+- P facing open sky, with the nearest block along the view ray more than 25 blocks away (test: 25.5, src/gametest/orbital-core.ts:244, :319). A variant looks at water only, or at tall grass with air behind it within 25.
 
 **WHEN** P uses the item (RMB) and attacks (LMB, a forced `entityHitBlock` path).
 

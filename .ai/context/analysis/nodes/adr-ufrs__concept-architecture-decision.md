@@ -27,7 +27,7 @@ status: accepted
 
 **Context (`L0-ufoc-cx01`).**
 - `L0-adr-ufom` §2 and C-23 allow exactly two durable world properties: `andrew:ufo_next_ms` and `andrew:ufo_enabled`.
-- `L0-adr-ufom` §4 says that at world load, `next_ms` becomes now + 15 min "if an event had been running, recorded by a transient `andrew:ufo_active` flag".
+- `L0-adr-ufom` §4 said that at world load, `next_ms` becomes now + 15 min "if an event had been running, recorded by a transient `andrew:ufo_active` flag".
 - A value read at load must have been written before the restart. So that flag is either durable, which breaks §2 and C-23, or in memory, which makes it always false at load. In the second case UFO §10 ("the next arrival is 15 min after a restart") never applies.
 - `ufoc` proposed option (a) as its autopilot default and left the decision to L0, because the fix amends an L0 ADR.
 
@@ -48,4 +48,4 @@ status: accepted
 
 **Consequences.**
 - `sauc` and `magn` are not affected. Neither one reads or writes the schedule.
-- The proof is `L0-ufoc-ac03` case 2: seed `next_ms = 0`, restart on the checks instance (19136), and assert `next_ms` ∈ [load + 900 000, load + 905 000]. Its red proof is a build without the load-time marker branch. It counts as "automated on BDS" under the still-open reading of `L0-xcx17`.
+- The proof is `L0-ufoc-ac03` case 2: start an event with `come`; assert `next_ms = 0` before the restart; restart on the checks instance (19136), and assert `next_ms` ∈ [load + 900 000, load + 905 000]. Its red proof is a build without the load-time marker branch. It counts as "automated on BDS" under the still-open reading of `L0-xcx17`.

@@ -26,7 +26,7 @@ status: accepted
 
 **Context.**
 - The L0 plan says `ufoc` publishes three signals: `onPhase`, `requestMagnetOff` and `saucerPosition()`.
-- `ufoc` failed in this run, so no artifact publishes the contract.
+- `ufoc` v5 publishes it (ufoc-p002, ufoc-ent2); shipped in src/ufo/event.ts.
 - `sauc` and `magn` were both analysed against the plan's wording. On top of the three signals they rely on:
   - two more calls (`saucerStep`, `reportShotDown`);
   - an extra argument on the `orbc` interceptor (`attack`).

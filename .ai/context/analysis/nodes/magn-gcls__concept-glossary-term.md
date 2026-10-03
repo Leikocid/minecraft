@@ -23,4 +23,4 @@ The selection tier of a candidate element:
 
 Lower classes fill only the slots that higher classes leave free. Within a class, candidates go nearest to the centre first.
 
-**Built block** means any placed iron block from IRON_BLOCKS (the hopper excluded), natural structures included.
+**Built block** means any placed iron block from IRON_BLOCKS (an empty hopper included; one holding anything is a container), natural structures included.

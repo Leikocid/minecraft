@@ -21,7 +21,7 @@ relates_to: ["L0-lgnd-p003", "L0-lgnd-r011", "L0-lgnd-ad11", "L0-lgnd-ent4"]
 
 GIVEN P last held a marked Orbital Cannon (gen g) and drops it into the Void
 WHEN the item entity falls below the dimension's minimum height
-THEN P receives it with the same id, gen g + 1 and `holder` = P, plus a private `andrew.orbital.returned` message,
+THEN P receives it with the same id, gen g + 1 and `holder` = P, plus a private `andrew.legendary.recovered` message,
 AND the Cannon craft flag is unchanged.
 
 If P is offline:

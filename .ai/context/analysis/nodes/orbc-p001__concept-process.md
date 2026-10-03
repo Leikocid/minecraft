@@ -25,8 +25,8 @@ level: 2
 3. **Dedup.** If `lastActivationTick[player.id] === system.currentTick`, stop silently. This covers both RMB events, and LMB+RMB in one touch gesture (`r006`).
 4. **Cooldown.** If `!isReady(player, "orbital_cannon")`, stop silently. No charge, no sound, no message (`as06`).
 5. **Target.** Resolve by `ad01`:
-   - Use the event block when the event supplies one and it is within 10 blocks.
-   - Otherwise use `player.getBlockFromViewDirection({maxDistance: 10, includeLiquidBlocks: false, includePassableBlocks: false})`.
+   - Use the event block when the event supplies one and it is within 25 blocks.
+   - Otherwise use `player.getBlockFromViewDirection({maxDistance: 25, includeLiquidBlocks: false, includePassableBlocks: false})`.
 
    If no block is found, **stop silently and start no cooldown** (`r004`, AC-3).
 6. **Lock.** Copy `block.location` into `target`, and copy the `dimensionId`. The player is never read again for aim (`ent2`).

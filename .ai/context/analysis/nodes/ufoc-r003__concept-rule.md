@@ -19,7 +19,7 @@ level: 2
 
 **Rule** (UFO §2, `L0-adr-ufht`):
 
-`hoverY = min(centre.y + 40, ceiling − 4)`, where `ceiling = world.getDimension("overworld").heightRange.max`. On current Bedrock that is 320, so `hoverY` ≤ 316.
+`hoverY = min(centre.y + 40, ceiling − 15)`, where `ceiling = world.getDimension("overworld").heightRange.max`. On current Bedrock that is 320, so `hoverY` ≤ 305.
 
 - It is computed once at arrival start and is part of every `onPhase` payload.
 - `sauc` and `magn` never recompute it. `sauc` caps its legs at `min(hoverY + 10, ceiling − 4)` from the same `ceiling`.

@@ -16,13 +16,13 @@ level: 1
 ---
 # ASM-L0-8 · Ring rasterisation and charge count
 
-**Gap.** Orbital §10 says the rings are "approximately 1/5/10/15/20 in diameter, as continuous as possible, discrete grid allowed".
+**Gap.** Orbital §10 says the rings are "approximately 1/7/14/21/28 in diameter, as continuous as possible, discrete grid allowed" (decision 2026-09-30).
 
 **Assumption (CAN_ASSUME).**
-- Rings are 8-connected midpoint circles of radius r = d/2 (0, 2.5, 5, 7.5, 10), centred on the target block's column.
+- Rings are 8-connected midpoint circles of radius r = d/2 (0.5, 3.5, 7, 10.5, 14), centred on the target block's column.
 - Duplicates are removed across rings.
 - Diameter 1 is exactly one charge over the target.
 
-That gives roughly 1 + 16 + 32 + 48 + 64 ≈ **160** charges per RMB. The budgets in C-5a′ and C-19 are sized for about 160 per attack and 3 concurrent attacks.
+That gives 1 + 20 + 40 + 60 + 80 = **201** charges per RMB (measured). The budgets in C-5a′ and C-19 are sized for 201 per attack and 3 concurrent attacks.
 
 **Impact if wrong.** A sparser ring, for example 4-connected, halves the load. A denser, "thick" ring doubles it and may break the tick budget. This must be re-measured on BDS.

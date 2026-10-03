@@ -18,7 +18,7 @@ A single LMB or RMB press that passes every gate:
 - the Cannon is resolved in a hand;
 - it is the first activation this tick;
 - the cooldown is ready;
-- a valid target lies within 10 blocks.
+- a valid target lies within 25 blocks (RMB: no nearer than 7).
 
 It then writes the cooldown and spawns the charges in the same tick. It is the only moment the cooldown starts. A press that fails any gate is a **no-op** and leaves no trace.
 

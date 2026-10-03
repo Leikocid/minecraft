@@ -10,7 +10,7 @@ part_of: ["L0"]
 relates_to: ["L0"]
 priority: 540
 size_chars: 3055
-tags: ["is_a:component", "relates_to:L0-lgnd", "relates_to:L0-pntr", "relates_to:L0-ring", "relates_to:L0-adr-orbc", "relates_to:L0-adr-ochg", "relates_to:L0-xcx8", "relates_to:L0-xcx13", "relates_to:L0-xq5", "orbital", "stage5", "not-implemented", "blocked:L0-xq5"]
+tags: ["is_a:component", "relates_to:L0-lgnd", "relates_to:L0-pntr", "relates_to:L0-ring", "relates_to:L0-adr-orbc", "relates_to:L0-adr-ochg", "relates_to:L0-xcx8", "relates_to:L0-xcx13", "relates_to:L0-xq5", "orbital", "stage5"]
 level: 1
 needs_rebuild_marked_at: 2026-10-02T18:41:56.507Z
 ---
@@ -18,7 +18,7 @@ needs_rebuild_marked_at: 2026-10-02T18:41:56.507Z
 
 **Links:** `part_of: ["L0"]` · `is_a: ["component"]` · `relates_to: ["L0-lgnd", "L0-pntr", "L0-ring", "L0-adr-orbc", "L0-adr-ochg", "L0-xcx8", "L0-xcx13", "L0-xq5"]`
 
-**State (2026-09-29):** not implemented. There is no `src/orbital/` and no `andrew:orbital_cannon` item. The framework that it plugs into is shipped: `src/legendary/{registry,hands,cooldown,hud,craftgate,retention,recovery}.ts`. **Task creation is blocked by `L0-xq5`/`L0-xcx8`**, the LMB reach question.
+**State (v1.4.4):** shipped in v1.4.0 (3e26db8), tuned in v1.4.1/1.4.3/1.4.4; `src/orbital/` and `andrew:orbital_cannon` exist. The framework that it plugs into is shipped: `src/legendary/{registry,hands,cooldown,hud,craftgate,retention,recovery}.ts`.
 
 ## Responsibility
 The weapon shell shared by both attacks. It covers:
@@ -42,7 +42,7 @@ Owned by `pntr`/`ring`: the column and ring effects, drops and legendary protect
 ## Inputs
 - `world.afterEvents.itemUse`, `itemUseOn`/`playerInteractWithBlock` (RMB).
 - `world.afterEvents.entityHitBlock` with a player damager, and `beforeEvents.playerBreakBlock` cancel (LMB). See `L0-adr-orbc` and the amendment `L0-orbc-ad01`.
-- `Player.getBlockFromViewDirection({maxDistance: 10})`, `Dimension.heightRange`, `entityLoad`, and world startup.
+- `Player.getBlockFromViewDirection({maxDistance: 25})`, `Dimension.heightRange`, `entityLoad`, and world startup.
 
 ## Outputs
 - A cooldown write (`andrew:cd_orbital_cannon`, 600 ticks) through `lgnd` `startCooldown`.

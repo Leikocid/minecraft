@@ -1,7 +1,7 @@
 ---
 title: Business Rules
 type: project-knowledge
-generated_at: "2026-10-03T14:58:23.865Z"
+generated_at: "2026-10-03T18:06:22.786Z"
 source_channel: rollout
 node_id: rollout-business-rules
 aliases: ["rollout-business-rules","business-rules","project-knowledge/business-rules"]
@@ -542,7 +542,8 @@ A **live marked** legendary is never lost to ordinary destruction. Which outcome
 | This add-on removes blocks or detonates (Cannon LMB/RMB, any future effect) | **Stays in the world.** Same stack, same `gen`, placed at a safe spot outside the volume. No message. | `protectLegendariesIn` (`p008`) is called **before** the removal |
 | RMB drop suppression | Legendary item entities are **never** removed | `isLegendaryItemEntity` exemption (`ring`) |
 | Vanilla container break (player, TNT, creeper) | **Drops** as an item entity (vanilla spill) | none; the drop is then watched |
-| Item entity burnt (fire, lava), cactus, vanilla explosion, despawn | **Returned** to the last holder with `gen + 1`, plus a private `returned` message; queued in the owed list if the holder is offline | `p003` (deviation C-16) |
+| Fire, lava | **Stays in the world** (`minecraft:fire_resistant`) | none |
+| Cactus, vanilla explosion, despawn | **Returned** to `mark.owner` with `gen + 1`, plus `andrew.legendary.recovered`; queued in the owed list if offline | `p003` (deviation C-16) |
 | Void (below `heightRange.min`) | Returned, as above (Orbital §5) | `p003` |
 
 Invariants:
@@ -640,7 +641,7 @@ relates_to: ["L0-lgnd-ad13", "L0-magn", "L0-lgnd-r013", "L0-lgnd-ac21", "L0-lgnd
    - a chest or hopper minecart with any slot holding a legendary;
    - an armour stand or mob with a legendary in a hand slot.
    It takes the next candidate instead.
-4. **Holder blocks.** *Reduce v4: dormant.* `L0-magn-adhp` takes the hopper out of the pulled-block list, so the magnet turns no `HOLDER_TYPES` block into air (`L0-adr-ufnd`). The clause stays as the floor for any future change to that list. Turning a `HOLDER_TYPES` block into air is script-caused destruction. `protectLegendariesIn` runs first, in the same synchronous step (`r013`, tier 1). The legendary is then dropped next to the cell with the same id and gen, and is **not** pulled.
+4. **Holder blocks.** *Reduce v4: dormant.* the magnet pulls a hopper only when it is empty (`L0-magn-adhp`), so it turns no `HOLDER_TYPES` block with contents into air. The clause stays as the floor for any future change to that list. Turning a `HOLDER_TYPES` block into air is script-caused destruction. `protectLegendariesIn` runs first, in the same synchronous step (`r013`, tier 1). The legendary is then dropped next to the cell with the same id and gen, and is **not** pulled.
 5. **Players.** A player is pulled by iron in either hand. A legendary in the other hand rides along as part of the player. That is not "pulling the weapon", and death retention covers it (`ac22`).
 6. **Late drops.** A legendary dropped during the magnet within 12 blocks of the hover point is not iron, so it is not pulled beyond the limit either.
 7. **Release / stop / restart.** The magnet holds no legendary, so it never has to release, persist or restore one.

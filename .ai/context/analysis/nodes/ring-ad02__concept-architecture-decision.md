@@ -18,8 +18,8 @@ level: 2
 **Status:** proposed.
 
 **Context.**
-- `orbc` calls `onDetonate` at contact, and on flat ground all ~145 charges of an attack touch down in the same tick.
-- C-5a′ requires the budget to hold for "≈160 charges per player, several players at once". That means ~480 power-4 explosions that could fall due in one tick.
+- `orbc` calls `onDetonate` at contact, and on flat ground all 201 charges of an attack touch down in the same tick.
+- C-5a′ requires the budget to hold for "201 charges per player, several players at once". Real load: 3 × 201 = 603 explosions in one tick (63 at power 4, 120 at 2, 420 at 1).
 - `L0-orbc-r014` asks effects to keep `onDetonate` synchronous-safe and to move heavy work into their own bounded job.
 
 **Decision.**

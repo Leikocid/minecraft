@@ -14,7 +14,7 @@ level: 2
 ---
 **AC-ring-13 · TNT damage, including to the owner** (Orbital AC-13; `r004`; C-20) · **verify: bds**
 
-GIVEN two SimulatedPlayers in Survival with 20 HP and no armour: owner A stands 2 blocks from the ring-5 line, and B stands 2 blocks from the ring-15 line, plus one zombie on ring 10. WHEN A fires RMB, THEN:
+GIVEN two SimulatedPlayers in Survival with 20 HP and no armour: the owner fires from 9 blocks; A stands 5, B 6 and a zombie 5 blocks from the target. WHEN A fires RMB, THEN:
 - A, B and the zombie each lose health in the range a vanilla primed TNT gives at the same distance (reference: a `minecraft:tnt` control run in the same pad);
 - A's death message, if A died, attributes the blast;
 - a control run with A's position switched to another dimension gives no error, and the blasts still happen with no `source`.

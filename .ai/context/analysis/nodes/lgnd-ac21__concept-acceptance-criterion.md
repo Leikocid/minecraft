@@ -32,9 +32,9 @@ WHEN the magnet runs its full 60 s and releases
 THEN:
 - no legendary stack is ever within 6 blocks of the saucer's hover column;
 - the ground Scythe and the chest's Web Sword have not moved;
-- the hopper block is still in place and the Cannon is still inside it, untouched. A hopper is a container only and never a pulled block (`L0-magn-adhp`, `L0-adr-ufnd`); an iron ingot placed in the same hopper is extracted;
+- the hopper block is still in place and the Cannon is still inside it, untouched. A hopper holding anything is a container and never a pulled block (`decision-resolve-l0-lgnd-cx13`); an iron ingot placed in the same hopper is extracted;
 - the chest minecart and the armour stand were not selected;
 - the iron ingot in the chest was extracted;
 - the world holds exactly one live copy of each marked instance, and neither owed list changed.
 
-Negative control: the same scenario with `isLegendaryStack` stubbed to return `false` must fail the "never within 6 blocks" clause. (Reconciled at reduce v4: the earlier control, a hopper pull without `protectLegendariesIn`, has no code path to exercise once the hopper is never a block.)
+Negative control: the same scenario with `isLegendaryStack` stubbed to return `false` must fail the "never within 6 blocks" clause. (Reconciled at reduce v4: the earlier control, a hopper pull without `protectLegendariesIn`, has no code path to exercise once a hopper holding anything is never a block.)

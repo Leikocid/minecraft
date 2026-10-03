@@ -3,7 +3,7 @@ type: "concept-acceptance-criterion"
 node_id: "L0-orbc-ac04"
 source_channel: "rollout"
 analysis_version: 5
-title: "AC-4 · Spawn height is +30 in the Overworld and End and +10 in the Nether, with the ceiling clamped `[bds]`"
+title: "AC-4 · Spawn height is +60 in the Overworld and End and +10 in the Nether, with the ceiling clamped `[bds]`"
 aliases: ["L0-orbc-ac04"]
 is_a: ["acceptance-criterion"]
 part_of: ["L0-orbc"]
@@ -13,7 +13,7 @@ size_chars: 734
 tags: ["is_a:acceptance-criterion", "channel:bds", "orbital-ac-4", "relates_to:L0-orbc-r007"]
 level: 2
 ---
-# AC-4 · Spawn height is +30 in the Overworld and End and +10 in the Nether, with the ceiling clamped `[bds]`
+# AC-4 · Spawn height is +60 in the Overworld and End and +10 in the Nether, with the ceiling clamped `[bds]`
 
 **Links:** `part_of: ["L0-orbc"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-orbc-r007", "L0-orbc-cx03"]`
 

@@ -27,8 +27,8 @@ closed_by_ref: decision-resolve-l0
   - A custom item that looks like the vanilla Fishing Rod, with no fishing, no durability loss and no enchanting. Melee does empty-hand damage. It is in the Creative *Equipment* category, in search, and available through `/give`.
   - A shaped recipe: TNT on N/E/S/W and a Fishing Rod in the centre. One Survival craft per world, persisted, announced in RU/EN with the crafter's name.
   - The general legendary rules (death retention, free transfer, Void return with offline delivery, survival of container destruction) apply to **all** legendaries, not only the Cannon.
-  - Two attacks with a shared 30 s per-player cooldown. Targeting is limited to 10 blocks, and the target is locked at activation.
-  - Charges spawn at +30 (Overworld/End) or +10 (Nether), clamped to the ceiling. They fall through entities, detonate on first block contact or at once inside a solid block, and vanish in the Void.
+  - Two attacks with a shared 30 s per-player cooldown. Targeting is limited to 25 blocks (RMB: no nearer than 7), and the target is locked at activation.
+  - Charges spawn at +60 (Overworld/End) or +10 (Nether), clamped to the ceiling. They fall through entities, detonate on first block contact or at once inside a solid block, and vanish in the Void.
   - LMB column effect and RMB five-ring effect as summarised in the overview.
   - Action-bar HUD for the main or off hand: "Orbital Cannon — Ready / 27s".
   - All three dimensions.

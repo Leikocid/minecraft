@@ -31,4 +31,4 @@ This is the only UFO state that survives a restart (C-23, `L0-adr-ufom` §2).
 - `next_ms` is written only by `ufoc`, in `schedule.ts`.
 - Every event end path (pause, downed, stop, abort, restart) writes `next_ms = now() + PAUSE_MS`, where `PAUSE_MS` = 900 000 (`r001`).
 - Neither property holds anything about a phase, the centre or the target. That information lives in `ent2`, in memory only.
-- Writes go through the `DynamicPropertyStore` already used by `strf` in `src/main.ts`.
+- Writes go through `worldStore` (`src/ufo/env.ts:86`). `DynamicPropertyStore` is used only in `src/main.ts:85` for structures.

@@ -34,7 +34,7 @@ Built once at module load from `ItemTypes.getAll()` / `BlockTypes.getAll()`, fil
 - anvil, chipped_anvil, damaged_anvil;
 - cauldron (any fill or liquid; the block id is the same);
 - heavy_weighted_pressure_plate, the iron chain, lantern, soul_lantern.
-- **The hopper is deliberately absent** (`L0-magn-adhp`).
+- hopper, only when empty; one with anything in it is a container (`L0-magn-adhp`).
 
 ## IRON_ORE (class 5)
 iron_ore, deepslate_iron_ore.

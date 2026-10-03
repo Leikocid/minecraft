@@ -11,20 +11,20 @@ part_of: ["L0"]
 relates_to: ["L0"]
 priority: 580
 size_chars: 4850
-tags: ["is_a:component", "ufo", "stage6", "not-implemented", "relates_to:L0-sauc", "relates_to:L0-magn", "relates_to:L0-adr-ufom", "relates_to:L0-adr-ufpc", "relates_to:L0-adr-ufht", "relates_to:L0-xasm13", "relates_to:L0-xasm14", "relates_to:L0-xasm17", "relates_to:L0-xcx17", "relates_to:L0-xcx20", "see_also:ufomagnetspecv1ruen-part-1", "see_also:ufomagnetspecv1ruen-part-3", "see_also:ufomagnetspecv1ruen-part-4"]
+tags: ["is_a:component", "ufo", "stage6", "relates_to:L0-sauc", "relates_to:L0-magn", "relates_to:L0-adr-ufom", "relates_to:L0-adr-ufpc", "relates_to:L0-adr-ufht", "relates_to:L0-xasm13", "relates_to:L0-xasm14", "relates_to:L0-xasm17", "relates_to:L0-xcx17", "relates_to:L0-xcx20", "see_also:ufomagnetspecv1ruen-part-1", "see_also:ufomagnetspecv1ruen-part-3", "see_also:ufomagnetspecv1ruen-part-4"]
 ---
 # L0-ufoc · UFO event core (schedule, phases, commands, restart)
 
 **Links:** `part_of: ["L0"]` · `is_a: ["component"]` · `relates_to: ["L0-sauc", "L0-magn", "L0-adr-ufom", "L0-adr-ufpc", "L0-adr-ufht", "L0-xasm13", "L0-xasm14", "L0-xasm17", "L0-xcx17", "L0-xcx20"]`
 
-**State (2026-10-02):** not implemented. There is no `src/ufo/`. This run replaces the failed v4 node (`L0-xcx20`). It implements `L0-adr-ufom`, `L0-adr-ufpc` and `L0-adr-ufht` as given and does not re-derive them.
+**Shipped: UFOC-CORE-01-AA (aef4d54, merge 4f479af), `src/ufo/`.** It implements `L0-adr-ufom`, `L0-adr-ufpc` and `L0-adr-ufht` as given and does not re-derive them.
 
 ## Responsibility
 `ufoc` is the event's only clock and only state machine (UFO §2, §9, §10, §12):
 - **Schedule** (`r001`, `p001`). The next arrival is stored as epoch ms in `andrew:ufo_next_ms` (C-21). The first arrival comes a random 10–20 min after the first join (`L0-xasm14`). After every departure, shoot-down, `stop` or restart, the next one is set 15 min out. When an arrival falls due, the event waits for an Overworld player.
 - **Enable flag** `andrew:ufo_enabled` (default on, `r006`).
 - **Target and centre** (`r002`). The target is a random valid Overworld player. The centre is the block under their feet when the arrival starts, and it is frozen from then on.
-- **Hover height** (`r003`): `hoverY = min(centre.y + 40, ceiling − 4)`, where `ceiling = overworld.heightRange.max` (`L0-adr-ufht`).
+- **Hover height** (`r003`): `hoverY = min(centre.y + 40, ceiling − 15)`, where `ceiling = overworld.heightRange.max` (`L0-adr-ufht`).
 - **Phase machine** (`p002`, `r004`): arrival 400 ticks → magnet 1200 → release (instant) → departure 300 → pause; or `downed` after a shot. Every phase change is published as `onPhase(...)` to `sauc` and `magn`. Requests to switch the magnet off are latched (`adr-ufpc`).
 - **One shared interval** (C-5d, `ad02`). It ticks every game tick but does only a clock check once per 100 ticks while no event is live. With a saucer, the order within a tick is latch → phase → `saucerStep` → `magnetStep`.
 - **Restart cleanup** (C-23, `p003`, `L0-xasm17`). The sweep runs at `worldLoad` and again on `entityLoad`, keyed by event id. An event that was in flight is rescheduled for now + 15 min, detected through the in-flight marker (`ad03`, `cx01`).

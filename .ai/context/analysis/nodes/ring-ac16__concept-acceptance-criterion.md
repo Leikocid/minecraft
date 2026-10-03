@@ -14,7 +14,7 @@ level: 2
 ---
 **AC-ring-16 · RMB never destroys a legendary** (Orbital §5, §10; `r008`) · **verify: bds**
 
-GIVEN a live-marked Web Sword in a chest on ring 5, and a live-marked Scythe as an item entity on the ground 6 blocks outside ring 20. WHEN RMB is fired, THEN:
+GIVEN a live-marked Web Sword in a chest 3 blocks from the target, and a live-marked Scythe as an item entity on the ground 16 blocks from the target, 2 outside ring d28. WHEN RMB is fired, THEN:
 - both legendaries exist afterwards as item entities in the same dimension, outside the footprint ± 8, with the same `id` and `gen` (no `gen + 1`);
 - no "returned" log line appears, and `handedBack` is 0;
 - the `lgnd` `ac19` detector reports no unprotected container removal.

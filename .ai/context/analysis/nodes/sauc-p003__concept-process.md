@@ -17,14 +17,15 @@ level: 2
 
 **Links:** `part_of: ["L0-sauc"]` · `is_a: ["process"]` · `relates_to: ["L0-adr-ufoi", "L0-xcx15", "L0-orbc", "L0-sauc-r001"]`
 
-## The `orbc` change (additive, owned by this task)
+## The `orbc` change (additive, shipped in `27a2f01`)
 - `Outcome` gains `"intercepted"`.
 - `registerInterceptor(fn: (attack: Attack, charge: Charge, from: Vector3, to: Vector3, tick: number) => boolean): () => void`, backed by a `Set`.
 - In `advance()`:
   1. If `next.kind === "move"` and the set is non-empty, each interceptor sees `from = (x, charge.y, z)` and `to = (x, next.y, z)` before the teleport.
   2. If an interceptor returns `true`, `advance` removes the entity and returns `{outcome: "intercepted"}`. `detonate()` is not called.
   3. A `contact` step also offers the segment `charge.y → cellY + 1` to the interceptors before it detonates. This way a hull just above the ground still wins.
-  4. The interceptor sees the `Attack` (the ADR's `ownerId` plus `dimensionId`), so `sauc` can ignore charges outside the Overworld.
+  4. A Void step offers the stretch down to `minY` (`flight.ts:242`), before the charge is removed as voided.
+  5. The interceptor sees the `Attack` (the ADR's `ownerId` plus `dimensionId`), so `sauc` can ignore charges outside the Overworld.
 - `finish()` notifies `observeChargeEnds` as usual. Existing observers ignore unknown outcomes. Ring and penetrator bookkeeping that counts ends must treat `intercepted` as "no effect", like `voided`.
 - An interceptor that throws is logged and treated as `false`. A broken saucer must never break the Cannon.
 

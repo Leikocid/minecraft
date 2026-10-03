@@ -29,4 +29,4 @@ level: 2
 
 **Players.** A pulled player who carries a legendary is still pulled. The player is not "the legendary", and `lgnd` retention covers their death.
 
-**Owned by `lgnd`, not restated here:** the predicate itself (`L0-lgnd-ad13`), the never-pulled rule including holders and players (`L0-lgnd-r016`), the watching of moved holders (`L0-lgnd-as15`), and death retention (`L0-lgnd-ac22`). The call sites above implement `L0-lgnd-r016` §2, §3, §5 and §6. Its §4 (holder blocks) is dormant, because the hopper is never a pulled block (`L0-adr-ufnd`). Where the two read differently, `lgnd` wins.
+**Owned by `lgnd`, not restated here:** the predicate itself (`L0-lgnd-ad13`), the never-pulled rule including holders and players (`L0-lgnd-r016`), the watching of moved holders (`L0-lgnd-as15`), and death retention (`L0-lgnd-ac22`). The call sites above implement `L0-lgnd-r016` §2, §3, §5 and §6. Its §4 (holder blocks) is dormant, because the only holder block the magnet turns into air is an empty hopper (`L0-magn-adhp`). Where the two read differently, `lgnd` wins.

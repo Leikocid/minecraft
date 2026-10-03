@@ -16,7 +16,7 @@ level: 2
 
 **Containers in scope:**
 - chest, double chest, trapped chest, barrel;
-- **hopper** (`L0-magn-adhp`);
+- **hopper** holding anything; an empty one is a built block (`L0-magn-adhp`);
 - furnace, blast furnace, smoker;
 - dispenser, dropper, brewing stand;
 - every placed shulker box.

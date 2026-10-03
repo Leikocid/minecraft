@@ -28,12 +28,13 @@ For each live charge:
 2. Set `ny = y − FALL_SPEED` (`as02`).
 3. **Sweep.** Visit every block cell with Y from `floor(y)−1` down to `floor(ny)` in column (x, z). The first cell where `isContact` holds is the **contact cell**.
    - Entities are never consulted, so charges pass through players and mobs (AC-6).
-4. On contact:
+4. Each registered interceptor sees the step's segment (`from`, `to`); `true` ends the charge `intercepted`, no effect (`L0-adr-ufoi`).
+5. On contact:
    - Detonation point = the contact block's location. That is the block hit, not the air above it.
    - Call `onDetonate(dim, point, ownerId, mode)` (`r014`), then remove the entity.
-5. If there is no contact and `ny < heightRange.min`, the charge is **voided** (`r009`). Remove it with no effect.
-6. If there is no contact and the next cell is not loaded (`dim.getBlock` returns undefined or throws `LocationInUnloadedChunkError`), treat the charge as **lost**.
-7. Otherwise `entity.teleport({x, y: ny, z})` and store `y = ny`.
+6. If there is no contact and `ny < heightRange.min`, the charge is **voided** (`r009`). Remove it with no effect.
+7. If there is no contact and the next cell is not loaded (`dim.getBlock` returns undefined or throws `LocationInUnloadedChunkError`), treat the charge as **lost**.
+8. Otherwise `entity.teleport({x, y: ny, z})` and store `y = ny`.
 
 ## Termination
 - The job ends when every attack has no charges. There is no idle loop (C-5a′).

@@ -25,7 +25,7 @@ resolves: ["L0-sauc-cx01"]
 # ADR-L0-ufht · Saucer flight height cap
 
 **Context (`L0-sauc-cx01`).** This spans three nodes:
-- `ufoc` caps `hoverY` at ceiling − 4.
+- `ufoc` caps `hoverY` at ceiling − 15.
 - `sauc` flies arrival and departure at `hoverY + 10`.
 - Shipped `orbc` spawns charges at ≤ `heightRange.max − 1`.
 
@@ -33,7 +33,7 @@ With a centre at Y ≥ 276, the arrival and departure legs run above the build l
 
 **Decision.** This is option (a) of `sauc-cx01`.
 - Arrival and departure fly at `min(hoverY + 10, ceiling − 4)`.
-- `hoverY` itself stays `ufoc`'s value (centre + 40, capped at ceiling − 4).
+- `hoverY` itself stays `ufoc`'s value (centre + 40, capped at ceiling − 15).
 - `sauc-r002` was amended in place.
 - `orbc` is unchanged: option (c) would break the additive-only stance of `L0-adr-ufoi`.
 

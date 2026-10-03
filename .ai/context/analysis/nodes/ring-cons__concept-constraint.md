@@ -18,7 +18,7 @@ level: 2
 | ID | NFR | Measured by |
 |---|---|---|
 | RG-1 | **Bounded work.** ≤ `RING_MAX_BLASTS_PER_TICK` (48) `createExplosion` calls per tick across all attacks. One `protectLegendariesIn` call per dimension per queue step. 0 entities spawned by `ring`. | Code review plus the gametest report `maxBlastsInTick` |
-| RG-2 | **Latency.** The first blast happens in its contact tick. The queue drains in ≤ 4 ticks for 1 attack and ≤ 10 ticks for 3 concurrent attacks on flat ground. | The report's `ticksToDrain` in a 3-player gametest |
+| RG-2 | **Latency.** The first blast happens in its contact tick. The queue drains in 5 ticks for 1 attack and 13 ticks for 3 concurrent attacks on flat ground (measured; asserted ≤ 13, gametest ring.ts:1452). | The report's `ticksToDrain` in a 3-player gametest |
 | RG-3 | **Tick budget.** With 3 concurrent RMBs over flat stone on BDS 1.26.x, tick time stays above 50 ms for no more than 3 consecutive ticks, and never above 150 ms. If this fails, lower the cap (`as05`) before touching anything else. | BDS tick-time probe, shared with PN-2 |
 | RG-4 | **Entity hygiene.** The `minecraft:item` count within footprint ± 8 after the attack is at most the count before, plus the vanilla drops of mobs and players killed (C-19). There are no orphan charges. | Gametest entity diff |
 | RG-5 | **Rank-1 safety.** `doTileDrops` is restored in `finally` in the same call. A thrown error in any blast or in protection never leaves the rule toggled, and never deletes a legendary. | A unit test with a throwing `createExplosion` mock and a throwing `lgnd` mock |

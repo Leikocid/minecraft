@@ -36,7 +36,7 @@ relates_to: ["L0-lgnd-ent2", "L0-lgnd-ent4", "L0-lgnd-r005", "L0-lgnd-r011", "L0
 4. **Re-issue**, in one synchronous turn:
    1. ledger `gen := gen + 1`;
    2. target = `holder ?? owner`;
-   3. if the target is online: `addItem` the stack with the same `id`, the new `gen` and `holder = target`, then send `<textPrefix>.returned`;
+   3. if the target is online: `addItem` the stack with the same `id`, the new `gen` and `holder = target`, then send `andrew.legendary.recovered`;
    4. otherwise append `{mark, reason, holderName}` to `owed[target]`.
 5. **Redeem owed** on `playerSpawn`: each entry is granted once, with the token rules of `p002`.
 6. **Stale survivor.** A copy that a hopper, allay or hopper-minecart took (mis-classified) now has an old `gen`. It cannot cast and is deleted on its first player-inventory event (`r005`). This closes the as-built duplication window (`cx09` item 2).
