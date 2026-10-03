@@ -26,7 +26,7 @@
 //      instead and the command is written to its stdin.
 //
 //   npm run bds:gametest
-//   npm run bds:gametest -- --no-build --timeout 1800
+//   npm run bds:gametest -- --no-build --timeout 5400
 //   npm run bds:gametest -- --keep-up      # leave the server running to inspect
 //   npm run bds:gametest -- --only andrew:probe_fire_resistance_noon   # one test, for iteration
 
@@ -379,8 +379,9 @@ const env = {
 // ---------------------------------------------------------------- arguments
 
 function parseArgs(argv) {
-  // The zombie-villager cure alone waits up to 5.5 minutes of game time.
-  const opts = { build: true, timeoutSec: 1800, keepUp: false, only: [] };
+  // The zombie-villager cure alone waits up to 5.5 minutes of game time, and the
+  // whole suite runs 32–48 minutes under Rosetta, past a 30-minute deadline.
+  const opts = { build: true, timeoutSec: 5400, keepUp: false, only: [] };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === '--no-build') opts.build = false;
