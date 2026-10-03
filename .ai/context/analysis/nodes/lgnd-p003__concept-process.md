@@ -2,7 +2,7 @@
 type: "concept-process"
 node_id: "L0-lgnd-p003"
 source_channel: "rollout"
-analysis_version: 5
+analysis_version: 6
 title: "P-lgnd-003: Loss return (tier 3 of the destruction policy) — v3 target"
 aliases: ["L0-lgnd-p003"]
 is_a: ["process"]

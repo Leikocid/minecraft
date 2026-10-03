@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-lgnd-as01"
 source_channel: "rollout"
-analysis_version: 5
+analysis_version: 6
 aliases: ["L0-lgnd-as01"]
 is_a: ["assumption"]
 part_of: ["L0-lgnd"]

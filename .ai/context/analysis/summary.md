@@ -1,13 +1,13 @@
 ---
 title: Project Summary
 type: analysis
-generated_at: "2026-10-02T19:14:06.012Z"
+generated_at: "2026-10-03T14:58:23.886Z"
 source_channel: rollout
 node_id: rollout-summary
 aliases: ["rollout-summary","summary"]
 is_a: ["rollout","summary"]
 relates_to: ["L0"]
-priority: 580
+priority: 600
 ---
 
 # Project Summary
@@ -19,127 +19,122 @@ priority: 580
 _node: L0_
 
 ---
-title: "Project Overview: «Andrew» Minecraft Bedrock add-on (v5: the UFO Magnet event fully analysed)"
+title: "Project Overview: «Andrew» Minecraft Bedrock add-on (v6 reduce: the Dragon Katana)"
 aliases: ["L0", "Project Overview"]
 is_a: ["system-overview"]
 part_of: []
-relates_to: ["L0-infr", "L0-pick", "L0-lgnd", "L0-webs", "L0-scyt", "L0-orbc", "L0-pntr", "L0-ring", "L0-strf", "L0-loot", "L0-wind", "L0-airs", "L0-wrdn", "L0-bast", "L0-ufoc", "L0-sauc", "L0-magn", "L0-adr-ufoi", "L0-adr-ufom", "L0-adr-ufpc", "L0-adr-ufnd", "L0-adr-ufht", "L0-adr-ufrs", "L0-adr-ufsd", "L0-ufoc-cx01", "L0-xcx15", "L0-xcx16", "L0-xcx17", "L0-xcx19", "L0-xcx20", "L0-xasm16", "L0-xasm17"]
-requires: ["L0-adr-ufpc", "L0-adr-ufom"]
-see_also: ["ufomagnetspecv1ruen-part-1", "ufomagnetspecv1ruen-part-2", "ufomagnetspecv1ruen-part-3", "ufomagnetspecv1ruen-part-4", "orbitalcannonspecv1ruen-part-1", "orbitalcannonspecv1ruen-part-3", "constraints"]
-supersedes: ["L0@v4"]
+relates_to: ["L0-infr", "L0-pick", "L0-lgnd", "L0-webs", "L0-scyt", "L0-orbc", "L0-pntr", "L0-ring", "L0-strf", "L0-loot", "L0-wind", "L0-airs", "L0-wrdn", "L0-bast", "L0-ufoc", "L0-sauc", "L0-magn", "L0-katn", "L0-adr-ktob", "L0-adr-ktfl", "L0-adr-ktgr", "L0-adr-hold", "L0-xcx11", "L0-xcx21", "L0-lgnd-cx14", "L0-katn-cx01", "L0-xq6", "L0-xasm18", "L0-xasm19", "L0-xasm20", "L0-xasm21", "L0-xasm22", "L0-lgnd-ad14", "L0-lgnd-r017", "L0-lgnd-ac23", "L0-lgnd-ac24", "L0-katn-p001", "L0-katn-p002"]
+requires: ["L0-lgnd"]
+see_also: ["dragonkatanaspecv1ruen-part-1", "dragonkatanaspecv1ruen-part-2", "dragonkatanaspecv1ruen-part-3", "webswordspecv1ruen-part-1", "scytheofcalamityspecv1ruen-part-1", "orbitalcannonspecv1ruen-part-1", "ufomagnetspecv1ruen-part-1", "constraints"]
+governs_files: ["src/legendary/", "src/websword/", "src/scythe/", "src/orbital/", "src/ufo/", "src/structures/", "src/katana/"]
+supersedes: ["L0@v5"]
 ---
-# Project Overview: «Andrew» Minecraft Bedrock add-on (v5)
+# Project Overview: «Andrew» Minecraft Bedrock add-on (v6)
 
 **What it is.**
 - A Minecraft **Bedrock** add-on: one behavior pack and one resource pack, namespace `andrew:`, shipped as `dist/andrew.mcaddon`. The as-built version is **1.4.4**.
-- It uses only the stable Script API: `@minecraft/server` 2.10.0 on BDS 1.26.51.1.
+- It uses only the stable Script API: `@minecraft/server` 2.10.0 on BDS 1.26.51.1. No Experiments, Beta or Preview.
 - It is played on an iPad and verified on a Mac mini.
   - The `bds` channel is BDS in Docker: production 19132, QA 19134, checks 19136.
   - The iPad is the only proof of what renders (`ipad` channel).
 
-| Family | Members | State (2026-10-02) |
+| Family | Members | State (2026-10-03) |
 |---|---|---|
-| Legendary weapons | Web Sword, Scythe of Calamity, Orbital Cannon | All shipped. The Cannon was tuned in v1.4.1–1.4.4. The v3 Orbital nodes are stale (`xcx16`). |
+| Legendary weapons | Web Sword, Scythe of Calamity, Orbital Cannon, **Dragon Katana (v6)** | The first three are shipped. **The Katana is analysed and ready for Stage 7 tasks; it is not built.** The v3 Orbital nodes are still stale (`xcx16`). |
 | World structures | Windmill, Warden City, Bastion, Airship | Shipped in v1.2.0. A scan-code reconcile is owed (`xcx12`). |
-| **World events** | **UFO Magnet** | **All four nodes are now analysed** (`lgnd` v4 carried forward; `ufoc`, `sauc` and `magn` analysed in v5). Nothing is built yet: as read during reduce v5 there was no `src/ufo/`, only the probe branch `probe/ufo-magnet`. |
+| World events | UFO Magnet (`ufoc`, `sauc`, `magn`) | Built and merged. The magnet-on cost of 36–39 ms is accepted as measured. |
+| Probe / infra | Miner's Pickaxe, Stage 0 | Closed. |
 
-## The UFO Magnet as one system
+## v6: how the two children fit together
+v6 analysed two children: the new **`katn`** (the Katana) and a re-run of **`lgnd`** (the framework). The result is one thin seam. The Katana is **data plus one ability module** on top of the framework as shipped.
 
 ```
-lgnd (carried, v4) ── isLegendaryStack (ad13) · never-pulled r016 · death retention ac22
-   ▲ predicate only; magn cites by id
-   │
-ufoc  the only clock and only state machine
-  │ next_ms (epoch ms; 0 = in flight, adr-ufrs) + ufo_enabled  ← the only durable state (C-23)
-  │ first arrival 10–20 min after first join; +15 min after any end or a restart; waits for an Overworld player
-  │ centre frozen at arrival; hoverY = min(centre+40, ceiling−4)                         (adr-ufht)
-  │ ONE runInterval: latch → advance → saucerStep → magnetStep → downed-end              (adr-ufpc, adr-ufsd)
-  │ /andrew:ufo come|stop|enable|disable · arrival notice ≤150 blocks RU/EN · env seam (xasm13)
-  │ restart sweep at worldLoad + entityLoad, keyed by eventId                            (xasm17)
-  │
-  ├─ onPhase / saucerStep ─→ sauc  andrew:ufo_saucer (snowball runtime id, 0×0 box, damage_sensor none, family andrew_ufo)
-  │                                path 90 → hover → 90 opposite, legs at min(hoverY+10, ceiling−4); beam = bone + property
-  │                                registerInterceptor(attack,…) on orbc flight → outcome "intercepted"   (adr-ufoi)
-  │     ◄── requestMagnetOff("shot") [latched] + reportShotDown ──┘  fall ≤ 60 ticks, harmless blast, 8♦ + totem, broadcast
-  │
-  └─ onPhase / magnetStep ─→ magn  one zone scan at magnet-on (r 50, loaded chunks only) → ≤10 elements, nearest first
-                                    containers give iron stacks; hopper is never a block (adr-ufnd); block → air + 1 item
-                                    players: applyKnockback ≤0.6/tick to −6; elements: ring r 5 at −3, away from players
-                                    reads saucerPosition() inside magnetStep; one-tick simultaneous release (magn-prel)
+                 lgnd (as built 1.4.4 + def #4)                         katn (new, src/katana/)
+ craft ─ recipe JSON ─► token ─► craftgate (lgnd-p001, ac23) ─► marked Katana, dk_crafted
+ Use ─ itemUse / blockTap ─► resolveActivation (hands.ts:35) ─► def === DRAGON_KATANA ?
+                                                                   │ trace (adr-ktob §1–2)
+                                                                   │ safe cell (adr-ktob §3, katn-r004)
+                                                                   │ player.teleport, same dim, no blocks
+                         startCooldown("dragon_katana") ◄──────────┤
+                         HUD via def.hudKeys (hud.ts:45) ◄─ reads ─┤
+                                                                   │ fall flag (adr-ktfl, katn-local interval)
+                                                                   └ petal trail (visual only)
+ death / Void / hazard / Orbital ─► retention · recovery · protectLegendariesIn — def-driven, no Katana code (lgnd-ad14)
 ```
 
-**How the children fit together.**
-- **`ufoc` publishes exactly the contract `L0-adr-ufpc` fixed at v4.** The re-run consumes it as written: `onPhase`, `saucerStep`, `magnetStep`, the latched `requestMagnetOff`, an idempotent `reportShotDown`, and `saucerPosition()` read only inside `magnetStep`. No child needed a different signal, and `xcx20` (ufoc missing) is satisfied by this run.
-- **The shoot-down is the one three-way flow.** Read in tick order across `sauc-p002`, `ufoc-p002` and `magn-prel`, it showed two seams no single child could see:
-  - the release keyed on the current phase, which a shot has already moved to `downed`;
-  - the end of `downed` came before the saucer's tick-60 step.
+**The cross-component contract.** It holds in both directions and is verified from both sides.
+- **The framework gives the Katana:** `LEGENDARIES` def #4, `resolveActivation`, `startCooldown`/`isReady`, the HUD through `hudKeys`, and every protection path. The framework adds no new hook, no new HUD state and no `mode` argument. The resolver's Use priority is all the Katana needs (`L0-lgnd-ad12` §2).
+- **The Katana gives the framework:** a *wielder teleport*. It moves only the player, in the player's own dimension. It edits no block, spawns no entity and raises no inventory or `DropItem` event. So it is **invisible to recovery** (`L0-lgnd-r017`) and never calls `protectLegendariesIn`. The ability side states the same guarantee in `L0-katn-r002`.
+- **Soft seams settled by assumption, with no code in the other nodes:**
+  - The magnet never pulls the Katana. This is automatic through the type-based `isLegendaryStack`, and `L0-lgnd-ac23` adds the Katana stack to the UFO "never pulled" test.
+  - The Katana may leave a Web Sword trap (cobweb is passable to the ray) and the magnet's hold (`L0-xasm21`).
 
-  `L0-adr-ufsd` fixes both and reconciles `ufoc-p002`/`ent2` in place.
-- **The restart path is one chain.**
-  - `ufoc-p003` removes everything tagged `andrew:ufo` or in the `andrew_ufo` family whose `andrew:ufo_event` is not live (`sauc-ent1` stamps it).
-  - It strips `andrew:ufo_iron` from held entities. This is `magn`'s cleanup hook, and `magn` owns no subscription for it.
-  - It rewrites the in-flight marker `next_ms = 0` to now + 15 min (`L0-adr-ufrs`, which resolves `ufoc-cx01`).
-- **`lgnd` answers first.** `magn-rleg` calls `isLegendaryStack` at every call site. For the rules it cites `lgnd-ad13`, `lgnd-r016`, `lgnd-as15` and `lgnd-ac22` by id, and states "`lgnd` wins" where they differ.
-  - Its holder check reads hand **and** armour slots, while `lgnd-r016` §3 names hand slots only. That is a harmless superset, because legendaries are not wearable.
-- **`sauc` owns the only change to shipped `orbc`.** The interceptor is additive, and its gate is the full Orbital suite unchanged, plus the whole suite (`sauc-ac04`).
-- **One budget.** `L0-xasm16` (≤ 2 ms mean per active tick) is shared by `saucerStep` and `magnetStep`. `ufoc`'s idle cost is one counter per tick plus one property read per 100 ticks (`ufoc-ac08`). No `runJob` is used and there is no second interval (C-5d).
+## Invariant check ("`lgnd` answers first")
+**It holds after reconciliation.** `katn` cites `lgnd-p001`/`p002`/`p003`/`p004`/`p005`/`p008` by id and needs no framework change. Five places disagreed between the two children of this run. The reduce reconciled them in place rather than filing contradictions:
 
-## AC routing (UFO 1–18): checked, it holds
+| Disagreement | Settled to | Why |
+|---|---|---|
+| Katana HUD cooldown key: shared `andrew.legendary.cooldown` (`katn-ent1`, `r008`) vs `andrew.katana.hud_cooldown` (`lgnd-ad14`) | `andrew.katana.hud_cooldown`, `%s — %s s` | `hudKeys` takes both keys (`registry.ts:34`); the Orbital precedent; `lgnd` owns the key names |
+| Teleport call with `dimension: dim` (`katn-p001` step 8) vs without it (`lgnd-r017` §3) | without | same dimension by construction; one fewer argument to get wrong |
+| T16 restore "gen + 1" (`katn-ac07`) vs "same id and gen" (`lgnd-ac24`) | same gen | `retention.ts` restore does not bump the gen (as read during reduce) |
+| T18 "last owner" (`katn-ac07`) vs `mark.owner` until `xcx11` (`lgnd-ac24`) | `mark.owner` | the holder change is not built |
+| T01–T03 and T16–T18 asserted in both `katn-ac01`/`ac07` and `lgnd-ac23`/`ac24` | `lgnd` owns the assertions; `katn-ac01` keeps only the recipe → token check; `katn-ac07` points at `lgnd-ac24` | otherwise each test becomes two criteria |
 
-| UFO AC | Owner | `bds` | `ipad` (separate, reopened after every epic merge) |
-|---|---|---|---|
-| 1, 2 (timing), 3, 17, 18 | `ufoc` | `ac01`–`ac06`, `ac08`: GameTest on the scaled clock; `ac04` keeps real durations. Restart cases run as `bds-check` on 19136 (`ac03`, `ac05`) | `ac07` (the RU notice in chat) |
-| 2 (path and look), 15, 16 | `sauc` | `ac01`–`ac05` | `ac06` (DoD visuals) |
-| 4–12, 14 | `magn` | `a04`–`a14`, `atps` | `aipd`: smooth lift, visible cloud, visible fall. This satisfies `xcx19`. |
-| 13 | `lgnd-ac21` (rule), `magn-a13` (call site) | `bds` + a `build` unit test | — |
+One more correction does not involve `lgnd`. `katn-p002` and `L0-adr-ktfl` said the fall watcher would join "the add-on's shared runInterval". As read during reduce at v6, there is no pack-wide tick hub, so the watcher is a **`katn`-local, lazily created interval**. That follows the Orbital pattern (`penetrator.ts:615`), and it is not a framework hook.
 
-The restart and real-time ACs are automated under the reading proposed in `xcx17`, which is still awaiting operator acceptance.
+## Contradictions surfaced and how they ended
+| Id | Issue | Outcome |
+|---|---|---|
+| `L0-katn-cx01` | `adr-ktob` §3 let a lava cell count as "fits" | **Resolved:** `adr-ktob` §3 amended: *fits* = column ray clear (`katn-ad01`); *safe* = fits and no lava or fire (`katn-as03`) |
+| `L0-xcx21` | T17 "survives" vs the shipped return under C-16 | **Resolved** by `L0-adr-ktgr` §1 |
+| `L0-lgnd-cx14` | armour stand in the Void loses its legendary | **Resolved** as a documented C-16 deviation for all four weapons (`L0-adr-ktgr` §3) |
 
-## Decided at this reduce (v5)
-- **`L0-adr-ufrs`:** the in-flight marker is `next_ms = 0`. It amends `L0-adr-ufom` §4 and keeps C-23 literal. It resolves `ufoc-cx01` and accepts `ufoc-ad03`.
-- **`L0-adr-ufsd`:** the shoot-down handshake. The release keys on `magnetOn`, and `downed` ends after `saucerStep` with a completion guarantee to `sauc`. New proof obligations go onto `sauc-ac03`.
+The operator confirms all of these defaults, plus `xasm18`/`xasm21` and the iPad aim model, through **`L0-xq6`**. It does **not** block the build.
 
-## Open at L0 after v5
-- **Satisfied by this run; formal closure is up to the operator's resolve:**
-  - `xcx20` (`ufoc` re-run done);
-  - `xcx19` (`magn-aipd`).
-- **Still open:**
-  - `xcx15`: the interceptor is designed, not built;
-  - `xcx16`: the Orbital v1.4.4 reconcile;
-  - `xcx17`: the restart and real-time automation reading;
-  - `lgnd-cx09`/`cx11`/`cx12`, carried with `lgnd`;
-  - carried: `xcx3`, `xcx5`–`xcx8`, `xcx12`–`xcx14`.
-- **Autopilot defaults the operator may overturn:**
-  - `adr-ufnd` (hopper / dependant pops);
-  - `magn-aslh` (legendary holders are skipped);
-  - `adr-ufrs` (marker encoding; this one is internal only);
-  - `xcx17`.
+## AC routing (Katana T01–T18), final
+| T | Criterion | Channel |
+|---|---|---|
+| T01–T03 gate, flag, restart, `/give`, broadcast | `L0-lgnd-ac23` | `bds` + `build` |
+| T01 recipe → token | `L0-katn-ac01` | `bds` + `build` |
+| T04, T14, T15 | `L0-katn-ac02` | `bds` |
+| T05–T10 | `L0-katn-ac03`, `ac04` | `bds` |
+| T11, T12 | `L0-katn-ac05` | `bds` |
+| T13 | `L0-katn-ac06` (counts) + `ac09` (look) | `bds` + `ipad` |
+| T16–T18, teleport trips no recovery, same dimension | `L0-lgnd-ac24` | `bds` |
+| Engine probes (fall reset, ray flags, column ray, unloaded chunk, particle) | `L0-katn-ac08` | `bds`, **before** any build task |
+| Icon, Creative, HUD look, trail, aim feel | `L0-katn-ac09` | `ipad`, manual: **the orchestrator must not auto-close it** |
 
-## Stage 6 order (unchanged)
-1. `lgnd` v4 (`isLegendaryStack` and the `ufo:legendary_*` GameTests).
-2. `ufoc` with a stub saucer; no longer blocked.
-3. `sauc` with the `orbc` interceptor, the full Orbital re-run, and the `adr-ufsd` assertions.
-4. `magn`.
+## Still open at L0 after v6
+- **Re-asserted, not new:** `L0-xcx11` / `L0-adr-hold` / `L0-xq3`: Void return to the last holder. The Katana is the fourth spec asking for it. T18 is tested against `mark.owner`.
+- **Probe-gated proposals:** `L0-adr-ktob`, `L0-adr-ktfl` and `L0-katn-ad01` stay `proposed` until `L0-katn-ac08` records the engine facts. A failed probe supersedes the matching ADR before the build tasks. A superseded `adr-ktfl` also rewords C-25.
+- **Carried, not touched in v6:** `xcx15`, `xcx16`, `xcx17`, `xcx19`, `xcx20`; `lgnd-cx09`/`cx11`/`cx12`; `xcx3`, `xcx5`–`xcx8`, `xcx12`–`xcx14`.
 
-After each merge, run the full suite, then reopen the auto-closed `ipad` criteria.
+## Stage 7 order
+1. **Probe** (`katn-ac08`) on the checks instance (19136).
+2. **`lgnd` v6:** def #4, the uniqueness-test extension, `dk` key asserts, and the Katana instances of the framework tests (`lgnd-ac23`, `ac24`). This lands together with step 3.
+3. **`katn`:** item, token, recipe, RP texture and lang (both HUD keys).
+4. **`katn`:** trace, safe cell and teleport (`plan.ts`, pure, with node tests).
+5. **`katn`:** fall flag and trail.
+
+Each merge needs a green **full** suite on the task branch. After each epic merge, reopen `katn-ac09`.
 
 
 ## Statistics
 
-- **Total artifacts:** 1040
-- **concept-aggregate:** 76 (195 KB)
-- **concept-atomic:** 747 (680 KB)
-- **concept-special:** 60 (85 KB)
-- **raw:** 27 (107 KB)
-- **decision:** 91 (60 KB)
-- **other:** 39 (706 KB)
+- **Total artifacts:** 1099
+- **concept-aggregate:** 79 (203 KB)
+- **concept-atomic:** 793 (738 KB)
+- **concept-special:** 63 (91 KB)
+- **raw:** 30 (120 KB)
+- **decision:** 95 (60 KB)
+- **other:** 39 (696 KB)
 
 ### By level
 
 - L0: 14 artifacts
-- L1: 61 artifacts
-- L2: 789 artifacts
+- L1: 72 artifacts
+- L2: 830 artifacts
 - L3: 6 artifacts
 
 
-_Analysis version: 5_
+_Analysis version: 6_

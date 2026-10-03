@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-lgnd-ad03"
 source_channel: "rollout"
-analysis_version: 5
+analysis_version: 6
 title: "AD-lgnd-03: A transient loss watcher that exists only while marked item entities exist"
 aliases: ["L0-lgnd-ad03"]
 is_a: ["architecture-decision"]

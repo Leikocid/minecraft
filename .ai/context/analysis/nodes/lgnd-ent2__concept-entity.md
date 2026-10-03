@@ -2,7 +2,7 @@
 type: "concept-entity"
 node_id: "L0-lgnd-ent2"
 source_channel: "rollout"
-analysis_version: 5
+analysis_version: 6
 title: "LegendaryInstanceMark"
 aliases: ["L0-lgnd-ent2"]
 is_a: ["entity"]

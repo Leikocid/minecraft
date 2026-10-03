@@ -1,13 +1,13 @@
 ---
 title: Risks
 type: analysis
-generated_at: "2026-10-02T19:14:07.420Z"
+generated_at: "2026-10-03T14:58:23.893Z"
 source_channel: rollout
 node_id: rollout-risks
 aliases: ["rollout-risks","risks"]
 is_a: ["rollout","risks"]
-relates_to: ["L0-lgnd-cx02","L0-lgnd-cx03","L0-lgnd-cx04","L0-lgnd-cx05","L0-lgnd-cx06","L0-scyt-cx01","L0-scyt-cx02","L0-ufoc-cx01","L0-webs-cx01"]
-priority: 580
+relates_to: ["L0-katn-cx01","L0-lgnd-cx02","L0-lgnd-cx03","L0-lgnd-cx04","L0-lgnd-cx05","L0-lgnd-cx06","L0-lgnd-cx14","L0-xcx21"]
+priority: 600
 ---
 
 # Risks
@@ -15,6 +15,37 @@ priority: 580
 > Автогенерация из Knowledge Vault. Ручное редактирование — установи `status: manual` в frontmatter.
 
 ## _other
+
+### CX-katn-01 · Fit vs. safe (L0-katn-cx01)
+
+---
+title: "CX-katn-01 · L0-adr-ktob counts a lava cell as 'player fits'; Katana §6 requires a safe position"
+is_a: ["contradiction"]
+part_of: ["L0-katn"]
+relates_to: ["L0-adr-ktob", "L0-katn-as03", "L0-katn-ad01", "L0-katn-r004"]
+see_also: ["dragonkatanaspecv1ruen-part-2"]
+---
+# CX-katn-01 · Fit vs. safe
+
+**Source A.** Katana §6 is titled "Safe destination position" and asks for "the nearest safe place where the player model fits". §5 says water and lava are not solid **for the trace**.
+
+**Source B.** `L0-adr-ktob` §3: "Player fits means: the feet cell and the head cell are each **air, liquid** or passable." It carries the trace's liquid rule over to the destination.
+
+**Disagreement.** Under B, a player who aims at the far bank of a lava lake can be placed in the lava, if the trace endpoint falls over it. That is a fitting cell but not a safe one. The spec only exempts liquids from blocking the *trace*.
+
+**Proposed resolution (not self-applied at L0).**
+- `katn` applies `L0-katn-as03`: lava and fire cells are unsafe for landing, and water stays allowed. It measures the fit with `L0-katn-ad01`.
+- The reduce should amend `L0-adr-ktob` §3 to read "fits = column ray clear; safe = fits and no lava or fire", or mark §3 as refined by `L0-katn-ad01`.
+
+Severity: medium. It is a player-death path on a legal use, but the fix is local to `katn`.
+
+**Resolved at reduce v6.** `L0-adr-ktob` §3 is amended in place: *fits* = the `L0-katn-ad01` column ray is clear; *safe* = fits and neither cell is lava, flowing lava, fire or soul fire (`L0-katn-as03`). Water stays allowed. The trace's liquid rule (§1) is unchanged.
+
+
+
+
+
+
 
 ### CX-lgnd-02 · Loss return can leave a stale but still melee-usable copy (hopper/allay pickup) (L0-lgnd-cx02)
 
@@ -146,99 +177,65 @@ relates_to: ["L0-lgnd-ad03", "L0-lgnd-p003", "L0-lgnd-ac12"]
 
 
 
-### CX-scyt-01 · Scythe sub-scopes have children but no component nodes, and targeting has no nodes at all (L0-scyt-cx01)
-
-# CX-scyt-01 · Scythe sub-scopes have children but no component nodes, and targeting has no nodes at all
-
-**Links:** `part_of: ["L0-scyt"]` · `is_a: ["contradiction"]` · `relates_to: ["L0", "L0-sprj-cx03", "L0-sitm", "L0-sprj"]` · **Target:** `L0` · **Category:** scope overlap and graph hygiene · **Severity:** medium · **Status:** open.
-
-**Checked, not assumed** (`kv_list node_prefix "L0-s"`, `ls nodes/`, 2026-09-24):
-- `L0-sitm-*` (3 nodes) and `L0-sprj-*` (32 nodes) are live, and each declares `part_of: L0-sitm` / `L0-sprj`. **Neither** `sitm__concept-component` nor `sprj__concept-component` exists.
-- `L0-sprj` children cite `L0-sprj-p001…p004`, `r001…r004`, `ent1…ent3`, `ac01…ac04`. None of these are live.
-- `L0-stgt` / `L0-sctg` (targeting) have **no** live artifacts. `L0-sprj` depends on its `selectTarget`.
-- The L0 decomposition plan lists only `scyt` for the whole Scythe. So `sitm`/`sprj` overlap with this node's scope, under a different parent.
-
-**Interim, done here:** `L0-scyt` acts as the umbrella. It owns targeting (`p001`, `r001`–`r003`, `ac01`–`ac04`), restates the missing `sprj` contract (`p002`, `p003`, `r004`–`r008`), and links to the live `sitm`/`sprj` children.
-
-**Needed from L0:** either re-parent `sitm`/`sprj` under `L0-scyt` (as `L0-scyt-*` sub-components) or add their component nodes. Then regenerate the rollups (together with `L0-sprj-cx03`).
-
-
-
-
-
-
-
-### CX-scyt-02 · Projectile tuning disagrees: 0.5 vs 0.6 block/tick, and turn-limited vs pure pursuit (L0-scyt-cx02)
-
-# CX-scyt-02 · Projectile tuning disagrees: 0.5 vs 0.6 block/tick, and turn-limited vs pure pursuit
-
-**Links:** `part_of: ["L0-scyt"]` · `is_a: ["contradiction"]` · `relates_to: ["L0-sprj-ad02", "L0-sprj", "L0-scyt-p002"]` · **Target:** `L0-sprj` · **Category:** source vs source · **Severity:** low · **Status:** open.
-
-- **`L0-sprj-ad02` (live):** constant speed **0.5** block/tick (ASM-018), **no** turn-rate limit.
-- **`project-knowledge/domain-model.md` → `L0-scpr-ent2` (rollup):** speed **about 0.6** block/tick (ASM-029), with a "maximum turn rate", a 1.0 hit radius, a 5-tick stagger and a 200-tick lifetime.
-
-**Why it matters:**
-- The speed sets how long a volley lasts, so it sets how often the leash or an expiry decides the outcome (AC-sprj-08/13).
-- A turn limit changes whether a target that dodges sideways can be missed.
-- The ASM number also clashes: ASM-018 against ASM-029.
-- GameTest timing windows must use one set of numbers.
-
-**Proposed:** follow the live `L0-sprj-ad02` (0.5 block/tick, pure pursuit) and adopt the rollup's stagger, lifetime and hit radius where `sprj` is silent. Keep all of them in one exported `SCYTHE_TUNING` constant. **L0 decides.** This node does not resolve it.
-
-
-
-
-
-
-
-### CX-ufoc-1 · `L0-adr-ufom` §4 needs a \ (L0-ufoc-cx01)
-
-# CX-ufoc-1 · `L0-adr-ufom` §4 needs a "transient" `andrew:ufo_active` flag to survive a restart, while §2 and C-23 allow only two durable properties
-
-**Links:** `part_of: ["L0-ufoc"]` · `is_a: ["contradiction"]` · `relates_to: ["L0-adr-ufom", "L0-ufoc-ad03", "L0-ufoc-p003"]` · **target:** `L0-adr-ufom` · **status:** resolved (reduce v5, `L0-adr-ufrs`) · **category:** source-vs-source
-
-- **`L0-adr-ufom` §2:** durable state is *only* `andrew:ufo_next_ms` and `andrew:ufo_enabled`.
-- **C-23:** "Only the schedule and the enable flag are durable."
-- **`L0-adr-ufom` §4:** at world load, `next_ms` is set to now + 15 min "if an event had been running, recorded by a transient `andrew:ufo_active` flag".
-
-  Anything read at load must have been written before the restart. So the flag is either durable, which contradicts §2 and C-23, or it is in memory, in which case it is always false at load and the UFO §10 "+15 min after a restart" never applies.
-
-**Options.**
-- (a) Encode the in-flight state as `next_ms = 0` (`L0-ufoc-ad03`). This keeps two properties, and C-23 holds literally.
-- (b) Accept a third durable property `andrew:ufo_active`, and amend `adr-ufom` §2 and C-23 to "schedule, enable flag and an in-flight marker".
-- (c) Drop the rule, and keep whatever `next_ms` held before the restart. That breaks UFO §10.
-
-**Autopilot default used by this node:** (a). It is not self-resolved: the fix amends an L0 ADR, so the reducer decides.
-
-**Resolved at reduce v5** by `L0-adr-ufrs`: option (a). The in-flight marker is `andrew:ufo_next_ms = 0`. `L0-adr-ufom` §4 is amended to read it that way, and C-23 holds literally.
-
-
-
-
-
-
-
-### CX-webs-01 · The \ (L0-webs-cx01)
+### CX-lgnd-14: A legendary held by an armour stand that falls into the Void is lost (L0-lgnd-cx14)
 
 ---
 is_a: ["contradiction"]
-part_of: ["L0-webs"]
-relates_to: ["L0-lgnd", "L0-lgnd-ad06", "L0-lgnd-cx04", "L0-lgnd-p001", "L0-lgnd-p002", "L0-lgnd-p003", "L0-lgnd-p005"]
-status: resolved
-category: scope-overlap
-target_node: L0
+part_of: ["L0-lgnd"]
+relates_to: ["L0-lgnd-ad12", "L0-lgnd-r016", "L0-lgnd-as15", "L0-xcx11", "L0-katn"]
+see_also: ["dragonkatanaspecv1ruen-part-1", "orbitalcannonspecv1ruen-part-1"]
 ---
-# CX-webs-01 · The "webs" component scope (item/recipe + ability) overlaps L0-lgnd, which has already absorbed the item/recipe, craft-gate, retention, void-return, cooldown and HUD pieces
+# CX-lgnd-14: A legendary held by an armour stand that falls into the Void is lost
 
-**Assigned scope** (this deep-dive's brief): "Web Sword (item/recipe, reach targeting, 3×3×3 cobweb trap, protected-block filter, unloaded-chunk safety)".
+**Sources.** Katana §3 (and the same rule in the Orbital, Scythe and Web Sword specs): "При падении в Void Катана должна вернуться последнему владельцу" ("If it falls into the Void, the Katana must return to its last owner").
 
-**Checked (not an unverified claim).** `kv_get_subtree("L0", status="all")` shows exactly one live `concept-component`, `L0-lgnd` ("Legendary weapon framework"), whose own scope statement is "craft gate + refund, announcement, death retention/anti-dup, void return, cooldown + Action Bar, hand priority, localization" and whose process `L0-lgnd-p006` is explicitly titled "Registration, startup **and Web Sword migration**". `L0-lgnd-ad06` keeps the shipped Web Sword module paths/commands as thin shims over the shared framework. No live node named `L0-item`, `L0-once`, `L0-keep`, `L0-cool`, or `L0-qatg` exists — those names survive only as targets of already-resolved rollup decisions (`decision-resolve-l0*`), i.e. they were superseded by the `L0-lgnd` migration, the same pattern `L0-sprj-cx03` documented for `L0-scpr`/`L0-sctg`/`L0-scit`.
+**Code (1.4.4).**
+- `VOID_HOLDER_TYPES` covers `chest_minecart` and `hopper_minecart` only (`recovery.ts:135`).
+- An armour stand's hand slots cannot be read from a script on 2.10.0 (`README.md:71`, `probe_ufo_holder_void`).
+- The engine removes it below the floor with no death and no spill, so the legendary it holds is gone and nothing is returned.
 
-**Consequence.** Item identity (recipe, damage, enchant slot — spec §1–2), the one-per-world craft gate + refund (§3), death retention (§4), cooldown persistence + Action Bar (§8), and multiplayer determinism for those flows (§9) are **already owned and deep-dived under `L0-lgnd`** (or, for item values specifically, only in the rollup decision `web-sword-item-values` with no live component home yet). Re-deriving rules/processes for them under `L0-webs` would either duplicate `L0-lgnd`'s content or drift from it over time.
+**Exposure.**
+- Nothing in the add-on moves an armour stand: the magnet skips holders that carry a legendary (`r016`).
+- Reaching this case takes a deliberate player setup: an armour stand pushed or placed over the Void, or the stand on a minecart.
 
-**This node did not escalate.** It scoped itself down to the genuine gap instead: `L0-lgnd`'s migration explicitly stopped at the cast body (`L0-lgnd-cx04` names the shipped `registerTrap()` module, which no longer self-subscribes to `itemUse` under the new framework, as needing a framework-side shim) — the targeting + 3×3×3 trap + protected-block filter + unloaded-chunk safety mechanic was never re-homed after the migration and has no other live deep-dive. `L0-webs`'s artifacts in this run cover only that residual (item identity is included too, since it likewise has no other live home, but framed as a static definition consumed by `L0-lgnd`'s registry, not as craft/retention logic).
+**Options (not self-resolved).**
+- (a) Accept it as a C-16 deviation and document it. This is the autopilot default.
+- (b) Probe `/replaceitem`- or `hasitem`-based reads of armour-stand hands (memory: mob armour is readable only via `hasitem`). If `hasitem slot.weapon.mainhand` can detect a legendary *type*, a mark cannot be read anyway, so the return would have to re-issue the ledger's last known instance.
 
-**Needed from L0.** Confirm `L0-webs` should be scoped down to "targeting + trap + protected-block filter + unloaded-chunk safety (+ static item/recipe definition)" going forward, with the legendary-framework concerns formally cross-referenced rather than restated, and update the L0 decomposition plan/rollups so future deep-dives don't re-open the item/craft/retention/cooldown/HUD ground under this slug.
+Filed so the operator confirms that it binds the Katana too.
+
+**Resolved at reduce v6** by `L0-adr-ktgr` §3: option (a), a documented C-16 deviation binding all four legendaries. The Katana adds no exposure. Option (b) stays a backlog probe. Operator confirmation is collected via `L0-xq6`.
+
+
+
+
+
+
+
+### CX-L0-21 · T17 literal reading vs the shipped C-16 deviation (L0-xcx21)
+
+---
+title: "CX-L0-21 · Katana §3/T17: the item entity \"is not destroyed\" by cactus and TNT; the framework returns it to the owner instead (C-16)"
+aliases: ["L0-xcx21", "Katana T17 vs C-16"]
+is_a: ["contradiction"]
+part_of: ["L0"]
+relates_to: ["L0-lgnd", "L0-katn", "L0-xcx10", "L0-xasm22"]
+see_also: ["dragonkatanaspecv1ruen-part-1", "dragonkatanaspecv1ruen-part-3"]
+---
+# CX-L0-21 · T17 literal reading vs the shipped C-16 deviation
+
+**Source.** Katana §3 says "the item entity is not destroyed by ordinary hazards: fire, lava, cactus, TNT and the Orbital Cannon". T17 says "as an item entity it survives fire, lava, TNT and the Orbital Cannon".
+
+**Code.** As built in v1.4.x (`lgnd`, with `xcx10` closed under C-16):
+- fire and lava are **prevented** (`fire_resistant`);
+- Orbital blasts and rings are **prevented** (`protectLegendariesIn` moves the item out first);
+- cactus, TNT and despawn are not preventable on stable 2.10.0. The item is destroyed and a fresh marked copy is **returned** to the owner (immediately, or owed).
+
+**Disagreement.** For cactus and TNT, the item does not "survive" where it lay; it reappears with its owner. A literal T17 GameTest ("the item entity is still on the ground after TNT") fails.
+
+**Proposed resolution (autopilot default).** Accept the same C-16 reading the operator accepted for the other three legendaries when closing `xcx10`. T17 is proven as "after TNT, exactly one Katana exists, and it is in the owner's inventory or owed". `katn` writes T17 that way; `lgnd` cites the deviation. Severity is low, because this is a re-statement of an accepted compromise. It is filed so the operator confirms that it also binds the new spec.
+
+**Resolved at reduce v6** by `L0-adr-ktgr` §1: the Katana's T17 is the shipped three-tier C-16 reading. The test text is `L0-lgnd-ac24`. Operator confirmation is collected via `L0-xq6`, which does not block the build.
 
 
 

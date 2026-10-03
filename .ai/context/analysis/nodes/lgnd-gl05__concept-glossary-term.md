@@ -2,7 +2,7 @@
 type: "concept-glossary-term"
 node_id: "L0-lgnd-gl05"
 source_channel: "rollout"
-analysis_version: 5
+analysis_version: 6
 aliases: ["L0-lgnd-gl05"]
 is_a: ["glossary-term"]
 part_of: ["L0-lgnd"]

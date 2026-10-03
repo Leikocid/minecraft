@@ -1,560 +1,252 @@
 ---
 title: Glossary
 type: project-knowledge
-generated_at: "2026-10-02T19:12:16.990Z"
+generated_at: "2026-10-03T14:58:23.855Z"
 source_channel: rollout
 node_id: rollout-glossary
 aliases: ["rollout-glossary","glossary","project-knowledge/glossary"]
 is_a: ["rollout","glossary"]
-relates_to: ["L0-airs-ac01","L0-airs-ac02","L0-airs-ac03","L0-airs-ac04","L0-airs-ac05","L0-airs-ac06","L0-airs-ac07","L0-airs-ac08","L0-airs-g001","L0-airs-g002","L0-airs-g003","L0-airs-g004","L0-airs-g005","L0-bast-ac01","L0-bast-ac02","L0-bast-ac03","L0-bast-ac04","L0-bast-ac05","L0-bast-ac06","L0-bast-ac07","L0-bast-ac08","L0-bast-ac09","L0-bast-gl01","L0-bast-gl02","L0-bast-gl03","L0-bast-gl04","L0-bast-gl05","L0-infr-ac01","L0-infr-ac02","L0-infr-ac03","L0-infr-ac04","L0-infr-ac05","L0-infr-ac06","L0-infr-ac07","L0-infr-ac08","L0-infr-ac09","L0-infr-ac10","L0-infr-ac11","L0-infr-g001","L0-infr-g002","L0-infr-g003","L0-infr-g004","L0-infr-g005","L0-infr-g006","L0-infr-g007","L0-infr-g008","L0-infr-g009","L0-lgnd-ac01","L0-lgnd-ac02","L0-lgnd-ac03","L0-lgnd-ac04","L0-lgnd-ac05","L0-lgnd-ac06","L0-lgnd-ac07","L0-lgnd-ac08","L0-lgnd-ac09","L0-lgnd-ac10","L0-lgnd-ac11","L0-lgnd-ac12","L0-lgnd-ac13","L0-lgnd-ac14","L0-lgnd-ac15","L0-lgnd-ac16","L0-lgnd-ac17","L0-lgnd-ac18","L0-lgnd-ac19","L0-lgnd-ac20","L0-lgnd-ac21","L0-lgnd-ac22","L0-lgnd-gl01","L0-lgnd-gl02","L0-lgnd-gl03","L0-lgnd-gl04","L0-lgnd-gl05","L0-lgnd-gl06","L0-lgnd-gl07","L0-lgnd-gl08","L0-lgnd-gl09","L0-lgnd-gl10","L0-lgnd-gl11","L0-lgnd-gl12","L0-lgnd-gl13","L0-lgnd-gl14","L0-lgnd-gl15","L0-loot-ac01","L0-loot-ac02","L0-loot-ac03","L0-loot-ac04","L0-loot-ac05","L0-loot-ac06","L0-loot-ac07","L0-loot-ac08","L0-loot-ac09","L0-loot-ac10","L0-loot-gl01","L0-loot-gl02","L0-loot-gl03","L0-loot-gl04","L0-loot-gl05","L0-magn-a04"]
-priority: 580
+relates_to: ["L0-katn-ac01","L0-katn-ac02","L0-katn-ac03","L0-katn-ac04","L0-katn-ac05","L0-katn-ac06","L0-katn-ac07","L0-katn-ac08","L0-katn-ac09","L0-katn-gl01","L0-katn-gl02","L0-katn-gl03","L0-katn-gl04","L0-katn-gl05","L0-lgnd-ac01","L0-lgnd-ac02","L0-lgnd-ac03","L0-lgnd-ac04","L0-lgnd-ac05","L0-lgnd-ac06","L0-lgnd-ac07","L0-lgnd-ac08","L0-lgnd-ac09","L0-lgnd-ac10","L0-lgnd-ac11","L0-lgnd-ac12","L0-lgnd-ac13","L0-lgnd-ac14","L0-lgnd-ac15","L0-lgnd-ac16","L0-lgnd-ac17","L0-lgnd-ac18","L0-lgnd-ac19","L0-lgnd-ac20","L0-lgnd-ac21","L0-lgnd-ac22","L0-lgnd-ac23","L0-lgnd-ac24","L0-lgnd-gl01","L0-lgnd-gl02","L0-lgnd-gl03","L0-lgnd-gl04","L0-lgnd-gl05","L0-lgnd-gl06","L0-lgnd-gl07","L0-lgnd-gl08","L0-lgnd-gl09","L0-lgnd-gl10","L0-lgnd-gl11","L0-lgnd-gl12","L0-lgnd-gl13","L0-lgnd-gl14","L0-lgnd-gl15","L0-lgnd-gl16","L0-lgnd-gl17","L0-lgnd-gl18"]
+priority: 600
 ---
 
 # Glossary
 
 > Автогенерация из Knowledge Vault. Ручное редактирование — установи `status: manual` в frontmatter.
 
-### AC — fixed modern appearance, size and randomized rotation (L0-airs-ac01)
+### Katn ac01 concept acceptance criterion (L0-katn-ac01)
+
+---
+title: "AC-katn-01 (T01, bds + build): the Katana recipe yields the craft token (gate assertions: L0-lgnd-ac23)"
+is_a: ["acceptance-criterion"]
+part_of: ["L0-katn"]
+relates_to: ["L0-lgnd-p001", "L0-lgnd-ac23", "L0-katn-r001", "L0-xasm22"]
+---
+The rule is owned by `L0-lgnd-p001`. **The gate, flag, refund, restart, Creative/`/give` and broadcast assertions (T01–T03) are `L0-lgnd-ac23`** (reconciled at reduce v6: this card used to repeat them). `katn` owns only the recipe JSON that feeds the gate:
+- **Shape.** GIVEN a Crafter loaded by `/replaceitem` with `. G . / P S P / . G .` (G golden apple, P ender pearl, S diamond sword, any damage or enchantment), WHEN it fires, THEN it outputs exactly one `andrew:dragon_katana_crafted` token and never the item itself.
+- **Negative controls.** An iron sword in the centre, an enchanted golden apple for G, or a mirrored or shifted layout produces nothing.
+- **Build.** `packs/behavior/recipes/dragon_katana*.json` names only `andrew:dragon_katana_crafted` as output (a node grep test).
+
+
+- **node**: L0-katn-ac01
+
+### Katn ac02 concept acceptance criterion (L0-katn-ac02)
+
+---
+title: "AC-katn-02 (T04, T14, T15, bds): melee equals a Diamond Sword, works on cooldown, no wear"
+is_a: ["acceptance-criterion"]
+part_of: ["L0-katn"]
+relates_to: ["L0-katn-r001", "L0-katn-r005"]
+---
+- **T04.** GIVEN two identical husks (spawnWithoutBehaviors, full health), WHEN one SimulatedPlayer hits one with a vanilla Diamond Sword and the other with the Katana (no crit, same cooldown charge), THEN the health losses measured via `entityHurt` are equal.
+- **T14.** GIVEN `andrew:cd_dragon_katana` armed (cooldown > 25 s), WHEN the player attacks a husk, THEN the hit deals the T04 damage and the cooldown value is unchanged.
+- **T15.** WHEN the player lands 50 hits and 3 successful activations, THEN the stack has no durability component, and `getComponent("durability")` stays `undefined`, as it was before.
 
-# AC — fixed modern appearance, size and randomized rotation
 
-**Links:** `part_of: ["L0-airs"]` · `is_a: ["acceptance-criterion"]`
+- **node**: L0-katn-ac02
+
+### Katn ac03 concept acceptance criterion (L0-katn-ac03)
+
+---
+title: "AC-katn-03 (T05, T06, bds): open-range teleport, cooldown, clamp, no-op on cooldown"
+is_a: ["acceptance-criterion"]
+part_of: ["L0-katn"]
+relates_to: ["L0-katn-p001", "L0-katn-r002", "L0-katn-r005", "L0-xasm18"]
+---
+- **T05.** GIVEN a flat floor and a SimulatedPlayer facing +X, looking at a floor block 19 blocks ahead, WHEN Use runs with the Katana, THEN in the same tick the feet are on top of that block (±0.5) and the yaw is unchanged. `andrew:cd_dragon_katana − Date.now()` lies in 29 500–30 000 ms.
+- **Cooldown no-op.** WHEN Use runs again 1 s later, THEN the position is unchanged and the cooldown value is bit-identical.
+- **T06.** GIVEN open air ahead and a 60-block runway, WHEN the player looks level and uses, THEN the head displacement is ≤ 20.0 and ≥ 19.0. A play with the yaw at 45° also holds ≤ 20.0.
+- **Off hand.** The Katana in the off hand with the main hand empty → the same teleport.
+
 
-**GIVEN** a placed Airship instance, **WHEN** it is inspected, **THEN**:
-- Its palette is grey/light-grey concrete with intact glass windows and working lights; there is no vine, cobweb, crack, or other decay decoration anywhere on it.
-- Its upper hull is a single decorative oval volume containing no chest and no spawner.
-- Its overall footprint is 75×13×18 (L×W×H), template `[75, 18, 13]`.
-- Across a sample of generated instances, the placed rotation is drawn from {0°, 90°, 180°, 270°} and is not fixed to a single value.
+- **node**: L0-katn-ac03
 
-(Spec §5.1; raw tests 24, 25.)
+### Katn ac04 concept acceptance criterion (L0-katn-ac04)
 
+---
+title: "AC-katn-04 (T07–T10, bds): walls, liquids, safe cell, no block edits"
+is_a: ["acceptance-criterion"]
+part_of: ["L0-katn"]
+relates_to: ["L0-katn-r003", "L0-katn-r004", "L0-katn-r002"]
+---
+- **T07.** GIVEN a 3-thick stone wall 10 blocks ahead (5 wide, 5 high), WHEN the player aims at a point 15 blocks out through it, THEN the feet x is < the wall's near face, within 1.5 of it, and the player is on the near side.
+- **T08.** GIVEN a water column and, separately, a lava pool lying across the path with an open floor beyond, WHEN the player aims past them, THEN they land beyond the liquid. The lava case uses a fire-resistance effect so the test is not about the landing.
+- **T09.** GIVEN aim at a 2-high gap that is 1 block high, or a ceiling 1 block above the floor hit, WHEN the player uses, THEN the feet and head cells after the teleport are free, `entityHurt` with cause `suffocation` is absent for 40 ticks, and the player is in a different cell than at the start.
+- **Refusal.** GIVEN the player boxed in with no fit within the search, WHEN they use, THEN there is no move and the cooldown is unset.
+- **T10.** GIVEN the full test area (`getBlocks` volume) snapshotted before the use, THEN every block typeId and permutation is unchanged after it.
+
+
+- **node**: L0-katn-ac04
+
+### Katn ac05 concept acceptance criterion (L0-katn-ac05)
+
+---
+title: "AC-katn-05 (T11, T12, bds): one-shot fall protection"
+is_a: ["acceptance-criterion"]
+part_of: ["L0-katn"]
+relates_to: ["L0-katn-p002", "L0-katn-r006", "L0-adr-ktfl"]
+---
+- **T11.** GIVEN a player teleported to an air point 15 blocks above stone (SimulatedPlayers regenerate, so damage is measured with `entityHurt`), WHEN they land, THEN no `entityHurt` with cause `fall` fires for that landing, and the fall flag map is empty afterwards.
+- **T11 at height.** The same from a 20-block cap point over a 30-block drop, with health set to 4. The player survives.
+- **T12.** GIVEN the flag consumed, WHEN the same player drops 10 blocks with `/tp` and then lands, THEN `entityHurt` cause `fall` fires with ≥ 6 damage.
+- **Expiry.** A flag with no landing in 10 s is cleared.
+- **Negative control** (in-test): with the watcher disabled, the T11 landing hurts.
 
-- **node**: L0-airs-ac01
 
-### AC — two opposite doors, no assisted ground access (L0-airs-ac02)
+- **node**: L0-katn-ac05
 
-# AC — two opposite doors, no assisted ground access
+### Katn ac06 concept acceptance criterion (L0-katn-ac06)
 
-**Links:** `part_of: ["L0-airs"]` · `is_a: ["acceptance-criterion"]`
+---
+title: "AC-katn-06 (T13, bds): the trail is harmless and bounded"
+is_a: ["acceptance-criterion"]
+part_of: ["L0-katn"]
+relates_to: ["L0-katn-r007"]
+---
+GIVEN a husk and a second SimulatedPlayer standing on the A→B line, WHEN the Katana teleport passes over them:
+- no `entityHurt` fires for either;
+- their velocity stays ≤ 0.01 apart from gravity;
+- the entity count in the area does not grow;
+- the T10 block snapshot is unchanged.
 
-**GIVEN** a placed Airship, **WHEN** its lower hull is inspected, **THEN** it has exactly 2 doors on opposite sides, and there is no ladder, staircase, lift, waterfall, or teleporter connecting it to the ground. Reaching it is left entirely to the player.
+A wrapped `spawnParticle` counter records between 1 and 130 calls, all within ≤ 10 ticks of the use, and none on a refused or cooldown press. (Visual reading is in `L0-katn-ac09`.)
 
-(Spec §5.2; raw test 26.)
 
+- **node**: L0-katn-ac06
 
-- **node**: L0-airs-ac02
+### Katn ac07 concept acceptance criterion (L0-katn-ac07)
 
-### AC — interior corridor + 4 rooms, one lamp per room (L0-airs-ac03)
+---
+title: "AC-katn-07 (T16–T18, bds): Katana instances of the framework's protection tests"
+is_a: ["acceptance-criterion"]
+part_of: ["L0-katn"]
+relates_to: ["L0-lgnd-ac24", "L0-lgnd-p002", "L0-lgnd-p003", "L0-lgnd-p008", "L0-xcx21", "L0-xasm22", "L0-adr-ktgr"]
+---
+These are framework rules. **The test text is `L0-lgnd-ac24`** (reconciled at reduce v6: this card used to restate it, and had drifted on two points). `katn` owns none of the assertions; it contributes only:
+- the Katana def and item JSON that `L0-lgnd-ac24` runs against (`L0-katn-ent1`);
+- the one Katana-specific case in that criterion, **death after a teleport** (into lava, or below the one-shot flag's cover), which `L0-lgnd-ac24` T16 already names.
 
-# AC — interior corridor + 4 rooms, one lamp per room
+**Reconciled points:**
+- T16: retention keeps the **same id and gen**. `retention.ts` restore does not bump the gen (as read during reduce at v6). The earlier `gen + 1` here was wrong.
+- T18: the return target is **`mark.owner`** until `L0-xcx11` closes. "Last owner" in Katana §3 is the open `L0-adr-hold` question, not a passing test today.
+- T17: under C-16 (`L0-xcx21`, settled by `L0-adr-ktgr`).
 
-**Links:** `part_of: ["L0-airs"]` · `is_a: ["acceptance-criterion"]`
+Do not create a separate task criterion from this card. It would duplicate `L0-lgnd-ac24`.
 
-**GIVEN** a placed Airship, **WHEN** its interior is inspected, **THEN** it has exactly 1 central corridor and 4 small rooms, each room has exactly 1 ceiling lamp, and the spawner cell's light level stays within the engine's spawner-suppression threshold despite the decorative lighting.
 
-(Spec §5.2; raw test 27.)
+- **node**: L0-katn-ac07
 
+### Katn ac08 concept acceptance criterion (L0-katn-ac08)
 
-- **node**: L0-airs-ac03
+---
+title: "AC-katn-08 (probe, bds): engine facts confirmed before the build"
+is_a: ["acceptance-criterion"]
+part_of: ["L0-katn"]
+relates_to: ["L0-adr-ktob", "L0-adr-ktfl", "L0-katn-ad01", "L0-katn-p002"]
+---
+A probe GameTest on BDS 1.26.51 (checks instance, port 19136) records:
+1. A SimulatedPlayer falling from 25 blocks and self-teleported 2 blocks above the floor takes no fall damage. The control without the self-teleport does take it.
+2. `getBlockFromRay` with `{includePassableBlocks:false, includeLiquidBlocks:false}`:
+   - passes water, lava, grass, flowers, cobweb, carpet;
+   - stops at stone, a bottom slab, a fence and a glass pane.
+3. The same ray through a cell column hits a bottom slab and a top slab when cast vertically (`L0-katn-ad01`).
+4. The same ray reaching into an unloaded chunk: hit, no hit, or throw.
+5. `spawnParticle("minecraft:cherry_leaves_particle")` does not throw.
 
-### AC — exactly 10 chests at fixed positions (L0-airs-ac04)
+Each fact goes to the memory and to the ADR status. A failed fact supersedes the relevant ADR before the build tasks start.
 
-# AC — exactly 10 chests at fixed positions
 
-**Links:** `part_of: ["L0-airs"]` · `is_a: ["acceptance-criterion"]`
+- **node**: L0-katn-ac08
 
-**GIVEN** a placed Airship, **WHEN** its chests are counted, **THEN** there are exactly 10: 2 in each of the 4 rooms (8 total) and 2 in the corridor, all at the same template-local positions (rotated per instance) across every instance, each reachable without breaking blocks.
+### Katn ac09 concept acceptance criterion (L0-katn-ac09)
 
-(Spec §5.3; raw test 28.)
+---
+title: "AC-katn-09 (ipad, manual): what only the operator can see"
+is_a: ["acceptance-criterion"]
+part_of: ["L0-katn"]
+relates_to: ["L0-katn-r007", "L0-katn-r008", "L0-katn-ent1", "L0-katn-as02", "L0-xasm21"]
+---
+On the iPad, on the production server, the operator confirms:
+1. **Icon.** The Katana icon reads as a katana in the hotbar and in the inventory.
+2. **Creative.** It is found under Equipment → swords and by searching "Katana" / "Катана".
+3. **HUD.** Holding it shows "Dragon Katana — Ready", or "Катана дракона — Готово" in Russian. After a use, the HUD counts down whole seconds from 30.
+4. **Trail.** A pink petal trail runs visibly from A to B and fades within about 1.5 s. A second player nearby sees it too.
+5. **Aim.** Tapping on air and tapping on a block both teleport toward the screen centre (view direction), and this feels right (`L0-katn-as02`).
+6. **Escape.** The answer on a Web Sword trap and UFO magnet escape (`L0-xasm21`) is recorded.
 
+The orchestrator must not auto-verify this criterion.
 
-- **node**: L0-airs-ac04
 
-### AC — exactly one iron-axe Vindicator spawner at the corridor centre (L0-airs-ac05)
+- **node**: L0-katn-ac09
 
-# AC — exactly one iron-axe Vindicator spawner at the corridor centre
+### Katn gl01 concept glossary term (L0-katn-gl01)
 
-**Links:** `part_of: ["L0-airs"]` · `is_a: ["acceptance-criterion"]`
+**Dragon Katana** (RU: Катана дракона)
 
-**GIVEN** a placed Airship, **WHEN** its spawner is inspected, **THEN** there is exactly 1 `mob_spawner`, positioned at the corridor's centre, and it produces Vindicators equipped with a vanilla iron axe.
+The fourth legendary weapon, `andrew:dragon_katana`. It is a Diamond Sword clone whose Use teleports the holder up to 20 blocks along their view, with a 30 s cooldown. Its craft token is `andrew:dragon_katana_crafted`, its ability key `dragon_katana`, and its key prefix `dk`.
 
-(Spec §5.3; raw test 29.)
+**Synonyms**: Katana, `katn` (the KV node), DK.
 
 
-- **node**: L0-airs-ac05
+- **node**: L0-katn-gl01
 
-### AC — altitude clearance and rejection over water / near the world ceiling (L0-airs-ac06)
+### Katn gl02 concept glossary term (L0-katn-gl02)
 
-# AC — altitude clearance and rejection over water / near the world ceiling
+**Trace (Katana)**
 
-**Links:** `part_of: ["L0-airs"]` · `is_a: ["acceptance-criterion"]`
+The server-side block ray from the use-time head location along the view direction, ≤ 20 blocks. It uses `includePassableBlocks:false, includeLiquidBlocks:false`.
+- It stops at the first block the engine treats as collidable, or before an unreadable cell.
+- Its end is the **endpoint E**: the hit point pulled back 0.3, or the point in the air at the range.
 
-**GIVEN** a rolled Airship candidate, **WHEN** its footprint is validated, **THEN**:
-- Its bottom sits at least 40 blocks above the highest terrain point (including trees) under its whole rotated footprint, with a target clearance of 40–70 blocks where the build height allows it.
-- A candidate whose footprint is significantly over open water is rejected.
-- A candidate that cannot fit below the world ceiling even at the minimum 40-block clearance is rejected, with no downgrade below 40.
+Not the Scythe's line of sight (`hasLineOfSight`), which treats every non-air, non-liquid block as blocking.
 
-(Spec §5.4; raw tests 30, 31.)
+**Synonyms**: ability ray, teleport ray.
 
 
-- **node**: L0-airs-ac06
+- **node**: L0-katn-gl02
 
-### AC — independent generation at 2 % on suitable land chunks only (L0-airs-ac07)
+### Katn gl03 concept glossary term (L0-katn-gl03)
 
-# AC — independent generation at 2 % on suitable land chunks only
+**Safe cell**
 
-**Links:** `part_of: ["L0-airs"]` · `is_a: ["acceptance-criterion"]`
+A feet cell B where a standing player (2 cells high, centred) can be placed. It must:
+- pass the column-ray fit check (`L0-katn-ad01`);
+- contain no lava or fire;
+- lie on the owner's side of the hit face;
+- be reachable from the head by a clear ray;
+- leave the head within 20 blocks of its start.
 
-**GIVEN** a large enough sample of newly discovered Overworld chunks with no Windmill involved, **WHEN** independent Airship generation is measured statistically, **THEN** the observed rate on suitable chunks (land, valid footprint, no collision) is consistent with a 2 % per-chunk roll, and no Airship appears on an unsuitable chunk (open water, colliding, or failing the altitude/ceiling check).
+A cell in mid-air qualifies. "Owner's side" means the half-space of the hit-face plane that contains the head.
 
-(Spec §5.5; raw test 32.)
+**Synonyms**: safe position, destination B, landing cell.
 
 
-- **node**: L0-airs-ac07
+- **node**: L0-katn-gl03
 
-### AC — the Windmill-linked attempt runs regardless of a nearby independent Airship (L0-airs-ac08)
+### Katn gl04 concept glossary term (L0-katn-gl04)
 
-# AC — the Windmill-linked attempt runs regardless of a nearby independent Airship
+**Fall flag**
 
-**Links:** `part_of: ["L0-airs"]` · `is_a: ["acceptance-criterion"]`
+A per-player, in-memory, one-shot protection that is armed by a successful Katana teleport. It is consumed by the first landing, liquid, climb, glide, death, dimension change or logout, or after 10 s.
+- While it is armed and the player is about to hit the ground, a self-teleport resets the fall distance, so that landing deals no damage.
+- It is never persisted and never blocks other damage.
 
-**GIVEN** a Windmill instance that already has an independent Airship within 100 blocks of it, **WHEN** that Windmill's `afterPlace` hook runs, **THEN** `airs` still performs its own linked-attempt search in the 40–100-block ring — the existing independent Airship does not substitute for, skip, or block the linked attempt — and the two Airships, if the linked attempt also succeeds, do not physically overlap.
+**Synonyms**: one-shot fall protection, landing flag.
 
-(Spec §5.6; raw test 33.)
 
+- **node**: L0-katn-gl04
 
-- **node**: L0-airs-ac08
+### Katn gl05 concept glossary term (L0-katn-gl05)
 
-### Airs g001 concept glossary term (L0-airs-g001)
+**Petal trail**
 
-**Gondola / Гондола**
+The one-shot visual of a successful Katana teleport. It is a line of pink cherry-blossom particles from A+1 to B+1, spawned through `dimension.spawnParticle` (`minecraft:cherry_leaves_particle`, or the fallback `andrew:katana_petal`) within ≤ 10 ticks.
+- Visual only: no entities, damage, knockback or block changes.
 
-The Airship's lower hull: an elongated oval volume of grey/light-grey concrete containing the 1 corridor + 4 rooms, 10 chests, 1 Vindicator spawner, and the 2 opposite doors. Everything script-relevant (chests, spawner, doors) lives in the gondola, never in the balloon.
+**Synonyms**: sakura trail, cherry trail.
 
-**Synonyms:** lower hull, hull.
 
-
-- **node**: L0-airs-g001
-
-### Airs g002 concept glossary term (L0-airs-g002)
-
-**Balloon / Аэростат** (upper hull)
-
-The Airship's decorative upper volume: a large oval shape in grey/light-grey concrete sitting above the gondola. Contains no chests, no spawner, and is not part of any script contract (`L0-airs-e001`) — purely template geometry for visual identity.
-
-**Synonyms:** upper hull, envelope.
-
-
-- **node**: L0-airs-g002
-
-### Airs g003 concept glossary term (L0-airs-g003)
-
-**Linked Airship**
-
-An Airship instance created by a Windmill's own one-time `afterPlace` trigger (`L0-airs-r004`), searched inside a hard 40–100-block ring around that Windmill's centre. Every Windmill instance — including the guaranteed spawn Windmill — attempts exactly one. Distinct from an **Independent Airship**; the two never substitute for or deduplicate against each other.
-
-**Synonyms:** Windmill-linked Airship.
-
-
-- **node**: L0-airs-g003
-
-### Airs g004 concept glossary term (L0-airs-g004)
-
-**Independent Airship**
-
-An Airship instance created by `strf`'s ordinary per-chunk discovery roll (2 % chance, `L0-airs-r003`), with no relationship to any Windmill. It is validated and placed exactly like a Linked Airship but through the normal discovery queue rather than a Windmill's trigger.
-
-**Synonyms:** normal Airship, chunk-roll Airship.
-
-
-- **node**: L0-airs-g004
-
-### Airs g005 concept glossary term (L0-airs-g005)
-
-**Ring search (hard ring)**
-
-`strf.searchRing(def, centre, rMin, rMax)`: the relocating-candidate-generation mode used only by `wind`'s guaranteed spawn Windmill (0–500 blocks, forced fallback) and by `airs`'s linked-Airship attempt (40–100 blocks, no forced fallback). Contrasts with the ordinary per-chunk roll, which never relocates a candidate (`L0-strf-r002` item 5).
-
-**Synonyms:** annulus search, 40–100 search (for the Airship's case specifically).
-
-
-- **node**: L0-airs-g005
-
-### Bast ac01 concept acceptance criterion (L0-bast-ac01)
-
-**AC-bast-01** (spec test 51)
-
-The rate belongs to `L0-strf-r002` §1 and is proven by `tests/structures-roll.test.mjs:148`.
-
-GIVEN a statistically sufficient sample of suitable Nether chunks,
-WHEN candidate generation runs,
-THEN `StructureDef.chance = 0.05` (`src/structures/config.ts:27`) — no exact-match requirement is imposed on small samples.
-
-**Source:** §14.7 test 51.
-
-
-- **node**: L0-bast-ac01
-
-### Bast ac02 concept acceptance criterion (L0-bast-ac02)
-
-**AC-bast-02** (spec test 52)
-
-GIVEN suitable terrain in any Nether biome,
-WHEN a candidate rolls,
-THEN generation proceeds regardless of biome identity;
-AND GIVEN a candidate site over a lava ocean,
-WHEN evaluated,
-THEN generation never occurs there.
-
-**Source:** §14.7 test 52.
-
-
-- **node**: L0-bast-ac02
-
-### Bast ac03 concept acceptance criterion (L0-bast-ac03)
-
-**AC-bast-03** (spec test 53)
-
-GIVEN a generated Mini Bastion,
-WHEN measured,
-THEN its footprint is ~20×20, height ~10-12, with 2-3 levels;
-AND across multiple instances, all four rotations (0°/90°/180°/270°) are observed.
-
-**Source:** §14.7 test 53.
-
-
-- **node**: L0-bast-ac03
-
-### Bast ac04 concept acceptance criterion (L0-bast-ac04)
-
-**AC-bast-04** (spec test 54)
-
-GIVEN a generated Mini Bastion,
-WHEN the treasure room is inspected,
-THEN it sits centrally/low with ordinary vanilla lava behavior (bucketable, blockable, water-reactive);
-AND both access methods work: building/routing a safe path through the lava area, and descending/falling from the level above.
-
-**Source:** §14.7 test 54.
-
-
-- **node**: L0-bast-ac04
-
-### Bast ac05 concept acceptance criterion (L0-bast-ac05)
-
-**AC-bast-05** (spec test 55)
-
-GIVEN a generated Mini Bastion,
-WHEN all chests are counted,
-THEN there are exactly 10: 3 treasure chests in the center + 7 regular chests elsewhere in the structure.
-
-**Source:** §14.7 test 55.
-
-
-- **node**: L0-bast-ac05
-
-### Bast ac06 concept acceptance criterion (L0-bast-ac06)
-
-**AC-bast-06** (spec test 56)
-
-GIVEN the treasure room,
-WHEN inspected,
-THEN it contains a random count of 2-4 Gold Blocks.
-
-**Source:** §14.7 test 56.
-
-
-- **node**: L0-bast-ac06
-
-### Bast ac07 concept acceptance criterion (L0-bast-ac07)
-
-**AC-bast-07** (spec test 57)
-
-GIVEN a freshly initialized Mini Bastion,
-WHEN the guard roster is counted,
-THEN there are 7-10 regular Piglins + exactly 2 Piglin Brutes, zero Hoglins,
-AND one Brute is positioned at/guarding the treasure room.
-
-**Source:** §14.7 test 57.
-
-
-- **node**: L0-bast-ac07
-
-### Bast ac08 concept acceptance criterion (L0-bast-ac08)
-
-**AC-bast-08** (spec test 58)
-
-GIVEN a Mini Bastion with guards killed, loot taken, and lava altered,
-WHEN the server restarts,
-THEN none of those changes revert — guards are not respawned, loot is not refilled, and altered lava/blocks stay altered.
-
-**Source:** §14.7 test 58.
-
-
-- **node**: L0-bast-ac08
-
-### Bast ac09 concept acceptance criterion (L0-bast-ac09)
-
-**AC-bast-09** (spec test 59)
-
-GIVEN a candidate site that physically intersects another detected structure (custom or vanilla, including a real Bastion Remnant),
-WHEN the candidate is evaluated,
-THEN generation is cancelled outright with no relocation attempt and no damage to the existing structure (`L0-strf-r006`).
-
-**Source:** §14.7 test 59, §15.
-
-
-- **node**: L0-bast-ac09
-
-### Bast gl01 concept glossary term (L0-bast-gl01)
-
-**Mini Bastion**
-
-The custom Nether structure this component describes: a compact (not full-size) Bastion Remnant-styled structure with a fixed ~20×20×10-12 template, one central lava treasure room, 10 loot chests, and a one-time Piglin/Piglin-Brute garrison.
-
-**Synonyms:** none (distinct from vanilla "Bastion Remnant").
-
-
-- **node**: L0-bast-gl01
-
-### Bast gl02 concept glossary term (L0-bast-gl02)
-
-**Bastion Remnant**
-
-The vanilla Minecraft structure Mini Bastion visually and mechanically references. Supplies the real loot tables (treasure + regular) and material palette (Blackstone family) that Mini Bastion reuses directly (R-bast-003, ADR-bast-02) rather than reimplementing.
-
-
-- **node**: L0-bast-gl02
-
-### Bast gl03 concept glossary term (L0-bast-gl03)
-
-**Piglin Brute**
-
-The elevated-tier vanilla Piglin variant used as Mini Bastion's dedicated guards. Exactly 2 spawn per instance (versus 7-10 regular Piglins), and unlike regular Piglins they are explicitly assigned fixed roles: one guards the treasure room, the other roams a second fixed position elsewhere in the template.
-
-
-- **node**: L0-bast-gl03
-
-### Bast gl04 concept glossary term (L0-bast-gl04)
-
-**Candidate (structure-generation candidate)**
-
-A chunk that has won the per-chunk generation roll (5% for Mini Bastion) and is being evaluated for physical suitability before a structure is actually placed. A candidate that fails suitability checks is simply discarded, never relocated to a neighboring chunk. Same term used across all four custom structures (Windmill, Airship, Mini Warden City, Mini Bastion). Cite: `L0-strf-e003`, `L0-strf-r002`.
-
-
-- **node**: L0-bast-gl04
-
-### Bast gl05 concept glossary term (L0-bast-gl05)
-
-**One-time persistent (guard/mob)**
-
-The family-wide mob-lifecycle pattern (§15) where an initial set of mobs is spawned exactly once at structure initialization, never despawns from distance/chunk-unload/restart, and is never replenished or respawned after death. Applies to Mini Bastion's Piglins/Piglin Brutes and, with different mob types, to Windmill's field Zombie Villagers. Cite: `L0-strf-r009`.
-
-
-- **node**: L0-bast-gl05
-
-### Infr ac01 concept acceptance criterion (L0-infr-ac01)
-
-**Links:** `part_of: ["L0-infr"]` · `is_a: ["acceptance-criterion"]`
-
-GIVEN a clean clone of the repository, WHEN `npm run build` is run, THEN it produces `dist/andrew.mcaddon` and `tsc` compiles `src/` with no errors against the installed `@minecraft/server` types. [src: stage-0-infrastructure criterion 1]
-
-
-- **node**: L0-infr-ac01
-
-### Infr ac02 concept acceptance criterion (L0-infr-ac02)
-
-**Links:** `part_of: ["L0-infr"]` · `is_a: ["acceptance-criterion"]`
-
-GIVEN the built packs, WHEN `npm run validate` (or the validate step inside `npm run build`) runs, THEN every manifest and every item/JSON file under `packs/**` passes structural validation (`validatePacks`/`validateSelfTestPack`) with zero `ValidationError`s. [src: stage-0-infrastructure criterion 2]
-
-
-- **node**: L0-infr-ac02
-
-### Infr ac03 concept acceptance criterion (L0-infr-ac03)
-
-**Links:** `part_of: ["L0-infr"]` · `is_a: ["acceptance-criterion"]`
-
-GIVEN `dist/andrew.mcaddon` staged into a BDS world in Docker, WHEN `npm run bds:check` runs, THEN the server log shows no manifest/dependency errors naming the add-on's packs, a `Pack Stack` line names the behavior and selftest pack uuids, and `SCRIPT_LOADED` appears in the log. [src: stage-0-infrastructure criterion 3]
-
-
-- **node**: L0-infr-ac03
-
-### Infr ac04 concept acceptance criterion (L0-infr-ac04)
-
-**Links:** `part_of: ["L0-infr"]` · `is_a: ["acceptance-criterion"]`
-
-GIVEN the built `.mcaddon` imported on the iPad (or delivered via the LAN server) with both packs enabled in a world, WHEN the player spawns, THEN a chat message appears at `initialSpawn`, and the test item is visible in Creative with both RU and EN names. This criterion is typed `manual`/`ipad`-channel and does not block autopilot merge — a green `bds` run never closes it. [src: stage-0-infrastructure criterion 4; C-6; decision-verification-approach-automatic]
-
-
-- **node**: L0-infr-ac04
-
-### Infr ac05 concept acceptance criterion (L0-infr-ac05)
-
-**Links:** `part_of: ["L0-infr"]` · `is_a: ["acceptance-criterion"]`
-
-GIVEN the Stage 0 deliverable is complete, WHEN the repository is inspected, THEN the project exists in git with a first commit covering the minimal add-on. [src: stage-0-infrastructure criterion 5]
-
-
-- **node**: L0-infr-ac05
-
-### Infr ac06 concept acceptance criterion (L0-infr-ac06)
-
-**Links:** `part_of: ["L0-infr"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-infr-as01"]`
-
-GIVEN a built add-on plus the `packs/gametest` beta pack, WHEN `npm run bds:gametest` runs, THEN a `SimulatedPlayer` completes the registered scenario on a dedicated `gametest` world with the Beta APIs experiment enabled, without a human or an iPad, and the run's log-derived verdict is PASS/FAIL with exit code 0/1 accordingly. [src: scripts/bds-gametest.mjs; decision-q-012]
-
-Note: see `L0-infr-as01` — this criterion is treated as an additional verification lane, not one of Stage 0's five original closing criteria.
-
-
-- **node**: L0-infr-ac06
-
-### Infr ac07 concept acceptance criterion (L0-infr-ac07)
-
-**Links:** `part_of: ["L0-infr"]` · `is_a: ["acceptance-criterion"]`
-
-GIVEN `docker/bds/compose.yaml`'s `VERSION` and `scripts/targets.mjs`'s `BDS_VERSION` disagree, WHEN `npm run bds:check` or `npm run bds:up` is run, THEN `assertComposePinsVersion()` fails the run immediately, before any Docker or build work happens. [src: scripts/bds-lib.mjs assertComposePinsVersion; C-2/C-3]
-
-
-- **node**: L0-infr-ac07
-
-### Infr ac08 concept acceptance criterion (L0-infr-ac08)
-
-**Links:** `part_of: ["L0-infr"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-infr-p005"]`
-
-GIVEN checked-in structure layout sources, WHEN the structure-compilation step of `npm run build` runs, THEN it emits one `.mcstructure` file per structure under `packs/behavior/structures/andrew/`, and a round-trip unit test confirms each file's chest/spawner/shrieker/door counts and footprint bounds match its source definition, for all four structures. [src: L0-adr-tmpl; L0-infr-p005]
-
-
-- **node**: L0-infr-ac08
-
-### Infr ac09 concept acceptance criterion (L0-infr-ac09)
-
-**Links:** `part_of: ["L0-infr"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-infr-p006"]`
-
-GIVEN a template built into the pack, WHEN the BDS/GameTest placement test places it via `structureManager.place` in each of the 4 rotations (0/90/180/270) in the `gametest` world, THEN in-world block-entity counts and states (chest count, spawner `EntityIdentifier`, shrieker `can_summon`) match the compiled template in every rotation. [src: L0-adr-tmpl; L0-infr-p006]
-
-
-- **node**: L0-infr-ac09
-
-### Infr ac10 concept acceptance criterion (L0-infr-ac10)
-
-**Links:** `part_of: ["L0-infr"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-infr-p006", "L0-infr-as03"]`
-
-GIVEN the statistical chunk-roll check drives `strf`'s roll formula over a large synthetic sample of chunk coordinates per structure, WHEN the harness tallies successful rolls, THEN the observed rate falls inside the configured tolerance band of that structure's chance constant, and the run exits 0/1 by that verdict alone, with no human eye needed. [src: L0-adr-strc; L0-infr-p006; L0-infr-as03]
-
-
-- **node**: L0-infr-ac10
-
-### Infr ac11 concept acceptance criterion (L0-infr-ac11)
-
-**Links:** `part_of: ["L0-infr"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-infr-p007", "L0-infr-as04"]`
-
-GIVEN a `gametest` world where at least one structure has completed one-time init, WHEN the BDS server process is restarted without re-staging the world, THEN no chest/spawner/guard/marker is duplicated and the instance registry's `placed`/`lootFilled`/`guardsSpawned` flags are byte-identical before and after the restart. [src: L0-adr-strs; C-7; L0-infr-p007; L0-infr-as04]
-
-
-- **node**: L0-infr-ac11
-
-### Infr g001 concept glossary term (L0-infr-g001)
-
-**BDS (Bedrock Dedicated Server)**
-
-**Links:** `part_of: ["L0-infr"]` · `is_a: ["glossary-term"]`
-
-The official headless Minecraft Bedrock server binary. Ships Linux x86_64 only — no native macOS build — so on the Mac mini (Apple Silicon) it runs inside Docker under Rosetta 2, via the `itzg/minecraft-bedrock-server` image [C-5]. Two roles in this project: the one-shot automated check (`bds:check`) and the manual LAN dev server the iPad joins (`bds:up`).
-
-**Synonyms**: Bedrock Dedicated Server, "the server", the `bds` verification channel.
-
-
-- **node**: L0-infr-g001
-
-### Infr g002 concept glossary term (L0-infr-g002)
-
-**.mcaddon**
-
-**Links:** `part_of: ["L0-infr"]` · `is_a: ["glossary-term"]`
-
-A zip archive containing one or more Minecraft Bedrock behavior/resource packs — Minecraft's native add-on import format. This project's build produces exactly one, `dist/andrew.mcaddon`, containing only the `behavior` and `resource` pack directories (never the dev-only `selftest`/`gametest` packs). Importing it on the iPad installs both packs; re-importing the same uuid+version is a no-op from the device's point of view.
-
-
-- **node**: L0-infr-g002
-
-### Infr g003 concept glossary term (L0-infr-g003)
-
-**SimulatedPlayer / GameTest harness**
-
-**Links:** `part_of: ["L0-infr"]` · `is_a: ["glossary-term"]`
-
-`@minecraft/server-gametest`'s API for scripting an artificial player inside a running Bedrock world — movement, mining, item use — without a real client. Beta-only (no stable channel), so it's confined to a dev-only pack (`packs/gametest`) and a dedicated, experiments-enabled world (`LEVEL_NAME=gametest`), driven here by `npm run bds:gametest`. Used both for single-player scripted-behavior proof and, per `decision-q-012`, as the accepted stand-in for multiplayer proof (two `SimulatedPlayer`s instead of two physical devices).
-
-
-- **node**: L0-infr-g003
-
-### Infr g004 concept glossary term (L0-infr-g004)
-
-**Content Log (GUI)**
-
-**Links:** `part_of: ["L0-infr"]` · `is_a: ["glossary-term"]`
-
-An in-game overlay on the iPad (Settings → Creator → Content Log) that streams script/engine diagnostics live, in white text on a translucent background, while playing. The device-side counterpart to reading `docker logs`/`bds-check.log` on the Mac — used for debugging import and script errors that only show up once the pack is actually running on the target hardware.
-
-
-- **node**: L0-infr-g004
-
-### Infr g005 concept glossary term (L0-infr-g005)
-
-**"Pack Stack" line**
-
-**Links:** `part_of: ["L0-infr"]` · `is_a: ["glossary-term"]`
-
-A specific line BDS prints to its log at world load, naming each loaded behavior pack and its uuid. `bds-check.mjs`'s log analysis treats its presence (for the release and selftest pack uuids) as positive proof those packs were actually loaded by the engine — resource packs get no such line, so their loading is proven negatively instead (absence of a "Configured pack … was not found and was ignored" warning for that uuid).
-
-
-- **node**: L0-infr-g005
-
-### Infr g006 concept glossary term (L0-infr-g006)
-
-**`.mcstructure` template**
-
-**Links:** `part_of: ["L0-infr"]` · `is_a: ["glossary-term"]`
-
-A little-endian NBT file format Bedrock uses for `structureManager.place()`/structure blocks. This project's four structure bodies (Windmill, Airship, Mini Warden City, Mini Bastion) ship as one file each, generated by `scripts/build-structures.mjs` from repo sources rather than exported from an in-game structure block (no Windows editor, no macOS Bedrock client). Lives at `packs/behavior/structures/andrew/*.mcstructure`, gitignored build output — see `L0-infr-e005`.
-
-
-- **node**: L0-infr-g006
-
-### Infr g007 concept glossary term (L0-infr-g007)
-
-**worldSalt**
-
-**Links:** `part_of: ["L0-infr"]` · `is_a: ["glossary-term"]`
-
-A random value created once per world and stored in a world dynamic property, used as the seed for `strf`'s deterministic per-chunk roll (`hash(worldSalt, dim, cx, cz, structureId) < chance`, `L0-adr-strc`). Makes re-evaluating an already-seen chunk idempotent — the same chunk always rolls the same outcome — so a lost "evaluated" bit can't double-generate a structure. Owned by `L0-strf`; infra's statistical chunk-roll check (`L0-infr-p006`) exercises it but does not generate or store it itself.
-
-
-- **node**: L0-infr-g007
-
-### Infr g008 concept glossary term (L0-infr-g008)
-
-**Chunk-roll statistical check**
-
-**Links:** `part_of: ["L0-infr"]` · `is_a: ["glossary-term"]`
-
-An infra-owned GameTest-lane check that drives `strf`'s roll formula over many synthetic chunk coordinates and asserts the observed generation rate matches the configured per-structure constant (1 % Windmill / 2 % Airship / 5 % Warden City & Bastion) within a tolerance band, because the real rate can't be observed by exploring a normal-sized test world. See `L0-infr-p006`, `L0-infr-r006`.
-
-**Synonyms**: statistical chunk-roll test, rate check.
-
-
-- **node**: L0-infr-g008
-
-### Infr g009 concept glossary term (L0-infr-g009)
-
-**Restart/idempotency check**
-
-**Links:** `part_of: ["L0-infr"]` · `is_a: ["glossary-term"]`
-
-An infra-owned BDS check that restarts the server process mid-lifetime (same world, not a fresh re-stage) and diffs structure-instance state before/after to prove one-time init (loot fill, guard spawn, marker placement) never re-runs — the engine-provable half of the project's no-duplication constraint (C-7). See `L0-infr-p007`.
-
-
-- **node**: L0-infr-g009
+- **node**: L0-katn-gl05
 
 ### Lgnd ac01 concept acceptance criterion (L0-lgnd-ac01)
 
@@ -1061,6 +753,61 @@ Variant: the same after `/andrew:ufo stop` mid-hold, and after a server restart 
 
 - **node**: L0-lgnd-ac22
 
+### Lgnd ac23 concept acceptance criterion (L0-lgnd-ac23)
+
+---
+is_a: ["acceptance-criterion"]
+part_of: ["L0-lgnd"]
+relates_to: ["L0-lgnd-ad14", "L0-lgnd-ac02", "L0-lgnd-ac15", "L0-lgnd-ac17", "L0-lgnd-ac21", "L0-katn"]
+see_also: ["dragonkatanaspecv1ruen-part-3"]
+---
+**AC-lgnd-23: The Dragon Katana is def #4, with its own craft budget (Katana T01–T03, framework side).** Channel: `build` + `bds`.
+
+**Build.**
+- `tests/legendary-registry.test.mjs` asserts `keysFor(DRAGON_KATANA).crafted === "andrew:dk_crafted"` and the other `dk_*` keys.
+- The uniqueness test covers `itemId`, `keyPrefix`, `abilityKey`, `command`, **`craftTokenId` and `textPrefix`** over all four defs.
+- `isLegendaryStack` is true for `andrew:dragon_katana` and `andrew:dragon_katana_crafted`, and false for `minecraft:diamond_sword`.
+
+**BDS.** GIVEN the Web Sword, Scythe and Cannon flags are set and `andrew:dk_crafted` is unset
+WHEN Survival player A crafts the Katana (the token reaches the inventory)
+THEN exactly one broadcast names A and the localized "Dragon Katana",
+AND A holds a marked `andrew:dragon_katana` with origin `craft`,
+AND `dk_crafted` is set.
+
+AND after a restart, player B's Survival craft is refunded with exactly 2 golden apples, 2 ender pearls and 1 diamond sword, with `andrew.katana.craft_blocked` and no broadcast.
+
+AND `/give B andrew:dragon_katana` and a Creative copy leave the flag unchanged.
+AND `/andrew:katana reset` clears only `dk_crafted`.
+AND the other three flags never change.
+AND the UFO `ufo:legendary_*` "never pulled" test passes with an added Katana stack, with no edit to `magn`.
+
+
+- **node**: L0-lgnd-ac23
+
+### Lgnd ac24 concept acceptance criterion (L0-lgnd-ac24)
+
+---
+is_a: ["acceptance-criterion"]
+part_of: ["L0-lgnd"]
+relates_to: ["L0-lgnd-r017", "L0-lgnd-ac07", "L0-lgnd-ac08", "L0-lgnd-ac09", "L0-lgnd-ac19", "L0-xcx21", "L0-xasm22", "L0-xcx11", "L0-katn"]
+see_also: ["dragonkatanaspecv1ruen-part-3"]
+---
+**AC-lgnd-24: Katana T16–T18 under C-16, and a teleport trips no recovery.** Channel: `bds` (GameTests `legendary_katana_*`, run with the shipped scenarios parameterised by def).
+
+- **T16.** P has a marked Katana in the hotbar and dies (also in lava, after a teleport). THEN on respawn P holds the same id and gen, and no item entity remains.
+- **T17, prevent.** A marked Katana item entity:
+  - in fire, or in lava, is still there after 10 s, with the same id and gen;
+  - in a chest in an Orbital LMB column, and on the ground in an RMB blast and ring AABB, ends up outside the volume with the same id and gen, and no `returned` message.
+- **T17, return (C-16, `L0-xcx21`).** A marked Katana entity on cactus, or hit by primed vanilla TNT: afterwards exactly one live Katana exists, either in the owner's inventory with `gen + 1` and `andrew.katana.returned`, or in `dk_owed` if the owner is offline.
+- **T18.** A Katana dropped into the Void, or inside a chest minecart that falls into the Void, returns to **`mark.owner`** exactly once. The clause "to the last holder" waits for `L0-xcx11`.
+- **Teleport (`r017`).** GIVEN a marked Katana on the ground near P, and P holding a second def's marked stack
+  WHEN P activates the Katana 20 blocks away 3 times, then walks until the ground item's chunk unloads and returns
+  THEN no `lost`/`returned` log line appears, both gens are unchanged, `dk_owed` is empty and the ground Katana is watched again.
+- **Same dimension.** A Katana teleport whose ray reaches the edge of a loaded area stops before the unloaded cell, and the player's `dimension.id` before and after is equal.
+
+
+- **node**: L0-lgnd-ac24
+
 ### Lgnd gl01 concept glossary term (L0-lgnd-gl01)
 
 **Legendary weapon** (легендарное оружие)
@@ -1289,158 +1036,37 @@ relates_to: ["L0-lgnd-p008", "L0-lgnd-as15", "L0-lgnd-cx13"]
 
 - **node**: L0-lgnd-gl15
 
-### Loot ac01 concept acceptance criterion (L0-loot-ac01)
+### Lgnd gl16 concept glossary term (L0-lgnd-gl16)
 
-GIVEN a Windmill or Airship chest is initialized, WHEN the fill algorithm runs, THEN it performs between 5 and 12 fill attempts inclusive, and each individual attempt yields at most one loot category (never zero-or-more-than-one simultaneous categories from a single attempt).
+**Void holder**
 
-Source: spec AC34.
+An **entity** with an inventory that the engine removes below the dimension floor with no death event and no spill, so its contents never become item entities. As of 1.4.4, `VOID_HOLDER_TYPES` = `minecraft:chest_minecart` and `minecraft:hopper_minecart` (`recovery.ts:135`). Recovery reads their containers in `beforeEvents.entityRemove`. The armour stand is a Void holder that is **not** covered (`cx14`).
 
+**Not the same as:** `HOLDER_TYPES`, the **block** containers that `protectLegendariesIn` empties before a script removes them.
 
-- **node**: L0-loot-ac01
 
-### Loot ac02 concept acceptance criterion (L0-loot-ac02)
+- **node**: L0-lgnd-gl16
 
-GIVEN repeated custom-table fills across many chests, WHEN Sticks/Logs/Iron Ingot/Copper Ingot/Gold Ingot/Diamond categories are selected, THEN their quantities fall within 2–8 / 2–6 / 2–8 / 3–10 / 1–5 / 1–3 respectively, on every occurrence.
+### Lgnd gl17 concept glossary term (L0-lgnd-gl17)
 
-Source: spec AC35.
+**Wielder teleport**
 
+An ability that moves the **player** holding the legendary, rather than a target or the world. The Dragon Katana is the first. It always stays in the player's own dimension and edits no block. To the framework it is invisible: a wielder teleport is not a loss event (`r017`), because the stacks travel inside the player's inventory.
 
-- **node**: L0-loot-ac02
+**Synonyms:** self-teleport, Katana blink.
 
-### Loot ac03 concept acceptance criterion (L0-loot-ac03)
 
-GIVEN a statistically sufficient sample of equipment-category rolls (armor, sword, axe; enchanted and unenchanted) across many chests, WHEN material is rolled, THEN iron appears in ~80% and diamond in ~20% of rolls (no exact-match requirement on small samples — statistical tolerance, not a per-roll assertion).
+- **node**: L0-lgnd-gl17
 
-Source: spec AC36.
+### Lgnd gl18 concept glossary term (L0-lgnd-gl18)
 
+**`hudKeys` / uniqueness flag**
 
-- **node**: L0-loot-ac03
+- **`hudKeys`.** An optional `LegendaryDef` field that names the weapon's own Action Bar lang keys (`ready`, `cooldown`). They take the same arguments as the shared `andrew.legendary.ready|cooldown` (`%s: Ready` / `%s: %s s`). A def uses them when its spec asks for a different string shape: the Orbital Cannon, and the Katana with "Dragon Katana — Ready".
+- **Uniqueness flag (craft flag).** The world dynamic property `andrew:<keyPrefix>_crafted`: `ws`, `sc`, `oc`, and `dk` for the Katana. It is set by the one legal Survival craft, and it persists across restarts. Only `/andrew:<cmd> reset` clears it.
 
-### Loot ac04 concept acceptance criterion (L0-loot-ac04)
+**Synonyms:** Survival craft flag, `crafted` key.
 
-GIVEN multiple armor-category attempts succeed in the same chest, WHEN slots are rolled, THEN identical armor pieces (e.g. two diamond helmets) are permitted to co-occur in one chest — the implementation must not de-duplicate or reject repeats.
 
-Source: spec AC37.
-
-
-- **node**: L0-loot-ac04
-
-### Loot ac05 concept acceptance criterion (L0-loot-ac05)
-
-GIVEN any Enchanted Armor/Sword/Axe roll from the custom table, WHEN its enchantments are inspected, THEN none of them is a curse (Curse of Binding, Curse of Vanishing), and every enchantment level present is within that enchantment's vanilla maximum.
-
-Source: spec AC38, §3.3.
-
-
-- **node**: L0-loot-ac05
-
-### Loot ac06 concept acceptance criterion (L0-loot-ac06)
-
-GIVEN a full custom-table chest fill (5–12 attempts), WHEN the resulting contents are inspected, THEN at most one Golden Apple stack exists, its quantity is 1–3, it is always a regular (never Enchanted) Golden Apple, and Enchanted Golden Apple never appears via the custom table.
-
-Source: spec AC39, §3.3.
-
-
-- **node**: L0-loot-ac06
-
-### Loot ac07 concept acceptance criterion (L0-loot-ac07)
-
-GIVEN a chest where Diamonds is selected on more than one attempt, WHEN contents are inspected, THEN multiple Diamond stacks/successes are permitted in the same chest (unlike Golden Apple).
-
-Source: spec AC40.
-
-
-- **node**: L0-loot-ac07
-
-### Loot ac08 concept acceptance criterion (L0-loot-ac08)
-
-GIVEN any structure chest (custom or vanilla path) whose contents have already been rolled, WHEN the chest is reopened, the chunk is unloaded/reloaded, or the server restarts, THEN its contents are unchanged — no re-roll, no refill.
-
-Source: spec §2, §3 preamble, §13.6/§13.7, §15.
-
-
-- **node**: L0-loot-ac08
-
-### Loot ac09 concept acceptance criterion (L0-loot-ac09)
-
-GIVEN Mini Warden City's 40 chests, WHEN their contents are inspected, THEN all 40 use the real vanilla `chests/ancient_city` loot table unmodified — including the normal possibility of rare vanilla drops such as Enchanted Golden Apple or Swift Sneak books — and the custom weighted table is never applied to them.
-
-Source: spec §13.6, AC48.
-
-
-- **node**: L0-loot-ac09
-
-### Loot ac10 concept acceptance criterion (L0-loot-ac10)
-
-GIVEN Mini Bastion's 10 chests, WHEN their contents are inspected, THEN the 3 central treasure chests draw from vanilla `chests/bastion_treasure` and the 7 distributed chests draw from vanilla `chests/bastion_other`, with no custom-table influence on either.
-
-Source: spec §14 addendum, AC55 (loot portion — chest counts/gold blocks/guards belong to `L0-bast`, not this component).
-
-
-- **node**: L0-loot-ac10
-
-### Loot gl01 concept glossary term (L0-loot-gl01)
-
-**Fill Attempt**
-
-One draw within a chest's 5–12-attempt custom fill run. Selects at most one of the 13 loot categories by relative weight, or none. Distinct from a vanilla loot-table roll, which has no attempt concept — it's a single opaque call into vanilla loot generation.
-
-**Synonyms:** attempt, roll.
-
-
-- **node**: L0-loot-gl01
-
-### Loot gl02 concept glossary term (L0-loot-gl02)
-
-**Relative Weight**
-
-The unit used in the 13-category table (`L0-loot-e001`). Weights are compared to each other, not to a 0–100 percentage scale — the table's weights intentionally do not sum to 100 and must be normalized at selection time (e.g. a cumulative-weight roll). Not to be confused with "drop chance" in vanilla loot tables, which is a true probability.
-
-
-- **node**: L0-loot-gl02
-
-### Loot gl03 concept glossary term (L0-loot-gl03)
-
-**Custom Table / Vanilla Table**
-
-**Custom Table** — this add-on's own 13-category weighted loot table (`L0-loot-p001`), used only for Windmill and Airship chests.
-
-**Vanilla Table** — an unmodified vanilla Bedrock loot table (`chests/ancient_city`, `chests/bastion_treasure`, `chests/bastion_other`), used only for Mini Warden City and Mini Bastion chests (`L0-loot-p002`). The two are mutually exclusive per chest (`L0-loot-r007`).
-
-
-- **node**: L0-loot-gl03
-
-### Loot gl04 concept glossary term (L0-loot-gl04)
-
-**Curse (enchantment)**
-
-A vanilla enchantment category (Curse of Binding, Curse of Vanishing) explicitly excluded from every custom-table enchanted roll (`L0-loot-r005`). Not excluded from vanilla-table chests, where normal vanilla curse odds apply unmodified.
-
-
-- **node**: L0-loot-gl04
-
-### Loot gl05 concept glossary term (L0-loot-gl05)
-
-**One-Time Fill**
-
-The persistence contract shared by both loot mechanisms (`L0-loot-r006`): a chest's contents are decided exactly once, at structure post-place init, and frozen thereafter regardless of reopen/restart/chunk reload. Enforced by `strf`'s instance registry, not by loot itself.
-
-
-- **node**: L0-loot-gl05
-
-### Magn a04 concept acceptance criterion (L0-magn-a04)
-
-**UFO AC-4 (bds).**
-- **GIVEN** two Survival players in the zone, A with `iron_ingot` in the main hand and B with `shears` in the off hand (`allow_off_hand` via `/replaceitem`),
-- **WHEN** the magnet turns on,
-- **THEN**:
-  - both rise at ≤ 0.6 blocks per tick (per-tick displacement measured);
-  - within (hover depth / 0.6 + 20) ticks, both are within 0.5 blocks of saucer − (0, 6, 0);
-  - both stay within 0.5 blocks of it until release.
-- An Adventure player behaves the same (`L0-xasm14`).
-
-The iPad check that the lift looks smooth is in `L0-magn-aipd`.
-
-
-- **node**: L0-magn-a04
+- **node**: L0-lgnd-gl18
 

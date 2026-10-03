@@ -2,59 +2,61 @@
 type: "concept-architecture-decision"
 node_id: "L0-lgnd-ad12"
 source_channel: "rollout"
-analysis_version: 5
-title: "AD-lgnd-12: As-built v1.4.x framework shape (recorded from code, 2026-10-02; supersedes parts of ad09/ad10)"
+analysis_version: 6
+title: "AD-lgnd-12: As-built framework shape up to 1.4.4 (recorded from code 2026-10-03; supersedes parts of ad09/ad10)"
 aliases: ["L0-lgnd-ad12"]
 is_a: ["architecture-decision"]
 part_of: ["L0-lgnd"]
 relates_to: ["L0-lgnd"]
-priority: 580
-size_chars: 3665
-tags: ["as-built", "v1.4.x", "reconciliation"]
+priority: 600
+size_chars: 2800
+tags: ["v6", "as-built", "as-built-1.4.4"]
 level: 2
 ---
 ---
 is_a: ["architecture-decision"]
 part_of: ["L0-lgnd"]
-relates_to: ["L0-lgnd-ad07", "L0-lgnd-ad08", "L0-lgnd-ad09", "L0-lgnd-ad10", "L0-lgnd-ad11", "L0-xcx9", "L0-xcx10", "L0-xcx11", "L0-lgnd-cx09", "L0-lgnd-cx10", "L0-lgnd-cx11"]
+relates_to: ["L0-lgnd-ad07", "L0-lgnd-ad08", "L0-lgnd-ad09", "L0-lgnd-ad10", "L0-lgnd-ad11", "L0-lgnd-ad13", "L0-xcx9", "L0-xcx10", "L0-xcx11", "L0-lgnd-cx09", "L0-lgnd-cx11", "L0-lgnd-cx14"]
 ---
-# AD-lgnd-12: As-built v1.4.x framework shape (recorded from code, 2026-10-02; supersedes parts of ad09/ad10)
+# AD-lgnd-12: As-built framework shape up to 1.4.4 (recorded from code 2026-10-03; supersedes parts of ad09/ad10)
 
-**Context.** Since `ad07`, the `src/legendary/` commits are:
-- `3dfcc84` GEN-01
-- `26784ba` FIREPROOF-01
-- `9fc3d34` CRAFTGATE-01
-- `b71f826` OFFHAND-01
-- `8ffe8fd` PROTECT-01
-- `f7488d6` RETAIN-01
-- `f77976c` DELTA-01
-- `160efc8` ORBC-ITEM-01
-- `5a68b84`, the v1.4.2 fix "a legendary destroyed in the tick it appeared is no longer lost"
-- `d600743`, the drop-swing quickfix
-
-This record states what is true in code, so planners stop reading v3 "not started" text.
+**Context.** The `src/legendary/` commits are:
+- GEN-01 `3dfcc84`
+- FIREPROOF-01 `26784ba`
+- CRAFTGATE-01 `9fc3d34`
+- OFFHAND-01 `b71f826`
+- PROTECT-01 `8ffe8fd`
+- RETAIN-01 `f7488d6`
+- DELTA-01 `f77976c`
+- ORBC-ITEM-01 `160efc8`
+- the same-tick-loss fix `5a68b84`
+- the drop-swing quickfix `d600743`
+- the UFO `isLegendaryStack`
+- **1.4.4:** the Void-minecart holder return (`2c1a383` tests, `83b9ffd` fix, merge `0a9d2b5`)
 
 ## Shipped (verified in code)
-| v3 item | As built |
+| Item | As built |
 |---|---|
-| gen guard | `bumpGen`/`ledgerGen`/`isLive`/`isStale` (`state.ts:71-96`); stale stacks voided in inventory and off hand (`retention.ts:126-163`) |
-| owed list | `OwedLedger` with `withOwed`/`withoutOwed` (`rules.ts:176-228`) |
-| off-hand read | `offhandOf`/`setOffhand` (`state.ts:166-188`); all three item JSONs declare `minecraft:allow_off_hand` |
-| pending list | `parsePending`/`withPending` (`rules.ts:128-158`); every marked copy is retained (RETAIN-01) |
-| craft tokens | `defForToken`, `tokenDecision` (`registry.ts:98`, `rules.ts:65`) |
-| third def | `ORBITAL_CANNON` in `LEGENDARIES` (`registry.ts:70-87`) |
-| prevent tier | `protectLegendariesIn(dimension, volume, {avoid, reason}) → {moved, handedBack}` (`recovery.ts:550`), over `HOLDER_TYPES` **blocks** plus ground items; frames broken open with `setblock … destroy` |
-| ring drop-suppression exemption | `isLegendaryItemEntity(entity)` (`recovery.ts:636`), for live marked `minecraft:item` only |
-| fire/lava | **prevented, not returned**: `minecraft:fire_resistant` on all three items (FIREPROOF-01; GameTests `legendary_survives_fire`/`_lava`). Return tier 3 now covers only cactus, vanilla TNT, despawn and the Void. |
-| same-tick loss | **Departure tracking** (`inFlight`, `recovery.ts:106-320`): an instance that leaves a player's slot right after a drop swing (±2 ticks) is resolved after a grace period. The search covers watched entities, every player's inventory and off hand, and **block** containers in a box around the departure cell. If it is found nowhere, it is lost and returned. A departure with no swing is never a loss (a shulker item or ender chest store). |
+| gen guard | `bumpGen`/`isLive`/`isStale` (`state.ts`); stale stacks are voided in the inventory and the off hand |
+| owed and pending lists | `OwedLedger`, `parsePending`/`withPending` (`rules.ts`) |
+| off hand | `heldLegendaries` reads both hands (`hands.ts:18`); every item JSON has `allow_off_hand` |
+| hand priority | `resolveActivation(player)` (`hands.ts:35`): main if ready and not busy, else off. **No `mode`.** |
+| craft tokens | `defForToken` (`registry.ts`), with the gate in `craftgate.ts` |
+| type predicate | `isLegendaryStack` over `LEGENDARY_TYPE_IDS`, which is built from `LEGENDARIES` |
+| prevent tier | `protectLegendariesIn` (`recovery.ts:587`) over the `HOLDER_TYPES` blocks plus ground items |
+| fire and lava | prevented by `fire_resistant` |
+| same-tick loss | departure tracking (`inFlight`); it opens only after a `DropItem` swing |
+| Void holder | `VOID_HOLDER_TYPES` = `chest_minecart`, `hopper_minecart` (`recovery.ts:135`). `beforeEvents.entityRemove` below the floor collects the live marks, and `system.run` calls `lost()` for each |
+| chunk unload | a watched entity whose chunk is unloaded is re-watched via `entityLoad`, not lost (`recovery.ts:326`) |
 
-## NOT as designed
-1. **No `holder`.** Neither `state.ts` nor `rules.ts` has a holder field. `lost()` and the protect hand-back target `mark.owner` (`recovery.ts:440`, `:748`), and owed is keyed by owner. `ad11`, `ac18` and the holder clauses of `ac01`/`ac08`/`ac09` are **unbuilt**. `L0-xcx11` stays open.
-2. **No `mode` on the resolver.** `resolveActivation(player)` (`hands.ts:35`) is Use-priority only. The Cannon applies "LMB is main-hand only" itself (`orbital/activation.ts:123-126`), and stops a second activation in the same tick with a per-player `lastActivationTick` latch (`:129`). That supersedes `ad09` items 1, 2 and 5, and it is the latch `ad09` rejected (c). Priority still has one owner, `hands.ts`. `ac16`'s `resolveActivation(P, "attack")` reads as `activate(P, "lmb")`.
-3. `isLegendaryItemEntity` is mark-based, and there is **no stack-level predicate**. `ad13` adds one.
+## NOT as designed (still true)
+1. **No `holder`.** `lost()` returns to `w.mark.owner` (`recovery.ts:477`). The protect hand-back and the owed list use `mark.owner` (`:785-787`). `ad11`, `ac18` and the holder clauses of `ac01`/`ac08`/`ac09` are unbuilt, and `L0-xcx11` stays open.
+2. **No `mode` on the resolver.** The Cannon's LMB rule and its per-player same-tick latch stay in `orbital/activation.ts`. This supersedes `ad09` items 1, 2 and 5. The Katana does not need `mode`: it is Use only.
+3. **Armour stand in the Void** is not covered (`cx14`).
 
-**Rejected.** Rewriting the v3 artifacts as if they were built. That hides the unbuilt holder from the planners.
+**Rejected.** Rewriting `ad09`/`ad11` as if built.
 
 **Consequence.**
-- `L0-xcx9` and `L0-xcx10` close against code and GameTests.
-- `L0-xcx11` narrows to the target field only (`cx11`).
+- `L0-xcx9` and `L0-xcx10` are closed.
+- `L0-xcx11` is narrowed to the target field.
+- A minecart Void loss is now in tier 3 (return).

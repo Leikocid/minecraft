@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-lgnd-ad13"
 source_channel: "rollout"
-analysis_version: 5
+analysis_version: 6
 title: "AD-lgnd-13: `isLegendaryStack(stack)` is type-based, and a magnet block pull of a holder goes through `protectLegendariesIn`"
 aliases: ["L0-lgnd-ad13"]
 is_a: ["architecture-decision"]

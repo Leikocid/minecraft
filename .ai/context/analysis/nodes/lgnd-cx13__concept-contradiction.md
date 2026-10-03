@@ -2,7 +2,7 @@
 type: "concept-contradiction"
 node_id: "L0-lgnd-cx13"
 source_channel: "rollout"
-analysis_version: 5
+analysis_version: 6
 title: "CX-lgnd-13 · UFO \\"a pulled block becomes air and exactly one item, nothing else drops\\" vs a hopper block's contents"
 aliases: ["L0-lgnd-cx13"]
 is_a: ["contradiction"]

@@ -2,7 +2,7 @@
 type: "concept-process"
 node_id: "L0-lgnd-p009"
 source_channel: "rollout"
-analysis_version: 5
+analysis_version: 6
 title: "P-lgnd-009: Attack (LMB) activation path"
 aliases: ["L0-lgnd-p009"]
 is_a: ["process"]

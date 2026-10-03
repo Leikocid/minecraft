@@ -2,17 +2,16 @@
 type: "concept-intent"
 node_id: "L0"
 source_channel: "rollout"
-analysis_version: 4
+analysis_version: 6
+level: 0
 title: "Project Intent"
 aliases: ["L0"]
 is_a: ["intent"]
 part_of: ["L0"]
 relates_to: ["L0"]
-priority: 580
-size_chars: 2321
-tags: ["v4", "title:Project Intent", "alias:L0-intent", "is_a:intent", "relates_to:L0", "see_also:ufomagnetspecv1ruen-part-1", "see_also:ufomagnetspecv1ruen-part-4", "supersedes:L0-intent@v3"]
-level: 0
-needs_rebuild_marked_at: 2026-10-02T19:13:14.954Z
+priority: 600
+size_chars: 2535
+tags: ["v6", "title:Project Intent", "alias:L0-intent", "is_a:intent", "relates_to:L0", "see_also:dragonkatanaspecv1ruen-part-1", "see_also:dragonkatanaspecv1ruen-part-3", "supersedes:L0-intent@v4"]
 ---
 ---
 title: "Project Intent"
@@ -20,26 +19,22 @@ aliases: ["L0-intent", "Intent"]
 is_a: ["intent"]
 part_of: ["L0"]
 relates_to: ["L0"]
-see_also: ["ufomagnetspecv1ruen-part-1", "ufomagnetspecv1ruen-part-4", "orbitalcannonspecv1ruen-part-1", "webswordspecv1ruen-part-1", "scytheofcalamityspecv1ruen-part-1", "fourstructuresspecruencopy-part-1"]
-supersedes: ["L0-intent@v3"]
+see_also: ["dragonkatanaspecv1ruen-part-1", "dragonkatanaspecv1ruen-part-3", "ufomagnetspecv1ruen-part-1", "orbitalcannonspecv1ruen-part-1", "webswordspecv1ruen-part-1", "scytheofcalamityspecv1ruen-part-1", "fourstructuresspecruencopy-part-1"]
+supersedes: ["L0-intent@v4"]
 ---
 # Project Intent
 
-1. **Weapons.** A PvP add-on for Minecraft Bedrock on iPad with a growing set of *legendary* weapons. Each one is unique per world, survives death, is protected from destruction and has a server-side ability on a cooldown. Shipped: Web Sword, Scythe of Calamity and Orbital Cannon (v1.4.4).
+1. **Weapons.** A PvP add-on for Minecraft Bedrock on iPad with a growing set of *legendary* weapons. Each one is unique per world, survives death, is protected from destruction and has a server-side ability on a cooldown.
+   - Shipped: Web Sword, Scythe of Calamity, Orbital Cannon (v1.4.4).
+   - **New in v6: the Dragon Katana.** It is the first *mobility* legendary. The weapon itself stays an ordinary Diamond Sword, and the ability moves its wielder up to 20 blocks along the view, never through a wall (Katana §1, §13). It gives PvP an engage/escape tool on a 30 s rhythm that matches the other legendaries.
 2. **World content.** Four custom structures make the world worth exploring (shipped v1.2.0).
-3. **World events (new in v4).** Recurring server-wide events give the world a rhythm and give players a reason to interact. The first is the **UFO Magnet** (UFO §1):
-   - It punishes carrying iron in the open: you lose items, or fall to your death.
-   - It gives the Orbital Cannon a target worth a reward: 8 diamonds and a totem.
-
-   Events are tied into the weapon family on purpose. Weapon changes must keep the saucer shootable (`L0-adr-ufoi`).
-4. **Portability.** Both the Orbital and UFO specs call themselves *standalone* modules for "the PvP add-on". In this repo that add-on already exists. Each spec is read as a self-contained source module (`src/orbital/`, `src/ufo/`) plugged into the shared frameworks and testable through the gametest pack (`L0-xasm9`, `L0-adr-ufom`).
-5. **Reliability first.** Orbital §16 and UFO §15 give the same ranking (C-15):
-   1. no duplication or world corruption;
-   2. correct gameplay;
-   3. multiplayer;
-   4. visual fidelity.
-6. **Stable APIs, measured facts, documented compromises.**
-   - No Experiments or Preview.
-   - The UFO spec is the first one written *after* engine probes (U1–U11), so its mechanics are measured rather than hoped for. The project keeps this practice: probe first, then specify.
-   - Where stable Bedrock cannot express a rule exactly, implement the closest equivalent and write the compromise next to the code (C-16).
-7. **Delivery.** Each feature is developed, tested with ≥2 players where multiplayer matters, accepted on BDS and then on the iPad, and only then is the next one started.
+3. **World events.** Recurring server-wide events give the world a rhythm. The UFO Magnet is shipped (stage 6). It is tied into the weapon family on purpose: the Orbital Cannon shoots it down, and legendaries are never pulled.
+4. **One framework, many weapons.** Each weapon spec repeats the same "global legendary rules". The project implements them once (`lgnd`), and each new weapon is a definition plus its ability. Katana §13 asks to "preserve all global legendary-item rules". The project reads that as "register with the framework", not "re-implement".
+5. **Reliability first** (C-15): no duplication or world corruption, then correct gameplay, then multiplayer, then visuals. Katana §14 agrees:
+   1. server-authoritative range;
+   2. never phase through solids;
+   3. persistent uniqueness and protection;
+   4. cheap particles;
+   5. synchronisation and UI.
+6. **Stable APIs, measured facts, documented compromises.** There are no Experiments. Where stable Bedrock cannot express a rule exactly, the closest stable equivalent is implemented and the deviation is documented next to the code (C-16; Katana §13 says the same). Engine behaviour is probed before it is relied on. This applies to the Katana's fall protection (`L0-adr-ktfl`).
+7. **Delivery.** Each feature is developed, tested with ≥ 2 players where multiplayer matters, accepted on BDS and then on the iPad, and only then is the next one started.

@@ -2,7 +2,7 @@
 type: "concept-entity"
 node_id: "L0-lgnd-ent1"
 source_channel: "rollout"
-analysis_version: 5
+analysis_version: 6
 title: "LegendaryDef (static registry entry, `src/legendary/registry.ts`)"
 aliases: ["L0-lgnd-ent1"]
 is_a: ["entity"]

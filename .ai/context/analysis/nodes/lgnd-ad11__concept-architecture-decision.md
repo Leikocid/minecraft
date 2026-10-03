@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-lgnd-ad11"
 source_channel: "rollout"
-analysis_version: 5
+analysis_version: 6
 title: "AD-lgnd-11: `holder` is stamped on the stack at inventory events; return target is `holder ?? owner`"
 aliases: ["L0-lgnd-ad11"]
 is_a: ["architecture-decision"]

@@ -2,7 +2,7 @@
 type: "concept-contradiction"
 node_id: "L0-lgnd-cx05"
 source_channel: "rollout"
-analysis_version: 5
+analysis_version: 6
 title: "CTR-lgnd-05: ADR-021 renames the operator command, but the shipped command is documented"
 aliases: ["L0-lgnd-cx05"]
 is_a: ["contradiction"]

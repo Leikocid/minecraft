@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-lgnd-ad05"
 source_channel: "rollout"
-analysis_version: 5
+analysis_version: 6
 title: "AD-lgnd-05: Busy is memory-only; cooldown deadlines are durable"
 aliases: ["L0-lgnd-ad05"]
 is_a: ["architecture-decision"]

@@ -2,7 +2,7 @@
 type: "concept-contradiction"
 node_id: "L0-lgnd-cx04"
 source_channel: "rollout"
-analysis_version: 5
+analysis_version: 6
 title: "CTR-lgnd-04: ADR-021 says existing tests stay unchanged, but the framework itself requires Web Sword changes"
 aliases: ["L0-lgnd-cx04"]
 is_a: ["contradiction"]
