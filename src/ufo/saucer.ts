@@ -1,11 +1,26 @@
 // The UFO saucer (L0-sauc): the `andrew:ufo_saucer` entity flown along the UFO
 // §2 path by one teleport per UFO tick (L0-sauc-ad02), the beam property the
-// client draws the beam bone by (ad01), and the §7 sounds. The model, its spin
-// and the beam's look live in the resource pack; the script never rotates it.
+// client draws the beam bone by (ad01), the §7 sounds, and — when its host
+// carries the Orbital seam — the §8 shoot-down (p002, shootdown.ts). The model,
+// its spin and the beam's look live in the resource pack; the script never
+// rotates it.
 
 import type { Dimension, Entity, Vector3 } from "@minecraft/server";
-import type { UfoDurations } from "./env";
+import type { Interceptor } from "../orbital/flight";
+import { OVERWORLD, type UfoDurations } from "./env";
 import { EVENT_TAG, type Phase, type PhasePayload, SAUCER_ID, type Saucer, UFO_TAG } from "./event";
+import {
+  BLAST_PARTICLE,
+  SMOKE_PARTICLE,
+  type ShootdownHost,
+  type ShotRecord,
+  fallStep,
+  hullHit,
+  landingCell,
+  rewardAndBroadcast,
+  shooterName,
+  smokePoints,
+} from "./shootdown";
 
 /** UFO §2: horizontal blocks from the centre at spawn and at removal. */
 export const APPROACH_DISTANCE = 90;
@@ -22,7 +37,7 @@ export const BEAM_LEN_MAX = 64;
 export const HUM_TICKS = 40;
 /** AS-sauc-2: Bedrock attenuates over about 16 × volume blocks, so 4 reaches the ground 40 below. */
 export const SOUND_VOLUME = 4;
-export const UFO_SOUNDS = { on: "beacon.activate", hum: "beacon.ambient", off: "beacon.deactivate" } as const;
+export const UFO_SOUNDS = { on: "beacon.activate", hum: "beacon.ambient", off: "beacon.deactivate", blast: "random.explode" } as const;
 export type UfoSound = (typeof UFO_SOUNDS)[keyof typeof UFO_SOUNDS];
 /** P-sauc-1 step 3: in the hover the entity is re-teleported only when it is this far off the point. */
 export const HOVER_DRIFT = 0.01;
@@ -99,6 +114,8 @@ export interface SaucerHost {
   ceiling(): number;
   /** Stands in for playUfoSound, so a GameTest can count the calls. */
   sound?(id: UfoSound, at: Vector3): void;
+  /** The Orbital hull and the shoot-down; a saucer without it cannot be shot. */
+  shootdown?: ShootdownHost;
 }
 
 export interface UfoSaucer extends Saucer {
@@ -106,6 +123,20 @@ export interface UfoSaucer extends Saucer {
   legs(): FlightPath | undefined;
   leg(): Leg | undefined;
   beamOn(): boolean;
+  /** This event's shoot-down, from the latch on. */
+  shot(): Readonly<ShotRecord> | undefined;
+}
+
+const fmt = (v: Vector3): string => `${v.x.toFixed(2)},${v.y.toFixed(2)},${v.z.toFixed(2)}`;
+const errText = (err: unknown): string => (err instanceof Error ? `${err.name}: ${err.message}` : String(err)).split("\n")[0];
+
+/** Unloaded reads as air: the fall goes on, and the step cap still ends it. */
+function airAt(dim: Dimension, x: number, y: number, z: number): boolean {
+  try {
+    return dim.getBlock({ x, y, z })?.isAir !== false;
+  } catch {
+    return true;
+  }
 }
 
 export function createSaucer(host: SaucerHost): UfoSaucer {
@@ -120,13 +151,127 @@ export function createSaucer(host: SaucerHost): UfoSaucer {
   let beam = false;
   /** The value last written to BEAM_PROPERTY. */
   let shown = false;
+  let eventId: string | undefined;
+  let shot: ShotRecord | undefined;
+  let unregister: (() => void) | undefined;
+  const sd = host.shootdown;
 
   const valid = (): Entity | undefined => (entity?.isValid === true ? entity : undefined);
 
+  const play = (id: UfoSound, at: Vector3): void => {
+    if (host.sound !== undefined) host.sound(id, at);
+    else playUfoSound(host.overworld(), id, at);
+  };
+
   const sound = (id: UfoSound): void => {
     if (pos === undefined || valid() === undefined) return;
-    if (host.sound !== undefined) host.sound(id, pos);
-    else playUfoSound(host.overworld(), id, pos);
+    play(id, pos);
+  };
+
+  const disarm = (): void => {
+    unregister?.();
+    unregister = undefined;
+  };
+
+  /**
+   * P-sauc-2 steps 6–9, once per shot: on the ground, at the step cap, or —
+   * when the event ends first — at the last known position. Tied to the latch,
+   * not to the entity.
+   */
+  const blast = (by: "ground" | "cap" | "end"): void => {
+    if (sd === undefined || shot === undefined || shot.blasted || pos === undefined) return;
+    shot.blasted = true;
+    shot.blastBy = by;
+    disarm();
+    const at = { ...pos };
+    shot.blastAt = at;
+    const dim = host.overworld();
+    try {
+      dim.spawnParticle(BLAST_PARTICLE, at);
+    } catch (err) {
+      sd.log(`ufo ${shot.eventId}: the blast particle threw ${errText(err)}`);
+    }
+    try {
+      play(UFO_SOUNDS.blast, at);
+    } catch (err) {
+      sd.log(`ufo ${shot.eventId}: the blast sound threw ${errText(err)}`);
+    }
+    rewardAndBroadcast(dim, at, shot, sd);
+    valid()?.remove();
+    sd.log(
+      `ufo ${shot.eventId}: blast (${by}) at ${fmt(at)} after ${shot.steps} fall steps; ${shot.absorbed} charge(s) absorbed, ` +
+        `${shot.rewards} reward stack(s), broadcast to ${shot.told} naming ${shot.ownerName}`
+    );
+  };
+
+  /** P-sauc-2 step 5: one tick of the smoking fall. */
+  const fall = (): void => {
+    if (shot === undefined || shot.blasted || pos === undefined) return;
+    shot.steps++;
+    const e = valid();
+    if (e === undefined) {
+      blast("end");
+      return;
+    }
+    const dim = host.overworld();
+    const next = fallStep(pos.y, shot.vy);
+    shot.vy = next.vy;
+    const { x, z } = pos;
+    const cell = landingCell(pos.y, next.y, dim.heightRange.min, (y) => airAt(dim, Math.floor(x), y, Math.floor(z)));
+    pos = { x, y: cell === undefined ? next.y : cell + 1, z };
+    e.teleport(pos);
+    if (cell !== undefined) {
+      blast("ground");
+      return;
+    }
+    try {
+      for (const at of smokePoints(pos, shot.steps)) dim.spawnParticle(SMOKE_PARTICLE, at);
+    } catch (err) {
+      if (shot.steps === 1) sd?.log(`ufo ${shot.eventId}: the smoke threw ${errText(err)}`);
+    }
+    if (shot.steps >= host.durations.downed) blast("cap");
+  };
+
+  /** P-sauc-2 steps 1–4: the first crossing latches; the rest are absorbed silently (R-sauc-4 item 1, AS-sauc-5). */
+  const intercept: Interceptor = (attack, _charge, from, to, tick) => {
+    if (sd === undefined || attack.dimensionId !== OVERWORLD || eventId === undefined) return false;
+    const at = valid() === undefined ? undefined : pos;
+    if (at === undefined || shot?.blasted === true || !hullHit(at, from, to)) return false;
+    if (shot !== undefined) {
+      shot.absorbed++;
+      return true;
+    }
+    const ownerName = shooterName(attack, sd.players());
+    shot = {
+      eventId,
+      ownerId: attack.ownerId,
+      ownerName,
+      attackId: attack.attackId,
+      tick,
+      leg: leg ?? "none",
+      at: { ...at },
+      absorbed: 1,
+      vy: 0,
+      steps: 0,
+      blasted: false,
+      blastAt: undefined,
+      blastBy: undefined,
+      told: 0,
+      rewards: 0,
+    };
+    sd.log(`ufo ${eventId}: shot down by ${ownerName} (attack ${attack.attackId}) at ${fmt(at)} in the ${shot.leg} leg`);
+    const core = sd.core();
+    if (core === undefined) {
+      sd.log(`ufo ${eventId}: no core to report the shot to`);
+      return true;
+    }
+    try {
+      core.requestMagnetOff("shot");
+      core.reportShotDown({ eventId, ownerId: attack.ownerId, ownerName });
+    } catch (err) {
+      sd.log(`ufo ${eventId}: reporting the shot threw ${errText(err)}`);
+    }
+    return true;
   };
 
   // setProperty lands a tick after the call, so the two flips the schedule
@@ -139,6 +284,7 @@ export function createSaucer(host: SaucerHost): UfoSaucer {
   };
 
   const reset = (): void => {
+    disarm();
     if (entity?.isValid === true) entity.remove();
     entity = undefined;
     path = undefined;
@@ -147,6 +293,8 @@ export function createSaucer(host: SaucerHost): UfoSaucer {
     beam = false;
     shown = false;
     t = 0;
+    eventId = undefined;
+    shot = undefined;
   };
 
   const spawn = (p: PhasePayload): void => {
@@ -161,6 +309,8 @@ export function createSaucer(host: SaucerHost): UfoSaucer {
     entity = spawned;
     pos = path.start;
     leg = "arrival";
+    eventId = p.eventId;
+    if (sd !== undefined) unregister = sd.registerInterceptor(intercept);
   };
 
   return {
@@ -195,12 +345,18 @@ export function createSaucer(host: SaucerHost): UfoSaucer {
           if (!beam) show(false);
           return;
         case "pause":
+          // ufsd §3: an event that ends before the blast still gets it, once.
+          if (shot !== undefined && !shot.blasted) blast("end");
           reset();
           return;
       }
     },
 
     saucerStep(): void {
+      if (leg === "downed") {
+        fall();
+        return;
+      }
       const e = valid();
       if (e === undefined || path === undefined || leg === undefined) return;
       t++;
@@ -221,9 +377,14 @@ export function createSaucer(host: SaucerHost): UfoSaucer {
       return valid() === undefined ? undefined : pos;
     },
 
+    fallFinished(): boolean {
+      return shot?.blasted === true;
+    },
+
     entity: valid,
     legs: () => path,
     leg: () => leg,
     beamOn: () => beam,
+    shot: () => shot,
   };
 }

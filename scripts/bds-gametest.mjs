@@ -341,6 +341,12 @@ const EXPECTED_TESTS = [
   'andrew:ufo_saucer_flight',
   'andrew:ufo_saucer_immune',
   'andrew:ufo_saucer_beam_stop',
+  // SAUC-SHOOT-01 — src/gametest/ufo-shootdown.ts
+  'andrew:ufo_shootdown_seam',
+  'andrew:ufo_shootdown_arrival',
+  'andrew:ufo_shootdown_magnet',
+  'andrew:ufo_shootdown_departure',
+  'andrew:ufo_shootdown_once',
 ];
 
 /**

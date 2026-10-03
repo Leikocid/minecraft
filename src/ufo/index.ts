@@ -11,6 +11,7 @@ import type {
   PlayerSpawnAfterEvent,
   WorldLoadAfterEvent,
 } from "@minecraft/server";
+import type { Interceptor } from "../orbital/flight";
 import { type UfoCommandApi, registerUfoCommand } from "./commands";
 import { type EnvWorld, productEnv } from "./env";
 import { type IntervalHost, UfoCore, runCore } from "./event";
@@ -65,15 +66,29 @@ export function startUfo(core: UfoCore, world: Pick<UfoWorld, "getDimension" | "
   };
 }
 
-export function registerUfo(engine: UfoCommandApi & UfoClasses & { world: UfoWorld; system: IntervalHost }, scope: string = DEFAULT_SCOPE): UfoCore {
-  const { world, system, ItemStack, BlockVolume } = engine;
+/** The Orbital Cannon's flight seam the saucer's hull registers on (L0-adr-ufoi). */
+export type RegisterInterceptor = (interceptor: Interceptor) => () => void;
+
+export function registerUfo(
+  engine: UfoCommandApi & UfoClasses & { world: UfoWorld; system: IntervalHost; registerInterceptor: RegisterInterceptor },
+  scope: string = DEFAULT_SCOPE
+): UfoCore {
+  const { world, system, ItemStack, BlockVolume, registerInterceptor } = engine;
   const log = (msg: string): void => console.warn(`[andrew] ${msg}`);
   const env = productEnv(world, log);
+  let core: UfoCore | undefined;
   const saucer = createSaucer({
     overworld: () => world.getDimension("overworld"),
     random: env.random,
     durations: env.durations,
     ceiling: env.ceiling,
+    shootdown: {
+      registerInterceptor,
+      core: () => core,
+      players: () => world.getAllPlayers(),
+      itemStack: (typeId, amount) => new ItemStack(typeId, amount),
+      log,
+    },
   });
   const magnet = new UfoMagnet({
     overworld: () => world.getDimension("overworld"),
@@ -88,12 +103,13 @@ export function registerUfo(engine: UfoCommandApi & UfoClasses & { world: UfoWor
       log,
     },
   });
-  const core = new UfoCore(env, { scope, saucer, magnet });
-  registerUfoCommand(engine, { core: () => core, log });
+  const live = new UfoCore(env, { scope, saucer, magnet });
+  core = live;
+  registerUfoCommand(engine, { core: () => live, log });
   world.afterEvents.worldLoad.subscribe(() => {
-    startUfo(core, world, system);
+    startUfo(live, world, system);
     const next = world.getDynamicProperty(NEXT_MS);
-    log(`ufo ${scope}: loaded, enabled=${core.schedule.enabled()}, next arrival ${next === undefined ? "absent" : String(next)}`);
+    log(`ufo ${scope}: loaded, enabled=${live.schedule.enabled()}, next arrival ${next === undefined ? "absent" : String(next)}`);
   });
-  return core;
+  return live;
 }
