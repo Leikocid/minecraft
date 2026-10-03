@@ -306,6 +306,7 @@ const EXPECTED_TESTS = [
   'andrew:probe_crater_by_power',
   'andrew:probe_ring_damage_by_distance',
   'andrew:probe_ring_drops',
+  'andrew:probe_chest_by_power',
   'andrew:ring_layout_craters',
   'andrew:ring_independent_stepped',
   'andrew:ring_tnt_damage',
