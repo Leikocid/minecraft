@@ -1,0 +1,21 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.andrew.ufo_saucer.spin": {
+      "loop": true,
+      "animation_length": 4,
+      "bones": {
+        "disc": { "rotation": [0, "q.anim_time * 90", 0] },
+        "rim": { "rotation": [0, "q.anim_time * 90", 0] },
+        "rim_lights": { "rotation": [0, "q.anim_time * 90", 0] },
+        "dome": { "rotation": [0, "q.anim_time * 90", 0] }
+      }
+    },
+    "animation.andrew.ufo_saucer.beam_length": {
+      "loop": true,
+      "bones": {
+        "beam": { "scale": [1, "math.clamp(q.property('andrew:beam_len'), 0, 64) / 40", 1] }
+      }
+    }
+  }
+}

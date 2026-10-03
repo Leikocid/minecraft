@@ -144,7 +144,7 @@ interface Rig {
   readonly target: UfoPlayer;
 }
 
-/** The product core and magnet over this pad; `saucer` defaults to the hover point the stub saucer holds. */
+/** The product core and magnet over this pad; `saucer` defaults to the hover point the saucer holds. */
 function rig(p: Pad, scope: string, durations: UfoDurations, saucer?: Vector3): Rig {
   const S = saucer ?? { x: p.cx + 0.5, y: p.hoverY, z: p.cz + 0.5 };
   const players: SimulatedPlayer[] = [];

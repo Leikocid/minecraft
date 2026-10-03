@@ -21,7 +21,7 @@ async function load() {
         export * from './src/ufo/event.ts';
         export * from './src/ufo/schedule.ts';
         export * from './src/ufo/env.ts';
-        export * from './src/ufo/stub-saucer.ts';
+        export * from './src/ufo/saucer.ts';
         export * from './src/ufo/commands.ts';
         export { startUfo, DIMENSIONS, DEFAULT_SCOPE } from './src/ufo/index.ts';`,
       resolveDir: projectRoot,
@@ -57,7 +57,7 @@ const {
   hoverHeight,
   centreUnder,
   overworldCandidates,
-  createStubSaucer,
+  createSaucer,
   APPROACH_DISTANCE,
   registerUfoCommand,
   UFO_COMMAND,
@@ -597,9 +597,9 @@ test('entityLoad: the live saucer stays, a stale one goes, an unrelated entity i
   assert.deepEqual(heldNow.tags, []);
 });
 
-// ------------------------------------------------------------ the stub saucer (UFO §2 geometry)
+// ------------------------------------------------------------ the saucer (UFO §2 geometry)
 
-test('stub saucer: spawns 90 blocks out at hover + 10, holds the hover point through the magnet, leaves the opposite way, removed at pause', () => {
+test('saucer: spawns 90 blocks out at hover + 10, holds the hover point through the magnet, leaves the opposite way, removed at pause', () => {
   const spawned = [];
   const overworld = {
     spawnEntity: (id, at) => {
@@ -608,13 +608,15 @@ test('stub saucer: spawns 90 blocks out at hover + 10, holds the hover point thr
       e.dp = {};
       e.addTag = (t) => e.tags.push(t);
       e.setDynamicProperty = (k, v) => (e.dp[k] = v);
+      e.setProperty = (k, v) => (e.dp[k] = v);
       e.teleport = (to) => (e.location = { ...to });
       spawned.push(e);
       return e;
     },
+    playSound: () => {},
   };
   const fx = fixture({ players: [player('a', 0.5, -60, 0.5)], random: () => 0.25 });
-  const saucer = createStubSaucer({ overworld: () => overworld, random: () => 0.25, durations: SHORT, ceiling: () => 320 });
+  const saucer = createSaucer({ overworld: () => overworld, random: () => 0.25, durations: SHORT, ceiling: () => 320 });
   fx.core = new UfoCore(fx.env, { scope: 'ut', saucer, listeners: [fx.recorder] });
   fx.core.command('come', 'a');
   fx.tick();
@@ -636,7 +638,7 @@ test('stub saucer: spawns 90 blocks out at hover + 10, holds the hover point thr
   assert.ok(Math.abs(start.x - (centre.x + 0.5)) < 1e-9 && start.z - (centre.z + 0.5) > 0, 'random 0.25 does not put the start due +z');
 });
 
-test('stub saucer legs never run above ceiling − 4 (L0-adr-ufht)', () => {
+test('saucer legs never run above ceiling − 4 (L0-adr-ufht)', () => {
   assert.equal(m.legHeight(305, 320), 315);
   assert.equal(m.legHeight(310, 320), 316);
 });

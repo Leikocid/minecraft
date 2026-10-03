@@ -2,7 +2,35 @@
   "format_version": "1.10.0",
   "minecraft:client_entity": {
     "description": {
-      "identifier": "andrew:ufo_saucer"
+      "identifier": "andrew:ufo_saucer",
+      "materials": {
+        "metal": "entity",
+        "glass": "entity_alphablend"
+      },
+      "textures": {
+        "hull": "textures/blocks/iron_block",
+        "rim": "textures/blocks/netherite_block",
+        "lights": "textures/blocks/glowstone",
+        "dome": "textures/blocks/glass_light_blue",
+        "beam": "textures/blocks/glass_lime"
+      },
+      "geometry": {
+        "default": "geometry.andrew.ufo_saucer"
+      },
+      "animations": {
+        "spin": "animation.andrew.ufo_saucer.spin",
+        "beam_length": "animation.andrew.ufo_saucer.beam_length"
+      },
+      "scripts": {
+        "animate": ["spin", "beam_length"]
+      },
+      "render_controllers": [
+        "controller.render.andrew.ufo_saucer.hull",
+        "controller.render.andrew.ufo_saucer.rim",
+        "controller.render.andrew.ufo_saucer.lights",
+        "controller.render.andrew.ufo_saucer.dome",
+        "controller.render.andrew.ufo_saucer.beam"
+      ]
     }
   }
 }

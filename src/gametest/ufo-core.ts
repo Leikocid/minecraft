@@ -1,10 +1,10 @@
 // The UFO event core (src/ufo/) on a real engine: the schedule on a test clock,
-// the phases at their real lengths with the stub saucer, Overworld only, the
+// the phases at their real lengths with the product saucer, Overworld only, the
 // operator command, the arrival notice, one interval and its idle cost.
 //
 // The release pack reads a SimulatedPlayer as undefined, so it can never pick
 // one as a target. Every scenario here builds its own core — the product class,
-// the product stub saucer and the product candidate filter — over an env whose
+// the product saucer and the product candidate filter — over an env whose
 // clock the test moves and whose players are the test's own (L0-ufoc-ad01).
 // Its event ids carry the scope "gt", which the release core's sweeps leave alone.
 
@@ -42,7 +42,7 @@ import {
   hoverHeight,
 } from "../ufo/event";
 import { ENABLED, NEXT_MS } from "../ufo/schedule";
-import { APPROACH_DISTANCE, type StubSaucer, createStubSaucer, legHeight } from "../ufo/stub-saucer";
+import { APPROACH_DISTANCE, type UfoSaucer, createSaucer, legHeight } from "../ufo/saucer";
 import { goTo } from "./orbital-core";
 import { loadBox } from "./structures-place";
 
@@ -156,13 +156,13 @@ interface Rig {
   env: UfoEnv;
   clock: TestClock;
   store: CountingStore;
-  saucer: StubSaucer;
+  saucer: UfoSaucer;
   host: SpyHost;
   players: SimulatedPlayer[];
   inbox: Map<string, RawMessage[]>;
   phases: PhaseRec[];
   steps: StepRec[];
-  /** Script time spent inside the stub saucer and the recording magnet. */
+  /** Script time spent inside the saucer and the recording magnet. */
   consumerMs: number;
   timing: boolean;
   next(): number | undefined;
@@ -202,7 +202,7 @@ function rig(opts: { durations: UfoDurations; random: () => number }): Rig {
     ceiling: () => world.getDimension("overworld").heightRange.max,
     log: (msg) => console.warn(`[gametest] ${msg}`),
   };
-  const saucer = createStubSaucer({ overworld: () => world.getDimension("overworld"), random: opts.random, durations: opts.durations, ceiling: env.ceiling });
+  const saucer = createSaucer({ overworld: () => world.getDimension("overworld"), random: opts.random, durations: opts.durations, ceiling: env.ceiling });
   const r: Partial<Rig> & { phases: PhaseRec[]; steps: StepRec[] } = { phases: [], steps: [], consumerMs: 0, timing: false };
   const host = new SpyHost(() => r.timing === true);
   let seq = 0;
@@ -216,7 +216,7 @@ function rig(opts: { durations: UfoDurations; random: () => number }): Rig {
     }
   };
   let core: UfoCore | undefined;
-  // Every member of the Saucer contract, delegated to the product stub.
+  // Every member of the Saucer contract, delegated to the product saucer.
   const recordingSaucer: Saucer = {
     onPhase: (phase, payload) => timedCall(() => saucer.onPhase(phase, payload)),
     saucerStep: (tick) =>
@@ -377,7 +377,7 @@ registerAsync("andrew", "ufo_schedule_scaled_clock", async (test: Test): Promise
   .maxTicks(2400)
   .tag("andrew");
 
-// ------------------------------------------------ AC#3 + AC#8: real phase lengths, the stub saucer, one interval
+// ------------------------------------------------ AC#3 + AC#8: real phase lengths, the product saucer, one interval
 
 /** The arrival leg moves 90/400 of a block a tick; the spawn point is read in the arrival tick itself. */
 const AT_SPAWN = 0.01;
@@ -421,7 +421,7 @@ registerAsync("andrew", "ufo_phases_real_durations", async (test: Test): Promise
     );
     test.assert(hoverY === hoverHeight(centre.y, ceiling), "the scenario and the product disagree on the hover height");
 
-    // The stub saucer: 90 blocks out at hover + 10, at the hover point through the magnet, gone after the pause.
+    // The saucer: 90 blocks out at hover + 10, at the hover point through the magnet, gone after the pause.
     const spawnAt = arrival.entityAt;
     if (spawnAt === undefined || arrival.entityDim !== "minecraft:overworld") throw new Error(`no saucer in the Overworld in the arrival tick (${arrival.entityDim ?? "none"})`);
     const out = horizontalDistance(centre, spawnAt);

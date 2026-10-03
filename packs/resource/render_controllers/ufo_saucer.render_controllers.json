@@ -1,0 +1,37 @@
+{
+  "format_version": "1.8.0",
+  "render_controllers": {
+    "controller.render.andrew.ufo_saucer.hull": {
+      "geometry": "Geometry.default",
+      "materials": [{ "*": "Material.metal" }],
+      "textures": ["Texture.hull"],
+      "part_visibility": [{ "*": false }, { "disc": true }]
+    },
+    "controller.render.andrew.ufo_saucer.rim": {
+      "geometry": "Geometry.default",
+      "materials": [{ "*": "Material.metal" }],
+      "textures": ["Texture.rim"],
+      "part_visibility": [{ "*": false }, { "rim": true }]
+    },
+    "controller.render.andrew.ufo_saucer.lights": {
+      "geometry": "Geometry.default",
+      "materials": [{ "*": "Material.metal" }],
+      "textures": ["Texture.lights"],
+      "part_visibility": [{ "*": false }, { "rim_lights": true }],
+      "ignore_lighting": true
+    },
+    "controller.render.andrew.ufo_saucer.dome": {
+      "geometry": "Geometry.default",
+      "materials": [{ "*": "Material.glass" }],
+      "textures": ["Texture.dome"],
+      "part_visibility": [{ "*": false }, { "dome": true }]
+    },
+    "controller.render.andrew.ufo_saucer.beam": {
+      "geometry": "Geometry.default",
+      "materials": [{ "*": "Material.glass" }],
+      "textures": ["Texture.beam"],
+      "part_visibility": [{ "*": false }, { "beam": "q.property('andrew:beam')" }],
+      "ignore_lighting": true
+    }
+  }
+}
