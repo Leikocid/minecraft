@@ -83,15 +83,19 @@ registerAsync("andrew", "probe_katn_cx01_safe", async (test: Test): Promise<void
   const floor = typeAt(test, { x: 1, y: 1, z: 1 });
   log(`setup floor(1,1,1)=${floor} above(1,2,1)=${typeAt(test, { x: 1, y: 2, z: 1 })}`);
 
-  const known = HAZARDS.map((id) => `${id.slice(10)}=${BlockTypes.get(id) !== undefined}`).join(" ");
+  const known = HAZARDS.map((id) => `${id.slice(10)}=${BlockTypes.get(id)?.id ?? "unknown"}`).join(" ");
   log(`IDS ${known}`);
 
   // Natural flow: a 3-cell trench sunk into the floor, sealed by stone, source at its west end.
+  // A script setBlockType of lava never starts a flow (measured: the trench stayed air for
+  // 80 ticks), so the source goes in through /setblock, which raises the block update.
   for (const x of [3, 4, 5]) {
     set(test, { x, y: 0, z: 1 }, "minecraft:stone");
     set(test, { x, y: 1, z: 1 }, "minecraft:air");
   }
-  set(test, { x: 3, y: 1, z: 1 }, "minecraft:lava");
+  const src = test.worldBlockLocation({ x: 3, y: 1, z: 1 });
+  const placed = dim.runCommand(`setblock ${src.x} ${src.y} ${src.z} lava`);
+  log(`FLOW source via /setblock successCount=${placed.successCount}`);
   const flowStart = system.currentTick;
 
   // Part A — what the fit ray and the hazard filter see, one content at a time in a sealed pit.
@@ -112,7 +116,8 @@ registerAsync("andrew", "probe_katn_cx01_safe", async (test: Test): Promise<void
     const read2 = typeAt(test, pit);
     const ray2 = columnRay(dim, test.worldBlockLocation(pit));
     fit.set(c.id, { read: read0, ray: ray0 });
-    log(`FIT cell=${c.id} read=${read0}/${read2} columnRay=${ray0}/${ray2} hazardListed=${HAZARDS.includes(read0)}`);
+    const depth = dim.getBlock(test.worldBlockLocation(pit))?.permutation.getState("liquid_depth");
+    log(`FIT cell=${c.id} read=${read0}/${read2}(liquid_depth=${depth ?? "-"}) columnRay=${ray0}/${ray2} hazardListed=${HAZARDS.includes(read0)}`);
     set(test, pit, "minecraft:air");
     set(test, below, "minecraft:stone");
     await test.idle(2);
@@ -121,8 +126,9 @@ registerAsync("andrew", "probe_katn_cx01_safe", async (test: Test): Promise<void
   const flowWait = 80 - (system.currentTick - flowStart);
   if (flowWait > 0) await test.idle(flowWait);
   const flow = [3, 4, 5].map((x) => {
-    const at: Vector3 = { x, y: 1, z: 1 };
-    return `${x}:${typeAt(test, at).slice(10)}/ray=${columnRay(dim, test.worldBlockLocation(at)).slice(10) || "none"}`;
+    const block = dim.getBlock(test.worldBlockLocation({ x, y: 1, z: 1 }));
+    const depth = block?.permutation.getState("liquid_depth");
+    return `${x}:${block?.typeId ?? "unloaded"}(liquid_depth=${depth ?? "-"})/columnRay=${columnRay(dim, test.worldBlockLocation({ x, y: 1, z: 1 }))}`;
   });
   log(`FLOW after ${system.currentTick - flowStart} ticks trench=[${flow.join(" ")}]`);
 
