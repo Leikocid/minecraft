@@ -131,6 +131,9 @@ export function forgetWatched(entityId: string): void {
   stopIfIdle();
 }
 
+/** Entities that carry an inventory and vanish below the floor without spilling it. */
+const VOID_HOLDER_TYPES: ReadonlySet<string> = new Set(["minecraft:chest_minecart", "minecraft:hopper_minecart"]);
+
 export function registerRecovery(): void {
   world.afterEvents.entitySpawn.subscribe((event) => {
     watch(event.entity, "entitySpawn");
@@ -161,6 +164,35 @@ export function registerRecovery(): void {
     const now = container.getItem(event.slot);
     noteDeparture(player, container, event.beforeItemStack, now);
     noteArrival(player, container, event.slot, event.itemStack, now);
+  });
+
+  // The engine removes a container entity below the floor with no death and no
+  // spill, so nothing it held ever becomes an item entity to watch. entityRemove
+  // also fires on a chunk unload; only a removal below the floor is a loss.
+  world.beforeEvents.entityRemove.subscribe((event) => {
+    const holder = event.removedEntity;
+    if (!VOID_HOLDER_TYPES.has(holder.typeId) || holder.location.y >= holder.dimension.heightRange.min) {
+      return;
+    }
+    const container = holder.getComponent("minecraft:inventory")?.container;
+    if (container === undefined) {
+      return;
+    }
+    const inside: Array<{ def: LegendaryDef; mark: Mark }> = [];
+    for (let slot = 0; slot < container.size; slot++) {
+      const stack = container.getItem(slot);
+      const def = defForStack(stack);
+      const mark = def === undefined || stack === undefined ? undefined : getMark(def, stack);
+      if (def !== undefined && mark !== undefined) inside.push({ def, mark });
+    }
+    if (inside.length === 0) {
+      return;
+    }
+    const how = `fell into the Void inside a ${holder.typeId}`;
+    // A before-event may not change the world: the return runs on the next tick.
+    system.run(() => {
+      for (const w of inside) lost(w, how);
+    });
   });
 
   world.afterEvents.playerSpawn.subscribe((event) => {

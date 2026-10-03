@@ -64,8 +64,11 @@ destroyed in that same tick is covered, but one that leaves an inventory into
 storage no script can read and is destroyed *there* (the shulker item burns with
 its holder) is not, because nothing can tell that case from ordinary storage.
 
-Also open: a holder *entity* that falls into the Void. A chest minecart
-or an armour stand below the floor is removed by the engine with no death and
-no spill (`probe_ufo_holder_void`), so whatever it held never reaches recovery
-and is gone. The UFO Magnet keeps out of that case by never selecting a holder
-that carries a legendary (`isLegendaryStack`, L0-lgnd-r016 §3).
+A holder *entity* that falls into the Void is removed by the engine with no
+death and no spill. For a chest or hopper minecart, recovery reads its inventory
+in `beforeEvents.entityRemove` when the minecart is below the floor and returns
+every live instance through the same loss path (`legendary_holder_void_*`).
+Still open: an armour stand — its hands cannot be read from a script on 2.10.0,
+so a legendary it holds is gone when it falls (`probe_ufo_holder_void`). The UFO
+Magnet keeps out of that case by never selecting a holder that carries a
+legendary (`isLegendaryStack`, L0-lgnd-r016 §3).

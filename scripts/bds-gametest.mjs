@@ -175,6 +175,8 @@ const EXPECTED_TESTS = [
   'andrew:legendary_ufo_holder_chest_minecart',
   'andrew:legendary_ufo_holder_hopper_minecart',
   'andrew:legendary_ufo_holder_armor_stand',
+  'andrew:legendary_holder_void_chest_minecart',
+  'andrew:legendary_holder_void_hopper_minecart',
   'andrew:probe_ufo_holder_void',
   // STRF-REG-01 — src/gametest/strf-registry.ts
   'andrew:strf_registry_steps_idempotent',

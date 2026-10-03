@@ -43,6 +43,7 @@ const signal = (name) => ({
 });
 export const world = {
   afterEvents: new Proxy({}, { get: (_, name) => signal(name) }),
+  beforeEvents: new Proxy({}, { get: (_, name) => signal("before:" + name) }),
   ...props(mc.worldProps),
   getAllPlayers: () => mc.players,
   getAbsoluteTime: () => 1000,
