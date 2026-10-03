@@ -10,13 +10,13 @@ part_of: ["L0"]
 relates_to: ["L0"]
 priority: 540
 size_chars: 3728
-tags: ["title:LMB penetrator — the ~5×5 column effect", "is_a:component", "relates_to:L0-orbc", "relates_to:L0-lgnd", "relates_to:L0-ring", "relates_to:L0-adr-ochg", "relates_to:L0-xasm6", "relates_to:L0-xcx10", "see_also:orbitalcannonspecv1ruen-part-2", "see_also:orbitalcannonspecv1ruen-part-3", "see_also:orbitalcannonspecv1ruen-part-4", "not-implemented", "stage5"]
+tags: ["title:LMB penetrator — the ~5×5 column effect", "is_a:component", "relates_to:L0-orbc", "relates_to:L0-lgnd", "relates_to:L0-ring", "relates_to:L0-adr-ochg", "relates_to:L0-xasm6", "relates_to:L0-xcx10", "see_also:orbitalcannonspecv1ruen-part-2", "see_also:orbitalcannonspecv1ruen-part-3", "see_also:orbitalcannonspecv1ruen-part-4", "stage5"]
 level: 1
 needs_rebuild_marked_at: 2026-10-02T18:41:56.508Z
 ---
 # LMB penetrator (`pntr`)
 
-**Status.** Analysis only. `src/orbital/` does not exist yet (checked 2026-09-29). Stage 5 order: `lgnd` delta → `orbc` → **`pntr`** → `ring`.
+**Status (v1.4.4).** Shipped in v1.4.0: `penetrator.ts`, `penetrator-plan.ts`, `penetrator-keep.ts`; deviations in src/orbital/README.md:14-27. Stage 5 order: `lgnd` delta → `orbc` → **`pntr`** → `ring`.
 
 ## Responsibility
 This component is the *effect* half of the Orbital Cannon's LMB mode (Orbital §9, §12; ACs 7–10). `orbc` owns input, the target lock, the cooldown, the charge entity, its fall and the detonation. `pntr` starts when `orbc` calls `onDetonate(dimension, point, ownerId, mode="lmb")` and owns everything after that:

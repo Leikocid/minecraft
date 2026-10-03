@@ -26,7 +26,8 @@ A **live marked** legendary is never lost to ordinary destruction. Which outcome
 | This add-on removes blocks or detonates (Cannon LMB/RMB, any future effect) | **Stays in the world.** Same stack, same `gen`, placed at a safe spot outside the volume. No message. | `protectLegendariesIn` (`p008`) is called **before** the removal |
 | RMB drop suppression | Legendary item entities are **never** removed | `isLegendaryItemEntity` exemption (`ring`) |
 | Vanilla container break (player, TNT, creeper) | **Drops** as an item entity (vanilla spill) | none; the drop is then watched |
-| Item entity burnt (fire, lava), cactus, vanilla explosion, despawn | **Returned** to the last holder with `gen + 1`, plus a private `returned` message; queued in the owed list if the holder is offline | `p003` (deviation C-16) |
+| Fire, lava | **Stays in the world** (`minecraft:fire_resistant`) | none |
+| Cactus, vanilla explosion, despawn | **Returned** to `mark.owner` with `gen + 1`, plus `andrew.legendary.recovered`; queued in the owed list if offline | `p003` (deviation C-16) |
 | Void (below `heightRange.min`) | Returned, as above (Orbital §5) | `p003` |
 
 Invariants:

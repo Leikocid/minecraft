@@ -25,7 +25,7 @@ These run on the checks instance (19136), never on production or QA. They are co
 - THEN: a selftest probe reads `next_ms === T`.
 
 **Case 2: in flight.**
-- GIVEN: seed `next_ms = 0`.
+- GIVEN: start an event with `come`; assert `next_ms = 0` before the restart.
 - WHEN: restart.
 - THEN: `next_ms` ∈ [load time + 900 000, load time + 900 000 + 5 000].
 

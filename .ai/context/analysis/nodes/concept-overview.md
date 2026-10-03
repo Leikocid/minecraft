@@ -34,7 +34,7 @@ supersedes: ["L0@v5"]
 
 | Family | Members | State (2026-10-03) |
 |---|---|---|
-| Legendary weapons | Web Sword, Scythe of Calamity, Orbital Cannon, **Dragon Katana (v6)** | The first three are shipped. **The Katana is analysed and ready for Stage 7 tasks; it is not built.** The v3 Orbital nodes are still stale (`xcx16`). |
+| Legendary weapons | Web Sword, Scythe of Calamity, Orbital Cannon, **Dragon Katana (v6)** | The first three are shipped. **The Katana is analysed and ready for Stage 7 tasks; it is not built.** |
 | World structures | Windmill, Warden City, Bastion, Airship | Shipped in v1.2.0. A scan-code reconcile is owed (`xcx12`). |
 | World events | UFO Magnet (`ufoc`, `sauc`, `magn`) | Built and merged. The magnet-on cost of 36–39 ms is accepted as measured. |
 | Probe / infra | Miner's Pickaxe, Stage 0 | Closed. |
@@ -101,7 +101,7 @@ The operator confirms all of these defaults, plus `xasm18`/`xasm21` and the iPad
 ## Still open at L0 after v6
 - **Re-asserted, not new:** `L0-xcx11` / `L0-adr-hold` / `L0-xq3`: Void return to the last holder. The Katana is the fourth spec asking for it. T18 is tested against `mark.owner`.
 - **Probe-gated proposals:** `L0-adr-ktob`, `L0-adr-ktfl` and `L0-katn-ad01` stay `proposed` until `L0-katn-ac08` records the engine facts. A failed probe supersedes the matching ADR before the build tasks. A superseded `adr-ktfl` also rewords C-25.
-- **Carried, not touched in v6:** `xcx15`, `xcx16`, `xcx17`, `xcx19`, `xcx20`; `lgnd-cx09`/`cx11`/`cx12`; `xcx3`, `xcx5`–`xcx8`, `xcx12`–`xcx14`.
+- **Carried, not touched in v6:** `xcx17`, `xcx19`; `lgnd-cx09`/`cx11`/`cx12`; `xcx3`, `xcx5`–`xcx8`, `xcx12`–`xcx14`.
 
 ## Stage 7 order
 1. **Probe** (`katn-ac08`) on the checks instance (19136).

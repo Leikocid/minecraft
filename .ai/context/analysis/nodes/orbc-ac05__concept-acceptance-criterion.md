@@ -18,7 +18,7 @@ level: 2
 **Links:** `part_of: ["L0-orbc"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-orbc-r008", "L0-orbc-p002"]`
 
 **GIVEN**
-- a stone block placed exactly at the computed spawn cell (T.y + 30) above target T;
+- a stone block placed exactly at the computed spawn cell (T.y + 60; Nether T.y + 10) above target T;
 - the stub effect, which records `(point, tick)`.
 
 **WHEN** P fires at T.

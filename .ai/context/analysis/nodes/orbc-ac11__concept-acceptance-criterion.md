@@ -17,7 +17,7 @@ level: 2
 
 **Links:** `part_of: ["L0-orbc"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-orbc-p003", "L0-orbc-p002", "L0-orbc-ad02"]`
 
-**GIVEN** three players each fire RMB in the same tick, using a stub `ring.layout` that returns 160 columns.
+**GIVEN** three players each fire RMB in the same tick, using a stub `ring.layout` that returns `STUB_RMB_COLUMNS` = 160 (not the real 201) columns.
 
 **THEN**
 - 480 charges exist in the spawn tick.

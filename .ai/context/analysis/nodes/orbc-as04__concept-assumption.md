@@ -17,7 +17,7 @@ level: 2
 
 **Links:** `part_of: ["L0-orbc"]` · `is_a: ["assumption"]` · `relates_to: ["L0-orbc-r007", "L0-ring"]`
 
-**Gap.** §10 says all RMB charges "are created simultaneously at the corresponding dimension height and start falling simultaneously". It is unclear whether "height" means per-column terrain + 30, or target + 30.
+**Gap.** §10 says all RMB charges "are created simultaneously at the corresponding dimension height and start falling simultaneously". It is unclear whether "height" means per-column terrain + 60, or target + 60.
 
 **Assumption.** There is one `spawnY` per attack, `target.y + offset` clamped (`r007`), shared by every ring column. On uneven terrain a column's fall is then longer or shorter, which matches §10's note that "actual detonation timing may differ slightly".
 

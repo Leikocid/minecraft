@@ -33,7 +33,7 @@ relates_to: ["L0-magn", "L0-lgnd-r016", "L0-lgnd-ac21", "L0-lgnd-ad12", "L0-lgnd
    - every slot of a chest or hopper minecart it would pull whole;
    - the hand slots of an armour stand it would pull.
    An entity that **carries** a legendary is skipped as an element (`r016`).
-3. Before `magn` turns a block in `HOLDER_TYPES` into air (in practice the hopper), it calls `protectLegendariesIn(dim, {min: cell, max: cell}, {reason: "ufo"})` in the same synchronous step. That is the tier-1 duty of `r013` and `ad10`, applied to the magnet.
+3. `magn` turns a `HOLDER_TYPES` block into air only when it is an empty hopper, checked in the same synchronous call (`iron.ts:141`, `magnet-select.ts:237`, `:384`); there is nothing to protect, so it makes no `protectLegendariesIn` call. A holder block added to the pulled list later needs that call first (r016 §4).
 
 **Rejected.**
 - (a) **Reuse `isLegendaryItemEntity`.** It needs an entity, so it cannot judge a container slot. It is also false for unmarked and stale copies, which are still "legendary weapons" to a player reading AC 13.

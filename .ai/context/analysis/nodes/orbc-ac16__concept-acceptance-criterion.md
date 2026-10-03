@@ -17,7 +17,7 @@ level: 2
 
 **Links:** `part_of: ["L0-orbc"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-orbc-r005", "L0-orbc-r006"]`
 
-**GIVEN** two SimulatedPlayers, P and Q, each holding a Cannon with no cooldown, and a target within 10.
+**GIVEN** two SimulatedPlayers, P and Q, each holding a Cannon with no cooldown, and a target 7–25 blocks away (P fires RMB first).
 
 **WHEN** P fires RMB at tick t.
 

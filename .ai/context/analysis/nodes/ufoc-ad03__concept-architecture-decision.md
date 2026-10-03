@@ -22,7 +22,7 @@ level: 2
 **Context.**
 - UFO §10: after a restart mid-event, the next arrival is 15 min after the restart.
 - To know at load that an event was in flight, something must survive the restart.
-- `L0-adr-ufom` §2 and C-23 allow exactly two durable properties. `adr-ufom` §4 still names a "transient `andrew:ufo_active` flag", which could only work if it were durable.
+- `L0-adr-ufom` §2 and C-23 allow exactly two durable properties. `adr-ufom` §4 read a transient `andrew:ufo_active` flag, which could only work if it were durable; `L0-adr-ufrs` amends it.
 
 **Decision.**
 - At arrival start, `ufoc` writes `next_ms = 0`. Every end path overwrites it with now + 15 min.

@@ -32,4 +32,4 @@ closed_by_ref: decision-resolve-l0-orbc-cx02
   - Touch also reports no tap at a block beyond reach, so on default touch **RMB 6–10 is not reachable either**. This extends `L0-xcx8` from LMB to both modes.
 - This is not verified on the device. It comes from the documented touch interaction model, and must be confirmed on the `ipad` channel before `ad01` is accepted.
 
-**Proposed:** `L0-orbc-ad01`, which prefers the event block, with the view ray as the fallback. Also add to `L0-xq5`: "Is 10-block range on iPad acceptable only with the crosshair (split) control layout?"
+**Proposed:** `L0-orbc-ad01`, which prefers the event block, with the view ray as the fallback. `L0-xq5` asked whether the iPad range should be limited to the crosshair layout; closed by decision 2026-09-29 and 2026-10-02 (range 25 in any layout).

@@ -16,7 +16,7 @@ level: 2
 # AS-sauc-3 · The shooter's name is resolved from `attack.ownerId` at the shot; `Attack` gains an optional `ownerName`
 
 **Assumption.**
-- The shipped `Attack` (`src/orbital/flight.ts:24-34`) carries `ownerId` only, and `L0-adr-ufoi` §6 passes only that.
+- `Attack` (`src/orbital/flight.ts:26-38`) carries `ownerId` and the optional `ownerName` (`:37`), filled at `src/orbital/activation.ts:79`.
 - The charge is at most ~3 s old when it crosses the hull, since it spawns 60 above the target and falls 1 block per tick. The owner is therefore almost always online.
 - `sauc` resolves the name from `world.getAllPlayers()`, filtering out `undefined` (C-22).
 - To cover a disconnect in that window, the seam adds an **optional** `ownerName` to `Attack`, filled at launch from `player.name`. This is additive and unused by `pntr`/`ring`. The broadcast uses the live name, then `ownerName`, then the literal `"?"`.

@@ -14,7 +14,7 @@ level: 2
 ---
 **AC-ring-18 · No leftovers, and vanilla drops preserved** (Orbital §15; C-19; `r006`, `r009`) · **verify: bds**
 
-GIVEN `keepInventory` false, a SimulatedPlayer B holding 5 diamonds on ring 10, 3 zombies on rings 5 and 15, and 4 pre-existing dirt item entities on ring 20. WHEN owner A fires RMB and B and the zombies die, THEN:
+GIVEN `keepInventory` false, a SimulatedPlayer B holding 5 diamonds 5 blocks from the target, 3 zombies on ring d7 and 3 on ring d14, and 4 pre-existing dirt item entities on ring d28. WHEN owner A fires RMB and B and the zombies die, THEN:
 - 0 `andrew:orbital_charge` entities remain;
 - B's 5 diamonds exist as item entities or were destroyed by a later blast, as in vanilla, and never by `ring` code (spy: 0 `remove()` calls on non-container-fallback items);
 - the zombie loot and XP orbs were spawned;

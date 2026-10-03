@@ -28,7 +28,7 @@ The attack is an in-memory record made by one successful activation (`p001`). It
 | `target` | `{x,y,z}` int | **Target lock**: the hit block's location and the face it was hit on. It is frozen at activation and never re-read from the player. |
 | `face` | `Direction` | Recorded for diagnostics only. The column/ring centre is the block's (x, z), whichever face was hit. |
 | `spawnY` | int | From `r007` |
-| `charges` | `Charge[]` | LMB: 1. RMB: ~160 from `ring`'s layout (`xasm8`). |
+| `charges` | `Charge[]` | LMB: 1. RMB: 201 from `ring`'s layout (`RING_LAYOUT.count`). |
 | `createdTick` | int | For the safety timeout (`p002`) |
 
 **Invariants**

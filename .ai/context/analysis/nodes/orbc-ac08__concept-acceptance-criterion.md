@@ -10,14 +10,14 @@ part_of: ["L0-orbc"]
 relates_to: ["L0-orbc"]
 priority: 540
 size_chars: 1076
-tags: ["is_a:acceptance-criterion", "channel:ipad", "manual", "relates_to:L0-xcx8", "relates_to:L0-orbc-cx02", "relates_to:L0-xasm10", "blocked:L0-xq5"]
+tags: ["is_a:acceptance-criterion", "channel:ipad", "manual", "relates_to:L0-xcx8", "relates_to:L0-orbc-cx02", "relates_to:L0-xasm10"]
 level: 2
 ---
 # AC-orbc-08 · Touch input and aim on the iPad `[ipad]` (manual)
 
 **Links:** `part_of: ["L0-orbc"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-xcx8", "L0-orbc-cx02", "L0-xasm10", "L0-orbc-ad01"]`
 
-**Blocked** until `L0-xq5` is answered. The THEN lines below are for option 1 (LMB within reach, RMB up to 10). Rewrite them if the answer is different.
+Unblocked: input by decision 2026-09-29, range by 2026-10-02 (LMB ≤ 25, RMB 7–25); this check records what touch sends. The THEN lines below are for option 1 (LMB within reach, RMB 7–25).
 
 On the iPad with the default touch controls, using the stub effect (one sound at detonation):
 1. **Tap** on a highlighted block 3 blocks away → one RMB attack lands on **that** block, the tapped one.

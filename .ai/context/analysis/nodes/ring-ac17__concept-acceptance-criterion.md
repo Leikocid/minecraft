@@ -16,6 +16,6 @@ level: 2
 
 GIVEN 3 SimulatedPlayers with their own Cannons over three adjacent flat pads (their footprints overlap by 5 blocks). WHEN all three fire RMB in the same tick, THEN:
 - `maxBlastsInTick` ≤ 48;
-- all queued blasts drain within 10 ticks;
+- all queued blasts drain within 13 ticks;
 - server tick time stays above 50 ms for at most 3 consecutive ticks and never exceeds 150 ms;
 - after 60 ticks the ring queue interval is cleared and orbc's flight interval is cleared.

@@ -21,7 +21,7 @@ level: 2
 
 **Context.**
 - A charge must pass through entities, never skip a block, and not be pushed.
-- RMB can put ~160 charges per attack in flight, with several attacks at once (C-5a′).
+- RMB can put 201 charges per attack in flight, with several attacks at once (C-5a′).
 - `L0-adr-ochg` says "one bounded job per attack".
 
 **Decision.**

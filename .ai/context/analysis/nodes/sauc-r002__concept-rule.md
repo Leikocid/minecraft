@@ -31,6 +31,6 @@ After that the saucer is removed in the same tick.
 - The horizontal distance from the centre stays ≤ 90 on every tick, and so never exceeds the 100-block U8 limit (C-12′). The 100 is read as horizontal (`as04`).
 - θ is uniform in [0, 2π). The departure bearing is exactly opposite.
 - The motion is continuous: the position step is ≤ 0.5 blocks per tick on every leg. The fastest step is at the middle of an eased leg, and stays under 0.5 blocks per tick for both legs.
-- `hoverY` comes from `ufoc`: centre + 40, capped at ceiling − 4. `sauc` never recomputes it.
+- `hoverY` comes from `ufoc`: centre + 40, capped at ceiling − 15. `sauc` never recomputes it.
 - The arrival and departure height is `min(hoverY + 10, ceiling − 4)`, so the hull never rises above the build limit and stays reachable by a charge in every phase (`L0-adr-ufht`, which resolves `sauc-cx01`).
 - Nothing in the world changes the path: the saucer has no physics or collision, and it passes through terrain (UFO §7).

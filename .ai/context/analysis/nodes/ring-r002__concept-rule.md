@@ -16,6 +16,6 @@ level: 2
 
 - `orbc` spawns every column of the layout in the activation tick, at the dimension's `spawnY` (`L0-orbc-p002`, `r007`), and they start falling together. `ring` provides only the layout. It must not stagger spawns.
 - A charge spawned inside a solid cell detonates in the spawn tick (`L0-orbc-r008`). The others detonate on first block contact, so differences in terrain height give different contact ticks. §10 accepts this.
-- `ring`'s detonation queue (`p003`) may add **≤ 4 ticks** for one attack and **≤ 10 ticks** with 3 concurrent attacks (RG-2). This delay is the only one `ring` is allowed to add. It must never reorder blasts across attacks (FIFO).
+- `ring`'s detonation queue (`p003`) may add **5 ticks** for one attack and **13 ticks** with 3 concurrent attacks (RG-2). This delay is the only one `ring` is allowed to add. It must never reorder blasts across attacks (FIFO).
 
 **Rationale:** §10 says "created simultaneously … start falling simultaneously". The queue delay is covered by "actual explosion time may differ slightly" and by the C-15 rank-3 priority over rank-4 visual fidelity.

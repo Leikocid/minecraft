@@ -21,7 +21,7 @@ level: 2
 
 **Assumption.**
 - `FALL_SPEED = 1.0` block/tick, which is 20 blocks/s, constant with no acceleration.
-- A +30 drop onto flat ground takes 1.5 s, and +10 in the Nether takes 0.5 s.
+- A +60 drop onto flat ground takes 60 ticks = 3 s, and +10 in the Nether takes 0.5 s.
 - It is exported as one named constant in `src/orbital/charge.ts`.
 
 **Impact if wrong.**

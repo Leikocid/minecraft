@@ -20,13 +20,13 @@ level: 2
 **Status:** proposed. It amends `L0-adr-orbc` §2.
 
 **Context.**
-- `L0-adr-orbc` resolves every activation with one `getBlockFromViewDirection({maxDistance: 10})` and ignores the event's block.
+- `L0-adr-orbc` had resolved every activation with one `getBlockFromViewDirection` call and ignored the event's block (superseded below: range 25, event block preferred).
 - On the iPad's default touch scheme, a tap selects the block **under the finger**, and `itemUseOn`, `playerInteractWithBlock` and `entityHitBlock` report that block. The view direction points at the screen centre, which can be a different block (`cx02`).
 - Ignoring the event block would fire at a block the player never highlighted. That breaks "the vanilla highlight is the marker" (§6).
 
 **Decision.**
 1. If the event carries a block (`itemUseOn.block`, `playerInteractWithBlock.block`, `entityHitBlock.hitBlock`) and its distance from the eye is ≤ 10, that block is the target. It passes through the same `isTargetable` filter as the ray.
-2. Otherwise, for plain `itemUse` in the air, or on a crosshair or controller, use `getBlockFromViewDirection({maxDistance: 10, includeLiquidBlocks: false, includePassableBlocks: false})`.
+2. Otherwise, for plain `itemUse` in the air, or on a crosshair or controller, use `getBlockFromViewDirection({maxDistance: 25, includeLiquidBlocks: false, includePassableBlocks: false})`.
 3. Both paths feed one `lockTarget()` function. There is one rule for both modes (`r003`).
 
 **Rejected.**

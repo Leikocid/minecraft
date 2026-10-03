@@ -32,10 +32,10 @@ see_also: ["dragonkatanaspecv1ruen-part-1", "dragonkatanaspecv1ruen-part-3"]
 **Code.** As built in v1.4.x (`lgnd`, with `xcx10` closed under C-16):
 - fire and lava are **prevented** (`fire_resistant`);
 - Orbital blasts and rings are **prevented** (`protectLegendariesIn` moves the item out first);
-- cactus, TNT and despawn are not preventable on stable 2.10.0. The item is destroyed and a fresh marked copy is **returned** to the owner (immediately, or owed).
+- cactus and TNT are not preventable; despawn is (`minecraft:should_despawn {value:false}` survived past t=6000, `diagnose-CNTR-XCX10-AA.md:41-50`) but stays a return on purpose: an item stuck on a lava lake or in a pit comes back after 5 min (`:148-149`). The item is destroyed and a fresh marked copy is **returned** to the owner (immediately, or owed).
 
 **Disagreement.** For cactus and TNT, the item does not "survive" where it lay; it reappears with its owner. A literal T17 GameTest ("the item entity is still on the ground after TNT") fails.
 
-**Proposed resolution (autopilot default).** Accept the same C-16 reading the operator accepted for the other three legendaries when closing `xcx10`. T17 is proven as "after TNT, exactly one Katana exists, and it is in the owner's inventory or owed". `katn` writes T17 that way; `lgnd` cites the deviation. Severity is low, because this is a re-statement of an accepted compromise. It is filed so the operator confirms that it also binds the new spec.
+**Proposed resolution (autopilot default).** Accept the C-16 reading accepted by `decision-resolve-l0-xcx10` (Void, cactus) and LGND-INDESTR-01-AA AC#2 (TNT, cactus, despawn). T17 is proven as "after TNT, exactly one Katana exists, and it is in the owner's inventory or owed". `katn` writes T17 that way; `lgnd` cites the deviation. Severity is low, because this is a re-statement of an accepted compromise. It is filed so the operator confirms that it also binds the new spec.
 
 **Resolved at reduce v6** by `L0-adr-ktgr` §1: the Katana's T17 is the shipped three-tier C-16 reading. The test text is `L0-lgnd-ac24`. Operator confirmation is collected via `L0-xq6`, which does not block the build.

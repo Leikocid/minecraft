@@ -1,7 +1,7 @@
 ---
 title: Scope
 type: analysis
-generated_at: "2026-10-03T14:58:23.890Z"
+generated_at: "2026-10-03T18:06:22.806Z"
 source_channel: rollout
 node_id: rollout-scope
 aliases: ["rollout-scope","scope"]
@@ -338,7 +338,7 @@ relates_to: ["L0-lgnd-p003", "L0-lgnd-r011", "L0-lgnd-ad11", "L0-lgnd-ent4"]
 
 GIVEN P last held a marked Orbital Cannon (gen g) and drops it into the Void
 WHEN the item entity falls below the dimension's minimum height
-THEN P receives it with the same id, gen g + 1 and `holder` = P, plus a private `andrew.orbital.returned` message,
+THEN P receives it with the same id, gen g + 1 and `holder` = P, plus a private `andrew.legendary.recovered` message,
 AND the Cannon craft flag is unchanged.
 
 If P is offline:
@@ -363,7 +363,7 @@ relates_to: ["L0-lgnd-p003", "L0-lgnd-r012", "L0-lgnd-as11"]
 **AC-lgnd-09: Vanilla item-entity destruction returns the instance; a pickup does not.** Channel: `bds`.
 
 GIVEN a marked legendary item entity (any of the three) last held by P
-WHEN it burns in lava or fire, is destroyed by cactus or a **vanilla** TNT explosion, or despawns
+WHEN it is destroyed by cactus or a **vanilla** TNT explosion, or despawns (in lava or fire it stays where it lies, same gen, nothing owed)
 THEN P receives it back per `ac08`,
 AND an ordinary pickup of the entity by any player triggers **no** return and no gen bump, and that player becomes `holder`,
 AND an unmarked (Creative or vanilla `/give`) copy is destroyed as in vanilla (`as11`).
@@ -653,12 +653,12 @@ WHEN the magnet runs its full 60 s and releases
 THEN:
 - no legendary stack is ever within 6 blocks of the saucer's hover column;
 - the ground Scythe and the chest's Web Sword have not moved;
-- the hopper block is still in place and the Cannon is still inside it, untouched. A hopper is a container only and never a pulled block (`L0-magn-adhp`, `L0-adr-ufnd`); an iron ingot placed in the same hopper is extracted;
+- the hopper block is still in place and the Cannon is still inside it, untouched. A hopper holding anything is a container and never a pulled block (`decision-resolve-l0-lgnd-cx13`); an iron ingot placed in the same hopper is extracted;
 - the chest minecart and the armour stand were not selected;
 - the iron ingot in the chest was extracted;
 - the world holds exactly one live copy of each marked instance, and neither owed list changed.
 
-Negative control: the same scenario with `isLegendaryStack` stubbed to return `false` must fail the "never within 6 blocks" clause. (Reconciled at reduce v4: the earlier control, a hopper pull without `protectLegendariesIn`, has no code path to exercise once the hopper is never a block.)
+Negative control: the same scenario with `isLegendaryStack` stubbed to return `false` must fail the "never within 6 blocks" clause. (Reconciled at reduce v4: the earlier control, a hopper pull without `protectLegendariesIn`, has no code path to exercise once a hopper holding anything is never a block.)
 
 
 - **level**: 2
@@ -730,12 +730,12 @@ see_also: ["dragonkatanaspecv1ruen-part-3"]
 - **T16.** P has a marked Katana in the hotbar and dies (also in lava, after a teleport). THEN on respawn P holds the same id and gen, and no item entity remains.
 - **T17, prevent.** A marked Katana item entity:
   - in fire, or in lava, is still there after 10 s, with the same id and gen;
-  - in a chest in an Orbital LMB column, and on the ground in an RMB blast and ring AABB, ends up outside the volume with the same id and gen, and no `returned` message.
-- **T17, return (C-16, `L0-xcx21`).** A marked Katana entity on cactus, or hit by primed vanilla TNT: afterwards exactly one live Katana exists, either in the owner's inventory with `gen + 1` and `andrew.katana.returned`, or in `dk_owed` if the owner is offline.
+  - in a chest in an Orbital LMB column, and on the ground in an RMB blast and ring AABB, ends up outside the volume with the same id and gen, and no `andrew.legendary.recovered` message, nothing in `dk_owed`.
+- **T17, return (C-16, `L0-xcx21`).** A marked Katana entity on cactus, or hit by primed vanilla TNT: afterwards exactly one live Katana exists, either in the owner's inventory (at their feet if it is full, `retention.ts:270-275`) with `gen + 1` and `andrew.legendary.recovered`, or in `dk_owed` if the owner is offline.
 - **T18.** A Katana dropped into the Void, or inside a chest minecart that falls into the Void, returns to **`mark.owner`** exactly once. The clause "to the last holder" waits for `L0-xcx11`.
 - **Teleport (`r017`).** GIVEN a marked Katana on the ground near P, and P holding a second def's marked stack
   WHEN P activates the Katana 20 blocks away 3 times, then walks until the ground item's chunk unloads and returns
-  THEN no `lost`/`returned` log line appears, both gens are unchanged, `dk_owed` is empty and the ground Katana is watched again.
+  THEN no `legendary recovery: … now gen` line appears, both gens are unchanged, `dk_owed` is empty and the ground Katana is watched again.
 - **Same dimension.** A Katana teleport whose ray reaches the edge of a loaded area stops before the unloaded cell, and the player's `dimension.id` before and after is equal.
 
 
