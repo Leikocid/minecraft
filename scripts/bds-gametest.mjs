@@ -319,6 +319,15 @@ const EXPECTED_TESTS = [
   'andrew:ufo_commands_operator',
   'andrew:ufo_arrival_notice',
   'andrew:ufo_idle_budget',
+  // MAGN-SCAN-01 — src/gametest/ufo-magnet-select.ts
+  'andrew:ufo_iron_ids_resolve',
+  'andrew:ufo_magnet_priority',
+  'andrew:ufo_magnet_nearest_blocks',
+  'andrew:ufo_magnet_containers',
+  'andrew:ufo_magnet_blocks',
+  'andrew:ufo_magnet_deep_ore',
+  'andrew:ufo_magnet_holders',
+  'andrew:ufo_magnet_legendaries',
 ];
 
 /**
