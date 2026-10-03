@@ -26,7 +26,7 @@
 //      instead and the command is written to its stdin.
 //
 //   npm run bds:gametest
-//   npm run bds:gametest -- --no-build --timeout 1800
+//   npm run bds:gametest -- --no-build --timeout 5400
 //   npm run bds:gametest -- --keep-up      # leave the server running to inspect
 //   npm run bds:gametest -- --only andrew:probe_fire_resistance_noon   # one test, for iteration
 
@@ -178,9 +178,11 @@ const EXPECTED_TESTS = [
   'andrew:legendary_holder_void_chest_minecart',
   'andrew:legendary_holder_void_hopper_minecart',
   'andrew:probe_ufo_holder_void',
-  // CNTR-LGND-CX14 — src/gametest/probe-stand-void.ts
+  // CNTR-LGND-CX14 — src/gametest/probe-stand-void.ts; LGND-STAND-01 asserts the stand watcher
   'andrew:probe_stand_void',
   'andrew:probe_item_floor_band',
+  'andrew:legendary_stand_void_hands',
+  'andrew:legendary_stand_watch_idle',
   // STRF-REG-01 — src/gametest/strf-registry.ts
   'andrew:strf_registry_steps_idempotent',
   // STRF-ROLL-01 — src/gametest/structures.ts
@@ -377,8 +379,9 @@ const env = {
 // ---------------------------------------------------------------- arguments
 
 function parseArgs(argv) {
-  // The zombie-villager cure alone waits up to 5.5 minutes of game time.
-  const opts = { build: true, timeoutSec: 1800, keepUp: false, only: [] };
+  // The zombie-villager cure alone waits up to 5.5 minutes of game time, and the
+  // whole suite runs 32–48 minutes under Rosetta, past a 30-minute deadline.
+  const opts = { build: true, timeoutSec: 5400, keepUp: false, only: [] };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === '--no-build') opts.build = false;
