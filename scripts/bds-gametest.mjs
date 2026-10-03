@@ -178,6 +178,9 @@ const EXPECTED_TESTS = [
   'andrew:legendary_holder_void_chest_minecart',
   'andrew:legendary_holder_void_hopper_minecart',
   'andrew:probe_ufo_holder_void',
+  // CNTR-LGND-CX14 — src/gametest/probe-stand-void.ts
+  'andrew:probe_stand_void',
+  'andrew:probe_item_floor_band',
   // STRF-REG-01 — src/gametest/strf-registry.ts
   'andrew:strf_registry_steps_idempotent',
   // STRF-ROLL-01 — src/gametest/structures.ts

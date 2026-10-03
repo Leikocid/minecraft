@@ -1,0 +1,56 @@
+# run 1 — code_sha ebe995a, 2026-10-03T15:16:09Z
+KATN setup floor(1,1,1)=minecraft:stone above(1,2,1)=minecraft:air
+KATN IDS lava=true flowing_lava=true fire=true soul_fire=true
+KATN FIT cell=minecraft:air read=minecraft:air/minecraft:air columnRay=none/none hazardListed=false
+KATN FIT cell=minecraft:water read=minecraft:water/minecraft:water columnRay=none/none hazardListed=false
+KATN FIT cell=minecraft:lava read=minecraft:lava/minecraft:lava columnRay=none/none hazardListed=true
+KATN FIT cell=minecraft:flowing_lava read=minecraft:lava/minecraft:lava columnRay=none/none hazardListed=true
+KATN FIT cell=minecraft:fire read=minecraft:fire/minecraft:fire columnRay=none/none hazardListed=true
+KATN FIT cell=minecraft:soul_fire read=minecraft:soul_fire/minecraft:soul_fire columnRay=none/none hazardListed=true
+KATN FIT cell=minecraft:short_grass read=minecraft:short_grass/minecraft:short_grass columnRay=none/none hazardListed=false
+KATN FIT cell=minecraft:stone read=minecraft:stone/minecraft:stone columnRay=minecraft:stone/minecraft:stone hazardListed=false
+KATN FLOW after 80 ticks trench=[3:lava/ray=none 4:air/ray=none 5:air/ray=none]
+KATN CANDIDATE above-lava F=(3,2,4) airShortcut=true columnRay=none hazard=false reachFrom=3.50,3.52,6.50 reach=clear dist=2.00 cellBelow=minecraft:lava | downRay passable+liquid=minecraft:lava@y-59 liquidOnly=minecraft:stone@y-60 control(1,2,4)=minecraft:stone@y-59
+KATN CASE above-stone placed=1.50,2.00,4.50 lavaHurt=0 firstLava=- fireHurt=0 fireTickHurt=0 other=[] track=[+1:y=2.00,feet=air,onFire=false +3:y=2.00,feet=air,onFire=false +5:y=2.00,feet=air,onFire=false +10:y=2.00,feet=air,onFire=false +20:y=2.00,feet=air,onFire=false +40:y=2.00,feet=air,onFire=false]
+KATN CASE above-lava placed=3.50,2.00,4.50 lavaHurt=4 firstLava=+5 fireHurt=4 fireTickHurt=0 other=[] track=[+1:y=2.00,feet=air,onFire=false +3:y=1.92,feet=lava,onFire=true +5:y=1.54,feet=lava,onFire=true +10:y=1.00,feet=lava,onFire=true +20:y=1.00,feet=lava,onFire=true +40:y=1.00,feet=lava,onFire=true]
+KATN CASE in-lava placed=5.50,1.00,4.50 lavaHurt=4 firstLava=+1 fireHurt=4 fireTickHurt=0 other=[] track=[+1:y=1.00,feet=lava,onFire=true +3:y=1.00,feet=lava,onFire=true +5:y=1.00,feet=lava,onFire=true +10:y=1.00,feet=lava,onFire=true +20:y=1.00,feet=lava,onFire=true +40:y=1.00,feet=lava,onFire=true]
+KATN RESULT lavaFitsColumnRay=true stoneFitsColumnRay=false candidateSafeByAmendedRule=true lavaHurt above-stone=0 in-lava=4 above-lava=4 firstLava above-lava=5 in-lava=1 verdict=safe-cell-above-lava-ends-in-lava
+
+# run 2 — code_sha dccdd26, 2026-10-03T15:18:44Z
+KATN setup floor(1,1,1)=minecraft:stone above(1,2,1)=minecraft:air
+KATN IDS lava=minecraft:lava flowing_lava=minecraft:flowing_lava fire=minecraft:fire soul_fire=minecraft:soul_fire
+KATN FLOW source via /setblock successCount=1
+KATN FIT cell=minecraft:air read=minecraft:air/minecraft:air(liquid_depth=-) columnRay=none/none hazardListed=false
+KATN FIT cell=minecraft:water read=minecraft:water/minecraft:water(liquid_depth=0) columnRay=none/none hazardListed=false
+KATN FIT cell=minecraft:lava read=minecraft:lava/minecraft:lava(liquid_depth=0) columnRay=none/none hazardListed=true
+KATN FIT cell=minecraft:flowing_lava read=minecraft:lava/minecraft:lava(liquid_depth=0) columnRay=none/none hazardListed=true
+KATN FIT cell=minecraft:fire read=minecraft:fire/minecraft:fire(liquid_depth=-) columnRay=none/none hazardListed=true
+KATN FIT cell=minecraft:soul_fire read=minecraft:soul_fire/minecraft:soul_fire(liquid_depth=-) columnRay=none/none hazardListed=true
+KATN FIT cell=minecraft:short_grass read=minecraft:short_grass/minecraft:short_grass(liquid_depth=-) columnRay=none/none hazardListed=false
+KATN FIT cell=minecraft:stone read=minecraft:stone/minecraft:stone(liquid_depth=-) columnRay=minecraft:stone/minecraft:stone hazardListed=false
+KATN FLOW after 80 ticks trench=[3:minecraft:lava(liquid_depth=0)/columnRay=none 4:minecraft:air(liquid_depth=-)/columnRay=none 5:minecraft:air(liquid_depth=-)/columnRay=none]
+KATN CANDIDATE above-lava F=(3,2,4) airShortcut=true columnRay=none hazard=false reachFrom=3.50,3.52,6.50 reach=clear dist=2.00 cellBelow=minecraft:lava | downRay passable+liquid=minecraft:lava@y-59 liquidOnly=minecraft:stone@y-60 control(1,2,4)=minecraft:stone@y-59
+KATN CASE above-stone placed=1.50,2.00,4.50 lavaHurt=0 firstLava=- fireHurt=0 fireTickHurt=0 other=[] track=[+1:y=2.00,feet=air,onFire=false +3:y=2.00,feet=air,onFire=false +5:y=2.00,feet=air,onFire=false +10:y=2.00,feet=air,onFire=false +20:y=2.00,feet=air,onFire=false +40:y=2.00,feet=air,onFire=false]
+KATN CASE above-lava placed=3.50,2.00,4.50 lavaHurt=4 firstLava=+5 fireHurt=4 fireTickHurt=0 other=[] track=[+1:y=2.00,feet=air,onFire=false +3:y=1.92,feet=lava,onFire=true +5:y=1.54,feet=lava,onFire=true +10:y=1.00,feet=lava,onFire=true +20:y=1.00,feet=lava,onFire=true +40:y=1.00,feet=lava,onFire=true]
+KATN CASE in-lava placed=5.50,1.00,4.50 lavaHurt=4 firstLava=+1 fireHurt=4 fireTickHurt=0 other=[] track=[+1:y=1.00,feet=lava,onFire=true +3:y=1.00,feet=lava,onFire=true +5:y=1.00,feet=lava,onFire=true +10:y=1.00,feet=lava,onFire=true +20:y=1.00,feet=lava,onFire=true +40:y=1.00,feet=lava,onFire=true]
+KATN RESULT lavaFitsColumnRay=true stoneFitsColumnRay=false candidateSafeByAmendedRule=true lavaHurt above-stone=0 in-lava=4 above-lava=4 firstLava above-lava=5 in-lava=1 verdict=safe-cell-above-lava-ends-in-lava
+
+# run 3 — code_sha 81b6be6, 2026-10-03T15:21:03Z (artifact .ai/verify/CNTR-KATN-CX01-AA/2.red.json)
+KATN setup floor(1,1,1)=minecraft:stone above(1,2,1)=minecraft:air
+KATN IDS lava=minecraft:lava flowing_lava=minecraft:flowing_lava fire=minecraft:fire soul_fire=minecraft:soul_fire
+KATN IDS all lava/fire/magma types (16): minecraft:campfire minecraft:dead_fire_coral minecraft:dead_fire_coral_block minecraft:dead_fire_coral_fan minecraft:dead_fire_coral_wall_fan minecraft:fire minecraft:fire_coral minecraft:fire_coral_block minecraft:fire_coral_fan minecraft:fire_coral_wall_fan minecraft:firefly_bush minecraft:flowing_lava minecraft:lava minecraft:magma minecraft:soul_campfire minecraft:soul_fire
+KATN FLOW source via /setblock successCount=1
+KATN FIT cell=minecraft:air read=minecraft:air/minecraft:air(liquid_depth=-) columnRay=none/none hazardListed=false
+KATN FIT cell=minecraft:water read=minecraft:water/minecraft:water(liquid_depth=0) columnRay=none/none hazardListed=false
+KATN FIT cell=minecraft:lava read=minecraft:lava/minecraft:lava(liquid_depth=0) columnRay=none/none hazardListed=true
+KATN FIT cell=minecraft:flowing_lava read=minecraft:lava/minecraft:lava(liquid_depth=0) columnRay=none/none hazardListed=true
+KATN FIT cell=minecraft:fire read=minecraft:fire/minecraft:fire(liquid_depth=-) columnRay=none/none hazardListed=true
+KATN FIT cell=minecraft:soul_fire read=minecraft:soul_fire/minecraft:soul_fire(liquid_depth=-) columnRay=none/none hazardListed=true
+KATN FIT cell=minecraft:short_grass read=minecraft:short_grass/minecraft:short_grass(liquid_depth=-) columnRay=none/none hazardListed=false
+KATN FIT cell=minecraft:stone read=minecraft:stone/minecraft:stone(liquid_depth=-) columnRay=minecraft:stone/minecraft:stone hazardListed=false
+KATN FLOW after 200 ticks trench=[3:minecraft:lava(liquid_depth=0)/columnRay=none 4:minecraft:air(liquid_depth=-)/columnRay=none 5:minecraft:air(liquid_depth=-)/columnRay=none]
+KATN CANDIDATE above-lava F=(3,2,4) airShortcut=true columnRay=none hazard=false reachFrom=3.50,3.52,6.50 reach=clear dist=2.00 cellBelow=minecraft:lava | downRay passable+liquid=minecraft:lava@y-59 liquidOnly=minecraft:stone@y-60 control(1,2,4)=minecraft:stone@y-59
+KATN CASE above-stone placed=1.50,2.00,4.50 lavaHurt=0 firstLava=- fireHurt=0 fireTickHurt=0 other=[] track=[+1:y=2.00,feet=air,onFire=false +3:y=2.00,feet=air,onFire=false +5:y=2.00,feet=air,onFire=false +10:y=2.00,feet=air,onFire=false +20:y=2.00,feet=air,onFire=false +40:y=2.00,feet=air,onFire=false]
+KATN CASE above-lava placed=3.50,2.00,4.50 lavaHurt=4 firstLava=+5 fireHurt=4 fireTickHurt=0 other=[] track=[+1:y=2.00,feet=air,onFire=false +3:y=1.92,feet=lava,onFire=true +5:y=1.54,feet=lava,onFire=true +10:y=1.00,feet=lava,onFire=true +20:y=1.00,feet=lava,onFire=true +40:y=1.00,feet=lava,onFire=true]
+KATN CASE in-lava placed=5.50,1.00,4.50 lavaHurt=4 firstLava=+1 fireHurt=4 fireTickHurt=0 other=[] track=[+1:y=1.00,feet=lava,onFire=true +3:y=1.00,feet=lava,onFire=true +5:y=1.00,feet=lava,onFire=true +10:y=1.00,feet=lava,onFire=true +20:y=1.00,feet=lava,onFire=true +40:y=1.00,feet=lava,onFire=true]
+KATN RESULT lavaFitsColumnRay=true stoneFitsColumnRay=false candidateSafeByAmendedRule=true lavaHurt above-stone=0 in-lava=4 above-lava=4 firstLava above-lava=5 in-lava=1 verdict=safe-cell-above-lava-ends-in-lava
