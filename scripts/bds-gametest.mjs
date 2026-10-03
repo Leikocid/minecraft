@@ -70,6 +70,8 @@ const EXPERIMENT_ACTIVE = 'Experiment(s) active:';
 const SPAWN_SEARCH_STOOD_DOWN = ['[andrew] spawn windmill: not started: windmill is not enabled', '[andrew] spawn windmill: search finished: skipped'];
 // The world is deleted before every run, so the release pack's load line must name no type.
 const ENABLED_NONE = '[andrew] structures enabled: none';
+// The saucer entity and its geometry by id; `\b` keeps the ufo_saucer_* test names out.
+const SAUCER_IDS = /andrew[:.]ufo_saucer\b/;
 
 /**
  * Tests registered by src/gametest/main.ts, run one at a time.
@@ -168,6 +170,12 @@ const EXPECTED_TESTS = [
   'andrew:legendary_offhand_resolves',
   'andrew:legendary_offhand_death_returns',
   'andrew:legendary_offhand_token_refused',
+  // LGND-UFO-01 — src/gametest/legendary-ufo.ts
+  'andrew:legendary_ufo_fall_death_keeps',
+  'andrew:legendary_ufo_holder_chest_minecart',
+  'andrew:legendary_ufo_holder_hopper_minecart',
+  'andrew:legendary_ufo_holder_armor_stand',
+  'andrew:probe_ufo_holder_void',
   // STRF-REG-01 — src/gametest/strf-registry.ts
   'andrew:strf_registry_steps_idempotent',
   // STRF-ROLL-01 — src/gametest/structures.ts
@@ -306,6 +314,39 @@ const EXPECTED_TESTS = [
   'andrew:ring_legendaries_survive',
   'andrew:ring_three_budget',
   'andrew:ring_no_leftovers_vanilla_drops',
+  // UFOC-CORE-01 — src/gametest/ufo-core.ts
+  'andrew:ufo_schedule_scaled_clock',
+  'andrew:ufo_phases_real_durations',
+  'andrew:ufo_overworld_only',
+  'andrew:ufo_commands_operator',
+  'andrew:ufo_arrival_notice',
+  'andrew:ufo_idle_budget',
+  // MAGN-SCAN-01 — src/gametest/ufo-magnet-select.ts
+  'andrew:ufo_iron_ids_resolve',
+  'andrew:ufo_magnet_priority',
+  'andrew:ufo_magnet_nearest_blocks',
+  'andrew:ufo_magnet_containers',
+  'andrew:ufo_magnet_blocks',
+  'andrew:ufo_magnet_deep_ore',
+  'andrew:ufo_magnet_holders',
+  'andrew:ufo_magnet_legendaries',
+  // MAGN-HOLD-01 — src/gametest/ufo-magnet-hold.ts
+  'andrew:ufo_hold_players_lift',
+  'andrew:ufo_hold_players_ignored',
+  'andrew:ufo_hold_drop_exempt',
+  'andrew:ufo_hold_release_fall',
+  'andrew:ufo_hold_release_together',
+  'andrew:ufo_hold_tps_measured',
+  // SAUC-ENTITY-01 — src/gametest/ufo-saucer.ts
+  'andrew:ufo_saucer_flight',
+  'andrew:ufo_saucer_immune',
+  'andrew:ufo_saucer_beam_stop',
+  // SAUC-SHOOT-01 — src/gametest/ufo-shootdown.ts
+  'andrew:ufo_shootdown_seam',
+  'andrew:ufo_shootdown_arrival',
+  'andrew:ufo_shootdown_magnet',
+  'andrew:ufo_shootdown_departure',
+  'andrew:ufo_shootdown_once',
 ];
 
 /**
@@ -598,6 +639,12 @@ function analyzeLog(text, expected) {
   if (enabledLine?.includes(ENABLED_NONE)) evidence.push(enabledLine.trim());
   else problems.push(`"${ENABLED_NONE}" is absent on a fresh world (got ${JSON.stringify(enabledLine?.trim() ?? null)})`);
 
+  // Script output reaches the log at WARN under [Scripting]; any other ERROR/WARN line naming the
+  // saucer is the engine refusing or trimming its entity or geometry.
+  const saucerComplaints = lines.filter((l) => /\b(ERROR|WARN)\]/.test(l) && !l.includes('[Scripting]') && SAUCER_IDS.test(l));
+  for (const l of saucerComplaints) problems.push(`the engine complained about the saucer: ${l.trim()}`);
+  if (saucerComplaints.length === 0) evidence.push('no engine ERROR/WARN line names andrew:ufo_saucer or its geometry');
+
   // A repeated test keeps its first failure: a later pass must not hide it.
   const runs = new Map();
   for (const line of lines) {
@@ -732,6 +779,7 @@ function main() {
     log('FAIL — the simulated-player scenarios did not pass on BDS:');
     for (const p of problems) log(`  ✗ ${p}`);
     log('');
+    printMeasurements(text);
     log(`Full server log: ${logPath}`);
     process.exit(1);
   }
@@ -741,8 +789,21 @@ function main() {
       'trap ability on BDS, with no human involved:'
   );
   for (const e of evidence) log(`  ✓ ${e}`);
+  printMeasurements(text);
   log('');
   log(`Full server log: ${logPath}`);
+}
+
+/**
+ * Costs a scenario measured rather than gated ("[gametest] … MEASURE …"), last
+ * in the output so they stay inside the tail a run-check artifact keeps.
+ */
+function printMeasurements(text) {
+  const lines = text.split('\n').filter((l) => / \[gametest\] .*MEASURE /.test(l));
+  if (lines.length === 0) return;
+  log('');
+  log('Measurements:');
+  for (const l of lines) log(`  ${l.slice(l.indexOf('[gametest]')).trim()}`);
 }
 
 try {

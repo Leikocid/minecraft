@@ -76,6 +76,7 @@ function commit(player: Player, owner: Owner, mode: Mode, effect: Effect, lock: 
     attackId: newAttackId(tick),
     mode,
     ownerId: owner.id,
+    ownerName: owner.name,
     dimensionId: lock.dimensionId,
     target: lock.location,
     face: lock.face,

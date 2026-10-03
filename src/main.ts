@@ -19,6 +19,7 @@ import { registerLegendaryHud } from "./legendary/hud";
 import { protectLegendariesIn, registerRecovery } from "./legendary/recovery";
 import { registerRetention } from "./legendary/retention";
 import { registerOrbitalCannon } from "./orbital";
+import { registerInterceptor } from "./orbital/flight";
 import { registerScytheVolley } from "./scythe/volley";
 import { registerStructureCommands } from "./structures/commands";
 import { DISCOVER_INTERVAL_TICKS, EnabledTypes, enabledLine } from "./structures/config";
@@ -28,6 +29,7 @@ import { makeFireproof } from "./structures/place";
 import { StrfRuntime, engineStrf } from "./structures/runtime";
 import { SPAWN_EVENT, SPAWN_STATE_EVENT, SpawnSearch, engineSpawnHost } from "./structures/spawn-search";
 import { DynamicPropertyStore } from "./structures/store";
+import { registerUfo } from "./ufo";
 import { registerTrap } from "./websword/trap";
 
 registerAutoSmelt();
@@ -42,6 +44,7 @@ registerOrbitalCannon();
 // engine's startup phase, which is over by the time the world exists.
 registerLegendaryCommands();
 registerHideCommand();
+registerUfo({ world, system, CommandPermissionLevel, CustomCommandParamType, CustomCommandStatus, ItemStack, BlockVolume, registerInterceptor });
 
 const strfLog = (msg: string): void => console.warn(`[andrew] ${msg}`);
 let strf: StrfRuntime | undefined;

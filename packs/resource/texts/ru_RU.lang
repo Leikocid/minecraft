@@ -89,3 +89,6 @@ andrew.structure.state.placed=построено
 andrew.structure.state.looted=сундуки заполнены
 andrew.structure.state.guarded=охрана создана
 andrew.structure.state.done=готово
+andrew.ufo.arrival=В небе НЛО!
+andrew.ufo.shot_down=%s сбил НЛО!
+entity.andrew:ufo_saucer.name=НЛО

@@ -99,6 +99,17 @@ export function defForToken(stack?: ItemStack): LegendaryDef | undefined {
   return stack === undefined ? undefined : LEGENDARIES.find((def) => def.craftGate && def.craftTokenId === stack.typeId);
 }
 
+const LEGENDARY_TYPE_IDS: ReadonlySet<string> = new Set(LEGENDARIES.flatMap((def) => [def.itemId, def.craftTokenId]));
+
+/**
+ * Whether `stack` is a legendary weapon or its craft token, by type alone
+ * (L0-lgnd-ad13): marked, unmarked and stale copies alike, and no dynamic
+ * property is read. "Is it a protected instance" is `isLegendaryItemEntity`.
+ */
+export function isLegendaryStack(stack?: ItemStack): boolean {
+  return stack !== undefined && LEGENDARY_TYPE_IDS.has(stack.typeId);
+}
+
 export function defForAbility(abilityKey: string): LegendaryDef | undefined {
   return LEGENDARIES.find((def) => def.abilityKey === abilityKey);
 }
