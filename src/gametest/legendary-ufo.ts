@@ -388,6 +388,44 @@ holderScenario("legendary_ufo_holder_armor_stand", "ufo_stand", "minecraft:armor
 // is the "void probe RESULT" line. On BDS 1.26.51.1 both holders are removed
 // about 20 ticks below the floor with no entityDie and no spill, so what they
 // held is never seen by recovery: r016 §3 is what keeps the magnet out of it.
+/**
+ * §5: a legendary that falls into the Void goes back to its last holder — also
+ * when it falls inside a container entity. The engine removes a chest or hopper
+ * minecart below the floor with no death and no spill (probe_ufo_holder_void).
+ */
+for (const cartType of ["minecraft:chest_minecart", "minecraft:hopper_minecart"]) {
+  const short = cartType.replace("minecraft:", "");
+  registerAsync("andrew", `legendary_holder_void_${short}`, async (test: Test): Promise<void> => {
+    const owner = test.spawnSimulatedPlayer(OWNER_STAND, `void_${short}`, GameMode.Survival);
+    const cart = test.spawn(cartType, HOLDER_AT);
+    await test.idle(4);
+    const mark = state.makeMark("admin", owner);
+    try {
+      await MINECART.load(test, owner, cart, state.markItem(WEB_SWORD, new ItemStack(WEB_SWORD.itemId, 1), mark));
+      test.assert(MINECART.holds(cart, WEB_SWORD, mark.id).holds, `the ${short} does not hold the Web Sword`);
+      const floor = test.getDimension().heightRange.min;
+      cart.teleport({ x: cart.location.x, y: floor - 8, z: cart.location.z });
+      let gens: number[] = [];
+      for (let t = 0; t < RETURN_DEADLINE_TICKS + 100 && gens.length === 0; t++) {
+        await test.idle(1);
+        gens = gensOf(WEB_SWORD, carried(owner), mark.id);
+      }
+      test.assert(!cart.isValid, `the ${short} is still in the world below the floor`);
+      test.assert(gens.length === 1 && gens[0] > mark.gen, `owner holds Web Sword gens [${gens.join(" ")}] after the ${short} fell into the Void`);
+      await test.idle(40);
+      const again = gensOf(WEB_SWORD, carried(owner), mark.id);
+      test.assert(again.length === 1, `owner holds ${again.length} copies 40 ticks later`);
+      log(`holder void RESULT ${short}: returned gen ${gens[0]} (was ${mark.gen})`);
+    } finally {
+      if (cart.isValid) cart.remove();
+    }
+    test.succeed();
+  })
+    .structureName(STRUCTURE)
+    .maxTicks(600)
+    .tag("andrew");
+}
+
 registerAsync("andrew", "probe_ufo_holder_void", async (test: Test): Promise<void> => {
   const owner = test.spawnSimulatedPlayer(OWNER_STAND, "ufo_void_owner", GameMode.Survival);
   const cart = test.spawn("minecraft:chest_minecart", HOLDER_AT);
