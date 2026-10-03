@@ -61,7 +61,9 @@ export class UfoSchedule {
 
   /** L0-ufoc-p003 step 3: an event that was live when the server stopped is rescheduled from now. */
   loaded(): boolean {
-    return false;
+    if (this.next() !== IN_FLIGHT) return false;
+    this.pauseFromNow();
+    return true;
   }
 
   /** r006: re-enabling never drops a saucer in the same second, so an overdue time moves 15 min out. */
