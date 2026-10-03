@@ -1,7 +1,8 @@
 // The fall of every live charge (L0-orbc-p002, L0-orbc-ad02) and the life
 // of the attacks that hold them (L0-orbc-p003, L0-orbc-ad03): one shared
-// interval while any attack has a charge, four ways for a charge to end, and
-// the sweeps that remove charge entities no live attack owns.
+// interval while any attack has a charge, five ways for a charge to end (the
+// fifth, "intercepted", only through a registered interceptor: L0-adr-ufoi),
+// and the sweeps that remove charge entities no live attack owns.
 //
 // Nothing here listens to the owner: no entityDie, playerLeave,
 // playerDimensionChange or hand change (L0-orbc-r010). The owner is the
@@ -32,9 +33,11 @@ export interface Attack {
   spawnY: number;
   charges: Charge[];
   createdTick: number;
+  /** The owner's name at the shot: what the UFO broadcast names once the owner has left (L0-sauc-as03). */
+  ownerName?: string;
 }
 
-export type Outcome = "detonated" | "voided" | "lost" | "timeout";
+export type Outcome = "detonated" | "voided" | "lost" | "timeout" | "intercepted";
 
 export interface ChargeEnd {
   attack: Attack;
@@ -47,6 +50,13 @@ export interface ChargeEnd {
 
 export type ChargeEndObserver = (end: ChargeEnd) => void;
 
+/**
+ * Sees the segment one charge sweeps in one step, `from` (its feet now) down to
+ * `to`, before the charge moves or detonates. `true` ends the charge as
+ * "intercepted": removed, no effect (L0-adr-ufoi, L0-sauc-p003).
+ */
+export type Interceptor = (attack: Attack, charge: Charge, from: Vector3, to: Vector3, tick: number) => boolean;
+
 /** A guard against a stuck path, not a feature (L0-orbc-p002 "Termination"). */
 export const ATTACK_TIMEOUT_TICKS = 400;
 
@@ -58,6 +68,9 @@ const attacks = new Map<string, Attack>();
 /** Entity ids of every charge a live attack holds: the one test of "live" for the sweeps. */
 const tracked = new Set<string>();
 const endObservers = new Set<ChargeEndObserver>();
+const interceptors = new Set<Interceptor>();
+/** Attacks an interceptor already threw on: one log line each, not one per charge step. */
+const interceptorThrew = new WeakSet<Attack>();
 const loop = { handle: undefined as number | undefined, starts: 0, stops: 0, steps: 0, ms: 0 };
 const orphans = { startup: 0, load: 0, spawn: 0 };
 const pendingOrphanLog = { load: 0, spawn: 0, scheduled: false };
@@ -98,6 +111,18 @@ export function orphanCounts(): Readonly<typeof orphans> {
 export function observeChargeEnds(observer: ChargeEndObserver): () => void {
   endObservers.add(observer);
   return () => endObservers.delete(observer);
+}
+
+/** Returns the unregister. */
+export function registerInterceptor(interceptor: Interceptor): () => void {
+  interceptors.add(interceptor);
+  return () => {
+    interceptors.delete(interceptor);
+  };
+}
+
+export function interceptorCount(): number {
+  return interceptors.size;
 }
 
 export function removeCharges(charges: Charge[]): void {
@@ -179,21 +204,43 @@ interface End {
   point?: Vector3;
 }
 
-/** One tick of one charge; undefined while it still falls. Entities are never consulted, so nothing but a block stops it. */
-function advance(attack: Attack, charge: Charge, dim: Dimension, minY: number): End | undefined {
+/** Whether an interceptor takes the charge on its way down to `toY`. One that throws counts as false and the charge flies on. */
+function intercepted(attack: Attack, charge: Charge, toY: number, tick: number): boolean {
+  if (interceptors.size === 0) return false;
+  const from = chargeLocation(charge, charge.y);
+  const to = chargeLocation(charge, toY);
+  for (const interceptor of [...interceptors]) {
+    try {
+      if (interceptor(attack, charge, from, to, tick) === true) return true;
+    } catch (err) {
+      if (!interceptorThrew.has(attack)) {
+        interceptorThrew.add(attack);
+        log(`attack ${attack.attackId}: an interceptor threw at y=${charge.y} ${String(err)}; its charges fly on`);
+      }
+    }
+  }
+  return false;
+}
+
+/** One tick of one charge; undefined while it still falls. Entities are never consulted, so nothing but a block or an interceptor stops it. */
+function advance(attack: Attack, charge: Charge, dim: Dimension, minY: number, tick: number): End | undefined {
   if (!charge.entity.isValid) return { outcome: "lost" };
   const next = fallStep(charge.y, minY, (cellY) => readCell(dim, charge.x, cellY, charge.z));
   if (next.kind === "move") {
+    if (intercepted(attack, charge, next.y, tick)) return { outcome: "intercepted" };
     charge.entity.teleport(chargeLocation(charge, next.y));
     charge.y = next.y;
     return undefined;
   }
   if (next.kind === "contact") {
+    // The last stretch, down to the top of the contact block, is offered too: a hull just above the ground still wins.
+    if (intercepted(attack, charge, next.cellY + 1, tick)) return { outcome: "intercepted" };
     const point = { x: charge.x, y: next.cellY, z: charge.z };
     detonate(attack, dim, point);
     return { outcome: "detonated", point };
   }
-  return { outcome: next.kind === "void" ? "voided" : "lost" };
+  if (next.kind === "void") return intercepted(attack, charge, minY, tick) ? { outcome: "intercepted" } : { outcome: "voided" };
+  return { outcome: "lost" };
 }
 
 function advanceAttack(attack: Attack, tick: number): void {
@@ -210,7 +257,7 @@ function advanceAttack(attack: Attack, tick: number): void {
   for (const charge of attack.charges) {
     let end: End | undefined;
     try {
-      end = advance(attack, charge, dim, minY);
+      end = advance(attack, charge, dim, minY, tick);
     } catch (err) {
       log(`attack ${attack.attackId}: charge ${charge.slot} at y=${charge.y} threw ${String(err)}, dropped as lost`);
       end = { outcome: "lost" };

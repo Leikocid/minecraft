@@ -85,6 +85,7 @@ import "./ufo-core";
 import "./ufo-magnet-select";
 import "./ufo-magnet-hold";
 import "./ufo-saucer";
+import "./ufo-shootdown";
 import { parkPenetrator } from "./penetrator";
 import { parkRing } from "./ring";
 import { registerOrbitalCannon } from "../orbital";
