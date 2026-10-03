@@ -450,6 +450,46 @@ registerAsync("andrew", "probe_blast_stacking", async (test: Test): Promise<void
  * from this: a ring whose cells break nothing is 80 silent pops, and "radius is
  * about 1.3 x power" is folklore until measured.
  */
+/**
+ * Does a ring blast — centred 1.5 above its contact cell, as ring.ts places it —
+ * destroy a chest standing in that cell? Twelve chests per power, each alone on
+ * stone, the blast in the same spot relative to the chest as a live RMB charge.
+ */
+registerAsync("andrew", "probe_chest_by_power", async (test: Test): Promise<void> => {
+  const s = await site(test, "andrew_gt_ring_p10", 23, PAD, 170);
+  const before = world.gameRules.doTileDrops;
+  try {
+    const { dim, cz, top } = s;
+    world.gameRules.doTileDrops = false;
+    const rows: string[] = [];
+    const powers = [4, 2, 1];
+    const TRIES = 12;
+    for (const [i, power] of powers.entries()) {
+      let stood = 0;
+      for (let t = 0; t < TRIES; t++) {
+        const x = s.cx - 160 + 9 * (i * TRIES + t) / 1;
+        const z = cz;
+        fill(dim, { x: x - 4, y: top - 3, z: z - 4 }, { x: x + 4, y: top, z: z + 4 }, "minecraft:stone");
+        fill(dim, { x: x - 4, y: top + 1, z: z - 4 }, { x: x + 4, y: top + 6, z: z + 4 }, "minecraft:air");
+        dim.setBlockType({ x, y: top + 1, z }, "minecraft:chest");
+        await test.idle(1);
+        dim.createExplosion({ x: x + 0.5, y: top + 2.5, z: z + 0.5 }, power, { breaksBlocks: true, allowUnderwater: true, causesFire: false });
+        await test.idle(2);
+        if (typeAt(dim, { x, y: top + 1, z }) === "minecraft:chest") stood++;
+      }
+      rows.push(`power ${power}: chest stood ${stood}/${TRIES}`);
+    }
+    log(`[probe] chest RESULT blast 1.5 above the chest cell: ${rows.join(" | ")}`);
+    test.succeed();
+  } finally {
+    world.gameRules.doTileDrops = before;
+    s.unload();
+  }
+})
+  .structureName(STRUCTURE)
+  .maxTicks(1200)
+  .tag("andrew");
+
 registerAsync("andrew", "probe_crater_by_power", async (test: Test): Promise<void> => {
   const s = await site(test, "andrew_gt_ring_p9", 22, PAD, 170);
   const before = world.gameRules.doTileDrops;
@@ -1130,10 +1170,13 @@ async function resistanceRun(test: Test, k: number, initial: boolean): Promise<{
     fill(dim, { x: cx, y: top - 2, z: cz + 1 }, { x: cx + PAD, y: top, z: cz + PAD }, "minecraft:oak_planks");
     const material = (c: { x: number; z: number }): string => (c.x < 0 ? "minecraft:dirt" : c.z > 0 ? "minecraft:oak_planks" : "minecraft:stone");
     // Rings by their place from the centre, never by diameter: the table is retuned between releases.
-    const [, second, third] = RING_LAYOUT.rings;
+    // RING_LAYOUT.rings excludes the centre column, so rings[0] is the second ring from the centre.
+    const [second, third] = RING_LAYOUT.rings;
     const pillars = second.cells.filter((_, i) => i % 4 === 0).map((c, i) => ({ c, type: i % 2 === 0 ? "minecraft:obsidian" : "minecraft:reinforced_deepslate" }));
     for (const p of pillars) for (let dy = 1; dy <= 3; dy++) dim.setBlockType(cellAt(s, p.c, dy), p.type);
     const chestCol = third.cells[Math.floor(third.cells.length / 4)];
+    // The chest has to stand where the blast reliably breaks it: power 1 leaves a chest whole in 3 of 12 (probe_chest_by_power).
+    test.assert(chestCol.power >= 2, `the chest stands on a ring of power ${chestCol.power}`);
     dim.setBlockType(cellAt(s, chestCol, 1), "minecraft:chest");
     dim.getBlock(cellAt(s, chestCol, 1))?.getComponent("minecraft:inventory")?.container?.setItem(0, new ItemStack("minecraft:cobblestone", 10));
     if (!initial) dim.runCommand("gamerule dotiledrops false");
