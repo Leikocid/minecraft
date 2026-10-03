@@ -6,7 +6,20 @@
       "runtime_identifier": "minecraft:snowball",
       "is_summonable": true,
       "is_spawnable": false,
-      "spawn_category": "misc"
+      "spawn_category": "misc",
+      "properties": {
+        "andrew:beam": {
+          "type": "bool",
+          "default": false,
+          "client_sync": true
+        },
+        "andrew:beam_len": {
+          "type": "int",
+          "range": [0, 64],
+          "default": 40,
+          "client_sync": true
+        }
+      }
     },
     "components": {
       "minecraft:type_family": {
@@ -27,6 +40,7 @@
       "minecraft:knockback_resistance": {
         "value": 1.0
       },
+      "minecraft:fire_immune": {},
       "minecraft:damage_sensor": {
         "triggers": {
           "cause": "all",

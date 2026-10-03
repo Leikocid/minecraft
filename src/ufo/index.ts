@@ -16,7 +16,7 @@ import { type EnvWorld, productEnv } from "./env";
 import { type IntervalHost, UfoCore, runCore } from "./event";
 import { UfoMagnet } from "./magnet";
 import { NEXT_MS } from "./schedule";
-import { createStubSaucer } from "./stub-saucer";
+import { createSaucer } from "./saucer";
 
 export { UfoCore } from "./event";
 
@@ -69,7 +69,7 @@ export function registerUfo(engine: UfoCommandApi & UfoClasses & { world: UfoWor
   const { world, system, ItemStack, BlockVolume } = engine;
   const log = (msg: string): void => console.warn(`[andrew] ${msg}`);
   const env = productEnv(world, log);
-  const saucer = createStubSaucer({
+  const saucer = createSaucer({
     overworld: () => world.getDimension("overworld"),
     random: env.random,
     durations: env.durations,

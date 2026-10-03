@@ -4,8 +4,8 @@
 // dynamic properties (a pack reads only the properties it wrote, so the
 // release pack's schedule is not visible from here):
 //   timer    — run 1 stores a future next_ms; run 2 reads it back unchanged.
-//   flight   — run 1 starts an event 3000 blocks out, lets the stub saucer
-//              reach the magnet phase, then stops stepping the core (the point
+//   flight   — run 1 starts an event 3000 blocks out, lets the saucer reach
+//              the magnet phase, then stops stepping the core (the point
 //              where a server stops mid-event) and lets the saucer's chunk
 //              unload; run 2 finds the in-flight marker, reschedules from the
 //              load, and removes the saucer when the chunk loads again.
@@ -19,7 +19,7 @@ import { startUfo } from "../ufo";
 import { FIRST_MAX_MS, FIRST_MIN_MS, PAUSE_MS, type UfoDurations, type UfoEnv, type UfoPlayer, type UfoStore } from "../ufo/env";
 import { EVENT_TAG, IRON_TAG, SAUCER_ID, UFO_TAG, UfoCore, type UfoAction } from "../ufo/event";
 import { ENABLED, IN_FLIGHT, NEXT_MS } from "../ufo/schedule";
-import { type StubSaucer, createStubSaucer } from "../ufo/stub-saucer";
+import { type UfoSaucer, createSaucer } from "../ufo/saucer";
 import type { Log, Wait } from "./chunk-probe";
 
 const MARKER = "andrew:selftest_ufo";
@@ -53,7 +53,7 @@ function scopedStore(prefix: string): UfoStore {
 interface Case {
   readonly store: UfoStore;
   readonly core: UfoCore;
-  readonly saucer: StubSaucer;
+  readonly saucer: UfoSaucer;
   readonly logs: string[];
   undo?: () => void;
   /** What the store held at worldLoad, before the core read it. */
@@ -81,7 +81,7 @@ function makeCase(scope: string, durations: UfoDurations): Case {
       console.warn(`[selftest] ${msg}`);
     },
   };
-  const saucer = createStubSaucer({ overworld: () => world.getDimension("overworld"), random: () => 0, durations, ceiling });
+  const saucer = createSaucer({ overworld: () => world.getDimension("overworld"), random: () => 0, durations, ceiling });
   return { store, saucer, logs, core: new UfoCore(env, { scope, saucer }) };
 }
 

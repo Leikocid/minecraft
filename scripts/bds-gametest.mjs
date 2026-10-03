@@ -70,6 +70,8 @@ const EXPERIMENT_ACTIVE = 'Experiment(s) active:';
 const SPAWN_SEARCH_STOOD_DOWN = ['[andrew] spawn windmill: not started: windmill is not enabled', '[andrew] spawn windmill: search finished: skipped'];
 // The world is deleted before every run, so the release pack's load line must name no type.
 const ENABLED_NONE = '[andrew] structures enabled: none';
+// The saucer entity and its geometry by id; `\b` keeps the ufo_saucer_* test names out.
+const SAUCER_IDS = /andrew[:.]ufo_saucer\b/;
 
 /**
  * Tests registered by src/gametest/main.ts, run one at a time.
@@ -335,6 +337,10 @@ const EXPECTED_TESTS = [
   'andrew:ufo_hold_release_fall',
   'andrew:ufo_hold_release_together',
   'andrew:ufo_hold_tps_measured',
+  // SAUC-ENTITY-01 — src/gametest/ufo-saucer.ts
+  'andrew:ufo_saucer_flight',
+  'andrew:ufo_saucer_immune',
+  'andrew:ufo_saucer_beam_stop',
 ];
 
 /**
@@ -626,6 +632,12 @@ function analyzeLog(text, expected) {
   const enabledLine = lines.find((l) => l.includes('[andrew] structures enabled:'));
   if (enabledLine?.includes(ENABLED_NONE)) evidence.push(enabledLine.trim());
   else problems.push(`"${ENABLED_NONE}" is absent on a fresh world (got ${JSON.stringify(enabledLine?.trim() ?? null)})`);
+
+  // Script output reaches the log at WARN under [Scripting]; any other ERROR/WARN line naming the
+  // saucer is the engine refusing or trimming its entity or geometry.
+  const saucerComplaints = lines.filter((l) => /\b(ERROR|WARN)\]/.test(l) && !l.includes('[Scripting]') && SAUCER_IDS.test(l));
+  for (const l of saucerComplaints) problems.push(`the engine complained about the saucer: ${l.trim()}`);
+  if (saucerComplaints.length === 0) evidence.push('no engine ERROR/WARN line names andrew:ufo_saucer or its geometry');
 
   // A repeated test keeps its first failure: a later pass must not hide it.
   const runs = new Map();
