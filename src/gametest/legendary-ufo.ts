@@ -386,8 +386,10 @@ holderScenario("legendary_ufo_holder_armor_stand", "ufo_stand", "minecraft:armor
 // as15 §4 measured: a holder that goes into the Void itself. Same contract as
 // the other probes — it passes when the measurement completed, and the answer
 // is the "void probe RESULT" line. On BDS 1.26.51.1 both holders are removed
-// about 20 ticks below the floor with no entityDie and no spill, so what they
-// held is never seen by recovery: r016 §3 is what keeps the magnet out of it.
+// below the floor with no entityDie and no spill. Recovery reads the minecart's
+// inventory in beforeEvents.entityRemove (legendary_holder_void_*), and kills
+// an armour stand holding a legendary while it is still below the floor, so its
+// spill is returned (src/gametest/probe-stand-void.ts).
 /**
  * §5: a legendary that falls into the Void goes back to its last holder — also
  * when it falls inside a container entity. The engine removes a chest or hopper

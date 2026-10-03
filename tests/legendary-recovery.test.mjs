@@ -106,7 +106,7 @@ const bundle = await build({
       "export * from './src/legendary/registry.ts';",
       "export * from './src/legendary/state.ts';",
       "export * from './src/legendary/hands.ts';",
-      "export { registerRecovery, protectLegendariesIn, HOLDER_TYPES, isLegendaryItemEntity, spotSearchLimit } from './src/legendary/recovery.ts';",
+      "export { registerRecovery, protectLegendariesIn, HOLDER_TYPES, isLegendaryItemEntity, spotSearchLimit, standWatchState } from './src/legendary/recovery.ts';",
       "export { registerRetention } from './src/legendary/retention.ts';",
     ].join('\n'),
     resolveDir: projectRoot,
@@ -1001,4 +1001,137 @@ test('recovery events for a player the pack cannot read, or one already removed,
   assert.doesNotThrow(() => fire('playerSwingStart', { player: undefined, swingSource: 'DropItem' }));
   assert.doesNotThrow(() => fire('playerSwingStart', { player: gone, swingSource: 'DropItem' }));
   assert.doesNotThrow(() => fire('playerInventoryItemChange', { player: gone, slot: 0, itemStack: undefined, beforeItemStack: new mc.ItemStack('minecraft:dirt'), inventoryType: 'Hotbar' }));
+});
+
+// ------------------------------------------------ the Void floor (L0-lgnd-cx14)
+
+/** A dimension where, as on BDS, isChunkLoaded is false below the floor and getBlock throws outside the height range. */
+function floorDimension(overrides = {}) {
+  return {
+    heightRange: { min: -64, max: 320 },
+    asked: [],
+    isChunkLoaded: (at) => at.y >= -64,
+    getBlock(at) {
+      this.asked.push(at.y);
+      if (at.y < -64 || at.y >= 320) throw new Error('LocationOutOfWorldBoundariesError');
+      return undefined;
+    },
+    getEntities: () => [],
+    ...overrides,
+  };
+}
+
+/** Watches `stack` at `location` in `dim`, then lets it vanish unseen before the next check. */
+function vanishAt(stack, dim, location) {
+  const entity = Object.assign(itemEntity(stack), { dimension: dim, location });
+  fire('entitySpawn', { entity });
+  entity.isValid = false;
+  tick();
+}
+
+test('CX-lgnd-14: a marked item that vanished at the floor or below it is returned', async (t) => {
+  const owner = makePlayer('floor');
+
+  await t.test('last seen below the floor, where isChunkLoaded reads false: a Void loss, returned at gen 1', () => {
+    online(owner);
+    const sword = markedSword(owner);
+    const { id } = lg.getMark(WEB_SWORD, sword);
+    vanishAt(sword, floorDimension(), { x: 5.5, y: -64.076, z: 8.5 });
+    assert.deepStrictEqual(gensOf(owner, id), [1]);
+    assert.strictEqual(lg.ledgerGen(WEB_SWORD, id), 1);
+  });
+
+  await t.test('last seen inside the world in a chunk that is not loaded: still an unload, nothing returned', () => {
+    online(owner);
+    const sword = markedSword(owner);
+    const { id } = lg.getMark(WEB_SWORD, sword);
+    vanishAt(sword, floorDimension({ isChunkLoaded: () => false }), { x: 5.5, y: -60, z: 8.5 });
+    assert.deepStrictEqual(gensOf(owner, id), []);
+    assert.strictEqual(lg.ledgerGen(WEB_SWORD, id), 0);
+  });
+
+  for (const y of [-63.5, -64, 319.5]) {
+    await t.test(`last seen at y=${y}: no cell outside the height range is asked for, and it is returned`, () => {
+      online(owner);
+      const sword = markedSword(owner);
+      const { id } = lg.getMark(WEB_SWORD, sword);
+      const dim = floorDimension();
+      assert.doesNotThrow(() => vanishAt(sword, dim, { x: 5.5, y, z: 8.5 }));
+      assert.ok(dim.asked.length > 0 && dim.asked.every((at) => at >= -64 && at < 320), `asked y [${dim.asked.join(' ')}]`);
+      assert.deepStrictEqual(gensOf(owner, id), [1]);
+    });
+  }
+});
+
+test('CX-lgnd-14: armour stands are followed only while loaded and asked only below the floor', async (t) => {
+  const standDim = { heightRange: { min: -64, max: 320 } };
+  let standCount = 0;
+  function stand(y, holds) {
+    return {
+      id: `stand${++standCount}`,
+      typeId: 'minecraft:armor_stand',
+      isValid: true,
+      location: { x: 0.5, y, z: 0.5 },
+      dimension: standDim,
+      asked: [],
+      killed: 0,
+      runCommand(command) {
+        this.asked.push(command);
+        const hit = holds !== undefined && command.includes(`item=${holds.item},location=${holds.slot}}`);
+        return { successCount: hit ? 1 : 0 };
+      },
+      kill() {
+        this.killed++;
+        return true;
+      },
+    };
+  }
+  const asked = (stands) => stands.reduce((n, s) => n + s.asked.length, 0);
+
+  await t.test('no stand loaded: no watcher interval; another entity type does not start one', () => {
+    assert.deepStrictEqual(lg.standWatchState(), { stands: 0, ticking: false });
+    fire('entitySpawn', { entity: { ...stand(-70), typeId: 'minecraft:zombie' } });
+    assert.deepStrictEqual(lg.standWatchState(), { stands: 0, ticking: false });
+  });
+
+  await t.test('50 stands above the floor holding a legendary: followed for 200 ticks, never asked', () => {
+    const many = Array.from({ length: 50 }, () => stand(-60, { item: WEB_SWORD.itemId, slot: 'slot.weapon.mainhand' }));
+    for (const s of many) fire('entitySpawn', { entity: s });
+    assert.deepStrictEqual(lg.standWatchState(), { stands: 50, ticking: true });
+    for (let i = 0; i < 200; i++) tick();
+    assert.strictEqual(asked(many), 0);
+    for (const s of many) fire('before:entityRemove', { removedEntity: s });
+    tick();
+    assert.deepStrictEqual(lg.standWatchState(), { stands: 0, ticking: false });
+  });
+
+  await t.test('below the floor holding a legendary in either hand: killed once, then no longer followed', () => {
+    const main = stand(-60, { item: lg.SCYTHE_OF_CALAMITY.itemId, slot: 'slot.weapon.mainhand' });
+    const off = stand(-60, { item: lg.ORBITAL_CANNON.itemId, slot: 'slot.weapon.offhand' });
+    fire('entityLoad', { entity: main });
+    fire('entitySpawn', { entity: off });
+    tick();
+    assert.strictEqual(asked([main, off]), 0);
+    main.location.y = off.location.y = -70.2;
+    tick();
+    tick();
+    assert.deepStrictEqual([main.killed, off.killed], [1, 1]);
+    assert.deepStrictEqual(lg.standWatchState(), { stands: 0, ticking: false });
+  });
+
+  await t.test('below the floor with no legendary: every legendary asked for in both hands, never killed', () => {
+    const plain = stand(-70.5, { item: 'minecraft:iron_sword', slot: 'slot.weapon.mainhand' });
+    fire('entitySpawn', { entity: plain });
+    tick();
+    assert.strictEqual(plain.killed, 0);
+    assert.strictEqual(plain.asked.length, lg.LEGENDARIES.length * 2);
+    for (const def of lg.LEGENDARIES) {
+      for (const slot of ['slot.weapon.mainhand', 'slot.weapon.offhand']) {
+        assert.ok(plain.asked.includes(`testfor @s[hasitem={item=${def.itemId},location=${slot}}]`), `${def.itemId} ${slot}`);
+      }
+    }
+    plain.isValid = false;
+    tick();
+    assert.deepStrictEqual(lg.standWatchState(), { stands: 0, ticking: false });
+  });
 });
