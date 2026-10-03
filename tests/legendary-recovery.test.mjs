@@ -1001,6 +1001,7 @@ test('recovery events for a player the pack cannot read, or one already removed,
   assert.doesNotThrow(() => fire('playerSwingStart', { player: undefined, swingSource: 'DropItem' }));
   assert.doesNotThrow(() => fire('playerSwingStart', { player: gone, swingSource: 'DropItem' }));
   assert.doesNotThrow(() => fire('playerInventoryItemChange', { player: gone, slot: 0, itemStack: undefined, beforeItemStack: new mc.ItemStack('minecraft:dirt'), inventoryType: 'Hotbar' }));
+  assert.doesNotThrow(() => fire('before:entityRemove', { removedEntity: undefined }));
 });
 
 // ------------------------------------------------ the Void floor (L0-lgnd-cx14)

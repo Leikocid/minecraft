@@ -172,7 +172,11 @@ export function registerRecovery(): void {
   // spill, so nothing it held ever becomes an item entity to watch. entityRemove
   // also fires on a chunk unload; only a removal below the floor is a loss.
   world.beforeEvents.entityRemove.subscribe((event) => {
-    const holder = event.removedEntity;
+    // Undefined in a pack without @minecraft/server-gametest when a SimulatedPlayer is removed.
+    const holder: Entity | undefined = event.removedEntity;
+    if (holder === undefined) {
+      return;
+    }
     stands.delete(holder.id);
     if (!VOID_HOLDER_TYPES.has(holder.typeId) || holder.location.y >= holder.dimension.heightRange.min) {
       return;
