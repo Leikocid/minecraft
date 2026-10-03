@@ -18,7 +18,7 @@ level: 2
 **Status:** proposed. It refines the cost note in `L0-lgnd-p008` ("RMB calls it once per detonation").
 
 **Context.**
-- ~145 detonations per attack × (one engine-filtered `getBlocks` + one `getEntities`) gives ~290 queries per attack, and ~870 for three attacks.
+- 201 detonations per attack × (one engine-filtered `getBlocks` + one `getEntities`) gives ~402 queries per attack, and ~1,206 for three attacks.
 - The blast AABBs of neighbouring ring cells overlap almost entirely.
 
 **Decision.**

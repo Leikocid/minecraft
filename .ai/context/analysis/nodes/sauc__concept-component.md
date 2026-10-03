@@ -44,7 +44,7 @@ The visible, physical half of the UFO Magnet event (UFO §2 table, §7, §8):
 
 ## Inputs
 - From `ufoc`: `onPhase(phase, {centre, hoverY, saucerPos, eventId})` for arrival, magnet, release, departure and pause, plus `requestMagnetOff(reason)`. `sauc` uses no interval of its own. `ufoc`'s shared interval calls `saucerStep(tick)` once per active tick (C-5d).
-- From `orbc` (the seam added by this task): `registerInterceptor((attack, charge, from, to, tick) => boolean)`.
+- From `orbc` (`src/orbital/flight.ts:117`): `registerInterceptor((attack, charge, from, to, tick) => boolean)`.
 
 ## Outputs
 - `saucerPosition()`, which `magn` reads every tick for its hold targets.
@@ -54,7 +54,7 @@ The visible, physical half of the UFO Magnet event (UFO §2 table, §7, §8):
 ## Owns
 - `packs/behavior/entities/ufo_saucer.json`, `packs/resource/entity/ufo_saucer.entity.json`, the geometry, texture, animation and render controller.
 - `src/ufo/saucer.ts` (path, beam and sound) and `src/ufo/shootdown.ts`.
-- The interceptor change in `src/orbital/flight.ts`. Today `Outcome` is `detonated | voided | lost | timeout`; the change adds `"intercepted"`.
+- The interceptor change in `src/orbital/flight.ts`. `Outcome` includes `"intercepted"` (`src/orbital/flight.ts:40`).
 - The lang key `andrew.ufo.shot_down`, in RU and EN.
 
 ## Does NOT own

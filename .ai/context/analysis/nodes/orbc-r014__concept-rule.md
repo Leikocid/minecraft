@@ -33,7 +33,7 @@ registerEffect(mode: Mode, effect: Effect): void;
 **Guarantees from `orbc`:**
 - `point` is an integer block location of a contact block (`r008`) in a loaded chunk.
 - `onDetonate` is called at most once per charge.
-- It is never called for a voided or lost charge, or an orphan.
+- It is never called for a voided, lost or intercepted charge, or an orphan.
 - The owner may be offline.
 - There is no refund path.
 

@@ -14,7 +14,7 @@ level: 2
 ---
 **AC-ring-14 · TNT resistance, no block drops, no fire** (Orbital AC-14; `r005`, `r006`) · **verify: bds**
 
-GIVEN a pad of dirt, stone and planks, with Obsidian and Reinforced Deepslate pillars on ring 10 and a chest with 10 cobblestone on ring 15. WHEN RMB is fired, THEN:
+GIVEN a pad of dirt, stone and planks, with Obsidian and Reinforced Deepslate pillars on ring d7 and a chest with 10 cobblestone on ring d14 (power ≥ 2). WHEN RMB is fired, THEN:
 - the dirt, stone and planks around each charge are cratered;
 - every Obsidian and Reinforced Deepslate block remains;
 - the chest is destroyed;

@@ -20,7 +20,7 @@ level: 2
 This runs once at module load. `layout(target)` only translates the table.
 
 1. **Centre.** Add `{0,0}` (d = 1: one charge exactly over the target, §10).
-2. **For each r ∈ {2.5, 5, 7.5, 10}** (d = 5/10/15/20), apply the midpoint circle with a real radius:
+2. **For each r ∈ {3.5, 7, 10.5, 14}** (d = 7/14/21/28), apply the midpoint circle with a real radius:
    - Start at `x = 0, z = round(r)`.
    - While `x ≤ z`:
      - Emit `(x, z)` and its 7 mirrors.
@@ -40,6 +40,5 @@ This runs once at module load. `layout(target)` only translates the table.
 `orbc` then spawns one `andrew:orbital_charge` per column at `spawnY` in the activation tick (`L0-orbc-p002`). `ring` does not spawn anything itself.
 
 **Expected counts:**
-- Midpoint circle with a real radius: 1 + ~16 + ~28 + ~44 + ~56 ≈ 145.
-- `xasm8` estimate: ≈ 160.
-- `as06` fixes the budget at ≤ 200.
+- Midpoint circle with a real radius: 1 + 20 + 40 + 60 + 80 = 201 (measured).
+- `RING_MAX_CHARGES` = 256; a layout over it throws (ring-layout.ts:91-93).

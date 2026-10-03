@@ -41,6 +41,6 @@ category: source-vs-source
 - (b) The hopper is pulled as a block after its contents are spilled vanilla-style (`setblock … destroy`). Legendaries go through `protectLegendariesIn`.
 - (c) The hopper is pulled only when it is empty.
 
-**Autopilot default: (a).** Priority (1) beats (2): no loss or corruption beats a complete gameplay list. The hopper stays in the §4 *item* list, so a hopper item is pulled. `magn` records this as an ADR and a C-16 deviation note.
+**Autopilot default at v4: (a)**, superseded by the spec's hopper rule (see below). Priority (1) beats (2): no loss or corruption beats a complete gameplay list. The hopper stays in the §4 *item* list, so a hopper item is pulled. `magn` records this as an ADR and a C-16 deviation note.
 
-**Resolved at reduce v4** by `L0-magn-adhp` (option a), confirmed in `L0-adr-ufnd`.
+**Resolved by the spec (§5 Containers, last bullet; AC-10; `2441fb5`) and `decision-resolve-l0-lgnd-cx13`:** a hopper holding anything is a container and stays; an empty hopper is pulled as a block (option c for empty, a otherwise). As built: `src/ufo/iron.ts:141`.

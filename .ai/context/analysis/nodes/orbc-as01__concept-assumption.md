@@ -17,7 +17,7 @@ level: 2
 
 **Links:** `part_of: ["L0-orbc"]` · `is_a: ["assumption"]` · `relates_to: ["L0-orbc-r007"]`
 
-**Gap.** §8 says "30 blocks above the selected point", but does not say whether that is the block's Y, its top face (Y+1) or the hit point.
+**Gap.** §8 says "60 blocks above the selected point" (Overworld, End; Nether 10), but does not say whether that is the block's Y, its top face (Y+1) or the hit point.
 
 **Assumption.**
 - `spawnY = target.y + offset`, in integer block coordinates.

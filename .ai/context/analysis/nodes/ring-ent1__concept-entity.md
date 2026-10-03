@@ -24,7 +24,7 @@ A pure value, computed once per RMB attack from the locked target by `layout(tar
 | `centre` | `{x,z}` int | The target block's column. The hit face is ignored. |
 | `rings` | `[{d, r, cells}]` | d ∈ {1,5,10,15,20}, r = d/2. `cells` is a list of `{dx,dz}` offsets. |
 | `columns` | `{x,z}[]` | The union of all ring cells + centre, de-duplicated, in ring order then angle order. `slot` = index. |
-| `count` | int | ≈ 141–161 (see `L0-ring-as06`). Hard cap `RING_MAX_CHARGES = 200`. |
+| `count` | int | 201 (see `L0-ring-as06`). Hard cap `RING_MAX_CHARGES = 256`. |
 
 **Invariants**
 - d = 1 → exactly `{0,0}`.

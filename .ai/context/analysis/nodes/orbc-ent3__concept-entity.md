@@ -40,4 +40,4 @@ level: 2
 | `y` | The current feet Y. It decreases by `FALL_SPEED` each tick (`as02`). |
 | `slot` | Index within the attack (RMB ring position) |
 
-**Lifecycle:** spawned → falling → one of: detonated | voided | lost | timed-out → removed. It never re-enters "falling".
+**Lifecycle:** spawned → falling → one of: detonated | voided | lost | timed-out | intercepted → removed. It never re-enters "falling".

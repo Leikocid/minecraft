@@ -11,7 +11,7 @@ part_of: ["L0"]
 relates_to: ["L0"]
 priority: 580
 size_chars: 2559
-tags: ["status:proposed", "resolves:L0-xcx15", "relates_to:L0-orbc", "relates_to:L0-sauc", "v4"]
+tags: ["status:accepted", "resolves:L0-xcx15", "relates_to:L0-orbc", "relates_to:L0-sauc", "v4"]
 ---
 ---
 title: "ADR-L0-ufoi · An additive mid-fall interceptor on the Orbital charge flight"
@@ -21,7 +21,7 @@ part_of: ["L0"]
 relates_to: ["L0-xcx15", "L0-orbc", "L0-sauc", "L0-pntr", "L0-ring"]
 governs_files: ["src/orbital/flight.ts", "src/orbital/charge.ts", "src/ufo/"]
 see_also: ["ufomagnetspecv1ruen-part-3"]
-status: proposed
+status: accepted
 ---
 # ADR-L0-ufoi · An additive mid-fall interceptor on the Orbital charge flight
 
@@ -32,7 +32,7 @@ status: proposed
 
 **Decision.**
 1. `flight.ts` exports `registerInterceptor(fn: (attack, charge, from: Vector3, to: Vector3, tick) => boolean): () => void`. The `attack` argument carries `ownerId` (item 6); this matches `L0-sauc-p003` (reconciled at reduce v4).
-2. On each fall step, before the block-contact sweep, every interceptor sees that charge's swept segment.
+2. On each fall step, after the step's cell read, before the move, the detonation or the Void end, every interceptor sees that charge's swept segment.
 3. When one returns `true`, the charge ends with a new `Outcome` of `"intercepted"`:
    - it is removed;
    - no effect runs and no explosion happens;

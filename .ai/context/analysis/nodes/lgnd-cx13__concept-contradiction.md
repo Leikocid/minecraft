@@ -22,7 +22,7 @@ is_a: ["contradiction"]
 part_of: ["L0-lgnd"]
 relates_to: ["L0-magn", "L0-lgnd-r016", "L0-lgnd-r013", "L0-lgnd-ad13", "L0-lgnd-as12", "ufomagnetspecv1ruen-part-2"]
 status: resolved
-resolved_by: ["L0-adr-ufnd", "L0-magn-adhp"]
+resolved_by: ["decision-resolve-l0-lgnd-cx13"]
 category: source-vs-invariant
 ---
 # CX-lgnd-13 · UFO "a pulled block becomes air and exactly one item, nothing else drops" vs a hopper block's contents
@@ -46,4 +46,4 @@ category: source-vs-invariant
 
 `lgnd`'s floor is (a) or (b); erase-blind is not acceptable. The recommended default is (b): it keeps AC 10 literal, and it touches no container contents (UFO §5 Containers: *«остальное содержимое и сам контейнер не трогаются»*).
 
-**Resolved at reduce v4** by `L0-adr-ufnd`: `magn` chose the stronger form of (b). A hopper is never a pulled block, full or empty (`L0-magn-adhp`), so AC 10 holds literally and r016 §4 is dormant.
+Resolved by `decision-resolve-l0-lgnd-cx13` (spec `2441fb5`): option (b). A hopper holding anything is never a pulled block, and an empty one is. AC 10 holds literally and r016 §4 is dormant.

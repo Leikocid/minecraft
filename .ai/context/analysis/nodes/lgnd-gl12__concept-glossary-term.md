@@ -17,6 +17,6 @@ level: 2
 How the framework meets "a legendary is not destroyed" (Orbital §5) within the stable API. The first tier that applies wins:
 1. **Prevent:** destruction this add-on causes, such as the Cannon, runs the protection pass first, so the item stays in the world.
 2. **Spill:** vanilla destruction of a container drops its contents, including the legendary.
-3. **Return:** when the engine destroys the item entity (fire, lava, cactus, vanilla TNT, despawn, the Void), the item is re-issued to the last holder with `gen + 1`. This tier is the documented deviation (C-16).
+3. **Return:** when the engine destroys the item entity (cactus, vanilla TNT, despawn, the Void; fire and lava are prevented by `minecraft:fire_resistant`), the item is re-issued to `mark.owner` (last holder waits for `L0-xcx11`) with `gen + 1`. This tier is the documented deviation (C-16).
 
 See `L0-lgnd-r012`.

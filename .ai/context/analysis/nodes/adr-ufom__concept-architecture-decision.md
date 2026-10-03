@@ -18,7 +18,7 @@ title: "ADR-L0-ufom · The UFO is its own module on one shared interval, with an
 aliases: ["L0-adr-ufom"]
 is_a: ["architecture-decision"]
 part_of: ["L0"]
-relates_to: ["L0-ufoc", "L0-sauc", "L0-magn", "L0-lgnd", "L0-adr-ufoi"]
+relates_to: ["L0-ufoc", "L0-sauc", "L0-magn", "L0-lgnd", "L0-adr-ufoi", "L0-adr-ufrs"]
 governs_files: ["src/ufo/", "src/main.ts", "src/gametest/main.ts"]
 see_also: ["ufomagnetspecv1ruen-part-1", "ufomagnetspecv1ruen-part-4"]
 status: accepted
@@ -43,7 +43,7 @@ status: accepted
    - With no saucer, the interval checks the clock every 100 ticks.
    - With a saucer, it runs every tick: phase → saucer step → magnet step.
    - The zone scan runs synchronously once, at magnet-on.
-4. **Restart.** On `worldLoad` (startup), entities tagged `andrew:ufo` (the saucer and the beam) are removed. Then `next_ms` is set to now + 15 min if an event had been running, recorded by a transient `andrew:ufo_active` flag.
+4. **Restart.** On `worldLoad` (startup), entities tagged `andrew:ufo` (the saucer and the beam) are removed. Then `next_ms` is set to now + 15 min if it holds the in-flight marker `0` (`L0-adr-ufrs`).
 
 **Rejected alternatives.**
 - *Persist the phase and resume.* This contradicts §10, and the held elements' state cannot be rebuilt.

@@ -22,6 +22,6 @@ level: 2
 
 **Underground.** Items born underground fly to their ring slot **through** stone. They move by teleport each tick with velocity cleared, so they neither collide nor fall (U3). This holds for ore 20 blocks deep (the zone floor is centre − 20).
 
-**The hopper** is never selected as a block (`L0-magn-adhp`).
+**The hopper** is selected as a block only when empty (`L0-magn-adhp`); with anything in it, it is a container (`L0-magn-rcnt`).
 
 **Other block entities.** No other block entity is ever removed by the magnet.

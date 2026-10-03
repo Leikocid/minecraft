@@ -22,7 +22,7 @@ relates_to: ["L0-xcx10", "L0-lgnd-r012", "L0-lgnd-r013", "L0-lgnd-p008", "L0-lgn
 
 **Context.**
 - Orbital §5 is a general rule: a legendary is **not destroyed** by fire, lava, cactus, TNT, the Orbital Cannon or other ordinary means. If its container is destroyed, it survives or drops.
-- As built, the rule is "destroyed means returned" (`recovery.ts`). The stable API offers no indestructible item entity (`as04`).
+- As built, the rule is "destroyed means returned" (`recovery.ts`), with fire/lava immunity only (`minecraft:fire_resistant`, `as04`).
 - The Cannon creates two new ways to lose one silently:
   - LMB `setType(air)` on a container erases its contents with no drop (`as12` item 3).
   - RMB drop suppression deletes new item entities (`L0-adr-ochg` §3).
@@ -30,7 +30,7 @@ relates_to: ["L0-xcx10", "L0-lgnd-r012", "L0-lgnd-r013", "L0-lgnd-p008", "L0-lgn
 **Decision: three tiers, the first applicable one wins.**
 1. **Prevent (script-caused destruction).** Code in this add-on that removes blocks or detonates calls `protectLegendariesIn(dimension, volume)` (`p008`) first. That covers the Cannon LMB column, each RMB detonation, and any future effect. The helper moves live marked legendaries out of containers and off the ground in that volume, to a safe spot. The item stays in the world: it is the same stack, the same `gen`, and gets no message. This **meets** §5 literally for the Cannon.
 2. **Spill (vanilla container destruction).** A player breaking a chest, vanilla TNT, a creeper, or a piston-free removal: vanilla spills the contents as item entities. The spilled legendary is then watched like any drop. No code runs.
-3. **Return (item-entity destruction the engine does).** Fire, lava, cactus, a vanilla explosion hitting the item entity, despawn, or the Void: `p003` re-issues the item to the last holder with `gen + 1`. This is the documented deviation (C-16): "returned" instead of "not destroyed".
+3. **Return (item-entity destruction the engine does).** Cactus, a vanilla explosion hitting the item entity, despawn, or the Void: `p003` re-issues the item to the last holder with `gen + 1`. This is the documented deviation (C-16): "returned" instead of "not destroyed".
 
 **Also decided.**
 - RMB drop suppression **must** skip legendary item entities, using `isLegendaryItemEntity`, which `lgnd` publishes. `ring` owns the suppression.
