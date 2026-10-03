@@ -114,6 +114,40 @@ function removeMobs(dim: Dimension, box: Box): void {
 const removeAirship = (dim: Dimension, inst: Instance): void => removeStructure(dim, inst, BODIES.airship, [...AIRSHIP_SIZE]);
 const removeWindmill = (dim: Dimension, inst: Instance): void => removeStructure(dim, inst, BODIES.windmill, [...WINDMILL_SIZE]);
 
+type Cleanup = () => void | Promise<void>;
+
+/** A linked Airship lies 40–100 blocks from its Windmill, outside every area the test loaded: fillBlocks throws there. */
+function removeFarAirship(test: Test, dim: Dimension, name: string, inst: Instance): Cleanup {
+  return async () => {
+    const unload = await loadBox(test, dim, name, boxOf(inst.origin, inst.size));
+    try {
+      removeAirship(dim, inst);
+    } finally {
+      unload();
+    }
+    // An area added in the tick another was removed never loads (measured on BDS 1.26.51.1).
+    await test.idle(2);
+  };
+}
+
+/** Every step runs even when one throws, and every ticking area is released: a leaked one holds an engine slot for the rest of the suite. */
+async function settle(cleanup: Cleanup[], unloads: Array<() => void>): Promise<void> {
+  for (const c of cleanup.reverse()) {
+    try {
+      await c();
+    } catch (e) {
+      log(`airship cleanup step threw ${String(e)}`);
+    }
+  }
+  for (const u of unloads) {
+    try {
+      u();
+    } catch (e) {
+      log(`airship unload threw ${String(e)}`);
+    }
+  }
+}
+
 /** AC8: entities within `reach` of the Airship's box carrying any guard tag, plus every entity carrying the Airship's own. */
 function guardsAround(dim: Dimension, inst: Instance, reach = 16): { tagged: number; own: number; kinds: string } {
   const box = boxOf(inst.origin, inst.size);
@@ -278,7 +312,7 @@ registerAsync("andrew", "airship_linked_ring", async (test: Test): Promise<void>
   const x = cx * CHUNK + 8;
   const z = cz * CHUNK + 8;
   const unloads: Array<() => void> = [await windmillArea(test, dim, "andrew_gt_as_ring_w", x, z)];
-  const cleanup: Array<() => void> = [];
+  const cleanup: Cleanup[] = [];
   try {
     world.setDifficulty(Difficulty.Easy);
     const out = rt.placeAt("windmill", "o", x, z, 0);
@@ -289,7 +323,7 @@ registerAsync("andrew", "airship_linked_ring", async (test: Test): Promise<void>
     const pending = rt.linked.outcome(w.id);
     test.assert(pending !== undefined, "placing the Windmill started no linked attempt");
     const o = await pending!;
-    if (o.airship !== undefined) cleanup.push(() => removeAirship(dim, o.airship!));
+    if (o.airship !== undefined) cleanup.push(removeFarAirship(test, dim, "andrew_gt_as_far", o.airship));
     const rec = rt.registry.get("o", w.origin, w.id);
     const d = o.airship === undefined ? NaN : hdist(shipCentre(o.airship), parentCentre(w));
     log(
@@ -357,7 +391,7 @@ registerAsync("andrew", "airship_linked_ring", async (test: Test): Promise<void>
     const resumed = rt.resumeUnfinished();
     rt.pumpPlacement(10);
     const o2 = await rt.linked.outcome(w2.id);
-    if (o2?.airship !== undefined) cleanup.push(() => removeAirship(dim, o2.airship!));
+    if (o2?.airship !== undefined) cleanup.push(removeFarAirship(test, dim, "andrew_gt_as_far2", o2.airship));
     const end = rt.registry.get("o", w2.origin, w2.id);
     log(
       `airship linked flag RESULT crash "${threw}" left ${mid?.state} la=${String(mid?.extras[LINKED_TRIED])}; resumed ${resumed}, finish step reran -> ${end?.state}; ` +
@@ -365,12 +399,12 @@ registerAsync("andrew", "airship_linked_ring", async (test: Test): Promise<void>
     );
     test.assert(threw !== "" && mid?.state === "guarded" && mid.extras[LINKED_TRIED] === true, `after the crash: ${mid?.state}`);
     test.assert(end?.state === "done" && rt.linked.attempts.get(w2.id) === 1, `the flag let a second attempt through: ${rt.linked.attempts.get(w2.id)}`);
-    test.succeed();
   } finally {
     world.setDifficulty(difficulty);
-    for (const c of cleanup.reverse()) c();
-    for (const u of unloads) u();
+    await settle(cleanup, unloads);
   }
+  // After the cleanup: every Test method throws once the test has succeeded, and the cleanup waits for chunks.
+  test.succeed();
 })
   .structureName(STRUCTURE)
   .maxTicks(3000)
@@ -452,7 +486,7 @@ registerAsync("andrew", "airship_linked_no_merge", async (test: Test): Promise<v
   const x = cx * CHUNK + 8;
   const z = cz * CHUNK + 8;
   const unloads: Array<() => void> = [await windmillArea(test, dim, "andrew_gt_as_merge_w", x, z)];
-  const cleanup: Array<() => void> = [];
+  const cleanup: Cleanup[] = [];
   try {
     world.setDifficulty(Difficulty.Easy);
     // An independent Airship already inside the future ring, 60 blocks east of the Windmill centre.
@@ -468,7 +502,7 @@ registerAsync("andrew", "airship_linked_no_merge", async (test: Test): Promise<v
     const w = out.instance;
     cleanup.push(() => removeWindmill(dim, w));
     const o = await rt.linked.outcome(w.id)!;
-    if (o.airship !== undefined) cleanup.push(() => removeAirship(dim, o.airship!));
+    if (o.airship !== undefined) cleanup.push(removeFarAirship(test, dim, "andrew_gt_as_far", o.airship));
     const ships = rt.instances("airship");
     const dists = ships.map((s) => `${s.id}@${hdist(shipCentre(s), parentCentre(w)).toFixed(1)}`);
     log(`airship no-merge RESULT independent ${ind.instance.id} in the ring; linked attempt -> ${o.status} ${o.airship?.id ?? ""}; airships ${ships.length}: ${dists.join(" ")}`);
@@ -504,7 +538,7 @@ registerAsync("andrew", "airship_linked_no_merge", async (test: Test): Promise<v
     rt.pumpPlacement(10);
     await test.idle(3);
     const own = rt.registry.get("o", [cand.x, 0, cand.z], cand.id);
-    if (own !== undefined && own.state !== "failed") cleanup.push(() => removeAirship(dim, own));
+    if (own !== undefined && own.state !== "failed") cleanup.push(removeFarAirship(test, dim, "andrew_gt_as_far_own", own));
     log(
       `airship roll kept RESULT linked ${ship.id} origin chunk ${scx},${scz} evaluated before ${evaluatedBefore}; its roll candidate ${cand.id} -> ${res?.outcome} ${res?.reason ?? ""}; ` +
         `record ${own?.state ?? "none"} bottom ${own?.origin[1] ?? "-"} vs linked bottom ${ship.origin[1]}; pillar ${pillar === undefined ? "none" : `${pillar.min.join(",")}..${pillar.max[1]}`}`
@@ -518,12 +552,12 @@ registerAsync("andrew", "airship_linked_no_merge", async (test: Test): Promise<v
     } else {
       test.assert(res?.outcome === "planned" || /^collision:/.test(res?.reason ?? ""), `the roll was eaten: ${res?.outcome} ${res?.reason ?? ""}`);
     }
-    test.succeed();
   } finally {
     world.setDifficulty(difficulty);
-    for (const c of cleanup.reverse()) c();
-    for (const u of unloads) u();
+    await settle(cleanup, unloads);
   }
+  // After the cleanup: every Test method throws once the test has succeeded, and the cleanup waits for chunks.
+  test.succeed();
 })
   .structureName(STRUCTURE)
   .maxTicks(3000)
