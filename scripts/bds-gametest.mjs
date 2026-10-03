@@ -355,6 +355,9 @@ const EXPECTED_TESTS = [
   'andrew:ufo_shootdown_magnet',
   'andrew:ufo_shootdown_departure',
   'andrew:ufo_shootdown_once',
+  // UFOC-RESTART-01 — src/gametest/ufo-restart.ts (UFO AC-1 restart half, AC-17, AC-18)
+  'andrew:ufo_restart_seed',
+  'andrew:ufo_restart_check',
 ];
 
 /**
@@ -365,6 +368,7 @@ const EXPECTED_TESTS = [
 const RESTART_AFTER = new Map([
   ['andrew:orbital_flight_restart_fire', 'andrew:orbital_flight_restart_check'],
   ['andrew:pntr_legendary_two_columns', 'andrew:pntr_legendary_restart_check'],
+  ['andrew:ufo_restart_seed', 'andrew:ufo_restart_check'],
 ]);
 
 // FLAT is not cosmetic: see the LEVEL_TYPE comment in docker/bds/compose.yaml.
