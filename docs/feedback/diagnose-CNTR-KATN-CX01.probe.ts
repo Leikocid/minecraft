@@ -85,10 +85,15 @@ registerAsync("andrew", "probe_katn_cx01_safe", async (test: Test): Promise<void
 
   const known = HAZARDS.map((id) => `${id.slice(10)}=${BlockTypes.get(id)?.id ?? "unknown"}`).join(" ");
   log(`IDS ${known}`);
+  const family = BlockTypes.getAll()
+    .map((t) => t.id)
+    .filter((id) => /lava|fire|magma/.test(id))
+    .sort();
+  log(`IDS all lava/fire/magma types (${family.length}): ${family.join(" ")}`);
 
   // Natural flow: a 3-cell trench sunk into the floor, sealed by stone, source at its west end.
   // A script setBlockType of lava never starts a flow (measured: the trench stayed air for
-  // 80 ticks), so the source goes in through /setblock, which raises the block update.
+  // 80 ticks); /setblock is tried instead.
   for (const x of [3, 4, 5]) {
     set(test, { x, y: 0, z: 1 }, "minecraft:stone");
     set(test, { x, y: 1, z: 1 }, "minecraft:air");
@@ -123,7 +128,7 @@ registerAsync("andrew", "probe_katn_cx01_safe", async (test: Test): Promise<void
     await test.idle(2);
   }
 
-  const flowWait = 80 - (system.currentTick - flowStart);
+  const flowWait = 200 - (system.currentTick - flowStart);
   if (flowWait > 0) await test.idle(flowWait);
   const flow = [3, 4, 5].map((x) => {
     const block = dim.getBlock(test.worldBlockLocation({ x, y: 1, z: 1 }));
@@ -222,5 +227,5 @@ registerAsync("andrew", "probe_katn_cx01_safe", async (test: Test): Promise<void
   test.succeed();
 })
   .structureName(STRUCTURE)
-  .maxTicks(600)
+  .maxTicks(800)
   .tag("andrew");
