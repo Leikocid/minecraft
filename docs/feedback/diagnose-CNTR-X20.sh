@@ -125,7 +125,8 @@ PY
 }
 artifact SAUC-SHOOT-01-AA/2.json "full GameTest suite passes the six ufo core scenarios" 'onTestPassed: andrew:ufo_(schedule_scaled_clock|phases_real_durations|overworld_only|commands_operator|arrival_notice|idle_budget)' 6
 artifact CNTR-X17-AA/2.json "bds-check with the UFO restart phases at HEAD" '\[andrew\] ufo ufo: loaded, enabled=' 3
-if python3 -c "import json,sys; sys.exit(0 if json.load(open(sys.argv[1]))['code_sha'].startswith(sys.argv[2]) else 1)" "$VERIFY/CNTR-X17-AA/2.json" "$(git rev-parse HEAD)"; then ok "that bds-check ran at HEAD $(git rev-parse --short HEAD)"; else no "CNTR-X17-AA/2.json is not at HEAD"; fi
+x17=$(python3 -c "import json,sys; print(json.load(open(sys.argv[1]))['code_sha'])" "$VERIFY/CNTR-X17-AA/2.json")
+if git diff --quiet "$x17" HEAD -- src scripts packs package.json; then ok "that bds-check ran on code identical to HEAD (${x17:0:7}..HEAD: no change in src, scripts, packs)"; else no "code changed since that bds-check (${x17:0:7}): $(git diff --name-only "$x17" HEAD -- src scripts packs package.json | tr '\n' ' ')"; fi
 
 echo "== 7. unit owner of the schedule, run now"
 if node --test tests/ufo-schedule.test.mjs >/tmp/cntr-x20-unit.log 2>&1; then ok "tests/ufo-schedule.test.mjs: $(grep -E '^ℹ (pass|fail) ' /tmp/cntr-x20-unit.log | tr '\n' ' ')"; else no "tests/ufo-schedule.test.mjs: $(tail -5 /tmp/cntr-x20-unit.log | tr '\n' ' ')"; fi
