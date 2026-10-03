@@ -1,12 +1,12 @@
 ---
 title: Risks
 type: analysis
-generated_at: "2026-10-03T14:58:23.893Z"
+generated_at: "2026-10-03T17:21:17.756Z"
 source_channel: rollout
 node_id: rollout-risks
 aliases: ["rollout-risks","risks"]
 is_a: ["rollout","risks"]
-relates_to: ["L0-katn-cx01","L0-lgnd-cx02","L0-lgnd-cx03","L0-lgnd-cx04","L0-lgnd-cx05","L0-lgnd-cx06","L0-lgnd-cx14","L0-xcx21"]
+relates_to: ["L0-katn-cx01","L0-lgnd-cx02","L0-lgnd-cx03","L0-lgnd-cx04","L0-lgnd-cx05","L0-lgnd-cx06","L0-lgnd-cx14"]
 priority: 600
 ---
 
@@ -205,37 +205,6 @@ see_also: ["dragonkatanaspecv1ruen-part-1", "orbitalcannonspecv1ruen-part-1"]
 Filed so the operator confirms that it binds the Katana too.
 
 **Resolved at reduce v6** by `L0-adr-ktgr` §3: option (a), a documented C-16 deviation binding all four legendaries. The Katana adds no exposure. Option (b) stays a backlog probe. Operator confirmation is collected via `L0-xq6`.
-
-
-
-
-
-
-
-### CX-L0-21 · T17 literal reading vs the shipped C-16 deviation (L0-xcx21)
-
----
-title: "CX-L0-21 · Katana §3/T17: the item entity \"is not destroyed\" by cactus and TNT; the framework returns it to the owner instead (C-16)"
-aliases: ["L0-xcx21", "Katana T17 vs C-16"]
-is_a: ["contradiction"]
-part_of: ["L0"]
-relates_to: ["L0-lgnd", "L0-katn", "L0-xcx10", "L0-xasm22"]
-see_also: ["dragonkatanaspecv1ruen-part-1", "dragonkatanaspecv1ruen-part-3"]
----
-# CX-L0-21 · T17 literal reading vs the shipped C-16 deviation
-
-**Source.** Katana §3 says "the item entity is not destroyed by ordinary hazards: fire, lava, cactus, TNT and the Orbital Cannon". T17 says "as an item entity it survives fire, lava, TNT and the Orbital Cannon".
-
-**Code.** As built in v1.4.x (`lgnd`, with `xcx10` closed under C-16):
-- fire and lava are **prevented** (`fire_resistant`);
-- Orbital blasts and rings are **prevented** (`protectLegendariesIn` moves the item out first);
-- cactus, TNT and despawn are not preventable on stable 2.10.0. The item is destroyed and a fresh marked copy is **returned** to the owner (immediately, or owed).
-
-**Disagreement.** For cactus and TNT, the item does not "survive" where it lay; it reappears with its owner. A literal T17 GameTest ("the item entity is still on the ground after TNT") fails.
-
-**Proposed resolution (autopilot default).** Accept the same C-16 reading the operator accepted for the other three legendaries when closing `xcx10`. T17 is proven as "after TNT, exactly one Katana exists, and it is in the owner's inventory or owed". `katn` writes T17 that way; `lgnd` cites the deviation. Severity is low, because this is a re-statement of an accepted compromise. It is filed so the operator confirms that it also binds the new spec.
-
-**Resolved at reduce v6** by `L0-adr-ktgr` §1: the Katana's T17 is the shipped three-tier C-16 reading. The test text is `L0-lgnd-ac24`. Operator confirmation is collected via `L0-xq6`, which does not block the build.
 
 
 

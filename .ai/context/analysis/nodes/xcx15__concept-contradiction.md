@@ -11,8 +11,12 @@ part_of: ["L0"]
 relates_to: ["L0"]
 priority: 580
 size_chars: 1589
-tags: ["status:open", "category:source-vs-code", "target:L0-orbc", "severity:high", "blocks:L0-sauc", "relates_to:L0-adr-ufoi", "relates_to:L0-orbc", "relates_to:L0-sauc", "see_also:ufomagnetspecv1ruen-part-3", "v4"]
+tags: ["status:open","category:source-vs-code","target:L0-orbc","severity:high","blocks:L0-sauc","relates_to:L0-adr-ufoi","relates_to:L0-orbc","relates_to:L0-sauc","see_also:ufomagnetspecv1ruen-part-3","v4","resolved"]
+closed_at: 2026-10-03
+closed_reason: resolved_by_decision
+closed_by_ref: decision-resolve-l0-xcx15
 ---
+
 ---
 title: "CX-L0-15 · UFO §8 needs a charge stopped mid-fall; the shipped `orbc` charge contract ends a charge only at a block, the Void, a loss or a timeout"
 aliases: ["L0-xcx15"]

@@ -10,9 +10,13 @@ part_of: ["L0"]
 relates_to: ["L0"]
 priority: 580
 size_chars: 1809
-tags: ["v4", "status:open", "category:plan-vs-child", "target:L0-magn", "severity:medium", "relates_to:L0-magn", "relates_to:L0-sauc", "relates_to:L0-magn-a04", "relates_to:L0-magn-a07", "relates_to:L0-magn-a14", "relates_to:L0-sauc-ac06"]
+tags: ["v4","status:open","category:plan-vs-child","target:L0-magn","severity:medium","relates_to:L0-magn","relates_to:L0-sauc","relates_to:L0-magn-a04","relates_to:L0-magn-a07","relates_to:L0-magn-a14","relates_to:L0-sauc-ac06","resolved"]
 level: 1
+closed_at: 2026-10-03
+closed_reason: resolved_by_decision
+closed_by_ref: decision-resolve-l0-xcx19
 ---
+
 ---
 title: "CX-L0-19 · AC routing wants each child's ACs split into `bds` and `ipad` criteria; `magn` folds its iPad checks into its GameTest criteria"
 aliases: ["L0-xcx19"]

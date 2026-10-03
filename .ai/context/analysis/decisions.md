@@ -1,12 +1,12 @@
 ---
 title: Decisions
 type: analysis
-generated_at: "2026-10-03T14:58:23.903Z"
+generated_at: "2026-10-03T17:21:15.483Z"
 source_channel: rollout
 node_id: rollout-decisions
 aliases: ["rollout-decisions","decisions"]
 is_a: ["rollout","decisions"]
-relates_to: ["decision-completion-flow-quick","decision-merge-policy-autopilot","decision-namespace-addona-andrew-asm-002-q-002","decision-tselevaya-versiya-bedrock-1-26-51-asm-001-q-001","decision-verification-approach-automatic","decision-windows-pk-ne-nuzhen-q-004","decision-yazyk-skriptov-typescript-asm-003-q-003","decision-zacharovanie-bez-durability-proverit-pervoy-zada","decision-q-006-web-sword-provenance-yes-metka-ekzemplyara","decision-q-007-enchantable-without-durability-podtverzhde","decision-q-008-blocked-craft-refund-a-obnaruzhit-i-vernut","decision-q-009-cooldown-persistence-sohranyat-mezhdu-vyho","decision-q-010-main-hand-off-hand-priority-otlozheno","decision-q-011-cube-geometry-27-kletok-tsentr-sosednyaya-","decision-q-012-two-player-dod-gametest-s-dvumya-simulated","decision-q-013-protected-blocks-zakrytyy-spisok-posture-s","decision-q-014-budget-after-destruction-pravo-ostaetsya-p","decision-q-015-gate-game-modes-survival-i-adventure","decision-q-016-sword-unlootable-podtverzhdeno-kak-zaduman","decision-q-017-zero-cells-proval-s-lokalizovannym-soobsch","decision-resolve-l0","decision-resolve-l0-keep-ctr006","decision-resolve-l0-once","decision-resolve-l0-qatg-ctr1","decision-resolve-l0-trap-ct07","decision-resolve-l0-trap-ct08","decision-web-sword-item-values-uron-kak-u-vanilnogo-almaz","decision-legendary-hand-priority-realizuem-seychas-osnovn","decision-legendary-ready-hud-gotovo-pokazyvaetsya-postoya","decision-legendary-rules-obschie-dlya-vseh-legendarnyh-vk","decision-resolve-cool-ctr3","decision-resolve-l0-sprj-cx02","decision-resolve-l0-xcx3","decision-scythe-enchantments-slot-sword","decision-scythe-hidden-target-dynamic-property-andrew-hid","decision-scythe-launch-applyknockback-s-kalibrovannoy-ver","decision-scythe-melee-damage-8-proveryaetsya-zamerom-prot","decision-scythe-projectiles-virtualnye-bez-suschnostey-ri","decision-scythe-true-damage-pryamoe-umenshenie-zdorovya-d","decision-scythe-targets-mobs-moby-tozhe-tseli-igrok-v-pri","decision-ad-wrdn-01-l0-wrdn-ad01-podtverzhdeno-vanilnaya-","decision-adr-bast-02-l0-bast-ad02-podtverzhdeno-vanilnye-","decision-adr-l0-adr-strc-accepted-generatsiya-skriptom-pr","decision-adr-l0-adr-strs-accepted-s-ogovorkoy-q5-zond-str","decision-adr-l0-adr-tmpl-accepted-zond-strf-p006-q1-q2-q3","decision-adr-l0-wind-ad01-accepted-s-ogovorkoy-o-razmere-","decision-adr-strf-01-l0-strf-d001-accepted-determinirovan","decision-adr-strf-02-l0-strf-d002-accepted-spavnery-vanil","decision-l0-airs-cx01-zagruzka-chankov-koltsa-privyazanno","decision-l0-xcx6-edinstvennyy-istochnik-pravdy-po-generat","decision-l0-xcx7-kanal-dokazatelstva-u-kazhdogo-kriteriya","decision-l0-xq2-plotnost-struktur-shansy-na-chank-rovno-k","decision-l0-xq3-vozvrat-poteryannogo-oruzhiya-kraftivshem","decision-l0-xq4-melnitsa-u-spavna-bez-suhoy-zemli-mira-be","decision-dirizhabl-udlinyaetsya-protiv-razmera-v-speke-ra","decision-gorod-hranitelya-rastet-vchetvero-po-ploschadi-i","decision-legendarnoe-vozvraschaetsya-poslednemu-derzhavsh","decision-resolve-cool-ctr1","decision-resolve-cool-ctr2","decision-resolve-cool-ctr4","decision-resolve-l0-airs-cx01","decision-resolve-l0-lgnd-cx01","decision-resolve-l0-lgnd-cx07","decision-resolve-l0-lgnd-cx08","decision-resolve-l0-lgnd-cx09","decision-resolve-l0-lgnd-cx10","decision-resolve-l0-orbc-cx02","decision-resolve-l0-scyt-cx03","decision-resolve-l0-scyt-cx04","decision-resolve-l0-scyt-cx05","decision-resolve-l0-strf-cx01","decision-resolve-l0-strf-cx02","decision-resolve-l0-wind-cx01","decision-resolve-l0-wind-cx02","decision-resolve-l0-xcx10","decision-resolve-l0-xcx11","decision-resolve-l0-xcx12","decision-resolve-l0-xcx13","decision-resolve-l0-xcx14","decision-resolve-l0-xcx5","decision-resolve-l0-xcx6","decision-resolve-l0-xcx7","decision-resolve-l0-xcx8","decision-resolve-l0-xcx9","decision-vvod-orbitalnoy-pushki-udar-po-playerswingstart-","decision-dvizhok-bedrock-chetyre-svoystva-naydennye-otgru","decision-luchi-i-tsel-facelocation-stoppery-i-zhidkosti-z","decision-pushka-predmet-i-zaryad-pravki-po-zameram-otgruz","decision-ring-diameters-1-7-14-21-28-was-1-5-10-15-20","decision-aim-range-25-and-spawn-height-60-the-shooter-get","decision-resolve-l0-lgnd-cx13","decision-resolve-l0-magn-cxdp","decision-resolve-l0-sauc-cx01","decision-ring-power-per-ring-4-4-2-1-1-and-a-minimum-aim-","decision-ufo-magnet-on-cost-accepted-as-measured-36-39-ms"]
+relates_to: ["decision-completion-flow-quick","decision-merge-policy-autopilot","decision-namespace-addona-andrew-asm-002-q-002","decision-tselevaya-versiya-bedrock-1-26-51-asm-001-q-001","decision-verification-approach-automatic","decision-windows-pk-ne-nuzhen-q-004","decision-yazyk-skriptov-typescript-asm-003-q-003","decision-zacharovanie-bez-durability-proverit-pervoy-zada","decision-q-006-web-sword-provenance-yes-metka-ekzemplyara","decision-q-007-enchantable-without-durability-podtverzhde","decision-q-008-blocked-craft-refund-a-obnaruzhit-i-vernut","decision-q-009-cooldown-persistence-sohranyat-mezhdu-vyho","decision-q-010-main-hand-off-hand-priority-otlozheno","decision-q-011-cube-geometry-27-kletok-tsentr-sosednyaya-","decision-q-012-two-player-dod-gametest-s-dvumya-simulated","decision-q-013-protected-blocks-zakrytyy-spisok-posture-s","decision-q-014-budget-after-destruction-pravo-ostaetsya-p","decision-q-015-gate-game-modes-survival-i-adventure","decision-q-016-sword-unlootable-podtverzhdeno-kak-zaduman","decision-q-017-zero-cells-proval-s-lokalizovannym-soobsch","decision-resolve-l0","decision-resolve-l0-keep-ctr006","decision-resolve-l0-once","decision-resolve-l0-qatg-ctr1","decision-resolve-l0-trap-ct07","decision-resolve-l0-trap-ct08","decision-web-sword-item-values-uron-kak-u-vanilnogo-almaz","decision-legendary-hand-priority-realizuem-seychas-osnovn","decision-legendary-ready-hud-gotovo-pokazyvaetsya-postoya","decision-legendary-rules-obschie-dlya-vseh-legendarnyh-vk","decision-resolve-cool-ctr3","decision-resolve-l0-sprj-cx02","decision-resolve-l0-xcx3","decision-scythe-enchantments-slot-sword","decision-scythe-hidden-target-dynamic-property-andrew-hid","decision-scythe-launch-applyknockback-s-kalibrovannoy-ver","decision-scythe-melee-damage-8-proveryaetsya-zamerom-prot","decision-scythe-projectiles-virtualnye-bez-suschnostey-ri","decision-scythe-true-damage-pryamoe-umenshenie-zdorovya-d","decision-scythe-targets-mobs-moby-tozhe-tseli-igrok-v-pri","decision-ad-wrdn-01-l0-wrdn-ad01-podtverzhdeno-vanilnaya-","decision-adr-bast-02-l0-bast-ad02-podtverzhdeno-vanilnye-","decision-adr-l0-adr-strc-accepted-generatsiya-skriptom-pr","decision-adr-l0-adr-strs-accepted-s-ogovorkoy-q5-zond-str","decision-adr-l0-adr-tmpl-accepted-zond-strf-p006-q1-q2-q3","decision-adr-l0-wind-ad01-accepted-s-ogovorkoy-o-razmere-","decision-adr-strf-01-l0-strf-d001-accepted-determinirovan","decision-adr-strf-02-l0-strf-d002-accepted-spavnery-vanil","decision-l0-airs-cx01-zagruzka-chankov-koltsa-privyazanno","decision-l0-xcx6-edinstvennyy-istochnik-pravdy-po-generat","decision-l0-xcx7-kanal-dokazatelstva-u-kazhdogo-kriteriya","decision-l0-xq2-plotnost-struktur-shansy-na-chank-rovno-k","decision-l0-xq3-vozvrat-poteryannogo-oruzhiya-kraftivshem","decision-l0-xq4-melnitsa-u-spavna-bez-suhoy-zemli-mira-be","decision-dirizhabl-udlinyaetsya-protiv-razmera-v-speke-ra","decision-gorod-hranitelya-rastet-vchetvero-po-ploschadi-i","decision-legendarnoe-vozvraschaetsya-poslednemu-derzhavsh","decision-resolve-cool-ctr1","decision-resolve-cool-ctr2","decision-resolve-cool-ctr4","decision-resolve-l0-airs-cx01","decision-resolve-l0-lgnd-cx01","decision-resolve-l0-lgnd-cx07","decision-resolve-l0-lgnd-cx08","decision-resolve-l0-lgnd-cx09","decision-resolve-l0-lgnd-cx10","decision-resolve-l0-orbc-cx02","decision-resolve-l0-scyt-cx03","decision-resolve-l0-scyt-cx04","decision-resolve-l0-scyt-cx05","decision-resolve-l0-strf-cx01","decision-resolve-l0-strf-cx02","decision-resolve-l0-wind-cx01","decision-resolve-l0-wind-cx02","decision-resolve-l0-xcx10","decision-resolve-l0-xcx11","decision-resolve-l0-xcx12","decision-resolve-l0-xcx13","decision-resolve-l0-xcx14","decision-resolve-l0-xcx5","decision-resolve-l0-xcx6","decision-resolve-l0-xcx7","decision-resolve-l0-xcx8","decision-resolve-l0-xcx9","decision-vvod-orbitalnoy-pushki-udar-po-playerswingstart-","decision-dvizhok-bedrock-chetyre-svoystva-naydennye-otgru","decision-luchi-i-tsel-facelocation-stoppery-i-zhidkosti-z","decision-pushka-predmet-i-zaryad-pravki-po-zameram-otgruz","decision-ring-diameters-1-7-14-21-28-was-1-5-10-15-20","decision-aim-range-25-and-spawn-height-60-the-shooter-get","decision-resolve-l0-lgnd-cx13","decision-resolve-l0-magn-cxdp","decision-resolve-l0-sauc-cx01","decision-ring-power-per-ring-4-4-2-1-1-and-a-minimum-aim-","decision-katana-landing-above-lava-unsafe","decision-resolve-l0-ufoc-cx01","decision-resolve-l0-xcx15","decision-resolve-l0-xcx16","decision-ufo-magnet-on-cost-accepted-as-measured-36-39-ms"]
 priority: 600
 ---
 
@@ -1109,6 +1109,55 @@ _Decided: 2026-10-02_
 3. probe_crater_by_power. Воронка не равна 1.3 × сила, как я считал: на обычном грунте сила 4 выбивает 133 клетки и достаёт на 5.0 блока, сила 2 — 38 клеток, сила 1 — 9 клеток, сила 0.5 — ни одной. В КАМНЕ сила 1 не ломает ничего. Поэтому два внешних кольца оставляют борозду на земле и не оставляют следа на скале, а сценарий воронок переведён на грунт — на то, по чему игра и идёт.
 Почему деление мощности на число точек, которое обсуждалось первым, не годится: сила взрыва это радиус, а не запас энергии. Один динамит, поделённый на 80 точек внешнего кольца, даёт силу 0.05 и радиус 0.1 блока — взрыв не выходит за свою клетку: ни урона, ни следа. И делить не нужно: по игроку приходит не сумма 201 взрыва, а последовательность из двух-шести ударов, так что важна сила ОДНОЙ клетки.
 Что это меняет в спеке: §6 получает минимум для ПКМ, §10 — таблицу сил и оговорку, что сила это радиус, AC-3 — отказ для близкого блока, AC-11 — силы по кольцам, AC-13 — урон силы своего кольца вместо «как обычный TNT» у всех.
+
+
+
+
+
+## katana_landing_above_lava = unsafe (decision-katana-landing-above-lava-unsafe)
+
+_Decided: 2026-10-03_
+
+
+Вопрос (L0-katn-cx01, исход 4 разбора CNTR-KATN-CX01-AA): безопасна ли для посадки Катаны клетка-воздух прямо над лавой или огнём?
+Решение: НЕТ. Кандидат-воздух считается небезопасным, если первый блок, который встречает луч вниз (includePassableBlocks: true, includeLiquidBlocks: true), — lava, flowing_lava, fire или soul_fire. Такой кандидат пропускается, поиск идёт дальше; если безопасного места нет — отказ без кулдауна. Вариант (A) из отчёта.
+Обоснование — измерение, не рассуждение. BDS 1.26.51.1, три Survival SimulatedPlayer в одном тике: над камнем — 0 ударов лавой за 40 тиков; внутри лавы — 4; в воздухе над лавой — те же 4 (игрок в лаве через 3 тика, y 2.00 -> 1.92). 3 прогона из 3. Артефакт .ai/verify/CNTR-KATN-CX01-AA/2.red.json (exit 1, code_sha 81b6be6). То есть правка свода v6, разделившая fits и safe, фильтрует только клетки ног и головы и вреда не снимает: поиск берёт воздух над лавой.
+Цена: не более одного дополнительного луча на кандидата, только на активации. Теряется возможность телепортироваться в точку воздуха прямо над лавой — Катана отступит на твёрдую землю рядом или откажет.
+Отвергнуто: (B) принять падение в лаву как часть баланса. Спека §6 прямо запрещает ставить игрока туда, где он сразу гибнет, а дефолт L0-xq6 #7 — «отступить на безопасную землю». Отгруженный restingY (src/legendary/recovery.ts:770-781) уже работает так же.
+Следствие: L0-adr-ktob §3 и L0-katn-r004 получают пункт про клетку под кандидатом; L0-katn-ac04 получает случай T08b (прицел за лавовое озеро — посадка не в лаву и не над ней). Узел L0-katn-cx01 остаётся открытым, пока это не отгружено в задаче катаны.
+
+
+
+
+
+## Resolved L0-ufoc-cx01: Снято вариантом (a). Код пишет ровно дв… (decision-resolve-l0-ufoc-cx01)
+
+_Decided: 2026-10-03_
+
+
+Снято вариантом (a). Код пишет ровно два стойких свойства — andrew:ufo_next_ms и andrew:ufo_enabled (зонд по worldStore, src/ufo/env.ts:86-91); событие, шедшее в момент перезапуска, кодируется маркером next_ms = 0 (schedule.ts:11,51-53), при загрузке он становится now+900000 (schedule.ts:62-67). Свойства andrew:ufo_active не существовало никогда: git log --all -S'ufo_active' по src, tests и scripts пуст. C-23 и adr-ufom §2 выполняются буквально. Остаётся подчистка знания в 5 местах (KV-CLEANUP-CNTR2-AA), главное — adr-ufom:46.
+
+
+
+
+
+## Resolved L0-xcx15: Закрыто кодом. Коммит 27a2f01 (SAUC-SHO… (decision-resolve-l0-xcx15)
+
+_Decided: 2026-10-03_
+
+
+Закрыто кодом. Коммит 27a2f01 (SAUC-SHOOT-01-AA) добавил registerInterceptor и исход intercepted (src/orbital/flight.ts:40,58,117,208-242): заряд снимается до перемещения, до детонации и до Бездны, без эффекта. На a1ac63f шва не было (grep intercept -> 0, 4 исхода). Доказано на BDS: сценарий ufo_shootdown_seam — заглушка перехватчика даёт 0 изменённых блоков и 0 вызовов onDetonate, тот же выстрел без перехватчика — 100 блоков. Остаётся подчистка знания в 9 местах (KV-CLEANUP-CNTR2-AA).
+
+
+
+
+
+## Resolved L0-xcx16: Подтверждено целиком и переведено в адр… (decision-resolve-l0-xcx16)
+
+_Decided: 2026-10-03_
+
+
+Подтверждено целиком и переведено в адресный список правок. Измерено на v1.4.4: прицел 25 (target.ts:13), минимум ПКМ 7 (ring-layout.ts:39), спавн 60/60/10 (spawn.ts:15-31), диаметры 1/7/14/21/28 и силы 4/4/2/1/1 (ring-layout.ts:98,112), 201 колонна, потолок зарядов 256. Узлы v3 несут старые числа: 223 правки в 147 файлах orbc/ring/pntr, каждая проверена по своей строке (226/226). Причина: v5 протащил эти файлы, поменяв в них только номер версии (git diff 0a8f2c1^..0a8f2c1). Работа передана в KV-CLEANUP-CNTR2-AA с измерителем diagnose-CNTR-X16.measure.mjs.
 
 
 

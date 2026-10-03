@@ -11,8 +11,12 @@ part_of: ["L0"]
 relates_to: ["L0"]
 priority: 600
 size_chars: 1680
-tags: ["v6", "katana", "category:source-vs-code", "severity:low", "status:resolved", "resolved_by:L0-adr-ktgr", "target:L0-lgnd", "alias:L0-xcx21", "is_a:contradiction", "relates_to:L0-lgnd", "relates_to:L0-katn", "relates_to:L0-xcx10", "relates_to:L0-xasm22", "see_also:dragonkatanaspecv1ruen-part-1", "see_also:dragonkatanaspecv1ruen-part-3"]
+tags: ["v6","katana","category:source-vs-code","severity:low","status:resolved","resolved_by:L0-adr-ktgr","target:L0-lgnd","alias:L0-xcx21","is_a:contradiction","relates_to:L0-lgnd","relates_to:L0-katn","relates_to:L0-xcx10","relates_to:L0-xasm22","see_also:dragonkatanaspecv1ruen-part-1","see_also:dragonkatanaspecv1ruen-part-3","resolved"]
+closed_at: 2026-10-03
+closed_reason: resolved_by_decision
+closed_by_ref: decision-resolve-l0-xcx21
 ---
+
 ---
 title: "CX-L0-21 · Katana §3/T17: the item entity \"is not destroyed\" by cactus and TNT; the framework returns it to the owner instead (C-16)"
 aliases: ["L0-xcx21", "Katana T17 vs C-16"]

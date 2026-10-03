@@ -3,16 +3,20 @@ type: "concept-contradiction"
 node_id: "L0-ufoc-cx01"
 source_channel: "rollout"
 analysis_version: 5
-title: "CX-ufoc-1 · `L0-adr-ufom` §4 needs a \"transient\" `andrew:ufo_active` flag to survive a restart, while §2 and C-23 allow only two durable properties"
+title: "CX-ufoc-1 · `L0-adr-ufom` §4 needs a \\"transient\\" `andrew:ufo_active` flag to survive a restart, while §2 and C-23 allow only two durable properties"
 aliases: ["L0-ufoc-cx01"]
 is_a: ["contradiction"]
 part_of: ["L0-ufoc"]
 relates_to: ["L0-ufoc"]
 priority: 580
 size_chars: 1415
-tags: ["is_a:contradiction", "status:resolved", "category:source-vs-source", "relates_to:L0-adr-ufom", "relates_to:L0-ufoc-ad03", "C-23"]
+tags: ["is_a:contradiction","status:resolved","category:source-vs-source","relates_to:L0-adr-ufom","relates_to:L0-ufoc-ad03","C-23","resolved"]
 level: 2
+closed_at: 2026-10-03
+closed_reason: resolved_by_decision
+closed_by_ref: decision-resolve-l0-ufoc-cx01
 ---
+
 # CX-ufoc-1 · `L0-adr-ufom` §4 needs a "transient" `andrew:ufo_active` flag to survive a restart, while §2 and C-23 allow only two durable properties
 
 **Links:** `part_of: ["L0-ufoc"]` · `is_a: ["contradiction"]` · `relates_to: ["L0-adr-ufom", "L0-ufoc-ad03", "L0-ufoc-p003"]` · **target:** `L0-adr-ufom` · **status:** resolved (reduce v5, `L0-adr-ufrs`) · **category:** source-vs-source

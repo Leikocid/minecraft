@@ -10,9 +10,13 @@ part_of: ["L0"]
 relates_to: ["L0"]
 priority: 580
 size_chars: 1803
-tags: ["v4", "status:open", "category:coverage-gap", "target:L0-ufoc", "severity:high", "relates_to:L0-ufoc", "relates_to:L0-sauc", "relates_to:L0-magn", "relates_to:L0-adr-ufpc", "relates_to:L0-xcx17"]
+tags: ["v4","status:open","category:coverage-gap","target:L0-ufoc","severity:high","relates_to:L0-ufoc","relates_to:L0-sauc","relates_to:L0-magn","relates_to:L0-adr-ufpc","relates_to:L0-xcx17","resolved"]
 level: 1
+closed_at: 2026-10-03
+closed_reason: resolved_by_decision
+closed_by_ref: decision-resolve-l0-xcx20
 ---
+
 ---
 title: "CX-L0-20 · `ufoc` failed in run v4: UFO ACs 1, 2 (timing), 3, 17 and 18 have no owner, and `sauc`/`magn` depend on it"
 aliases: ["L0-xcx20"]

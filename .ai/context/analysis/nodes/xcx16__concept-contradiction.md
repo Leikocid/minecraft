@@ -4,15 +4,19 @@ node_id: "L0-xcx16"
 source_channel: "rollout"
 analysis_version: 4
 level: 1
-title: "CX-L0-16 · The v3 Orbital nodes still describe 10-block aim, +30 spawn, power-4 rings at d 1/5/10/15/20 and \"not started\"; the spec and v1.4.4 say otherwise"
+title: "CX-L0-16 · The v3 Orbital nodes still describe 10-block aim, +30 spawn, power-4 rings at d 1/5/10/15/20 and \\"not started\\"; the spec and v1.4.4 say otherwise"
 aliases: ["L0-xcx16"]
 is_a: ["contradiction"]
 part_of: ["L0"]
 relates_to: ["L0"]
 priority: 580
 size_chars: 1738
-tags: ["status:open", "category:source-vs-code", "target:L0-orbc", "severity:medium", "relates_to:L0-orbc", "relates_to:L0-pntr", "relates_to:L0-ring", "see_also:orbitalcannonspecv1ruen-part-2", "see_also:orbitalcannonspecv1ruen-part-3", "v4"]
+tags: ["status:open","category:source-vs-code","target:L0-orbc","severity:medium","relates_to:L0-orbc","relates_to:L0-pntr","relates_to:L0-ring","see_also:orbitalcannonspecv1ruen-part-2","see_also:orbitalcannonspecv1ruen-part-3","v4","resolved"]
+closed_at: 2026-10-03
+closed_reason: resolved_by_decision
+closed_by_ref: decision-resolve-l0-xcx16
 ---
+
 ---
 title: "CX-L0-16 · The v3 Orbital nodes still describe 10-block aim, +30 spawn, power-4 rings at d 1/5/10/15/20 and \"not started\"; the spec and v1.4.4 say otherwise"
 aliases: ["L0-xcx16"]

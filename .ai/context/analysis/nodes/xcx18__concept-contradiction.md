@@ -11,8 +11,12 @@ part_of: ["L0"]
 relates_to: ["L0"]
 priority: 580
 size_chars: 1745
-tags: ["status:resolved", "category:source-vs-source", "target:L0-magn", "severity:high", "relates_to:L0-magn", "relates_to:L0-lgnd", "see_also:ufomagnetspecv1ruen-part-1", "see_also:ufomagnetspecv1ruen-part-2", "v4"]
+tags: ["status:resolved","category:source-vs-source","target:L0-magn","severity:high","relates_to:L0-magn","relates_to:L0-lgnd","see_also:ufomagnetspecv1ruen-part-1","see_also:ufomagnetspecv1ruen-part-2","v4","resolved"]
+closed_at: 2026-10-03
+closed_reason: resolved_by_decision
+closed_by_ref: decision-resolve-l0-xcx18
 ---
+
 ---
 title: "CX-L0-18 · Hopper is both an untouched container (UFO §5 Containers) and a pullable iron block (UFO §4 Blocks, §5 Blocks)"
 aliases: ["L0-xcx18"]
