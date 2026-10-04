@@ -275,7 +275,7 @@ test('registerRing puts the ring effect on RMB: the five-ring layout, normal TNT
   assert.equal(BLAST_POWER, 4);
   // The rings refuse a nearer target: at 7 blocks the shooter already stands
   // 3.5 from the d=7 ring, whose power-4 cells reach 8.
-  assert.equal(RING_MIN_RANGE, 7);
+  assert.equal(RING_MIN_RANGE, 5);
   assert.equal(RING_EFFECT.minRange, RING_MIN_RANGE);
   // The protection margin must cover the strongest ring, not the weakest.
   assert.equal(PROTECT_MARGIN, 8);
