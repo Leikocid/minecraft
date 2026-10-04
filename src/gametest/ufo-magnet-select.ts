@@ -1,5 +1,5 @@
 // The UFO magnet's choice on a real engine (src/ufo/iron.ts, magnet-select.ts):
-// every id resolves on BDS 1.26.51.1, and each scenario runs the product's r 50
+// every id resolves on BDS 1.26.51.1, and each scenario runs the product's r 100
 // zone on its own stone pad far from every other test. A pad's ticking area is
 // smaller than the zone, so every scan also meets unloaded chunks (C-12′).
 
@@ -696,6 +696,8 @@ registerAsync("andrew", "ufo_magnet_legendaries", async (test: Test): Promise<vo
     for (const e of sel.elements) if (e.entity.isValid && e.cls === STACK) e.entity.remove();
     removeAll(iron);
     if (scythe.isValid) scythe.remove();
+    // The emptied hopper is now a built iron block the second event would take.
+    setBlock(p, hopper, "minecraft:air");
     const loaded = p.dim.spawnEntity("minecraft:chest_minecart", middle(at(p, 6, 6)));
     const stand = p.dim.spawnEntity("minecraft:armor_stand", middle(at(p, -6, 6)));
     const katanaStand = p.dim.spawnEntity("minecraft:armor_stand", middle(at(p, 0, 8)));
