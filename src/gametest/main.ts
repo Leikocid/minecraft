@@ -88,6 +88,7 @@ import "./ufo-saucer";
 import "./ufo-shootdown";
 import "./ufo-restart";
 import "./probe-stand-void";
+import "./katana-probe";
 import { parkPenetrator } from "./penetrator";
 import { parkRing } from "./ring";
 import { registerOrbitalCannon } from "../orbital";

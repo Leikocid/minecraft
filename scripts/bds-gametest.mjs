@@ -366,6 +366,14 @@ const EXPECTED_TESTS = [
   // UFOC-RESTART-01 — src/gametest/ufo-restart.ts (UFO AC-1 restart half, AC-17, AC-18)
   'andrew:ufo_restart_seed',
   'andrew:ufo_restart_check',
+  // KATA-PROBE-01 — src/gametest/katana-probe.ts (L0-katn-ac08)
+  'andrew:probe_katana_fall_reset',
+  'andrew:probe_katana_ray_flags',
+  'andrew:probe_katana_ray_reach',
+  'andrew:probe_katana_column_slabs',
+  'andrew:probe_katana_lava_below',
+  'andrew:probe_katana_unloaded_ray',
+  'andrew:probe_katana_cherry_particle',
 ];
 
 /**
