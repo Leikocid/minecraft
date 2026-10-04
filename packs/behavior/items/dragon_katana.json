@@ -1,0 +1,47 @@
+{
+  "format_version": "1.21.90",
+  "minecraft:item": {
+    "description": {
+      "identifier": "andrew:dragon_katana",
+      "menu_category": {
+        "category": "equipment",
+        "group": "minecraft:itemGroup.name.sword"
+      }
+    },
+    "components": {
+      "minecraft:display_name": {
+        "value": "item.andrew:dragon_katana.name"
+      },
+      "minecraft:icon": "andrew_dragon_katana",
+      "minecraft:max_stack_size": 1,
+      "minecraft:hand_equipped": true,
+      "minecraft:allow_off_hand": {
+        "value": true
+      },
+      "minecraft:fire_resistant": {
+        "value": true
+      },
+      "minecraft:enchantable": {
+        "slot": "sword",
+        "value": 10
+      },
+      "minecraft:damage": {
+        "value": 7
+      },
+      "minecraft:digger": {
+        "use_efficiency": true,
+        "destroy_speeds": [
+          {
+            "block": {
+              "tags": "query.any_tag('minecraft:is_sword_item_destructible')"
+            },
+            "speed": 15
+          }
+        ]
+      },
+      "minecraft:tags": {
+        "tags": ["minecraft:is_sword", "minecraft:is_tool"]
+      }
+    }
+  }
+}

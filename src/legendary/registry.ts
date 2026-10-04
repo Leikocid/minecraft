@@ -84,7 +84,25 @@ export const ORBITAL_CANNON: LegendaryDef = {
   hudKeys: { ready: "andrew.orbital.hud_ready", cooldown: "andrew.orbital.hud_cooldown" },
 };
 
-export const LEGENDARIES: ReadonlyArray<LegendaryDef> = [WEB_SWORD, SCYTHE_OF_CALAMITY, ORBITAL_CANNON];
+export const DRAGON_KATANA: LegendaryDef = {
+  itemId: "andrew:dragon_katana",
+  keyPrefix: "dk",
+  abilityKey: "dragon_katana",
+  nameKey: "item.andrew:dragon_katana",
+  cooldownTicks: 600,
+  craftGate: true,
+  craftTokenId: "andrew:dragon_katana_crafted",
+  refund: [
+    ["minecraft:golden_apple", 2],
+    ["minecraft:ender_pearl", 2],
+    ["minecraft:diamond_sword", 1],
+  ],
+  textPrefix: "andrew.katana",
+  command: "andrew:katana",
+  hudKeys: { ready: "andrew.katana.hud_ready", cooldown: "andrew.katana.hud_cooldown" },
+};
+
+export const LEGENDARIES: ReadonlyArray<LegendaryDef> = [WEB_SWORD, SCYTHE_OF_CALAMITY, ORBITAL_CANNON, DRAGON_KATANA];
 
 export function defFor(itemId: string): LegendaryDef | undefined {
   return LEGENDARIES.find((def) => def.itemId === itemId);

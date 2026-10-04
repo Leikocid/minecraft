@@ -172,7 +172,9 @@ const EXPECTED_TESTS = [
   // LGND-CRAFTGATE-01 — src/gametest/legendary-craftgate.ts
   'andrew:legendary_give_then_craft_web_sword',
   'andrew:legendary_give_then_craft_scythe',
+  'andrew:legendary_give_then_craft_dragon_katana',
   'andrew:legendary_second_real_craft_refunded',
+  'andrew:legendary_katana_recipe_negative_controls',
   // LGND-OFFHAND-01 — src/gametest/legendary-offhand.ts
   'andrew:legendary_offhand_admitted',
   'andrew:legendary_offhand_resolves',
