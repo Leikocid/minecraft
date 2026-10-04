@@ -19,7 +19,7 @@ import {
   world,
 } from "@minecraft/server";
 import { type Test, registerAsync } from "@minecraft/server-gametest";
-import { ORBITAL_CANNON, SCYTHE_OF_CALAMITY, WEB_SWORD, genLedgerKey, isLegendaryStack } from "../legendary/registry";
+import { DRAGON_KATANA, ORBITAL_CANNON, SCYTHE_OF_CALAMITY, WEB_SWORD, genLedgerKey, isLegendaryStack } from "../legendary/registry";
 import * as state from "../legendary/state";
 import { FIRST_MAX_MS, FIRST_MIN_MS, PAUSE_MS, type UfoEnv, type UfoPlayer } from "../ufo/env";
 import { IRON_TAG, type Magnet, type Saucer, UfoCore, hoverHeight } from "../ufo/event";
@@ -648,7 +648,7 @@ registerAsync("andrew", "ufo_magnet_holders", async (test: Test): Promise<void> 
   .maxTicks(600)
   .tag("andrew");
 
-// ------------------------------------------------ AC-7: legendaries are never chosen and take no place
+// ------------------------------------------------ legendary weapons are pulled like iron, wherever they lie
 
 registerAsync("andrew", "ufo_magnet_legendaries", async (test: Test): Promise<void> => {
   const owner = test.spawnSimulatedPlayer({ x: 3, y: 2, z: 3 }, "magnet_owner");
@@ -658,9 +658,8 @@ registerAsync("andrew", "ufo_magnet_legendaries", async (test: Test): Promise<vo
     assertClean(test, p);
     const mark = state.makeMark("admin", owner);
     const scythe = p.dim.spawnItem(state.markItem(SCYTHE_OF_CALAMITY, new ItemStack(SCYTHE_OF_CALAMITY.itemId, 1), mark), middle(at(p, 1, 0)));
-    // Nine iron ground items, farther than the Scythe: with it counted, the chest would get no place.
-    // Nine types two blocks apart, so no two merge.
-    const kinds = ["iron_ingot", "iron_nugget", "raw_iron", "iron_sword", "iron_pickaxe", "iron_axe", "iron_shovel", "iron_hoe", "shears"];
+    // Five iron ground items, farther than the Scythe; five types two blocks apart, so no two merge.
+    const kinds = ["iron_ingot", "iron_nugget", "raw_iron", "iron_sword", "shears"];
     const iron = kinds.map((k, i) => p.dim.spawnItem(new ItemStack(`minecraft:${k}`, 1), middle(at(p, -4 - 2 * (i % 3), 4 + 2 * Math.floor(i / 3)))));
     // The hopper, holding the Cannon alone, is nearer than the chest.
     const hopper = at(p, 0, -6);
@@ -671,52 +670,57 @@ registerAsync("andrew", "ufo_magnet_legendaries", async (test: Test): Promise<vo
     const box = containerAt(p, chest);
     box.setItem(0, new ItemStack(WEB_SWORD.itemId, 1));
     box.setItem(1, new ItemStack("minecraft:iron_ingot", 7));
+    box.setItem(2, new ItemStack("minecraft:dirt", 3));
     await test.idle(10);
-    const scytheAt = scythe.location;
     const gen = world.getDynamicProperty(genLedgerKey(SCYTHE_OF_CALAMITY, mark.id));
 
     const sel = magnetOn(p.dim, p.centre, p.hoverY, host);
-    const legendaryElements = sel.elements.filter((e) => isLegendaryStack(stackOf(e.entity)) || e.entity.id === scythe.id);
-    log(`legendaries RESULT [${describe(sel)}] in ${sel.ms} ms; scythe ${scythe.isValid ? fmt(scythe.location) : "GONE"} (was ${fmt(scytheAt)}); chest ${short(box.getItem(0)?.typeId ?? "empty")}/${box.getItem(1)?.typeId ?? "empty"}; hopper ${blockAt(p, hopper)} holding ${containerAt(p, hopper).getItem(0)?.typeId ?? "nothing"}`);
-    test.assert(legendaryElements.length === 0, `a legendary was chosen: ${legendaryElements.map((e) => e.from).join(" ")}`);
-    test.assert(sel.elements.length === 10, `${sel.elements.length} elements, expected 10`);
-    test.assert(sel.elements.slice(0, 9).every((e) => e.cls === GROUND) && sel.elements[9].cls === STACK, `classes ${sel.elements.map((e) => e.cls).join("")}`);
-    test.assert(sel.elements.slice(0, 9).map((e) => e.entity.id).sort().join() === iron.map((e) => e.id).sort().join(), "the nine ground elements are not the nine ingots");
-    const ingot = stackOf(sel.elements[9].entity);
-    test.assert(ingot?.typeId === "minecraft:iron_ingot" && ingot.amount === 7, `the tenth element is ${ingot?.typeId}*${ingot?.amount}, expected the chest's 7 ingots`);
-    test.assert(box.getItem(1) === undefined, "the chest's ingot is still there");
-    test.assert(box.getItem(0)?.typeId === WEB_SWORD.itemId, "the Web Sword left the chest");
-    test.assert(blockAt(p, hopper) === "minecraft:hopper" && containerAt(p, hopper).getItem(0)?.typeId === ORBITAL_CANNON.itemId, "the hopper or its Cannon moved");
-    test.assert(scythe.isValid && Math.hypot(scythe.location.x - scytheAt.x, scythe.location.y - scytheAt.y, scythe.location.z - scytheAt.z) < 0.1, "the Scythe moved");
+    log(`legendaries RESULT [${describe(sel)}] in ${sel.ms} ms; chest ${box.getItem(0)?.typeId ?? "empty"}/${box.getItem(1)?.typeId ?? "empty"}/${box.getItem(2)?.typeId ?? "empty"}; hopper ${blockAt(p, hopper)} holding ${containerAt(p, hopper).getItem(0)?.typeId ?? "nothing"}`);
+    test.assert(sel.failures.length === 0, `failures: ${sel.failures.join(" | ")}`);
+    test.assert(sel.elements.map((e) => e.cls).join("") === "111111222", `classes ${sel.elements.map((e) => e.cls).join("")}, expected 111111222`);
+    test.assert(sel.elements[0].entity.id === scythe.id, `the nearest ground element is ${sel.elements[0].from}, not the Scythe`);
+    test.assert(sel.elements.slice(1, 6).map((e) => e.entity.id).sort().join() === iron.map((e) => e.id).sort().join(), "the other five ground elements are not the five iron items");
+    const stacks = sel.elements.slice(6).map((e) => stackOf(e.entity));
+    test.assert(stacks.map((s) => s?.typeId).join(" ") === `${ORBITAL_CANNON.itemId} ${WEB_SWORD.itemId} minecraft:iron_ingot`, `the stacks are ${stacks.map((s) => s?.typeId).join(" ")}`);
+    test.assert(stacks.slice(0, 2).every((s) => isLegendaryStack(s)), "an extracted weapon lost its type");
+    test.assert(blockAt(p, hopper) === "minecraft:hopper" && containerAt(p, hopper).getItem(0) === undefined, "the hopper did not give up its Cannon, or left its place");
+    test.assert(box.getItem(0) === undefined && box.getItem(1) === undefined, "the chest kept a weapon or its ingots");
+    test.assert(box.getItem(2)?.typeId === "minecraft:dirt", "the chest lost its dirt");
     test.assert(stackOf(scythe)?.typeId === SCYTHE_OF_CALAMITY.itemId, "the Scythe's stack changed");
     test.assert(world.getDynamicProperty(genLedgerKey(SCYTHE_OF_CALAMITY, mark.id)) === gen, "the Scythe's ledger moved");
 
-    // The holders: a chest minecart with a Web Sword and an iron-wearing stand
-    // holding the Cannon stay; the same two without a legendary, and a plain
-    // minecart, are taken.
+    // The holders: a chest minecart with a Web Sword, an iron-wearing stand
+    // holding the Cannon, a bare stand holding the Katana, the same cart and
+    // stand without a weapon and a plain minecart are taken; a bare stand
+    // holding a stick is not.
     for (const e of sel.elements) if (e.entity.isValid && e.cls === STACK) e.entity.remove();
     removeAll(iron);
+    if (scythe.isValid) scythe.remove();
     const loaded = p.dim.spawnEntity("minecraft:chest_minecart", middle(at(p, 6, 6)));
     const stand = p.dim.spawnEntity("minecraft:armor_stand", middle(at(p, -6, 6)));
+    const katanaStand = p.dim.spawnEntity("minecraft:armor_stand", middle(at(p, 0, 8)));
+    const bareStand = p.dim.spawnEntity("minecraft:armor_stand", middle(at(p, 0, -8)));
     const ironCart = p.dim.spawnEntity("minecraft:chest_minecart", middle(at(p, 6, -6)));
     const ironStand = p.dim.spawnEntity("minecraft:armor_stand", middle(at(p, -6, -6)));
     const plain = p.dim.spawnEntity("minecraft:minecart", middle(at(p, 8, -8)));
-    extras.push(loaded, stand, ironCart, ironStand, plain);
+    extras.push(loaded, stand, katanaStand, bareStand, ironCart, ironStand, plain);
     await test.idle(2);
     loaded.getComponent("minecraft:inventory")?.container?.setItem(0, new ItemStack(WEB_SWORD.itemId, 1));
     loaded.getComponent("minecraft:inventory")?.container?.setItem(1, new ItemStack("minecraft:iron_ingot", 2));
     ironCart.getComponent("minecraft:inventory")?.container?.setItem(1, new ItemStack("minecraft:iron_ingot", 2));
     dress(stand, { head: "iron_helmet", mainhand: ORBITAL_CANNON.itemId });
+    dress(katanaStand, { mainhand: DRAGON_KATANA.itemId });
+    dress(bareStand, { mainhand: "minecraft:stick" });
     dress(ironStand, { head: "iron_helmet", mainhand: "minecraft:stick" });
     await test.idle(2);
     const second = magnetOn(p.dim, p.centre, p.hoverY, host);
-    const want = [ironCart, ironStand, plain].map((e) => e.id).sort().join(" ");
+    const want = [loaded, stand, katanaStand, ironCart, ironStand, plain].map((e) => e.id).sort().join(" ");
     const got = second.elements.map((e) => e.entity.id).sort().join(" ");
-    log(`legendary holders RESULT [${describe(second)}]; chosen ${got}; expected ${want}; left: chest minecart ${loaded.id}, stand ${stand.id}`);
-    test.assert(got === want, `chosen [${describe(second)}] (${got}), expected the plain minecart and the two holders without a legendary (${want})`);
-    test.assert(second.failures.length === 0, `the second event left holders out for a failure, not for their legendaries: ${second.failures.join(" | ")}`);
-    test.assert(!stand.hasTag(IRON_TAG) && !loaded.hasTag(IRON_TAG), "a legendary holder carries the held tag");
-    test.assert(scythe.isValid && box.getItem(0)?.typeId === WEB_SWORD.itemId, "a legendary moved in the second event");
+    log(`legendary holders RESULT [${describe(second)}]; chosen ${got}; expected ${want}; left: bare stand ${bareStand.id}`);
+    test.assert(got === want, `chosen [${describe(second)}] (${got}), expected both carts, the plain minecart and the three dressed stands (${want})`);
+    test.assert(second.failures.length === 0, `class 3 failures: ${second.failures.join(" | ")}`);
+    test.assert(!bareStand.hasTag(IRON_TAG), "a stand holding a stick carries the held tag");
+    test.assert(katanaStand.hasTag(IRON_TAG) && stand.hasTag(IRON_TAG), "a chosen weapon holder lacks the held tag");
   } finally {
     for (const e of extras) if (e.isValid) e.removeTag(IRON_TAG);
     removeAll(extras);

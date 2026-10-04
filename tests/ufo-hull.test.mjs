@@ -55,6 +55,7 @@ const {
   BLAST_PARTICLE,
   SMOKE_PARTICLE,
   SMOKE_PER_TICK,
+  SMOKE_RADIUS,
   hullHit,
   fallStep,
   landingCell,
@@ -74,28 +75,29 @@ const at = (x, y, z) => ({ x, y, z });
 
 // ------------------------------------------------------------------ AC#1: the hull test (R-sauc-1)
 
-test('hull: r 6 × h 3 standing on the position — a segment through the band within 6 of the axis hits, edges closed', () => {
-  assert.deepEqual([HULL_RADIUS, HULL_HEIGHT], [6, 3]);
+test('hull: r 12 × h 6 standing on the position — a segment through the band within 12 of the axis hits, edges closed', () => {
+  assert.deepEqual([HULL_RADIUS, HULL_HEIGHT], [12, 6]);
   const S = at(10.5, 100, -6.5);
   const seg = (dx, top, bottom) => hullHit(S, at(S.x + dx, top, S.z), at(S.x + dx, bottom, S.z));
-  for (const dx of [0, 3, 5.99, 6]) {
-    assert.equal(seg(dx, 103.5, 102.5), true, `${dx} out, through the top`);
+  for (const dx of [0, 6, 11.99, 12]) {
+    assert.equal(seg(dx, 106.5, 105.5), true, `${dx} out, through the top`);
     assert.equal(seg(dx, 110, 90), true, `${dx} out, a segment longer than the hull`);
-    assert.equal(seg(dx, 103, 102), true, `${dx} out, from exactly the top edge`);
+    assert.equal(seg(dx, 106, 105), true, `${dx} out, from exactly the top edge`);
     assert.equal(seg(dx, 101, 100), true, `${dx} out, down to exactly the bottom edge`);
-    assert.equal(seg(dx, 101.2, 101.1), true, `${dx} out, inside the band`);
+    assert.equal(seg(dx, 103.2, 103.1), true, `${dx} out, inside the band`);
   }
-  assert.equal(hullHit(S, at(S.x + 4.2, 101, S.z - 4.2), at(S.x + 4.2, 100, S.z - 4.2)), true, 'diagonal 5.94 out');
-  for (const dx of [6.01, 7, 30]) assert.equal(seg(dx, 110, 90), false, `${dx} out: outside the cylinder`);
-  assert.equal(hullHit(S, at(S.x + 4.3, 101, S.z - 4.3), at(S.x + 4.3, 100, S.z - 4.3)), false, 'diagonal 6.08 out');
-  assert.equal(seg(0, 104, 103.01), false, 'wholly above the band');
+  assert.equal(hullHit(S, at(S.x + 8.4, 101, S.z - 8.4), at(S.x + 8.4, 100, S.z - 8.4)), true, 'diagonal 11.88 out');
+  for (const dx of [12.01, 14, 30]) assert.equal(seg(dx, 110, 90), false, `${dx} out: outside the cylinder`);
+  assert.equal(hullHit(S, at(S.x + 8.6, 101, S.z - 8.6), at(S.x + 8.6, 100, S.z - 8.6)), false, 'diagonal 12.16 out');
+  assert.equal(seg(0, 107, 106.01), false, 'wholly above the band');
   assert.equal(seg(0, 99.99, 98.99), false, 'wholly below the band');
   assert.equal(seg(0, 99, 60), false, 'a fall that starts under the hull');
-  assert.equal(hullHit(S, at(S.x, 102.5, S.z), at(S.x, 103.5, S.z)), true, 'the order of the ends does not matter');
+  assert.equal(hullHit(S, at(S.x, 105.5, S.z), at(S.x, 106.5, S.z)), true, 'the order of the ends does not matter');
 });
 
 const SPEEDS = [0.25, 0.3, 0.5, FALL_SPEED, 1.5, 2, 2.5, 3.7, 7, 16, 40, 100, 1000];
-const STARTS = [160, 160.5, 133.99, 103.2, 120.01];
+// 106.2 starts just above the band top of a hull standing at y 100.
+const STARTS = [160, 160.5, 133.99, 106.2, 120.01];
 
 /**
  * The segments the flight offers a charge falling from `start` at `speed`
@@ -127,12 +129,12 @@ test('hull: a falling charge is caught at any fall speed, on the first step whos
       const overlaps = segs.map(([y, ny]) => ny <= S.y + HULL_HEIGHT && y >= S.y);
       const first = overlaps.indexOf(true);
       assert.ok(first >= 0, `speed ${speed}, start ${start}: the path never reaches the band`);
-      for (const dx of [0, 2.5, 6]) {
+      for (const dx of [0, 5, 12]) {
         const hits = segs.map(([y, ny]) => hullHit(S, at(S.x + dx, y, S.z), at(S.x + dx, ny, S.z)));
         assert.deepEqual(hits, overlaps, `speed ${speed}, start ${start}, ${dx} out`);
         assert.equal(hits.indexOf(true), first);
       }
-      for (const dx of [6.01, 9]) {
+      for (const dx of [12.01, 18]) {
         assert.ok(!segs.some(([y, ny]) => hullHit(S, at(S.x + dx, y, S.z), at(S.x + dx, ny, S.z))), `speed ${speed}, start ${start}: a hit ${dx} out`);
       }
     }
@@ -542,7 +544,7 @@ test('magnet-phase shot: latched once, the release on the next UFO tick, a smoki
   r.tick(10);
   assert.equal(r.interceptors.size, 1, 'no interceptor while the saucer flies');
   const e = r.w.spawned[0];
-  assert.equal(r.charge(HOVER.x + 6.5, HOVER.z, HOVER.y + 10, HOVER.y + 2), false, 'a column 6.5 out was taken');
+  assert.equal(r.charge(HOVER.x + 12.5, HOVER.z, HOVER.y + 10, HOVER.y + 2), false, 'a column 12.5 out was taken');
   assert.equal(r.charge(HOVER.x, HOVER.z, HOVER.y + 10, HOVER.y + 9), false, 'a step above the hull was taken');
   assert.equal(r.charge(HOVER.x, HOVER.z, HOVER.y + 3.5, HOVER.y + 2.5, { ownerId: 'p2', ownerName: 'Bob', dimensionId: 'minecraft:nether' }), false, 'a Nether charge was taken');
   const shotTick = r.w.tick;
@@ -575,6 +577,8 @@ test('magnet-phase shot: latched once, the release on the next UFO tick, a smoki
   assert.ok(e.trail.filter((p) => p.tick > shotTick).every((p) => p.x === HOVER.x && p.z === HOVER.z), 'the fall drifted sideways');
   const smoke = r.w.particles.filter((p) => p.id === SMOKE_PARTICLE);
   assert.equal(smoke.length, (steps - 1) * SMOKE_PER_TICK, 'smoke is not 4 calls on every airborne step');
+  assert.equal(SMOKE_RADIUS, 8);
+  assert.ok(smoke.every((p) => Math.abs(flatDist(p.at, HOVER) - SMOKE_RADIUS) < 1e-9), 'the smoke is not on the 8-block rim of the hull');
 
   // The blast: particles and the sound at the landing point, in the last step; the saucer gone the same tick.
   const blastTick = shotTick + 1 + steps - 1;

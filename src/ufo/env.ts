@@ -16,8 +16,8 @@ export interface UfoDurations {
   readonly downed: number;
 }
 
-/** UFO §2 and §8 at 20 ticks a second: 20 s, 60 s, 15 s, and the 3 s fall. */
-export const PHASE_TICKS: UfoDurations = { arrival: 400, magnet: 1200, departure: 300, downed: 60 };
+/** UFO §2 and §8 at 20 ticks a second: 20 s, 30 s, 15 s, and the 3 s fall. The magnet's 30 s overrides §2's 60. */
+export const PHASE_TICKS: UfoDurations = { arrival: 400, magnet: 600, departure: 300, downed: 60 };
 
 /** UFO §2: the next arrival comes exactly 15 min after a departure or a shoot-down. */
 export const PAUSE_MS = 900_000;

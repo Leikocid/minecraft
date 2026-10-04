@@ -128,6 +128,11 @@ export function isLegendaryStack(stack?: ItemStack): boolean {
   return stack !== undefined && LEGENDARY_TYPE_IDS.has(stack.typeId);
 }
 
+/** Whether `stack` is one of the weapons themselves; a craft token is not. */
+export function isLegendaryWeaponStack(stack?: ItemStack): boolean {
+  return defForStack(stack) !== undefined;
+}
+
 export function defForAbility(abilityKey: string): LegendaryDef | undefined {
   return LEGENDARIES.find((def) => def.abilityKey === abilityKey);
 }

@@ -8,15 +8,15 @@ import type { Dimension, ItemStack, RawMessage, Vector3 } from "@minecraft/serve
 import type { Attack, Interceptor } from "../orbital/flight";
 import type { OffReason } from "./event";
 
-/** R-sauc-1, UFO §8: a vertical cylinder standing on the saucer's position, edges closed (AS-sauc-1). */
-export const HULL_RADIUS = 6;
-export const HULL_HEIGHT = 3;
+/** R-sauc-1, UFO §8: a vertical cylinder standing on the saucer's position, edges closed (AS-sauc-1); it matches the model. */
+export const HULL_RADIUS = 12;
+export const HULL_HEIGHT = 6;
 /** AS-sauc-2: blocks per tick², from rest; from the hover height the ground comes at about tick 57. */
 export const FALL_ACCEL = 0.025;
 export const SMOKE_PARTICLE = "minecraft:campfire_tall_smoke_particle";
 /** P-sauc-2 step 5 allows at most 4 particle calls per fall tick. */
 export const SMOKE_PER_TICK = 4;
-export const SMOKE_RADIUS = 4;
+export const SMOKE_RADIUS = 8;
 export const BLAST_PARTICLE = "minecraft:huge_explosion_emitter";
 /** R-sauc-4 item 3: two item entities, once per event. */
 export const REWARD: readonly { readonly typeId: string; readonly amount: number }[] = [

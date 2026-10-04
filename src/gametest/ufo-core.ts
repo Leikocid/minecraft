@@ -431,7 +431,7 @@ registerAsync("andrew", "ufo_phases_real_durations", async (test: Test): Promise
     test.assert(order === "arrival → magnet → release → departure → pause", `phase order ${order}`);
     test.assert(Math.abs(magnet.tick - arrival.tick - 400) <= 1, `arrival lasted ${magnet.tick - arrival.tick} ticks, not 400`);
     test.assert(release.tick === departure.tick && release.call === departure.call, "the release and the departure are not in one tick");
-    test.assert(Math.abs(release.tick - magnet.tick - 1200) <= 1, `the magnet lasted ${release.tick - magnet.tick} ticks, not 1200`);
+    test.assert(Math.abs(release.tick - magnet.tick - PHASE_TICKS.magnet) <= 1, `the magnet lasted ${release.tick - magnet.tick} ticks, not ${PHASE_TICKS.magnet}`);
     test.assert(Math.abs(pause.tick - departure.tick - 300) <= 1, `the departure lasted ${pause.tick - departure.tick} ticks, not 300`);
     test.assert(new Set(r.phases.map((x) => x.payload.eventId)).size === 1, "the payloads carry more than one event id");
     test.assert(

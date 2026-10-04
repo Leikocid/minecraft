@@ -1,6 +1,8 @@
 // What the UFO magnet treats as iron (UFO §4, §5; L0-magn-eirn), as BDS
 // 1.26.51.1 names it. Pure, so node tests load it without @minecraft/server.
 
+import type { ItemStack } from "@minecraft/server";
+
 const mc = (ids: readonly string[]): string[] => ids.map((id) => `minecraft:${id}`);
 
 export const RAILS: readonly string[] = mc(["rail", "golden_rail", "detector_rail", "activator_rail"]);
@@ -132,6 +134,10 @@ export const IRON_ARMOUR: ReadonlyArray<{ readonly item: string; readonly locati
 export const SCAN_TYPES: readonly string[] = [...new Set([...BLOCK_ITEMS.keys(), ...IRON_ORE, ...CONTAINER_BLOCKS])];
 
 export const isIronItem = (typeId: string): boolean => IRON_ITEMS.has(typeId);
+
+/** What the magnet moves as an item: iron, or a legendary weapon. A craft token is neither. */
+export const isMagneticStack = (stack: ItemStack, isLegendaryWeapon: (s: ItemStack) => boolean): boolean =>
+  isIronItem(stack.typeId) || isLegendaryWeapon(stack);
 export const isIronEntityType = (typeId: string): boolean => IRON_ENTITY_TYPES.has(typeId);
 
 export type BlockRole = "container" | "built" | "ore";
