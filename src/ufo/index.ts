@@ -82,6 +82,7 @@ export function registerUfo(
     random: env.random,
     durations: env.durations,
     ceiling: env.ceiling,
+    log,
     shootdown: {
       registerInterceptor,
       core: () => core,

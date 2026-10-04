@@ -45,6 +45,8 @@ export interface PhasePayload {
 }
 
 export interface PhaseListener {
+  /** How the core's log names this listener when it throws. */
+  readonly name?: string;
   onPhase(phase: Phase, payload: PhasePayload): void;
 }
 
@@ -128,7 +130,7 @@ export class UfoCore {
   private live: Session | undefined;
   private counter = 0;
   private readonly queue: Array<{ action: UfoAction; invokerId: string | undefined }> = [];
-  private readonly listeners: PhaseListener[];
+  private readonly listeners: ReadonlyArray<{ readonly name: string; readonly listener: PhaseListener }>;
   private ended: { eventId: string; reason: EndReason } | undefined;
 
   constructor(
@@ -137,7 +139,11 @@ export class UfoCore {
   ) {
     if (parts.scope === "" || parts.scope.includes("-")) throw new Error(`ufo: scope "${parts.scope}" must be non-empty and free of "-"`);
     this.schedule = new UfoSchedule(env);
-    this.listeners = [parts.saucer, ...(parts.magnet === undefined ? [] : [parts.magnet]), ...(parts.listeners ?? [])];
+    this.listeners = [
+      { name: parts.saucer.name ?? "saucer", listener: parts.saucer },
+      ...(parts.magnet === undefined ? [] : [{ name: parts.magnet.name ?? "magnet", listener: parts.magnet }]),
+      ...(parts.listeners ?? []).map((listener, i) => ({ name: listener.name ?? `listener ${i + 1}`, listener })),
+    ];
   }
 
   get scope(): string {
@@ -251,6 +257,11 @@ export class UfoCore {
     }
   }
 
+  /**
+   * Every listener hears the phase; one that throws is logged by name and the
+   * rest go on. A saucer that failed is not let off: the next tick's liveness
+   * check ends an event with no valid saucer (L0-ufoc-as04).
+   */
   private publish(s: Session, phase: Phase): void {
     const payload: PhasePayload = Object.freeze({
       centre: Object.freeze({ ...s.centre }),
@@ -258,12 +269,11 @@ export class UfoCore {
       saucerPos: this.saucerPosition(),
       eventId: s.eventId,
     });
-    for (const listener of this.listeners) {
+    for (const { name, listener } of this.listeners) {
       try {
         listener.onPhase(phase, payload);
       } catch (err) {
-        this.env.log(`ufo ${s.eventId}: a ${phase} listener threw ${errText(err)} — aborting`);
-        if (phase !== "pause" && this.live === s) s.offLatch ??= "abort";
+        this.env.log(`ufo ${s.eventId}: the ${name} listener threw on ${phase}: ${errText(err)}`);
       }
     }
   }
@@ -290,7 +300,10 @@ export class UfoCore {
     this.live = s;
     this.schedule.markInFlight();
     this.publish(s, "arrival");
-    const told = this.notify(s, pool);
+    // L0-ufoc-as04: no saucer, no event — and no notice of one.
+    const saucer = this.saucerPosition() !== undefined;
+    if (!saucer) s.offLatch ??= "abort";
+    const told = saucer ? String(this.notify(s, pool)) : "none, no saucer — aborting";
     this.env.log(`ufo ${s.eventId}: arrival (${source}) over ${target.name} at ${fmt(centre)}, hover y ${s.hoverY}, notice to ${told}`);
     return s;
   }
