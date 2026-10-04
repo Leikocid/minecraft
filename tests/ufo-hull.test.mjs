@@ -440,6 +440,7 @@ function fakeWorld() {
   w.overworld = {
     id: OW,
     heightRange: { min: -64, max: 320 },
+    isChunkLoaded: () => true,
     spawnEntity(typeId, location) {
       const e = { id: `s${w.spawned.length}`, typeId, isValid: true, location: { ...location }, tags: [], props: {}, trail: [] };
       e.addTag = (t) => e.tags.push(t);
@@ -731,6 +732,7 @@ test('registerUfo: the product saucer registers its hull on the Cannon seam it i
     id: OW,
     heightRange: { min: -64, max: 320 },
     getEntities: () => [],
+    isChunkLoaded: () => true,
     spawnEntity(typeId, location) {
       const e = { id: `e${spawned.length}`, typeId, isValid: true, location: { ...location }, addTag() {}, setDynamicProperty() {}, setProperty() {}, teleport: (to) => (e.location = { ...to }), remove: () => (e.isValid = false) };
       spawned.push(e);

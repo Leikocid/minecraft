@@ -22,8 +22,19 @@ import {
   smokePoints,
 } from "./shootdown";
 
-/** UFO §2: horizontal blocks from the centre at spawn and at removal. */
+/**
+ * UFO §2: horizontal blocks from the centre at spawn and at removal — at most.
+ * The engine spawns and moves an entity only in a chunk that is loaded and
+ * ticking, and one player on a default server (tick-distance 4) keeps a disc of
+ * 57 chunks: 45.75–82.25 blocks out by bearing (ufo_arrival_reach_measured). So
+ * each leg is measured when it starts and ends short of the first such chunk.
+ */
 export const APPROACH_DISTANCE = 90;
+/** The saucer stays this far inside the last loaded and ticking chunk column of a leg. */
+export const REACH_MARGIN = 1;
+/** The arrival tries this many bearings evenly around the random one and takes the longest reach. */
+export const ARRIVAL_BEARINGS = 8;
+export const CHUNK = 16;
 export const LEG_ABOVE_HOVER = 10;
 /** L0-adr-ufht: the legs fly at most at ceiling − 4. */
 export const LEG_CEILING_MARGIN = 4;
@@ -67,14 +78,87 @@ export function beamLength(centre: Readonly<Vector3>, hoverY: number): number {
   return Math.min(BEAM_LEN_MAX, Math.max(0, Math.round(hoverY - centre.y)));
 }
 
-/** R-sauc-2: in from `theta` at the leg height, out the opposite way, both APPROACH_DISTANCE from the centre's middle. */
-export function flightPath(centre: Readonly<Vector3>, hoverY: number, ceiling: number, theta: number): FlightPath {
+/** R-sauc-2: in from `theta` at the leg height, `arrive` blocks from the centre's middle; out the opposite way, `depart` blocks. */
+export function flightPath(
+  centre: Readonly<Vector3>,
+  hoverY: number,
+  ceiling: number,
+  theta: number,
+  arrive: number = APPROACH_DISTANCE,
+  depart: number = APPROACH_DISTANCE
+): FlightPath {
   const hover = { x: centre.x + 0.5, y: hoverY, z: centre.z + 0.5 };
-  const y = legHeight(hoverY, ceiling);
-  const dx = APPROACH_DISTANCE * Math.cos(theta);
-  const dz = APPROACH_DISTANCE * Math.sin(theta);
-  return { theta, start: { x: hover.x + dx, y, z: hover.z + dz }, hover, end: { x: hover.x - dx, y, z: hover.z - dz } };
+  const start = { x: hover.x + arrive * Math.cos(theta), y: legHeight(hoverY, ceiling), z: hover.z + arrive * Math.sin(theta) };
+  return departingTo({ theta, start, hover, end: hover }, depart);
 }
+
+/** The same path with its end `depart` blocks out on the bearing opposite the arrival, at the leg height. */
+export function departingTo(path: FlightPath, depart: number): FlightPath {
+  const { theta, hover, start } = path;
+  return { ...path, end: { x: hover.x - depart * Math.cos(theta), y: start.y, z: hover.z - depart * Math.sin(theta) } };
+}
+
+/**
+ * Blocks from `from` along `theta`, up to `max`, that stay in chunk columns
+ * `isTicking` accepts (it is asked at a column's middle): the entry into the first
+ * column it refuses, less REACH_MARGIN; 0 when it refuses the first one.
+ */
+export function tickingReach(isTicking: (at: Vector3) => boolean, from: Readonly<Vector3>, theta: number, max: number): number {
+  const dx = Math.cos(theta);
+  const dz = Math.sin(theta);
+  const column = (cx: number, cz: number): boolean => isTicking({ x: cx * CHUNK + CHUNK / 2, y: from.y, z: cz * CHUNK + CHUNK / 2 });
+  let cx = Math.floor(from.x / CHUNK);
+  let cz = Math.floor(from.z / CHUNK);
+  const sx = dx > 0 ? 1 : -1;
+  const sz = dz > 0 ? 1 : -1;
+  const flatX = Math.abs(dx) < 1e-12;
+  const flatZ = Math.abs(dz) < 1e-12;
+  // Distance along the ray to the next column boundary across x and across z.
+  let tx = flatX ? Infinity : ((sx > 0 ? (cx + 1) * CHUNK : cx * CHUNK) - from.x) / dx;
+  let tz = flatZ ? Infinity : ((sz > 0 ? (cz + 1) * CHUNK : cz * CHUNK) - from.z) / dz;
+  const stepX = flatX ? Infinity : CHUNK / Math.abs(dx);
+  const stepZ = flatZ ? Infinity : CHUNK / Math.abs(dz);
+  if (!column(cx, cz)) return 0;
+  for (;;) {
+    const t = Math.min(tx, tz);
+    if (t >= max) return max;
+    const acrossX = tx <= tz;
+    const acrossZ = tz <= tx;
+    // Through a corner the ray grazes both side columns as well.
+    if (acrossX && acrossZ && (!column(cx + sx, cz) || !column(cx, cz + sz))) return Math.max(0, t - REACH_MARGIN);
+    if (acrossX) {
+      cx += sx;
+      tx += stepX;
+    }
+    if (acrossZ) {
+      cz += sz;
+      tz += stepZ;
+    }
+    if (!column(cx, cz)) return Math.max(0, t - REACH_MARGIN);
+  }
+}
+
+/** The random bearing first, then ARRIVAL_BEARINGS − 1 more around it; the longest reach wins, the earliest on a tie. */
+export function arrivalBearing(isTicking: (at: Vector3) => boolean, from: Readonly<Vector3>, theta0: number): { theta: number; reach: number } {
+  let best = { theta: theta0, reach: tickingReach(isTicking, from, theta0, APPROACH_DISTANCE) };
+  for (let k = 1; k < ARRIVAL_BEARINGS && best.reach < APPROACH_DISTANCE; k++) {
+    const theta = theta0 + (2 * Math.PI * k) / ARRIVAL_BEARINGS;
+    const reach = tickingReach(isTicking, from, theta, APPROACH_DISTANCE);
+    if (reach > best.reach) best = { theta, reach };
+  }
+  return best;
+}
+
+/** A throw reads as not ticking: the leg then stops short of that column. */
+export const tickingIn =
+  (dim: Pick<Dimension, "isChunkLoaded">) =>
+  (at: Vector3): boolean => {
+    try {
+      return dim.isChunkLoaded(at);
+    } catch {
+      return false;
+    }
+  };
 
 const clamp01 = (k: number): number => Math.min(1, Math.max(0, k));
 
@@ -116,6 +200,8 @@ export interface SaucerHost {
   sound?(id: UfoSound, at: Vector3): void;
   /** The Orbital hull and the shoot-down; a saucer without it cannot be shot. */
   shootdown?: ShootdownHost;
+  /** Where the measured legs are reported. */
+  log?(msg: string): void;
 }
 
 export interface UfoSaucer extends Saucer {
@@ -128,6 +214,7 @@ export interface UfoSaucer extends Saucer {
 }
 
 const fmt = (v: Vector3): string => `${v.x.toFixed(2)},${v.y.toFixed(2)},${v.z.toFixed(2)}`;
+const degrees = (theta: number): string => (((((theta * 180) / Math.PI) % 360) + 360) % 360).toFixed(1);
 const errText = (err: unknown): string => (err instanceof Error ? `${err.name}: ${err.message}` : String(err)).split("\n")[0];
 
 /** Unloaded reads as air: the fall goes on, and the step cap still ends it. */
@@ -299,9 +386,14 @@ export function createSaucer(host: SaucerHost): UfoSaucer {
 
   const spawn = (p: PhasePayload): void => {
     reset();
-    path = flightPath(p.centre, p.hoverY, host.ceiling(), host.random() * 2 * Math.PI);
-    // Throws in an unloaded chunk; the core then aborts the event (L0-ufoc-as04).
-    const spawned = host.overworld().spawnEntity(SAUCER_ID, path.start);
+    const dim = host.overworld();
+    const ceiling = host.ceiling();
+    const from = { x: p.centre.x + 0.5, y: legHeight(p.hoverY, ceiling), z: p.centre.z + 0.5 };
+    const { theta, reach } = arrivalBearing(tickingIn(dim), from, host.random() * 2 * Math.PI);
+    path = flightPath(p.centre, p.hoverY, ceiling, theta, reach);
+    host.log?.(`ufo ${p.eventId}: saucer in from ${reach.toFixed(2)} blocks at ${degrees(theta)}° — the loaded and ticking reach, at most ${APPROACH_DISTANCE}`);
+    // Throws where the chunk is not loaded and ticking; with no saucer the core ends the event (L0-ufoc-as04).
+    const spawned = dim.spawnEntity(SAUCER_ID, path.start);
     spawned.addTag(UFO_TAG);
     spawned.addTag(EVENT_TAG + p.eventId);
     spawned.setDynamicProperty(EVENT_PROPERTY, p.eventId);
@@ -334,10 +426,15 @@ export function createSaucer(host: SaucerHost): UfoSaucer {
           show(false);
           sound(UFO_SOUNDS.off);
           return;
-        case "departure":
+        case "departure": {
           leg = "departure";
           t = 0;
+          if (path === undefined) return;
+          const out = tickingReach(tickingIn(host.overworld()), { ...path.hover, y: path.start.y }, path.theta + Math.PI, APPROACH_DISTANCE);
+          path = departingTo(path, out);
+          host.log?.(`ufo ${p.eventId}: saucer out to ${out.toFixed(2)} blocks — the loaded and ticking reach, at most ${APPROACH_DISTANCE}`);
           return;
+        }
         case "downed":
           leg = "downed";
           t = 0;
