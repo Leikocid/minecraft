@@ -23,7 +23,7 @@ import {
 } from "@minecraft/server";
 import { type SimulatedPlayer, type Test, registerAsync } from "@minecraft/server-gametest";
 import * as cooldown from "../legendary/cooldown";
-import { ORBITAL_CANNON, WEB_SWORD } from "../legendary/registry";
+import { DRAGON_KATANA, type LegendaryDef, ORBITAL_CANNON, WEB_SWORD } from "../legendary/registry";
 import * as state from "../legendary/state";
 import { activate } from "../orbital/activation";
 import { type Effect, effectFor, registerEffect } from "../orbital/charge";
@@ -519,22 +519,22 @@ interface LegendaryRecord {
   at: Vector3;
 }
 
-function swordCopies(dim: Dimension, center: Vector3, id: string): Array<{ entity: Entity; gen: number }> {
+function swordCopies(dim: Dimension, center: Vector3, id: string, def: LegendaryDef = WEB_SWORD): Array<{ entity: Entity; gen: number }> {
   return dim
     .getEntities({ type: "minecraft:item", location: center, maxDistance: 64 })
     .flatMap((e) => {
       const stack = e.getComponent("minecraft:item")?.itemStack;
-      const mark = stack !== undefined && state.isItemOf(WEB_SWORD, stack) ? state.getMark(WEB_SWORD, stack) : undefined;
+      const mark = stack !== undefined && state.isItemOf(def, stack) ? state.getMark(def, stack) : undefined;
       return mark?.id === id ? [{ entity: e, gen: mark.gen }] : [];
     });
 }
 
-function swordsIn(player: Player, id: string): number {
+function swordsIn(player: Player, id: string, def: LegendaryDef = WEB_SWORD): number {
   const c = player.getComponent("minecraft:inventory")?.container;
   let n = 0;
   for (let slot = 0; c !== undefined && slot < c.size; slot++) {
     const s = c.getItem(slot);
-    if (s !== undefined && state.isItemOf(WEB_SWORD, s) && state.getMark(WEB_SWORD, s)?.id === id) n++;
+    if (s !== undefined && state.isItemOf(def, s) && state.getMark(def, s)?.id === id) n++;
   }
   return n;
 }
@@ -565,9 +565,12 @@ registerAsync("andrew", "pntr_legendary_two_columns", async (test: Test): Promis
     cooldown.clearCooldown(b, KEY);
     const mark = state.makeMark("craft", b);
     const sword = state.markItem(WEB_SWORD, new ItemStack(WEB_SWORD.itemId, 1), mark);
+    const katanaMark = state.makeMark("craft", a);
+    const katana = state.markItem(DRAGON_KATANA, new ItemStack(DRAGON_KATANA.itemId, 1), katanaMark);
     stock(dim.getBlock(chestX)?.getComponent("minecraft:inventory")?.container, [["minecraft:cobblestone", 64], ["minecraft:bread", 12]]);
     dim.getBlock(chestX)?.getComponent("minecraft:inventory")?.container?.setItem(5, sword);
     stock(dim.getBlock(chestY)?.getComponent("minecraft:inventory")?.container, [["minecraft:dirt", 64], ["minecraft:apple", 3]]);
+    dim.getBlock(chestY)?.getComponent("minecraft:inventory")?.container?.setItem(5, katana);
     await goTo(test, a, dim, { x: ax, y: top + 1, z: az + 6 });
     await goTo(test, b, dim, { x: bx, y: top + 1, z: az + 6 });
     await test.idle(2);
@@ -594,11 +597,17 @@ registerAsync("andrew", "pntr_legendary_two_columns", async (test: Test): Promis
     const inFootprints = (v: Vector3): boolean => [ax, bx].some((c) => Math.abs(Math.floor(v.x) - c) <= 3) && Math.abs(Math.floor(v.z) - az) <= 3;
     const ordinary = [...dropsIn(dim, pa), ...dropsIn(dim, pb)].filter((e) => {
       const s = e.getComponent("minecraft:item")?.itemStack;
-      return s === undefined || !state.isItemOf(WEB_SWORD, s);
+      return s === undefined || !(state.isItemOf(WEB_SWORD, s) || state.isItemOf(DRAGON_KATANA, s));
     });
+    const kGround = swordCopies(dim, site, katanaMark.id, DRAGON_KATANA);
+    const kHeld = swordsIn(a, katanaMark.id, DRAGON_KATANA) + swordsIn(b, katanaMark.id, DRAGON_KATANA);
+    const kLedger = state.ledgerGen(DRAGON_KATANA, katanaMark.id);
+    const kOwed = JSON.stringify(state.readOwed(DRAGON_KATANA));
+    const kWhere = kGround.map((g) => `${fmt1(g.entity.location)}@gen${g.gen}`).join(" ");
     log(
       `ac4 RESULT detonations ${ra.startedTick}/${rb.startedTick}; A ${brief(ra)}; B ${brief(rb)}; ws_id ${mark.id}: on the ground [${where}], in inventories ${held}, ` +
-        `ledger gen ${ledger}; owed ${owed.includes(mark.id) ? "LISTS IT" : "clear"}; chests ${typeAt(dim, chestX)}/${typeAt(dim, chestY)}; ordinary drops near the columns ${ordinary.length}`
+        `ledger gen ${ledger}; owed ${owed.includes(mark.id) ? "LISTS IT" : "clear"}; dk_id ${katanaMark.id}: on the ground [${kWhere}], in inventories ${kHeld}, ` +
+        `ledger gen ${kLedger}; owed ${kOwed.includes(katanaMark.id) ? "LISTS IT" : "clear"}; chests ${typeAt(dim, chestX)}/${typeAt(dim, chestY)}; ordinary drops near the columns ${ordinary.length}`
     );
     test.assert(ra.startedTick === rb.startedTick, `the columns detonated in ticks ${ra.startedTick} and ${rb.startedTick}, not one`);
     test.assert(ground.length + held === 1, `ws_id ${mark.id} exists ${ground.length + held} times`);
@@ -606,9 +615,14 @@ registerAsync("andrew", "pntr_legendary_two_columns", async (test: Test): Promis
     const at = ground[0].entity.location;
     test.assert(!inAPlan(at) && !inBPlan(at) && !inFootprints(at), `the sword lies at ${fmt1(at)}, inside a column`);
     test.assert(!owed.includes(mark.id), "the sword is listed as owed: a second copy would be issued");
+    test.assert(kGround.length + kHeld === 1, `dk_id ${katanaMark.id} exists ${kGround.length + kHeld} times`);
+    test.assert(kGround.length === 1 && kGround[0].gen === katanaMark.gen && kLedger === katanaMark.gen, `the Katana is not one copy on the ground at gen ${katanaMark.gen}: [${kWhere}], ledger ${kLedger}`);
+    const kAt = kGround[0].entity.location;
+    test.assert(!inAPlan(kAt) && !inBPlan(kAt) && !inFootprints(kAt), `the Katana lies at ${fmt1(kAt)}, inside a column`);
+    test.assert(!kOwed.includes(katanaMark.id), "the Katana is listed as owed: a second copy would be issued");
     test.assert(typeAt(dim, chestX) === "minecraft:air" && typeAt(dim, chestY) === "minecraft:air", "a chest is still standing");
     test.assert(ordinary.length === 0, `${ordinary.length} ordinary item(s) survived as drops`);
-    test.assert(ra.legendariesProtected + rb.legendariesProtected === 1, `legendariesProtected ${ra.legendariesProtected}+${rb.legendariesProtected}`);
+    test.assert(ra.legendariesProtected + rb.legendariesProtected === 2, `legendariesProtected ${ra.legendariesProtected}+${rb.legendariesProtected}`);
 
     const added = dim.runCommand(`tickingarea add ${site.x - 32} 0 ${site.z - 32} ${site.x + 32} 0 ${site.z + 32} ${LGND_AREA}`).successCount;
     test.assert(added > 0, "tickingarea add refused: the site would not load after the restart");

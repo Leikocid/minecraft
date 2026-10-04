@@ -23,7 +23,7 @@ import {
 } from "@minecraft/server";
 import { type SimulatedPlayer, type Test, registerAsync } from "@minecraft/server-gametest";
 import * as cooldown from "../legendary/cooldown";
-import { type LegendaryDef, ORBITAL_CANNON, SCYTHE_OF_CALAMITY, WEB_SWORD } from "../legendary/registry";
+import { DRAGON_KATANA, type LegendaryDef, ORBITAL_CANNON, SCYTHE_OF_CALAMITY, WEB_SWORD } from "../legendary/registry";
 import * as state from "../legendary/state";
 import { activate } from "../orbital/activation";
 import { CHARGE_ENTITY_ID, type Effect, attackTag, effectFor, registerEffect } from "../orbital/charge";
@@ -1354,9 +1354,13 @@ registerAsync("andrew", "ring_legendaries_survive", async (test: Test): Promise<
     chest?.setItem(5, state.markItem(WEB_SWORD, new ItemStack(WEB_SWORD.itemId, 1), swordMark));
     const scytheMark = state.makeMark("craft", a);
     dim.spawnItem(state.markItem(SCYTHE_OF_CALAMITY, new ItemStack(SCYTHE_OF_CALAMITY.itemId, 1), scytheMark), { x: cx + 16.5, y: top + 1, z: cz + 0.5 }).clearVelocity();
+    const katanaMark = state.makeMark("craft", a);
+    dim.spawnItem(state.markItem(DRAGON_KATANA, new ItemStack(DRAGON_KATANA.itemId, 1), katanaMark), { x: cx + 0.5, y: top + 1, z: cz + 16.5 }).clearVelocity();
     await test.idle(10);
     const scytheBefore = copies(dim, s.target, SCYTHE_OF_CALAMITY, scytheMark.id);
     test.assert(scytheBefore.length === 1 && Math.floor(scytheBefore[0].entity.location.x) - cx === 16, "setup: the Scythe is not on the ground 6 blocks outside ring 20");
+    const katanaBefore = copies(dim, s.target, DRAGON_KATANA, katanaMark.id);
+    test.assert(katanaBefore.length === 1 && Math.floor(katanaBefore[0].entity.location.z) - cz === 16, "setup: the Dragon Katana is not on the ground 16 blocks out on z");
     const attack = fireRmb(a, dim, s.target);
     a.teleport(s.park);
     const r = await untilReport(test, reports, attack.attackId);
@@ -1365,6 +1369,7 @@ registerAsync("andrew", "ring_legendaries_survive", async (test: Test): Promise<
     const rows = [
       { name: "Web Sword", def: WEB_SWORD, mark: swordMark },
       { name: "Scythe", def: SCYTHE_OF_CALAMITY, mark: scytheMark },
+      { name: "Dragon Katana", def: DRAGON_KATANA, mark: katanaMark },
     ].map((x) => {
       const ground = copies(dim, s.target, x.def, x.mark.id);
       const inHand = held(inv, x.def, x.mark.id);
@@ -1388,7 +1393,7 @@ registerAsync("andrew", "ring_legendaries_survive", async (test: Test): Promise<
       test.assert(x.outside, `${x.name} lies inside the footprint ± 8`);
       test.assert(!x.returned && !x.owed, `${x.name} went through loss recovery`);
     }
-    test.assert(r.legendariesHandedBack === 0 && r.legendariesMoved >= 2, `moved ${r.legendariesMoved}, handedBack ${r.legendariesHandedBack}`);
+    test.assert(r.legendariesHandedBack === 0 && r.legendariesMoved >= rows.length, `moved ${r.legendariesMoved}, handedBack ${r.legendariesHandedBack}`);
     test.succeed();
   } finally {
     warnings.stop();
