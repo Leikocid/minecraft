@@ -90,6 +90,7 @@ import "./ufo-restart";
 import "./probe-stand-void";
 import "./katana-probe";
 import "./katana";
+import "./katana-fall";
 import { parkPenetrator } from "./penetrator";
 import { parkRing } from "./ring";
 import { registerOrbitalCannon } from "../orbital";

@@ -55,6 +55,47 @@ jumps 19 blocks along the view.
 2. **The block input is `itemStartUseOn`.** `L0-katn-p001` §1 names `playerInteractWithBlock`. For a custom item used
    on a block the engine raises neither that nor `itemUse`, only `itemStartUseOn` (CNTR-XCX14).
 
+## `fall.ts` — the one-shot fall flag (`L0-adr-ktfl`, `L0-katn-p002`, `L0-katn-r006`)
+
+Every jump that returned arms `{ player, until: now + 10 s, dimId }` in a module `Map`; a new jump replaces the entry.
+It is never a dynamic property. One `system.runInterval(…, 1)` exists only while the map is not empty. Per flag and
+tick:
+1. gone, dead, another dimension, or past `until` → dropped;
+2. the arm tick and the two after it are skipped (deviation 1);
+3. on the ground, in water, in lava (feet or head cell), climbing or gliding → dropped, the first qualifying landing.
+   "On the ground" is `isOnGround` **and** a solid within 0.75 under the hitbox;
+4. falling, and a solid within `max(2, ceil(|vy|) + 1)` below the feet → `teleport(location, { rotation })`, which
+   zeroes the stored fall (KATA-PROBE-01 P1), then dropped unless 3 or more is left (deviation 2).
+
+Nothing touches damage: no `resistance`, no `slow_falling`, no heal. `src/gametest/katana-fall.ts` measures T11, T12,
+expiry, a mob hit and lava under the flag, and the same landing with the watcher off.
+
+Measured on BDS 1.26.51.1 (`katana-fall` RESULT and MEASURE lines):
+- 15 blocks up, watcher off: 12.0 fall damage; watcher on: reset 3.00 up, none.
+- The next ordinary 10-block drop: 7.0. A drop from rest deals drop − 3.
+- 30 blocks up at 4 HP: reset 1.49 up, no fall damage.
+- 152 blocks up at 4 HP: resets 4.79 and 1.45 up, no fall damage.
+- A flag in the air ends at 10.1 s. A zombie hit (3.0) and lava (3.0) under the flag hurt as usual.
+
+### Deviations (C-16)
+
+1. **`isOnGround` is not trusted alone.** `L0-katn-p002` §2 consumes the flag on the first `isOnGround` tick.
+   - Measured (`katana_fall_one_shot`): after a jump from a perch to B 15 blocks up, a SimulatedPlayer reads
+     `isOnGround=true` and `vy 0.00` at +1 and +2 ticks, and starts to fall at +3.
+   - As written, the rule consumed every flag at +1, and the landing hurt (12.0, the same as with no watcher).
+   - So the state flags wait out those two ticks, and the ground also needs a solid under the hitbox. The ground check
+     holds however long a live client keeps reporting A's ground. Water, climbing and gliding rely on the two ticks
+     alone. A live client is not measured; that is iPad only.
+2. **A reset that leaves 3 or more keeps the flag for a second reset.** `L0-katn-p002` §2 drops the flag in the reset
+   tick.
+   - The reset zeroes the velocity, so the player falls what is left from rest, and a drop of more than 3 hurts.
+   - The look-ahead is sized so that no tick skips past the ground. At `|vy|` above 2 (falls over ~40 blocks) the
+     reset can therefore come 3 to 5 blocks up. Measured: 4.79 from 152 blocks.
+   - The next falling tick has a look-ahead of 2, so the second reset comes under 2 blocks up and drops the flag.
+3. **The ground is read under the whole hitbox.** One ray from the centre and four from just inside the corners. A
+   centre ray alone misses the ledge a player lands on with the edge of its hitbox.
+4. **A ray runs two cells past the look-ahead.** A part-block is caught only as the ray leaves its cell (P3).
+
 ## Not the Scythe's line of sight (`L0-adr-ktob`, `L0-katn-r003`)
 
 The two notions are different on purpose, and neither module calls the other.
