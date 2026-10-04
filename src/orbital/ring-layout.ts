@@ -28,15 +28,16 @@ export const RING_MAX_CHARGES = 256;
 
 /**
  * Blocks: the rings refuse a target nearer than this (§6, amended by
- * decision-ring-power-per-ring-4-4-2-1-1). It belongs to the layout because the
- * layout is the reason — the outer ring stands 14 blocks out and the d=7 ring's
- * cells are power 4, so a shooter nearer than this is aiming at himself.
+ * decision-ring-power-per-ring-4-4-2-1-1 and decision-ring-min-range-5). It
+ * belongs to the layout because the layout is the reason — the outer ring
+ * stands 14 blocks out and the d=7 ring's cells are power 4.
  * Measured with the shipped powers (probe_ring_damage_by_distance): standing
  * still 8 blocks from the target costs 20 in six hits and 10 costs 11, while
- * nothing at all reaches 18 — so the minimum buys a shot one can walk away
- * from, not one that can be watched from the spot.
+ * nothing at all reaches 18. At 5 the shooter is inside his own power-4 blast:
+ * the operator took that trade knowingly, so the minimum stops a shot into
+ * one's own feet without pretending the close range is survivable standing.
  */
-export const RING_MIN_RANGE = 7;
+export const RING_MIN_RANGE = 5;
 
 // Math.round(-0) and -x at x = 0 both produce -0; normalize so offsets compare
 // equal to +0 (assert.deepStrictEqual distinguishes -0 from 0).
