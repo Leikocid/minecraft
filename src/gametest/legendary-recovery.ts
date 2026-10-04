@@ -1,6 +1,7 @@
 // Loss return against pickups the recovery heuristic cannot see, and debts of
 // one owner that must not overwrite each other (CX-lgnd-09 items 2–3;
-// L0-lgnd-ad02, r005, ent4, p003).
+// L0-lgnd-ad02, r005, ent4, p003). The Dragon Katana's death, Void and jump
+// cases of L0-lgnd-ac24 close the file.
 //
 // The oracle reads the persisted keys itself — the stack's `andrew:ws_gen`
 // and the world ledger `andrew:ws_gen:<id>`, both absent = 0 — rather than
@@ -9,10 +10,13 @@
 
 import {
   BlockPermutation,
+  BlockVolume,
   type Container,
   Direction,
   type Dimension,
   type Entity,
+  EntityComponentTypes,
+  EquipmentSlot,
   GameMode,
   ItemStack,
   type Player,
@@ -21,10 +25,13 @@ import {
   world,
 } from "@minecraft/server";
 import { type SimulatedPlayer, type Test, registerAsync } from "@minecraft/server-gametest";
-import { WEB_SWORD } from "../legendary/registry";
+import { type Activation, observeActivations } from "../katana";
+import { clearCooldown } from "../legendary/cooldown";
+import { DRAGON_KATANA, type LegendaryDef, WEB_SWORD } from "../legendary/registry";
 import type { Mark } from "../legendary/rules";
-import { type BlockBox, protectLegendariesIn } from "../legendary/recovery";
+import { type BlockBox, forgetWatched, protectLegendariesIn } from "../legendary/recovery";
 import * as state from "../legendary/state";
+import { loadBox } from "./structures-place";
 
 const STRUCTURE = "andrew:platform";
 const STAND_A: Vector3 = { x: 2, y: 2, z: 5 };
@@ -548,4 +555,475 @@ registerAsync("andrew", "legendary_protect_framed", async (test: Test): Promise<
 })
   .structureName(STRUCTURE)
   .maxTicks(WAIT_TICKS + 120)
+  .tag("andrew");
+
+// ------------------------------------------------ the Dragon Katana under the legendary rules (L0-lgnd-ac24 T16, T18; L0-lgnd-r017)
+
+const KATANA_SLOT = 0;
+/** Two 40-tick recovery checks: a loss return, if one is coming, has landed. */
+const KATANA_SETTLE_TICKS = 100;
+/** Twice the retention sweep radius: also sees what the sweep left behind. */
+const KATANA_GROUND_RADIUS = 16;
+/** T06: a jump through open air moves the head 19–20 blocks; positions are single precision. */
+const JUMP_HEAD_MOVE: readonly [number, number] = [19, 20 + 1e-4];
+
+const klog = (msg: string): void => console.warn(`[gametest] katana-lgnd ${msg}`);
+const f1 = (v: Vector3): string => `${v.x.toFixed(1)},${v.y.toFixed(1)},${v.z.toFixed(1)}`;
+
+/** Every stack `player` carries: inventory, then the off hand. */
+function carried(player: Player): ItemStack[] {
+  const stacks: ItemStack[] = [];
+  const container = inventoryOf(player);
+  for (let slot = 0; container !== undefined && slot < container.size; slot++) {
+    const stack = container.getItem(slot);
+    if (stack !== undefined) stacks.push(stack);
+  }
+  const off = state.offhandOf(player);
+  if (off !== undefined) stacks.push(off);
+  return stacks;
+}
+
+/** Generations of every copy of instance `id` among `stacks`. */
+function gensOf(def: LegendaryDef, stacks: ItemStack[], id: string): number[] {
+  return stacks.flatMap((stack) => {
+    const mark = state.isItemOf(def, stack) ? state.getMark(def, stack) : undefined;
+    return mark?.id === id ? [mark.gen] : [];
+  });
+}
+
+function groundCopies(dim: Dimension, at: Vector3, def: LegendaryDef, id: string): Array<{ entity: Entity; gen: number }> {
+  return dim.getEntities({ type: "minecraft:item", location: at, maxDistance: KATANA_GROUND_RADIUS }).flatMap((entity) => {
+    const stack = entity.isValid ? entity.getComponent("minecraft:item")?.itemStack : undefined;
+    return stack === undefined ? [] : gensOf(def, [stack], id).map((gen) => ({ entity, gen }));
+  });
+}
+
+/** Entries of `def`'s owed ledger, any owner, that name instance `id`. */
+function owedEntries(def: LegendaryDef, id: string): number {
+  return Object.values(state.readOwed(def))
+    .flat()
+    .filter((entry) => entry.mark.id === id).length;
+}
+
+/** Every recovery line about `ids` that a loss or a stale copy would print. */
+function recoveryVerdicts(lines: string[], ids: string[]): string[] {
+  return lines.filter(
+    (l) => l.includes("legendary recovery:") && ids.some((id) => l.includes(`id ${id}`)) && /now gen|already stale|removed a stale|owed/.test(l)
+  );
+}
+
+/** A Survival player at `at` holding a marked Katana in the main hand, its cooldown clear. */
+async function katanaHolder(test: Test, at: Vector3, name: string): Promise<{ player: SimulatedPlayer; mark: Mark }> {
+  const player = test.spawnSimulatedPlayer(at, name, GameMode.Survival);
+  await test.idle(4);
+  const mark = state.makeMark("admin", player);
+  player.selectedSlotIndex = KATANA_SLOT;
+  inventoryOf(player)?.setItem(KATANA_SLOT, state.markItem(DRAGON_KATANA, new ItemStack(DRAGON_KATANA.itemId, 1), mark));
+  clearCooldown(player, DRAGON_KATANA.abilityKey);
+  await test.idle(2);
+  return { player, mark };
+}
+
+/** Cells written outside the platform, put back by restore(): `gametest clearall` resets only the platform. */
+class Cells {
+  private readonly saved = new Map<string, { at: Vector3; permutation: BlockPermutation }>();
+
+  constructor(private readonly test: Test) {}
+
+  fill(from: Vector3, to: Vector3, typeId: string): void {
+    const dim = this.test.getDimension();
+    for (let x = from.x; x <= to.x; x++)
+      for (let y = from.y; y <= to.y; y++)
+        for (let z = from.z; z <= to.z; z++) {
+          const block = dim.getBlock(this.test.worldBlockLocation({ x, y, z }));
+          if (block === undefined) throw new Error(`cell ${x},${y},${z} is not loaded`);
+          const key = `${block.location.x},${block.location.y},${block.location.z}`;
+          if (!this.saved.has(key)) this.saved.set(key, { at: block.location, permutation: block.permutation });
+          if (block.typeId !== typeId) block.setType(typeId);
+        }
+  }
+
+  restore(): void {
+    const dim = this.test.getDimension();
+    for (const { at, permutation } of this.saved.values()) {
+      try {
+        dim.getBlock(at)?.setPermutation(permutation);
+      } catch (err) {
+        klog(`restore ${f1(at)} threw ${String(err)}`);
+      }
+    }
+    this.saved.clear();
+  }
+}
+
+interface Jump {
+  activation: Activation;
+  /** Read in the activation's tick, right after the teleport. */
+  head: Vector3;
+  dimensionId: string;
+}
+
+/** Turns `player` level along +x, 40 blocks out from its head. */
+async function faceEast(test: Test, player: SimulatedPlayer): Promise<void> {
+  const head = player.getHeadLocation();
+  player.lookAtLocation(test.relativeLocation({ x: head.x + 40, y: head.y, z: head.z }));
+  await test.idle(4);
+}
+
+/**
+ * One Katana jump through the real press, repeated until an activation arrives:
+ * a SimulatedPlayer swallows every second use (CNTR-XCX14). `inTick` runs in
+ * the activation's own tick, after the teleport and the cooldown.
+ */
+async function jumpOnce(test: Test, player: SimulatedPlayer, inTick?: () => void): Promise<Jump> {
+  let got: Jump | undefined;
+  const stop = observeActivations((activation) => {
+    if (activation.player.id !== player.id || got !== undefined) return;
+    got = { activation, head: { ...player.getHeadLocation() }, dimensionId: player.dimension.id };
+    inTick?.();
+  });
+  try {
+    for (let attempt = 1; attempt <= 3 && got === undefined; attempt++) {
+      player.useItemInSlot(KATANA_SLOT);
+      for (let t = 0; t < 4 && got === undefined; t++) await test.idle(1);
+    }
+  } finally {
+    stop();
+  }
+  if (got === undefined) throw new Error(`${player.name}: no Katana activation after 3 presses`);
+  return got;
+}
+
+/** What is wrong with `jump` as a 20-block jump in the dimension it started in. */
+function jumpFaults(jump: Jump, dimensionBefore: string): string[] {
+  const a = jump.activation;
+  const moved = Math.hypot(jump.head.x - a.plan.head.x, jump.head.y - a.plan.head.y, jump.head.z - a.plan.head.z);
+  const faults: string[] = [];
+  if (!a.jumped) faults.push(`refused (trace stopped by ${a.plan.stoppedBy})`);
+  if (a.dimensionId !== dimensionBefore || jump.dimensionId !== dimensionBefore) faults.push(`dimension ${dimensionBefore} -> ${a.dimensionId}/${jump.dimensionId}`);
+  if (a.jumped && (moved < JUMP_HEAD_MOVE[0] || moved > JUMP_HEAD_MOVE[1])) faults.push(`head moved ${moved.toFixed(4)}, not 19–20 (trace stopped by ${a.plan.stoppedBy})`);
+  return faults;
+}
+
+function describeJump(jump: Jump): string {
+  const a = jump.activation;
+  const moved = Math.hypot(jump.head.x - a.plan.head.x, jump.head.y - a.plan.head.y, jump.head.z - a.plan.head.z);
+  return `${f1(a.plan.origin)} -> ${a.plan.feet === undefined ? "refused" : f1(a.plan.feet)} head moved ${moved.toFixed(3)} stoppedBy ${a.plan.stoppedBy} dim ${a.dimensionId}/${jump.dimensionId}`;
+}
+
+// T16 (L0-lgnd-ac24, L0-katn-ac07): a death keeps the Katana with the SAME id
+// and generation — retention restores the stack, it is not a loss return.
+// The jump variants build a level runway east of the platform; a kill in the
+// activation's own tick is the earliest "right after a jump" there is.
+
+/** Feet cell of the runway jumps, on the platform floor; the runway runs east from it. */
+const RUNWAY_START: Vector3 = { x: 2, y: 2, z: 3 };
+const RUNWAY_FLOOR_Y = 1;
+const RUNWAY_TO_X = 26;
+/** Lava starts well above any regeneration: a low-health player dies in it within a few hurts. */
+const LAVA_HEALTH = 4;
+const DEATH_DEADLINE_TICKS = 300;
+
+function katanaDeath(name: string, cause: "kill" | "lava", afterJump: boolean): void {
+  registerAsync("andrew", name, async (test: Test): Promise<void> => {
+    const dim = test.getDimension();
+    const cells = new Cells(test);
+    const capture = captureWarnings();
+    let dieSub: ReturnType<typeof world.afterEvents.entityDie.subscribe> | undefined;
+    try {
+      if (afterJump) {
+        cells.fill({ x: 0, y: RUNWAY_FLOOR_Y, z: RUNWAY_START.z - 1 }, { x: RUNWAY_TO_X, y: RUNWAY_FLOOR_Y, z: RUNWAY_START.z + 1 }, "minecraft:stone");
+        cells.fill({ x: 0, y: RUNWAY_FLOOR_Y + 1, z: RUNWAY_START.z - 1 }, { x: RUNWAY_TO_X, y: RUNWAY_FLOOR_Y + 5, z: RUNWAY_START.z + 1 }, "minecraft:air");
+      }
+      const { player, mark } = await katanaHolder(test, afterJump ? RUNWAY_START : STAND_A, `klg_${name.replace("legendary_katana_", "")}`);
+      const startedAt = { ...player.location };
+      let death: { cause: string; at: Vector3; tick: number } | undefined;
+      dieSub = world.afterEvents.entityDie.subscribe((event) => {
+        const dead: Entity | undefined = event.deadEntity;
+        if (dead !== undefined && dead.id === player.id) death = { cause: event.damageSource.cause, at: { ...dead.location }, tick: system.currentTick };
+      });
+
+      let jump: Jump | undefined;
+      const dimensionBefore = player.dimension.id;
+      if (afterJump) {
+        await faceEast(test, player);
+        jump = await jumpOnce(test, player, cause === "kill" ? () => player.kill() : undefined);
+        const faults = jumpFaults(jump, dimensionBefore);
+        test.assert(faults.length === 0, `the jump before the death: ${faults.join("; ")}`);
+      } else if (cause === "kill") {
+        player.kill();
+      }
+      if (cause === "lava") {
+        player.getComponent(EntityComponentTypes.Health)?.setCurrentValue(LAVA_HEALTH);
+        const feet = test.relativeBlockLocation(player.location);
+        cells.fill(feet, { ...feet, y: feet.y + 1 }, "minecraft:lava");
+      }
+      for (let t = 0; t < DEATH_DEADLINE_TICKS && death === undefined; t++) await test.idle(1);
+      test.assert(death !== undefined, `${player.name} did not die within ${DEATH_DEADLINE_TICKS} ticks (${cause})`);
+      const died = death as NonNullable<typeof death>;
+
+      // Past retention's next-tick sweep, before the respawn: what lies there now stays.
+      await test.idle(10);
+      const atDeath = groundCopies(dim, died.at, DRAGON_KATANA, mark.id).length;
+      cells.restore();
+      player.respawn();
+      await test.idle(KATANA_SETTLE_TICKS);
+
+      const held = gensOf(DRAGON_KATANA, carried(player), mark.id);
+      const ground = groundCopies(dim, died.at, DRAGON_KATANA, mark.id).length + groundCopies(dim, startedAt, DRAGON_KATANA, mark.id).length;
+      const ledger = state.ledgerGen(DRAGON_KATANA, mark.id);
+      const pending = state.readPending(DRAGON_KATANA, player).length;
+      const owed = owedEntries(DRAGON_KATANA, mark.id);
+      const verdicts = recoveryVerdicts(capture.lines, [mark.id]);
+      klog(
+        `${name} RESULT ${jump === undefined ? "no jump" : `jump ${describeJump(jump)}, died ${died.tick - jump.activation.tick} tick(s) later`}; ` +
+          `died of ${died.cause} at ${f1(died.at)}; ${DRAGON_KATANA.itemId} id ${mark.id}: ` +
+          `on the ground at death+10 ${atDeath}, after respawn held gens [${held.join(" ")}] ground ${ground} ledger ${ledger} pending ${pending} owed ${owed}; ` +
+          `recovery verdicts: ${verdicts.join(" | ") || "none"}`
+      );
+      if (cause === "lava") test.assert(["lava", "fire", "fireTick"].includes(died.cause), `${player.name} died of ${died.cause}, not in the lava`);
+      test.assert(held.join() === String(mark.gen), `after respawn the Katana is held at gens [${held.join(" ")}], expected once at gen ${mark.gen}`);
+      test.assert(ledger === mark.gen, `the ledger moved to gen ${ledger}: the Katana came back as a loss, not retained`);
+      test.assert(atDeath === 0 && ground === 0, `Katana item entities left on the ground: ${atDeath} at death, ${ground} after the respawn`);
+      test.assert(pending === 0 && owed === 0, `a return is still outstanding (pending ${pending}, owed ${owed})`);
+      test.assert(verdicts.length === 0, `recovery read the death as a loss: ${verdicts.join(" | ")}`);
+    } finally {
+      if (dieSub !== undefined) world.afterEvents.entityDie.unsubscribe(dieSub);
+      capture.stop();
+      cells.restore();
+    }
+    test.succeed();
+  })
+    .structureName(STRUCTURE)
+    .maxTicks(DEATH_DEADLINE_TICKS + KATANA_SETTLE_TICKS + 200)
+    .tag("andrew");
+}
+
+katanaDeath("legendary_katana_death_kill", "kill", false);
+katanaDeath("legendary_katana_death_lava", "lava", false);
+katanaDeath("legendary_katana_death_after_jump", "kill", true);
+katanaDeath("legendary_katana_death_lava_after_jump", "lava", true);
+
+// T18 (L0-lgnd-ac24): a Katana that falls into the Void, thrown or inside a
+// chest minecart, comes back to `mark.owner` exactly once, at gen + 1.
+
+const VOID_RETURN_TICKS = 200;
+
+/** Waits for the owner to hold the instance, then a further 40 ticks, and judges "returned exactly once". */
+async function judgeVoidReturn(test: Test, name: string, owner: Player, mark: Mark, lines: string[], near: Vector3, extra: string): Promise<void> {
+  let held: number[] = [];
+  let waited = 0;
+  for (; waited < VOID_RETURN_TICKS && held.length === 0; waited++) {
+    await test.idle(1);
+    held = gensOf(DRAGON_KATANA, carried(owner), mark.id);
+  }
+  await test.idle(40);
+  held = gensOf(DRAGON_KATANA, carried(owner), mark.id);
+  const ledger = state.ledgerGen(DRAGON_KATANA, mark.id);
+  const ground = groundCopies(test.getDimension(), near, DRAGON_KATANA, mark.id).length;
+  const losses = lossLines(lines, mark.id);
+  const owed = owedEntries(DRAGON_KATANA, mark.id);
+  klog(
+    `${name} RESULT ${extra}; returned after ${waited} tick(s); owner holds gens [${held.join(" ")}] 40 ticks later, ledger ${ledger}, ` +
+      `ground ${ground}, owed ${owed}; loss lines: ${losses.join(" | ") || "none"}`
+  );
+  test.assert(held.join() === String(mark.gen + 1), `the owner holds the Katana at gens [${held.join(" ")}], expected once at gen ${mark.gen + 1}`);
+  test.assert(ledger === mark.gen + 1, `the ledger is at gen ${ledger}, expected ${mark.gen + 1}`);
+  test.assert(ground === 0, `${ground} copies of the Katana lie on the ground`);
+  test.assert(owed === 0, `the Katana is also owed ${owed} time(s): it would come back twice`);
+  test.assert(losses.length === 1, `expected exactly one loss return, got ${losses.length}: ${losses.join(" | ") || "none"}`);
+}
+
+registerAsync("andrew", "legendary_katana_void_thrown", async (test: Test): Promise<void> => {
+  const dim = test.getDimension();
+  const { player, mark } = await katanaHolder(test, STAND_A, "klg_void_thrower");
+  const capture = captureWarnings();
+  try {
+    test.assert(player.dropSelectedItem(), "dropSelectedItem refused to throw the Katana");
+    let thrown: Entity | undefined;
+    for (let t = 0; t < 10 && thrown === undefined; t++) {
+      await test.idle(1);
+      thrown = groundCopies(dim, player.location, DRAGON_KATANA, mark.id)[0]?.entity;
+    }
+    test.assert(thrown !== undefined, "no Katana item entity appeared after the throw");
+    // Watched on the platform first: an item already below the floor at its
+    // spawn reads as unloaded with its chunk, not as lost.
+    await test.idle(3);
+    const entity = thrown as Entity;
+    const at = { ...entity.location };
+    entity.teleport({ x: at.x, y: dim.heightRange.min - 8, z: at.z });
+    await judgeVoidReturn(test, "void_thrown", player, mark, capture.lines, at, `thrown from ${f1(at)} below the floor`);
+  } finally {
+    capture.stop();
+  }
+  test.succeed();
+})
+  .structureName(STRUCTURE)
+  .maxTicks(VOID_RETURN_TICKS + 200)
+  .tag("andrew");
+
+registerAsync("andrew", "legendary_katana_void_chest_minecart", async (test: Test): Promise<void> => {
+  const dim = test.getDimension();
+  const owner = test.spawnSimulatedPlayer(STAND_A, "klg_void_cart", GameMode.Survival);
+  const cart = test.spawn("minecraft:chest_minecart", { x: 5, y: 2, z: 3 });
+  await test.idle(4);
+  const capture = captureWarnings();
+  try {
+    const mark = state.makeMark("admin", owner);
+    const container = cart.getComponent("minecraft:inventory")?.container;
+    test.assert(container !== undefined, "the chest minecart has no readable container");
+    (container as Container).setItem(0, state.markItem(DRAGON_KATANA, new ItemStack(DRAGON_KATANA.itemId, 1), mark));
+    (container as Container).setItem(1, new ItemStack("minecraft:iron_ingot", 3));
+    await test.idle(2);
+    test.assert(gensOf(DRAGON_KATANA, carried(owner), mark.id).length === 0, "the owner already holds the Katana the minecart is meant to carry");
+    const at = { ...cart.location };
+    cart.teleport({ x: at.x, y: dim.heightRange.min - 8, z: at.z });
+    await judgeVoidReturn(test, "void_chest_minecart", owner, mark, capture.lines, at, `minecart from ${f1(at)} below the floor`);
+    test.assert(!cart.isValid, "the chest minecart is still in the world below the floor after the return");
+  } finally {
+    capture.stop();
+    if (cart.isValid) cart.remove();
+  }
+  test.succeed();
+})
+  .structureName(STRUCTURE)
+  .maxTicks(VOID_RETURN_TICKS + 200)
+  .tag("andrew");
+
+// L0-lgnd-r017: a Katana jump trips no loss trigger. A marked Katana lies on the
+// ground, the jumper carries a marked Web Sword in the off hand, jumps three
+// times, moves on until the ground Katana's chunk unloads, and comes back.
+// SimulatedPlayers load no chunks, so ticking areas stand in for "near" and
+// "away": one over the ground Katana's chunk and the runway east of it, then
+// one over the far end only.
+
+/** Far from every other scenario's site, so nothing else keeps these chunks loaded. */
+const R017_OFFSET = { x: -400, z: 300 };
+/** The runway: the ground Katana's chunk and five more east of it. */
+const R017_CHUNKS = 6;
+const R017_JUMPS = 3;
+/**
+ * Where the jumper walks to: past the server's view distance (BDS default 32
+ * chunks). A SimulatedPlayer keeps every chunk within it in memory, so the
+ * ground Katana stays a valid entity, though isChunkLoaded reads false, until
+ * the player is farther than that (measured: 6 chunks away it never unloaded).
+ */
+const R017_AWAY_CHUNKS = 48;
+const R017_UNLOAD_TICKS = 1200;
+const CHUNK = 16;
+
+registerAsync("andrew", "legendary_katana_jump_keeps_recovery", async (test: Test): Promise<void> => {
+  const dim = test.getDimension();
+  const origin = test.worldBlockLocation({ x: 0, y: 0, z: 0 });
+  const kx = Math.floor((origin.x + R017_OFFSET.x) / CHUNK) * CHUNK;
+  const kz = Math.floor((origin.z + R017_OFFSET.z) / CHUNK) * CHUNK;
+  const lane = kz + 8;
+  const runEndX = kx + R017_CHUNKS * CHUNK - 1;
+  const runwayBox = { min: [kx, 0, kz] as [number, number, number], max: [runEndX, 0, kz + CHUNK - 1] as [number, number, number] };
+  const farX = kx + R017_AWAY_CHUNKS * CHUNK;
+  const capture = captureWarnings();
+  let unloadRunway: (() => void) | undefined;
+  let unloadFar: (() => void) | undefined;
+  let ground: Entity | undefined;
+  let player: SimulatedPlayer | undefined;
+  try {
+    const loadedBefore = dim.isChunkLoaded({ x: kx + 8, y: 0, z: lane });
+    unloadRunway = await loadBox(test, dim, "andrew_gt_klg_run", runwayBox);
+    const top = dim.getTopmostBlock({ x: kx + 8, z: lane });
+    test.assert(top !== undefined, `no ground at ${kx + 8},${lane}`);
+    const y = (top as NonNullable<typeof top>).location.y + 1;
+    dim.fillBlocks(new BlockVolume({ x: kx, y, z: lane - 2 }, { x: runEndX, y: y + 5, z: lane + 2 }), "minecraft:air");
+
+    player = test.spawnSimulatedPlayer(STAND_A, "klg_r017", GameMode.Survival);
+    const p = player;
+    await test.idle(4);
+    const heldMark = state.makeMark("admin", p);
+    p.selectedSlotIndex = KATANA_SLOT;
+    inventoryOf(p)?.setItem(KATANA_SLOT, state.markItem(DRAGON_KATANA, new ItemStack(DRAGON_KATANA.itemId, 1), heldMark));
+    const swordMark = state.makeMark("admin", p);
+    const offhand = p.getComponent(EntityComponentTypes.Equippable)?.setEquipment(EquipmentSlot.Offhand, state.markItem(WEB_SWORD, new ItemStack(WEB_SWORD.itemId, 1), swordMark));
+    test.assert(offhand === true, "the off hand refused the marked Web Sword");
+    p.teleport({ x: kx + 12.5, y, z: lane + 0.5 });
+    await test.idle(4);
+
+    const groundMark = state.makeMark("admin", p);
+    const groundAt = { x: kx + 8.5, y: y + 0.2, z: lane + 0.5 };
+    ground = dim.spawnItem(state.markItem(DRAGON_KATANA, new ItemStack(DRAGON_KATANA.itemId, 1), groundMark), groundAt);
+    ground.clearVelocity();
+    await test.idle(10);
+    const ids = [groundMark.id, heldMark.id, swordMark.id];
+    const watching = (via: string): number => capture.lines.findIndex((l) => l.includes(`watching ${DRAGON_KATANA.itemId} id ${groundMark.id}`) && l.includes(via));
+    test.assert(watching("entitySpawn") >= 0, "recovery never started watching the ground Katana");
+
+    const jumps: string[] = [];
+    for (let i = 1; i <= R017_JUMPS; i++) {
+      clearCooldown(p, DRAGON_KATANA.abilityKey);
+      const before = p.dimension.id;
+      await faceEast(test, p);
+      const jump = await jumpOnce(test, p);
+      await test.idle(10);
+      const faults = jumpFaults(jump, before);
+      if (p.dimension.id !== before) faults.push(`dimension ${before} -> ${p.dimension.id} after landing`);
+      jumps.push(`#${i} ${describeJump(jump)}`);
+      test.assert(faults.length === 0, `jump ${i}: ${faults.join("; ")}`);
+    }
+
+    // Moving on, out of view: only the far chunk stays loaded, so the ground Katana's chunk goes.
+    unloadFar = await loadBox(test, dim, "andrew_gt_klg_far", { min: [farX, 0, kz], max: [farX + CHUNK - 1, 0, kz + CHUNK - 1] });
+    dim.fillBlocks(new BlockVolume({ x: farX, y, z: lane - 2 }, { x: farX + CHUNK - 1, y: y + 5, z: lane + 2 }), "minecraft:air");
+    p.teleport({ x: farX + 8.5, y, z: lane + 0.5 });
+    unloadRunway();
+    unloadRunway = undefined;
+    const unloadedLine = (): number => capture.lines.findIndex((l) => l.includes(`id ${groundMark.id} unloaded with its chunk`));
+    let waited = 0;
+    for (; waited < R017_UNLOAD_TICKS && unloadedLine() < 0; waited++) await test.idle(1);
+    const unloadedAt = unloadedLine();
+    const chunkGone = !dim.isChunkLoaded(groundAt);
+    test.assert(unloadedAt >= 0, `the ground Katana's chunk never unloaded (${waited} ticks; chunk loaded ${!chunkGone}, before the test ${loadedBefore})`);
+
+    // And back.
+    unloadRunway = await loadBox(test, dim, "andrew_gt_klg_run", runwayBox);
+    p.teleport({ x: kx + 12.5, y, z: lane + 0.5 });
+    unloadFar();
+    unloadFar = undefined;
+    const rewatched = (): boolean => capture.lines.some((l, i) => i > unloadedAt && l.includes(`watching ${DRAGON_KATANA.itemId} id ${groundMark.id}`) && l.includes("entityLoad"));
+    for (let t = 0; t < 200 && !rewatched(); t++) await test.idle(1);
+    await test.idle(KATANA_SETTLE_TICKS);
+
+    const lying = groundCopies(dim, groundAt, DRAGON_KATANA, groundMark.id);
+    ground = lying[0]?.entity ?? ground;
+    const rows = [
+      { name: "ground Katana", def: DRAGON_KATANA, mark: groundMark, gens: lying.map((g) => g.gen) },
+      { name: "held Katana", def: DRAGON_KATANA, mark: heldMark, gens: gensOf(DRAGON_KATANA, carried(p), heldMark.id) },
+      { name: "off-hand Web Sword", def: WEB_SWORD, mark: swordMark, gens: gensOf(WEB_SWORD, carried(p), swordMark.id) },
+    ].map((r) => ({ ...r, ledger: state.ledgerGen(r.def, r.mark.id), owed: owedEntries(r.def, r.mark.id) }));
+    const verdicts = recoveryVerdicts(capture.lines, ids);
+    const katanaOwed = JSON.stringify(state.readOwed(DRAGON_KATANA));
+    klog(
+      `r017 RESULT jumps: ${jumps.join("; ")}; chunk unloaded after ${waited} tick(s) (isChunkLoaded ${!chunkGone}), re-watched ${rewatched()}; ` +
+        rows.map((r) => `${r.name} id ${r.mark.id} gens [${r.gens.join(" ")}] ledger ${r.ledger} owed ${r.owed}`).join("; ") +
+        `; dk_owed ${katanaOwed}; recovery verdicts: ${verdicts.join(" | ") || "none"}`
+    );
+    test.assert(verdicts.length === 0, `recovery read a loss: ${verdicts.join(" | ")}`);
+    for (const r of rows) {
+      test.assert(r.gens.join() === String(r.mark.gen), `${r.name}: gens [${r.gens.join(" ")}], expected once at gen ${r.mark.gen}`);
+      test.assert(r.ledger === r.mark.gen, `${r.name}: the ledger moved to gen ${r.ledger}`);
+      test.assert(r.owed === 0, `${r.name}: owed ${r.owed} time(s)`);
+    }
+    test.assert(rewatched(), "the ground Katana was not watched again after its chunk came back");
+  } finally {
+    capture.stop();
+    if (ground?.isValid) {
+      // Unwatched first: a watched item that vanishes on a loaded chunk is a loss.
+      forgetWatched(ground.id);
+      ground.remove();
+    }
+    unloadFar?.();
+    unloadRunway?.();
+    if (player?.isValid) test.removeSimulatedPlayer(player);
+  }
+  test.succeed();
+})
+  .structureName(STRUCTURE)
+  .maxTicks(R017_UNLOAD_TICKS + 1200)
   .tag("andrew");

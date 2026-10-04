@@ -13,6 +13,9 @@
     },
     "andrew_scythe_of_calamity": {
       "textures": "textures/items/andrew_scythe_of_calamity"
+    },
+    "andrew_dragon_katana": {
+      "textures": "textures/items/andrew_dragon_katana"
     }
   }
 }

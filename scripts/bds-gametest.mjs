@@ -172,7 +172,9 @@ const EXPECTED_TESTS = [
   // LGND-CRAFTGATE-01 — src/gametest/legendary-craftgate.ts
   'andrew:legendary_give_then_craft_web_sword',
   'andrew:legendary_give_then_craft_scythe',
+  'andrew:legendary_give_then_craft_dragon_katana',
   'andrew:legendary_second_real_craft_refunded',
+  'andrew:legendary_katana_recipe_negative_controls',
   // LGND-OFFHAND-01 — src/gametest/legendary-offhand.ts
   'andrew:legendary_offhand_admitted',
   'andrew:legendary_offhand_resolves',
@@ -366,6 +368,44 @@ const EXPECTED_TESTS = [
   // UFOC-RESTART-01 — src/gametest/ufo-restart.ts (UFO AC-1 restart half, AC-17, AC-18)
   'andrew:ufo_restart_seed',
   'andrew:ufo_restart_check',
+  // KATA-PROBE-01 — src/gametest/katana-probe.ts (L0-katn-ac08)
+  'andrew:probe_katana_fall_reset',
+  'andrew:probe_katana_ray_flags',
+  'andrew:probe_katana_ray_reach',
+  'andrew:probe_katana_column_slabs',
+  'andrew:probe_katana_lava_below',
+  'andrew:probe_katana_unloaded_ray',
+  'andrew:probe_katana_cherry_particle',
+  // KATA-TP-01 — src/gametest/katana.ts (L0-katn-ac03, L0-katn-ac04)
+  'andrew:katana_floor_jump',
+  'andrew:katana_open_air_clamp',
+  'andrew:katana_wall',
+  'andrew:katana_through_water',
+  'andrew:katana_through_lava',
+  'andrew:katana_slit_no_suffocation',
+  'andrew:katana_crawlspace_no_suffocation',
+  'andrew:katana_boxed_refusal',
+  'andrew:katana_blocks_unchanged',
+  'andrew:katana_empty_main_no_cast',
+  'andrew:katana_offhand_behind_main',
+  'andrew:katana_use_on_block_aims_by_view',
+  // KATA-FALL-01 — src/gametest/katana-fall.ts (L0-katn-ac05)
+  'andrew:katana_fall_one_shot',
+  'andrew:katana_fall_at_height',
+  'andrew:katana_fall_expiry_other_damage',
+  // KATA-TRAIL-01 — src/gametest/katana-trail.ts (L0-katn-ac06)
+  'andrew:katana_trail_call_count',
+  'andrew:katana_trail_silent_on_refusal_and_cooldown',
+  'andrew:katana_trail_harmless',
+  'andrew:katana_trail_skips_unloaded',
+  // KATA-LGND-01 — src/gametest/legendary-recovery.ts (L0-lgnd-ac24 T16, T18; L0-lgnd-r017)
+  'andrew:legendary_katana_death_kill',
+  'andrew:legendary_katana_death_lava',
+  'andrew:legendary_katana_death_after_jump',
+  'andrew:legendary_katana_death_lava_after_jump',
+  'andrew:legendary_katana_void_thrown',
+  'andrew:legendary_katana_void_chest_minecart',
+  'andrew:legendary_katana_jump_keeps_recovery',
 ];
 
 /**
@@ -737,6 +777,7 @@ function main() {
   if (!existsSync(addonPath)) throw new Error(`${addonPath} not found — run "npm run build" first`);
 
   bundleGameTestScript();
+  // PLATFORM_SIZE in src/gametest/legendary-fireproof.ts lays one cell per legendary on this floor.
   writeStructure({ sx: 7, sy: 5, sz: 7 });
 
   const packs = unpackAddon(null);
