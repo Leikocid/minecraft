@@ -91,6 +91,7 @@ import "./probe-stand-void";
 import "./katana-probe";
 import "./katana";
 import "./katana-fall";
+import "./katana-trail";
 import { parkPenetrator } from "./penetrator";
 import { parkRing } from "./ring";
 import { registerOrbitalCannon } from "../orbital";

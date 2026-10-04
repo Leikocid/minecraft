@@ -393,6 +393,11 @@ const EXPECTED_TESTS = [
   'andrew:katana_fall_one_shot',
   'andrew:katana_fall_at_height',
   'andrew:katana_fall_expiry_other_damage',
+  // KATA-TRAIL-01 — src/gametest/katana-trail.ts (L0-katn-ac06)
+  'andrew:katana_trail_call_count',
+  'andrew:katana_trail_silent_on_refusal_and_cooldown',
+  'andrew:katana_trail_harmless',
+  'andrew:katana_trail_skips_unloaded',
   // KATA-LGND-01 — src/gametest/legendary-recovery.ts (L0-lgnd-ac24 T16, T18; L0-lgnd-r017)
   'andrew:legendary_katana_death_kill',
   'andrew:legendary_katana_death_lava',
