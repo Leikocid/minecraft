@@ -10,9 +10,13 @@ part_of: ["L0-katn"]
 relates_to: ["L0-katn"]
 priority: 600
 size_chars: 1356
-tags: ["contradiction", "katana", "category:source-vs-decision", "severity:medium", "status:resolved", "resolved_by:L0-adr-ktob", "target:L0-adr-ktob", "is_a:contradiction", "relates_to:L0-adr-ktob", "relates_to:L0-katn-as03"]
+tags: ["contradiction","katana","category:source-vs-decision","severity:medium","status:resolved","resolved_by:L0-adr-ktob","target:L0-adr-ktob","is_a:contradiction","relates_to:L0-adr-ktob","relates_to:L0-katn-as03","resolved"]
 level: 2
+closed_at: 2026-10-04
+closed_reason: resolved_by_decision
+closed_by_ref: decision-resolve-l0-katn-cx01
 ---
+
 ---
 title: "CX-katn-01 · L0-adr-ktob counts a lava cell as 'player fits'; Katana §6 requires a safe position"
 is_a: ["contradiction"]

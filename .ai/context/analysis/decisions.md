@@ -1,12 +1,12 @@
 ---
 title: Decisions
 type: analysis
-generated_at: "2026-10-03T23:54:07.078Z"
+generated_at: "2026-10-04T11:11:10.756Z"
 source_channel: rollout
 node_id: rollout-decisions
 aliases: ["rollout-decisions","decisions"]
 is_a: ["rollout","decisions"]
-relates_to: ["decision-completion-flow-quick","decision-merge-policy-autopilot","decision-namespace-addona-andrew-asm-002-q-002","decision-tselevaya-versiya-bedrock-1-26-51-asm-001-q-001","decision-verification-approach-automatic","decision-q-006-web-sword-provenance-yes-metka-ekzemplyara","decision-q-007-enchantable-without-durability-podtverzhde","decision-q-008-blocked-craft-refund-a-obnaruzhit-i-vernut","decision-q-009-cooldown-persistence-sohranyat-mezhdu-vyho","decision-q-010-main-hand-off-hand-priority-otlozheno","decision-q-011-cube-geometry-27-kletok-tsentr-sosednyaya-","decision-q-012-two-player-dod-gametest-s-dvumya-simulated","decision-q-013-protected-blocks-zakrytyy-spisok-posture-s","decision-q-014-budget-after-destruction-pravo-ostaetsya-p","decision-q-015-gate-game-modes-survival-i-adventure","decision-q-016-sword-unlootable-podtverzhdeno-kak-zaduman","decision-q-017-zero-cells-proval-s-lokalizovannym-soobsch","decision-resolve-l0","decision-resolve-l0-keep-ctr006","decision-resolve-l0-once","decision-resolve-l0-qatg-ctr1","decision-resolve-l0-trap-ct07","decision-resolve-l0-trap-ct08","decision-web-sword-item-values-uron-kak-u-vanilnogo-almaz","decision-legendary-hand-priority-realizuem-seychas-osnovn","decision-legendary-ready-hud-gotovo-pokazyvaetsya-postoya","decision-legendary-rules-obschie-dlya-vseh-legendarnyh-vk","decision-resolve-cool-ctr3","decision-resolve-l0-sprj-cx02","decision-resolve-l0-xcx3","decision-scythe-enchantments-slot-sword","decision-scythe-hidden-target-dynamic-property-andrew-hid","decision-scythe-launch-applyknockback-s-kalibrovannoy-ver","decision-scythe-melee-damage-8-proveryaetsya-zamerom-prot","decision-scythe-projectiles-virtualnye-bez-suschnostey-ri","decision-scythe-true-damage-pryamoe-umenshenie-zdorovya-d","decision-scythe-targets-mobs-moby-tozhe-tseli-igrok-v-pri","decision-ad-wrdn-01-l0-wrdn-ad01-podtverzhdeno-vanilnaya-","decision-adr-bast-02-l0-bast-ad02-podtverzhdeno-vanilnye-","decision-adr-l0-adr-strc-accepted-generatsiya-skriptom-pr","decision-adr-l0-adr-strs-accepted-s-ogovorkoy-q5-zond-str","decision-adr-l0-adr-tmpl-accepted-zond-strf-p006-q1-q2-q3","decision-adr-l0-wind-ad01-accepted-s-ogovorkoy-o-razmere-","decision-adr-strf-01-l0-strf-d001-accepted-determinirovan","decision-adr-strf-02-l0-strf-d002-accepted-spavnery-vanil","decision-l0-airs-cx01-zagruzka-chankov-koltsa-privyazanno","decision-l0-xcx6-edinstvennyy-istochnik-pravdy-po-generat","decision-l0-xcx7-kanal-dokazatelstva-u-kazhdogo-kriteriya","decision-l0-xq2-plotnost-struktur-shansy-na-chank-rovno-k","decision-l0-xq3-vozvrat-poteryannogo-oruzhiya-kraftivshem","decision-l0-xq4-melnitsa-u-spavna-bez-suhoy-zemli-mira-be","decision-dirizhabl-udlinyaetsya-protiv-razmera-v-speke-ra","decision-gorod-hranitelya-rastet-vchetvero-po-ploschadi-i","decision-legendarnoe-vozvraschaetsya-poslednemu-derzhavsh","decision-resolve-cool-ctr1","decision-resolve-cool-ctr2","decision-resolve-cool-ctr4","decision-resolve-l0-airs-cx01","decision-resolve-l0-lgnd-cx01","decision-resolve-l0-lgnd-cx07","decision-resolve-l0-lgnd-cx08","decision-resolve-l0-lgnd-cx09","decision-resolve-l0-lgnd-cx10","decision-resolve-l0-orbc-cx02","decision-resolve-l0-scyt-cx03","decision-resolve-l0-scyt-cx04","decision-resolve-l0-scyt-cx05","decision-resolve-l0-strf-cx01","decision-resolve-l0-strf-cx02","decision-resolve-l0-wind-cx01","decision-resolve-l0-wind-cx02","decision-resolve-l0-xcx10","decision-resolve-l0-xcx11","decision-resolve-l0-xcx12","decision-resolve-l0-xcx13","decision-resolve-l0-xcx14","decision-resolve-l0-xcx5","decision-resolve-l0-xcx6","decision-resolve-l0-xcx7","decision-resolve-l0-xcx8","decision-resolve-l0-xcx9","decision-vvod-orbitalnoy-pushki-udar-po-playerswingstart-","decision-dvizhok-bedrock-chetyre-svoystva-naydennye-otgru","decision-luchi-i-tsel-facelocation-stoppery-i-zhidkosti-z","decision-pushka-predmet-i-zaryad-pravki-po-zameram-otgruz","decision-ring-diameters-1-7-14-21-28-was-1-5-10-15-20","decision-aim-range-25-and-spawn-height-60-the-shooter-get","decision-resolve-l0-lgnd-cx13","decision-resolve-l0-magn-cxdp","decision-resolve-l0-sauc-cx01","decision-ring-power-per-ring-4-4-2-1-1-and-a-minimum-aim-","decision-katana-landing-above-lava-unsafe","decision-resolve-l0-ufoc-cx01","decision-resolve-l0-xcx15","decision-resolve-l0-xcx16","decision-resolve-l0-xcx18","decision-resolve-l0-xcx19","decision-resolve-l0-xcx20","decision-resolve-l0-xcx21","decision-ufo-magnet-on-cost-accepted-as-measured-36-39-ms"]
+relates_to: ["decision-completion-flow-quick","decision-merge-policy-autopilot","decision-namespace-addona-andrew-asm-002-q-002","decision-tselevaya-versiya-bedrock-1-26-51-asm-001-q-001","decision-q-006-web-sword-provenance-yes-metka-ekzemplyara","decision-q-007-enchantable-without-durability-podtverzhde","decision-q-008-blocked-craft-refund-a-obnaruzhit-i-vernut","decision-q-009-cooldown-persistence-sohranyat-mezhdu-vyho","decision-q-010-main-hand-off-hand-priority-otlozheno","decision-q-011-cube-geometry-27-kletok-tsentr-sosednyaya-","decision-q-012-two-player-dod-gametest-s-dvumya-simulated","decision-q-013-protected-blocks-zakrytyy-spisok-posture-s","decision-q-014-budget-after-destruction-pravo-ostaetsya-p","decision-q-015-gate-game-modes-survival-i-adventure","decision-q-016-sword-unlootable-podtverzhdeno-kak-zaduman","decision-q-017-zero-cells-proval-s-lokalizovannym-soobsch","decision-resolve-l0","decision-resolve-l0-keep-ctr006","decision-resolve-l0-once","decision-resolve-l0-qatg-ctr1","decision-resolve-l0-trap-ct07","decision-resolve-l0-trap-ct08","decision-legendary-hand-priority-realizuem-seychas-osnovn","decision-legendary-ready-hud-gotovo-pokazyvaetsya-postoya","decision-legendary-rules-obschie-dlya-vseh-legendarnyh-vk","decision-resolve-cool-ctr3","decision-resolve-l0-sprj-cx02","decision-resolve-l0-xcx3","decision-scythe-enchantments-slot-sword","decision-scythe-hidden-target-dynamic-property-andrew-hid","decision-scythe-launch-applyknockback-s-kalibrovannoy-ver","decision-scythe-melee-damage-8-proveryaetsya-zamerom-prot","decision-scythe-projectiles-virtualnye-bez-suschnostey-ri","decision-scythe-true-damage-pryamoe-umenshenie-zdorovya-d","decision-scythe-targets-mobs-moby-tozhe-tseli-igrok-v-pri","decision-ad-wrdn-01-l0-wrdn-ad01-podtverzhdeno-vanilnaya-","decision-adr-bast-02-l0-bast-ad02-podtverzhdeno-vanilnye-","decision-adr-l0-adr-strc-accepted-generatsiya-skriptom-pr","decision-adr-l0-adr-strs-accepted-s-ogovorkoy-q5-zond-str","decision-adr-l0-adr-tmpl-accepted-zond-strf-p006-q1-q2-q3","decision-adr-l0-wind-ad01-accepted-s-ogovorkoy-o-razmere-","decision-adr-strf-01-l0-strf-d001-accepted-determinirovan","decision-adr-strf-02-l0-strf-d002-accepted-spavnery-vanil","decision-l0-airs-cx01-zagruzka-chankov-koltsa-privyazanno","decision-l0-xcx6-edinstvennyy-istochnik-pravdy-po-generat","decision-l0-xcx7-kanal-dokazatelstva-u-kazhdogo-kriteriya","decision-l0-xq2-plotnost-struktur-shansy-na-chank-rovno-k","decision-l0-xq3-vozvrat-poteryannogo-oruzhiya-kraftivshem","decision-l0-xq4-melnitsa-u-spavna-bez-suhoy-zemli-mira-be","decision-dirizhabl-udlinyaetsya-protiv-razmera-v-speke-ra","decision-gorod-hranitelya-rastet-vchetvero-po-ploschadi-i","decision-legendarnoe-vozvraschaetsya-poslednemu-derzhavsh","decision-resolve-cool-ctr1","decision-resolve-cool-ctr2","decision-resolve-cool-ctr4","decision-resolve-l0-airs-cx01","decision-resolve-l0-lgnd-cx01","decision-resolve-l0-lgnd-cx07","decision-resolve-l0-lgnd-cx08","decision-resolve-l0-lgnd-cx09","decision-resolve-l0-lgnd-cx10","decision-resolve-l0-orbc-cx02","decision-resolve-l0-scyt-cx03","decision-resolve-l0-scyt-cx04","decision-resolve-l0-scyt-cx05","decision-resolve-l0-strf-cx01","decision-resolve-l0-strf-cx02","decision-resolve-l0-wind-cx01","decision-resolve-l0-wind-cx02","decision-resolve-l0-xcx10","decision-resolve-l0-xcx11","decision-resolve-l0-xcx12","decision-resolve-l0-xcx13","decision-resolve-l0-xcx14","decision-resolve-l0-xcx5","decision-resolve-l0-xcx6","decision-resolve-l0-xcx7","decision-resolve-l0-xcx8","decision-resolve-l0-xcx9","decision-dvizhok-bedrock-chetyre-svoystva-naydennye-otgru","decision-luchi-i-tsel-facelocation-stoppery-i-zhidkosti-z","decision-pushka-predmet-i-zaryad-pravki-po-zameram-otgruz","decision-ring-diameters-1-7-14-21-28-was-1-5-10-15-20","decision-aim-range-25-and-spawn-height-60-the-shooter-get","decision-resolve-l0-lgnd-cx13","decision-resolve-l0-magn-cxdp","decision-resolve-l0-sauc-cx01","decision-ring-power-per-ring-4-4-2-1-1-and-a-minimum-aim-","decision-katana-landing-above-lava-unsafe","decision-resolve-l0-lgnd-cx14","decision-resolve-l0-ufoc-cx01","decision-resolve-l0-xcx15","decision-resolve-l0-xcx16","decision-resolve-l0-xcx17","decision-resolve-l0-xcx18","decision-resolve-l0-xcx19","decision-resolve-l0-xcx20","decision-resolve-l0-xcx21","decision-ufo-magnet-on-cost-accepted-as-measured-36-39-ms","decision-katana-ray-budget-and-column-length-measured-not"]
 priority: 600
 ---
 
@@ -55,17 +55,6 @@ _Decided: 2026-09-20_
 
 
 Вопрос: какая версия игры на iPad. Решение: на iPad установлена Minecraft Bedrock 1.26.51 (оператор прочитал с устройства 2026-09-20) — текущий стабильный релиз (BDS 1.26.51.1 по download API Mojang, bedrock-samples v1.26.50.4 от 2026-09-16). Целевые значения: min_engine_version [1, 26, 50]; @minecraft/server 2.10.0 (стабильный на npm, опубликован 2026-09-15); Bedrock Dedicated Server 1.26.51.1 в Docker. Preview 1.26.60 не используем. Влияние: спека кирки (2.9.0 / 1.26.0) подгоняется под эти значения; закрывает ASM-001 и Q-001.
-
-
-
-
-
-## verification_approach = automatic (decision-verification-approach-automatic)
-
-_Decided: 2026-09-20_
-
-
-Rationale: решение оператора 2026-09-20 — полный автопилот. Проверка автоматическая: канал build (tsc против типов @minecraft/server 2.10.0, валидация JSON, сборка .mcaddon) и канал bds (Bedrock Dedicated Server 1.26.51.1 в Docker: загрузка пакета без ошибок манифеста/зависимостей, исполнение скрипта подтверждается логом сервера). Человек не участвует, если всё зелёное. Канал ipad остаётся только для того, что движок сервера физически не покрывает (визуал: иконка, название в креативе) — такие критерии планировать минимально и как manual; они не блокируют мерж. Impact: /plan типизирует критерии как build/unit/e2e везде, где проверку можно выполнить на Маке или BDS; /verify закрывает их артефактами run-check без участия оператора.
 
 
 
@@ -264,17 +253,6 @@ _Decided: 2026-09-21_
 
 
 CTR-008: ноль заменённых клеток = провал, cooldown не тратится, локализованное сообщение в actionbar
-
-
-
-
-
-## web-sword-item-values = урон как у ванильного алмазного меча, рецепт 4 паутины + алмазный меч (decision-web-sword-item-values-uron-kak-u-vanilnogo-almaz)
-
-_Decided: 2026-09-21_
-
-
-Решение (автопилот): minecraft:damage берётся из ванильного определения diamond_sword текущей версии BDS (проверить в пакете сервера при реализации, не гадать); прочности нет; enchantable slot=sword; menu_category equipment, группа мечей. Рецепт shaped: [ ,web, ] / [web,diamond_sword,web] / [ ,web, ] — меч-ингредиент любой прочности/чар, чары не переносятся. Объявление первого крафта: ключ RU/EN с именем оружия и ником игрока (player.name).
 
 
 
@@ -948,21 +926,6 @@ _Decided: 2026-09-29_
 
 
 
-## Ввод Орбитальной пушки: удар по playerSwingStart, применение по itemUse, цель — блок события, луч как запасной (decision-vvod-orbitalnoy-pushki-udar-po-playerswingstart-)
-
-_Decided: 2026-09-29_
-
-
-Разбор CNTR-XCX14-AA измерил движок прибором src/gametest/probe-input.ts (три GameTest, два совпавших прогона, 122 шага, артефакт .ai/verify/CNTR-XCX14-AA/2.json). Посылки утверждений L0-xcx8 и L0-xcx14 опровергнуты: сервер дальность не режет — entityHitBlock, before.playerInteractWithBlock и itemStartUseOn приходят на всех дистанциях (22/22); world.afterEvents.playerSwingStart стабилен в 2.10.0 и приходит даже при ударе в пустое небо в обоих режимах; getBlockFromViewDirection({maxDistance:10}) находит блок при грани 9.5 и не находит при 10.5.
-РЕШЕНИЕ. Удар (левая кнопка) ловится через playerSwingStart, применение (правая) — через itemUse. Цель в обоих режимах: блок из события, если он есть, иначе луч взгляда с ограничением 10. Дальность 10 блоков остаётся как в спеке.
-Маркер. Спека (part-1:109) говорит, что дополнительный маркер НЕ НУЖЕН, а не что он запрещён. Поэтому: штатно маркера нет; если проверка на iPad покажет, что ванильная подсветка не достаёт до 6-10 блоков, добавляется минимальная частица — это не отклонение от спеки.
-Что остаётся на устройстве: наблюдение на iPad, какая раскладка управления (обычная сенсорная или с прицелом) даёт какую цель и какую предельную дальность касания. Это идёт критерием приёмки демо Пушки, а не блокирует разработку.
-СЛЕДСТВИЕ: запрет на создание задач по orbc снимается.
-
-
-
-
-
 ## Движок Bedrock: четыре свойства, найденные отгрузкой Пушки (ring-ent1, ring-as03, ring-as02, pntr-ad01) (decision-dvizhok-bedrock-chetyre-svoystva-naydennye-otgru)
 
 _Decided: 2026-09-30_
@@ -1097,6 +1060,17 @@ _Decided: 2026-10-03_
 
 
 
+## Resolved L0-lgnd-cx14: Закрыто кодом. Допущение, на котором ст… (decision-resolve-l0-lgnd-cx14)
+
+_Decided: 2026-10-03_
+
+
+Закрыто кодом. Допущение, на котором стояло решение «принять как отклонение C-16», опровергнуто измерением: руку стойки для брони читает hasitem slot.weapon.mainhand (аддон уже так делает в магните), а kill() в окне 13 тиков под полом роняет тот же предмет с той же меткой и поколением 0. Реализован сторожок стойки плюс два стража возврата: ниже пола мира чанк больше не считается выгруженным (recovery.ts:326) и проверка клеток держателя не падает за границей мира (recovery.ts:433). Обе ошибки были общими для всего возврата, не только для стойки. По дороге устранён поток из 234 ошибок за прогон: обработчик удаления сущностей спотыкался о симулированного игрока, который в боевом паке приходит неопределённым.
+
+
+
+
+
 ## Resolved L0-ufoc-cx01: Снято вариантом (a). Код пишет ровно дв… (decision-resolve-l0-ufoc-cx01)
 
 _Decided: 2026-10-03_
@@ -1125,6 +1099,17 @@ _Decided: 2026-10-03_
 
 
 Подтверждено целиком и переведено в адресный список правок. Измерено на v1.4.4: прицел 25 (target.ts:13), минимум ПКМ 7 (ring-layout.ts:39), спавн 60/60/10 (spawn.ts:15-31), диаметры 1/7/14/21/28 и силы 4/4/2/1/1 (ring-layout.ts:98,112), 201 колонна, потолок зарядов 256. Узлы v3 несут старые числа: 223 правки в 147 файлах orbc/ring/pntr, каждая проверена по своей строке (226/226). Причина: v5 протащил эти файлы, поменяв в них только номер версии (git diff 0a8f2c1^..0a8f2c1). Работа передана в KV-CLEANUP-CNTR2-AA с измерителем diagnose-CNTR-X16.measure.mjs.
+
+
+
+
+
+## Resolved L0-xcx17: Снято без изменения определения готовно… (decision-resolve-l0-xcx17)
+
+_Decided: 2026-10-03_
+
+
+Снято без изменения определения готовности. Допущение «GameTest не может перезапустить сервер» для нашего прогонщика ложно: раннер перезапускает BDS между парными сценариями с 30 сентября. Поэтому буква спеки НЛО §14 выполнима как есть, и решение оператора о признании проверки другого рода автоматизацией не требуется. Пара andrew:ufo_restart_seed / andrew:ufo_restart_check добавлена в RESTART_AFTER и проходит в полном наборе: таймер сохраняется, маркер 0 даёт время загрузки + 900001 мс, тарелок при загрузке нет, тег железа снят, выключенное ядро молчит. Раннер валит набор, если боевая /andrew:ufo disable не пережила перезапуск. Красные доказательства сняты до правки по обеим ветвям. Фазы bds-check остаются на месте.
 
 
 
@@ -1180,6 +1165,23 @@ _Decided: 2026-10-03_
 
 
 Question: L0-xasm16 budgets 12 ms for the magnet-on pass; measured 23–41 ms over 200 chests (MAGN-HOLD-01-AA, final main run 39 ms) while the server holds 20.01 TPS. Decision (operator, 2026-10-03): accept as is — keep the single synchronous pass at onPhase(magnet) (L0-magn-adsc); do not spread the scan over ticks. Impact: the 12 ms figure in L0-xasm16 is superseded by the measurement; TPS 20 over the magnet stays the acceptance bar (L0-magn-atps).
+
+
+
+
+
+## katana_ray_budget_and_column_length = measured, not as written (decision-katana-ray-budget-and-column-length-measured-not)
+
+_Decided: 2026-10-04_
+
+
+Поправки к трём записанным решениям по итогам проб KATA-PROBE-01-AA (docs/feedback/probe-katana.md, 7 сценариев probe_katana_*, два зелёных полных прогона 235/235). Кода Катаны ещё нет, поэтому это правка постановки, а не исправление.
+1. L0-adr-ktob §1 — maxDistance НЕ равен дальности в блоках. ОПРОВЕРГНУТО. maxDistance — бюджет шагов по клеткам. Измерено: камень по диагонали x/z в 16.40 блока (24 шага) и по диагонали x/y/z в 13.16 блока (24 шага) при maxDistance 20 дают «нет попадания»; по оси 15.50 блока (16 шагов) хватает 16.00. Следствие: с maxDistance 20 Катана прошла бы СКВОЗЬ стену по диагонали, нарушив §5 и §13 спеки. Как делать: бюджет шагов не меньше 20·(|dx|+|dy|+|dz|), до 34.7, и обрезание по евклидовым 20 блокам считать самому, по точке попадания.
+2. L0-katn-ad01 §1 — длина колонного луча. ОПРОВЕРГНУТО. Луч длиной 2−2ε, кончающийся на ε над полом, НЕ видит нижнюю плиту в клетке ног: нет попадания, то есть клетка считается подходящей и игрока ставят в плиту. Как делать: длина ровно 2, конец на ε ниже клетки ног. «Не влезает» — попадание в клетку ног или головы; попадание в клетку ниже — это пол, оно не считается. Измерено на 9 случаях: пусто, ковёр, трава — влезает; камень, нижняя и верхняя плита в ногах и в голове, забор — не влезает. Запасной вариант из Consequences (два горизонтальных луча на y+0.1 и y+1.9) тоже опровергнут: нет попадания во всех 9 случаях, даже на камне.
+Общее правило лучей на 1.26.51, из которого это следует: полный блок ловится, когда луч входит в его клетку; неполный блок, в который луч входит посреди клетки (нижняя плита сверху, столб забора сбоку), ловится только когда луч ВЫХОДИТ из этой клетки. Любой луч, судящий клетку, обязан заканчиваться за ней.
+3. decision-katana-landing-above-lava-unsafe — часть про огонь. ОПРОВЕРГНУТА в заявленном виде. Луч вниз с обоими флагами true видит лаву (lava@3,1,4 под одной клеткой воздуха, lava@5,1,4 под двумя, контроль над камнем — stone), но ОГОНЬ И ОГОНЬ ДУШ НЕ ВИДИТ: первым встречается опора под ними (stone, soul_soil), и список includeTypes не помогает. Как делать: проверять первый встреченный блок И блок над ним через getBlock(hit + up) — там читается fire / soul_fire. Лавовая часть решения остаётся без изменений.
+Подтверждено и менять не надо: L0-adr-ktfl (самотелепорт гасит падение: контроль 21.0 урона и смерть, защищённый 0); L0-adr-ktob §1 флаги трассы (11 из 11 блоков); L0-adr-ktob §2 «нечитаемое = твёрдое» — подтверждено как необходимое, потому что сам луч на незагруженном чанке не останавливается: 0 попаданий из 12 лучей, либо «нет попадания», либо LocationInUnloadedChunkError, и что именно — зависит от состояния мира. Отсюда требование: проверка isChunkLoaded по клеткам до луча И try/catch вокруг getBlockFromRay.
+Про частицу: spawnParticle(minecraft:cherry_leaves_particle) не бросает (210 вызовов за тик, ~1 мс), но несуществующий id andrew:no_such_particle тоже не бросает. Значит «не бросает» ничего не доказывает о видимости — это закрывается только глазами на iPad (L0-katn-ac09 п.4).
 
 
 
