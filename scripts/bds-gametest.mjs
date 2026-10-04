@@ -376,6 +376,19 @@ const EXPECTED_TESTS = [
   'andrew:probe_katana_lava_below',
   'andrew:probe_katana_unloaded_ray',
   'andrew:probe_katana_cherry_particle',
+  // KATA-TP-01 — src/gametest/katana.ts (L0-katn-ac03, L0-katn-ac04)
+  'andrew:katana_floor_jump',
+  'andrew:katana_open_air_clamp',
+  'andrew:katana_wall',
+  'andrew:katana_through_water',
+  'andrew:katana_through_lava',
+  'andrew:katana_slit_no_suffocation',
+  'andrew:katana_crawlspace_no_suffocation',
+  'andrew:katana_boxed_refusal',
+  'andrew:katana_blocks_unchanged',
+  'andrew:katana_empty_main_no_cast',
+  'andrew:katana_offhand_behind_main',
+  'andrew:katana_use_on_block_aims_by_view',
 ];
 
 /**

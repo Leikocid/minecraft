@@ -12,6 +12,7 @@ import {
   world,
 } from "@minecraft/server";
 import { registerAutoSmelt } from "./autosmelt";
+import { registerDragonKatana } from "./katana";
 import { registerLegendaryCommands } from "./legendary/commands";
 import { registerCraftGate } from "./legendary/craftgate";
 import { registerHideCommand } from "./legendary/hidden";
@@ -40,6 +41,7 @@ registerLegendaryHud();
 registerTrap();
 registerScytheVolley();
 registerOrbitalCannon();
+registerDragonKatana();
 // Must run at script load: custom commands can only be registered during the
 // engine's startup phase, which is over by the time the world exists.
 registerLegendaryCommands();

@@ -89,9 +89,11 @@ import "./ufo-shootdown";
 import "./ufo-restart";
 import "./probe-stand-void";
 import "./katana-probe";
+import "./katana";
 import { parkPenetrator } from "./penetrator";
 import { parkRing } from "./ring";
 import { registerOrbitalCannon } from "../orbital";
+import { registerDragonKatana } from "../katana";
 import { SPAWN_EVENT } from "../structures/spawn-search";
 
 const WEB_SWORD_ID = WEB_SWORD.itemId;
@@ -178,6 +180,10 @@ registerOrbitalCannon("gt");
 // the real effects back for their own scenarios.
 parkPenetrator();
 parkRing();
+
+// Same binding problem: the release pack's Katana handlers receive no
+// SimulatedPlayer, so src/gametest/katana.ts drives this copy.
+registerDragonKatana();
 
 // Which use-event a press actually produces on BDS 1.26.51.1 is an engine fact,
 // not a documented one, and src/websword/trap.ts subscribes to both. This

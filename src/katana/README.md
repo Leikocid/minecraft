@@ -23,6 +23,38 @@ A candidate is taken if all five hold:
 4. a clear ray runs from H to its head cell;
 5. it is not the player's own cell.
 
+## `activation.ts` — the press
+
+`registerDragonKatana()` (`index.ts`) arms the input; `src/main.ts` and the GameTest pack each arm their own copy. The
+order is `L0-katn-p001`:
+1. press: `itemUse` (air) or `itemStartUseOn` (a block), one activation per player per tick;
+2. hand: `resolveActivation(player)`; anything but the Katana, or the Katana on cooldown, is a silent no-op;
+3. snapshot: A, H, d, rotation and dimension, read once;
+4. `planTeleport`; `feet: undefined` is a refusal;
+5. `player.teleport(B, { rotation })`, without `dimension` (`L0-lgnd-r017` §3);
+6. `startCooldown(player, "dragon_katana")`, only after the teleport returned. There is no busy window.
+
+`observeActivations` hands every activation that reached step 4 to its observers in the same tick, after the teleport
+and the cooldown. A refusal (`jumped: false`) writes nothing; it leaves one line in the server log and none in chat
+(`L0-katn-r005`).
+
+Measured on BDS 1.26.51.1 (`src/gametest/katana.ts`): the feet read back at B in the press tick, the yaw is kept, and
+29 999 ms of cooldown are left. The tapped block is never the aim (`L0-katn-as02`): a use on the floor 1 block ahead
+jumps 19 blocks along the view.
+
+### Deviations (C-16)
+
+1. **The off hand casts only behind a main-hand legendary.** `L0-katn-ac03` "Off hand" asks the Katana in the off hand
+   to jump with the main hand empty.
+   - Measured (`katana_empty_main_no_cast`): with the main hand empty, `useItemInSlot`, `useItemInSlotOnBlock`,
+     `interactWithBlock` on stone and on a noteblock, and `interact` raise no script event, 0 in 10 presses.
+   - That is `L0-lgnd-as07`, and `L0-lgnd-r004` already says an empty or non-legendary main hand never casts the off
+     hand.
+   - So the off-hand Katana fires when the main hand holds a legendary that is not ready. It makes the same T05 jump
+     (`katana_offhand_behind_main`). A ready main-hand legendary wins the press even when it then refuses.
+2. **The block input is `itemStartUseOn`.** `L0-katn-p001` §1 names `playerInteractWithBlock`. For a custom item used
+   on a block the engine raises neither that nor `itemUse`, only `itemStartUseOn` (CNTR-XCX14).
+
 ## Not the Scythe's line of sight (`L0-adr-ktob`, `L0-katn-r003`)
 
 The two notions are different on purpose, and neither module calls the other.
