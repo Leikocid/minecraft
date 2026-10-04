@@ -28,18 +28,23 @@ import {
 import { NEXT_MS } from "../ufo/schedule";
 import {
   APPROACH_DISTANCE,
+  ARRIVAL_BEARINGS,
   BEAM_LEN_PROPERTY,
   BEAM_PROPERTY,
   HUM_TICKS,
   LEG_ABOVE_HOVER,
+  REACH_MARGIN,
   UFO_SOUNDS,
   type UfoSaucer,
   type UfoSound,
+  arrivalBearing,
   beamLength,
   createSaucer,
   flightPath,
   legHeight,
   playUfoSound,
+  tickingIn,
+  tickingReach,
 } from "../ufo/saucer";
 import { goTo } from "./orbital-core";
 import { loadBox } from "./structures-place";
@@ -195,6 +200,7 @@ function rig(opts: { durations: UfoDurations; theta01: number; ceiling: () => nu
     random: () => opts.theta01,
     durations: opts.durations,
     ceiling: opts.ceiling,
+    log: env.log,
     sound: (id, at) => {
       sounds.push({ id, call: calls, phase: core?.session()?.phase, at: { ...at } });
       playUfoSound(overworld(), id, at);
@@ -857,6 +863,20 @@ registerAsync("andrew", "ufo_arrival_reach_measured", async (test: Test): Promis
       log(`reach RESULT ${label} map (P = the player's chunk, # = loaded and ticking):\n${m.rows.join("\n")}`);
       test.assert(m.count > 0, `${label}: no chunk is loaded and ticking around the player — the measurement measured nothing`);
       test.assert(edge === "spawned" && past.startsWith("threw"), `${label}: spawnEntity disagrees with isChunkLoaded at the edge (${edge} / ${past})`);
+
+      // The product's walk over chunk columns against this quarter-block walk, bearing by bearing, capped at the §2 distance.
+      const product = Array.from({ length: REACH_BEARINGS }, (_, k) => tickingReach(tickingIn(dim), at, (2 * Math.PI * k) / REACH_BEARINGS, APPROACH_DISTANCE));
+      const off = product.filter((d, k) => {
+        const walked = Math.min(reach[k], APPROACH_DISTANCE);
+        return d > walked + 0.25 || d < walked - REACH_MARGIN - 0.25;
+      });
+      const pick = arrivalBearing(tickingIn(dim), at, 0);
+      log(
+        `reach RESULT ${label}: the saucer's measured reach by bearing ${product.map((d) => d.toFixed(1)).join(" ")}; ` +
+          `of ${ARRIVAL_BEARINGS} bearings from east it comes in on ${((pick.theta * 180) / Math.PI).toFixed(1)}° from ${pick.reach.toFixed(2)} blocks`
+      );
+      test.assert(off.length === 0, `${label}: the product's reach strays from the engine's at ${off.length} bearing(s): ${product.map((d) => d.toFixed(2)).join(" ")} vs ${reach.map((d) => d.toFixed(2)).join(" ")}`);
+      test.assert(pick.reach === Math.max(...Array.from({ length: ARRIVAL_BEARINGS }, (_, k) => tickingReach(tickingIn(dim), at, (2 * Math.PI * k) / ARRIVAL_BEARINGS, APPROACH_DISTANCE))), `${label}: the arrival did not take the longest bearing`);
     }
   } finally {
     test.removeSimulatedPlayer(sim);
@@ -920,6 +940,9 @@ registerAsync("andrew", "ufo_arrival_single_player", async (test: Test): Promise
     test.assert(out1 >= LONE_MIN_OUT && out1 <= APPROACH_DISTANCE + 0.01, `the departure ended ${out1.toFixed(2)} out, not within [${LONE_MIN_OUT}, ${APPROACH_DISTANCE}]`);
     test.assert(bearingDot(centre, spawnAt, last) <= -0.99, `the departure ended on bearing dot ${bearingDot(centre, spawnAt, last).toFixed(4)} to the spawn`);
     test.assert((r.notices.get(sim.name) ?? 0) === 1, `the target got ${r.notices.get(sim.name) ?? 0} notices, not 1`);
+    const legs = r.logs.filter((l) => l.includes("saucer in from") || l.includes("saucer out to"));
+    log(`single RESULT the saucer's own measurement: ${legs.join(" | ")}`);
+    test.assert(legs.some((l) => l.includes(`saucer in from ${out0.toFixed(2)} blocks`)) && legs.some((l) => l.includes(`saucer out to ${out1.toFixed(2)} blocks`)), `the saucer did not log its measured legs: ${legs.join(" | ")}`);
     test.assert(pause.saucers === 0 && saucersInOverworld() === 0, `${pause.saucers} saucers at the pause, ${saucersInOverworld()} now`);
   } finally {
     r.stop();

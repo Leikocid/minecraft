@@ -216,7 +216,7 @@ function rig(opts: {
       console.warn(`[gametest] ${msg}`);
     },
   };
-  const saucer = createSaucer({ overworld: () => world.getDimension("overworld"), random: opts.random, durations: opts.durations, ceiling: env.ceiling });
+  const saucer = createSaucer({ overworld: () => world.getDimension("overworld"), random: opts.random, durations: opts.durations, ceiling: env.ceiling, log: env.log });
   const r: Partial<Rig> & { phases: PhaseRec[]; steps: StepRec[] } = { phases: [], steps: [], consumerMs: 0, timing: false };
   const host = new SpyHost(() => r.timing === true);
   let seq = 0;

@@ -401,8 +401,10 @@ test('a lost saucer aborts: the release runs when the magnet was on, the event e
   assert.equal(fx.data.get(NEXT_MS), fx.t + PAUSE_MS);
 });
 
-test('a consumer that throws at arrival aborts the event on the next tick', () => {
-  const fx = fixture({ players: [player('a')] });
+test('a saucer that throws at arrival leaves no saucer: the event aborts on the next tick and nobody is told of a UFO', () => {
+  const told = [];
+  const a = { ...player('a'), sendMessage: (m) => told.push(m) };
+  const fx = fixture({ players: [a] });
   fx.saucer.onPhase = (phase) => {
     if (phase === 'arrival') throw new Error('spawn refused: unloaded chunk');
   };
@@ -410,7 +412,59 @@ test('a consumer that throws at arrival aborts the event on the next tick', () =
   fx.tick(2);
   assert.equal(fx.core.session(), undefined);
   assert.equal(fx.core.lastEnd().reason, 'abort');
-  assert.ok(fx.logs.some((l) => /arrival listener threw/.test(l)));
+  assert.ok(fx.logs.some((l) => /the saucer listener threw on arrival: Error: spawn refused/.test(l)), fx.logs.join('\n'));
+  assert.ok(fx.logs.some((l) => /notice to none, no saucer/.test(l)), fx.logs.join('\n'));
+  assert.deepEqual(told, []);
+});
+
+test('a listener that throws on every phase is logged by name; the saucer, the magnet and the listeners after it go on to the departure', () => {
+  const told = [];
+  const a = { ...player('a'), sendMessage: (m) => told.push(m) };
+  const fx = fixture({ players: [a] });
+  const heard = { stub: [], magnet: [], after: [], unnamed: [] };
+  const magnet = { onPhase: (phase) => heard.magnet.push(phase), magnetStep() {} };
+  const stub = {
+    name: 'stub',
+    onPhase: (phase) => {
+      heard.stub.push(phase);
+      throw new Error(`stub refuses ${phase}`);
+    },
+  };
+  const unnamed = {
+    onPhase: (phase) => {
+      heard.unnamed.push(phase);
+      if (phase === 'magnet') throw new Error('unnamed refuses magnet');
+    },
+  };
+  const after = { onPhase: (phase) => heard.after.push(phase) };
+  fx.core = new UfoCore(fx.env, { scope: 'ut', saucer: fx.saucer, magnet, listeners: [stub, unnamed, after, fx.recorder] });
+  fx.core.command('come', 'a');
+  fx.until(() => fx.core.session() === undefined && fx.phases.some((p) => p.phase === 'pause'));
+  const all = ['arrival', 'magnet', 'release', 'departure', 'pause'];
+  assert.deepEqual(phaseNames(fx), all);
+  assert.equal(fx.core.lastEnd().reason, 'departed');
+  for (const [who, got] of Object.entries(heard)) assert.deepEqual(got, all, `${who} heard ${got.join(',')}`);
+  for (const phase of all) assert.ok(fx.logs.some((l) => l.endsWith(`the stub listener threw on ${phase}: Error: stub refuses ${phase}`)), `no line for ${phase}:\n${fx.logs.join('\n')}`);
+  assert.ok(fx.logs.some((l) => l.endsWith('the listener 2 listener threw on magnet: Error: unnamed refuses magnet')), fx.logs.join('\n'));
+  assert.ok(!fx.logs.some((l) => /abort/.test(l)), fx.logs.join('\n'));
+  assert.equal(told.length, 1);
+  assert.equal(fx.saucer.calls.filter((c) => c.kind === 'step').length > 0, true);
+});
+
+test('a magnet that throws at magnet-on is logged as the magnet; the saucer still hovers and leaves', () => {
+  const fx = fixture({ players: [player('a')] });
+  const magnet = {
+    onPhase: (phase) => {
+      if (phase === 'magnet') throw new Error('scan failed');
+    },
+    magnetStep() {},
+  };
+  fx.core = new UfoCore(fx.env, { scope: 'ut', saucer: fx.saucer, magnet, listeners: [fx.recorder] });
+  fx.core.command('come', 'a');
+  fx.until(() => fx.core.session() === undefined && fx.phases.some((p) => p.phase === 'pause'));
+  assert.deepEqual(phaseNames(fx), ['arrival', 'magnet', 'release', 'departure', 'pause']);
+  assert.equal(fx.core.lastEnd().reason, 'departed');
+  assert.ok(fx.logs.some((l) => l.endsWith('the magnet listener threw on magnet: Error: scan failed')), fx.logs.join('\n'));
 });
 
 // ------------------------------------------------------------ notice (L0-ufoc-r005, ac07)
@@ -602,6 +656,7 @@ test('entityLoad: the live saucer stays, a stale one goes, an unrelated entity i
 test('saucer: spawns 90 blocks out at hover + 10, holds the hover point through the magnet, leaves the opposite way, removed at pause', () => {
   const spawned = [];
   const overworld = {
+    isChunkLoaded: () => true,
     spawnEntity: (id, at) => {
       const e = fakeEntity({ id: `e${spawned.length}`, typeId: id });
       e.location = { ...at };

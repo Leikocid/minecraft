@@ -37,6 +37,7 @@ async function load() {
 const m = await load();
 const {
   APPROACH_DISTANCE,
+  ARRIVAL_BEARINGS,
   BEAM_LEN_MAX,
   BEAM_LEN_PROPERTY,
   BEAM_PROPERTY,
@@ -44,7 +45,9 @@ const {
   HOVER_DRIFT,
   HUM_TICKS,
   SOUND_VOLUME,
+  REACH_MARGIN,
   UFO_SOUNDS,
+  arrivalBearing,
   beamLength,
   createSaucer,
   departEase,
@@ -52,6 +55,7 @@ const {
   legHeight,
   legPosition,
   smoothstep,
+  tickingReach,
   UfoCore,
   SAUCER_ID,
   UFO_TAG,
@@ -134,10 +138,16 @@ test('legHeight caps the legs at ceiling − 4; beamLength is hoverY − centre.
 
 // ------------------------------------------------------------ the saucer on the core's clock
 
-function fakeEngine() {
+/** Like the engine: an entity is spawned and moved only into a chunk that is loaded and ticking. */
+function fakeEngine(ticking = () => true) {
   const engine = { spawned: [], played: [], tick: 0 };
+  const refuse = (at) => {
+    if (!ticking(at)) throw new Error(`LocationInUnloadedChunkError: Trying to access location (${at.x}, ${at.y}, ${at.z}) which is not in a chunk currently loaded and ticking.`);
+  };
   engine.overworld = {
+    isChunkLoaded: (at) => ticking(at),
     spawnEntity(typeId, at) {
+      refuse(at);
       const e = { id: `e${engine.spawned.length}`, typeId, isValid: true, removed: false, location: { ...at }, tags: [], dp: {}, props: {}, pending: [], writes: [], teleports: 0 };
       e.addTag = (t) => e.tags.push(t);
       e.setDynamicProperty = (k, v) => (e.dp[k] = v);
@@ -147,6 +157,7 @@ function fakeEngine() {
         e.writes.push({ k, v, tick: engine.tick });
       };
       e.teleport = (to) => {
+        refuse(to);
         e.teleports++;
         e.location = { ...to };
       };
@@ -162,9 +173,9 @@ function fakeEngine() {
   return engine;
 }
 
-function rig({ durations = PHASE_TICKS, theta01 = 0.25, spy = true } = {}) {
-  const engine = fakeEngine();
-  const r = { engine, ticks: 0, sounds: [], samples: [] };
+function rig({ durations = PHASE_TICKS, theta01 = 0.25, spy = true, ticking = undefined } = {}) {
+  const engine = fakeEngine(ticking);
+  const r = { engine, ticks: 0, sounds: [], samples: [], logs: [] };
   const target = { id: 'a', name: 'a', location: { x: CENTRE.x + 0.5, y: CENTRE.y + 1, z: CENTRE.z + 0.5 }, sendMessage() {} };
   const data = new Map();
   let now = 1_790_000_000_000;
@@ -178,13 +189,14 @@ function rig({ durations = PHASE_TICKS, theta01 = 0.25, spy = true } = {}) {
     random: () => 0,
     store: { get: (k) => data.get(k), set: (k, v) => (v === undefined ? data.delete(k) : data.set(k, v)) },
     ceiling: () => 320,
-    log() {},
+    log: (msg) => r.logs.push(msg),
   };
   r.saucer = createSaucer({
     overworld: () => engine.overworld,
     random: () => theta01,
     durations,
     ceiling: env.ceiling,
+    log: env.log,
     ...(spy ? { sound: (id, at) => r.sounds.push({ id, at: { ...at }, tick: r.ticks, phase: r.core.session()?.phase }) } : {}),
   });
   r.phases = [];
@@ -322,6 +334,104 @@ test('the hover re-teleports only when the entity drifts past HOVER_DRIFT; witho
   assert.ok(dist(e.location, hover) < 1e-9);
   assert.deepEqual(r.saucer.saucerPosition(), hover);
   assert.deepEqual(r.engine.played[0], { id: UFO_SOUNDS.on, at: hover, opts: { volume: SOUND_VOLUME } });
+});
+
+// ------------------------------------------------------------ the measured reach (one player's ticking disc)
+
+/** As measured on BDS 1.26.51.1 at tick-distance 4 (ufo_arrival_reach_measured): the chunks with dx² + dz² ≤ 17 around the player's. */
+const disc = (at) => {
+  const [pcx, pcz] = [Math.floor(at.x / 16), Math.floor(at.z / 16)];
+  return (q) => (Math.floor(q.x / 16) - pcx) ** 2 + (Math.floor(q.z / 16) - pcz) ** 2 <= 17;
+};
+
+/** Brute force: the last 0.05-block sample along the bearing whose chunk ticks. */
+function walked(ticking, from, theta, max) {
+  let reach = 0;
+  for (let d = 0; d <= max + 1e-9; d += 0.05) {
+    if (!ticking({ x: from.x + d * Math.cos(theta), y: from.y, z: from.z + d * Math.sin(theta) })) break;
+    reach = d;
+  }
+  return reach;
+}
+
+test('tickingReach: the whole leg where every chunk ticks, 0 where the first one does not, the column edge less the margin on an axis', () => {
+  const from = { x: 8.5, y: 0, z: 8.5 };
+  for (const theta of [0, 1, Math.PI / 4, Math.PI, 4]) assert.equal(tickingReach(() => true, from, theta, APPROACH_DISTANCE), APPROACH_DISTANCE);
+  assert.equal(tickingReach(() => false, from, 0, APPROACH_DISTANCE), 0);
+  // Columns 0…4 tick along +x: the first refused column starts at x 80, 71.5 out.
+  const row = (q) => Math.floor(q.x / 16) <= 4;
+  assert.equal(tickingReach(row, from, 0, APPROACH_DISTANCE), 80 - from.x - REACH_MARGIN);
+  assert.equal(tickingReach(row, from, Math.PI, APPROACH_DISTANCE), APPROACH_DISTANCE);
+});
+
+test('tickingReach over the measured disc: never past its edge, at most the margin short, 44+ blocks from any spot and bearing', () => {
+  let lo = Infinity;
+  let hi = 0;
+  for (const [ox, oz] of [[8.5, 8.5], [0.5, 0.5], [15.5, 15.5], [3.25, 12.75]]) {
+    const from = { x: 160 + ox, y: 100, z: -320 + oz };
+    const ticking = disc(from);
+    for (let k = 0; k < 360; k++) {
+      const theta = (k * Math.PI) / 180;
+      const reach = tickingReach(ticking, from, theta, APPROACH_DISTANCE);
+      const brute = walked(ticking, from, theta, APPROACH_DISTANCE);
+      for (let d = 0; d <= reach; d += 0.05) assert.ok(ticking({ x: from.x + d * Math.cos(theta), y: 0, z: from.z + d * Math.sin(theta) }), `${k}° from ${ox},${oz}: ${d} of ${reach} is outside`);
+      assert.ok(reach >= brute - REACH_MARGIN - 0.05 - 1e-9 && reach <= brute + 1e-9, `${k}° from ${ox},${oz}: reach ${reach}, walked ${brute}`);
+      lo = Math.min(lo, reach);
+      hi = Math.max(hi, reach);
+    }
+  }
+  assert.ok(lo >= 44 && hi < APPROACH_DISTANCE, `reach over the disc ${lo}…${hi}`);
+});
+
+test('arrivalBearing: the random bearing when it reaches 90; else the longest of ARRIVAL_BEARINGS around it, the earliest on a tie', () => {
+  const from = { x: 8.5, y: 0, z: 8.5 };
+  const seen = [];
+  const all = (q) => (seen.push(q), true);
+  assert.deepEqual(arrivalBearing(all, from, 2), { theta: 2, reach: APPROACH_DISTANCE });
+  const asked = seen.length;
+  assert.ok(asked <= 8, `${asked} columns asked for one full-length bearing`);
+  // Only −z ticks far: of eight bearings from 0, the one at 3π/2 wins.
+  const south = (q) => Math.floor(q.x / 16) === 0 && Math.floor(q.z / 16) <= 0;
+  const best = arrivalBearing(south, from, 0);
+  assert.ok(Math.abs(best.theta - (3 * Math.PI) / 2) < 1e-9 && best.reach === APPROACH_DISTANCE, JSON.stringify(best));
+  // One column, from its middle: the four diagonals tie at 8√2 − margin; the first of them wins.
+  const tie = arrivalBearing((q) => Math.floor(q.x / 16) === 0 && Math.floor(q.z / 16) === 0, { x: 8, y: 0, z: 8 }, 0);
+  assert.ok(Math.abs(tie.theta - Math.PI / 4) < 1e-12 && Math.abs(tie.reach - (8 * Math.SQRT2 - REACH_MARGIN)) < 1e-9, JSON.stringify(tie));
+  assert.equal(ARRIVAL_BEARINGS, 8);
+});
+
+test("the saucer over one player's disc: spawned at the measured reach, every step and the departure inside, both legs logged", () => {
+  const hover = { x: CENTRE.x + 0.5, z: CENTRE.z + 0.5 };
+  const ticking = disc(hover);
+  for (const theta01 of [0, 0.125, 0.3, 0.77]) {
+    const r = rig({ ticking, theta01 });
+    r.core.command('come', 'a');
+    r.until(() => r.core.session() === undefined && r.at('pause') !== undefined);
+    assert.equal(r.core.lastEnd().reason, 'departed', `θ ${theta01}: ended ${r.core.lastEnd().reason}; ${r.logs.join(' | ')}`);
+    const steps = r.samples.filter((x) => x.at !== undefined);
+    assert.ok(steps.every((x) => ticking(x.at)), `θ ${theta01}: a step outside the disc`);
+    const path = r.saucer.legs?.() ?? undefined;
+    assert.equal(path, undefined);
+    const spawn = r.samples.find((x) => x.tick === r.at('arrival')).at;
+    const out0 = horizontalDistance(CENTRE, spawn);
+    const last = steps.at(-1).at;
+    const out1 = horizontalDistance(CENTRE, last);
+    assert.ok(out0 >= 44 && out0 < APPROACH_DISTANCE && out1 >= 44 && out1 < APPROACH_DISTANCE, `θ ${theta01}: in from ${out0}, out to ${out1}`);
+    assert.ok(ticking(spawn) && spawn.y === HOVER_Y + 10);
+    const theta = Math.atan2(spawn.z - hover.z, spawn.x - hover.x);
+    const back = Math.atan2(last.z - hover.z, last.x - hover.x);
+    assert.ok(Math.abs(Math.cos(theta - back) + 1) < 1e-9, `θ ${theta01}: the departure is not opposite the arrival`);
+    assert.ok(r.logs.some((l) => l.includes(`saucer in from ${out0.toFixed(2)} blocks`)), r.logs.join(' | '));
+    assert.ok(r.logs.some((l) => l.includes(`saucer out to ${out1.toFixed(2)} blocks`)), r.logs.join(' | '));
+  }
+});
+
+test('the nominal 90-block start over the same disc throws, as on the live server', () => {
+  const ticking = disc({ x: CENTRE.x + 0.5, z: CENTRE.z + 0.5 });
+  for (let k = 0; k < 64; k++) {
+    const p = flightPath(CENTRE, HOVER_Y, 320, (k / 64) * 2 * Math.PI);
+    assert.equal(ticking(p.start), false, `the disc holds ${JSON.stringify(p.start)}, 90 out`);
+  }
 });
 
 // ------------------------------------------------------------ the packs (R-sauc-3, L0-sauc-ent1)
