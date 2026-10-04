@@ -33,6 +33,7 @@ import {
   type Magnet,
   NOTICE_RANGE,
   type Phase,
+  type PhaseListener,
   type PhasePayload,
   SAUCER_ID,
   type Saucer,
@@ -160,6 +161,8 @@ interface Rig {
   host: SpyHost;
   players: SimulatedPlayer[];
   inbox: Map<string, RawMessage[]>;
+  /** Every line the core logged. */
+  logs: string[];
   phases: PhaseRec[];
   steps: StepRec[];
   /** Script time spent inside the saucer and the recording magnet. */
@@ -170,11 +173,19 @@ interface Rig {
   stop(): void;
 }
 
-function rig(opts: { durations: UfoDurations; random: () => number }): Rig {
+function rig(opts: {
+  durations: UfoDurations;
+  random: () => number;
+  /** Heard before the recorder, after the saucer and the magnet. */
+  extra?: readonly PhaseListener[];
+  /** The saucer's arrival throws before the product saucer hears it, as a spawn in an unloaded chunk does. */
+  failArrival?: boolean;
+}): Rig {
   const clock = new TestClock();
   const store = new CountingStore();
   const players: SimulatedPlayer[] = [];
   const inbox = new Map<string, RawMessage[]>();
+  const logs: string[] = [];
   const box = (name: string): RawMessage[] => {
     let list = inbox.get(name);
     if (list === undefined) inbox.set(name, (list = []));
@@ -200,7 +211,10 @@ function rig(opts: { durations: UfoDurations; random: () => number }): Rig {
     random: opts.random,
     store,
     ceiling: () => world.getDimension("overworld").heightRange.max,
-    log: (msg) => console.warn(`[gametest] ${msg}`),
+    log: (msg) => {
+      logs.push(msg);
+      console.warn(`[gametest] ${msg}`);
+    },
   };
   const saucer = createSaucer({ overworld: () => world.getDimension("overworld"), random: opts.random, durations: opts.durations, ceiling: env.ceiling });
   const r: Partial<Rig> & { phases: PhaseRec[]; steps: StepRec[] } = { phases: [], steps: [], consumerMs: 0, timing: false };
@@ -218,7 +232,11 @@ function rig(opts: { durations: UfoDurations; random: () => number }): Rig {
   let core: UfoCore | undefined;
   // Every member of the Saucer contract, delegated to the product saucer.
   const recordingSaucer: Saucer = {
-    onPhase: (phase, payload) => timedCall(() => saucer.onPhase(phase, payload)),
+    onPhase: (phase, payload) =>
+      timedCall(() => {
+        if (opts.failArrival === true && phase === "arrival") throw new Error(`LocationInUnloadedChunkError stand-in: no saucer for ${payload.eventId}`);
+        saucer.onPhase(phase, payload);
+      }),
     saucerStep: (tick) =>
       timedCall(() => {
         saucer.saucerStep(tick);
@@ -236,7 +254,7 @@ function rig(opts: { durations: UfoDurations; random: () => number }): Rig {
       r.phases.push({ phase, payload, tick: system.currentTick, call: host.calls, now: clock.peek(), wallMs: Date.now(), entityAt: e?.location, entityDim: e?.dimension.id });
     },
   };
-  core = new UfoCore(env, { scope: SCOPE, saucer: recordingSaucer, magnet, listeners: [recorder] });
+  core = new UfoCore(env, { scope: SCOPE, saucer: recordingSaucer, magnet, listeners: [...(opts.extra ?? []), recorder] });
   const undo = startUfo(core, world, host);
   current = core;
   return Object.assign(r, {
@@ -248,6 +266,7 @@ function rig(opts: { durations: UfoDurations; random: () => number }): Rig {
     host,
     players,
     inbox,
+    logs,
     next: () => {
       const v = store.data.get(NEXT_MS);
       return typeof v === "number" ? v : undefined;
@@ -684,6 +703,76 @@ registerAsync("andrew", "ufo_arrival_notice", async (test: Test): Promise<void> 
   .maxTicks(900)
   .tag("andrew");
 
+// ------------------------------------------------ one listener's failure is its own (UFOC-ARRIVE)
+
+const STUB = "gt_throwing_stub";
+
+registerAsync("andrew", "ufo_listener_throws", async (test: Test): Promise<void> => {
+  const heard: Phase[] = [];
+  const stub = {
+    name: STUB,
+    onPhase: (phase: Phase): void => {
+      heard.push(phase);
+      throw new Error(`${STUB} refuses ${phase}`);
+    },
+  };
+  const unload = await loadCorridor(test, "andrew_gt_ufo_l");
+  let r = rig({ durations: SHORT, random: () => 0, extra: [stub] });
+  try {
+    const p = test.spawnSimulatedPlayer(STAND, "ufo_listener", GameMode.Survival);
+    r.players.push(p);
+    await test.idle(4);
+
+    // A listener that throws on every phase: the saucer, the magnet and the recorder after it go on.
+    test.assert(r.core.command("come", p.id).ok, "come was refused");
+    await waitFor(test, () => r.of("pause").length === 1, SHORT.arrival + SHORT.magnet + SHORT.departure + 20, "the event to end");
+    const order = r.phases.map((x) => x.phase).join(" → ");
+    const blamed = r.logs.filter((l) => l.includes(`the ${STUB} listener threw`));
+    const [arrival, magnet] = [r.of("arrival")[0], r.of("magnet")[0]];
+    log(
+      `listener RESULT throwing stub: recorder heard ${order}; stub heard ${heard.join(" → ")}; ended (${r.core.lastEnd()?.reason ?? "?"}); ` +
+        `saucer at the arrival ${arrival?.entityAt === undefined ? "none" : fmt(arrival.entityAt)}, at the magnet ${magnet?.entityAt === undefined ? "none" : fmt(magnet.entityAt)}; ` +
+        `notices ${(r.inbox.get(p.name) ?? []).length}; log lines naming the stub ${blamed.length}: ${blamed.join(" | ")}`
+    );
+    test.assert(order === "arrival → magnet → release → departure → pause", `a throwing listener cut the event to ${order}`);
+    test.assert(r.core.lastEnd()?.reason === "departed", `the event ended by ${r.core.lastEnd()?.reason ?? "?"}, not departed`);
+    test.assert(heard.join(" → ") === order, `the stub heard ${heard.join(" → ")}`);
+    test.assert(arrival?.entityAt !== undefined && magnet?.entityAt !== undefined, "the saucer did not fly past the stub's failures");
+    test.assert((r.inbox.get(p.name) ?? []).length === 1, `the target got ${(r.inbox.get(p.name) ?? []).length} notices, not 1`);
+    for (const phase of ["arrival", "magnet", "release", "departure", "pause"])
+      test.assert(
+        blamed.some((l) => l.includes(`threw on ${phase}`) && l.includes(`${STUB} refuses ${phase}`)),
+        `no log line names the ${STUB} listener's failure on ${phase}`
+      );
+    test.assert(!r.logs.some((l) => l.includes("aborting")), `a listener's failure aborted: ${r.logs.filter((l) => l.includes("aborting")).join(" | ")}`);
+    r.stop();
+
+    // The saucer's own arrival failing: no saucer, so no event and no notice of one.
+    r = rig({ durations: SHORT, random: () => 0, failArrival: true });
+    r.players.push(p);
+    test.assert(r.core.command("come", p.id).ok, "come to the failing saucer was refused");
+    await waitFor(test, () => r.of("pause").length === 1, 10, "the event without a saucer to end");
+    const failed = r.of("arrival")[0];
+    const ended = r.of("pause")[0];
+    const saucerLine = r.logs.filter((l) => l.includes("the saucer listener threw on arrival"));
+    log(
+      `listener RESULT failing saucer: ${r.phases.map((x) => x.phase).join(" → ")}, ended (${r.core.lastEnd()?.reason ?? "?"}) after ${ended.call - failed.call} UFO ticks; ` +
+        `notices ${(r.inbox.get(p.name) ?? []).length}; next_ms now + ${(r.next() ?? 0) - r.clock.peek()} ms; ${saucerLine.join(" | ")}`
+    );
+    test.assert(r.core.lastEnd()?.reason === "abort" && ended.call - failed.call <= 2, `without a saucer the event ended by ${r.core.lastEnd()?.reason ?? "?"} after ${ended.call - failed.call} ticks`);
+    test.assert((r.inbox.get(p.name) ?? []).length === 0, `the target was told of a UFO that never appeared (${(r.inbox.get(p.name) ?? []).length} notices)`);
+    test.assert(saucerLine.length === 1, `${saucerLine.length} log lines name the saucer listener's failure on arrival`);
+    test.assert(r.next() === r.clock.peek() + PAUSE_MS, `after the failed arrival next_ms = now + ${(r.next() ?? 0) - r.clock.peek()} ms, not + ${PAUSE_MS}`);
+  } finally {
+    r.stop();
+    unload();
+  }
+  test.succeed();
+})
+  .structureName(STRUCTURE)
+  .maxTicks(600)
+  .tag("andrew");
+
 // ------------------------------------------------ AC#8: the idle cost (L0-ufoc-ac08, C-5d)
 
 const IDLE_TICKS = 2000;
@@ -735,5 +824,6 @@ export const UFO_CORE_TESTS = [
   "ufo_overworld_only",
   "ufo_commands_operator",
   "ufo_arrival_notice",
+  "ufo_listener_throws",
   "ufo_idle_budget",
 ];

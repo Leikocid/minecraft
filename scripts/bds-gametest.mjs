@@ -338,6 +338,7 @@ const EXPECTED_TESTS = [
   'andrew:ufo_overworld_only',
   'andrew:ufo_commands_operator',
   'andrew:ufo_arrival_notice',
+  'andrew:ufo_listener_throws',
   'andrew:ufo_idle_budget',
   // MAGN-SCAN-01 — src/gametest/ufo-magnet-select.ts
   'andrew:ufo_iron_ids_resolve',
@@ -359,6 +360,8 @@ const EXPECTED_TESTS = [
   'andrew:ufo_saucer_flight',
   'andrew:ufo_saucer_immune',
   'andrew:ufo_saucer_beam_stop',
+  'andrew:ufo_arrival_reach_measured',
+  'andrew:ufo_arrival_single_player',
   // SAUC-SHOOT-01 — src/gametest/ufo-shootdown.ts
   'andrew:ufo_shootdown_seam',
   'andrew:ufo_shootdown_arrival',

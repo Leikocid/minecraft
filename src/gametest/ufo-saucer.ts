@@ -11,7 +11,21 @@ import { BlockPermutation, BlockVolume, type Dimension, type Entity, EntityDamag
 import { type SimulatedPlayer, type Test, registerAsync } from "@minecraft/server-gametest";
 import { startUfo } from "../ufo";
 import { FIRST_MAX_MS, FIRST_MIN_MS, PAUSE_MS, PHASE_TICKS, type UfoDurations, type UfoEnv, type UfoPlayer, overworldCandidates } from "../ufo/env";
-import { EVENT_TAG, type IntervalHost, type Phase, type PhasePayload, SAUCER_ID, type Saucer, UFO_FAMILY, UfoCore, horizontalDistance } from "../ufo/event";
+import {
+  EVENT_TAG,
+  IDLE_CHECK_TICKS,
+  type IntervalHost,
+  type Phase,
+  type PhasePayload,
+  SAUCER_ID,
+  type Saucer,
+  UFO_FAMILY,
+  UfoCore,
+  centreUnder,
+  horizontalDistance,
+  hoverHeight,
+} from "../ufo/event";
+import { NEXT_MS } from "../ufo/schedule";
 import {
   APPROACH_DISTANCE,
   BEAM_LEN_PROPERTY,
@@ -24,6 +38,7 @@ import {
   beamLength,
   createSaucer,
   flightPath,
+  legHeight,
   playUfoSound,
 } from "../ufo/saucer";
 import { goTo } from "./orbital-core";
@@ -131,6 +146,11 @@ interface Rig {
   samples: Sample[];
   phases: PhaseRec[];
   sounds: SoundRec[];
+  /** Every line the core logged. */
+  logs: string[];
+  /** Arrival notices by player name. */
+  notices: Map<string, number>;
+  store: MemoryStore;
   calls(): number;
   of(phase: Phase): PhaseRec[];
   stop(): void;
@@ -149,6 +169,9 @@ function rig(opts: { durations: UfoDurations; theta01: number; ceiling: () => nu
   const samples: Sample[] = [];
   const phases: PhaseRec[] = [];
   const sounds: SoundRec[] = [];
+  const logs: string[] = [];
+  const notices = new Map<string, number>();
+  const store = new MemoryStore();
   let core: UfoCore | undefined;
   const env: UfoEnv = {
     now: () => Date.now(),
@@ -156,11 +179,15 @@ function rig(opts: { durations: UfoDurations; theta01: number; ceiling: () => nu
     pauseMs: PAUSE_MS,
     firstMinMs: FIRST_MIN_MS,
     firstMaxMs: FIRST_MAX_MS,
-    overworldPlayers: (): UfoPlayer[] => overworldCandidates(opts.players).map((p) => ({ id: p.id, name: p.name, location: p.location, sendMessage: () => {} })),
+    overworldPlayers: (): UfoPlayer[] =>
+      overworldCandidates(opts.players).map((p) => ({ id: p.id, name: p.name, location: p.location, sendMessage: () => void notices.set(p.name, (notices.get(p.name) ?? 0) + 1) })),
     random: () => 0,
-    store: new MemoryStore(),
+    store,
     ceiling: opts.ceiling,
-    log: (msg) => console.warn(`[gametest] ${msg}`),
+    log: (msg) => {
+      logs.push(msg);
+      console.warn(`[gametest] ${msg}`);
+    },
   };
   // The product saucer; its sound hook is the counted wrapper around the product playUfoSound.
   const saucer = createSaucer({
@@ -214,6 +241,9 @@ function rig(opts: { durations: UfoDurations; theta01: number; ceiling: () => nu
     samples,
     phases,
     sounds,
+    logs,
+    notices,
+    store,
     calls: () => calls,
     of: (phase) => phases.filter((x) => x.phase === phase),
     stop: () => {
@@ -679,6 +709,221 @@ registerAsync("andrew", "ufo_saucer_beam_stop", async (test: Test): Promise<void
   } finally {
     r.stop();
     p.unload();
+  }
+  test.succeed();
+})
+  .structureName(STRUCTURE)
+  .maxTicks(1400)
+  .tag("andrew");
+
+// ------------------------------------------- one player alone: the chunks the engine keeps ticking around them
+
+const LONE_SITE_DZ = 2600;
+/** Chunks each way kept loaded while the player arrives, then released. */
+const LONE_PRELOAD = 7;
+/** Chunks each way mapped around the player's chunk. */
+const REACH_SCAN = 9;
+const REACH_MAX = 160;
+const REACH_BEARINGS = 24;
+
+const ticking = (dim: Dimension, at: Vector3): boolean => {
+  try {
+    return dim.isChunkLoaded(at);
+  } catch {
+    return false;
+  }
+};
+
+/** Blocks from `from` along `theta` to the last quarter-block sample whose chunk is loaded and ticking. */
+function reachAlong(dim: Dimension, from: Vector3, theta: number, max: number): number {
+  const [c, s] = [Math.cos(theta), Math.sin(theta)];
+  let reach = 0;
+  for (let d = 0; d <= max; d += 0.25) {
+    if (!ticking(dim, { x: from.x + d * c, y: from.y, z: from.z + d * s })) break;
+    reach = d;
+  }
+  return reach;
+}
+
+function chunkMap(dim: Dimension, at: Vector3): { rows: string[]; count: number; chebyshev: number; euclid: number } {
+  const pcx = Math.floor(at.x / 16);
+  const pcz = Math.floor(at.z / 16);
+  const rows: string[] = [];
+  let count = 0;
+  let chebyshev = -1;
+  let euclid = -1;
+  for (let dz = -REACH_SCAN; dz <= REACH_SCAN; dz++) {
+    let row = "";
+    for (let dx = -REACH_SCAN; dx <= REACH_SCAN; dx++) {
+      const on = ticking(dim, { x: (pcx + dx) * 16 + 8, y: at.y, z: (pcz + dz) * 16 + 8 });
+      row += dx === 0 && dz === 0 ? (on ? "P" : "p") : on ? "#" : ".";
+      if (!on) continue;
+      count++;
+      chebyshev = Math.max(chebyshev, Math.abs(dx), Math.abs(dz));
+      euclid = Math.max(euclid, Math.hypot(dx, dz));
+    }
+    rows.push(row);
+  }
+  return { rows, count, chebyshev, euclid };
+}
+
+function spawnProbe(dim: Dimension, at: Vector3): string {
+  try {
+    dim.spawnEntity(SAUCER_ID, at).remove();
+    return "spawned";
+  } catch (err) {
+    return `threw ${errText(err)}`;
+  }
+}
+
+interface Lone {
+  dim: Dimension;
+  sim: SimulatedPlayer;
+  /** The block the player stands on. */
+  ground: Vector3;
+  /** The window's loaded+ticking chunks while the preload held, and after its release. */
+  held: number;
+  kept: number;
+}
+
+/**
+ * A simulated player standing in the middle of a chunk at (x, z), and nothing else
+ * holding the chunks around: the site is preloaded so that the player lands on
+ * ground, then the ticking areas are released. Simulated players load no chunks,
+ * but they keep the ones in their tick distance ticking.
+ */
+async function alone(test: Test, name: string, x: number, z: number): Promise<Lone> {
+  const dim = test.getDimension();
+  const span = LONE_PRELOAD * 16;
+  const release = await loadBox(test, dim, name, { min: [x - span, 0, z - span], max: [x + span, 0, z + span] });
+  const sim = test.spawnSimulatedPlayer(STAND, `${name}_p`, GameMode.Survival);
+  try {
+    const mx = Math.floor(x / 16) * 16 + 8;
+    const mz = Math.floor(z / 16) * 16 + 8;
+    const top = dim.getTopmostBlock({ x: mx, z: mz });
+    if (top === undefined) throw new Error(`${name}: no ground at ${mx},${mz}`);
+    for (const e of dim.getEntities({ location: { x: mx + 0.5, y: top.location.y, z: mz + 0.5 }, maxDistance: 24 })) if (e !== undefined && e.isValid && e.typeId !== "minecraft:player") e.remove();
+    await goTo(test, sim, dim, { x: mx, y: top.location.y + 1, z: mz });
+    await test.idle(20);
+    const held = chunkMap(dim, sim.location).count;
+    release();
+    await test.idle(10);
+    return { dim, sim, ground: top.location, held, kept: chunkMap(dim, sim.location).count };
+  } catch (err) {
+    release();
+    test.removeSimulatedPlayer(sim);
+    throw err;
+  }
+}
+
+// ------------------------------------------- the measurement the arrival's start is chosen by
+
+registerAsync("andrew", "ufo_arrival_reach_measured", async (test: Test): Promise<void> => {
+  const origin = test.worldBlockLocation({ x: 0, y: 0, z: 0 });
+  const lone = await alone(test, "andrew_gt_reach", origin.x + SITE_DX, origin.z + LONE_SITE_DZ);
+  const { dim, sim } = lone;
+  try {
+    const counts: string[] = [];
+    let waited = 0;
+    for (const t of [20, 100, 200]) {
+      await test.idle(t - waited);
+      waited = t;
+      counts.push(`+${t}: ${chunkMap(dim, sim.location).count}`);
+    }
+    log(`reach RESULT ticking areas released; chunks loaded+ticking in the ${2 * REACH_SCAN + 1}² window: ${lone.held} held by the preload, then ${lone.kept} (+10), ${counts.join(", ")}`);
+    const cx = Math.floor(lone.ground.x / 16) * 16;
+    const cz = Math.floor(lone.ground.z / 16) * 16;
+    const spots: Array<[string, number, number]> = [
+      ["chunk middle", cx + 8, cz + 8],
+      ["chunk -x-z corner", cx, cz],
+      ["chunk +x+z corner", cx + 15, cz + 15],
+    ];
+    for (const [label, x, z] of spots) {
+      await goTo(test, sim, dim, { x, y: lone.ground.y + 1, z });
+      await test.idle(40);
+      const at = sim.location;
+      const m = chunkMap(dim, at);
+      const reach = Array.from({ length: REACH_BEARINGS }, (_, k) => reachAlong(dim, at, (2 * Math.PI * k) / REACH_BEARINGS, REACH_MAX));
+      const lo = Math.min(...reach);
+      const hi = Math.max(...reach);
+      const east = reach[0];
+      const edge = spawnProbe(dim, { x: at.x + east - 0.5, y: at.y + 40, z: at.z });
+      const past = spawnProbe(dim, { x: at.x + east + 1, y: at.y + 40, z: at.z });
+      log(
+        `reach RESULT ${label} at ${fmt(at)}: ${m.count} chunks, Chebyshev ${m.chebyshev}, Euclid ${m.euclid.toFixed(2)} chunks; ` +
+          `reach by ${360 / REACH_BEARINGS}° from east: ${reach.map((d) => d.toFixed(1)).join(" ")}; min ${lo.toFixed(2)}, max ${hi.toFixed(2)}; ` +
+          `spawnEntity at east reach − 0.5: ${edge}; at east reach + 1: ${past}`
+      );
+      log(`reach RESULT ${label} map (P = the player's chunk, # = loaded and ticking):\n${m.rows.join("\n")}`);
+      test.assert(m.count > 0, `${label}: no chunk is loaded and ticking around the player — the measurement measured nothing`);
+      test.assert(edge === "spawned" && past.startsWith("threw"), `${label}: spawnEntity disagrees with isChunkLoaded at the edge (${edge} / ${past})`);
+    }
+  } finally {
+    test.removeSimulatedPlayer(sim);
+  }
+  test.succeed();
+})
+  .structureName(STRUCTURE)
+  .maxTicks(1200)
+  .tag("andrew");
+
+// ------------------------------------------- the arrival over one player who alone holds the chunks
+
+const ARRIVE: UfoDurations = { arrival: PHASE_TICKS.arrival, magnet: 100, departure: PHASE_TICKS.departure, downed: 10 };
+/** Two and a half chunks: the saucer comes in from afar, not out of the player's own chunk. */
+const LONE_MIN_OUT = 40;
+
+registerAsync("andrew", "ufo_arrival_single_player", async (test: Test): Promise<void> => {
+  const origin = test.worldBlockLocation({ x: 0, y: 0, z: 0 });
+  const lone = await alone(test, "andrew_gt_arrive", origin.x + SITE_DX + SITE_STEP, origin.z + LONE_SITE_DZ);
+  const { dim, sim } = lone;
+  const ceiling = dim.heightRange.max;
+  const r = rig({ durations: ARRIVE, theta01: 0, ceiling: () => ceiling, players: [sim] });
+  try {
+    const centre = centreUnder(sim.location);
+    const hoverY = hoverHeight(centre.y, ceiling);
+    const legY = legHeight(hoverY, ceiling);
+    const nominal = flightPath(centre, hoverY, ceiling, 0).start;
+    const from = { x: centre.x + 0.5, y: legY, z: centre.z + 0.5 };
+    log(
+      `single RESULT one player at ${fmt(sim.location)}: ${lone.kept} chunks loaded and ticking after the preload's release; ` +
+        `the §2 start ${APPROACH_DISTANCE} east ${fmt(nominal)} is ${ticking(dim, nominal) ? "" : "NOT "}loaded and ticking; measured reach east ${reachAlong(dim, from, 0, REACH_MAX).toFixed(2)}`
+    );
+    test.assert(lone.kept > 0, "no chunk stays ticking around the lone player — the scenario is wrong");
+    test.assert(!ticking(dim, nominal), `the scenario is wrong: ${fmt(nominal)}, ${APPROACH_DISTANCE} blocks out, is loaded and ticking`);
+
+    // As on the live server: the arrival falls due and the idle check starts it.
+    r.store.set(NEXT_MS, Date.now() - 1);
+    await waitFor(test, () => r.of("arrival").length === 1, IDLE_CHECK_TICKS + 5, "the scheduled arrival");
+    await waitFor(test, () => r.of("pause").length === 1, ARRIVE.arrival + ARRIVE.magnet + ARRIVE.departure + 20, "the event to end");
+    const [arrival] = r.of("arrival");
+    const [pause] = r.of("pause");
+    const order = r.phases.map((x) => x.phase).join(" → ");
+    const end = r.core.lastEnd();
+    const spawnAt = arrival.at;
+    const last = r.samples.at(-1)?.after;
+    const invalid = r.samples.filter((x) => x.after === undefined);
+    log(
+      `single RESULT ${order}; ended (${end?.reason ?? "?"}) ${pause.call - arrival.call} UFO ticks after the arrival; saucers at the arrival ${arrival.saucers}; ` +
+        `spawn ${fmt(spawnAt)} ${spawnAt === undefined ? "-" : horizontalDistance(centre, spawnAt).toFixed(2)} out; last step ${fmt(last)} ${last === undefined ? "-" : horizontalDistance(centre, last).toFixed(2)} out; ` +
+        `${r.samples.length} steps, ${invalid.length} without a saucer; notices ${sim.name}: ${r.notices.get(sim.name) ?? 0}`
+    );
+    if (spawnAt === undefined || arrival.saucers !== 1)
+      throw new Error(`no saucer in the arrival tick: the event ended (${end?.reason ?? "?"}) after ${pause.call - arrival.call} UFO ticks — ${order}`);
+    test.assert(order === "arrival → magnet → release → departure → pause" && end?.reason === "departed", `phases ${order}, ended by ${end?.reason ?? "?"}`);
+    test.assert(invalid.length === 0 && r.samples.length === pause.call - arrival.call - 1, `${r.samples.length} steps, ${invalid.length} of them without a valid saucer`);
+    const out0 = horizontalDistance(centre, spawnAt);
+    test.assert(out0 >= LONE_MIN_OUT && out0 <= APPROACH_DISTANCE + 0.01, `the saucer spawned ${out0.toFixed(2)} out, not within [${LONE_MIN_OUT}, ${APPROACH_DISTANCE}]`);
+    test.assert(ticking(dim, spawnAt), `the spawn point ${fmt(spawnAt)} is not loaded and ticking`);
+    if (last === undefined) throw new Error("no last step");
+    const out1 = horizontalDistance(centre, last);
+    test.assert(out1 >= LONE_MIN_OUT && out1 <= APPROACH_DISTANCE + 0.01, `the departure ended ${out1.toFixed(2)} out, not within [${LONE_MIN_OUT}, ${APPROACH_DISTANCE}]`);
+    test.assert(bearingDot(centre, spawnAt, last) <= -0.99, `the departure ended on bearing dot ${bearingDot(centre, spawnAt, last).toFixed(4)} to the spawn`);
+    test.assert((r.notices.get(sim.name) ?? 0) === 1, `the target got ${r.notices.get(sim.name) ?? 0} notices, not 1`);
+    test.assert(pause.saucers === 0 && saucersInOverworld() === 0, `${pause.saucers} saucers at the pause, ${saucersInOverworld()} now`);
+  } finally {
+    r.stop();
+    test.removeSimulatedPlayer(sim);
   }
   test.succeed();
 })
