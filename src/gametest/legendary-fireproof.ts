@@ -1,26 +1,24 @@
-// CNTR-XCX10-AA / LGND-FIREPROOF-01-AA (W1): Orbital §5 wants a legendary to
-// never be destroyed. minecraft:fire_resistant (format_version >= 1.21.90)
-// meets this literally for fire and lava — the item entity survives instead
-// of vanishing, so recovery.ts never sees a loss and never queues a return.
-// This replaces the old andrew:legendary_survives_lava, which removed the
-// surviving entity itself and so stayed green testing nothing (F1 of the
-// diagnose report).
+// Every legendary in LEGENDARIES against the hazards that destroy an item
+// entity (Orbital §5, Katana T17, L0-lgnd-ac24).
 //
-// Cactus, an explosion and despawn are not covered by the component; that
-// fallback (destroyed -> returned) is exercised by legendary_returns_from_void
-// in main.ts, which stays on the same "destroyed means returned" path for the
-// Void per §5 itself.
+// Fire and lava are prevented: minecraft:fire_resistant (format_version >=
+// 1.21.90) keeps the marked entity in place, so recovery.ts never sees a loss.
+// Cactus, a primed TNT and despawn have no stable component, so the entity is
+// destroyed and recovery.ts hands the instance back at gen + 1 (C-16, L0-xcx21).
+// The Void, the other return path, is held by legendary_returns_from_void
+// (main.ts) and legendary_katana_void_* (legendary-recovery.ts).
 
 import { type Container, type Dimension, type Entity, GameMode, ItemStack, type Player, type Vector3 } from "@minecraft/server";
 import { type Test, registerAsync } from "@minecraft/server-gametest";
 import { LEGENDARIES, type LegendaryDef } from "../legendary/registry";
 import { isLegendaryItemEntity } from "../legendary/recovery";
 import { type Mark } from "../legendary/rules";
-import { findAllMarked, ledgerGen, makeMark, markItem, readPending } from "../legendary/state";
+import { findAllMarked, getMark, ledgerGen, makeMark, markItem, readPending } from "../legendary/state";
 
 const STRUCTURE = "andrew:platform";
 const STAND: Vector3 = { x: 2, y: 2, z: 5 };
-const SURVIVE_TICKS = 80;
+/** Katana T17: still in place after 10 s. */
+const SURVIVE_TICKS = 200;
 const CONTROL_ITEM_ID = "minecraft:diamond_sword";
 
 const log = (msg: string): void => console.warn(`[gametest] fireproof ${msg}`);
@@ -31,23 +29,27 @@ interface Cell {
   cell: Vector3;
 }
 
-// Cells two apart on the platform floor (stone at test-relative y=1), one per
-// legendary, plus a vanilla control that the same cell destroys. Generated from
-// the registry: a weapon added later is covered without editing this list.
-//
-// A single row (x = 1 + 2*i) ran the Dragon Katana off the 7-wide platform's
-// edge at x=7 — outside the generated structure, with no floor under it, its
-// dropped item fell away before the TNT/cactus scenarios below ever reached
-// it ("not destroyed" with nothing actually wrong). A 2-column grid keeps
-// every weapon on the platform (x, z in {1,3,5,...}) up to 6 legendaries
-// before it would need to grow again; the control stays in its own x=5
-// column so it never lands on a weapon cell.
+/** The platform scripts/bds-gametest.mjs writes is PLATFORM_SIZE × PLATFORM_SIZE. */
+const PLATFORM_SIZE = 7;
+
+// One cell per legendary, two apart on the platform floor (stone at
+// test-relative y=1), generated from the registry. Columns x=1,3 and rows
+// z=1,3,5 hold six legendaries; a seventh runs off the platform, where its item
+// has no floor and falls out of every hazard's reach, and assertOnPlatform()
+// fails the scenario. The vanilla control has the x=5 column to itself.
 const GRID_COLUMNS = 2;
 const CELLS: Cell[] = LEGENDARIES.map((def, i) => ({
   def,
   cell: { x: 1 + 2 * (i % GRID_COLUMNS), y: 2, z: 1 + 2 * Math.floor(i / GRID_COLUMNS) },
 }));
 const CONTROL_CELL: Vector3 = { x: 5, y: 2, z: 3 };
+
+function assertOnPlatform(test: Test): void {
+  for (const { def, cell } of CELLS) {
+    const on = cell.x >= 0 && cell.x < PLATFORM_SIZE && cell.z >= 0 && cell.z < PLATFORM_SIZE;
+    test.assert(on, `${def.itemId}'s cell ${cell.x},${cell.z} lies off the ${PLATFORM_SIZE}×${PLATFORM_SIZE} platform`);
+  }
+}
 
 function spawnMarked(test: Test, dim: Dimension, owner: Player, def: LegendaryDef, cell: Vector3): { entity: Entity; mark: Mark } {
   const mark = makeMark("admin", owner);
@@ -57,10 +59,12 @@ function spawnMarked(test: Test, dim: Dimension, owner: Player, def: LegendaryDe
 
 /**
  * Drops a marked instance of every legendary, plus a vanilla control, into the
- * same destructive block, and checks each legendary is still a valid entity
- * (not destroyed, not returned) while the control is gone.
+ * same destructive block, and checks each legendary is still a valid entity in
+ * its own cell with the same id and generation (not destroyed, not returned)
+ * while the control is gone.
  */
 async function scenario(test: Test, block: string): Promise<void> {
+  assertOnPlatform(test);
   const dim = test.getDimension();
   const owner = test.spawnSimulatedPlayer(STAND, `andrew_fireproof_${block.replace("minecraft:", "")}`, GameMode.Survival);
   await test.idle(2);
@@ -70,7 +74,7 @@ async function scenario(test: Test, block: string): Promise<void> {
   for (const { cell } of CELLS) test.setBlockType("minecraft:netherrack", { x: cell.x, y: cell.y - 1, z: cell.z });
   test.setBlockType("minecraft:netherrack", { x: CONTROL_CELL.x, y: CONTROL_CELL.y - 1, z: CONTROL_CELL.z });
 
-  const spawned = CELLS.map(({ def, cell }) => ({ def, entity: spawnMarked(test, dim, owner, def, cell).entity }));
+  const spawned = CELLS.map(({ def, cell }) => ({ def, cell, ...spawnMarked(test, dim, owner, def, cell) }));
   const controlAt = test.worldLocation({ x: CONTROL_CELL.x + 0.5, y: CONTROL_CELL.y + 0.2, z: CONTROL_CELL.z + 0.5 });
   const control = dim.spawnItem(new ItemStack(CONTROL_ITEM_ID, 1), controlAt);
   // spawnItem gives the item a random shove (returnPath below hits the same
@@ -86,14 +90,28 @@ async function scenario(test: Test, block: string): Promise<void> {
   test.setBlockType(block, CONTROL_CELL);
   await test.idle(SURVIVE_TICKS);
 
-  for (const { def, entity } of spawned) {
-    test.assert(entity.isValid, `${def.itemId} was destroyed in ${block} — minecraft:fire_resistant is missing or not honoured`);
+  const rows = spawned.map(({ def, cell, entity, mark }) => {
+    const stack = entity.isValid ? entity.getComponent("minecraft:item")?.itemStack : undefined;
+    const now = stack === undefined ? undefined : getMark(def, stack);
+    const at = entity.isValid ? entity.location : undefined;
+    const home = test.worldBlockLocation(cell);
+    const inCell = at !== undefined && Math.floor(at.x) === home.x && Math.floor(at.z) === home.z;
+    const where = at === undefined ? "gone" : `${(at.x - home.x).toFixed(2)},${(at.y - home.y).toFixed(2)},${(at.z - home.z).toFixed(2)} from its cell`;
+    return { def, mark, alive: entity.isValid, now, inCell, where, ledger: ledgerGen(def, mark.id), pending: readPending(def, owner).length };
+  });
+  log(
+    `${block} RESULT after ${SURVIVE_TICKS} ticks: ` +
+      rows.map((r) => `${r.def.itemId} ${r.alive ? "alive" : "DESTROYED"} at ${r.where}, id ${r.now?.id === r.mark.id ? "same" : (r.now?.id ?? "-")} gen ${r.now?.gen ?? "-"} ledger ${r.ledger}`).join(" | ") +
+      `; ${CONTROL_ITEM_ID} ${control.isValid ? "survived" : "destroyed"}`
+  );
+  for (const r of rows) {
+    test.assert(r.alive, `${r.def.itemId} was destroyed in ${block} — minecraft:fire_resistant is missing or not honoured`);
+    test.assert(r.inCell, `${r.def.itemId} left its cell in ${block}: ${r.where}`);
+    test.assert(r.now?.id === r.mark.id && r.now.gen === r.mark.gen, `${r.def.itemId} in ${block} reads id ${r.now?.id ?? "-"} gen ${r.now?.gen ?? "-"}, was ${r.mark.id} gen ${r.mark.gen}`);
+    test.assert(r.ledger === r.mark.gen, `${block}: the ledger moved ${r.def.itemId} to gen ${r.ledger} — it was returned, not kept in place`);
+    test.assert(r.pending === 0, `${block}: a return was queued for ${r.def.itemId} even though it survived in place`);
   }
   test.assert(!control.isValid, `${CONTROL_ITEM_ID} survived ${block} — the probe cell does not actually destroy items, so the assertion above proves nothing`);
-  for (const def of LEGENDARIES) {
-    test.assert(readPending(def, owner).length === 0, `${block}: a return was queued for ${def.itemId} even though it survived in place`);
-  }
-  log(`${block} RESULT: ${spawned.map((s) => s.def.itemId).join(", ")} survived in place; ${CONTROL_ITEM_ID} destroyed; no pending return`);
 
   for (const { cell } of CELLS) test.setBlockType("minecraft:air", cell);
   test.setBlockType("minecraft:air", CONTROL_CELL);
@@ -104,12 +122,12 @@ async function scenario(test: Test, block: string): Promise<void> {
 
 registerAsync("andrew", "legendary_survives_lava", (test) => scenario(test, "minecraft:lava"))
   .structureName(STRUCTURE)
-  .maxTicks(200)
+  .maxTicks(SURVIVE_TICKS + 120)
   .tag("andrew");
 
 registerAsync("andrew", "legendary_survives_fire", (test) => scenario(test, "minecraft:fire"))
   .structureName(STRUCTURE)
-  .maxTicks(200)
+  .maxTicks(SURVIVE_TICKS + 120)
   .tag("andrew");
 
 // ---------------------------------------------------------------- the three paths no component covers
@@ -152,6 +170,7 @@ async function returnPath(
   /** Blocks added under every item, when the path builds a column to drop onto. */
   lift = 0
 ): Promise<void> {
+  assertOnPlatform(test);
   const dim = test.getDimension();
   const owner = test.spawnSimulatedPlayer(STAND, name, mode);
   await test.idle(2);
@@ -180,14 +199,14 @@ async function returnPath(
   const container = containerOf(owner);
   const rows = dropped.map((d, i) => {
     const held = findAllMarked(d.def, container).filter((x) => x.mark.id === d.mark.id);
-    return { id: d.def.itemId, held: held.length, gen: held[0]?.mark.gen, want: want[i], pending: readPending(d.def, owner).length };
+    return { id: d.def.itemId, held: held.length, gen: held[0]?.mark.gen, want: want[i], ledger: ledgerGen(d.def, d.mark.id), pending: readPending(d.def, owner).length };
   });
   const centre = test.worldLocation({ x: 3, y: 2, z: 2 });
   const onGround = dim.getEntities({ type: "minecraft:item", location: centre, maxDistance: 14 }).filter((e) => isLegendaryItemEntity(e)).length;
   log(
     `${name} RESULT (${models}): destroyed ${CELLS.length - alive.length}/${CELLS.length}` +
       `${alive.length === 0 ? "" : ` (still alive: ${alive.join(", ")})`}, control destroyed ${!controlAlive}; ` +
-      `${rows.map((r) => `${r.id} held ${r.held} gen ${r.gen ?? "-"} want ${r.want} pending ${r.pending}`).join(" | ")}; ` +
+      `${rows.map((r) => `${r.id} held ${r.held} gen ${r.gen ?? "-"} want ${r.want} ledger ${r.ledger} pending ${r.pending}`).join(" | ")}; ` +
       `marked items left on the ground ${onGround}`
   );
   test.assert(!controlAlive, `${CONTROL_ITEM_ID} survived — the destroyer does not destroy items, so nothing below proves anything`);
@@ -195,6 +214,7 @@ async function returnPath(
   for (const r of rows) {
     test.assert(r.held === 1, `the owner holds ${r.held} ${r.id} of that instance, expected exactly 1`);
     test.assert(r.gen === r.want, `${r.id} came back at generation ${r.gen ?? "none"}, expected ${r.want}`);
+    test.assert(r.ledger === r.want, `${r.id}: the ledger reads gen ${r.ledger}, so the copy handed back is not the live one (want ${r.want})`);
     test.assert(r.pending === 0, `${r.id} is still owed to the owner after being handed over`);
   }
   test.assert(onGround === 0, `${onGround} marked item(s) still lying on the ground`);

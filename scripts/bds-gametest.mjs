@@ -393,6 +393,14 @@ const EXPECTED_TESTS = [
   'andrew:katana_fall_one_shot',
   'andrew:katana_fall_at_height',
   'andrew:katana_fall_expiry_other_damage',
+  // KATA-LGND-01 — src/gametest/legendary-recovery.ts (L0-lgnd-ac24 T16, T18; L0-lgnd-r017)
+  'andrew:legendary_katana_death_kill',
+  'andrew:legendary_katana_death_lava',
+  'andrew:legendary_katana_death_after_jump',
+  'andrew:legendary_katana_death_lava_after_jump',
+  'andrew:legendary_katana_void_thrown',
+  'andrew:legendary_katana_void_chest_minecart',
+  'andrew:legendary_katana_jump_keeps_recovery',
 ];
 
 /**
@@ -764,6 +772,7 @@ function main() {
   if (!existsSync(addonPath)) throw new Error(`${addonPath} not found — run "npm run build" first`);
 
   bundleGameTestScript();
+  // PLATFORM_SIZE in src/gametest/legendary-fireproof.ts lays one cell per legendary on this floor.
   writeStructure({ sx: 7, sy: 5, sz: 7 });
 
   const packs = unpackAddon(null);
