@@ -9,7 +9,7 @@
 
 import { BlockPermutation, type Container, GameMode, type Player, type Vector3, world } from "@minecraft/server";
 import { type Test, register } from "@minecraft/server-gametest";
-import { type LegendaryDef, SCYTHE_OF_CALAMITY, WEB_SWORD } from "../legendary/registry";
+import { DRAGON_KATANA, type LegendaryDef, SCYTHE_OF_CALAMITY, WEB_SWORD } from "../legendary/registry";
 import * as state from "../legendary/state";
 
 /** Must match the structure written by scripts/bds-gametest.mjs. */
@@ -39,6 +39,14 @@ const GRIDS = new Map<LegendaryDef, ReadonlyArray<string | undefined>>([
     [
       undefined, "minecraft:golden_apple", undefined,
       "minecraft:obsidian", "minecraft:diamond_hoe", "minecraft:obsidian",
+      undefined, "minecraft:golden_apple", undefined,
+    ],
+  ],
+  [
+    DRAGON_KATANA,
+    [
+      undefined, "minecraft:golden_apple", undefined,
+      "minecraft:ender_pearl", "minecraft:diamond_sword", "minecraft:ender_pearl",
       undefined, "minecraft:golden_apple", undefined,
     ],
   ],
@@ -132,6 +140,21 @@ function craftWithCrafter(test: Test, def: LegendaryDef): void {
   test.pulseRedstone(POWER, 2);
 }
 
+/**
+ * Every one of the crafter's 9 slots, explicit: unlike `GRIDS`, `undefined`
+ * here means "clear this slot" rather than "leave it alone" — negative
+ * controls run one after another on the same crafter and must not inherit the
+ * previous stage's ingredients.
+ */
+function loadFullGrid(test: Test, grid: ReadonlyArray<string | undefined>): void {
+  const at = test.worldBlockLocation(CRAFTER);
+  grid.forEach((itemId, slot) => {
+    const cmd = `replaceitem block ${at.x} ${at.y} ${at.z} slot.container ${slot} ${itemId ?? "minecraft:air"} 1`;
+    const ok = test.getDimension().runCommand(cmd).successCount;
+    test.assert(ok > 0, `${cmd} failed`);
+  });
+}
+
 function giveThenCraft(name: string, def: LegendaryDef): void {
   register("andrew", `legendary_give_then_craft_${name}`, (test: Test): void => {
     state.resetCrafted(def);
@@ -180,6 +203,7 @@ function giveThenCraft(name: string, def: LegendaryDef): void {
 
 giveThenCraft("web_sword", WEB_SWORD);
 giveThenCraft("scythe", SCYTHE_OF_CALAMITY);
+giveThenCraft("dragon_katana", DRAGON_KATANA);
 
 // The fix must not open the gate: a second real craft is still refunded.
 register("andrew", "legendary_second_real_craft_refunded", (test: Test): void => {
@@ -206,6 +230,56 @@ register("andrew", "legendary_second_real_craft_refunded", (test: Test): void =>
     test.assert(held.crafted === 1, `second craft: ${describe(held)}, expected the one crafted sword only`);
     test.assert(held.plain === 0 && held.tokens === 0, `second craft left a weapon or token: ${describe(held)}`);
     console.warn(`[gametest] craftgate second craft: flag=${state.isCrafted(WEB_SWORD)} ${describe(held)}`);
+  });
+})
+  .structureName(STRUCTURE)
+  .maxTicks(400)
+  .tag("andrew");
+
+// AC-katn-01 negative controls: an iron sword at the centre, an enchanted
+// golden apple instead of a plain one, and a shifted layout must not match the
+// Katana recipe — none of them may eject a token or claim the world's craft.
+register("andrew", "legendary_katana_recipe_negative_controls", (test: Test): void => {
+  state.resetCrafted(DRAGON_KATANA);
+  placeCrafter(test);
+  const player = test.spawnSimulatedPlayer(STAND, "cg_katana_neg", GameMode.Survival);
+
+  const IRON_SWORD_CENTRE: ReadonlyArray<string | undefined> = [
+    undefined, "minecraft:golden_apple", undefined,
+    "minecraft:ender_pearl", "minecraft:iron_sword", "minecraft:ender_pearl",
+    undefined, "minecraft:golden_apple", undefined,
+  ];
+  const ENCHANTED_APPLE: ReadonlyArray<string | undefined> = [
+    undefined, "minecraft:enchanted_golden_apple", undefined,
+    "minecraft:ender_pearl", "minecraft:diamond_sword", "minecraft:ender_pearl",
+    undefined, "minecraft:enchanted_golden_apple", undefined,
+  ];
+  // Shifted one column right: the shape no longer lines up with the recipe's
+  // exact 3x3 fit, and the row-1 pearl that would land in column 3 is lost off
+  // the grid entirely.
+  const SHIFTED_LAYOUT: ReadonlyArray<string | undefined> = [
+    undefined, undefined, "minecraft:golden_apple",
+    undefined, "minecraft:ender_pearl", "minecraft:diamond_sword",
+    undefined, undefined, "minecraft:golden_apple",
+  ];
+
+  function pulse(label: string, grid: ReadonlyArray<string | undefined>): void {
+    loadFullGrid(test, grid);
+    test.pulseRedstone(POWER, 2);
+    console.warn(`[gametest] katana recipe negative control: ${label}`);
+  }
+
+  test.runAfterDelay(4, () => pulse("iron sword centre", IRON_SWORD_CENTRE));
+  test.runAfterDelay(4 + SETTLE_TICKS, () => pulse("enchanted golden apple", ENCHANTED_APPLE));
+  test.runAfterDelay(4 + 2 * SETTLE_TICKS, () => pulse("shifted layout", SHIFTED_LAYOUT));
+
+  test.runAfterDelay(4 + 3 * SETTLE_TICKS, () => {
+    const held = holdings(DRAGON_KATANA, player);
+    test.assert(arrivalsOf(DRAGON_KATANA, player) === 0, "a negative-control layout produced a Dragon Katana token");
+    test.assert(held.crafted === 0 && held.tokens === 0, `a negative control crafted something: ${describe(held)}`);
+    test.assert(!state.isCrafted(DRAGON_KATANA), "a negative control claimed the world's craft budget");
+    console.warn(`[gametest] katana recipe negative controls: none matched, ${describe(held)}`);
+    test.succeed();
   });
 })
   .structureName(STRUCTURE)

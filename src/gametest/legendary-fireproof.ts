@@ -33,10 +33,21 @@ interface Cell {
 
 // Cells two apart on the platform floor (stone at test-relative y=1), one per
 // legendary, plus a vanilla control that the same cell destroys. Generated from
-// the registry: a weapon added later is covered without editing this list, and
-// the 7-wide platform fits one more.
-const CELLS: Cell[] = LEGENDARIES.map((def, i) => ({ def, cell: { x: 1 + 2 * i, y: 2, z: 1 } }));
-const CONTROL_CELL: Vector3 = { x: 1, y: 2, z: 3 };
+// the registry: a weapon added later is covered without editing this list.
+//
+// A single row (x = 1 + 2*i) ran the Dragon Katana off the 7-wide platform's
+// edge at x=7 — outside the generated structure, with no floor under it, its
+// dropped item fell away before the TNT/cactus scenarios below ever reached
+// it ("not destroyed" with nothing actually wrong). A 2-column grid keeps
+// every weapon on the platform (x, z in {1,3,5,...}) up to 6 legendaries
+// before it would need to grow again; the control stays in its own x=5
+// column so it never lands on a weapon cell.
+const GRID_COLUMNS = 2;
+const CELLS: Cell[] = LEGENDARIES.map((def, i) => ({
+  def,
+  cell: { x: 1 + 2 * (i % GRID_COLUMNS), y: 2, z: 1 + 2 * Math.floor(i / GRID_COLUMNS) },
+}));
+const CONTROL_CELL: Vector3 = { x: 5, y: 2, z: 3 };
 
 function spawnMarked(test: Test, dim: Dimension, owner: Player, def: LegendaryDef, cell: Vector3): { entity: Entity; mark: Mark } {
   const mark = makeMark("admin", owner);
@@ -62,6 +73,13 @@ async function scenario(test: Test, block: string): Promise<void> {
   const spawned = CELLS.map(({ def, cell }) => ({ def, entity: spawnMarked(test, dim, owner, def, cell).entity }));
   const controlAt = test.worldLocation({ x: CONTROL_CELL.x + 0.5, y: CONTROL_CELL.y + 0.2, z: CONTROL_CELL.z + 0.5 });
   const control = dim.spawnItem(new ItemStack(CONTROL_ITEM_ID, 1), controlAt);
+  // spawnItem gives the item a random shove (returnPath below hits the same
+  // thing): uncleared, a legendary can drift off its own cell before the
+  // block below is set and land somewhere the scenario never governs —
+  // observed intermittently as a random legendary "destroyed" in a cell nothing
+  // was ever placed under.
+  for (const { entity } of spawned) entity.clearVelocity();
+  control.clearVelocity();
   await test.idle(2);
 
   for (const { cell } of CELLS) test.setBlockType(block, cell);

@@ -52,9 +52,11 @@ const bundle = await build({
 const {
   LEGENDARIES,
   WEB_SWORD,
+  DRAGON_KATANA,
   defFor,
   defForStack,
   defForAbility,
+  isLegendaryStack,
   keysFor,
   cooldownKey,
   busyKey,
@@ -114,10 +116,38 @@ test('registry', async (t) => {
   });
 
   await t.test('item ids, prefixes and ability keys are unique across the registry', () => {
-    for (const field of ['itemId', 'keyPrefix', 'abilityKey', 'command']) {
+    for (const field of ['itemId', 'keyPrefix', 'abilityKey', 'command', 'craftTokenId', 'textPrefix']) {
       const values = LEGENDARIES.map((def) => def[field]);
       assert.strictEqual(new Set(values).size, values.length, `duplicate ${field}`);
     }
+  });
+
+  await t.test('Dragon Katana is def #4 (AD-lgnd-14)', () => {
+    assert.ok(LEGENDARIES.includes(DRAGON_KATANA));
+    assert.strictEqual(DRAGON_KATANA.itemId, 'andrew:dragon_katana');
+    assert.strictEqual(DRAGON_KATANA.keyPrefix, 'dk');
+    assert.strictEqual(DRAGON_KATANA.abilityKey, 'dragon_katana');
+    assert.strictEqual(DRAGON_KATANA.nameKey, 'item.andrew:dragon_katana');
+    assert.strictEqual(DRAGON_KATANA.cooldownTicks, 600);
+    assert.strictEqual(DRAGON_KATANA.craftGate, true);
+    assert.strictEqual(DRAGON_KATANA.craftTokenId, 'andrew:dragon_katana_crafted');
+    assert.deepStrictEqual(DRAGON_KATANA.refund, [
+      ['minecraft:golden_apple', 2],
+      ['minecraft:ender_pearl', 2],
+      ['minecraft:diamond_sword', 1],
+    ]);
+    assert.strictEqual(DRAGON_KATANA.textPrefix, 'andrew.katana');
+    assert.strictEqual(DRAGON_KATANA.command, 'andrew:katana');
+    assert.deepStrictEqual(DRAGON_KATANA.hudKeys, {
+      ready: 'andrew.katana.hud_ready',
+      cooldown: 'andrew.katana.hud_cooldown',
+    });
+  });
+
+  await t.test('isLegendaryStack is true for the Katana item and its token, false for a plain Diamond Sword', () => {
+    assert.strictEqual(isLegendaryStack({ typeId: 'andrew:dragon_katana' }), true);
+    assert.strictEqual(isLegendaryStack({ typeId: 'andrew:dragon_katana_crafted' }), true);
+    assert.strictEqual(isLegendaryStack({ typeId: 'minecraft:diamond_sword' }), false);
   });
 });
 
@@ -133,6 +163,20 @@ test('keys from keyPrefix', async (t) => {
       pending: 'andrew:ws_pending',
       gen: 'andrew:ws_gen',
       owed: 'andrew:ws_owed',
+    });
+  });
+
+  await t.test('Dragon Katana keys live under andrew:dk_*', () => {
+    assert.deepStrictEqual(keysFor(DRAGON_KATANA), {
+      origin: 'andrew:dk_origin',
+      owner: 'andrew:dk_owner',
+      id: 'andrew:dk_id',
+      ownerName: 'andrew:dk_owner_name',
+      crafted: 'andrew:dk_crafted',
+      craftedBy: 'andrew:dk_crafted_by',
+      pending: 'andrew:dk_pending',
+      gen: 'andrew:dk_gen',
+      owed: 'andrew:dk_owed',
     });
   });
 
