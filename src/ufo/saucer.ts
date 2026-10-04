@@ -48,7 +48,8 @@ export const BEAM_LEN_MAX = 64;
 export const HUM_TICKS = 40;
 /** AS-sauc-2: Bedrock attenuates over about 16 × volume blocks, so 4 reaches the ground 40 below. */
 export const SOUND_VOLUME = 4;
-export const UFO_SOUNDS = { on: "beacon.activate", hum: "beacon.ambient", off: "beacon.deactivate", blast: "random.explode" } as const;
+/** The hum is the pack's own alarm drone (packs/resource/sounds/sound_definitions.json), a 2 s loop that matches HUM_TICKS. */
+export const UFO_SOUNDS = { on: "beacon.activate", hum: "andrew.ufo.hum", off: "beacon.deactivate", blast: "random.explode" } as const;
 export type UfoSound = (typeof UFO_SOUNDS)[keyof typeof UFO_SOUNDS];
 /** P-sauc-1 step 3: in the hover the entity is re-teleported only when it is this far off the point. */
 export const HOVER_DRIFT = 0.01;

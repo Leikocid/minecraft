@@ -431,7 +431,7 @@ registerAsync("andrew", "ufo_phases_real_durations", async (test: Test): Promise
     test.assert(order === "arrival → magnet → release → departure → pause", `phase order ${order}`);
     test.assert(Math.abs(magnet.tick - arrival.tick - 400) <= 1, `arrival lasted ${magnet.tick - arrival.tick} ticks, not 400`);
     test.assert(release.tick === departure.tick && release.call === departure.call, "the release and the departure are not in one tick");
-    test.assert(Math.abs(release.tick - magnet.tick - 1200) <= 1, `the magnet lasted ${release.tick - magnet.tick} ticks, not 1200`);
+    test.assert(Math.abs(release.tick - magnet.tick - PHASE_TICKS.magnet) <= 1, `the magnet lasted ${release.tick - magnet.tick} ticks, not ${PHASE_TICKS.magnet}`);
     test.assert(Math.abs(pause.tick - departure.tick - 300) <= 1, `the departure lasted ${pause.tick - departure.tick} ticks, not 300`);
     test.assert(new Set(r.phases.map((x) => x.payload.eventId)).size === 1, "the payloads carry more than one event id");
     test.assert(
@@ -449,7 +449,7 @@ registerAsync("andrew", "ufo_phases_real_durations", async (test: Test): Promise
     test.assert(Math.abs(spawnAt.y - legHeight(hoverY, ceiling)) <= AT_SPAWN && legHeight(hoverY, ceiling) === hoverY + 10, `the saucer spawned at y ${spawnAt.y}, not ${hoverY + 10}`);
     const held = r.steps.filter((s) => s.kind === "saucerStep" && s.phase === "magnet");
     const off = held.filter((s) => s.pos === undefined || horizontalDistance(centre, s.pos) > 0.01 || Math.abs(s.pos.y - hoverY) > 0.01);
-    test.assert(held.length >= 1199 && off.length === 0, `${off.length} of ${held.length} magnet ticks off the hover point (first ${off[0]?.pos === undefined ? "none" : fmt(off[0].pos)})`);
+    test.assert(held.length >= PHASE_TICKS.magnet - 1 && off.length === 0, `${off.length} of ${held.length} magnet ticks off the hover point (first ${off[0]?.pos === undefined ? "none" : fmt(off[0].pos)})`);
     const last = r.steps.filter((s) => s.kind === "saucerStep").at(-1);
     log(`phases RESULT last saucer step at ${last?.pos === undefined ? "none" : fmt(last.pos)}, ${last?.pos === undefined ? "-" : horizontalDistance(centre, last.pos).toFixed(2)} blocks out`);
     await test.idle(1);

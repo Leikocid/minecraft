@@ -12,7 +12,9 @@
         "rim": "textures/blocks/netherite_block",
         "lights": "textures/blocks/glowstone",
         "dome": "textures/blocks/glass_light_blue",
-        "beam": "textures/blocks/glass_lime"
+        "beam_bright": "textures/entity/ufo_beam_bright",
+        "beam_mid": "textures/entity/ufo_beam_mid",
+        "beam_dim": "textures/entity/ufo_beam_dim"
       },
       "geometry": {
         "default": "geometry.andrew.ufo_saucer"
@@ -29,7 +31,9 @@
         "controller.render.andrew.ufo_saucer.rim",
         "controller.render.andrew.ufo_saucer.lights",
         "controller.render.andrew.ufo_saucer.dome",
-        "controller.render.andrew.ufo_saucer.beam"
+        "controller.render.andrew.ufo_saucer.beam_bright",
+        "controller.render.andrew.ufo_saucer.beam_mid",
+        "controller.render.andrew.ufo_saucer.beam_dim"
       ]
     }
   }

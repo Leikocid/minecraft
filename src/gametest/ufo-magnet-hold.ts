@@ -24,7 +24,7 @@ import {
   world,
 } from "@minecraft/server";
 import { type SimulatedPlayer, type Test, registerAsync } from "@minecraft/server-gametest";
-import { FIRST_MAX_MS, FIRST_MIN_MS, PAUSE_MS, type UfoDurations, type UfoEnv, type UfoPlayer } from "../ufo/env";
+import { FIRST_MAX_MS, FIRST_MIN_MS, PAUSE_MS, PHASE_TICKS, type UfoDurations, type UfoEnv, type UfoPlayer } from "../ufo/env";
 import { IRON_TAG, type Magnet, type Saucer, UfoCore, hoverHeight } from "../ufo/event";
 import { IRON_DOOR, SCAN_TYPES } from "../ufo/iron";
 import { UfoMagnet } from "../ufo/magnet";
@@ -536,12 +536,12 @@ registerAsync("andrew", "ufo_hold_drop_exempt", async (test: Test): Promise<void
   .maxTicks(900)
   .tag("andrew");
 
-// ------------------------------------------------ AC-4: held 34 up for the whole 60 s — dies on release; held 2 up — no damage
+// ------------------------------------------------ AC-4: held 34 up for the whole magnet phase — dies on release; held 2 up — no damage
 
 registerAsync("andrew", "ufo_hold_release_fall", async (test: Test): Promise<void> => {
   const high = await pad(test, "andrew_gt_hold_h", 3);
   const low = await pad(test, "andrew_gt_hold_g", 4);
-  const MAGNET = 1200;
+  const MAGNET = PHASE_TICKS.magnet;
   const rh = rig(high, "hh", D_SHORT(MAGNET));
   // The same knockback hold, aimed 2 above the ground: the stand-in saucer hangs PLAYER_DEPTH + 2 over the surface.
   const rl = rig(low, "hg", D_SHORT(MAGNET), { x: low.cx + 0.5, y: low.top + 1 + 2 + PLAYER_DEPTH, z: low.cz + 0.5 });
@@ -789,7 +789,7 @@ registerAsync("andrew", "ufo_hold_tps_measured", async (test: Test): Promise<voi
   const difficulty = world.getDifficulty();
   const time = world.getTimeOfDay();
   const p = await pad(test, "andrew_gt_hold_s", 6);
-  const MAGNET = 1200;
+  const MAGNET = PHASE_TICKS.magnet;
   const r = rig(p, "hs", D_SHORT(MAGNET));
   const extras: Entity[] = [];
   try {

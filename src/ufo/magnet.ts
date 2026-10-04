@@ -7,9 +7,9 @@
 // Engine objects come in through MagnetEnv, so node tests run it over fakes.
 
 import type { Dimension, Entity, EntitySpawnAfterEvent, ItemStack, Vector3 } from "@minecraft/server";
-import { isLegendaryStack } from "../legendary/registry";
+import { isLegendaryWeaponStack } from "../legendary/registry";
 import { IRON_TAG, type Magnet, type Phase, type PhasePayload } from "./event";
-import { isIronItem } from "./iron";
+import { isMagneticStack } from "./iron";
 import { EXEMPT, type HeldElement, type HeldPlayer, type HoldReport, distance, holdStep } from "./magnet-hold";
 import { HOLDER, type MagnetDimension, type MagnetHost, type MagnetSelection, type Zone, magnetOn } from "./magnet-select";
 
@@ -37,7 +37,7 @@ export interface MagnetEnv {
   /** world.afterEvents.entitySpawn; subscribed only while the magnet is on (L0-magn-adex). */
   readonly spawns: Subscribable<EntitySpawnAfterEvent>;
   readonly host: MagnetHost;
-  isLegendary?(stack: ItemStack): boolean;
+  isLegendaryWeapon?(stack: ItemStack): boolean;
 }
 
 /** L0-magn-eelm's session, read-only, for diagnostics and GameTest. */
@@ -90,10 +90,10 @@ const fmt = (v: Vector3): string => `${v.x.toFixed(1)},${v.y.toFixed(1)},${v.z.t
 export class UfoMagnet implements Magnet {
   private live: Session | undefined;
   private summary: MagnetSummary | undefined;
-  private readonly isLegendary: (stack: ItemStack) => boolean;
+  private readonly isLegendaryWeapon: (stack: ItemStack) => boolean;
 
   constructor(private readonly env: MagnetEnv) {
-    this.isLegendary = env.isLegendary ?? isLegendaryStack;
+    this.isLegendaryWeapon = env.isLegendaryWeapon ?? isLegendaryWeaponStack;
   }
 
   onPhase(phase: Phase, payload: PhasePayload): void {
@@ -121,7 +121,7 @@ export class UfoMagnet implements Magnet {
       slots: s.slots,
       players: this.env.players(),
       elements: s.elements,
-      isLegendary: this.isLegendary,
+      isLegendaryWeapon: this.isLegendaryWeapon,
       isLoaded: (at) => dim.isChunkLoaded(at),
     });
     if (report.errors.length > 0 && s.errors++ < 3) host.log(`ufo magnet ${s.eventId}: hold step ${tick}: ${report.errors.join(" | ")}`);
@@ -146,7 +146,7 @@ export class UfoMagnet implements Magnet {
   private start(p: PhasePayload): void {
     const host = this.env.host;
     const dim = this.env.overworld();
-    const selection = magnetOn(dim, p.centre, p.hoverY, host, { isLegendary: this.isLegendary });
+    const selection = magnetOn(dim, p.centre, p.hoverY, host, { isLegendaryWeapon: this.isLegendaryWeapon });
     const elements: HeldElement[] = selection.elements.map((e) => ({ entity: e.entity, cls: e.cls, from: e.from, origin: e.origin, slot: e.slot, arrived: false }));
     const known = new Set<string>([...selection.spawned, ...elements.map((e) => e.entity.id)]);
     const pending: Session["pending"] = [];
@@ -177,14 +177,14 @@ export class UfoMagnet implements Magnet {
     };
   }
 
-  /** L0-magn-rexm: iron that spawned within EXEMPT_RADIUS of the saucer becomes a class X element. */
+  /** L0-magn-rexm: iron or a legendary weapon that spawned within EXEMPT_RADIUS of the saucer becomes a class X element. */
   private admit(s: Session, saucer: Vector3): void {
     for (const { entity, at } of s.pending.splice(0)) {
       if (!entity.isValid || s.known.has(entity.id)) continue;
       s.known.add(entity.id);
       if (distance(at, saucer) > EXEMPT_RADIUS) continue;
       const stack = entity.getComponent("minecraft:item")?.itemStack;
-      if (stack === undefined || !isIronItem(stack.typeId) || this.isLegendary(stack)) continue;
+      if (stack === undefined || !isMagneticStack(stack, this.isLegendaryWeapon)) continue;
       s.elements.push({ entity, cls: EXEMPT, from: stack.typeId, origin: at, slot: s.slots++, arrived: false });
       s.exempt++;
     }

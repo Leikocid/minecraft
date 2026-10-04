@@ -5,12 +5,12 @@
 // in as arguments, so node tests run the whole pass over fakes.
 
 import type { BlockVolumeBase, Container, Dimension, Entity, ItemStack, Vector3 } from "@minecraft/server";
-import { LEGENDARIES, isLegendaryStack } from "../legendary/registry";
+import { LEGENDARIES, isLegendaryWeaponStack } from "../legendary/registry";
 import { IRON_TAG } from "./event";
-import { IRON_ARMOUR, IRON_DOOR, PAIRED_CHESTS, SCAN_TYPES, blockRole, isIronEntityType, isIronItem, itemForBlock } from "./iron";
+import { IRON_ARMOUR, IRON_DOOR, PAIRED_CHESTS, SCAN_TYPES, blockRole, isIronEntityType, isMagneticStack, itemForBlock } from "./iron";
 
-/** UFO §3. */
-export const ZONE_RADIUS = 50;
+/** UFO §3's radius is 50; the operator's 100 overrides it. */
+export const ZONE_RADIUS = 100;
 export const ZONE_DEPTH = 20;
 /** UFO §5: non-player elements per event. */
 export const ELEMENT_LIMIT = 10;
@@ -255,19 +255,19 @@ function scanBlocks(dim: MagnetDimension, zone: Zone, host: MagnetHost): Scan {
   return scan;
 }
 
-function groundItems(dim: MagnetDimension, zone: Zone, isLegendary: (s: ItemStack) => boolean): Candidate[] {
+function groundItems(dim: MagnetDimension, zone: Zone, isLegendaryWeapon: (s: ItemStack) => boolean): Candidate[] {
   const out: Candidate[] = [];
   for (const e of dim.getEntities({ type: ITEM, location: zoneMiddle(zone), maxDistance: reach(zone) })) {
     // A product pack reads some entities as undefined (C-22).
     if (e === undefined || !e.isValid || !inZone(zone, e.location)) continue;
     const stack = e.getComponent("minecraft:item")?.itemStack;
-    if (stack === undefined || !isIronItem(stack.typeId) || isLegendary(stack)) continue;
+    if (stack === undefined || !isMagneticStack(stack, isLegendaryWeapon)) continue;
     out.push({ cls: GROUND, distance: distanceFrom(zone, e.location), key: e.id, sub: 0, source: { kind: "entity", entity: e, from: stack.typeId } });
   }
   return out;
 }
 
-function containerStacks(dim: MagnetDimension, sites: readonly Site[], free: number, isLegendary: (s: ItemStack) => boolean): Candidate[] {
+function containerStacks(dim: MagnetDimension, sites: readonly Site[], free: number, isLegendaryWeapon: (s: ItemStack) => boolean): Candidate[] {
   const out: Candidate[] = [];
   const visited = new Set<string>();
   for (const site of rank(sites.map((s) => ({ ...s, cls: STACK, sub: 0 })))) {
@@ -281,7 +281,7 @@ function containerStacks(dim: MagnetDimension, sites: readonly Site[], free: num
     }
     for (let k = 0; k < container.size && out.length < free; k++) {
       const stack = container.getItem(k);
-      if (stack === undefined || !isIronItem(stack.typeId) || isLegendary(stack)) continue;
+      if (stack === undefined || !isMagneticStack(stack, isLegendaryWeapon)) continue;
       out.push({
         cls: STACK,
         distance: site.distance,
@@ -305,38 +305,20 @@ function command(dim: MagnetDimension, text: string, failed: string[]): number {
   }
 }
 
-function holderCarriesLegendary(e: Entity, isLegendary: (s: ItemStack) => boolean): boolean {
-  const container = e.getComponent("minecraft:inventory")?.container;
-  if (container === undefined) return false;
-  for (let k = 0; k < container.size; k++) {
-    const stack = container.getItem(k);
-    if (stack !== undefined && isLegendary(stack)) return true;
-  }
-  return false;
-}
-
 /**
  * Class 3: iron golems and minecarts by type, mobs and armour stands by the
- * L0-magn-adar tag. Holders of a legendary are skipped (L0-magn-aslh): a
- * minecart by its container, a tagged mob by hasitem on every legendary id.
+ * L0-magn-adar tag, which marks iron armour or a legendary weapon held. A minecart is iron whatever it carries.
  */
-function holders(dim: MagnetDimension, zone: Zone, isLegendary: (s: ItemStack) => boolean, tagged: Entity[], failures: string[]): Candidate[] {
+function holders(dim: MagnetDimension, zone: Zone, tagged: Entity[], failures: string[]): Candidate[] {
   const m = zoneMiddle(zone);
   const sphere = `x=${m.x},y=${m.y},z=${m.z},r=${reach(zone)}`;
   const failed: string[] = [];
-  // The tag means "wears iron now": a leftover from an earlier event is cleared first.
+  // The tag means "magnetic now": a leftover from an earlier event is cleared first.
   command(dim, `tag @e[${sphere},tag=${IRON_TAG}] remove ${IRON_TAG}`, failed);
-  let wearers = 0;
-  for (const { item, location } of IRON_ARMOUR) {
-    wearers += command(dim, `tag @e[${sphere},type=!${PLAYER},type=!${ITEM},hasitem={item=${item},location=${location}}] add ${IRON_TAG}`, failed);
-  }
-  if (wearers > 0) {
-    const before = failed.length;
-    for (const id of HELD_LEGENDARY_IDS) {
-      for (const where of HELD_LOCATIONS) command(dim, `tag @e[${sphere},tag=${IRON_TAG},hasitem={item=${id}${where}}] remove ${IRON_TAG}`, failed);
-    }
-    // A legendary that could not be ruled out keeps its holder on the ground.
-    if (failed.length > before) command(dim, `tag @e[${sphere},tag=${IRON_TAG}] remove ${IRON_TAG}`, failed);
+  const holder = `${sphere},type=!${PLAYER},type=!${ITEM}`;
+  for (const { item, location } of IRON_ARMOUR) command(dim, `tag @e[${holder},hasitem={item=${item},location=${location}}] add ${IRON_TAG}`, failed);
+  for (const id of HELD_LEGENDARY_IDS) {
+    for (const where of HELD_LOCATIONS) command(dim, `tag @e[${holder},hasitem={item=${id}${where}}] add ${IRON_TAG}`, failed);
   }
   if (failed.length > 0) failures.push(`class 3 commands: ${failed.join("; ")}`);
 
@@ -346,7 +328,7 @@ function holders(dim: MagnetDimension, zone: Zone, isLegendary: (s: ItemStack) =
     const wears = e.hasTag(IRON_TAG);
     if (wears) tagged.push(e);
     if (!wears && !isIronEntityType(e.typeId)) continue;
-    if (!inZone(zone, e.location) || holderCarriesLegendary(e, isLegendary)) continue;
+    if (!inZone(zone, e.location)) continue;
     out.push({ cls: HOLDER, distance: distanceFrom(zone, e.location), key: e.id, sub: 0, source: { kind: "entity", entity: e, from: e.typeId } });
   }
   return out;
@@ -404,11 +386,11 @@ export function magnetOn(
   centre: Vector3,
   hoverY: number,
   host: MagnetHost,
-  opts: { limit?: number; isLegendary?: (s: ItemStack) => boolean } = {}
+  opts: { limit?: number; isLegendaryWeapon?: (s: ItemStack) => boolean } = {}
 ): MagnetSelection {
   const start = host.now();
   const limit = opts.limit ?? ELEMENT_LIMIT;
-  const isLegendary = opts.isLegendary ?? isLegendaryStack;
+  const isLegendaryWeapon = opts.isLegendaryWeapon ?? isLegendaryWeaponStack;
   const zone = zoneOf(centre, hoverY, dim.heightRange);
   const failures: string[] = [];
   const found: Partial<Record<ElementClass, number>> = {};
@@ -441,9 +423,9 @@ export function magnetOn(
 
   const chosen = selectByPriority<Candidate>(
     [
-      guarded(GROUND, () => groundItems(dim, zone, isLegendary)),
-      guarded(STACK, (free) => containerStacks(dim, blocks().containers, free, isLegendary)),
-      guarded(HOLDER, () => holders(dim, zone, isLegendary, tagged, failures)),
+      guarded(GROUND, () => groundItems(dim, zone, isLegendaryWeapon)),
+      guarded(STACK, (free) => containerStacks(dim, blocks().containers, free, isLegendaryWeapon)),
+      guarded(HOLDER, () => holders(dim, zone, tagged, failures)),
       guarded(BLOCK, () => blockCandidates(BLOCK, blocks().built)),
       guarded(ORE, () => blockCandidates(ORE, blocks().ore)),
     ],

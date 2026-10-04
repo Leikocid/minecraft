@@ -77,7 +77,7 @@ class Stack {
     this.legendary = legendary;
   }
 }
-const isLegendary = (s) => s.legendary === true;
+const isLegendaryWeapon = (s) => s.legendary === true;
 
 let seq = 0;
 
@@ -207,7 +207,7 @@ function rig({ players = [], saucer = SAUCER } = {}) {
     saucerPosition: () => saucer,
     spawns,
     host: { itemStack: (id, n) => new Stack(id, n), volume: (from, to) => ({ from, to }), now: () => 0, log: (msg) => logs.push(msg) },
-    isLegendary,
+    isLegendaryWeapon,
   };
   const magnet = new UfoMagnet(env);
   const payload = { centre: CENTRE, hoverY: HOVER, saucerPos: saucer, eventId: 'test-1-1' };
@@ -276,7 +276,7 @@ test('keep-away: a point within 3 of a body moves out from the axis, else up; a 
 
 // ---------------------------------------------------------------- who is pulled
 
-test('pulled (UFO AC-4, AC-5): iron in the main or off hand, Survival or Adventure, alive, in the zone', () => {
+test('pulled (UFO AC-4, AC-5, UFO-TUNE-01): iron or a legendary weapon in the main or off hand, Survival or Adventure, alive, in the zone', () => {
   const at = ground(3, 3);
   const P = (opts) => new FakePlayer('x', at, opts);
   assert.equal(pullsPlayer(P({ hands: { Mainhand: new Stack('iron_ingot') } }), ZONE, noLegendary), true, 'ingot, main hand');
@@ -289,11 +289,16 @@ test('pulled (UFO AC-4, AC-5): iron in the main or off hand, Survival or Adventu
   assert.equal(pullsPlayer(P({ hands: { Mainhand: new Stack('dirt') }, armour }), ZONE, noLegendary), false, 'full iron armour, dirt in hand');
   assert.equal(pullsPlayer(P({}), ZONE, noLegendary), false, 'empty hands');
   assert.equal(pullsPlayer(P({ hands: { Mainhand: new Stack('iron_ingot') }, health: 0 }), ZONE, noLegendary), false, 'dead and still listed');
-  const legendary = new Stack('iron_sword', 1, true);
-  assert.equal(pullsPlayer(P({ hands: { Mainhand: legendary } }), ZONE, isLegendary), false, 'a legendary is never iron');
-  assert.equal(ironInHand(P({ hands: { Mainhand: legendary, Offhand: new Stack('compass') } }), isLegendary)?.typeId, 'minecraft:compass', 'the other hand still counts');
-  const outside = new FakePlayer('far', { x: CENTRE.x + 51, y: CENTRE.y + 1, z: CENTRE.z + 0.5 }, { hands: { Mainhand: new Stack('iron_ingot') } });
-  assert.equal(pullsPlayer(outside, ZONE, noLegendary), false, 'outside the r 50 cylinder');
+  const legendary = new Stack('andrew:scythe_of_calamity', 1, true);
+  assert.equal(pullsPlayer(P({ hands: { Mainhand: legendary } }), ZONE, isLegendaryWeapon), true, 'a legendary weapon pulls like iron');
+  assert.equal(pullsPlayer(P({ hands: { Offhand: legendary } }), ZONE, isLegendaryWeapon), true, 'a legendary weapon in the off hand');
+  assert.equal(pullsPlayer(P({ hands: { Mainhand: new Stack('andrew:scythe_of_calamity_crafted') } }), ZONE, isLegendaryWeapon), false, 'a craft token is no weapon');
+  assert.equal(pullsPlayer(P({ hands: { Mainhand: legendary } }), ZONE, noLegendary), false, 'the weapon test is the injected predicate');
+  assert.equal(ironInHand(P({ hands: { Mainhand: new Stack('dirt'), Offhand: legendary } }), isLegendaryWeapon)?.typeId, 'andrew:scythe_of_calamity', 'the other hand still counts');
+  const inside = new FakePlayer('mid', { x: CENTRE.x + 99, y: CENTRE.y + 1, z: CENTRE.z + 0.5 }, { hands: { Mainhand: new Stack('iron_ingot') } });
+  assert.equal(pullsPlayer(inside, ZONE, noLegendary), true, 'inside the r 100 cylinder, 99 out');
+  const outside = new FakePlayer('far', { x: CENTRE.x + 101, y: CENTRE.y + 1, z: CENTRE.z + 0.5 }, { hands: { Mainhand: new Stack('iron_ingot') } });
+  assert.equal(pullsPlayer(outside, ZONE, noLegendary), false, 'outside the r 100 cylinder');
   const gone = P({ hands: { Mainhand: new Stack('iron_ingot') } });
   gone.isValid = false;
   assert.equal(pullsPlayer(gone, ZONE, noLegendary), false, 'invalid');
@@ -304,7 +309,7 @@ test('pulled (UFO AC-4, AC-5): iron in the main or off hand, Survival or Adventu
 test('a hold step: knockback toward the hold point for pulled players only, no element limit for players', () => {
   const players = Array.from({ length: ELEMENT_LIMIT + 2 }, (_, i) => new FakePlayer(`p${i}`, ground(i - 6, 4), { hands: { Mainhand: new Stack('iron_ingot') } }));
   const bare = new FakePlayer('bare', ground(0, -4));
-  const r = holdStep({ saucer: SAUCER, zone: ZONE, tick: 0, slots: 0, players: [undefined, ...players, bare], elements: [], isLegendary: noLegendary, isLoaded: () => true });
+  const r = holdStep({ saucer: SAUCER, zone: ZONE, tick: 0, slots: 0, players: [undefined, ...players, bare], elements: [], isLegendaryWeapon: noLegendary, isLoaded: () => true });
   assert.equal(r.pulled.length, ELEMENT_LIMIT + 2, 'every player with iron, beyond the 10');
   assert.equal(bare.knocks.length, 0, 'no knockback without iron');
   const target = holdPoint(SAUCER);
@@ -320,7 +325,7 @@ test('a hold step: knockback toward the hold point for pulled players only, no e
 
 test('a hold step: the hand is re-read every tick — drop stops the pull, iron back resumes it (U10)', () => {
   const p = new FakePlayer('a', ground(2, 2), { hands: { Mainhand: new Stack('iron_ingot') } });
-  const step = () => holdStep({ saucer: SAUCER, zone: ZONE, tick: 0, slots: 0, players: [p], elements: [], isLegendary: noLegendary, isLoaded: () => true });
+  const step = () => holdStep({ saucer: SAUCER, zone: ZONE, tick: 0, slots: 0, players: [p], elements: [], isLegendaryWeapon: noLegendary, isLoaded: () => true });
   assert.deepEqual(step().pulled, [p.id]);
   p.slots.Mainhand = undefined;
   assert.deepEqual(step().pulled, [], 'dropped: no knockback in that tick');
@@ -342,7 +347,7 @@ test('a hold step: elements teleport toward their slot at ≤ 1.5, then clearVel
     { entity: gone, cls: 1, from: 'minecraft:iron_nugget', origin: gone.location, slot: 2, arrived: false },
   ];
   const before = { ...far.location };
-  const r = holdStep({ saucer: SAUCER, zone: ZONE, tick: 0, slots: 3, players: [], elements: els, isLegendary: noLegendary, isLoaded: () => true });
+  const r = holdStep({ saucer: SAUCER, zone: ZONE, tick: 0, slots: 3, players: [], elements: els, isLegendaryWeapon: noLegendary, isLoaded: () => true });
   assert.equal(r.moved, 2);
   assert.equal(r.gone, 1);
   assert.deepEqual(els.map((e) => e.entity.id), [far.id, close.id], 'the gone element is out; its slot is not refilled');
@@ -362,14 +367,14 @@ test('a hold step: an item never comes within 3 of a player; a mob is not kept a
     { entity: item, cls: 1, from: 'minecraft:iron_ingot', origin: item.location, slot: 0, arrived: true },
     { entity: golem, cls: 3, from: 'minecraft:iron_golem', origin: golem.location, slot: 0, arrived: true },
   ];
-  holdStep({ saucer: SAUCER, zone: ZONE, tick: 0, slots: 2, players: [rising], elements: els, isLegendary: noLegendary, isLoaded: () => true });
+  holdStep({ saucer: SAUCER, zone: ZONE, tick: 0, slots: 2, players: [rising], elements: els, isLegendaryWeapon: noLegendary, isLoaded: () => true });
   const body = { x: rising.location.x, y: rising.location.y + BODY_MIDDLE, z: rising.location.z };
   assert.ok(dist(item.location, body) >= KEEP_AWAY - 1e-9, `the item is ${dist(item.location, body).toFixed(2)} from the body`);
   assert.ok(dist(golem.location, slot0) < 1e-9, 'the golem holds its slot');
   // A spectator picks nothing up and is not a body.
   const ghost = new FakePlayer('ghost', rising.location, { mode: 'Spectator' });
   item.location = { ...slot0 };
-  holdStep({ saucer: SAUCER, zone: ZONE, tick: 0, slots: 2, players: [ghost], elements: els, isLegendary: noLegendary, isLoaded: () => true });
+  holdStep({ saucer: SAUCER, zone: ZONE, tick: 0, slots: 2, players: [ghost], elements: els, isLegendaryWeapon: noLegendary, isLoaded: () => true });
   assert.ok(dist(item.location, slot0) < 1e-9);
 });
 
@@ -385,7 +390,7 @@ test('a hold step: nothing is moved into an unloaded chunk; a throwing element d
     asked.push(p);
     return !(p.x >= 112 && p.x < 128);
   };
-  const r = holdStep({ saucer: SAUCER, zone: ZONE, tick: 0, slots: 3, players: [], elements: els, isLegendary: noLegendary, isLoaded });
+  const r = holdStep({ saucer: SAUCER, zone: ZONE, tick: 0, slots: 3, players: [], elements: els, isLegendaryWeapon: noLegendary, isLoaded });
   assert.equal(r.skipped, 1);
   assert.deepEqual(a.calls, [], 'a stayed: its step ends in an unloaded chunk');
   assert.deepEqual(b.calls, ['teleport', 'clearVelocity']);
@@ -397,7 +402,7 @@ test('a hold step: nothing is moved into an unloaded chunk; a throwing element d
 
 // ---------------------------------------------------------------- the magnet session
 
-test('magnet-on and the drop exemption (UFO AC-6): iron within 12 of the saucer joins as X beyond the 10', () => {
+test('magnet-on and the drop exemption (UFO AC-6): iron or a legendary weapon within 12 of the saucer joins as X beyond the 10', () => {
   const { dim, spawns, magnet, payload, logs } = rig();
   for (let i = 0; i < 11; i++) dim.item('iron_ingot', ground(2 + i, 0));
   magnet.onPhase('magnet', payload);
@@ -410,25 +415,26 @@ test('magnet-on and the drop exemption (UFO AC-6): iron within 12 of the saucer 
   const dropped = dim.item('iron_ingot', { x: SAUCER.x + 1, y: HOVER - 6 + 1.5, z: SAUCER.z });
   const groundDrop = dim.item('iron_ingot', ground(5, 5));
   const dirt = dim.item('dirt', { x: SAUCER.x, y: HOVER - 5, z: SAUCER.z });
-  const legendary = dim.item('iron_sword', { x: SAUCER.x, y: HOVER - 5, z: SAUCER.z }, true);
+  const legendary = dim.item('andrew:web_sword', { x: SAUCER.x, y: HOVER - 5, z: SAUCER.z }, true);
+  const token = dim.item('andrew:web_sword_crafted', { x: SAUCER.x, y: HOVER - 4, z: SAUCER.z });
   const edge = dim.item('shears', { x: SAUCER.x + EXEMPT_RADIUS, y: HOVER, z: SAUCER.z });
   const past = dim.item('shears', { x: SAUCER.x + EXEMPT_RADIUS + 0.01, y: HOVER, z: SAUCER.z });
-  for (const e of [dropped, groundDrop, dirt, legendary, edge, past]) spawns.fire(e);
+  for (const e of [dropped, groundDrop, dirt, legendary, token, edge, past]) spawns.fire(e);
   // An element the magnet spawned itself is never admitted twice.
   spawns.fire(v.elements[0].entity);
   assert.equal(magnet.view().elements.length, ELEMENT_LIMIT, 'admitted at the next step, not inside the after-event');
   magnet.magnetStep(2);
   const w = magnet.view();
   const x = w.elements.filter((e) => e.cls === EXEMPT);
-  assert.deepEqual(x.map((e) => e.entity.id), [dropped.id, edge.id], 'the near drop and the one at exactly 12');
-  assert.equal(w.elements.length, ELEMENT_LIMIT + 2);
-  assert.deepEqual(x.map((e) => e.slot), [10, 11], 'the next ring slots');
-  assert.equal(w.slots, 12, 'the ring re-spaced over 12');
-  assert.equal(w.exempt, 2);
+  assert.deepEqual(x.map((e) => e.entity.id), [dropped.id, legendary.id, edge.id], 'the near drop, the legendary weapon and the one at exactly 12');
+  assert.equal(w.elements.length, ELEMENT_LIMIT + 3);
+  assert.deepEqual(x.map((e) => e.slot), [10, 11, 12], 'the next ring slots');
+  assert.equal(w.slots, 13, 'the ring re-spaced over 13');
+  assert.equal(w.exempt, 3);
   assert.ok(logs.some((l) => /magnet-on/.test(l)));
   spawns.fire(dropped);
   magnet.magnetStep(3);
-  assert.equal(magnet.view().elements.length, ELEMENT_LIMIT + 2, 'no element twice');
+  assert.equal(magnet.view().elements.length, ELEMENT_LIMIT + 3, 'no element twice');
 });
 
 test('release (UFO AC-14): one call lets every element go — no teleport, no knockback after it; the listener and the tag are gone', () => {

@@ -334,7 +334,7 @@ test('arrival start writes the in-flight marker; every end path overwrites it', 
 
 // ------------------------------------------------------------ phases (L0-ufoc-ac04 with product durations)
 
-test('real durations: arrival → magnet 400 → release + departure in one tick 1200 later → pause 300 later; one eventId; saucerStep every active tick, magnetStep only in magnet, after it', () => {
+test('real durations: arrival → magnet 400 → release + departure in one tick 600 later → pause 300 later; one eventId; saucerStep every active tick, magnetStep only in magnet, after it', () => {
   const order = [];
   const fx = fixture({ players: [player('a', 3.5, -59, 3.5)], durations: PHASE_TICKS });
   const magnet = {
@@ -354,7 +354,7 @@ test('real durations: arrival → magnet 400 → release + departure in one tick
   const at = Object.fromEntries(fx.phases.map((p) => [p.phase, p.tick]));
   assert.equal(at.magnet - at.arrival, 400);
   assert.equal(at.release, at.departure);
-  assert.equal(at.departure - at.magnet, 1200);
+  assert.equal(at.departure - at.magnet, 600);
   assert.equal(at.pause - at.departure, 300);
   assert.equal(new Set(fx.phases.map((p) => p.payload.eventId)).size, 1);
   assert.ok(fx.phases.every((p) => p.payload.hoverY === hoverHeight(-60, 320) && p.payload.hoverY === -20));
@@ -362,7 +362,7 @@ test('real durations: arrival → magnet 400 → release + departure in one tick
   const active = at.pause - at.arrival - 1;
   assert.equal(steps.length, active, `saucerStep ran ${steps.length} times over ${active} active ticks`);
   const mags = order.filter((o) => o.startsWith('magnetStep:')).map((o) => Number(o.split(':')[1]));
-  assert.equal(mags.length, 1200 - 1 + 1, 'magnetStep is not called on every magnet tick');
+  assert.equal(mags.length, 600 - 1 + 1, 'magnetStep is not called on every magnet tick');
   assert.ok(mags.every((t) => t >= at.magnet && t < at.departure), 'magnetStep outside the magnet phase');
   for (const t of mags) assert.ok(order.indexOf(`saucerStep:${t}`) < order.indexOf(`magnetStep:${t}`), `tick ${t}: magnetStep before saucerStep`);
 });

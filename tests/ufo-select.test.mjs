@@ -54,17 +54,17 @@ const HOVER = 104;
 
 // ---------------------------------------------------------------- the zone
 
-test('the zone: r 50 around the centre, from centre − 20 to the hover height, clamped to the world', () => {
-  assert.equal(ZONE_RADIUS, 50);
+test('the zone: r 100 around the centre, from centre − 20 to the hover height, clamped to the world', () => {
+  assert.equal(ZONE_RADIUS, 100);
   assert.equal(ZONE_DEPTH, 20);
   assert.equal(ELEMENT_LIMIT, 10);
   const z = zoneOf(CENTRE, HOVER, RANGE);
-  assert.deepEqual([z.yMin, z.yMax, z.radius], [44, 104, 50]);
+  assert.deepEqual([z.yMin, z.yMax, z.radius], [44, 104, 100]);
   const box = zoneBox(z);
   assert.deepEqual(
     [box.to.x - box.from.x + 1, box.to.y - box.from.y + 1, box.to.z - box.from.z + 1],
-    [101, 61, 101],
-    'the box is 101 × 61 × 101'
+    [201, 61, 201],
+    'the box is 201 × 61 × 201'
   );
   const low = zoneOf({ x: 0, y: -55, z: 0 }, -15, RANGE);
   assert.equal(low.yMin, -64, 'clamped to the floor');
@@ -75,9 +75,9 @@ test('the zone: r 50 around the centre, from centre − 20 to the hover height, 
 test('the cylinder: horizontal distance from the centre block’s middle, block rows inclusive', () => {
   const z = zoneOf(CENTRE, HOVER, RANGE);
   const mid = { x: 100.5, z: -39.5 };
-  assert.ok(inZone(z, { x: mid.x + 50, y: 64, z: mid.z }), 'on the rim');
-  assert.ok(!inZone(z, { x: mid.x + 50.01, y: 64, z: mid.z }), 'just outside the rim');
-  assert.ok(!inZone(z, { x: mid.x + 36, y: 64, z: mid.z + 36 }), 'a box corner is outside the cylinder');
+  assert.ok(inZone(z, { x: mid.x + 100, y: 64, z: mid.z }), 'on the rim');
+  assert.ok(!inZone(z, { x: mid.x + 100.01, y: 64, z: mid.z }), 'just outside the rim');
+  assert.ok(!inZone(z, { x: mid.x + 71, y: 64, z: mid.z + 71 }), 'a box corner is outside the cylinder');
   assert.ok(inZone(z, { x: mid.x, y: 44, z: mid.z }), 'the floor row');
   assert.ok(!inZone(z, { x: mid.x, y: 43.99, z: mid.z }), 'below the floor');
   assert.ok(inZone(z, { x: mid.x, y: 104.9, z: mid.z }), 'the hover row');
@@ -91,7 +91,7 @@ test('reach: a sphere around the centre holds every cell of the cylinder', () =>
   const box = zoneBox(z);
   for (const x of [box.from.x, box.to.x + 1]) for (const y of [box.from.y, box.to.y + 1]) for (const zz of [box.from.z, box.to.z + 1]) {
     const d = Math.hypot(x - 100.5, y - 64.5, zz - -39.5);
-    if (Math.hypot(x - 100.5, zz - -39.5) <= 51) assert.ok(d <= r, `corner ${x},${y},${zz} at ${d.toFixed(1)} is beyond reach ${r}`);
+    if (Math.hypot(x - 100.5, zz - -39.5) <= 101) assert.ok(d <= r, `corner ${x},${y},${zz} at ${d.toFixed(1)} is beyond reach ${r}`);
   }
 });
 
@@ -399,9 +399,9 @@ test('the lazy cut: with 10 ground items the blocks are never scanned and no com
 
 test('outside the cylinder or below the floor: never a candidate', () => {
   const dim = new FakeDimension();
-  dim.item('iron_ingot', E(40, 40));
+  dim.item('iron_ingot', E(72, 72));
   dim.item('iron_ingot', E(0, 0, -21));
-  dim.put(C(36, 36), 'iron_block');
+  dim.put(C(71, 71), 'iron_block');
   dim.put(C(0, 0, -21), 'iron_ore');
   dim.put(C(0, 3, 41), 'iron_block');
   dim.put(C(0, 3, 40), 'iron_block');
@@ -465,7 +465,7 @@ test('a double chest is paired by contents in either half order, not by adjacenc
   assert.deepEqual(sel.elements.map((e) => `${e.from}@${e.origin.z - CENTRE.z}`), ['minecraft:iron_ingot@0', 'minecraft:iron_ingot@-1'], 'the pair once; the chest beside it is its own');
 });
 
-test('the hopper (L0-lgnd-cx13): with anything in it a container that stays, empty a block that is pulled', () => {
+test('the hopper (L0-lgnd-cx13): with anything in it a container that stays and gives up its iron and legendary weapons, empty a block that is pulled', () => {
   const dim = new FakeDimension();
   const full = new FakeContainer(5, { 0: new Stack('iron_ingot', 3), 4: new Stack('dirt') });
   const legendaryOnly = new FakeContainer(5, { 0: new Stack('andrew:orbital_cannon') });
@@ -473,13 +473,13 @@ test('the hopper (L0-lgnd-cx13): with anything in it a container that stays, emp
   dim.put(C(4, 0), 'hopper', {}, legendaryOnly);
   dim.put(C(6, 0), 'hopper', {}, new FakeContainer(5));
   const sel = run(dim);
-  assert.deepEqual(sel.elements.map((e) => `${e.cls}:${e.from}@${e.origin.x - CENTRE.x}`), ['2:minecraft:iron_ingot@2', '4:minecraft:hopper@6']);
+  assert.deepEqual(sel.elements.map((e) => `${e.cls}:${e.from}@${e.origin.x - CENTRE.x}`), ['2:minecraft:iron_ingot@2', '2:andrew:orbital_cannon@4', '4:minecraft:hopper@6']);
   assert.equal(dim.getBlock(C(2, 0)).typeId, 'minecraft:hopper');
   assert.deepEqual(full.getItem(4), new Stack('dirt'));
   assert.equal(dim.getBlock(C(4, 0)).typeId, 'minecraft:hopper');
-  assert.equal(legendaryOnly.getItem(0).typeId, 'andrew:orbital_cannon');
+  assert.equal(legendaryOnly.getItem(0), undefined);
   assert.equal(dim.getBlock(C(6, 0)).typeId, 'minecraft:air');
-  assert.deepEqual(dim.spawnedItems().map((e) => e.stack.typeId).sort(), ['minecraft:hopper', 'minecraft:iron_ingot']);
+  assert.deepEqual(dim.spawnedItems().map((e) => e.stack.typeId).sort(), ['andrew:orbital_cannon', 'minecraft:hopper', 'minecraft:iron_ingot']);
 });
 
 test('blocks: air plus exactly one own item; a door once, by its lower half; ore gives one raw_iron', () => {
@@ -513,26 +513,37 @@ test('a door is one element even when only its upper half is in the zone', () =>
   assert.equal(dim.getBlock(C(1, 0, -20)).typeId, 'minecraft:air');
 });
 
-test('legendaries (UFO AC-13): never chosen, never counted, wherever they lie', () => {
+test('legendary weapons (UFO-TUNE-01): pulled like iron wherever they lie; a craft token is not', () => {
   const dim = new FakeDimension();
   const scythe = dim.item('andrew:scythe_of_calamity', E(1, 0));
-  dim.item('andrew:web_sword_crafted', E(1, 1));
-  for (let i = 0; i < 9; i++) dim.item(['iron_ingot', 'iron_nugget', 'raw_iron', 'iron_sword', 'iron_pickaxe', 'iron_axe', 'iron_shovel', 'iron_hoe', 'shears'][i], E(-4 - i, 4));
+  const token = dim.item('andrew:web_sword_crafted', E(1, 1));
+  for (let i = 0; i < 5; i++) dim.item(['iron_ingot', 'iron_nugget', 'raw_iron', 'iron_sword', 'shears'][i], E(-4 - i, 4));
   const hopper = new FakeContainer(5, { 0: new Stack('andrew:orbital_cannon') });
   dim.put(C(0, -6), 'hopper', {}, hopper);
-  const chest = new FakeContainer(27, { 0: new Stack('andrew:web_sword'), 1: new Stack('iron_ingot', 7) });
+  const chest = new FakeContainer(27, { 0: new Stack('andrew:web_sword'), 1: new Stack('iron_ingot', 7), 2: new Stack('andrew:dragon_katana_crafted') });
   dim.put(C(0, -10), 'chest', {}, chest);
   const sel = run(dim);
-  assert.equal(shape(sel), '1111111112');
-  assert.equal(sel.elements[9].from, 'minecraft:iron_ingot');
-  assert.equal(chest.getItem(0).typeId, 'andrew:web_sword');
+  assert.equal(shape(sel), '111111222');
+  assert.equal(sel.elements[0].entity, scythe, 'the Scythe is the nearest ground element');
+  assert.deepEqual(sel.elements.slice(6).map((e) => e.from), ['andrew:orbital_cannon', 'andrew:web_sword', 'minecraft:iron_ingot']);
+  assert.equal(hopper.getItem(0), undefined);
+  assert.equal(chest.getItem(0), undefined);
   assert.equal(chest.getItem(1), undefined);
-  assert.equal(hopper.getItem(0).typeId, 'andrew:orbital_cannon');
-  assert.ok(scythe.isValid && !sel.elements.some((e) => e.entity === scythe));
-  assert.ok(!sel.elements.some((e) => !e.from.startsWith('minecraft:')));
+  assert.equal(chest.getItem(2).typeId, 'andrew:dragon_katana_crafted', 'a token stays in the chest');
+  assert.ok(token.isValid && !sel.elements.some((e) => e.entity === token), 'a token on the ground is not pulled');
 });
 
-test('holders (L0-magn-adar, aslh): iron armour by four tag commands; a holder of a legendary stays', () => {
+test('legendary weapons count towards the 10 like iron', () => {
+  const dim = new FakeDimension();
+  for (let i = 0; i < 10; i++) dim.item('iron_ingot', E(-2 - i, 3));
+  const katana = dim.item('andrew:dragon_katana', E(1, 0));
+  const sel = run(dim);
+  assert.equal(shape(sel), '1111111111');
+  assert.equal(sel.elements[0].entity, katana, 'the nearer weapon takes a place');
+  assert.equal(sel.elements.filter((e) => e.from === 'minecraft:iron_ingot').length, 9, 'the farthest ingot is left');
+});
+
+test('holders (L0-magn-adar, UFO-TUNE-01): iron armour by four tag commands, a legendary weapon held by twelve; minecarts by type', () => {
   const dim = new FakeDimension();
   const golem = dim.mob('iron_golem', E(12, 12));
   const helmet = dim.mob('zombie', E(-10, -10), { armour: { head: 'minecraft:iron_helmet' } });
@@ -541,34 +552,39 @@ test('holders (L0-magn-adar, aslh): iron armour by four tag commands; a holder o
   const sword = dim.mob('zombie', E(-4, -10), { hands: { mainhand: 'minecraft:iron_sword' } });
   const horse = dim.mob('horse', E(4, -10), { armour: {} });
   const cannonStand = dim.mob('armor_stand', E(6, 6), { armour: { head: 'minecraft:iron_helmet' }, hands: { mainhand: 'andrew:orbital_cannon' } });
-  const offhandZombie = dim.mob('zombie', E(-6, 6), { armour: { feet: 'minecraft:iron_boots' }, hands: { offhand: 'andrew:web_sword' } });
-  const loadedCart = dim.mob('chest_minecart', E(7, 0), { container: new FakeContainer(27, { 3: new Stack('andrew:web_sword_crafted') }) });
+  const katanaStand = dim.mob('armor_stand', E(-3, 9), { armour: {}, hands: { mainhand: 'andrew:dragon_katana' } });
+  const offhandZombie = dim.mob('zombie', E(-6, 6), { armour: {}, hands: { offhand: 'andrew:web_sword' } });
+  const loadedCart = dim.mob('chest_minecart', E(7, 0), { container: new FakeContainer(27, { 3: new Stack('andrew:web_sword') }) });
   const ironCart = dim.mob('hopper_minecart', E(8, 0), { container: new FakeContainer(5, { 0: new Stack('iron_ingot') }) });
-  const player = dim.mob('player', E(1, 1), { armour: { head: 'minecraft:iron_helmet' } });
+  const player = dim.mob('player', E(1, 1), { armour: { head: 'minecraft:iron_helmet' }, hands: { mainhand: 'andrew:web_sword' } });
   const stale = dim.mob('cow', E(2, 2));
   stale.addTag(IRON_TAG);
-  const sel = run(dim);
+  const sel = run(dim, { limit: 20 });
   const chosen = new Set(sel.elements.map((e) => e.entity));
-  assert.deepEqual([golem, helmet, stand, ironCart].map((e) => chosen.has(e)), [true, true, true, true]);
-  for (const e of [bare, sword, horse, cannonStand, offhandZombie, loadedCart, player, stale]) assert.ok(!chosen.has(e), `${e.typeId} was chosen`);
-  for (const e of [bare, sword, cannonStand, offhandZombie, player, stale]) assert.ok(!e.hasTag(IRON_TAG), `${e.typeId} keeps the tag`);
+  for (const e of [golem, helmet, stand, cannonStand, katanaStand, offhandZombie, loadedCart, ironCart]) assert.ok(chosen.has(e), `${e.typeId} at ${e.location.x - CENTRE.x},${e.location.z - CENTRE.z} was not chosen`);
+  for (const e of [bare, sword, horse, player, stale]) assert.ok(!chosen.has(e), `${e.typeId} was chosen`);
+  for (const e of [bare, sword, player, stale]) assert.ok(!e.hasTag(IRON_TAG), `${e.typeId} keeps the tag`);
   assert.ok(sel.elements.every((e) => e.cls === HOLDER));
   assert.ok(sel.elements.every((e, i, a) => i === 0 || a[i - 1].distance <= e.distance), 'nearest first');
-  const armour = dim.commands.filter((c) => c.includes(' add '));
+  const adds = dim.commands.filter((c) => c.includes(' add '));
+  const armour = adds.filter((c) => c.includes('location=slot.armor.'));
   assert.equal(armour.length, 4, 'one command per armour piece, never a list');
   assert.ok(armour.every((c) => /hasitem=\{item=minecraft:iron_\w+,location=slot\.armor\.\w+\}/.test(c) && c.includes('type=!minecraft:player')));
+  const weapons = adds.filter((c) => c.includes('item=andrew:'));
+  assert.equal(weapons.length, 12, 'four weapons, each asked with no location, in the main hand and in the off hand');
+  assert.ok(weapons.every((c) => c.includes('type=!minecraft:player') && c.includes('type=!minecraft:item')));
+  assert.equal(adds.length, 16);
   assert.ok(!dim.commands.some((c) => c.includes('_crafted')), 'tokens are hidden from commands; never asked by hasitem');
   assert.deepEqual(sel.failures, []);
 });
 
-test('a legendary check that fails leaves every wearer on the ground', () => {
+test('a legendary hasitem command that fails is logged; the other holders are still taken', () => {
   const dim = new FakeDimension();
   dim.hiddenItems.add('andrew:web_sword');
   const helmet = dim.mob('zombie', E(-10, -10), { armour: { head: 'minecraft:iron_helmet' } });
   const golem = dim.mob('iron_golem', E(12, 12));
   const sel = run(dim);
-  assert.deepEqual(sel.elements.map((e) => e.entity), [golem]);
-  assert.ok(!helmet.hasTag(IRON_TAG));
+  assert.deepEqual(sel.elements.map((e) => e.entity), [helmet, golem]);
   assert.match(sel.failures.join(' '), /class 3 commands/);
 });
 

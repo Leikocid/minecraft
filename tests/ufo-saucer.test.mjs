@@ -7,7 +7,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { build } from 'esbuild';
-import { readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -20,7 +20,8 @@ async function load() {
       contents: `
         export * from './src/ufo/saucer.ts';
         export { UfoCore, SAUCER_ID, UFO_TAG, EVENT_TAG, horizontalDistance } from './src/ufo/event.ts';
-        export { PHASE_TICKS, PAUSE_MS, FIRST_MIN_MS, FIRST_MAX_MS } from './src/ufo/env.ts';`,
+        export { PHASE_TICKS, PAUSE_MS, FIRST_MIN_MS, FIRST_MAX_MS } from './src/ufo/env.ts';
+        export { HULL_RADIUS, HULL_HEIGHT } from './src/ufo/shootdown.ts';`,
       resolveDir: projectRoot,
       loader: 'ts',
     },
@@ -65,6 +66,8 @@ const {
   PAUSE_MS,
   FIRST_MIN_MS,
   FIRST_MAX_MS,
+  HULL_RADIUS,
+  HULL_HEIGHT,
 } = m;
 
 const readJson = (rel) => JSON.parse(readFileSync(join(projectRoot, rel), 'utf-8'));
@@ -259,7 +262,9 @@ test('saucer through a whole event: one entity, tagged, the path, beam on exactl
   // R-sauc-6: activate at magnet-on, a hum every 40 from +40, deactivate at the release, nothing after.
   const hums = Array.from({ length: Math.ceil(PHASE_TICKS.magnet / HUM_TICKS) - 1 }, (_, k) => ({ id: UFO_SOUNDS.hum, tick: magnet + HUM_TICKS * (k + 1) }));
   const expected = [{ id: UFO_SOUNDS.on, tick: magnet }, ...hums, { id: UFO_SOUNDS.off, tick: release }];
-  assert.equal(hums.length, 29);
+  assert.equal(PHASE_TICKS.magnet, 600);
+  assert.equal(hums.length, 14);
+  assert.equal(UFO_SOUNDS.hum, 'andrew.ufo.hum');
   assert.deepEqual(r.sounds.map(({ id, tick }) => ({ id, tick })), expected);
   assert.ok(r.sounds.every((s) => dist(s.at, hover) < 1e-9), 'a UFO sound away from the saucer');
   r.tick(100);
@@ -474,44 +479,78 @@ function corners(cube) {
   return out;
 }
 
-test('RP: one geometry fills the hull band [y, y + 3] within r 6, the beam bone hangs 40 blocks to a 5-block radius, the bounds hold both', () => {
+const SLICES = Array.from({ length: 40 }, (_, i) => `beam_${String(i).padStart(2, '0')}`);
+
+test('RP: one geometry fills the hull band [y, y + 6] within r 12, the beam is 40 one-block slices under the beam bone down to a 5-block radius, the bounds hold both', () => {
+  assert.deepEqual([HULL_RADIUS, HULL_HEIGHT], [12, 6], 'the model and the hit cylinder disagree');
   const geo = readJson('packs/resource/models/entity/ufo_saucer.geo.json')['minecraft:geometry'];
   assert.equal(geo.length, 1);
   const g = geo[0];
   assert.equal(g.description.identifier, 'geometry.andrew.ufo_saucer');
   const bones = new Map(g.bones.map((b) => [b.name, b]));
-  for (const name of ['disc', 'rim', 'dome', 'rim_lights', 'beam']) assert.ok(bones.has(name), `no ${name} bone`);
+  for (const name of ['disc', 'rim', 'dome', 'rim_lights', 'beam', ...SLICES]) assert.ok(bones.has(name), `no ${name} bone`);
   for (const name of ['disc', 'rim', 'dome', 'rim_lights']) {
     const pts = bones.get(name).cubes.flatMap(corners);
-    assert.ok(pts.every((p) => p.y >= 0 && p.y <= 3 * PX), `${name} leaves the hull band`);
+    assert.ok(pts.every((p) => p.y >= 0 && p.y <= HULL_HEIGHT * PX), `${name} leaves the hull band`);
     const r = Math.max(...pts.map((p) => Math.hypot(p.x, p.z)));
-    assert.ok(r <= 6 * PX + 1e-9, `${name} reaches ${(r / PX).toFixed(2)} blocks out`);
+    assert.ok(r <= HULL_RADIUS * PX + 1e-9, `${name} reaches ${(r / PX).toFixed(2)} blocks out`);
   }
   const all = ['disc', 'rim', 'dome'].flatMap((n) => bones.get(n).cubes.flatMap(corners));
-  assert.ok(Math.min(...all.map((p) => p.y)) === 0 && Math.max(...all.map((p) => p.y)) === 3 * PX, 'the disc and dome do not span the band');
-  assert.ok(Math.max(...bones.get('rim').cubes.flatMap(corners).map((p) => Math.hypot(p.x, p.z))) >= 5.5 * PX, 'the disc is not ~12 blocks across');
+  assert.ok(Math.min(...all.map((p) => p.y)) === 0 && Math.max(...all.map((p) => p.y)) === HULL_HEIGHT * PX, 'the disc and dome do not span the band');
+  assert.ok(Math.max(...bones.get('rim').cubes.flatMap(corners).map((p) => Math.hypot(p.x, p.z))) >= 11 * PX, 'the disc is not ~24 blocks across');
   assert.equal(bones.get('rim_lights').cubes.length >= 12 && bones.get('rim_lights').cubes.length <= 16, true);
 
-  const beam = bones.get('beam').cubes.flatMap(corners);
-  const top = Math.max(...beam.map((p) => p.y));
-  const bottom = Math.min(...beam.map((p) => p.y));
-  assert.ok(top <= 0, 'the beam reaches into the disc');
-  assert.equal(Math.round((top - bottom) / PX), 40, 'the beam bone is not 40 blocks long at beam_len 40');
-  const widest = Math.max(...beam.filter((p) => p.y === bottom).map((p) => Math.max(Math.abs(p.x), Math.abs(p.z))));
-  assert.equal(widest / PX, 5, 'the beam does not end at a 5-block radius');
-  const narrowest = Math.max(...beam.filter((p) => p.y === top).map((p) => Math.max(Math.abs(p.x), Math.abs(p.z))));
-  assert.ok(narrowest < widest / 4, 'the beam is not a cone');
+  // The beam bone draws nothing itself: it is the parent the beam_length animation scales.
+  assert.equal(bones.get('beam').cubes?.length ?? 0, 0, 'the beam bone has cubes of its own');
+  const slices = g.bones.filter((b) => b.name.startsWith('beam_'));
+  assert.deepEqual(slices.map((b) => b.name), SLICES, 'the beam is not beam_00 … beam_39 in order');
+  for (const b of slices) {
+    assert.equal(b.parent, 'beam', `${b.name} does not hang from the beam bone`);
+    assert.equal(b.cubes.length, 1, `${b.name} is not one cube`);
+  }
+  const box = slices.map((b) => {
+    const pts = corners(b.cubes[0]);
+    const ys = pts.map((p) => p.y);
+    return { top: Math.max(...ys), bottom: Math.min(...ys), r: Math.max(...pts.map((p) => Math.max(Math.abs(p.x), Math.abs(p.z)))) };
+  });
+  assert.ok(box[0].top <= 0, 'the beam reaches into the disc');
+  box.forEach((b, i) => {
+    assert.equal(b.top - b.bottom, PX, `${SLICES[i]} is not one block high`);
+    if (i > 0) {
+      assert.equal(b.top, box[i - 1].bottom, `${SLICES[i]} does not start where ${SLICES[i - 1]} ends: the slices are not top first and gapless`);
+      assert.ok(b.r >= box[i - 1].r, `${SLICES[i]} is narrower than the slice above it`);
+    }
+  });
+  assert.equal(Math.round((box[0].top - box[39].bottom) / PX), 40, 'the beam is not 40 blocks long at beam_len 40');
+  assert.equal(box[39].r / PX, 5, 'the beam does not end at a 5-block radius');
+  assert.ok(box[0].r < box[39].r / 4, 'the beam is not a cone');
 
   const { visible_bounds_width: w, visible_bounds_height: h, visible_bounds_offset: off } = g.description;
-  assert.ok(w >= 14, `bounds ${w} wide`);
-  assert.ok(off[1] - h / 2 <= -BEAM_LEN_MAX && off[1] + h / 2 >= 4, `bounds span ${off[1] - h / 2} … ${off[1] + h / 2}`);
+  assert.ok(w >= 2 * HULL_RADIUS, `bounds ${w} wide`);
+  assert.ok(off[1] - h / 2 <= -BEAM_LEN_MAX && off[1] + h / 2 >= HULL_HEIGHT, `bounds span ${off[1] - h / 2} … ${off[1] + h / 2}`);
 });
 
-test('RP: the client entity resolves its geometry, controllers and animations; the beam shows by q.property and scales by beam_len', () => {
+const BEAM_ON = "q.property('andrew:beam')";
+const BANDS = { beam_bright: [0], beam_mid: [1, 3], beam_dim: [2] };
+const beamController = (band) => `controller.render.andrew.ufo_saucer.${band}`;
+
+/** A part_visibility condition as a JS function of (beam, life_time); only the Molang the beam controllers use is accepted. */
+function molang(cond) {
+  const js = cond
+    .replaceAll(BEAM_ON, 'beam')
+    .replaceAll('math.mod(', 'mod(')
+    .replaceAll('math.floor(', 'Math.floor(')
+    .replaceAll('q.life_time', 't');
+  assert.match(js.replaceAll('Math.floor', ''), /^[a-z0-9\s()+*=|&,]+$/, `unexpected Molang in ${cond}`);
+  return new Function('beam', 't', 'const mod = (a, b) => a % b; return !!(' + js + ');');
+}
+
+test('RP: the client entity resolves its geometry, controllers and animations; the beam slices band by q.property and q.life_time and scale by beam_len', () => {
   const client = readJson('packs/resource/entity/ufo_saucer.entity.json')['minecraft:client_entity'].description;
   assert.equal(client.identifier, SAUCER_ID);
   const geo = readJson('packs/resource/models/entity/ufo_saucer.geo.json')['minecraft:geometry'][0];
   const bones = new Set(geo.bones.map((b) => b.name));
+  const drawable = geo.bones.filter((b) => (b.cubes?.length ?? 0) > 0).map((b) => b.name);
   assert.deepEqual(Object.values(client.geometry), ['geometry.andrew.ufo_saucer']);
 
   const controllers = readJson('packs/resource/render_controllers/ufo_saucer.render_controllers.json').render_controllers;
@@ -527,15 +566,55 @@ test('RP: the client entity resolves its geometry, controllers and animations; t
     for (const entry of vis.slice(1))
       for (const [bone, cond] of Object.entries(entry)) {
         assert.ok(bones.has(bone), `${id} shows a bone ${bone} the geometry lacks`);
-        assert.ok(!shown.has(bone), `${bone} is drawn by two controllers`);
-        shown.set(bone, { id, cond, material: client.materials[Object.values(rc.materials[0])[0].replace(/^Material\./, '')] });
+        if (!shown.has(bone)) shown.set(bone, []);
+        shown.get(bone).push({ id, cond, material: client.materials[Object.values(rc.materials[0])[0].replace(/^Material\./, '')] });
       }
   }
-  assert.deepEqual([...shown.keys()].sort(), [...bones].sort(), 'a bone no controller draws');
-  assert.equal(shown.get('beam').cond, "q.property('andrew:beam')");
-  for (const name of ['disc', 'rim', 'dome', 'rim_lights']) assert.equal(shown.get(name).cond, true);
-  assert.equal(shown.get('beam').material, 'entity_alphablend');
-  assert.equal(shown.get('dome').material, 'entity_alphablend');
+  for (const bone of drawable) assert.ok(shown.has(bone), `${bone} has cubes and no controller draws it`);
+  const beamIds = Object.keys(BANDS).map(beamController);
+  for (const [bone, by] of shown) {
+    if (bone === 'beam' || SLICES.includes(bone)) {
+      assert.deepEqual(by.map((x) => x.id).sort(), [...beamIds].sort(), `${bone} is not in exactly the three beam controllers`);
+      for (const x of by) assert.equal(x.material, 'entity_alphablend', `${x.id} does not draw ${bone} translucent`);
+    } else {
+      assert.equal(by.length, 1, `${bone} is drawn by ${by.length} controllers`);
+      assert.equal(by[0].cond, true, `${bone} is not always shown`);
+    }
+  }
+  for (const name of ['disc', 'rim', 'dome', 'rim_lights']) assert.ok(shown.has(name), `no controller draws ${name}`);
+  assert.equal(shown.get('dome')[0].material, 'entity_alphablend');
+  for (const x of shown.get('beam')) assert.equal(x.cond, BEAM_ON, `${x.id} shows the beam bone by ${x.cond}`);
+
+  // Each band controller paints its own texture, a file in the pack.
+  for (const band of Object.keys(BANDS)) {
+    const rc = controllers[beamController(band)];
+    assert.deepEqual(rc.textures, [`Texture.${band}`]);
+    assert.equal(client.textures[band], `textures/entity/ufo_${band}`);
+    assert.ok(
+      ['png', 'tga'].some((ext) => existsSync(join(projectRoot, 'packs/resource', `${client.textures[band]}.${ext}`))),
+      `${client.textures[band]} is not a file under packs/resource`,
+    );
+  }
+
+  // The slice phase is (i + floor(life_time · 8)) mod 4, and the condition string says so in each controller.
+  for (const [i, slice] of SLICES.entries()) {
+    const phase = `math.mod(${i} + math.floor(q.life_time * 8), 4)`;
+    for (const x of shown.get(slice)) assert.ok(x.cond.startsWith(`${BEAM_ON} && `) && x.cond.includes(phase), `${x.id} shows ${slice} by ${x.cond}`);
+  }
+
+  // Evaluated: with the beam on, every slice is in exactly one band at every phase, the band its phase names; with it off, in none.
+  const visible = (slice, beam, k) =>
+    Object.keys(BANDS).filter((band) => molang(shown.get(slice).find((x) => x.id === beamController(band)).cond)(beam, k / 8 + 0.01));
+  for (const [i, slice] of SLICES.entries())
+    for (let k = 0; k < 8; k++) {
+      const on = visible(slice, true, k);
+      assert.equal(on.length, 1, `${slice} at phase step ${k}: shown by ${on.join(', ') || 'none'}`);
+      assert.ok(BANDS[on[0]].includes((i + k) % 4), `${slice} at phase step ${k} is ${on[0]}`);
+      assert.deepEqual(visible(slice, false, k), [], `${slice} shows with the beam off`);
+    }
+  // The bands move toward beam_00, the top slice, as life_time grows: upward.
+  for (let i = 1; i < SLICES.length; i++)
+    for (let k = 0; k < 7; k++) assert.deepEqual(visible(SLICES[i - 1], true, k + 1), visible(SLICES[i], true, k), `the band at ${SLICES[i]} does not move up to ${SLICES[i - 1]}`);
 
   const animations = {};
   for (const f of readdirSync(join(projectRoot, 'packs/resource/animations'))) Object.assign(animations, readJson(`packs/resource/animations/${f}`).animations);
@@ -552,4 +631,15 @@ test('RP: the client entity resolves its geometry, controllers and animations; t
   assert.equal(scale[2], 1);
   assert.match(scale[1], /q\.property\('andrew:beam_len'\)/);
   assert.match(scale[1], /\/ 40$/, 'the beam scale does not divide by the bone\'s 40-block length');
+});
+
+test('RP: sound_definitions.json defines the hum UFO_SOUNDS plays, on an .ogg in the pack', () => {
+  const defs = readJson('packs/resource/sounds/sound_definitions.json').sound_definitions;
+  const hum = defs[UFO_SOUNDS.hum];
+  assert.ok(hum, `${UFO_SOUNDS.hum} is not defined`);
+  assert.ok(hum.sounds.length >= 1, `${UFO_SOUNDS.hum} has no sounds`);
+  for (const snd of hum.sounds) {
+    const name = typeof snd === 'string' ? snd : snd.name;
+    assert.ok(existsSync(join(projectRoot, 'packs/resource', `${name}.ogg`)), `${name}.ogg is not in packs/resource`);
+  }
 });

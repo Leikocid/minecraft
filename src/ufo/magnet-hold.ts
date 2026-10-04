@@ -1,11 +1,11 @@
-// The per-tick hold (L0-magn-phld): players with iron in a hand are pulled by
+// The per-tick hold (L0-magn-phld): players with iron or a legendary weapon in a hand are pulled by
 // knockback toward the hold point under the saucer (L0-magn-rply); every other
 // element is teleported toward its slot on the cloud ring and its velocity
 // cleared (L0-magn-rrng), so it neither falls nor collides (U3). Engine objects
 // come in as arguments, so node tests run a whole step over fakes.
 
 import type { Entity, EquipmentSlot, GameMode, ItemStack, Player, Vector3 } from "@minecraft/server";
-import { isIronItem } from "./iron";
+import { isMagneticStack } from "./iron";
 import { type ElementClass, type Zone, inZone } from "./magnet-select";
 
 /** UFO §6: players hang this far below the saucer, on its axis. */
@@ -114,26 +114,26 @@ export function keepAway(p: Vector3, axis: Vector3, bodies: readonly Vector3[], 
   return { x: p.x, y: p.y + PUSH_STEPS * PUSH_STEP, z: p.z };
 }
 
-/** The iron stack in the main or off hand; a legendary is never iron. Inventory and armour do not count. */
-export function ironInHand(player: HeldPlayer, isLegendary: (s: ItemStack) => boolean): ItemStack | undefined {
+/** The iron or legendary weapon stack in the main or off hand. Inventory and armour do not count. */
+export function ironInHand(player: HeldPlayer, isLegendaryWeapon: (s: ItemStack) => boolean): ItemStack | undefined {
   const equippable = player.getComponent("minecraft:equippable");
   if (equippable === undefined) return undefined;
   for (const slot of HANDS) {
     const stack = equippable.getEquipment(slot);
-    if (stack !== undefined && isIronItem(stack.typeId) && !isLegendary(stack)) return stack;
+    if (stack !== undefined && isMagneticStack(stack, isLegendaryWeapon)) return stack;
   }
   return undefined;
 }
 
-/** L0-magn-rply, re-read every tick: alive, in the zone, not Creative or Spectator, iron in a hand. */
-export function pullsPlayer(player: HeldPlayer, zone: Zone, isLegendary: (s: ItemStack) => boolean): boolean {
-  return player.isValid && pulls(player, player.getGameMode(), player.location, zone, isLegendary);
+/** L0-magn-rply, re-read every tick: alive, in the zone, not Creative or Spectator, iron or a legendary weapon in a hand. */
+export function pullsPlayer(player: HeldPlayer, zone: Zone, isLegendaryWeapon: (s: ItemStack) => boolean): boolean {
+  return player.isValid && pulls(player, player.getGameMode(), player.location, zone, isLegendaryWeapon);
 }
 
 /** pullsPlayer for a valid player whose mode and location are already read; the cheap tests go first. */
-function pulls(player: HeldPlayer, mode: GameMode, at: Vector3, zone: Zone, isLegendary: (s: ItemStack) => boolean): boolean {
+function pulls(player: HeldPlayer, mode: GameMode, at: Vector3, zone: Zone, isLegendaryWeapon: (s: ItemStack) => boolean): boolean {
   if (mode === CREATIVE || mode === SPECTATOR || !inZone(zone, at)) return false;
-  if (ironInHand(player, isLegendary) === undefined) return false;
+  if (ironInHand(player, isLegendaryWeapon) === undefined) return false;
   // A dead player stays listed, with health 0, until it respawns.
   const health = player.getComponent("minecraft:health")?.currentValue;
   return health === undefined || health > 0;
@@ -153,7 +153,7 @@ export interface HoldInput {
   readonly players: Iterable<HeldPlayer | undefined>;
   /** Mutated: an element whose entity is gone is taken out and its slot stays empty. */
   readonly elements: HeldElement[];
-  isLegendary(stack: ItemStack): boolean;
+  isLegendaryWeapon(stack: ItemStack): boolean;
   /** Dimension.isChunkLoaded: nothing is moved into an unloaded chunk (C-12′). */
   isLoaded(at: Vector3): boolean;
 }
@@ -184,7 +184,7 @@ export function holdStep(input: HoldInput): HoldReport {
       const mode = p.getGameMode();
       const loc = p.location;
       if (mode !== SPECTATOR) bodies.push({ x: loc.x, y: loc.y + BODY_MIDDLE, z: loc.z });
-      if (!pulls(p, mode, loc, input.zone, input.isLegendary)) continue;
+      if (!pulls(p, mode, loc, input.zone, input.isLegendaryWeapon)) continue;
       const v = pullStep(loc, target, PLAYER_SPEED);
       // U1: holds within ~0.03 of the target; at the target the step is zero.
       p.applyKnockback({ x: v.x, z: v.z }, v.y);

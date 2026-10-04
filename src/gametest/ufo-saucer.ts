@@ -319,7 +319,7 @@ registerAsync("andrew", "ufo_saucer_flight", async (test: Test): Promise<void> =
     const hover: Vector3 = { x: centre.x + 0.5, y: hoverY, z: centre.z + 0.5 };
     test.assert(centre.y === p.top && centre.x === p.cx && centre.z === p.cz, `centre ${fmt(centre)}, not the pad's ${p.cx},${p.top},${p.cz}`);
     test.assert(hoverY === centre.y + 40, `hoverY ${hoverY}, not centre + 40`);
-    test.assert(magnet.call - arrival.call === D.arrival && release.call - magnet.call === D.magnet && pause.call - release.call === D.departure, "the phases did not run 400 / 1200 / 300 UFO ticks");
+    test.assert(magnet.call - arrival.call === D.arrival && release.call - magnet.call === D.magnet && pause.call - release.call === D.departure, `the phases did not run ${D.arrival} / ${D.magnet} / ${D.departure} UFO ticks`);
 
     // The spawn: one saucer 90 out at hover + 10, the BP shape the script relies on.
     const spawnAt = arrival.at;
@@ -386,7 +386,8 @@ registerAsync("andrew", "ufo_saucer_flight", async (test: Test): Promise<void> =
     const hums = r.sounds.filter((s) => s.id === UFO_SOUNDS.hum).length;
     log(`flight RESULT sounds ${r.sounds.length}: ${UFO_SOUNDS.on} ×${r.sounds.filter((s) => s.id === UFO_SOUNDS.on).length}, ${UFO_SOUNDS.hum} ×${hums}, ${UFO_SOUNDS.off} ×${r.sounds.filter((s) => s.id === UFO_SOUNDS.off).length}; 60 ticks after the removal: none further`);
     test.assert(got === want, `sound log (UFO ticks from magnet-on)\n got  ${got}\n want ${want}`);
-    test.assert(hums === 29, `${hums} hums over the 1200-tick magnet, not 29`);
+    const wantHums = Math.ceil(D.magnet / HUM_TICKS) - 1;
+    test.assert(hums === wantHums, `${hums} hums over the ${D.magnet}-tick magnet, not ${wantHums}`);
     test.assert(r.sounds.every((s) => dist(s.at, hover) < 0.01), "a UFO sound played away from the saucer");
     test.assert(r.core.lastEnd()?.reason === "departed" && r.core.lastEnd()?.eventId === eventId, `the event ended by ${r.core.lastEnd()?.reason}`);
   } finally {
