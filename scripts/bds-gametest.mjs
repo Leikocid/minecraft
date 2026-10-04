@@ -389,6 +389,10 @@ const EXPECTED_TESTS = [
   'andrew:katana_empty_main_no_cast',
   'andrew:katana_offhand_behind_main',
   'andrew:katana_use_on_block_aims_by_view',
+  // KATA-FALL-01 — src/gametest/katana-fall.ts (L0-katn-ac05)
+  'andrew:katana_fall_one_shot',
+  'andrew:katana_fall_at_height',
+  'andrew:katana_fall_expiry_other_damage',
 ];
 
 /**
