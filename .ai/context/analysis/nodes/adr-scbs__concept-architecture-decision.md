@@ -28,7 +28,7 @@ see_also: ["sculkcrossbowspecv1ruen-part-1", "sculkcrossbowspecv1ruen-part-2"]
 **Options.**
 - **A: a custom `andrew:sculk_crossbow`** with `minecraft:shooter` (arrow ammunition), `minecraft:enchantable` (slot `crossbow`), no `minecraft:durability`, and a crossbow icon.
   - Pros: framework identity is unchanged, as are Creative/`/give` (T03) and infinite durability by omission.
-  - Risks: a custom shooter draws and releases like a bow, with no stored "loaded" state. Quick Charge and Multishot may not apply natively. If they do not, the script emulates them: Multishot = two extra bolts at ±10°; Quick Charge = a shorter required use duration, read from the enchantment level.
+  - Measured: with `charge_on_draw` it loads at `max_draw_duration` and fires on the next press, like a crossbow — not like a bow. Quick Charge has **no** native effect; Multishot was not measured. Quick Charge is therefore emulated: set the native draw to the QC III floor (0.5 s) and gate on the length of the loading draw, 25 − 5·level ticks. Multishot, if it is not native, is two extra bolts at ±10°.
 - **B: the vanilla `minecraft:crossbow`** with the legendary mark in item dynamic properties.
   - Pros: real loading; Quick Charge and Multishot are native.
   - Cons: `isLegendaryStack` has to become mark-aware throughout the framework, the magnet and the GameTests. There is no Creative entry (§10). Durability must be refilled after every shot (T18). The unmarked vanilla crossbow is the recipe input and looks identical.
@@ -39,7 +39,7 @@ see_also: ["sculkcrossbowspecv1ruen-part-1", "sculkcrossbowspecv1ruen-part-2"]
 1. that the custom shooter fires arrows in Survival and consumes ammunition;
 2. whether the enchanting table and the anvil offer Quick Charge, Multishot and Piercing for slot `crossbow`;
 3. whether Multishot and Quick Charge change the custom shooter's behaviour natively.
-4. (added at reduce, `L0-sclk-cx02`, `L0-adr-scfc`) the minimum release time (probe Q5). Under A a full-charge gate is mandatory: a bolt is spawned only for a release at or past the Quick-Charge-adjusted charge time. If neither the native draw nor the scripted gate holds reliably, B is adopted.
+4. ~~(added at reduce) the minimum release time (probe Q5)~~ — **satisfied natively on BDS**: `charge_on_draw` + `max_draw_duration` admit no early shot at all, so §9's limiter needs no script.
 
 If (1) or (4) fails, B is adopted. Under B, T18 (durability kept at 0) moves from `sclk` to `lgnd`, together with mark-aware identity. The reduce then re-opens `lgnd` for mark-based identity. Under C-16, emulated Quick Charge is a documented deviation from the vanilla feel.
 

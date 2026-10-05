@@ -28,7 +28,8 @@ see_also: ["sculkcrossbowspecv1ruen-part-2"]
 **Assumption (CAN_ASSUME).**
 - Crater cells become air **without item drops**. A drop-free carve fits "not a TNT explosion" and avoids a resource farm.
 - **Liquids** are not removed. Water may flow into the crater.
-- **Deny-list blocks** (bedrock, portals, command and structure blocks, barriers, reinforced deepslate, …; the shared list from `L0-xasm6`) stay.
+- **Deny-list blocks** stay. The list is `PENETRATOR_KEEP` (`src/orbital/penetrator-keep.ts`), 35 ids: bedrock, end portal, end portal frame, end gateway, barrier, `light_block` plus `light_block_0…15`, the three command blocks, structure block, structure void, jigsaw, allow, deny, border block, invisible bedrock, moving block, and both piston arm collision blocks.
+- **Obsidian, reinforced deepslate, ancient debris and the Nether portal are carved like stone** — they are deliberately absent from the list, being hard but Survival-breakable (`xasm6`, `pntr-r003`). Spec §6 is silent on them; `r010` already ruled that the list keeps its Orbital meaning, and the operator has accepted the Cannon as it stands (ORBC-IPAD-01-AA).
 - **Containers** removed by the carve **spill their contents**. This is an engine fact: `setType` spills containers even with `doTileDrops` false. Any legendary inside is first taken out by `protectLegendariesIn`.
 - **Structure blocks** of the shipped structures (Warden City, Bastion, …) get no special protection. A crater is an ordinary world edit, like a player's pickaxe.
 - In the Nether and the End the same rules apply. Sculk is placed in every dimension.

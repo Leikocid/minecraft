@@ -16,5 +16,6 @@ level: 2
 
 GIVEN `PENETRATOR_KEEP` moved to `src/terrain/keep.ts`, THEN:
 - the node set-equality test against the pre-move list passes;
-- the Orbital LMB, penetrator and ring GameTests are green (blast-radius gate);
+- the four `pntr_*` GameTests and the node bundle are green (blast-radius gate; the ring is not a consumer of the list);
+- reinforced deepslate is carved, like obsidian and ancient debris — asserted explicitly, so nobody turns the shared list into a per-weapon extension;
 - a crossbow bolt hitting bedrock or a barrier leaves it in place.

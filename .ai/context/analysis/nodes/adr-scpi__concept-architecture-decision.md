@@ -28,7 +28,7 @@ governs_files: ["src/sculk/"]
 
 **Decision.**
 - T15 passes when the following hold. (a) Every sculk-crossbow stack that gains Piercing loses it in the same tick the inventory-change event reports it (`sclk-r005`). (b) No bolt behaves differently with Piercing, because each bolt resolves once (`sclk-r001`).
-- The momentary tooltip is listed in the README C-16 deviation list.
-- If probe **Q2** shows that neither the table nor the anvil offers Piercing for the custom item, the deviation is dropped, and T15 is tested only as "cannot be applied".
+- The README C-16 list states the cost: Piercing from a table roll or an anvil book is removed with no refund. `enchant_with_levels 30` gives Piercing in 65 % of rolls and Piercing alone in 19 % (levels 1–30: 70 % / 42 %), and such a roll leaves the crossbow bare.
+- Probe **Q2** is answered: the engine does admit Piercing for the custom item, so the deviation is kept and T15 is tested as "removed at once".
 
 **Scope.** This applies only to `sclk`. No `lgnd` hook is involved: the strip is crossbow code on `playerInventoryItemChange`, so the plan's single framework change still holds.

@@ -30,7 +30,7 @@ governs_files: ["src/legendary/registry.ts", "src/ufo/magnet-select.ts", "src/uf
 |---|---|
 | Hazards: fire and lava prevented; cactus and TNT get a return | the C-16 reading of `L0-xcx21`/`adr-ktgr`. T20 is proven as "exactly one exists, held or owed" |
 | Orbital blast and rings | prevented by `protectLegendariesIn` |
-| Void return to "the last owner" | **`mark.owner` (the crafter or `/give` target)**. `decision-resolve-l0-xcx11` chose the last holder, but it is not built (`state.ts:66`, `recovery.ts:490`) |
+| Void return to "the last owner" | **`mark.holder`, falling back to `mark.owner`**. `decision-resolve-l0-xcx11` chose the last holder, and it is built as of 2026-10-05 (`state.ts:47-52,69-72`, `recovery.ts:273`, LGND-HOLD-01-AA): a stack from before holders still returns to its `owner` |
 | UFO Magnet | the crossbow **is pulled**: since 1.6.0 the selector takes any `isLegendaryWeaponStack` (`magnet-select.ts:8`). The spec does not list the magnet as a hazard, so this is not a breach |
 
-**Impact if wrong.** If the operator wants the holder built now, `lgnd` v7 takes on the holder field (`LGND`-scope task), and T20/Void tests for all five weapons change. If the crossbow must be exempt from the magnet, a per-def `magnetic: false` is needed (touches `magn`).
+**Impact if wrong.** The holder field is built, so the crossbow inherits it with no `lgnd` work of its own; T20/Void tests name the last holder, not the crafter. If the crossbow must be exempt from the magnet, a per-def `magnetic: false` is needed (touches `magn`).

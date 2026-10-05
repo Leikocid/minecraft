@@ -1,7 +1,7 @@
 ---
 title: Domain Model
 type: project-knowledge
-generated_at: "2026-10-05T17:12:56.140Z"
+generated_at: "2026-10-05T22:05:04.956Z"
 source_channel: rollout
 node_id: rollout-domain-model
 aliases: ["rollout-domain-model","domain-model","project-knowledge/domain-model"]
@@ -180,7 +180,8 @@ File: `packs/behavior/items/sculk_crossbow.json`. It mirrors `dragon_katana.json
 | `display_name` | `item.andrew:sculk_crossbow.name` |
 | `icon` | `andrew_sculk_crossbow` (an RP texture in a crossbow silhouette with sculk teal) |
 | `max_stack_size` | 1 |
-| `minecraft:shooter` | `ammunition: [{item: "minecraft:arrow", use_offhand: true, search_inventory: true, use_in_creative: true}]`, `charge_on_draw: true`, `max_draw_duration` = 1.25 s (a probe-tuned value) |
+| `minecraft:shooter` | `ammunition: [{item: "minecraft:arrow", use_offhand: true, search_inventory: true, use_in_creative: true}]`, `charge_on_draw: true`, `max_draw_duration` = 1.25 s, or 0.5 s under the scripted Quick-Charge scheme (`as05`) |
+| — load-bearing | `charge_on_draw: true` is what makes the item hold a loaded state; without it, and without `scale_power`, a bare tap fires a full-power bolt. `max_draw_duration` **is** the native fire-rate gate (`cx02`) |
 | `minecraft:use_modifiers` | `use_duration` ≥ the draw time, `movement_modifier` 0.35 (like a crossbow) |
 | `minecraft:enchantable` | `slot: "crossbow"`, value 1 (the vanilla crossbow's enchantability) |
 | `minecraft:fire_resistant` | true (the item entity's fire immunity is `lgnd`'s, but this is the cheap first line) |
@@ -334,7 +335,7 @@ Source: `docs/Sculk_Crossbow_Spec_v1_RU_EN.docx` (raw `sculkcrossbowspecv1ruen-p
 
 ## Responsibility
 A passive ranged legendary. Every projectile its holder fires is replaced at spawn by one `andrew:sculk_bolt`. The bolt flies physically, with a Warden-style Sonic Boom trail, and resolves exactly once (C-26):
-- **entity hit:** fixed `SONIC_BOOM_DAMAGE` = 10 HP through armour, the shield and the invulnerability window (C-28), plus a sculk patch under the target, with no crater;
+- **entity hit:** fixed `SONIC_BOOM_DAMAGE` = 10 HP, absorption first, through armour, the shield and the invulnerability window (C-28), plus a sculk patch under the target, with no crater;
 - **block hit:** an irregular crater ≤ 5×5×3 plus a ring of plain sculk ≤ 5×5, with no entity damage (C-27);
 - **expiry:** after 100 ticks, on leaving loaded chunks, or in the Void, nothing happens.
 
