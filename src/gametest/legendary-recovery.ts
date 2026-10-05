@@ -1,7 +1,8 @@
 // Loss return against pickups the recovery heuristic cannot see, and debts of
 // one owner that must not overwrite each other (CX-lgnd-09 items 2–3;
-// L0-lgnd-ad02, r005, ent4, p003). The Dragon Katana's death, Void and jump
-// cases of L0-lgnd-ac24 close the file.
+// L0-lgnd-ad02, r005, ent4, p003); a loss going back to the last holder, not
+// to the crafter (CX-lgnd-16, L0-lgnd-ad11). The Dragon Katana's death, Void
+// and jump cases of L0-lgnd-ac24 close the file.
 //
 // The oracle reads the persisted keys itself — the stack's `andrew:ws_gen`
 // and the world ledger `andrew:ws_gen:<id>`, both absent = 0 — rather than
@@ -39,6 +40,9 @@ const STAND_B: Vector3 = { x: 4, y: 2, z: 5 };
 
 /** Four 40-tick recovery checks: a loss return, if one is coming, has landed. */
 const WAIT_TICKS = 160;
+
+/** How long a Void return may take to reach the player it goes to. */
+const VOID_RETURN_TICKS = 200;
 
 const KEY = `andrew:${WEB_SWORD.keyPrefix}_`;
 
@@ -309,6 +313,357 @@ registerAsync("andrew", "legendary_cx09_owed_redeemed_on_respawn", async (test: 
 })
   .structureName(STRUCTURE)
   .maxTicks(WAIT_TICKS + 100)
+  .tag("andrew");
+
+// ------------------------------------------------ CX-lgnd-16: a lost legendary goes back to its last holder (L0-lgnd-ad11)
+//
+// A holds the instance, it reaches B through the ground, and B loses it in the
+// Void. B gets it back; A, who made it, stays its owner and gets nothing. The
+// oracle reads the stack's raw keys and the raw owed ledger.
+
+const PICKUP_TICKS = 100;
+
+const hlog = (msg: string): void => console.warn(`[gametest] hold ${msg}`);
+
+/** A stack's raw dynamic property, read past src/legendary. */
+const rawKey = (stack: ItemStack | undefined, suffix: string): unknown => stack?.getDynamicProperty(`${KEY}${suffix}`);
+
+/** The slots of `player`'s inventory holding instance `id`. */
+function slotsOf(player: Player, id: string): number[] {
+  const container = inventoryOf(player);
+  const slots: number[] = [];
+  for (let slot = 0; container !== undefined && slot < container.size; slot++) {
+    if (isInstance(container.getItem(slot), id)) slots.push(slot);
+  }
+  return slots;
+}
+
+/** The first stack of instance `id` in `player`'s inventory. */
+function stackOf(player: Player, id: string): ItemStack | undefined {
+  const slot = slotsOf(player, id)[0];
+  return slot === undefined ? undefined : inventoryOf(player)?.getItem(slot);
+}
+
+/** Return targets whose raw owed entry names instance `id`. */
+function owedTargetsOf(id: string): string[] {
+  const value = world.getDynamicProperty(`${KEY}owed`);
+  if (typeof value !== "string") return [];
+  return Object.entries(JSON.parse(value) as Record<string, unknown>)
+    .filter(([, entry]) => JSON.stringify(entry).includes(id))
+    .map(([target]) => target);
+}
+
+/** The stack's crafter and holder fields, raw. */
+function describeKeys(stack: ItemStack | undefined): string {
+  return ["origin", "owner", "owner_name", "holder", "holder_name", "gen"].map((k) => `${k}=${String(rawKey(stack, k))}`).join(" ");
+}
+
+async function waitToCarry(test: Test, player: Player, id: string, ticks: number): Promise<number[]> {
+  let slots = slotsOf(player, id);
+  for (let t = 0; t < ticks && slots.length === 0; t++) {
+    await test.idle(1);
+    slots = slotsOf(player, id);
+  }
+  return slots;
+}
+
+async function droppedNear(test: Test, at: Vector3, id: string): Promise<Entity | undefined> {
+  for (let t = 0; t < 10; t++) {
+    await test.idle(1);
+    const found = test
+      .getDimension()
+      .getEntities({ type: "minecraft:item", location: at, maxDistance: 8 })
+      .find((e) => isInstance(e.getComponent("minecraft:item")?.itemStack, id));
+    if (found !== undefined) return found;
+  }
+  return undefined;
+}
+
+/** `from` throws instance `id`; it is put down at `to`'s feet, and `to` picks it up. */
+async function handOver(test: Test, from: SimulatedPlayer, to: SimulatedPlayer, id: string): Promise<void> {
+  const slot = slotsOf(from, id)[0];
+  test.assert(slot !== undefined, `${from.name} does not carry ${id}`);
+  from.selectedSlotIndex = slot as number;
+  test.assert(from.dropSelectedItem(), `${from.name}: dropSelectedItem refused`);
+  const entity = await droppedNear(test, from.location, id);
+  test.assert(entity !== undefined, `no item entity after ${from.name}'s throw`);
+  (entity as Entity).teleport(to.location);
+  const got = await waitToCarry(test, to, id, PICKUP_TICKS);
+  test.assert(got.length === 1 && slotsOf(from, id).length === 0, `hand-over failed: ${to.name} carries ${got.length}, ${from.name} ${slotsOf(from, id).length}`);
+}
+
+/**
+ * `player` throws instance `id`; once it is watched on the platform, `beforeVoid`
+ * runs and the entity is sent below the floor in the same tick.
+ */
+async function throwIntoVoid(test: Test, player: SimulatedPlayer, id: string, beforeVoid?: () => void): Promise<void> {
+  const slot = slotsOf(player, id)[0];
+  test.assert(slot !== undefined, `${player.name} does not carry ${id}`);
+  player.selectedSlotIndex = slot as number;
+  test.assert(player.dropSelectedItem(), `${player.name}: dropSelectedItem refused`);
+  const entity = await droppedNear(test, player.location, id);
+  test.assert(entity !== undefined, `no item entity after ${player.name}'s throw`);
+  // Watched on the platform first: an item already below the floor at its
+  // spawn reads as unloaded with its chunk, not as lost.
+  await test.idle(3);
+  const e = entity as Entity;
+  const floor = e.dimension.heightRange.min;
+  beforeVoid?.();
+  e.teleport({ x: e.location.x, y: floor - 8, z: e.location.z });
+}
+
+/** A Survival crafter at STAND_A holding a freshly made Web Sword, and a Survival receiver at STAND_B. */
+async function crafterAndReceiver(test: Test, tag: string): Promise<{ crafter: SimulatedPlayer; receiver: SimulatedPlayer; id: string }> {
+  const crafter = test.spawnSimulatedPlayer(STAND_A, `hold_crafter_${tag}`, GameMode.Survival);
+  const receiver = test.spawnSimulatedPlayer(STAND_B, `hold_receiver_${tag}`, GameMode.Survival);
+  await test.idle(4);
+  const mark = state.makeMark("craft", crafter);
+  inventoryOf(crafter)?.setItem(0, state.markItem(WEB_SWORD, new ItemStack(WEB_SWORD.itemId, 1), mark));
+  await test.idle(2);
+  return { crafter, receiver, id: mark.id };
+}
+
+/** Waits for the return to land, then 40 ticks more, and reads where every copy is. */
+async function settleReturn(test: Test, to: Player, id: string): Promise<void> {
+  await waitToCarry(test, to, id, VOID_RETURN_TICKS);
+  await test.idle(40);
+}
+
+function transferThenVoid(tag: string, crafterOffline: boolean) {
+  return async (test: Test): Promise<void> => {
+    const { crafter, receiver, id } = await crafterAndReceiver(test, tag);
+    const [crafterId, crafterName, receiverId] = [crafter.id, crafter.name, receiver.id];
+    await handOver(test, crafter, receiver, id);
+    const onB = stackOf(receiver, id);
+    hlog(`${tag}: B holds ws_id ${id}; B's stack ${describeKeys(onB)} (A=${crafterId}, B=${receiverId})`);
+    if (crafterOffline) crafter.disconnect();
+
+    await throwIntoVoid(test, receiver, id);
+    await settleReturn(test, receiver, id);
+
+    const toB = gensIn(inventoryOf(receiver), id) ?? [];
+    const toA = crafterOffline ? undefined : (gensIn(inventoryOf(crafter), id) ?? []);
+    const owed = owedTargetsOf(id).map((t) => (t === crafterId ? "A" : t === receiverId ? "B" : t));
+    const back = stackOf(receiver, id);
+    const result =
+      `holder(B) gens=[${toB.join(",")}] crafter(A) ${toA === undefined ? "offline" : `gens=[${toA.join(",")}]`} ` +
+      `owed targets=[${owed.join(",")}] ledger gen=${ledgerGen(id)}; returned ${describeKeys(back)}`;
+    hlog(`${tag} RESULT ${result}`);
+    test.assert(toB.join() === "1", `the holder who lost it did not get it back once at gen 1: ${result}`);
+    test.assert(toA === undefined || toA.length === 0, `the crafter was handed the holder's loss: ${result}`);
+    test.assert(owed.length === 0, `the return was also owed: ${result}`);
+    test.assert(ledgerGen(id) === 1, `the loss did not move the ledger to gen 1: ${result}`);
+    test.assert(rawKey(back, "holder") === receiverId, `the returned copy does not name B as holder: ${result}`);
+    test.assert(rawKey(back, "owner") === crafterId && rawKey(back, "owner_name") === crafterName, `the returned copy lost its crafter: ${result}`);
+    test.succeed();
+  };
+}
+
+registerAsync("andrew", "legendary_hold_void_after_transfer", transferThenVoid("online", false))
+  .structureName(STRUCTURE)
+  .maxTicks(PICKUP_TICKS + VOID_RETURN_TICKS + 200)
+  .tag("andrew");
+
+registerAsync("andrew", "legendary_hold_void_after_transfer_crafter_offline", transferThenVoid("crafter_off", true))
+  .structureName(STRUCTURE)
+  .maxTicks(PICKUP_TICKS + VOID_RETURN_TICKS + 200)
+  .tag("andrew");
+
+// The holder leaves the server with the instance on the ground; it falls into
+// the Void while they are away. The debt is theirs, not the crafter's.
+registerAsync("andrew", "legendary_hold_void_holder_offline", async (test: Test): Promise<void> => {
+  const { crafter, receiver, id } = await crafterAndReceiver(test, "off");
+  const [crafterId, receiverId] = [crafter.id, receiver.id];
+  await handOver(test, crafter, receiver, id);
+  await throwIntoVoid(test, receiver, id, () => receiver.disconnect());
+  await test.idle(WAIT_TICKS);
+
+  const owed = owedTargetsOf(id);
+  const toA = gensIn(inventoryOf(crafter), id) ?? [];
+  const result = `owed targets=[${owed.map((t) => (t === crafterId ? "A" : t === receiverId ? "B" : t)).join(",")}] crafter(A) gens=[${toA.join(",")}] ledger gen=${ledgerGen(id)}; owed[B]=${owedFor(receiverId) || "(none)"}`;
+  hlog(`holder_offline RESULT ${result}`);
+  test.assert(owed.length === 1 && owed[0] === receiverId, `the debt is not B's alone: ${result}`);
+  test.assert(toA.length === 0, `the crafter was handed the offline holder's loss: ${result}`);
+  test.assert(ledgerGen(id) === 1 && owedFor(receiverId).includes('"gen":1'), `the debt is not at gen 1: ${result}`);
+  test.succeed();
+})
+  .structureName(STRUCTURE)
+  .maxTicks(PICKUP_TICKS + WAIT_TICKS + 120)
+  .tag("andrew");
+
+// The holder is dead when the instance falls: it is owed to them, and paid on
+// their next spawn — the same playerSpawn handler that pays on joining.
+registerAsync("andrew", "legendary_hold_void_holder_dead_redeemed", async (test: Test): Promise<void> => {
+  const { crafter, receiver, id } = await crafterAndReceiver(test, "dead");
+  const [crafterId, receiverId] = [crafter.id, receiver.id];
+  await handOver(test, crafter, receiver, id);
+  // Killed in the tick the entity leaves the platform, so the death sweep
+  // (8 blocks round the body) cannot reach it.
+  await throwIntoVoid(test, receiver, id, () => receiver.kill());
+  await test.idle(WAIT_TICKS);
+
+  const owedWhileDead = owedTargetsOf(id).map((t) => (t === crafterId ? "A" : t === receiverId ? "B" : t));
+  const toAWhileDead = gensIn(inventoryOf(crafter), id) ?? [];
+  hlog(`holder_dead: while B is dead owed targets=[${owedWhileDead.join(",")}] crafter(A) gens=[${toAWhileDead.join(",")}]`);
+  test.assert(owedWhileDead.join() === "B", `while B is dead the debt is not B's alone: [${owedWhileDead.join(",")}]`);
+  test.assert(toAWhileDead.length === 0, `the crafter was handed the dead holder's loss: gens=[${toAWhileDead.join(",")}]`);
+
+  receiver.respawn();
+  await settleReturn(test, receiver, id);
+  const toB = gensIn(inventoryOf(receiver), id) ?? [];
+  const toA = gensIn(inventoryOf(crafter), id) ?? [];
+  const result = `after respawn holder(B) gens=[${toB.join(",")}] crafter(A) gens=[${toA.join(",")}] owed targets=[${owedTargetsOf(id).join(",")}] ledger gen=${ledgerGen(id)}`;
+  hlog(`holder_dead RESULT ${result}`);
+  test.assert(toB.join() === "1", `B was not paid exactly once at gen 1: ${result}`);
+  test.assert(toA.length === 0 && owedTargetsOf(id).length === 0, `the debt survived or went to A: ${result}`);
+  test.succeed();
+})
+  .structureName(STRUCTURE)
+  .maxTicks(PICKUP_TICKS + WAIT_TICKS + VOID_RETURN_TICKS + 200)
+  .tag("andrew");
+
+/** A Web Sword stamped the way stacks were before holders: no holder keys at all. */
+function legacySword(owner: Player, id: string): ItemStack {
+  const stack = new ItemStack(WEB_SWORD.itemId, 1);
+  stack.setDynamicProperty(`${KEY}origin`, "craft");
+  stack.setDynamicProperty(`${KEY}owner`, owner.id);
+  stack.setDynamicProperty(`${KEY}id`, id);
+  stack.setDynamicProperty(`${KEY}owner_name`, owner.name);
+  return stack;
+}
+
+const LEGACY_DROP: Vector3 = { x: 5.5, y: 2.2, z: 1.5 };
+
+// An old world's instance that never entered an inventory since: no holder, so
+// its loss goes to its owner, as before holders existed.
+registerAsync("andrew", "legendary_hold_legacy_mark_owner", async (test: Test): Promise<void> => {
+  const owner = test.spawnSimulatedPlayer(STAND_A, "hold_legacy_owner", GameMode.Survival);
+  const bystander = test.spawnSimulatedPlayer(STAND_B, "hold_legacy_bystander", GameMode.Survival);
+  await test.idle(4);
+  const id = `legacy-${system.currentTick}`;
+  const old = legacySword(owner, id);
+  test.assert(rawKey(old, "holder") === undefined, "the legacy stack carries a holder");
+  const entity = test.getDimension().spawnItem(old, test.worldLocation(LEGACY_DROP));
+  entity.clearVelocity();
+  await test.idle(3);
+  entity.teleport({ x: entity.location.x, y: entity.dimension.heightRange.min - 8, z: entity.location.z });
+  await settleReturn(test, owner, id);
+
+  const toOwner = gensIn(inventoryOf(owner), id) ?? [];
+  const toBystander = gensIn(inventoryOf(bystander), id) ?? [];
+  const back = stackOf(owner, id);
+  const result = `owner gens=[${toOwner.join(",")}] bystander gens=[${toBystander.join(",")}] owed targets=[${owedTargetsOf(id).join(",")}] ledger gen=${ledgerGen(id)}; returned ${describeKeys(back)}`;
+  hlog(`legacy_owner RESULT ${result}`);
+  test.assert(toOwner.join() === "1", `the owner of a holder-less stack did not get it back once at gen 1: ${result}`);
+  test.assert(toBystander.length === 0 && owedTargetsOf(id).length === 0, `the return went elsewhere too: ${result}`);
+  test.assert(rawKey(back, "owner") === owner.id && rawKey(back, "owner_name") === owner.name, `the returned copy lost its owner: ${result}`);
+  test.succeed();
+})
+  .structureName(STRUCTURE)
+  .maxTicks(VOID_RETURN_TICKS + 120)
+  .tag("andrew");
+
+// The same old stack, picked up by somebody else: the first inventory it
+// enters becomes its holder, and a later loss goes there.
+registerAsync("andrew", "legendary_hold_legacy_mark_stamped", async (test: Test): Promise<void> => {
+  const owner = test.spawnSimulatedPlayer(STAND_A, "hold_legacy_maker", GameMode.Survival);
+  const taker = test.spawnSimulatedPlayer(STAND_B, "hold_legacy_taker", GameMode.Survival);
+  await test.idle(4);
+  const id = `legacy-${system.currentTick}`;
+  test.getDimension().spawnItem(legacySword(owner, id), taker.location);
+  const got = await waitToCarry(test, taker, id, PICKUP_TICKS);
+  test.assert(got.length === 1, `the taker never picked the legacy stack up`);
+  await test.idle(2);
+  const taken = stackOf(taker, id);
+  hlog(`legacy_stamped: taker's stack ${describeKeys(taken)} (owner=${owner.id}, taker=${taker.id})`);
+
+  await throwIntoVoid(test, taker, id);
+  await settleReturn(test, taker, id);
+  const toTaker = gensIn(inventoryOf(taker), id) ?? [];
+  const toOwner = gensIn(inventoryOf(owner), id) ?? [];
+  const result = `taker gens=[${toTaker.join(",")}] owner gens=[${toOwner.join(",")}] owed targets=[${owedTargetsOf(id).join(",")}] ledger gen=${ledgerGen(id)}; at pick-up ${describeKeys(taken)}`;
+  hlog(`legacy_stamped RESULT ${result}`);
+  test.assert(toTaker.join() === "1" && toOwner.length === 0, `the loss did not go to the stack's last holder: ${result}`);
+  test.assert(rawKey(taken, "holder") === taker.id && rawKey(taken, "owner") === owner.id, `the pick-up did not record the holder, or rewrote the owner: ${result}`);
+  test.succeed();
+})
+  .structureName(STRUCTURE)
+  .maxTicks(PICKUP_TICKS + VOID_RETURN_TICKS + 160)
+  .tag("andrew");
+
+const HOLD_CRAFTER: Vector3 = { x: 3, y: 2, z: 4 };
+const HOLD_SMITH: Vector3 = { x: 3, y: 2, z: 5 };
+const HOLD_POWER: Vector3 = { x: 2, y: 2, z: 4 };
+const HOLD_RECEIVER: Vector3 = { x: 5, y: 2, z: 5 };
+const WEB_SWORD_GRID: ReadonlyArray<string | undefined> = [
+  undefined, "minecraft:web", undefined,
+  "minecraft:web", "minecraft:diamond_sword", "minecraft:web",
+  undefined, "minecraft:web", undefined,
+];
+
+// What needs the crafter keeps the crafter: a real recipe craft announces its
+// maker once, and after a hand-over and a loss the copy B gets back still names
+// A as owner and the world still records A as the one who made it.
+registerAsync("andrew", "legendary_hold_crafter_stays_owner", async (test: Test): Promise<void> => {
+  state.resetCrafted(WEB_SWORD);
+  test.setBlockPermutation(BlockPermutation.resolve("minecraft:crafter", { orientation: "south_up" }), HOLD_CRAFTER);
+  const smith = test.spawnSimulatedPlayer(HOLD_SMITH, "hold_smith", GameMode.Survival);
+  const capture = captureWarnings();
+  const announcements = (): string[] => capture.lines.filter((l) => l.includes(`${WEB_SWORD.itemId} first craft by`));
+  try {
+    await test.idle(4);
+    const at = test.worldBlockLocation(HOLD_CRAFTER);
+    WEB_SWORD_GRID.forEach((itemId, slot) => {
+      if (itemId === undefined) return;
+      const cmd = `replaceitem block ${at.x} ${at.y} ${at.z} slot.container ${slot} ${itemId} 1`;
+      test.assert(test.getDimension().runCommand(cmd).successCount > 0, `${cmd} failed`);
+    });
+    test.pulseRedstone(HOLD_POWER, 2);
+
+    let crafted: state.MarkedSlot | undefined;
+    for (let t = 0; t < PICKUP_TICKS && crafted === undefined; t++) {
+      await test.idle(1);
+      const container = inventoryOf(smith);
+      crafted = container === undefined ? undefined : state.findAllMarked(WEB_SWORD, container).find((m) => m.mark.origin === "craft");
+    }
+    test.assert(crafted !== undefined, "the crafter's Web Sword never reached the smith as a crafted instance");
+    const id = (crafted as state.MarkedSlot).mark.id;
+    const made = stackOf(smith, id);
+    const craftedBy = (): unknown => world.getDynamicProperty(`${KEY}crafted_by`);
+    hlog(`crafter_stays_owner: crafted ws_id ${id}; ${describeKeys(made)}; crafted_by=${String(craftedBy())}; announced: ${announcements().join(" | ")}`);
+    test.assert(announcements().length === 1 && announcements()[0].includes(smith.name), `the first craft was not announced once by its maker: ${announcements().join(" | ")}`);
+    test.assert(rawKey(made, "owner") === smith.id && rawKey(made, "owner_name") === smith.name, `the craft did not stamp its maker: ${describeKeys(made)}`);
+
+    const receiver = test.spawnSimulatedPlayer(HOLD_RECEIVER, "hold_heir", GameMode.Survival);
+    await test.idle(4);
+    await handOver(test, smith, receiver, id);
+    const onB = stackOf(receiver, id);
+    await throwIntoVoid(test, receiver, id);
+    await settleReturn(test, receiver, id);
+
+    const back = stackOf(receiver, id);
+    const toB = gensIn(inventoryOf(receiver), id) ?? [];
+    const toSmith = gensIn(inventoryOf(smith), id) ?? [];
+    const result =
+      `heir gens=[${toB.join(",")}] smith gens=[${toSmith.join(",")}]; on the heir ${describeKeys(onB)}; returned ${describeKeys(back)}; ` +
+      `crafted=${String(world.getDynamicProperty(`${KEY}crafted`))} crafted_by=${String(craftedBy())}; announcements ${announcements().length}`;
+    hlog(`crafter_stays_owner RESULT ${result}`);
+    test.assert(toB.join() === "1" && toSmith.length === 0, `the loss did not go back to the heir alone: ${result}`);
+    for (const [where, stack] of [["on the heir", onB], ["returned", back]] as const) {
+      test.assert(rawKey(stack, "origin") === "craft", `${where}: the origin is no longer craft: ${result}`);
+      test.assert(rawKey(stack, "owner") === smith.id && rawKey(stack, "owner_name") === smith.name, `${where}: the crafter was replaced: ${result}`);
+      test.assert(rawKey(stack, "holder") === receiver.id, `${where}: the heir is not the holder: ${result}`);
+    }
+    test.assert(craftedBy() === smith.name && world.getDynamicProperty(`${KEY}crafted`) === true, `the world forgot who made it: ${result}`);
+    test.assert(announcements().length === 1, `the hand-over or the loss announced a craft again: ${result}`);
+  } finally {
+    capture.stop();
+    state.resetCrafted(WEB_SWORD);
+  }
+  test.succeed();
+})
+  .structureName(STRUCTURE)
+  .maxTicks(2 * PICKUP_TICKS + VOID_RETURN_TICKS + 200)
   .tag("andrew");
 
 // ------------------------------------------------ probe L0-xasm11 P1: item frames spill on `setblock … destroy`
@@ -805,9 +1160,7 @@ katanaDeath("legendary_katana_death_after_jump", "kill", true);
 katanaDeath("legendary_katana_death_lava_after_jump", "lava", true);
 
 // T18 (L0-lgnd-ac24): a Katana that falls into the Void, thrown or inside a
-// chest minecart, comes back to `mark.owner` exactly once, at gen + 1.
-
-const VOID_RETURN_TICKS = 200;
+// chest minecart, comes back to its last holder exactly once, at gen + 1.
 
 /** Waits for the owner to hold the instance, then a further 40 ticks, and judges "returned exactly once". */
 async function judgeVoidReturn(test: Test, name: string, owner: Player, mark: Mark, lines: string[], near: Vector3, extra: string): Promise<void> {
