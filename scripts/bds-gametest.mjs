@@ -180,6 +180,8 @@ const EXPECTED_TESTS = [
   'andrew:legendary_offhand_resolves',
   'andrew:legendary_offhand_death_returns',
   'andrew:legendary_offhand_token_refused',
+  // LGND-PASSIVE-01 (R-lgnd-018, L0-lgnd-ac26) — src/gametest/legendary-offhand.ts
+  'andrew:legendary_offhand_passive_yields',
   // LGND-UFO-01 — src/gametest/legendary-ufo.ts
   'andrew:legendary_ufo_fall_death_keeps',
   'andrew:legendary_ufo_holder_chest_minecart',
