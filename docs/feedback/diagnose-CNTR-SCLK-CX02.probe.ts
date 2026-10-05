@@ -90,7 +90,8 @@ function weapon(v: Variant): { stack: ItemStack; enchant: string } {
 
 for (const v of VARIANTS) {
   registerAsync("andrew", `probe_sclk_cx02_${v.name}`, async (test: Test): Promise<void> => {
-    const p = test.spawnSimulatedPlayer({ x: 1, y: 1, z: 3 }, `scx2_${v.name}`, GameMode.Survival);
+    // Relative y=1 is the platform's stone floor: a player spawned there suffocates by tick ~210.
+    const p = test.spawnSimulatedPlayer({ x: 1, y: 2, z: 3 }, `scx2_${v.name}`, GameMode.Survival);
     let cur: Phase | undefined;
     const tracked: Entity[] = [];
     const onItem =
@@ -166,13 +167,13 @@ for (const v of VARIANTS) {
       }
       return 0;
     };
-    const state = (): string => `hp=${p.getComponent("minecraft:health")?.currentValue ?? "?"} gm=${p.getGameMode()} y=${(p.location.y - test.worldLocation({ x: 0, y: 1, z: 0 }).y).toFixed(2)}`;
+    const state = (): string => `hp=${p.getComponent("minecraft:health")?.currentValue ?? "?"} gm=${p.getGameMode()} y=${(p.location.y - test.worldLocation({ x: 0, y: 2, z: 0 }).y).toFixed(2)}`;
     try {
       const { stack, enchant } = weapon(v);
       p.setItem(stack, SLOT, true);
       p.getComponent("minecraft:inventory")?.container?.setItem(AMMO_SLOT, new ItemStack(ARROW, 64));
       await test.idle(10);
-      p.lookAtLocation(test.worldLocation({ x: 60, y: 2.62, z: 3.5 }));
+      p.lookAtLocation(test.worldLocation({ x: 60, y: 3.62, z: 3.5 }));
       await test.idle(2);
       log(`${v.name} item=${v.item} enchant=${enchant} ammo=${ammo(p)} ${state()}`);
 
