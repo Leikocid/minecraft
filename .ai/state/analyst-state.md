@@ -1,8 +1,8 @@
 ---
-current_analysis_version: 6
+current_analysis_version: 7
 current_versions_by_node:
-  L0: 6
-  L0-lgnd: 6
+  L0: 7
+  L0-lgnd: 7
   L0-pick: 2
   L0-infr: 2
   L0-scyt: 2
@@ -20,20 +20,21 @@ current_versions_by_node:
   L0-sauc: 5
   L0-magn: 5
   L0-katn: 6
+  L0-sclk: 7
 pending_revisions: []
 last_run:
-  started_at: '2026-10-03T14:42:44.633Z'
-  completed_at: '2026-10-03T14:58:23.825Z'
-  duration_seconds: 939
-  total_artifacts_current: 96
-  total_size_kb: 1473
-  open_contradictions: 6
+  started_at: '2026-10-05T16:54:57.806Z'
+  completed_at: '2026-10-05T17:12:56.098Z'
+  duration_seconds: 1078
+  total_artifacts_current: 183
+  total_size_kb: 1617
+  open_contradictions: 14
   llm_calls: 4
   llm_budget_used_pct: 2
-  input_hash: ec711c249fb716d68c3bd0f3ae552036eb99775bde14baaa35f8d8ce84f1b8a7
-  run_priority: 600
+  input_hash: e3b15635b08b914c9add7bdb027c6e0968d12ebc0496e0c156f5676717beb267
+  run_priority: 610
   run_scope:
-    recorded_at: '2026-10-03T14:42:44.710Z'
+    recorded_at: '2026-10-05T16:54:57.825Z'
     rule: 'full: every node the decomposition plans name, from L0 down.'
     nodes:
       - L0
@@ -124,20 +125,25 @@ last_run:
       done: 3
     - stage: rollout
       entered_at: '2026-10-03T14:58:23.838Z'
+    - stage: nodes
+      entered_at: '2026-10-05T16:54:57.833Z'
+      done: 3
+    - stage: rollout
+      entered_at: '2026-10-05T17:12:56.108Z'
 last_rollout_hashes:
-  project-knowledge/glossary.md: 1328a69ae8ef09e2
-  project-knowledge/business-rules.md: 67e5c208158baee8
+  project-knowledge/glossary.md: b4bcb65b22a3c356
+  project-knowledge/business-rules.md: d40cda1f41c579f7
   project-knowledge/boundaries.md: 52130c6cd83d1194
-  project-knowledge/intent.md: 9e33cdc9cb428f33
-  project-knowledge/domain-model.md: b03caaa7f283a1bb
-  project-knowledge/architecture.md: 1435041827067b9d
-  assumptions.md: df4f71b7ddd93a30
-  contradictions.md: 2187b69517beda5c
-  client-questions.md: a88a8e2426d7a724
-  summary.md: e613ad750928df02
-  scope.md: 8a0ed5dcd6e1e1c5
-  risks.md: 807b2021c7b2a0a3
-  decisions.md: 0568c1016b67db9e
+  project-knowledge/intent.md: 9c53f0b1c2383c84
+  project-knowledge/domain-model.md: 7afbbbe454b6961a
+  project-knowledge/architecture.md: 7b429d92ef305625
+  assumptions.md: ce10084baf93b7b8
+  contradictions.md: b03a64515353b40b
+  client-questions.md: e0cb3bc914347a3a
+  summary.md: 25009253244fe525
+  scope.md: ecff048e7b3c9d46
+  risks.md: 43c6a06eaac9b909
+  decisions.md: 4e9cc66f778a3610
 runtime_vocabulary:
   concept-boundary:
     description: Seen at runtime
@@ -227,6 +233,10 @@ slug_mappings:
   ? 'Dragon Katana (`andrew:dragon_katana`). **Item:** a Diamond Sword clone on the `web_sword.json` template: damage 7, `is_sword`, sword enchant slot, `fire_resistant`, `allow_off_hand`, no durability, Creative "Equipment", RU/EN names. **Recipe:** golden apple / ender pearl ×2 / Diamond Sword, through the framework''s craft token (T01–T03). **Ability:** `itemUse` (and the block-tap path as in `webs`/`scyt`) → `resolveActivation` → server-side trace from the head along the view, capped at 20 blocks (clamp per `L0-xasm18`), with obstacle semantics per `L0-adr-ktob` (water and lava pass, unreadable = solid) → the nearest safe standing cell on the owner''s side (`L0-xasm19`), with no block edits → `teleport` keeping the facing → `startCooldown` 30 s epoch ms. A cooldown attempt is a no-op that does not reset the timer (T05–T10). **Fall:** a one-shot flag per `L0-adr-ktfl` / `L0-xasm20` (T11, T12). **Trail:** a pink cherry-petal trail A→B under C-5e, harmless (T13). **HUD:** the RU/EN ready string and seconds. **GameTests:** T04–T15 with SimulatedPlayers, plus the Katana instances of T16–T18 against the framework. **iPad:** the trail, the HUD, the icon and the Creative placement. Probe first: fall-distance reset and the ray flags (`includePassableBlocks`, liquids).'
   : L0-katn
   'Legendary framework, v6 pass. **(1) Reconcile with as-built 1.4.4:** `resolveActivation` and `heldLegendaries` are shipped (`hands.ts`). The Void-minecart holder return has merged (`recovery.ts` `VOID_HOLDER_TYPES`). Re-state what is still open (`holder` for the last owner, `xcx11`; the armour stand). **(2) Katana delta:** def #4 and its craft token, and the uniqueness-flag key. Confirm that `isLegendaryStack`, retention, `protectLegendariesIn` (Orbital blast and rings, T17) and the HUD need no per-weapon code beyond the def. State T17 under C-16 (`L0-xcx21`, `L0-xasm22`). Make sure the Katana''s self-teleport does not trip recovery (a player teleport moves no item entity) and that a teleport into another dimension''s chunks is never attempted (same-dimension only).': L0-lgnd
+  ? 'Sculk Crossbow (`andrew:sculk_crossbow`). **Probe first** (gates `L0-adr-scbs` and `L0-adr-scdm`): does a custom `minecraft:shooter` item get a loaded state, and do Quick Charge and Multishot apply to it? Does the vanilla crossbow''s projectile spawn expose its owner and velocity at `entitySpawn`, so it can be swapped for a bolt? Snowball-runtime bolt against a shield-holder (`xcx23`). Hurt-invulnerability on three hits in the same tick (`xcx22`). The `sonic_explosion` particle on the iPad. **Item:** the def from `L0-adr-scbs`, infinite durability, an enchant slot without Piercing (strip it on sight if the slot cannot exclude it), RU/EN lang, the Creative "Equipment" entry. **Recipe:** echo shard / deepslate / crossbow through the craft token (T01–T03). **Pipeline:** each projectile spawned by a marked crossbow becomes exactly one `andrew:sculk_bolt` with the same velocity and owner (C-26). It emits boom particles along its real path while in flight (C-5f), and has a lifetime cap. **Entity hit:** fixed `SONIC_BOOM_DAMAGE` (10, `xasm23`) through the Scythe true-damage pattern (C-28); a sculk patch under the target (`xasm24`); no crater. **Block hit:** an irregular crater seeded per bolt, ≤ 5×5×3, plus sculk on the exposed surfaces ≤ 5×5, under C-27 (`L0-adr-sctr`, `xasm25`); no entity damage. **Ammunition** per `xasm27`. **GameTests:** T04–T18 with SimulatedPlayers (≥ 2, C-20‴), plus the crossbow instances of T19–T20 against the framework. **iPad:** trail, crater, sculk, icon, Creative.'
+  : L0-sclk
+  ? 'Legendary framework, v7 pass. **(1) Reconcile with 1.6.1:** the Katana shipped (1.5.0). Legendaries are magnetic (`magnet-select.ts`, `magnet-hold.ts`): restate the old "never pulled" rule as an operator-tuned exception. **(2) No-ability def (`L0-xcx24`):** `LegendaryDef` gains an optional ability. Without it: no cooldown key, no `resolveActivation` claim and no HUD line (`hud.ts:37`). `cooldownTicks`/`abilityKey` become optional or are moved into an `ability` block, with no behaviour change for defs #1–#4. **(3) Crossbow delta:** def #5 (`keyPrefix: "sc"`), the craft token and refund (echo shard ×2, deepslate ×2, crossbow). Confirm that retention, recovery, Void and `protectLegendariesIn` need no per-weapon code. If `L0-adr-scbs` falls back to the vanilla crossbow, `isLegendaryStack` must become mark-aware; that is a larger change and must be stated as such. **(4) Holder (`xcx11`):** the decision says "the last holder" and the code returns to `mark.owner`. Either plan the holder field or restate T20 / the Void return against `mark.owner`, as v6 did for the Katana.'
+  : L0-lgnd
 tags:
   - analysis
   - registry
@@ -241,12 +251,12 @@ Runtime state for the analyst pipeline (analyse runs, vocabulary, slug map, roll
 
 | Node | Version |
 |------|---------|
-| L0 | 6 |
+| L0 | 7 |
 | L0-airs | 2 |
 | L0-bast | 2 |
 | L0-infr | 2 |
 | L0-katn | 6 |
-| L0-lgnd | 6 |
+| L0-lgnd | 7 |
 | L0-loot | 2 |
 | L0-magn | 5 |
 | L0-orbc | 3 |
@@ -254,6 +264,7 @@ Runtime state for the analyst pipeline (analyse runs, vocabulary, slug map, roll
 | L0-pntr | 3 |
 | L0-ring | 3 |
 | L0-sauc | 5 |
+| L0-sclk | 7 |
 | L0-scyt | 2 |
 | L0-strf | 2 |
 | L0-ufoc | 5 |
@@ -263,12 +274,12 @@ Runtime state for the analyst pipeline (analyse runs, vocabulary, slug map, roll
 
 ## Last Run
 
-- Started: 2026-10-03T14:42:44.633Z
-- Completed: 2026-10-03T14:58:23.825Z
-- Duration: 939s
-- Current artifacts: 96 (1473 KB total)
+- Started: 2026-10-05T16:54:57.806Z
+- Completed: 2026-10-05T17:12:56.098Z
+- Duration: 1078s
+- Current artifacts: 183 (1617 KB total)
 - LLM calls: 4 (2% budget)
-- Open contradictions: 6
+- Open contradictions: 14
 
 ## Changelog
 
