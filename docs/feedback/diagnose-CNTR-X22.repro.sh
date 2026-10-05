@@ -17,7 +17,7 @@ cd "$(dirname "$0")/../.."
 export ANDREW_BDS_DIR="${ANDREW_BDS_DIR:-bds-ci}"
 log=dist/bds-gametest.log
 probe=src/gametest/probe-x22.ts
-tests="andrew:probe_x22_window andrew:probe_x22_pattern andrew:probe_x22_shield_raised andrew:probe_x22_shield_lethal andrew:probe_x22_absorption andrew:probe_x22_causes andrew:probe_x22_scythe_live"
+tests="andrew:probe_x22_window andrew:probe_x22_pattern andrew:probe_x22_shield_raised andrew:probe_x22_shield_lethal andrew:probe_x22_absorption andrew:probe_x22_causes andrew:probe_x22_scythe_live andrew:probe_x22_scythe_absorption andrew:probe_x22_scythe_shield"
 shipped="andrew:scythe_three_hits_true_damage andrew:scythe_lethal_hit_kills"
 
 cp docs/feedback/diagnose-CNTR-X22.probe.ts "$probe"

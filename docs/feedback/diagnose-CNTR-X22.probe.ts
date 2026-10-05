@@ -550,3 +550,56 @@ scenario("probe_x22_scythe_live", 600, async (test, players) => {
   for (let i = 0; i < 300 && ended === ""; i++) await test.idle(1);
   log(`SCY launched=${String(launched)} hp ${r2(before)} -> ${r2(hp(t))} total=${r2(before - hp(t))} hits=${hits.join(" ")} end=${ended} hurts=${hurtsSince(t, t0)}`);
 });
+
+/** Runs the shipped volley to its end; returns the hit trace and end reason. */
+async function scytheVolley(test: Test, o: SimulatedPlayer, t: SimulatedPlayer): Promise<{ hits: string; end: string }> {
+  const hits: string[] = [];
+  let ended = "";
+  const t0 = system.currentTick;
+  const launched = launchVolley(o, t, {
+    onHit(n, after) {
+      hits.push(`#${n}@+${system.currentTick - t0}:hp=${r2(after)}`);
+    },
+    onEnd(reason, n) {
+      ended = `${reason}/hits=${n}`;
+    },
+  });
+  for (let i = 0; i < 300 && ended === ""; i++) await test.idle(1);
+  return { hits: `launched=${String(launched)} ${hits.join(" ")}`, end: ended };
+}
+
+scenario("probe_x22_scythe_absorption", 900, async (test, players) => {
+  const o = owner(test, players, { x: 3, y: 2, z: 6 }, "x22_sca_owner");
+  const t = await target(test, { x: 3, y: 2, z: 1 }, "x22_sca_target");
+  players.push(t);
+  t.addEffect("absorption", 2400, { amplifier: 3, showParticles: false });
+  await test.idle(4);
+  const t0 = system.currentTick;
+  const before = hp(t);
+  const { hits, end } = await scytheVolley(test, o, t);
+  const afterVolley = hp(t);
+  await test.idle(CLEAR);
+  const pre = hp(t);
+  const ret = damage(t, 16, { cause: EntityDamageCause.entityAttack, damagingEntity: o });
+  const delta = pre - hp(t);
+  await test.idle(1);
+  log(
+    `SCA shipped scythe vs absorption16 hp ${r2(before)} -> ${r2(afterVolley)} health-lost=${r2(before - afterVolley)} ${hits} end=${end} probe16(${ret}) health-delta=${r2(delta)} absorption-lost-in-volley=${r2(delta)} left=${r2(16 - delta)} hurts=${hurtsSince(t, t0)}`
+  );
+});
+
+scenario("probe_x22_scythe_shield", 900, async (test, players) => {
+  const o = owner(test, players, { x: 3, y: 2, z: 6 }, "x22_scs_owner");
+  const t = await target(test, { x: 3, y: 2, z: 1 }, "x22_scs_target", { shield: true });
+  players.push(t);
+  t.lookAtEntity(o);
+  t.isSneaking = true;
+  await test.idle(10);
+  setHp(t, 5);
+  const t0 = system.currentTick;
+  const { hits, end } = await scytheVolley(test, o, t);
+  await test.idle(2);
+  log(
+    `SCS shipped scythe vs raised shield from 5 hp: ${hits} end=${end} sneaking=${String(t.isSneaking)} hp=${r2(hp(t))} death=${deaths.get(t.id) ?? "none"} hurts=${hurtsSince(t, t0)}`
+  );
+});
