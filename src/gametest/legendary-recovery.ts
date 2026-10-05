@@ -390,6 +390,10 @@ async function handOver(test: Test, from: SimulatedPlayer, to: SimulatedPlayer, 
   (entity as Entity).teleport(to.location);
   const got = await waitToCarry(test, to, id, PICKUP_TICKS);
   test.assert(got.length === 1 && slotsOf(from, id).length === 0, `hand-over failed: ${to.name} carries ${got.length}, ${from.name} ${slotsOf(from, id).length}`);
+  // The pick-up's playerInventoryItemChange reaches scripts after the GameTest
+  // continuations of its tick. A player cannot throw in the tick they picked
+  // up in, so the scenario lets the event land as play would.
+  await test.idle(2);
 }
 
 /**
