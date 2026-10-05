@@ -8,9 +8,11 @@
 // fires. The stable API still has no component for cactus, an explosion or
 // despawn, so for those three the fallback stays "destroyed means returned"
 // (deviation, C-16): a marked instance lying on the ground is watched, and
-// when it vanishes without having reached an inventory, its owner (the mark's
-// `owner`) gets it back, at once when online and alive, otherwise from the
-// owed list on their next spawn.
+// when it vanishes without having reached an inventory, its last holder gets
+// it back (the mark's `holder`, or its `owner` on a stack from before holders,
+// L0-lgnd-ad11), at once when online and alive, otherwise from the owed list
+// on their next spawn. A container never becomes the holder: the holder is
+// written when the stack enters a player's inventory.
 // The Void is not a deviation — §5 itself prescribes returning a legendary
 // that falls in, and that path also runs through this module. The craft right
 // is never reopened (Q-014).
@@ -58,8 +60,8 @@ import {
 } from "@minecraft/server";
 import { LEGENDARIES, type LegendaryDef, defForStack } from "./registry";
 import { grant } from "./retention";
-import { bumpGen, carriesInstance, getMark, isItemOf, isLive, offhandOf, readOwed, writeOwed } from "./state";
-import { type Mark, withOwed, withoutOwed } from "./rules";
+import { bumpGen, carriesInstance, getMark, isItemOf, isLive, offhandOf, readOwed, stampHolder, writeOwed } from "./state";
+import { type Mark, returnTarget, withOwed, withoutOwed } from "./rules";
 
 const CHECK_INTERVAL_TICKS = 40;
 
@@ -268,6 +270,28 @@ function noteArrival(player: Player, container: Container, slot: number, stack: 
   if ([...watched.values()].some((w) => w.mark.id === mark.id)) {
     seenInInventory.add(mark.id);
   }
+  if (there.holder !== player.id) {
+    noteHolder(def, player, container, slot, there);
+  }
+}
+
+/** `player` now holds the instance: a later loss goes back to them (L0-lgnd-ad11). */
+function noteHolder(def: LegendaryDef, player: Player, container: Container, slot: number, mark: Mark): void {
+  try {
+    stampHolder(def, container, slot, player);
+  } catch (err) {
+    // The return then still goes to the previous holder, or to the owner.
+    console.warn(`[andrew] legendary recovery: could not record ${player.name} as holder of ${def.itemId} id ${mark.id}: ${String(err)}`);
+    return;
+  }
+  console.warn(
+    `[andrew] legendary recovery: ${def.itemId} id ${mark.id} now held by ${player.name} (was ${mark.holderName ?? mark.holder ?? `owner ${mark.owner}`})`
+  );
+}
+
+/** How a log line names the player a return goes to. */
+function describeTarget(mark: Mark): string {
+  return mark.holder === undefined ? `owner ${mark.owner}` : `holder ${mark.holderName ?? mark.holder}`;
 }
 
 function startChecking(): void {
@@ -487,11 +511,11 @@ function lost(w: { def: LegendaryDef; mark: Mark }, how: string): void {
   // Order: one synchronous turn — the generation moves before the new stack
   // exists, so the vanished copy is stale before a second one can be live.
   const mark: Mark = { ...w.mark, gen: bumpGen(w.def, w.mark.id) };
-  const target = w.mark.owner;
+  const target = returnTarget(w.mark);
   const online = reachable(target);
   console.warn(
     `[andrew] legendary recovery: ${w.def.itemId} id ${w.mark.id} ${how}; now gen ${mark.gen}, ` +
-      (online === undefined ? `owner ${target} offline or dead, owed on next spawn` : `returning to ${online.player.name}`)
+      (online === undefined ? `${describeTarget(w.mark)} offline or dead, owed on next spawn` : `returning to ${online.player.name}`)
   );
   if (online === undefined) {
     writeOwed(w.def, withOwed(readOwed(w.def), target, { mark, reason: how }));
@@ -673,8 +697,8 @@ const fmt = (v: Vector3): string => `${v.x},${v.y},${v.z}`;
  * Throws before moving anything when the volume is not loaded, holds a holder
  * with no script inventory (crafter: C-16), or holds a frame the command could
  * not break, so the caller writes nothing rather than erase blind. With no safe
- * spot within spotSearchLimit the stack goes to its owner, owed if offline
- * (P-lgnd-008 step 6).
+ * spot within spotSearchLimit the stack goes to its last holder (else its
+ * owner), owed if offline (P-lgnd-008 step 6).
  */
 export function protectLegendariesIn(dimension: Dimension, volume: BlockBox, opts: { avoid?: BlockBox; reason?: string } = {}): ProtectResult {
   const { min: floor, max: ceiling } = dimension.heightRange;
@@ -874,10 +898,11 @@ function restingY(dimension: Dimension, x: number, z: number, top: number, floor
 
 /** P-lgnd-008 step 6: the stack was removed, not lost, so its generation stays. */
 function handBack(def: LegendaryDef, mark: Mark, stack: ItemStack, reason: string): void {
-  const online = reachable(mark.owner);
+  const target = returnTarget(mark);
+  const online = reachable(target);
   if (online === undefined) {
-    writeOwed(def, withOwed(readOwed(def), mark.owner, { mark, reason }));
-    console.warn(`[andrew] legendary protect: no safe spot for ${def.itemId} id ${mark.id}; owner ${mark.owner} offline or dead, owed on next spawn`);
+    writeOwed(def, withOwed(readOwed(def), target, { mark, reason }));
+    console.warn(`[andrew] legendary protect: no safe spot for ${def.itemId} id ${mark.id}; ${describeTarget(mark)} offline or dead, owed on next spawn`);
     return;
   }
   const leftover = online.container.addItem(stack);

@@ -156,6 +156,10 @@ export interface LegendaryKeys {
   gen: string;
   /** World: return target's id -> instances owed back after a loss. */
   owed: string;
+  /** ItemStack: the last holder's player id (absent = return to the owner). */
+  holder: string;
+  /** ItemStack: the last holder's name. */
+  holderName: string;
 }
 
 /**
@@ -175,6 +179,8 @@ export function keysFor(def: LegendaryDef): LegendaryKeys {
     pending: `${p}pending`,
     gen: `${p}gen`,
     owed: `${p}owed`,
+    holder: `${p}holder`,
+    holderName: `${p}holder_name`,
   };
 }
 

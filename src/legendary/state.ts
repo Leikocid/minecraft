@@ -16,6 +16,7 @@ import {
   type MarkOrigin,
   type OwedLedger,
   isGen,
+  isHolder,
   parseOwed,
   parsePending,
   serializeOwed,
@@ -38,8 +39,20 @@ export function getMark(def: LegendaryDef, stack: ItemStack): Mark | undefined {
     return undefined;
   }
 
+  const mark: Mark = { origin, owner, id, gen };
   const ownerName = stack.getDynamicProperty(keys.ownerName);
-  return typeof ownerName === "string" ? { origin, owner, id, gen, ownerName } : { origin, owner, id, gen };
+  if (typeof ownerName === "string") {
+    mark.ownerName = ownerName;
+  }
+  const holder = stack.getDynamicProperty(keys.holder);
+  if (isHolder(holder)) {
+    mark.holder = holder;
+    const holderName = stack.getDynamicProperty(keys.holderName);
+    if (typeof holderName === "string") {
+      mark.holderName = holderName;
+    }
+  }
+  return mark;
 }
 
 /** Clones `stack` and stamps it with `mark`. The input stack is untouched. */
@@ -53,18 +66,36 @@ export function markItem(def: LegendaryDef, stack: ItemStack, mark: Mark): ItemS
   if (mark.ownerName !== undefined) {
     marked.setDynamicProperty(keys.ownerName, mark.ownerName);
   }
+  if (mark.holder !== undefined) {
+    marked.setDynamicProperty(keys.holder, mark.holder);
+    if (mark.holderName !== undefined) {
+      marked.setDynamicProperty(keys.holderName, mark.holderName);
+    }
+  }
   return marked;
 }
 
 /**
- * Builds a fresh instance mark for `player`. `ownerName` is only populated
- * for `origin: "craft"` — it exists solely for the first-craft chat message.
+ * Records `player` as the holder of the marked stack in `slot`, in place: the
+ * stack keeps its state and stays where it is. A slot write can raise another
+ * playerInventoryItemChange, so callers write only when the holder differs.
+ */
+export function stampHolder(def: LegendaryDef, container: Container, slot: number, player: Player): void {
+  const keys = keysFor(def);
+  container.getSlot(slot).setDynamicProperties({ [keys.holder]: player.id, [keys.holderName]: player.name });
+}
+
+/**
+ * Builds a fresh instance mark for `player`, who is both its owner and its
+ * holder. `ownerName` is only populated for `origin: "craft"` — it exists
+ * solely for the first-craft chat message.
  */
 export function makeMark(origin: MarkOrigin, player: Player): Mark {
   const id = `${world.getAbsoluteTime()}-${Math.random().toString(36).slice(2)}`;
+  const holder = { holder: player.id, holderName: player.name };
   return origin === "craft"
-    ? { origin, owner: player.id, id, gen: 0, ownerName: player.name }
-    : { origin, owner: player.id, id, gen: 0 };
+    ? { origin, owner: player.id, id, gen: 0, ownerName: player.name, ...holder }
+    : { origin, owner: player.id, id, gen: 0, ...holder };
 }
 
 /** The live generation of instance `id` in the world ledger. */

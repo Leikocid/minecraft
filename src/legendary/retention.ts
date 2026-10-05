@@ -44,7 +44,7 @@ import {
 } from "@minecraft/server";
 import { forgetWatched } from "./recovery";
 import { LEGENDARIES, type LegendaryDef, defForStack } from "./registry";
-import { type Mark, withoutPending } from "./rules";
+import { type Mark, withHolder, withoutPending } from "./rules";
 import {
   addPending,
   carriesInstance,
@@ -263,11 +263,12 @@ export function restore(def: LegendaryDef, player: Player, messageKey = `${def.t
 }
 
 /**
- * Hands `player` a fresh stack stamped with `mark` and tells them. Every return
- * path goes through here; the caller owns the token that makes it happen once.
+ * Hands `player` a fresh stack stamped with `mark`, with `player` as its
+ * holder, and tells them. Every return path goes through here; the caller owns
+ * the token that makes it happen once.
  */
 export function grant(def: LegendaryDef, player: Player, container: Container, mark: Mark, messageKey: string): void {
-  const leftover = container.addItem(markItem(def, new ItemStack(def.itemId, 1), mark));
+  const leftover = container.addItem(markItem(def, new ItemStack(def.itemId, 1), withHolder(mark, player)));
   if (leftover !== undefined) {
     // Nowhere in the inventory to put it. At their feet is still "returned to
     // the owner", and it beats destroying the world's only copy.
