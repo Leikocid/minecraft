@@ -603,3 +603,39 @@ scenario("probe_x22_scythe_shield", 900, async (test, players) => {
     `SCS shipped scythe vs raised shield from 5 hp: ${hits} end=${end} sneaking=${String(t.isSneaking)} hp=${r2(hp(t))} death=${deaths.get(t.id) ?? "none"} hurts=${hurtsSince(t, t0)}`
   );
 });
+
+scenario("probe_x22_window_anchor", 900, async (test, players) => {
+  const at = { x: 3, y: 2, z: 2 };
+  const o = owner(test, players, { x: 3, y: 2, z: 4 }, "x22_anc_owner");
+  const t = await target(test, at, "x22_anc_target");
+  players.push(t);
+  const w: Who = { test, owner: o, at };
+
+  // 5 @0, then 8 @5 lands the difference. Window kept from @0: 8 @12 lands, 8 @16 does not.
+  // Window restarted at @5: 8 @12 does not land, 8 @16 does.
+  let t0 = await fresh(w, t);
+  const trace: string[] = [];
+  for (const [when, amount] of [
+    [0, 5],
+    [5, 8],
+    [12, 8],
+    [16, 8],
+  ] as [number, number][]) {
+    while (system.currentTick - t0 < when) await test.idle(1);
+    const before = hp(t);
+    const ret = damage(t, amount, { cause: EntityDamageCause.entityAttack, damagingEntity: o });
+    trace.push(`@${system.currentTick - t0}:${amount}->${ret}/delta=${r2(before - hp(t))}`);
+  }
+  await test.idle(1);
+  log(`ANC rising-restart ${trace.join(" ")} hurts=${hurtsSince(t, t0)}`);
+
+  // does a bare setCurrentValue open a window of its own?
+  t0 = await fresh(w, t);
+  const wrote = setHp(t, 30);
+  await test.idle(1);
+  const before = hp(t);
+  const ret = damage(t, D, { cause: EntityDamageCause.entityAttack, damagingEntity: o });
+  const delta = before - hp(t);
+  await test.idle(1);
+  log(`ANC write-then-hit write(${String(wrote)}) 40->30, +1 applyDamage(${ret}) delta=${r2(delta)} hurts=${hurtsSince(t, t0)}`);
+});
