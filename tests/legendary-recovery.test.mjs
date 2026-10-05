@@ -161,10 +161,20 @@ const dimension = {
 
 function makeContainer(size = 36) {
   const slots = new Array(size).fill(undefined);
+  const slotWrites = [];
   return {
     size,
     slots,
+    slotWrites,
     getItem: (i) => slots[i],
+    // ContainerSlot writes the stack in place, as the engine does.
+    getSlot: (i) => ({
+      setDynamicProperties(values) {
+        if (slots[i] === undefined) throw new Error(`slot ${i} is empty`);
+        for (const [k, v] of Object.entries(values)) slots[i].setDynamicProperty(k, v);
+        slotWrites.push(i);
+      },
+    }),
     setItem(i, stack) {
       slots[i] = stack;
     },
@@ -1134,5 +1144,206 @@ test('CX-lgnd-14: armour stands are followed only while loaded and asked only be
     plain.isValid = false;
     tick();
     assert.deepStrictEqual(lg.standWatchState(), { stands: 0, ticking: false });
+  });
+});
+
+// ------------------------------------------------ the last holder gets a lost instance back (L0-lgnd-ad11, CX-lgnd-16)
+
+/** A Web Sword made by `crafter` the way the craft gate makes it. */
+function craftedSword(crafter) {
+  return lg.markItem(WEB_SWORD, new mc.ItemStack(WEB_SWORD.itemId, 1), lg.makeMark('craft', crafter));
+}
+
+/** A stack stamped the way stacks were before holders: origin, owner, id, owner name, no holder keys. */
+function legacySword(owner, id) {
+  const stack = new mc.ItemStack(WEB_SWORD.itemId, 1);
+  stack.setDynamicProperty('andrew:ws_origin', 'craft');
+  stack.setDynamicProperty('andrew:ws_owner', owner.id);
+  stack.setDynamicProperty('andrew:ws_id', id);
+  stack.setDynamicProperty('andrew:ws_owner_name', owner.name);
+  return stack;
+}
+
+/** `stack` enters `player`'s slot, and the engine reports it. */
+function arrive(player, slot, stack) {
+  player.container.setItem(slot, stack);
+  fire('playerInventoryItemChange', { player, slot, itemStack: stack, inventoryType: 'Inventory' });
+}
+
+/** The stack leaves `player`'s slot onto the ground and vanishes there unseen. */
+function dropAndLose(player, slot) {
+  const stack = player.container.getItem(slot);
+  player.container.setItem(slot, undefined);
+  loseUnseen(stack);
+}
+
+test('holder: a lost instance goes back to whoever held it last, not to its crafter (L0-lgnd-ad11)', async (t) => {
+  await t.test('parsing: holder and holderName are read; a bad holder is dropped, never the mark', () => {
+    const base = { origin: 'craft', owner: '-1', id: 'h', gen: 0, ownerName: 'Ann' };
+    const held = { ...base, holder: '-2', holderName: 'Bea' };
+    assert.deepStrictEqual(lg.parseMark(JSON.stringify(held)), held);
+    assert.deepStrictEqual(lg.parseMark(lg.serializeMark(held)), held);
+    for (const holder of [5, '', null, true, {}]) {
+      assert.deepStrictEqual(lg.parseMark(JSON.stringify({ ...base, holder, holderName: 'x' })), base, `holder ${JSON.stringify(holder)}`);
+    }
+    assert.deepStrictEqual(lg.parseMark(JSON.stringify({ ...base, holderName: 'orphan' })), base, 'a name without a holder names nobody');
+    assert.deepStrictEqual(lg.parseMark(JSON.stringify({ ...base, holder: '-2', holderName: 3 })), { ...base, holder: '-2' });
+    assert.deepStrictEqual(lg.parsePending(JSON.stringify([{ ...base, holder: 7 }, held])), [base, held]);
+    assert.deepStrictEqual(lg.parseOwed(JSON.stringify({ '-2': [{ mark: held, reason: 'lost' }], '-3': [{ mark: { ...base, holder: [] }, reason: 'lost' }] })), {
+      '-2': [{ mark: held, reason: 'lost' }],
+      '-3': [{ mark: base, reason: 'lost' }],
+    });
+  });
+
+  await t.test('returnTarget is the holder, and the owner when there is none', () => {
+    assert.strictEqual(lg.returnTarget({ origin: 'craft', owner: '-1', id: 'a', gen: 0, holder: '-2' }), '-2');
+    assert.strictEqual(lg.returnTarget({ origin: 'craft', owner: '-1', id: 'a', gen: 0 }), '-1');
+  });
+
+  await t.test('a fresh mark names its maker as owner and holder; the stack carries both', () => {
+    const maker = makePlayer('maker');
+    const stack = craftedSword(maker);
+    const mark = lg.getMark(WEB_SWORD, stack);
+    assert.deepStrictEqual(
+      [mark.owner, mark.ownerName, mark.holder, mark.holderName],
+      [maker.id, 'maker', maker.id, 'maker']
+    );
+    assert.strictEqual(stack.getDynamicProperty('andrew:ws_holder'), maker.id);
+    assert.strictEqual(stack.getDynamicProperty('andrew:ws_holder_name'), 'maker');
+    stack.setDynamicProperty('andrew:ws_holder', 12);
+    const bad = lg.getMark(WEB_SWORD, stack);
+    assert.ok(bad !== undefined, 'a bad holder key cost the stack its mark');
+    assert.strictEqual(bad.holder, undefined);
+    assert.strictEqual(lg.returnTarget(bad), maker.id);
+  });
+
+  const crafter = makePlayer('crafter');
+  const holder = makePlayer('holder');
+  online(crafter, holder);
+  const sword = craftedSword(crafter);
+  const { id } = lg.getMark(WEB_SWORD, sword);
+
+  await t.test('a hand-over stamps the new holder in place; the crafter fields stay', () => {
+    arrive(holder, 3, sword);
+    const onB = lg.getMark(WEB_SWORD, holder.container.getItem(3));
+    assert.deepStrictEqual(
+      [onB.owner, onB.ownerName, onB.origin, onB.holder, onB.holderName, onB.gen],
+      [crafter.id, 'crafter', 'craft', holder.id, 'holder', 0]
+    );
+    assert.deepStrictEqual(holder.container.slotWrites, [3]);
+    fire('playerInventoryItemChange', { player: holder, slot: 3, itemStack: holder.container.getItem(3), inventoryType: 'Inventory' });
+    assert.deepStrictEqual(holder.container.slotWrites, [3], 'the holder is written once per hand-over, not on every event');
+  });
+
+  await t.test('online: the holder who lost it gets the next generation; the crafter gets nothing', () => {
+    dropAndLose(holder, 3);
+    assert.deepStrictEqual(gensOf(holder, id), [1]);
+    assert.deepStrictEqual(gensOf(crafter, id), []);
+    assert.deepStrictEqual(holder.messages, [RECOVERED]);
+    assert.deepStrictEqual(crafter.messages, []);
+    assert.deepStrictEqual(lg.readOwed(WEB_SWORD), {});
+    const back = lg.getMark(WEB_SWORD, holder.container.slots.find((s) => s !== undefined));
+    assert.deepStrictEqual([back.owner, back.ownerName, back.holder], [crafter.id, 'crafter', holder.id], 'the crafter stays the owner of the returned copy');
+  });
+
+  await t.test('offline: the debt is the holder\'s, not the crafter\'s, and is paid on the holder\'s join', () => {
+    const a = makePlayer('crafter-2');
+    const b = makePlayer('holder-2');
+    online(a, b);
+    const s2 = craftedSword(a);
+    const id2 = lg.getMark(WEB_SWORD, s2).id;
+    arrive(b, 0, s2);
+    b.container.setItem(0, undefined);
+    online(a);
+    loseUnseen(s2.clone());
+    const owed = lg.readOwed(WEB_SWORD);
+    assert.deepStrictEqual(Object.keys(owed), [b.id]);
+    assert.deepStrictEqual(owed[b.id].map((e) => [e.mark.id, e.mark.gen, e.mark.holder, e.mark.owner]), [[id2, 1, b.id, a.id]]);
+    assert.deepStrictEqual(gensOf(a, id2), []);
+
+    fire('playerSpawn', { player: a, initialSpawn: false });
+    flush();
+    assert.deepStrictEqual(gensOf(a, id2), [], 'the crafter redeemed the holder\'s debt');
+    online(a, b);
+    fire('playerSpawn', { player: b, initialSpawn: true });
+    flush();
+    assert.deepStrictEqual(gensOf(b, id2), [1]);
+    assert.deepStrictEqual(lg.readOwed(WEB_SWORD), {});
+  });
+
+  await t.test('legacy: a stack with no holder, lost from the ground, goes to its owner', () => {
+    const owner = makePlayer('legacy-owner-2');
+    const bystander = makePlayer('bystander');
+    online(owner, bystander);
+    const old = legacySword(owner, 'legacy-held-1');
+    assert.strictEqual(lg.getMark(WEB_SWORD, old).holder, undefined);
+    loseUnseen(old);
+    assert.deepStrictEqual(gensOf(owner, 'legacy-held-1'), [1]);
+    assert.deepStrictEqual(gensOf(bystander, 'legacy-held-1'), []);
+    assert.strictEqual(lg.getMark(WEB_SWORD, owner.container.slots.find((s) => s !== undefined)).holder, owner.id);
+  });
+
+  await t.test('legacy: the first inventory a holder-less stack enters becomes its holder', () => {
+    const owner = makePlayer('legacy-owner-3');
+    const taker = makePlayer('taker');
+    online(owner, taker);
+    arrive(taker, 5, legacySword(owner, 'legacy-held-2'));
+    const mark = lg.getMark(WEB_SWORD, taker.container.getItem(5));
+    assert.deepStrictEqual([mark.owner, mark.holder], [owner.id, taker.id]);
+    dropAndLose(taker, 5);
+    assert.deepStrictEqual(gensOf(taker, 'legacy-held-2'), [1]);
+    assert.deepStrictEqual(gensOf(owner, 'legacy-held-2'), []);
+  });
+
+  await t.test('a stale copy entering an inventory is deleted, not stamped', () => {
+    const owner = makePlayer('stale-owner');
+    const finder = makePlayer('stale-finder');
+    online(owner, finder);
+    const s = craftedSword(owner);
+    lg.bumpGen(WEB_SWORD, lg.getMark(WEB_SWORD, s).id);
+    arrive(finder, 1, s);
+    assert.strictEqual(finder.container.getItem(1), undefined);
+    assert.deepStrictEqual(finder.container.slotWrites, []);
+    assert.strictEqual(lg.getMark(WEB_SWORD, s).holder, owner.id);
+  });
+
+  await t.test('protect with no safe spot hands the stack to its holder, or owes it to them', () => {
+    const flooded = () => {
+      const w = protectWorld();
+      const getBlock = w.getBlock;
+      w.getBlock = (at) => (at.y === 64 ? { ...getBlock(at), typeId: 'minecraft:water', isAir: false, isLiquid: true } : getBlock(at));
+      return w;
+    };
+    const a = makePlayer('protect-crafter');
+    const b = makePlayer('protect-holder');
+    const held = (stack) => lg.markItem(WEB_SWORD, new mc.ItemStack(WEB_SWORD.itemId, 1), lg.withHolder(lg.getMark(WEB_SWORD, stack), b));
+
+    const w1 = flooded();
+    const barrel = makeContainer(27);
+    const s1 = held(craftedSword(a));
+    const id1 = lg.getMark(WEB_SWORD, s1).id;
+    barrel.setItem(0, s1);
+    w1.put({ x: 9, y: 64, z: 9 }, 'minecraft:barrel', barrel);
+    online(a, b);
+    assert.deepStrictEqual(lg.protectLegendariesIn(w1, BOX), { moved: 0, handedBack: 1 });
+    assert.deepStrictEqual(gensOf(b, id1), [0]);
+    assert.deepStrictEqual(gensOf(a, id1), []);
+
+    const w2 = flooded();
+    const hopper = makeContainer(5);
+    const s2 = held(craftedSword(a));
+    const id2 = lg.getMark(WEB_SWORD, s2).id;
+    hopper.setItem(0, s2);
+    w2.put({ x: 9, y: 64, z: 9 }, 'minecraft:hopper', hopper);
+    online(a);
+    assert.deepStrictEqual(lg.protectLegendariesIn(w2, BOX), { moved: 0, handedBack: 1 });
+    assert.deepStrictEqual(Object.keys(lg.readOwed(WEB_SWORD)), [b.id]);
+    assert.deepStrictEqual(owedOf(b).map((e) => [e.mark.id, e.mark.gen]), [[id2, 0]]);
+    assert.deepStrictEqual(gensOf(a, id2), []);
+    online(a, b);
+    fire('playerSpawn', { player: b, initialSpawn: true });
+    flush();
+    assert.deepStrictEqual(gensOf(b, id2), [0]);
+    assert.deepStrictEqual(lg.readOwed(WEB_SWORD), {});
   });
 });

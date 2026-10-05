@@ -65,6 +65,10 @@ const {
   setBusy,
   hudMessage,
   SCYTHE_OF_CALAMITY,
+  ORBITAL_CANNON,
+  hasAbility,
+  heldLegendaries,
+  genLedgerKey,
 } = await import(
   'data:text/javascript;base64,' + Buffer.from(bundle.outputFiles[0].text, 'utf-8').toString('base64')
 );
@@ -99,6 +103,18 @@ test('registry', async (t) => {
   await t.test('defForAbility finds by ability key', () => {
     assert.strictEqual(defForAbility('web_sword'), WEB_SWORD);
     assert.strictEqual(defForAbility('nope'), undefined);
+  });
+
+  await t.test('the four shipped defs are active, each found by its own ability key (L0-lgnd-ac26)', () => {
+    assert.deepStrictEqual(
+      LEGENDARIES.map((def) => def.itemId),
+      ['andrew:web_sword', 'andrew:scythe_of_calamity', 'andrew:orbital_cannon', 'andrew:dragon_katana']
+    );
+    for (const def of [WEB_SWORD, SCYTHE_OF_CALAMITY, ORBITAL_CANNON, DRAGON_KATANA]) {
+      assert.strictEqual(hasAbility(def), true, `${def.itemId} lost its ability`);
+      assert.strictEqual(defForAbility(def.abilityKey), def);
+      assert.strictEqual(def.cooldownTicks, 600);
+    }
   });
 
   await t.test('Web Sword definition matches the shipped behaviour', () => {
@@ -163,6 +179,8 @@ test('keys from keyPrefix', async (t) => {
       pending: 'andrew:ws_pending',
       gen: 'andrew:ws_gen',
       owed: 'andrew:ws_owed',
+      holder: 'andrew:ws_holder',
+      holderName: 'andrew:ws_holder_name',
     });
   });
 
@@ -177,6 +195,8 @@ test('keys from keyPrefix', async (t) => {
       pending: 'andrew:dk_pending',
       gen: 'andrew:dk_gen',
       owed: 'andrew:dk_owed',
+      holder: 'andrew:dk_holder',
+      holderName: 'andrew:dk_holder_name',
     });
   });
 
@@ -195,10 +215,60 @@ test('keys from keyPrefix', async (t) => {
   });
 });
 
+// Every key defs #1–#4 have written into shipped worlds, spelled out rather
+// than derived: a changed byte orphans every mark, craft flag and timer under
+// the old key (C-17).
+test('keys of defs #1–#4 are byte-identical to the shipped ones (L0-lgnd-ac26)', () => {
+  const shipped = [
+    [WEB_SWORD, {
+      item: {
+        origin: 'andrew:ws_origin', owner: 'andrew:ws_owner', id: 'andrew:ws_id', ownerName: 'andrew:ws_owner_name',
+        crafted: 'andrew:ws_crafted', craftedBy: 'andrew:ws_crafted_by', pending: 'andrew:ws_pending',
+        gen: 'andrew:ws_gen', owed: 'andrew:ws_owed',
+      },
+      ledger: 'andrew:ws_gen:i-1', cooldown: 'andrew:cd_web_sword', busy: 'andrew:busy_web_sword', hudKeys: undefined,
+    }],
+    [SCYTHE_OF_CALAMITY, {
+      item: {
+        origin: 'andrew:sc_origin', owner: 'andrew:sc_owner', id: 'andrew:sc_id', ownerName: 'andrew:sc_owner_name',
+        crafted: 'andrew:sc_crafted', craftedBy: 'andrew:sc_crafted_by', pending: 'andrew:sc_pending',
+        gen: 'andrew:sc_gen', owed: 'andrew:sc_owed',
+      },
+      ledger: 'andrew:sc_gen:i-1', cooldown: 'andrew:cd_scythe_of_calamity', busy: 'andrew:busy_scythe_of_calamity', hudKeys: undefined,
+    }],
+    [ORBITAL_CANNON, {
+      item: {
+        origin: 'andrew:oc_origin', owner: 'andrew:oc_owner', id: 'andrew:oc_id', ownerName: 'andrew:oc_owner_name',
+        crafted: 'andrew:oc_crafted', craftedBy: 'andrew:oc_crafted_by', pending: 'andrew:oc_pending',
+        gen: 'andrew:oc_gen', owed: 'andrew:oc_owed',
+      },
+      ledger: 'andrew:oc_gen:i-1', cooldown: 'andrew:cd_orbital_cannon', busy: 'andrew:busy_orbital_cannon',
+      hudKeys: { ready: 'andrew.orbital.hud_ready', cooldown: 'andrew.orbital.hud_cooldown' },
+    }],
+    [DRAGON_KATANA, {
+      item: {
+        origin: 'andrew:dk_origin', owner: 'andrew:dk_owner', id: 'andrew:dk_id', ownerName: 'andrew:dk_owner_name',
+        crafted: 'andrew:dk_crafted', craftedBy: 'andrew:dk_crafted_by', pending: 'andrew:dk_pending',
+        gen: 'andrew:dk_gen', owed: 'andrew:dk_owed',
+      },
+      ledger: 'andrew:dk_gen:i-1', cooldown: 'andrew:cd_dragon_katana', busy: 'andrew:busy_dragon_katana',
+      hudKeys: { ready: 'andrew.katana.hud_ready', cooldown: 'andrew.katana.hud_cooldown' },
+    }],
+  ];
+  for (const [def, want] of shipped) {
+    assert.deepStrictEqual(keysFor(def), want.item, `${def.itemId} keysFor`);
+    assert.strictEqual(genLedgerKey(def, 'i-1'), want.ledger, `${def.itemId} genLedgerKey`);
+    assert.strictEqual(cooldownKey(def.abilityKey), want.cooldown, `${def.itemId} cooldownKey`);
+    assert.strictEqual(busyKey(def.abilityKey), want.busy, `${def.itemId} busyKey`);
+    assert.deepStrictEqual(def.hudKeys, want.hudKeys, `${def.itemId} hudKeys`);
+  }
+});
+
 function makePlayer(main, off) {
   const props = new Map();
   const hands = { Mainhand: main, Offhand: off };
   return {
+    props,
     getDynamicProperty: (key) => props.get(key),
     setDynamicProperty(key, value) {
       if (value === undefined) props.delete(key);
@@ -359,5 +429,98 @@ test('hudMessage: shared keys unless the def names its own (L0-adr-oded §1)', a
         { translate: 'andrew.legendary.ready', with: { rawtext: [{ translate: 'item.andrew:web_sword.name' }] } },
       ],
     });
+  });
+});
+
+// R-lgnd-018: a def with no ability (crossbow §1, §9, §10). The crossbow item
+// does not exist yet, so a test-only passive def stands in for it.
+test('a passive def has no Use claim, no HUD line and no timer (R-lgnd-018, L0-lgnd-ac26)', async (t) => {
+  const PASSIVE = {
+    itemId: 'andrew:test_passive',
+    keyPrefix: 'tp',
+    nameKey: 'item.andrew:test_passive',
+    craftGate: true,
+    craftTokenId: 'andrew:test_passive_crafted',
+    refund: [],
+    textPrefix: 'andrew.test_passive',
+    command: 'andrew:testpassive',
+  };
+  LEGENDARIES.push(PASSIVE);
+  t.after(() => LEGENDARIES.splice(LEGENDARIES.indexOf(PASSIVE), 1));
+
+  const unmarked = (typeId) => ({ typeId, getDynamicProperty: () => undefined });
+  const passive = unmarked(PASSIVE.itemId);
+  const katana = unmarked(DRAGON_KATANA.itemId);
+  const cannon = unmarked(ORBITAL_CANNON.itemId);
+  const hit = (player) => {
+    const h = resolveActivation(player);
+    return h === undefined ? 'none' : `${h.slot}:${h.def.itemId}`;
+  };
+  const katanaReady =
+    '{"rawtext":[{"translate":"andrew.katana.hud_ready","with":{"rawtext":[{"translate":"item.andrew:dragon_katana.name"}]}}]}';
+  const katanaCooling =
+    '{"rawtext":[{"translate":"andrew.katana.hud_cooldown","with":{"rawtext":[{"translate":"item.andrew:dragon_katana.name"},{"text":"27"}]}}]}';
+  const timers = (player) => [...player.props.keys()].filter((k) => k.startsWith('andrew:cd_') || k.startsWith('andrew:busy_'));
+
+  await t.test('hasAbility is false for it, and no ability lookup returns it', () => {
+    assert.strictEqual(hasAbility(PASSIVE), false);
+    assert.strictEqual(defForAbility(undefined), undefined);
+    assert.strictEqual(defForAbility('undefined'), undefined);
+    assert.strictEqual(defFor(PASSIVE.itemId), PASSIVE);
+  });
+
+  await t.test('it is still a held legendary, in either hand (AD-lgnd-15 §4)', () => {
+    assert.deepStrictEqual(
+      heldLegendaries(makePlayer(passive, katana)).map(({ def, slot }) => `${slot}:${def.itemId}`),
+      ['Mainhand:andrew:test_passive', 'Offhand:andrew:dragon_katana']
+    );
+    assert.deepStrictEqual(
+      heldLegendaries(makePlayer(undefined, passive)).map(({ def, slot }) => `${slot}:${def.itemId}`),
+      ['Offhand:andrew:test_passive']
+    );
+  });
+
+  await t.test('held alone, in either hand: no HUD message and no Use', () => {
+    globalThis.__nowMs = 1_000_000;
+    for (const player of [makePlayer(passive, undefined), makePlayer(undefined, passive), makePlayer(passive, passive)]) {
+      assert.strictEqual(hudMessage(player), undefined);
+      assert.strictEqual(hit(player), 'none');
+      assert.deepStrictEqual(timers(player), []);
+    }
+  });
+
+  await t.test('passive main hand: a ready off-hand Katana or Cannon answers the Use', () => {
+    globalThis.__nowMs = 1_000_000;
+    assert.strictEqual(hit(makePlayer(passive, katana)), 'Offhand:andrew:dragon_katana');
+    assert.strictEqual(hit(makePlayer(passive, cannon)), 'Offhand:andrew:orbital_cannon');
+  });
+
+  await t.test('passive main hand: a cooling or busy off-hand Katana still answers nothing', () => {
+    globalThis.__nowMs = 1_000_000;
+    const cooling = makePlayer(passive, katana);
+    startCooldown(cooling, DRAGON_KATANA.abilityKey);
+    assert.strictEqual(hit(cooling), 'none');
+    const busy = makePlayer(passive, katana);
+    setBusy(busy, DRAGON_KATANA.abilityKey, 5000);
+    assert.strictEqual(hit(busy), 'none');
+  });
+
+  await t.test('Katana main hand, passive off hand: the Katana keeps the Use as before', () => {
+    globalThis.__nowMs = 1_000_000;
+    assert.strictEqual(hit(makePlayer(katana, passive)), 'Mainhand:andrew:dragon_katana');
+    const cooling = makePlayer(katana, passive);
+    startCooldown(cooling, DRAGON_KATANA.abilityKey);
+    assert.strictEqual(hit(cooling), 'none');
+  });
+
+  await t.test('next to a Katana, the HUD shows only the Katana line, byte for byte', () => {
+    globalThis.__nowMs = 1_000_000;
+    assert.strictEqual(JSON.stringify(hudMessage(makePlayer(passive, katana))), katanaReady);
+    assert.strictEqual(JSON.stringify(hudMessage(makePlayer(katana, passive))), katanaReady);
+    const cooling = makePlayer(passive, katana);
+    startCooldown(cooling, DRAGON_KATANA.abilityKey);
+    globalThis.__nowMs = 1_000_000 + 3_001;
+    assert.strictEqual(JSON.stringify(hudMessage(cooling)), katanaCooling);
+    assert.deepStrictEqual(timers(cooling), ['andrew:cd_dragon_katana']);
   });
 });

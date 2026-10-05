@@ -4,15 +4,12 @@
 
 import type { ItemStack } from "@minecraft/server";
 
-export interface LegendaryDef {
+interface LegendaryBase {
   itemId: string;
   /** Namespace of the item-mark, craft-flag and pending keys — see keysFor(). */
   keyPrefix: string;
-  /** Namespace of the player's cooldown and busy timers — see cooldownKey(). */
-  abilityKey: string;
   /** Translation key of the item name without the `.name` suffix. */
   nameKey: string;
-  cooldownTicks: number;
   craftGate: boolean;
   /**
    * What the weapon's recipe outputs instead of the weapon (AD-lgnd-08). Only a
@@ -25,6 +22,13 @@ export interface LegendaryDef {
   textPrefix: string;
   /** Operator command: `<command> give [player]` / `<command> reset`. */
   command: string;
+}
+
+/** A weapon with a Use ability: it owns timers and a HUD line. */
+export interface ActiveLegendaryDef extends LegendaryBase {
+  /** Namespace of the player's cooldown and busy timers — see cooldownKey(). */
+  abilityKey: string;
+  cooldownTicks: number;
   /**
    * The weapon's own HUD lang keys, rendered with the shared keys' arguments
    * (L0-adr-oded §1); absent keeps `andrew.legendary.ready|cooldown`.
@@ -34,7 +38,23 @@ export interface LegendaryDef {
   hudKeys?: { ready: string; cooldown: string };
 }
 
-export const WEB_SWORD: LegendaryDef = {
+/**
+ * A weapon with no ability (L0-lgnd-ad15, R-lgnd-018): it never claims a Use,
+ * draws no HUD line and owns no timer, and keeps every other legendary rule.
+ */
+export interface PassiveLegendaryDef extends LegendaryBase {
+  abilityKey?: never;
+  cooldownTicks?: never;
+  hudKeys?: never;
+}
+
+export type LegendaryDef = ActiveLegendaryDef | PassiveLegendaryDef;
+
+export function hasAbility(def: LegendaryDef): def is ActiveLegendaryDef {
+  return def.abilityKey !== undefined;
+}
+
+export const WEB_SWORD: ActiveLegendaryDef = {
   itemId: "andrew:web_sword",
   keyPrefix: "ws",
   abilityKey: "web_sword",
@@ -50,7 +70,7 @@ export const WEB_SWORD: LegendaryDef = {
   command: "andrew:websword",
 };
 
-export const SCYTHE_OF_CALAMITY: LegendaryDef = {
+export const SCYTHE_OF_CALAMITY: ActiveLegendaryDef = {
   itemId: "andrew:scythe_of_calamity",
   keyPrefix: "sc",
   abilityKey: "scythe_of_calamity",
@@ -67,7 +87,7 @@ export const SCYTHE_OF_CALAMITY: LegendaryDef = {
   command: "andrew:scythe",
 };
 
-export const ORBITAL_CANNON: LegendaryDef = {
+export const ORBITAL_CANNON: ActiveLegendaryDef = {
   itemId: "andrew:orbital_cannon",
   keyPrefix: "oc",
   abilityKey: "orbital_cannon",
@@ -84,7 +104,7 @@ export const ORBITAL_CANNON: LegendaryDef = {
   hudKeys: { ready: "andrew.orbital.hud_ready", cooldown: "andrew.orbital.hud_cooldown" },
 };
 
-export const DRAGON_KATANA: LegendaryDef = {
+export const DRAGON_KATANA: ActiveLegendaryDef = {
   itemId: "andrew:dragon_katana",
   keyPrefix: "dk",
   abilityKey: "dragon_katana",
@@ -133,8 +153,8 @@ export function isLegendaryWeaponStack(stack?: ItemStack): boolean {
   return defForStack(stack) !== undefined;
 }
 
-export function defForAbility(abilityKey: string): LegendaryDef | undefined {
-  return LEGENDARIES.find((def) => def.abilityKey === abilityKey);
+export function defForAbility(abilityKey: string): ActiveLegendaryDef | undefined {
+  return LEGENDARIES.filter(hasAbility).find((def) => def.abilityKey === abilityKey);
 }
 
 export interface LegendaryKeys {
@@ -156,6 +176,10 @@ export interface LegendaryKeys {
   gen: string;
   /** World: return target's id -> instances owed back after a loss. */
   owed: string;
+  /** ItemStack: the last holder's player id (absent = return to the owner). */
+  holder: string;
+  /** ItemStack: the last holder's name. */
+  holderName: string;
 }
 
 /**
@@ -175,6 +199,8 @@ export function keysFor(def: LegendaryDef): LegendaryKeys {
     pending: `${p}pending`,
     gen: `${p}gen`,
     owed: `${p}owed`,
+    holder: `${p}holder`,
+    holderName: `${p}holder_name`,
   };
 }
 
