@@ -1,0 +1,127 @@
+# run 4 — code_sha a39e654, BDS 1.26.51.1, private instance andrew-bds-x22, artifact .ai/verify/CNTR-X22-AA/2.json (exit 0, 12/12 passed)
+# format: before-apply(return)->after-apply-write(return)->after; hurts=[+tick:damage/cause]; NOISE = hurts the probe did not deal
+X22 SETUP x22_win_target hp=40.00 max=40.00 kit=bare
+X22 WIN difficulty=Peaceful regen=false
+X22 WIN single 40.00-apply(true)->30.00 next=+1:30.00,+2:30.00 hurts=[+0:10.00/entityAttack]
+X22 WIN same-tick x3 40.00-apply(true)->30.00 | 30.00-apply(true)->30.00 | 30.00-apply(true)->30.00 total=10.00 hurts=[+0:10.00/entityAttack]
+X22 WIN adjacent x3 @0:40.00-apply(true)->30.00 | @1:30.00-apply(true)->30.00 | @2:30.00-apply(true)->30.00 total=10.00 hurts=[+0:10.00/entityAttack]
+X22 WIN gap k=1 measured=1 first=40.00-apply(true)->30.00 second=30.00-apply(true)->30.00 second-delta=0.00
+X22 WIN gap k=2 measured=2 first=40.00-apply(true)->30.00 second=30.00-apply(true)->30.00 second-delta=0.00
+X22 WIN gap k=4 measured=4 first=40.00-apply(true)->30.00 second=30.00-apply(true)->30.00 second-delta=0.00
+X22 WIN gap k=6 measured=6 first=40.00-apply(true)->30.00 second=30.00-apply(true)->30.00 second-delta=0.00
+X22 WIN gap k=8 measured=8 first=40.00-apply(true)->30.00 second=30.00-apply(true)->30.00 second-delta=0.00
+X22 WIN gap k=9 measured=9 first=40.00-apply(true)->30.00 second=30.00-apply(true)->30.00 second-delta=0.00
+X22 WIN gap k=10 measured=10 first=40.00-apply(true)->30.00 second=30.00-apply(true)->20.00 second-delta=10.00
+X22 WIN gap k=11 measured=11 first=40.00-apply(true)->30.00 second=30.00-apply(true)->20.00 second-delta=10.00
+X22 WIN gap k=12 measured=12 first=40.00-apply(true)->30.00 second=30.00-apply(true)->20.00 second-delta=10.00
+X22 WIN gap k=15 measured=15 first=40.00-apply(true)->30.00 second=30.00-apply(true)->20.00 second-delta=10.00
+X22 WIN gap k=20 measured=20 first=40.00-apply(true)->30.00 second=30.00-apply(true)->20.00 second-delta=10.00
+X22 WIN SWEEP k=1:swallowed k=2:swallowed k=4:swallowed k=6:swallowed k=8:swallowed k=9:swallowed k=10:lands k=11:lands k=12:lands k=15:lands k=20:lands
+X22 WIN rising @0:5->true/delta=5.00 @2:8->true/delta=3.00 @3:8->true/delta=0.00 @4:4->true/delta=0.00 @5:20->true/delta=12.00 hurts=[+0:5.00/entityAttack +2:3.00/entityAttack +5:12.00/entityAttack]
+X22 WIN lethal-in-window first=40.00-apply(true)->30.00 lethal=5.00-lethal(true)->0.00 valid=true hp=0.00 death=entityAttack/killer=minecraft:player hurts=[+0:10.00/entityAttack +1:95.00/entityAttack]
+X22 NOISE probe_x22_window x22_win_target none
+X22 SETUP x22_pat_target hp=40.00 max=40.00 kit=minecraft:netherite_chestplate+protection4
+X22 PAT difficulty=Peaceful
+X22 PAT reference one plain hit through netherite+P4: 40.00-apply(true)->38.99 hurts=[+0:1.01/entityAttack]
+X22 PAT same-tick mode=pattern cause=entityAttack spacing=0 @0:40.00-apply(true)->38.99-write(true)->30.00 | @0:30.00-apply(true)->30.00-write(true)->20.00 | @0:20.00-apply(true)->20.00-write(true)->10.00 total=30.00 later=+1:10.00,+2:10.00,+5:10.00,+20:10.00 hurts=[+0:1.01/entityAttack]
+X22 PAT same-tick NEGATIVE-CONTROL mode=plain cause=entityAttack spacing=0 @0:40.00-apply(true)->38.99 | @0:38.99-apply(true)->38.99 | @0:38.99-apply(true)->38.99 total=1.01 later=+1:38.99,+2:38.99,+5:38.99,+20:38.99 hurts=[+0:1.01/entityAttack]
+X22 PAT adjacent mode=pattern cause=entityAttack spacing=1 @0:40.00-apply(true)->38.99-write(true)->30.00 | @1:30.00-apply(true)->30.00-write(true)->20.00 | @2:20.00-apply(true)->20.00-write(true)->10.00 total=30.00 later=+1:10.00,+2:10.00,+5:10.00,+20:10.00 hurts=[+0:1.01/entityAttack]
+X22 PAT adjacent NEGATIVE-CONTROL mode=plain cause=entityAttack spacing=1 @0:40.00-apply(true)->38.99 | @1:38.99-apply(true)->38.99 | @2:38.99-apply(true)->38.99 total=1.01 later=+1:38.99,+2:38.99,+5:38.99,+20:38.99 hurts=[+0:1.01/entityAttack]
+X22 PAT scythe-spacing mode=pattern cause=entityAttack spacing=10 @0:40.00-apply(true)->38.99-write(true)->30.00 | @10:30.00-apply(true)->28.99-write(true)->20.00 | @20:20.00-apply(true)->18.99-write(true)->10.00 total=30.00 later=+1:10.00,+2:10.00,+5:10.00,+20:10.00 hurts=[+0:1.01/entityAttack +10:1.01/entityAttack +20:1.01/entityAttack]
+X22 PAT same-tick mode=pattern cause=sonicBoom spacing=0 @0:40.00-apply(true)->30.00-write(true)->30.00 | @0:30.00-apply(true)->30.00-write(true)->20.00 | @0:20.00-apply(true)->20.00-write(true)->10.00 total=30.00 later=+1:10.00,+2:10.00,+5:10.00,+20:10.00 hurts=[+0:10.00/sonicBoom]
+X22 PAT same-tick NEGATIVE-CONTROL mode=plain cause=sonicBoom spacing=0 @0:40.00-apply(true)->30.00 | @0:30.00-apply(true)->30.00 | @0:30.00-apply(true)->30.00 total=10.00 later=+1:30.00,+2:30.00,+5:30.00,+20:30.00 hurts=[+0:10.00/sonicBoom]
+X22 PAT difficulty=Normal
+X22 PAT reference one plain hit at Normal: 40.00-apply(true)->38.99 hurts=[+0:1.01/entityAttack]
+X22 PAT same-tick normal mode=pattern cause=entityAttack spacing=0 @0:40.00-apply(true)->38.99-write(true)->30.00 | @0:30.00-apply(true)->30.00-write(true)->20.00 | @0:20.00-apply(true)->20.00-write(true)->10.00 total=30.00 later=+1:10.00,+2:10.00,+5:10.00,+20:10.00 hurts=[+0:1.01/entityAttack]
+X22 PAT lethal-third @0:25.00-apply(true)->23.99-write(true)->15.00 | @1:15.00-apply(true)->15.00-write(true)->5.00 | @2:5.00-lethal(true)->0.00 valid=true hp=0.00 death=entityAttack/killer=minecraft:player hurts=[+0:1.01/entityAttack +2:30.74/entityAttack]
+X22 NOISE probe_x22_pattern x22_pat_target none
+X22 SETUP x22_shd_target hp=40.00 max=40.00 kit=bare shield=true
+X22 SHD sneak=false read=false arrow delta=4.00 hurts=[+11:4.00/projectile]
+X22 SHD sneak=false plain cause=entityAttack 40.00-apply(true)->30.00 hurts=[+10:10.00/entityAttack]
+X22 SHD sneak=false plain cause=sonicBoom 40.00-apply(true)->30.00 hurts=[+10:10.00/sonicBoom]
+X22 SHD sneak=false pattern same-tick x3 40.00-apply(true)->30.00-write(true)->30.00 | 30.00-apply(true)->30.00-write(true)->20.00 | 20.00-apply(true)->20.00-write(true)->10.00 total=30.00 hurts=[+10:10.00/entityAttack]
+X22 SHD sneak=true read=true arrow delta=0.00 hurts=[]
+X22 SHD sneak=true plain cause=entityAttack 40.00-apply(false)->40.00 hurts=[]
+X22 SHD sneak=true plain cause=sonicBoom 40.00-apply(true)->30.00 hurts=[+10:10.00/sonicBoom]
+X22 SHD sneak=true pattern same-tick x3 40.00-apply(false)->40.00-write(true)->30.00 | 30.00-apply(false)->30.00-write(true)->20.00 | 20.00-apply(false)->20.00-write(true)->10.00 total=30.00 hurts=[]
+X22 NOISE probe_x22_shield_raised x22_shd_target none
+X22 SETUP x22_shl_entityAttack hp=40.00 max=40.00 kit=bare shield=true
+X22 SETUP x22_shl_sonicBoom hp=40.00 max=40.00 kit=bare shield=true
+X22 SETUP x22_shl_override hp=40.00 max=40.00 kit=bare shield=true
+X22 SHL raised-shield lethal cause=entityAttack entityAttack:5.00-lethal(false)->5.00 sneaking=true hp=5.00 death=none hurts=[]
+X22 SHL raised-shield lethal cause=sonicBoom sonicBoom:5.00-lethal(true)->0.00 sneaking=true hp=0.00 death=sonicBoom/killer=minecraft:player hurts=[+0:105.00/sonicBoom]
+X22 SHL raised-shield lethal cause=override override:5.00-lethal(true)->0.00 sneaking=true hp=0.00 death=override/killer=minecraft:player hurts=[+0:105.00/override]
+X22 NOISE probe_x22_shield_lethal x22_shl_entityAttack none
+X22 NOISE probe_x22_shield_lethal x22_shl_sonicBoom none
+X22 NOISE probe_x22_shield_lethal x22_shl_override none
+X22 SETUP x22_abs_pattern hp=40.00 max=40.00 kit=bare
+X22 SETUP x22_abs_plain hp=40.00 max=40.00 kit=bare
+X22 SETUP x22_abs_none hp=40.00 max=40.00 kit=bare
+X22 SETUP x22_abs_plain-sonicBoom hp=40.00 max=40.00 kit=bare
+X22 ABS mode=pattern first=40.00-apply(true)->40.00-write(true)->30.00 probe16(true) health-delta=10.00 absorption-left-before-probe=6.00 hurts=[+0:10.00/entityAttack +40:16.00/entityAttack]
+X22 ABS mode=plain first=40.00-apply(true)->40.00 probe16(true) health-delta=10.00 absorption-left-before-probe=6.00 hurts=[+0:10.00/entityAttack +40:16.00/entityAttack]
+X22 ABS mode=none first=40.00-untouched probe16(true) health-delta=0.00 absorption-left-before-probe=16.00 hurts=[+40:16.00/entityAttack]
+X22 ABS mode=plain-sonicBoom first=40.00-apply(true)->40.00 probe16(true) health-delta=10.00 absorption-left-before-probe=6.00 hurts=[+0:10.00/sonicBoom +40:16.00/entityAttack]
+X22 NOISE probe_x22_absorption x22_abs_pattern none
+X22 NOISE probe_x22_absorption x22_abs_plain none
+X22 NOISE probe_x22_absorption x22_abs_none none
+X22 NOISE probe_x22_absorption x22_abs_plain-sonicBoom none
+X22 SETUP x22_cau_target hp=40.00 max=40.00 kit=minecraft:netherite_chestplate+protection4
+X22 CAU armoured cause=projectile with-owner 40.00-apply(threw(UnsupportedFunctionalityError: Unsupported functionality: Cause 'projectile' is not valid.))->40.00 hurts=[]
+X22 CAU armoured cause=entityAttack with-owner 40.00-apply(true)->38.99 hurts=[+0:1.01/entityAttack]
+X22 CAU armoured cause=sonicBoom with-owner 40.00-apply(true)->30.00 hurts=[+0:10.00/sonicBoom]
+X22 CAU armoured cause=magic with-owner 40.00-apply(true)->36.40 hurts=[+0:3.60/magic]
+X22 CAU armoured cause=override with-owner 40.00-apply(true)->36.40 hurts=[+0:3.60/override]
+X22 CAU armoured by-projectile(snowball) ret=true delta=1.01 hurts=[+0:1.01/projectile]
+X22 CAU snowball-impact hit@+1 hp-at-hit=40.00 applyDamage(true) delta=1.01 hurts=[+1:1.01/entityAttack]
+X22 NOISE probe_x22_causes x22_cau_target none
+X22 SETUP x22_scy_target hp=40.00 max=40.00 kit=minecraft:netherite_chestplate+protection4
+X22 SCY launched=true hp 40.00 -> 31.00 total=9.00 hits=#1@+6:hp=37.00 #2@+20:hp=34.00 #3@+38:hp=31.00 end=spent/hits=3 hurts=[+6:0.24/entityAttack +20:0.24/entityAttack +38:0.24/entityAttack]
+X22 NOISE probe_x22_scythe_live x22_scy_target none
+X22 SETUP x22_sca_target hp=40.00 max=40.00 kit=bare
+X22 SCA shipped scythe vs absorption16 hp 40.00 -> 31.00 health-lost=9.00 launched=true #1@+6:hp=37.00 #2@+24:hp=34.00 #3@+46:hp=31.00 end=spent/hits=3 probe16(true) health-delta=9.00 absorption-lost-in-volley=9.00 left=7.00 hurts=[+6:3.00/entityAttack +24:3.00/entityAttack +46:3.00/entityAttack +87:16.00/entityAttack]
+X22 NOISE probe_x22_scythe_absorption x22_sca_target none
+X22 SETUP x22_scs_target hp=40.00 max=40.00 kit=bare shield=true
+X22 SCS shipped scythe vs raised shield from 5 hp: launched=true #1@+6:hp=2.00 #2@+23:hp=2.00 #3@+48:hp=2.00 end=spent/hits=3 sneaking=true hp=2.00 death=none hurts=[]
+X22 NOISE probe_x22_scythe_shield x22_scs_target none
+X22 SETUP x22_anc_target hp=40.00 max=40.00 kit=bare
+X22 ANC rising-restart @0:5->true/delta=5.00 @5:8->true/delta=3.00 @12:8->true/delta=0.00 @16:8->true/delta=8.00 hurts=[+0:5.00/entityAttack +5:3.00/entityAttack +16:8.00/entityAttack]
+X22 ANC write-then-hit write(true) 40->30, +1 applyDamage(true) delta=10.00 hurts=[+1:10.00/entityAttack]
+X22 NOISE probe_x22_window_anchor x22_anc_target none
+[andrew] scythe volley: hit 1 on x22_scy_target hp 40 -> 37 (true 3) at 3.5,-58.0,4.5
+[andrew] scythe volley: hit 2 on x22_scy_target hp 37 -> 34 (true 3) at 3.5,-51.1,3.9
+[andrew] scythe volley: hit 3 on x22_scy_target hp 34 -> 31 (true 3) at 3.5,-44.5,2.7
+[andrew] scythe volley: hit 1 on x22_sca_target hp 40 -> 37 (true 3) at 3.5,-58.0,4.5
+[andrew] scythe volley: hit 2 on x22_sca_target hp 37 -> 34 (true 3) at 3.5,-48.0,3.3
+[andrew] scythe volley: hit 3 on x22_sca_target hp 34 -> 31 (true 3) at 3.5,-38.3,1.3
+[andrew] scythe volley: hit 1 on x22_scs_target hp 5 -> 2 (true 3) at 3.5,-58.0,4.5
+[andrew] scythe volley: hit 2 on x22_scs_target hp 2 -> 2 (true 3) at 3.5,-48.0,4.5
+[andrew] scythe volley: hit 3 on x22_scs_target hp 2 -> 2 (true 3) at 3.5,-38.6,4.5
+[gametest] scythe damage: target hp 20 at launch, chest=minecraft:diamond_chestplate
+[andrew] scythe volley: hit 1 on andrew_scy_armored hp 20 -> 17 (true 3) at 5.5,-58.0,6.5
+[andrew] scythe volley: hit 2 on andrew_scy_armored hp 17 -> 14 (true 3) at 6.7,-48.1,6.5
+[andrew] scythe volley: hit 3 on andrew_scy_armored hp 14 -> 11 (true 3) at 8.7,-38.4,6.5
+[gametest] scythe damage: 3 hit(s), hp 20 -> 11 (after each hit: 17, 14, 11), end=spent
+[andrew] scythe volley: hit 1 on andrew_scy_frail hp 4 -> 1 (true 3) at 5.5,-58.0,6.5
+[andrew] scythe volley: hit 2 on andrew_scy_frail hp 1 -> 0 (true 3) at 6.7,-48.5,6.5
+[gametest] scythe lethal: end=target_invalid hits=2 hp after each: 1, 0 killer=-8589934554 owner=-8589934554
+PASSED andrew:probe_x22_window
+PASSED andrew:probe_x22_pattern
+PASSED andrew:probe_x22_shield_raised
+PASSED andrew:probe_x22_shield_lethal
+PASSED andrew:probe_x22_absorption
+PASSED andrew:probe_x22_causes
+PASSED andrew:probe_x22_scythe_live
+PASSED andrew:probe_x22_scythe_absorption
+PASSED andrew:probe_x22_scythe_shield
+PASSED andrew:probe_x22_window_anchor
+PASSED andrew:scythe_three_hits_true_damage
+PASSED andrew:scythe_lethal_hit_kills
+
+
+# run 1 — code_sha 26c18ef: targets stood at relative y=1 (inside the platform floor) and took suffocation hits of 2 HP;
+# its numbers are superseded. Its suffocation lines explain the 8.00 first hit (10 minus a 2-HP window) and the 0.72 drift (2 through netherite+P4).
+X22 WIN single 40.00-apply(true)->32.00 next=+1:32.00,+2:32.00 hurts=[+0:8.00/entityAttack]
+X22 PAT adjacent mode=pattern spacing=1 @0:40.00-apply(true)->38.99-write(true)->30.00 | @1:30.00-apply(true)->30.00-write(true)->20.00 | @2:20.00-apply(true)->20.00-write(true)->10.00 total=30.00 later=+1:10.00,+2:10.00,+5:10.00,+20:9.28 hurts=[+0:1.01/entityAttack]
+X22 PAT adjacent NEGATIVE-CONTROL mode=plain spacing=1 @0:40.00-apply(true)->39.71 | @1:39.71-apply(true)->39.71 | @2:39.71-apply(true)->39.71 total=0.29 later=+1:39.71,+2:39.71,+5:39.71,+20:38.99 hurts=[+0:0.29/entityAttack]
+X22 SCY launched=true hp 40.00 -> 30.28 total=9.72 hits=#1@+7:hp=36.28 #2@+19:hp=33.28 #3@+36:hp=30.28 end=spent/hits=3 hurts=[+5:0.72/suffocation +19:0.24/entityAttack +36:0.24/entityAttack]
