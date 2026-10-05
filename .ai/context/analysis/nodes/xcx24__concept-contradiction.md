@@ -11,8 +11,12 @@ part_of: ["L0"]
 relates_to: ["L0"]
 priority: 610
 size_chars: 1772
-tags: ["v7", "sculk-crossbow", "category:plan-vs-code", "severity:medium", "status:resolved", "target:L0-lgnd", "resolved_by:L0-lgnd-ad15"]
+tags: ["v7","sculk-crossbow","category:plan-vs-code","severity:medium","status:resolved","target:L0-lgnd","resolved_by:L0-lgnd-ad15","resolved"]
+closed_at: 2026-10-05
+closed_reason: resolved_by_decision
+closed_by_ref: decision-resolve-l0-xcx24
 ---
+
 ---
 title: "CX-L0-24 · The framework assumes every legendary has an ability, a cooldown and a HUD line; the Sculk Crossbow has none"
 aliases: ["L0-xcx24", "No-ability legendary vs framework"]

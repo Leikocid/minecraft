@@ -10,9 +10,13 @@ part_of: ["L0-lgnd"]
 relates_to: ["L0-lgnd"]
 priority: 610
 size_chars: 1557
-tags: ["v7", "category:decision-vs-code", "severity:medium", "status:resolved", "target:L0-lgnd", "resolved_by:L0-adr-hldb"]
+tags: ["v7","category:decision-vs-code","severity:medium","status:resolved","target:L0-lgnd","resolved_by:L0-adr-hldb","resolved"]
 level: 2
+closed_at: 2026-10-05
+closed_reason: resolved_by_decision
+closed_by_ref: decision-resolve-l0-lgnd-cx16
 ---
+
 # CX-lgnd-16: `decision-resolve-l0-xcx11` closed the holder question with a task, but the holder was never built
 
 Related: L0-xcx11, L0-adr-hold, L0-lgnd-ad11, L0-lgnd-ac18, L0-lgnd-ad17, L0-xasm26.

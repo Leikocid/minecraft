@@ -1,12 +1,12 @@
 ---
 title: Decisions
 type: analysis
-generated_at: "2026-10-05T20:08:58.267Z"
+generated_at: "2026-10-05T22:05:04.995Z"
 source_channel: rollout
 node_id: rollout-decisions
 aliases: ["rollout-decisions","decisions"]
 is_a: ["rollout","decisions"]
-relates_to: ["decision-completion-flow-quick","decision-merge-policy-autopilot","decision-namespace-addona-andrew-asm-002-q-002","decision-q-006-web-sword-provenance-yes-metka-ekzemplyara","decision-q-007-enchantable-without-durability-podtverzhde","decision-q-008-blocked-craft-refund-a-obnaruzhit-i-vernut","decision-q-009-cooldown-persistence-sohranyat-mezhdu-vyho","decision-q-010-main-hand-off-hand-priority-otlozheno","decision-q-011-cube-geometry-27-kletok-tsentr-sosednyaya-","decision-q-012-two-player-dod-gametest-s-dvumya-simulated","decision-q-013-protected-blocks-zakrytyy-spisok-posture-s","decision-q-014-budget-after-destruction-pravo-ostaetsya-p","decision-q-015-gate-game-modes-survival-i-adventure","decision-q-016-sword-unlootable-podtverzhdeno-kak-zaduman","decision-q-017-zero-cells-proval-s-lokalizovannym-soobsch","decision-resolve-l0","decision-resolve-l0-keep-ctr006","decision-resolve-l0-once","decision-resolve-l0-qatg-ctr1","decision-resolve-l0-trap-ct07","decision-resolve-l0-trap-ct08","decision-legendary-hand-priority-realizuem-seychas-osnovn","decision-legendary-ready-hud-gotovo-pokazyvaetsya-postoya","decision-legendary-rules-obschie-dlya-vseh-legendarnyh-vk","decision-resolve-cool-ctr3","decision-resolve-l0-sprj-cx02","decision-resolve-l0-xcx3","decision-scythe-enchantments-slot-sword","decision-scythe-hidden-target-dynamic-property-andrew-hid","decision-scythe-launch-applyknockback-s-kalibrovannoy-ver","decision-scythe-melee-damage-8-proveryaetsya-zamerom-prot","decision-ad-wrdn-01-l0-wrdn-ad01-podtverzhdeno-vanilnaya-","decision-adr-bast-02-l0-bast-ad02-podtverzhdeno-vanilnye-","decision-adr-l0-adr-strc-accepted-generatsiya-skriptom-pr","decision-adr-l0-adr-strs-accepted-s-ogovorkoy-q5-zond-str","decision-adr-l0-adr-tmpl-accepted-zond-strf-p006-q1-q2-q3","decision-adr-l0-wind-ad01-accepted-s-ogovorkoy-o-razmere-","decision-adr-strf-01-l0-strf-d001-accepted-determinirovan","decision-adr-strf-02-l0-strf-d002-accepted-spavnery-vanil","decision-l0-airs-cx01-zagruzka-chankov-koltsa-privyazanno","decision-l0-xcx6-edinstvennyy-istochnik-pravdy-po-generat","decision-l0-xcx7-kanal-dokazatelstva-u-kazhdogo-kriteriya","decision-l0-xq2-plotnost-struktur-shansy-na-chank-rovno-k","decision-l0-xq3-vozvrat-poteryannogo-oruzhiya-kraftivshem","decision-l0-xq4-melnitsa-u-spavna-bez-suhoy-zemli-mira-be","decision-dirizhabl-udlinyaetsya-protiv-razmera-v-speke-ra","decision-gorod-hranitelya-rastet-vchetvero-po-ploschadi-i","decision-legendarnoe-vozvraschaetsya-poslednemu-derzhavsh","decision-resolve-cool-ctr1","decision-resolve-cool-ctr2","decision-resolve-cool-ctr4","decision-resolve-l0-airs-cx01","decision-resolve-l0-lgnd-cx01","decision-resolve-l0-lgnd-cx07","decision-resolve-l0-lgnd-cx08","decision-resolve-l0-lgnd-cx09","decision-resolve-l0-lgnd-cx10","decision-resolve-l0-orbc-cx02","decision-resolve-l0-scyt-cx03","decision-resolve-l0-scyt-cx04","decision-resolve-l0-scyt-cx05","decision-resolve-l0-strf-cx01","decision-resolve-l0-strf-cx02","decision-resolve-l0-wind-cx01","decision-resolve-l0-wind-cx02","decision-resolve-l0-xcx10","decision-resolve-l0-xcx11","decision-resolve-l0-xcx12","decision-resolve-l0-xcx13","decision-resolve-l0-xcx14","decision-resolve-l0-xcx5","decision-resolve-l0-xcx6","decision-resolve-l0-xcx7","decision-resolve-l0-xcx8","decision-resolve-l0-xcx9","decision-dvizhok-bedrock-chetyre-svoystva-naydennye-otgru","decision-luchi-i-tsel-facelocation-stoppery-i-zhidkosti-z","decision-pushka-predmet-i-zaryad-pravki-po-zameram-otgruz","decision-ring-diameters-1-7-14-21-28-was-1-5-10-15-20","decision-aim-range-25-and-spawn-height-60-the-shooter-get","decision-resolve-l0-lgnd-cx13","decision-resolve-l0-magn-cxdp","decision-resolve-l0-sauc-cx01","decision-ring-power-per-ring-4-4-2-1-1-and-a-minimum-aim-","decision-katana-landing-above-lava-unsafe","decision-resolve-l0-lgnd-cx14","decision-resolve-l0-ufoc-cx01","decision-resolve-l0-xcx15","decision-resolve-l0-xcx16","decision-resolve-l0-xcx17","decision-resolve-l0-xcx18","decision-resolve-l0-xcx19","decision-resolve-l0-xcx20","decision-resolve-l0-xcx21","decision-katana-ray-budget-and-column-length-measured-not","decision-resolve-l0-katn-cx01","decision-ring-min-range-5","decision-resolve-l0-lgnd-cx15","decision-resolve-l0-sclk-cx02","decision-resolve-l0-xcx25"]
+relates_to: ["decision-completion-flow-quick","decision-merge-policy-autopilot","decision-namespace-addona-andrew-asm-002-q-002","decision-q-006-web-sword-provenance-yes-metka-ekzemplyara","decision-q-007-enchantable-without-durability-podtverzhde","decision-q-008-blocked-craft-refund-a-obnaruzhit-i-vernut","decision-q-009-cooldown-persistence-sohranyat-mezhdu-vyho","decision-q-010-main-hand-off-hand-priority-otlozheno","decision-q-011-cube-geometry-27-kletok-tsentr-sosednyaya-","decision-q-012-two-player-dod-gametest-s-dvumya-simulated","decision-q-013-protected-blocks-zakrytyy-spisok-posture-s","decision-q-014-budget-after-destruction-pravo-ostaetsya-p","decision-q-015-gate-game-modes-survival-i-adventure","decision-q-016-sword-unlootable-podtverzhdeno-kak-zaduman","decision-q-017-zero-cells-proval-s-lokalizovannym-soobsch","decision-resolve-l0","decision-resolve-l0-keep-ctr006","decision-resolve-l0-once","decision-resolve-l0-qatg-ctr1","decision-resolve-l0-trap-ct07","decision-resolve-l0-trap-ct08","decision-legendary-hand-priority-realizuem-seychas-osnovn","decision-legendary-ready-hud-gotovo-pokazyvaetsya-postoya","decision-legendary-rules-obschie-dlya-vseh-legendarnyh-vk","decision-resolve-cool-ctr3","decision-resolve-l0-sprj-cx02","decision-resolve-l0-xcx3","decision-ad-wrdn-01-l0-wrdn-ad01-podtverzhdeno-vanilnaya-","decision-adr-bast-02-l0-bast-ad02-podtverzhdeno-vanilnye-","decision-adr-l0-adr-strc-accepted-generatsiya-skriptom-pr","decision-adr-l0-adr-strs-accepted-s-ogovorkoy-q5-zond-str","decision-adr-l0-adr-tmpl-accepted-zond-strf-p006-q1-q2-q3","decision-adr-l0-wind-ad01-accepted-s-ogovorkoy-o-razmere-","decision-adr-strf-01-l0-strf-d001-accepted-determinirovan","decision-adr-strf-02-l0-strf-d002-accepted-spavnery-vanil","decision-l0-airs-cx01-zagruzka-chankov-koltsa-privyazanno","decision-l0-xcx6-edinstvennyy-istochnik-pravdy-po-generat","decision-l0-xcx7-kanal-dokazatelstva-u-kazhdogo-kriteriya","decision-l0-xq2-plotnost-struktur-shansy-na-chank-rovno-k","decision-l0-xq3-vozvrat-poteryannogo-oruzhiya-kraftivshem","decision-l0-xq4-melnitsa-u-spavna-bez-suhoy-zemli-mira-be","decision-dirizhabl-udlinyaetsya-protiv-razmera-v-speke-ra","decision-gorod-hranitelya-rastet-vchetvero-po-ploschadi-i","decision-legendarnoe-vozvraschaetsya-poslednemu-derzhavsh","decision-resolve-cool-ctr1","decision-resolve-cool-ctr2","decision-resolve-cool-ctr4","decision-resolve-l0-airs-cx01","decision-resolve-l0-lgnd-cx01","decision-resolve-l0-lgnd-cx07","decision-resolve-l0-lgnd-cx08","decision-resolve-l0-lgnd-cx09","decision-resolve-l0-lgnd-cx10","decision-resolve-l0-orbc-cx02","decision-resolve-l0-scyt-cx03","decision-resolve-l0-scyt-cx04","decision-resolve-l0-scyt-cx05","decision-resolve-l0-strf-cx01","decision-resolve-l0-strf-cx02","decision-resolve-l0-wind-cx01","decision-resolve-l0-wind-cx02","decision-resolve-l0-xcx10","decision-resolve-l0-xcx11","decision-resolve-l0-xcx12","decision-resolve-l0-xcx13","decision-resolve-l0-xcx14","decision-resolve-l0-xcx5","decision-resolve-l0-xcx6","decision-resolve-l0-xcx7","decision-resolve-l0-xcx8","decision-resolve-l0-xcx9","decision-dvizhok-bedrock-chetyre-svoystva-naydennye-otgru","decision-luchi-i-tsel-facelocation-stoppery-i-zhidkosti-z","decision-pushka-predmet-i-zaryad-pravki-po-zameram-otgruz","decision-ring-diameters-1-7-14-21-28-was-1-5-10-15-20","decision-aim-range-25-and-spawn-height-60-the-shooter-get","decision-resolve-l0-lgnd-cx13","decision-resolve-l0-magn-cxdp","decision-resolve-l0-sauc-cx01","decision-katana-landing-above-lava-unsafe","decision-resolve-l0-lgnd-cx14","decision-resolve-l0-ufoc-cx01","decision-resolve-l0-xcx15","decision-resolve-l0-xcx16","decision-resolve-l0-xcx17","decision-resolve-l0-xcx18","decision-resolve-l0-xcx19","decision-resolve-l0-xcx20","decision-resolve-l0-xcx21","decision-katana-ray-budget-and-column-length-measured-not","decision-resolve-l0-katn-cx01","decision-ring-min-range-5","decision-resolve-l0-lgnd-cx15","decision-resolve-l0-lgnd-cx16","decision-resolve-l0-sclk-cx01","decision-resolve-l0-sclk-cx02","decision-resolve-l0-xcx22","decision-resolve-l0-xcx23","decision-resolve-l0-xcx24","decision-resolve-l0-xcx25"]
 priority: 610
 ---
 
@@ -308,50 +308,6 @@ _Decided: 2026-09-24_
 
 
 Различие в показе Ready снято: принят непрерывный режим для обоих оружий
-
-
-
-
-
-## scythe-enchantments = слот sword (decision-scythe-enchantments-slot-sword)
-
-_Decided: 2026-09-24_
-
-
-Решение (автопилот): minecraft:enchantable slot=sword, хотя база предмета — алмазная мотыга. Обоснование: спека §1 требует урона как у незеритового меча и разрешает совместимые чары базового предмета «если они не конфликтуют с механикой»; боевое назначение делает осмысленными именно мечевые чары (Sharpness, Smite, Fire Aspect, Knockback, Looting), а мотыжные к бою отношения не имеют. Закрывает CTR-2.
-
-
-
-
-
-## scythe-hidden-target = dynamic property andrew:hidden_until, ваниль-невидимость целью остаётся (decision-scythe-hidden-target-dynamic-property-andrew-hid)
-
-_Decided: 2026-09-24_
-
-
-Решение (автопилот): предикат isHiddenFromTargeting(player) читает dynamic property игрока andrew:hidden_until (метка времени Date.now(), тот же часовой механизм, что у кулдауна). Пока Теневого клинка нет, свойство никто не ставит, кроме тестовой команды. Обычная ванильная невидимость (зелье) цель НЕ исключает — иначе дешёвое зелье становится контрой легендарному оружию, чего спека не просит. Когда появится спека Теневого клинка, меняется только тело предиката.
-
-
-
-
-
-## scythe-launch = applyKnockback с калиброванной вертикальной силой (decision-scythe-launch-applyknockback-s-kalibrovannoy-ver)
-
-_Decided: 2026-09-24_
-
-
-Решение (автопилот): подброс примерно на 10 блоков (допуск 8–12 на ровной земле) делается одним player.applyKnockback({x:0,z:0}, V). Константу V подобрать замером на BDS 1.26.51.1 — GameTest логирует пиковый location.y симулированного игрока, старт от 2.5. Сопротивление отбрасыванию (незеритовая броня) не компенсируем: бронированная цель летит ниже, это честно. Урон от падения — ванильный.
-
-
-
-
-
-## scythe-melee-damage = 8, проверяется замером против настоящего незеритового меча (decision-scythe-melee-damage-8-proveryaetsya-zamerom-prot)
-
-_Decided: 2026-09-24_
-
-
-Решение (автопилот): minecraft:damage 8 (на один выше алмазного меча, у которого 7 и который замером даёт ровно 8 итогового урона). Значение не принимается на веру: GameTest бьёт корову нашей Косой и ванильным незеритовым мечом в одном прогоне и сравнивает — как сделано для Паутинного меча.
 
 
 
@@ -977,25 +933,6 @@ Hover = min(centre + 40, ceiling - 15); arrival/departure at hover + 10; a Canno
 
 
 
-## ring power per ring 4/4/2/1/1 and a minimum aim range of 7 (decision-ring-power-per-ring-4-4-2-1-1-and-a-minimum-aim-)
-
-_Decided: 2026-10-02_
-
-
-Решение оператора 2026-10-02 по отзыву Андрея «я всё равно умираю от колец». Выбор делался по замерам, а не по модели — и модель дважды оказалась неверной.
-Что принято: сила взрыва по кольцам от центра к краю 4 / 4 / 2 / 1 / 1 вместо 4 у всех; кольца отказывают в выстреле по блоку ближе 7 блоков (тихо, без кулдауна, как за пределом дальности). Пробой ЛКМ минимума не получает — он не наносит урона сущностям. Дальность 25 и высота спавна 60 остаются.
-Замеры, на которых это стоит:
-1. probe_blast_stacking. Равные взрывы в одном тике НЕ складываются: четыре взрыва силы 4 в семи блоках дают один удар 6.1, столько же, сколько один взрыв. Но каждый взрыв СИЛЬНЕЕ предыдущего проходит снова: 7, 5 и 3 блока в один тик дали три удара 6.1 + 10.8 + 14.1 и убили зомби с 20 жизнями.
-2. probe_ring_damage_by_distance, настоящая атака с принятыми силами. Стоящий в 8 блоках от цели теряет 20 за шесть ударов и погибает; в 10 блоках 11.1 за четыре удара; в 12 — 7.2; в 14 — 20 и смерть, потому что клетка кольца оказывается ровно под ним (разбивка ударов 1.9 / 5.6 / 5.3 / 13.0, последний — взрыв под ногами); в 16 — 1.9; с 18 блоков не задевает вовсе. Стрелок в 9 блоках теряет 15.3 и выживает с 2.7.
-Отсюда и минимум 7: он не делает выстрел безопасным для стоящего на месте, а делает его таким, от которого можно уйти — трёх секунд фитиля и нескольких шагов хватает, чтобы оказаться за 18 блоками. Оператор принял этот баланс сознательно: «убежать можно и умереть — баланс».
-3. probe_crater_by_power. Воронка не равна 1.3 × сила, как я считал: на обычном грунте сила 4 выбивает 133 клетки и достаёт на 5.0 блока, сила 2 — 38 клеток, сила 1 — 9 клеток, сила 0.5 — ни одной. В КАМНЕ сила 1 не ломает ничего. Поэтому два внешних кольца оставляют борозду на земле и не оставляют следа на скале, а сценарий воронок переведён на грунт — на то, по чему игра и идёт.
-Почему деление мощности на число точек, которое обсуждалось первым, не годится: сила взрыва это радиус, а не запас энергии. Один динамит, поделённый на 80 точек внешнего кольца, даёт силу 0.05 и радиус 0.1 блока — взрыв не выходит за свою клетку: ни урона, ни следа. И делить не нужно: по игроку приходит не сумма 201 взрыва, а последовательность из двух-шести ударов, так что важна сила ОДНОЙ клетки.
-Что это меняет в спеке: §6 получает минимум для ПКМ, §10 — таблицу сил и оговорку, что сила это радиус, AC-3 — отказ для близкого блока, AC-11 — силы по кольцам, AC-13 — урон силы своего кольца вместо «как обычный TNT» у всех.
-
-
-
-
-
 ## katana_landing_above_lava = unsafe (decision-katana-landing-above-lava-unsafe)
 
 _Decided: 2026-10-03_
@@ -1164,12 +1101,67 @@ _Decided: 2026-10-05_
 
 
 
+## Resolved L0-lgnd-cx16: Закрыто кодом. LGND-HOLD-01-AA добавила… (decision-resolve-l0-lgnd-cx16)
+
+_Decided: 2026-10-05_
+
+
+Закрыто кодом. LGND-HOLD-01-AA добавила в метку поле держателя и перевела на него цель возврата; метка без этого поля (старые миры) продолжает работать и целится в owner — отдельный критерий. Долг висел с 29.09: решение было принято, названная в нём задача держателя не содержала, и пять спек подряд писали свои тесты Бездны против владельца. Красное доказательство снято до правки: держатель получал пустой список, а предмет уходил первому крафтеру.
+
+
+
+
+
+## Resolved L0-sclk-cx01: Разобрано. Движок не даёт отменить нало… (decision-resolve-l0-sclk-cx01)
+
+_Decided: 2026-10-05_
+
+
+Разобрано. Движок не даёт отменить наложение Piercing наковальней или столом зачарований: minecraft:enchantable.slot принимает целый ванильный слот, и стабильный 2.10.0 не может отвергнуть результат. T15 выполняется в чтении «снимается в тот же тик, когда попало в инвентарь», а не «нельзя наложить»; это отклонение по C-16 и оно идёт в список отклонений README арбалета.
+
+
+
+
+
 ## Resolved L0-sclk-cx02: Снято измерением. Разбор CNTR-SCLK-CX02… (decision-resolve-l0-sclk-cx02)
 
 _Decided: 2026-10-05_
 
 
 Снято измерением. Разбор CNTR-SCLK-CX02-AA написал пробу на BDS 1.26.51.1, отпускающую натяжение на 1, 2, 5, 10, 20 и 40 тике, с тремя вариантами Quick Charge, и дважды поправил саму пробу по ходу (игрок стоял в полу; отказ использования не перезапрашивался). Результат: кастомный shooter с charge_on_draw не поддаётся стрельбе тыком — движок не выпускает снаряд раньше времени. Значит минимальное натяжение городить не нужно, вариант A основы остаётся, и §9 («перезарядка арбалета — единственный ограничитель») выполняется сам собой.
+
+
+
+
+
+## Resolved L0-xcx22: Снято измерением. Разбор CNTR-X22-AA по… (decision-resolve-l0-xcx22)
+
+_Decided: 2026-10-05_
+
+
+Снято измерением. Разбор CNTR-X22-AA подтвердил окно неуязвимости движка и проверил отгруженный приём истинного урона Косы: applyDamage для отклика и зачёта убийства, затем setCurrentValue(hp − D) на каждый болт. Три болта Multishot, попавшие в пределах окна, вычитают D каждый, то есть T17 выполним без изменения механики — нужен тот же приём, что уже работает у Косы, а не новый.
+
+
+
+
+
+## Resolved L0-xcx23: Разобрано измерением на BDS. Противореч… (decision-resolve-l0-xcx23)
+
+_Decided: 2026-10-05_
+
+
+Разобрано измерением на BDS. Противоречие спеки (§5 «щит не спасает» против §9 «снаряд физический») разрешается принятым чтением: болт, чей полёт кончился на хитбоксе владельца щита, считается прямым попаданием — полный урон, пятно скалка, без кратера; отбитый болт удаляется и второго исхода не порождает. Подробности измерения и граничные случаи — в отчёте.
+
+
+
+
+
+## Resolved L0-xcx24: Закрыто кодом. LGND-PASSIVE-01-AA отгру… (decision-resolve-l0-xcx24)
+
+_Decided: 2026-10-05_
+
+
+Закрыто кодом. LGND-PASSIVE-01-AA отгрузила вариант C решения L0-lgnd-ad15: размеченное объединение Active | Passive, hasAbility в hud.ts и hands.ts, defForAbility только по активным записям. Запись без способности не появляется в HUD, не участвует в разборе нажатия и не получает ключа кулдауна; записи #1-#4 сохраняют побайтно те же ключи. Варианты A и B были измерены и отвергнуты: A не меняет поведения вовсе (79 ошибок типов, запись всё равно рисует HUD), B схлопывает ключи кулдауна всех четырёх в andrew:cd_undefined — один общий кулдаун на все легендарки.
 
 
 

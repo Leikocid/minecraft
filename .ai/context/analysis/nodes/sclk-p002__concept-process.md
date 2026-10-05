@@ -21,7 +21,7 @@ level: 2
 
 **Steps (all in the spawn tick):**
 1. Read `owner`, `location` and `getVelocity()` from the arrow. If any is missing, leave the arrow alone, log `sculk: spawn without owner/velocity`, and stop (C-16; the probe Q4 decides whether this path is reachable).
-2. Gate on charge (`L0-sclk-r006`, `cx02`). If the arrow's speed is below `MIN_BOLT_SPEED`, it is removed and **no** bolt is spawned. The arrow item is not refunded.
+2. Gate on charge (`L0-sclk-r006`, `cx02`), only if scripted Quick Charge is built: if the **loading draw** was shorter than 25 − 5·QC ticks, the arrow is removed and **no** bolt is spawned. The arrow item is not refunded. A speed gate is impossible — every fired arrow is full speed. The arrow is born on the press **after** the load, in the `itemStartUse` tick.
 3. `arrow.remove()`. The arrow never ticks, so it deals no vanilla damage and cannot be picked up.
 4. `dimension.spawnEntity("andrew:sculk_bolt", location)`. Then `projectile.owner = owner` and `projectile.shoot(velocity)`; the speed and direction are unchanged.
 5. Create a `BoltRecord` (`L0-sclk-ent3`) keyed by the bolt's entity id, with a fresh `seed`, `bornTick` and `lastPos`.

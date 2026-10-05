@@ -1,7 +1,7 @@
 ---
 title: Scope
 type: analysis
-generated_at: "2026-10-05T17:12:56.158Z"
+generated_at: "2026-10-05T22:05:04.976Z"
 source_channel: rollout
 node_id: rollout-scope
 aliases: ["rollout-scope","scope"]
@@ -730,7 +730,10 @@ WHEN:
 - (a) it is hit by one bolt;
 - (b) it holds a shield in the off hand, raised by sneaking, faces the shooter, and is hit by one bolt;
 
-THEN in each case it loses exactly D. The case (b) bolt resolves once, as an entity hit, either through `projectileHitEntity` or through the shield fallback (`as02`). The log names the path used.
+- (c) it holds a raised shield and its health is ≤ D;
+- (d) it holds a raised shield and a totem of undying in the other hand.
+
+THEN in (a) and (b) it loses exactly D; the case (b) bolt resolves once, as an entity hit, through `projectileHitEntity` — a raised shield neither deflects the bolt nor suppresses the event (measured 5/5). In (c) it dies from the one bolt, with the kill credited to the shooter. In (d) the totem is used. The log names the path used.
 
 
 - **level**: 2
@@ -808,9 +811,9 @@ AND after a BDS restart (the restart harness), the same cells are still sculk.
 **AC-sclk-14 (T14) · Quick Charge works, and the reload still limits** · channel `bds`
 
 GIVEN two shooter SimulatedPlayers, one with Quick Charge III and one without, WHEN each repeatedly holds use until the shot fires,
-THEN the Quick Charge III shooter's measured charge-to-shot time is ≤ 50 % of the plain one's (vanilla: 0.5 s vs 1.25 s, ±2 ticks).
+THEN the Quick Charge III shooter's measured charge-to-shot time is ≤ 50 % of the plain one's (vanilla: 0.5 s vs 1.25 s, ±2 ticks). This does **not** hold natively — it rests on the scripted scheme in `as05`.
 
-AND a release after 2 ticks spawns **no** bolt for either shooter (`cx02`).
+AND a release after 2 ticks spawns **no** bolt for either shooter (`cx02`) — this one the engine already enforces; it stays as a guard.
 
 
 - **level**: 2
@@ -819,9 +822,11 @@ AND a release after 2 ticks spawns **no** bolt for either shooter (`cx02`).
 
 **AC-sclk-15 (T15) · Piercing cannot stay or act** · channels `bds` + node
 
-GIVEN a crossbow stack with `piercing 4` + `multishot 1`, put into a SimulatedPlayer's inventory by script (this fires `playerInventoryItemChange`), THEN by the next tick:
+GIVEN a crossbow stack with `piercing 4` + `quick_charge 3` + `unbreaking 3`, put into a SimulatedPlayer's inventory by script (this fires `playerInventoryItemChange`), THEN by the next tick:
 - the stack has no `piercing`;
-- it still has `multishot`.
+- it still has `quick_charge 3` and `unbreaking 3`.
+
+Piercing and Multishot exclude each other in the engine, so no stack ever carries both. The production strip is armed in the gametest pack: the release pack reads `event.player` as undefined for a SimulatedPlayer.
 
 AND a bolt fired by a stack that has Piercing (set in the same tick, before the strip) hitting two targets in a line damages only the first.
 
@@ -917,7 +922,8 @@ No `sclk` item, pipeline or crater task starts before this.
 
 GIVEN `PENETRATOR_KEEP` moved to `src/terrain/keep.ts`, THEN:
 - the node set-equality test against the pre-move list passes;
-- the Orbital LMB, penetrator and ring GameTests are green (blast-radius gate);
+- the four `pntr_*` GameTests and the node bundle are green (blast-radius gate; the ring is not a consumer of the list);
+- reinforced deepslate is carved, like obsidian and ancient debris — asserted explicitly, so nobody turns the shared list into a per-weapon extension;
 - a crossbow bolt hitting bedrock or a barrier leaves it in place.
 
 
@@ -983,9 +989,9 @@ GIVEN the Creative inventory, THEN:
 - searching «арбалет» or "crossbow" finds it.
 
 AND in Survival:
-- the shot charges like a crossbow (or like a bow, per the `xq7` item 8 answer);
+- the shot charges like a crossbow: hold to load, press to fire;
 - a quick tap does not fire;
-- a Quick Charge copy charges visibly faster.
+- a Quick Charge copy charges visibly faster (scripted, not native).
 
 
 - **level**: 2

@@ -26,5 +26,5 @@ level: 2
 | K-sclk-5 | Server-authoritative: every hit, damage and edit decision is in the BP script; the RP is cosmetic | §11 |
 | K-sclk-6 | Edits respect C-12 (no unloaded writes) and C-27 (box, protect-first, deny list) | C-27 |
 | K-sclk-7 | Acceptance with ≥ 2 SimulatedPlayers per combat test (a shooter plus a target or bystander) on the **checks** BDS; GameTests never default to production | C-20‴ |
-| K-sclk-8 | Pure planners (`crater-plan.ts`, the speed gate, Piercing stripping) are node-tested with no `@minecraft/server` import | the repo pattern |
+| K-sclk-8 | Pure planners (`crater-plan.ts`, the speed gate, Piercing stripping) are node-tested with no `@minecraft/server` import. Platform quirk: `addEnchantments` silently drops a conflicting element and does not throw, while `canAddEnchantment` on a conflict throws `EnchantmentLevelOutOfBoundsError` instead of returning false | the repo pattern |
 | K-sclk-9 | Defs #1–#4 keep byte-identical behaviour; the Orbital carve is unchanged after the deny-list move | `xcx24`, `xcx25` |

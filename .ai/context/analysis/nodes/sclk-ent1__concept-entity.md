@@ -26,7 +26,8 @@ File: `packs/behavior/items/sculk_crossbow.json`. It mirrors `dragon_katana.json
 | `display_name` | `item.andrew:sculk_crossbow.name` |
 | `icon` | `andrew_sculk_crossbow` (an RP texture in a crossbow silhouette with sculk teal) |
 | `max_stack_size` | 1 |
-| `minecraft:shooter` | `ammunition: [{item: "minecraft:arrow", use_offhand: true, search_inventory: true, use_in_creative: true}]`, `charge_on_draw: true`, `max_draw_duration` = 1.25 s (a probe-tuned value) |
+| `minecraft:shooter` | `ammunition: [{item: "minecraft:arrow", use_offhand: true, search_inventory: true, use_in_creative: true}]`, `charge_on_draw: true`, `max_draw_duration` = 1.25 s, or 0.5 s under the scripted Quick-Charge scheme (`as05`) |
+| — load-bearing | `charge_on_draw: true` is what makes the item hold a loaded state; without it, and without `scale_power`, a bare tap fires a full-power bolt. `max_draw_duration` **is** the native fire-rate gate (`cx02`) |
 | `minecraft:use_modifiers` | `use_duration` ≥ the draw time, `movement_modifier` 0.35 (like a crossbow) |
 | `minecraft:enchantable` | `slot: "crossbow"`, value 1 (the vanilla crossbow's enchantability) |
 | `minecraft:fire_resistant` | true (the item entity's fire immunity is `lgnd`'s, but this is the cheap first line) |

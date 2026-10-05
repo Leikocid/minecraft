@@ -127,6 +127,14 @@ const EXPECTED_TESTS = [
   'andrew:legendary_cx09_hopper_minecart',
   'andrew:legendary_cx09_owed_two_losses',
   'andrew:legendary_cx09_owed_redeemed_on_respawn',
+  // CX-lgnd-16 — src/gametest/legendary-recovery.ts (L0-lgnd-ad11: the last holder gets a loss back)
+  'andrew:legendary_hold_void_after_transfer',
+  'andrew:legendary_hold_void_after_transfer_crafter_offline',
+  'andrew:legendary_hold_void_holder_offline',
+  'andrew:legendary_hold_void_holder_dead_redeemed',
+  'andrew:legendary_hold_legacy_mark_owner',
+  'andrew:legendary_hold_legacy_mark_stamped',
+  'andrew:legendary_hold_crafter_stays_owner',
   // LGND-DELTA-01 — src/gametest/legendary-recovery.ts (L0-xasm11 P1, L0-lgnd-p008 steps 2b and 3)
   'andrew:probe_xasm11_frames',
   'andrew:legendary_protect_ground_item',
@@ -180,6 +188,8 @@ const EXPECTED_TESTS = [
   'andrew:legendary_offhand_resolves',
   'andrew:legendary_offhand_death_returns',
   'andrew:legendary_offhand_token_refused',
+  // LGND-PASSIVE-01 (R-lgnd-018, L0-lgnd-ac26) — src/gametest/legendary-offhand.ts
+  'andrew:legendary_offhand_passive_yields',
   // LGND-UFO-01 — src/gametest/legendary-ufo.ts
   'andrew:legendary_ufo_fall_death_keeps',
   'andrew:legendary_ufo_holder_chest_minecart',

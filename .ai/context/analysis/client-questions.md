@@ -1,7 +1,7 @@
 ---
 title: Client Questions
 type: analysis
-generated_at: "2026-10-05T17:12:56.151Z"
+generated_at: "2026-10-05T22:05:04.970Z"
 source_channel: rollout
 node_id: rollout-client-questions
 aliases: ["rollout-client-questions","client-questions"]
@@ -33,13 +33,12 @@ see_also: ["sculkcrossbowspecv1ruen-part-1", "sculkcrossbowspecv1ruen-part-2"]
 The build proceeds on these defaults. A "no" changes only the item named.
 
 1. **Damage** is 10 HP (5 hearts) per bolt, the same at every difficulty, through any armour or shield (`xasm23`).
-2. **A hit on a shield** counts as a hit on its holder (`xcx23`).
-3. **The crater drops nothing.** Water is not removed. Bedrock, portals and similar stay. Chests in the crater spill. Structures get no protection (`xasm25`).
-4. **The patch under a target in the air**: only if there is ground at most 6 blocks below. Boats, minecarts and the UFO take no damage but still get a patch (`xasm24`).
-5. **Arrows only, no fireworks.** Tipped-arrow effects are dropped (`xasm27`).
-6. **The crossbow is pulled by the UFO magnet**, like every legendary since 1.6.0 (`xasm26`).
-7. **Void return** goes to the crafter (the current behaviour for all weapons), not to the last holder, until the holder change is built (`xasm26`).
-8. **Feel:** if the custom item cannot hold a loaded bolt like a vanilla crossbow, it is drawn and released like a bow, and Quick Charge shortens the draw (`adr-scbs`). Is that acceptable?
+2. **The crater drops nothing.** Water is not removed. Bedrock, portals and similar stay. Chests in the crater spill. Structures get no protection (`xasm25`).
+3. **The patch under a target in the air**: only if there is ground at most 6 blocks below. Boats, minecarts and the UFO take no damage but still get a patch (`xasm24`).
+4. **Arrows only, no fireworks.** Tipped-arrow effects are dropped (`xasm27`).
+5. **The crossbow is pulled by the UFO magnet**, like every legendary since 1.6.0 (`xasm26`).
+6. **Void return** goes to the last holder, falling back to the crafter for a stack nobody has held since the change (`xasm26`; built 2026-10-05).
+7. **Feel:** the custom item does hold a loaded bolt — with `charge_on_draw` it loads at `max_draw_duration` and fires on the next press, like a crossbow. Quick Charge has no native effect, so shortening the draw is script work (`adr-scbs`). Hold to load, press to fire, Quick Charge by script — is that acceptable?
 
 **Source node:** L0-xq7
 

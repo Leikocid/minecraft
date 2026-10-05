@@ -1,12 +1,12 @@
 ---
 title: Contradictions
 type: analysis
-generated_at: "2026-10-05T20:08:59.884Z"
+generated_at: "2026-10-05T22:05:04.967Z"
 source_channel: rollout
 node_id: rollout-contradictions
 aliases: ["rollout-contradictions","contradictions"]
 is_a: ["rollout","contradictions"]
-relates_to: ["L0-lgnd-cx02","L0-lgnd-cx03","L0-lgnd-cx04","L0-lgnd-cx05","L0-lgnd-cx06","L0-lgnd-cx16","L0-xcx24"]
+relates_to: ["L0-lgnd-cx02","L0-lgnd-cx03","L0-lgnd-cx04","L0-lgnd-cx05","L0-lgnd-cx06"]
 priority: 610
 ---
 
@@ -135,65 +135,6 @@ relates_to: ["L0-lgnd-ad03", "L0-lgnd-p003", "L0-lgnd-ac12"]
 **Conflict.** The loop is not global and not permanent, so it keeps the spirit of C-5. But C-5 names Scythe projectiles as the only allowed case. A legendary dropped in an unloaded-but-ticking area, or left on the ground for the 5-minute despawn window, keeps the loop alive for minutes.
 
 **Resolution needed.** Either widen C-5 to "while temporary objects **or dropped legendary items** exist", or drop the watcher and rely only on `beforeEvents.entityRemove` (`L0-lgnd-as03` must then be measured on BDS 1.26.51.1 to confirm the Void kill raises it).
-
-
-
-
-
-
-### CX-lgnd-16: `decision-resolve-l0-xcx11` closed the holder question with a task, but the holder was never built (L0-lgnd-cx16)
-
-# CX-lgnd-16: `decision-resolve-l0-xcx11` closed the holder question with a task, but the holder was never built
-
-Related: L0-xcx11, L0-adr-hold, L0-lgnd-ad11, L0-lgnd-ac18, L0-lgnd-ad17, L0-xasm26.
-
-**Decision (2026-09-29).** "Return goes to the last holder… a holder field is added to the mark, the return target changes to it. Work is filed as LGND-GEN-01-AA."
-
-**Code (1.6.1).**
-- The mark has no holder field (`state.ts`).
-- `lost()` targets `w.mark.owner` (`recovery.ts:490`).
-- The protect hand-back and its owed entry use `mark.owner` (`recovery.ts:877-879`).
-- `LGND-GEN-01-AA` is in `.ai/tasks/archive/`; the generation guard shipped, the holder did not.
-
-**KV.** `L0-adr-hold` still reads `status: proposed`, `ac18` still says "pending the client's confirmation", and the v6 component said `xcx11` "stays open". All three predate or ignore the decision.
-
-**Why it matters now.** The Katana spec (§3) and the crossbow spec (§3: "возвращается последнему владельцу"; "no permanent binding to one owner") are the fourth and fifth specs asking for the last holder. Every new weapon's T20/Void test is written against the owner and must be rewritten later.
-
-**Proposed resolution (autopilot default).** The decision stands; the gap is unbuilt work, not an open question. File `LGND-HOLD` per `ad11` as its own task, independent of `sclk`. Until it ships, the crossbow's Void/T20 clauses target `mark.owner` through one `returnTarget(mark)` test helper (`ad17`). Mark `L0-adr-hold` accepted and drop the "pending confirmation" text of `ac18` at reduce.
-
-**Resolved at reduce (v7):** `L0-adr-hldb`.
-
-
-
-
-
-
-### CX-L0-24 · A legendary with no ability (L0-xcx24)
-
----
-title: "CX-L0-24 · The framework assumes every legendary has an ability, a cooldown and a HUD line; the Sculk Crossbow has none"
-aliases: ["L0-xcx24", "No-ability legendary vs framework"]
-is_a: ["contradiction"]
-part_of: ["L0"]
-relates_to: ["L0-lgnd", "L0-sclk", "L0-adr-scbs"]
-see_also: ["sculkcrossbowspecv1ruen-part-1", "sculkcrossbowspecv1ruen-part-2"]
-governs_files: ["src/legendary/registry.ts", "src/legendary/hud.ts", "src/legendary/cooldown.ts", "src/legendary/hands.ts"]
----
-# CX-L0-24 · A legendary with no ability
-
-**Source.** Crossbow §1: no active ability and no cooldown. §9: no separate 30 s cooldown. §10: a permanent Action Bar readiness indicator is not needed.
-
-**Code (1.6.1).**
-- `LegendaryDef` requires `abilityKey` and `cooldownTicks` (`registry.ts:12-15`).
-- `hudMessage` emits a "Ready / N s" line for **every** held legendary (`hud.ts:35-58`). With the crossbow in hand, players would see "Sculk Crossbow — Ready" forever.
-- `cooldown.ts:48` falls back to the default 600 ticks for an unknown ability key.
-- `resolveActivation` is the Use arbiter between held legendaries; a passive def must never claim a Use there, or it would mask a Katana or Cannon in the other hand.
-
-**Disagreement.** Under the v6 reduce invariant ("any framework change a weapon needs is an L0 contradiction"), def #5 cannot be added as data only.
-
-**Proposed resolution (autopilot default).** `lgnd` v7 makes the ability optional: an `ability?: { key, cooldownTicks, hudKeys? }` block, or optional fields. A def without one has no cooldown key, never appears in the HUD and is skipped by `resolveActivation`. Defs #1–#4 keep byte-identical keys and behaviour, which the existing legendary GameTests prove. This is the only framework change the crossbow may ask for.
-
-**Resolved at reduce (v7):** `L0-lgnd-ad15` (optional ability block, `hasAbility`; gate `lgnd-ac26`).
 
 
 

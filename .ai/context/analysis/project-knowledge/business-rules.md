@@ -1,7 +1,7 @@
 ---
 title: Business Rules
 type: project-knowledge
-generated_at: "2026-10-05T17:12:56.135Z"
+generated_at: "2026-10-05T22:05:04.951Z"
 source_channel: rollout
 node_id: rollout-business-rules
 aliases: ["rollout-business-rules","business-rules","project-knowledge/business-rules"]
@@ -43,7 +43,7 @@ v7 adds:
 | C-26 | *(new)* **One projectile, one outcome, decided by the server.** Each bolt is tracked separately (a Multishot volley is three records) and resolves **at most once**, to exactly one of: an entity hit (fixed damage to the struck entity only, plus a patch), a block hit (crater plus sculk), or expiry/unload (nothing). Vanilla projectile damage is never applied on top of the fixed damage, and no other entity is ever damaged by a bolt, a crater or a patch. | §5, §6, §9, §11, §14 |
 | C-27 | *(new)* **Terrain edits by a weapon are bounded, protected and permanent.** A crossbow bolt edits only cells inside its own box: crater ≤ 5×5 footprint × 3 deep, sculk ≤ 5×5 around the impact. Before any edit, `protectLegendariesIn` runs on that box. The Survival-unbreakable deny list is never edited. Cells in unloaded chunks or outside the height range are skipped. The edits are ordinary world changes: synced to every client, saved, never rolled back. | §6, §7, §11, §14; C-12 |
 | C-5f | *(new)* **Visuals of a flying projectile are bounded.** Boom particles are emitted only while a bolt is alive, at a fixed small count per bolt per tick, from the shared interval. A bolt has a lifetime cap. There are no lingering effect entities. With no bolts in flight, the cost is zero. | §4, §11 |
-| C-28 | *(new)* **Fixed damage is fixed.** The crossbow's hit damage is one constant: the same at every difficulty and whatever the armour, Protection, the shield or the hurt-invulnerability window. Kill credit, the death message and totems still work (the true-damage pattern from `decision-scythe-true-damage`). | §5, §8, §9; T06–T08, T17 |
+| C-28 | *(new)* **Fixed damage is fixed.** The crossbow's hit damage is one constant: the same at every difficulty and whatever the armour, Protection, the shield or the hurt-invulnerability window. Kill credit, the death message and totems still work (the true-damage pattern from `decision-scythe-true-damage`). Holds with cause `sonicBoom` and a write only inside the window (diagnose-CNTR-X22); with any other cause the shield clause fails. | §5, §8, §9; T06–T08, T17 |
 | C-20‴ | *(extended)* Crossbow acceptance uses ≥ 2 players: a SimulatedPlayer target for T08 (armour and shield) and T17 (three hits), and a bystander for T09 and T12. | §12 |
 
 
@@ -498,7 +498,7 @@ Defs #1–#4 are active. Their behaviour, keys and HUD strings do not change.
 | K-sclk-5 | Server-authoritative: every hit, damage and edit decision is in the BP script; the RP is cosmetic | §11 |
 | K-sclk-6 | Edits respect C-12 (no unloaded writes) and C-27 (box, protect-first, deny list) | C-27 |
 | K-sclk-7 | Acceptance with ≥ 2 SimulatedPlayers per combat test (a shooter plus a target or bystander) on the **checks** BDS; GameTests never default to production | C-20‴ |
-| K-sclk-8 | Pure planners (`crater-plan.ts`, the speed gate, Piercing stripping) are node-tested with no `@minecraft/server` import | the repo pattern |
+| K-sclk-8 | Pure planners (`crater-plan.ts`, the speed gate, Piercing stripping) are node-tested with no `@minecraft/server` import. Platform quirk: `addEnchantments` silently drops a conflicting element and does not throw, while `canAddEnchantment` on a conflict throws `EnchantmentLevelOutOfBoundsError` instead of returning false | the repo pattern |
 | K-sclk-9 | Defs #1–#4 keep byte-identical behaviour; the Orbital carve is unchanged after the deny-list move | `xcx24`, `xcx25` |
 
 
@@ -513,7 +513,7 @@ Defs #1–#4 are active. Their behaviour, keys and HUD strings do not change.
 **Links:** `part_of: ["L0-sclk"]` · `is_a: ["rule"]` · `relates_to: ["L0-sclk-p002", "L0-sclk-p004", "L0-sclk-p005", "L0-sclk-ent3"]`
 
 - Each substituted arrow gives **exactly one** bolt. Emulated Multishot gives exactly two more. Each bolt has its own `BoltRecord`.
-- A record resolves **at most once**, to exactly one of: `entity` (p004), `block` (p005) or `expired` (p003). The handler deletes the record **before** acting, so a duplicate event (hit-entity then hit-block, or the shield fallback after an event) is a no-op.
+- A record resolves **at most once**, to exactly one of: `entity` (p004), `block` (p005) or `expired` (p003). The handler deletes the record **before** acting, so a duplicate event (hit-entity then hit-block) is a no-op.
 - Three Multishot bolts are three records. They are never merged into one hit, one damage call or one carve job.
 - No other path damages an entity: not the trail, not the crater and not the patch.
 
@@ -531,14 +531,14 @@ Source: §8 ("each processed independently"), §11 ("cannot merge three arrows i
 **Links:** `part_of: ["L0-sclk"]` · `is_a: ["rule"]` · `relates_to: ["L0-xasm23", "L0-xcx22", "L0-adr-scdm", "L0-scyt", "L0-sclk-p004"]`
 
 - `SONIC_BOOM_DAMAGE = 10` (HP). It is exported from one module (`src/sculk/constants.ts`) and read by the GameTests (`xasm23`; the probe's Q8 may replace the value, never the shape).
-- Every living direct hit lowers the target's health by **exactly D**, or kills it if hp ≤ D. This holds:
+- Every living direct hit takes **exactly D** from absorption, then health, or kills the target if hp ≤ D. This holds:
   - at any difficulty (T07);
-  - with any armour, Protection level or raised shield (T08);
+  - with any armour, Protection level or raised shield (T08) — which holds only because the cause is `sonicBoom`;
   - inside the hurt-invulnerability window (T17, `xcx22`).
-- The mechanism is the Scythe true-damage pattern (`volley.ts:114-136`): `applyDamage` for the flash, sound and credit, then `setCurrentValue(hp − D)`. If hp ≤ D, it is an overkill `applyDamage(hp + 100)`.
+- The mechanism is `sonicBoom`-cause `applyDamage` (exact through armour, Protection and a raised shield, absorption first), plus `setCurrentValue(hp − D)` only inside a known window. If hp ≤ D, it is an overkill `applyDamage(hp + 100)` with the same cause. The shipped Scythe pattern it descends from spans `volley.ts:115-133`.
 - `damagingEntity` is the bolt's owner while the owner is valid, so the kill credit and the death message name the shooter.
 - No vanilla arrow damage, no Power bonus, no crit bonus and no tipped effect is ever added (§9, §14).
-- A totem of undying still works, because the lethal path goes through `applyDamage`.
+- A totem of undying still works, because the lethal path goes through `applyDamage` with cause `sonicBoom`; an `entityAttack` overkill is stopped by a raised shield instead.
 
 
 
@@ -612,9 +612,9 @@ Source: §8 ("each processed independently"), §11 ("cannot merge three arrows i
 - **Ammunition:** `minecraft:arrow` in every variant (plain, tipped, spectral). No firework rockets. Tipped and spectral effects are discarded.
 - **Consumption:** as the engine spends it. In Survival, one arrow per shot, Multishot included. In Creative, none.
 - **The reload is the only limiter** (§9: no cooldown).
-  - A shot counts only if it was fully charged. A charged shot is an arrow whose spawn speed is ≥ `MIN_BOLT_SPEED`, measured by the probe (Q5) as 90 % of the full-draw speed.
-  - With Quick Charge, the time to full charge shortens, never the speed threshold.
-  - Under-charged releases: the arrow is removed, the ammunition stays spent, and no bolt is spawned (`cx02`).
+  - A shot is charged if its **loading draw** lasted ≥ 25 − 5·QC ticks. Speed cannot tell: every fired arrow leaves at full speed (2.965–3.041 measured), so there is no under-charged arrow to detect.
+  - Quick Charge does **not** natively shorten the time to full charge; shortening it is script work (`as05`).
+  - An under-length release fires nothing and spends nothing — the native gate admits no early shot (`cx02`).
 - **Bolts are never picked up.** They are removed on their outcome or on expiry.
 - **Lifetime:** `BOLT_LIFETIME_TICKS = 100`.
 

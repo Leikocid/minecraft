@@ -1,7 +1,7 @@
 ---
 title: Assumptions
 type: analysis
-generated_at: "2026-10-05T17:12:56.146Z"
+generated_at: "2026-10-05T22:05:04.964Z"
 source_channel: rollout
 node_id: rollout-assumptions
 aliases: ["rollout-assumptions","assumptions"]
@@ -383,21 +383,7 @@ The refunded crossbow is a fresh, unenchanted, full-durability `minecraft:crossb
 
 ### Sclk as02 concept assumption (L0-sclk-as02)
 
-**AS-sclk-02 · Shield fallback geometry (CAN_ASSUME)**
 
-**Links:** `part_of: ["L0-sclk"]` · `is_a: ["assumption"]` · `relates_to: ["L0-xcx23", "L0-sclk-p004", "L0-sclk-ac08"]`
-
-**Assumption.** If probe Q6 shows that a snowball-runtime bolt is deflected by a raised shield with no `projectileHitEntity`, the interval resolves the bolt as an entity hit on a player when **both** hold:
-- the bolt is ≤ `SHIELD_HIT_RADIUS` = 0.8 blocks from that player's eye-height axis;
-- the player is blocking (`isSneaking` with a shield in either hand: the Bedrock shield is raised by sneaking).
-
-The first match wins, and the record is claimed (r001).
-
-**Impact if wrong.**
-- If the radius is too wide, a near-miss past a sneaking shield-holder counts as a hit, against §9.
-- If it is too narrow, deflections sometimes deal nothing, against T08.
-
-Either way only one constant and the T08 shield instance change.
 
 
 
@@ -432,7 +418,6 @@ Either way only one constant and the T08 shield instance change.
 | `TRAIL_PER_TICK` | 3 | about 1 ring per 1–1.3 blocks at full arrow speed (~3 blocks/tick) |
 | `CARVE_BUDGET_PER_TICK` | 300 | one full volley in one tick; the Orbital ring carve has run at similar per-tick counts on the iPad |
 | `BOLT_LIFETIME_TICKS` | 100 | `xasm27` |
-| `MIN_BOLT_SPEED` | 90 % of the full-draw speed | `cx02`; the probe's Q5 measures it |
 
 **Impact if wrong.** These are TPS-only effects. `ufo_hold_tps_measured`-style measurement on the iPad (a 3-player Multishot burst) retunes the constants. No logic changes.
 
@@ -447,12 +432,12 @@ Either way only one constant and the T08 shield instance change.
 
 **Links:** `part_of: ["L0-sclk"]` · `is_a: ["assumption"]` · `relates_to: ["L0-adr-scbs", "L0-sclk-r005", "L0-sclk-p002", "L0-xq7"]`
 
-**Assumption.** If probe Q3 shows no native effect:
+**Assumption.** Probe Q3 measured no native Quick Charge effect (Multishot was not measured), so:
 - **Multishot:** the substitution of one arrow from a stack with `multishot` spawns 3 bolts, at 0° and ±10° yaw at the same speed. One arrow is spent (vanilla Multishot spends one).
-- **Quick Charge:** the shooter's draw stays at 1.25 s. Script-side, the full-charge requirement (r006) is measured in **ticks since `itemStartUse`** rather than by spawn speed: `25 − 5 × level` ticks. A release before that spawns no bolt.
+- **Quick Charge:** the native draw is set to the QC III floor (0.5 s), and the script holds each load to `25 − 5 × level` ticks of the **loading draw**, removing the arrow fired by the next press when the load was shorter. Measuring by spawn speed is impossible: every fired arrow is full speed.
 
 **Impact if wrong.**
-- If the operator rejects the bow-like feel (`xq7` item 8): fall back to `adr-scbs` option B (the vanilla crossbow), which re-opens `lgnd`.
+- If the operator rejects hold-to-load/press-to-fire with scripted Quick Charge (`xq7`, the feel item): fall back to `adr-scbs` option B (the vanilla crossbow), which re-opens `lgnd`.
 - If the ±10° spread is off: one constant.
 
 
@@ -474,7 +459,7 @@ see_also: ["sculkcrossbowspecv1ruen-part-1", "sculkcrossbowspecv1ruen-part-3"]
 
 **Gap.** §5 and T06 say "equal to vanilla Warden Sonic Boom on Normal difficulty", but give no number.
 
-**Assumption (CAN_ASSUME).** `SONIC_BOOM_DAMAGE = 10` HP (5 hearts): the Warden's ranged attack on Normal. It is exported as one constant that the GameTests read. It ignores difficulty (T07), armour and the shield (T08, C-28).
+**Assumption (CAN_ASSUME).** `SONIC_BOOM_DAMAGE = 10` HP (5 hearts): the Warden's ranged attack on Normal. It is exported as one constant that the GameTests read. It ignores difficulty (T07), armour and the shield (T08, C-28) — the shield clause holds only with a shield-piercing cause (`sonicBoom`), not through `decision-scythe-true-damage`, whose `entityAttack` lethal branch a raised shield cancels.
 
 **Verification.** The probe measures a real Warden's Sonic Boom on an unarmoured SimulatedPlayer at Normal on BDS 1.26.51. If the value differs, the constant takes the measured value.
 
@@ -532,7 +517,8 @@ see_also: ["sculkcrossbowspecv1ruen-part-2"]
 **Assumption (CAN_ASSUME).**
 - Crater cells become air **without item drops**. A drop-free carve fits "not a TNT explosion" and avoids a resource farm.
 - **Liquids** are not removed. Water may flow into the crater.
-- **Deny-list blocks** (bedrock, portals, command and structure blocks, barriers, reinforced deepslate, …; the shared list from `L0-xasm6`) stay.
+- **Deny-list blocks** stay. The list is `PENETRATOR_KEEP` (`src/orbital/penetrator-keep.ts`), 35 ids: bedrock, end portal, end portal frame, end gateway, barrier, `light_block` plus `light_block_0…15`, the three command blocks, structure block, structure void, jigsaw, allow, deny, border block, invisible bedrock, moving block, and both piston arm collision blocks.
+- **Obsidian, reinforced deepslate, ancient debris and the Nether portal are carved like stone** — they are deliberately absent from the list, being hard but Survival-breakable (`xasm6`, `pntr-r003`). Spec §6 is silent on them; `r010` already ruled that the list keeps its Orbital meaning, and the operator has accepted the Cannon as it stands (ORBC-IPAD-01-AA).
 - **Containers** removed by the carve **spill their contents**. This is an engine fact: `setType` spills containers even with `doTileDrops` false. Any legendary inside is first taken out by `protectLegendariesIn`.
 - **Structure blocks** of the shipped structures (Warden City, Bastion, …) get no special protection. A crater is an ordinary world edit, like a player's pickaxe.
 - In the Nether and the End the same rules apply. Sculk is placed in every dimension.
@@ -565,10 +551,10 @@ governs_files: ["src/legendary/registry.ts", "src/ufo/magnet-select.ts", "src/uf
 |---|---|
 | Hazards: fire and lava prevented; cactus and TNT get a return | the C-16 reading of `L0-xcx21`/`adr-ktgr`. T20 is proven as "exactly one exists, held or owed" |
 | Orbital blast and rings | prevented by `protectLegendariesIn` |
-| Void return to "the last owner" | **`mark.owner` (the crafter or `/give` target)**. `decision-resolve-l0-xcx11` chose the last holder, but it is not built (`state.ts:66`, `recovery.ts:490`) |
+| Void return to "the last owner" | **`mark.holder`, falling back to `mark.owner`**. `decision-resolve-l0-xcx11` chose the last holder, and it is built as of 2026-10-05 (`state.ts:47-52,69-72`, `recovery.ts:273`, LGND-HOLD-01-AA): a stack from before holders still returns to its `owner` |
 | UFO Magnet | the crossbow **is pulled**: since 1.6.0 the selector takes any `isLegendaryWeaponStack` (`magnet-select.ts:8`). The spec does not list the magnet as a hazard, so this is not a breach |
 
-**Impact if wrong.** If the operator wants the holder built now, `lgnd` v7 takes on the holder field (`LGND`-scope task), and T20/Void tests for all five weapons change. If the crossbow must be exempt from the magnet, a per-def `magnetic: false` is needed (touches `magn`).
+**Impact if wrong.** The holder field is built, so the crossbow inherits it with no `lgnd` work of its own; T20/Void tests name the last holder, not the crafter. If the crossbow must be exempt from the magnet, a per-def `magnetic: false` is needed (touches `magn`).
 
 
 

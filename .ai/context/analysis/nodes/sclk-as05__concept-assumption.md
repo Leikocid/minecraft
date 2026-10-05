@@ -16,10 +16,10 @@ level: 2
 
 **Links:** `part_of: ["L0-sclk"]` · `is_a: ["assumption"]` · `relates_to: ["L0-adr-scbs", "L0-sclk-r005", "L0-sclk-p002", "L0-xq7"]`
 
-**Assumption.** If probe Q3 shows no native effect:
+**Assumption.** Probe Q3 measured no native Quick Charge effect (Multishot was not measured), so:
 - **Multishot:** the substitution of one arrow from a stack with `multishot` spawns 3 bolts, at 0° and ±10° yaw at the same speed. One arrow is spent (vanilla Multishot spends one).
-- **Quick Charge:** the shooter's draw stays at 1.25 s. Script-side, the full-charge requirement (r006) is measured in **ticks since `itemStartUse`** rather than by spawn speed: `25 − 5 × level` ticks. A release before that spawns no bolt.
+- **Quick Charge:** the native draw is set to the QC III floor (0.5 s), and the script holds each load to `25 − 5 × level` ticks of the **loading draw**, removing the arrow fired by the next press when the load was shorter. Measuring by spawn speed is impossible: every fired arrow is full speed.
 
 **Impact if wrong.**
-- If the operator rejects the bow-like feel (`xq7` item 8): fall back to `adr-scbs` option B (the vanilla crossbow), which re-opens `lgnd`.
+- If the operator rejects hold-to-load/press-to-fire with scripted Quick Charge (`xq7`, the feel item): fall back to `adr-scbs` option B (the vanilla crossbow), which re-opens `lgnd`.
 - If the ±10° spread is off: one constant.

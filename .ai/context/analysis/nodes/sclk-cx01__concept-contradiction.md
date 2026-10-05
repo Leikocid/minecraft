@@ -22,8 +22,8 @@ closed_by_ref: decision-resolve-l0-sclk-cx01
 
 **Source A.** Spec §8 and T15 say Piercing is forbidden and "cannot be applied or used". The plan reads this as "strip it on sight if the slot cannot exclude it".
 
-**Source B (engine).** `minecraft:enchantable.slot` admits a whole vanilla slot. `crossbow` includes Piercing, and stable 2.10.0 cannot veto an anvil or enchanting-table result. So Piercing **can** be applied. It sits on the stack until the next inventory-change event strips it, and the player sees it in the tooltip for that moment.
+**Source B (engine).** `minecraft:enchantable.slot` admits a whole vanilla slot. `crossbow` includes Piercing, and stable 2.10.0 cannot veto an anvil or enchanting-table result. So Piercing **can** be applied. The inventory-change event fires in the tick the stack enters the inventory (+1 for a pickup) and the strip lands in that tick — measured 2026-10-05 over six server-side paths. The anvil result slot and the table hint are client UI and were not measured on BDS.
 
-**Tension.** "Cannot be **used**" is met: a bolt resolves once (r001). "Cannot be **applied**" is met only as "removed at once", not "refused".
+**Tension.** "Cannot be **used**" is met: a bolt resolves once (r001). "Cannot be **applied**" is met only as "removed at once", not "refused". Q2 measured: the engine admits Piercing on a slot-crossbow custom item (`canAddEnchantment`, `/enchant`, `enchant_with_levels` in 65 % of rolls), so the deviation stays.
 
 **Proposed default (not self-resolved).** Accept "stripped within the same tick it enters the inventory" as T15's reading under C-16, and record it in the README deviation list. The probe's Q2 confirms whether the table even offers Piercing for a custom item. If it does not, this contradiction closes.
