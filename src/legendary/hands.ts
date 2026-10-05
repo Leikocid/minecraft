@@ -3,7 +3,7 @@
 
 import { EntityComponentTypes, EquipmentSlot, type ItemStack, type Player } from "@minecraft/server";
 import { isBusy, isReady } from "./cooldown";
-import { type LegendaryDef, defForStack } from "./registry";
+import { type ActiveLegendaryDef, type LegendaryDef, defForStack, hasAbility } from "./registry";
 import { isStale } from "./state";
 
 export type HandSlot = EquipmentSlot.Mainhand | EquipmentSlot.Offhand;
@@ -30,11 +30,13 @@ export function heldLegendaries(player: Player): HeldLegendary[] {
 
 /**
  * Which held legendary a Use activates: the main hand when it is ready and
- * not busy, otherwise a ready, idle off hand, otherwise none.
+ * not busy, otherwise a ready, idle off hand, otherwise none. A passive
+ * legendary counts as no ready ability, so it never masks the other hand
+ * (R-lgnd-018).
  */
-export function resolveActivation(player: Player): { def: LegendaryDef; slot: HandSlot } | undefined {
+export function resolveActivation(player: Player): { def: ActiveLegendaryDef; slot: HandSlot } | undefined {
   for (const { def, slot } of heldLegendaries(player)) {
-    if (isReady(player, def.abilityKey) && !isBusy(player, def.abilityKey)) {
+    if (hasAbility(def) && isReady(player, def.abilityKey) && !isBusy(player, def.abilityKey)) {
       return { def, slot };
     }
   }
