@@ -609,7 +609,8 @@ registerAsync("andrew", "legendary_hold_crafter_stays_owner", async (test: Test)
   test.setBlockPermutation(BlockPermutation.resolve("minecraft:crafter", { orientation: "south_up" }), HOLD_CRAFTER);
   const smith = test.spawnSimulatedPlayer(HOLD_SMITH, "hold_smith", GameMode.Survival);
   const capture = captureWarnings();
-  const announcements = (): string[] => capture.lines.filter((l) => l.includes(`${WEB_SWORD.itemId} first craft by`));
+  // Only the craft gate's own lines: this test's log lines quote them.
+  const announcements = (): string[] => capture.lines.filter((l) => l.startsWith(`[andrew] ${WEB_SWORD.itemId} first craft by`));
   try {
     await test.idle(4);
     const at = test.worldBlockLocation(HOLD_CRAFTER);
