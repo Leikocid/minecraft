@@ -596,10 +596,15 @@ test('RP: the client entity resolves its geometry, controllers and animations; t
     );
   }
 
-  // The slice phase is (i + floor(life_time · 8)) mod 4, and the condition string says so in each controller.
+  // The slice phase is (i + floor(life_time · 8)) mod 4. Every comparison is in its own parentheses: the
+  // client binds && tighter than ==, so `beam && phase == 0` reads as `(beam && phase) == 0` and stays lit with the beam off.
   for (const [i, slice] of SLICES.entries()) {
     const phase = `math.mod(${i} + math.floor(q.life_time * 8), 4)`;
-    for (const x of shown.get(slice)) assert.ok(x.cond.startsWith(`${BEAM_ON} && `) && x.cond.includes(phase), `${x.id} shows ${slice} by ${x.cond}`);
+    for (const x of shown.get(slice)) {
+      const values = BANDS[Object.keys(BANDS).find((band) => beamController(band) === x.id)];
+      const test = values.length === 1 ? `(${phase} == ${values[0]})` : `(${values.map((v) => `(${phase} == ${v})`).join(' || ')})`;
+      assert.equal(x.cond, `${BEAM_ON} && ${test}`, `${x.id} shows ${slice} by ${x.cond}`);
+    }
   }
 
   // Evaluated: with the beam on, every slice is in exactly one band at every phase, the band its phase names; with it off, in none.
