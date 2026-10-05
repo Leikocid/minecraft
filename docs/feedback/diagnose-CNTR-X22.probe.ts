@@ -71,6 +71,16 @@ function setHp(e: Entity, v: number): boolean {
   return e.getComponent("minecraft:health")?.setCurrentValue(v) ?? false;
 }
 
+/** Causes the probe itself deals; any other hurt on a target spoils its numbers. */
+const PROBE_CAUSES = new Set<string>([
+  EntityDamageCause.entityAttack,
+  EntityDamageCause.sonicBoom,
+  EntityDamageCause.magic,
+  EntityDamageCause.override,
+  EntityDamageCause.projectile,
+]);
+let tracked: { e: Entity; name: string }[] = [];
+
 /** Hurt events of `e` since `from`, as "+dt:damage/cause". */
 function hurtsSince(e: Entity, from: number): string {
   const list = (hurts.get(e.id) ?? []).filter((h) => h.tick >= from);
@@ -135,6 +145,7 @@ interface Who {
 async function target(test: Test, rel: Vector3, name: string, opts: { armour?: boolean; shield?: boolean } = {}): Promise<SimulatedPlayer> {
   const p = test.spawnSimulatedPlayer(rel, name, GameMode.Survival);
   hurts.set(p.id, []);
+  tracked.push({ e: p, name });
   await test.idle(2);
   p.addEffect("health_boost", 12000, { amplifier: 4, showParticles: false });
   p.addEffect("slow_falling", 12000, { showParticles: false });
@@ -154,7 +165,7 @@ async function target(test: Test, rel: Vector3, name: string, opts: { armour?: b
 /** Waits the window out, puts the target back in place facing the owner, refills health. */
 async function fresh(w: Who, t: SimulatedPlayer, value = 40): Promise<number> {
   await w.test.idle(CLEAR);
-  t.teleport(w.test.worldLocation(w.at));
+  t.teleport(w.test.worldLocation({ x: w.at.x + 0.5, y: w.at.y, z: w.at.z + 0.5 }));
   t.lookAtEntity(w.owner);
   await w.test.idle(2);
   setHp(t, value);
@@ -167,8 +178,13 @@ function scenario(name: string, maxTicks: number, body: (test: Test, players: Si
     const regen = world.gameRules.naturalRegeneration;
     world.gameRules.naturalRegeneration = false;
     const difficulty = world.getDifficulty();
+    tracked = [];
     try {
       await body(test, players);
+      for (const t of tracked) {
+        const stray = (hurts.get(t.e.id) ?? []).filter((h) => !PROBE_CAUSES.has(h.cause));
+        log(`NOISE ${name} ${t.name} ${stray.length === 0 ? "none" : stray.map((h) => `${r2(h.damage)}/${h.cause}`).join(" ")}`);
+      }
     } catch (err) {
       log(`${name} ERROR ${errText(err)}`);
       throw err;
@@ -193,8 +209,8 @@ function owner(test: Test, players: SimulatedPlayer[], rel: Vector3, name: strin
 // ------------------------------------------------------------------ window
 
 scenario("probe_x22_window", 2400, async (test, players) => {
-  const at = { x: 3, y: 1, z: 2 };
-  const o = owner(test, players, { x: 3, y: 1, z: 4 }, "x22_win_owner");
+  const at = { x: 3, y: 2, z: 2 };
+  const o = owner(test, players, { x: 3, y: 2, z: 4 }, "x22_win_owner");
   const t = await target(test, at, "x22_win_target");
   players.push(t);
   const w: Who = { test, owner: o, at };
@@ -250,6 +266,7 @@ scenario("probe_x22_window", 2400, async (test, players) => {
     const ret = damage(t, amount, { cause: EntityDamageCause.entityAttack, damagingEntity: o });
     rise.push(`@${system.currentTick - t0}:${amount}->${ret}/delta=${r2(before - hp(t))}`);
   }
+  await test.idle(1);
   log(`WIN rising ${rise.join(" ")} hurts=${hurtsSince(t, t0)}`);
 
   // the pattern's lethal branch one tick into a window
@@ -275,41 +292,54 @@ async function nextTicks(test: Test, t: Entity, at: number[]): Promise<string> {
 
 // ------------------------------------------------------------------ pattern on armour
 
-async function volley3(w: Who, t: SimulatedPlayer, mode: Mode, spacing: number, label: string): Promise<void> {
+async function volley3(
+  w: Who,
+  t: SimulatedPlayer,
+  mode: Mode,
+  spacing: number,
+  label: string,
+  cause: EntityDamageCause = EntityDamageCause.entityAttack
+): Promise<void> {
   const t0 = await fresh(w, t);
   const parts: string[] = [];
   for (let i = 0; i < 3; i++) {
-    parts.push(`@${system.currentTick - t0}:${strike(t, w.owner, mode)}`);
+    parts.push(`@${system.currentTick - t0}:${strike(t, w.owner, mode, cause)}`);
     if (i < 2 && spacing > 0) await w.test.idle(spacing);
   }
   const atEnd = hp(t);
   const later = await nextTicks(w.test, t, [1, 2, 5, 20]);
   log(
-    `PAT ${label} mode=${mode} spacing=${spacing} ${parts.join(" | ")} total=${r2(40 - atEnd)} later=${later} hurts=${hurtsSince(t, t0)}`
+    `PAT ${label} mode=${mode} cause=${cause} spacing=${spacing} ${parts.join(" | ")} total=${r2(40 - atEnd)} later=${later} hurts=${hurtsSince(t, t0)}`
   );
 }
 
 scenario("probe_x22_pattern", 2400, async (test, players) => {
-  const at = { x: 3, y: 1, z: 2 };
-  const o = owner(test, players, { x: 3, y: 1, z: 4 }, "x22_pat_owner");
+  const at = { x: 3, y: 2, z: 2 };
+  const o = owner(test, players, { x: 3, y: 2, z: 4 }, "x22_pat_owner");
   const t = await target(test, at, "x22_pat_target", { armour: true });
   players.push(t);
   const w: Who = { test, owner: o, at };
   log(`PAT difficulty=${world.getDifficulty()}`);
 
   let t0 = await fresh(w, t);
-  log(`PAT reference one plain hit through netherite+P4: ${strike(t, o, "plain")} hurts=${hurtsSince(t, t0)}`);
+  let ref = strike(t, o, "plain");
+  await test.idle(1);
+  log(`PAT reference one plain hit through netherite+P4: ${ref} hurts=${hurtsSince(t, t0)}`);
 
   await volley3(w, t, "pattern", 0, "same-tick");
   await volley3(w, t, "plain", 0, "same-tick NEGATIVE-CONTROL");
   await volley3(w, t, "pattern", 1, "adjacent");
   await volley3(w, t, "plain", 1, "adjacent NEGATIVE-CONTROL");
   await volley3(w, t, "pattern", 10, "scythe-spacing");
+  await volley3(w, t, "pattern", 0, "same-tick", EntityDamageCause.sonicBoom);
+  await volley3(w, t, "plain", 0, "same-tick NEGATIVE-CONTROL", EntityDamageCause.sonicBoom);
 
   world.setDifficulty(Difficulty.Normal);
   log(`PAT difficulty=${world.getDifficulty()}`);
   t0 = await fresh(w, t);
-  log(`PAT reference one plain hit at Normal: ${strike(t, o, "plain")} hurts=${hurtsSince(t, t0)}`);
+  ref = strike(t, o, "plain");
+  await test.idle(1);
+  log(`PAT reference one plain hit at Normal: ${ref} hurts=${hurtsSince(t, t0)}`);
   await volley3(w, t, "pattern", 0, "same-tick normal");
 
   // the third bolt lethal inside the window: 25 -> 15 -> 5 -> overkill
@@ -347,8 +377,8 @@ async function shot(test: Test, from: Vector3, to: Entity, typeId: string, owner
 }
 
 scenario("probe_x22_shield_raised", 2400, async (test, players) => {
-  const at = { x: 3, y: 1, z: 2 };
-  const o = owner(test, players, { x: 3, y: 1, z: 5 }, "x22_shd_owner");
+  const at = { x: 3, y: 2, z: 2 };
+  const o = owner(test, players, { x: 3, y: 2, z: 5 }, "x22_shd_owner");
   const t = await target(test, at, "x22_shd_target", { shield: true });
   players.push(t);
   const w: Who = { test, owner: o, at };
@@ -359,7 +389,7 @@ scenario("probe_x22_shield_raised", 2400, async (test, players) => {
     t.isSneaking = sneak;
     await test.idle(10);
     const before = hp(t);
-    const from = test.worldLocation({ x: 3.5, y: 2.3, z: 4.2 });
+    const from = test.worldLocation({ x: 3.5, y: 3.3, z: 4.2 });
     await shot(test, from, t, "minecraft:arrow", o);
     await test.idle(10);
     log(`SHD sneak=${String(sneak)} read=${String(t.isSneaking)} arrow delta=${r2(before - hp(t))} hurts=${hurtsSince(t, t0)}`);
@@ -368,7 +398,9 @@ scenario("probe_x22_shield_raised", 2400, async (test, players) => {
       t0 = await fresh(w, t);
       t.isSneaking = sneak;
       await test.idle(10);
-      log(`SHD sneak=${String(sneak)} plain cause=${cause} ${strike(t, o, "plain", cause)} hurts=${hurtsSince(t, t0)}`);
+      const hit = strike(t, o, "plain", cause);
+      await test.idle(1);
+      log(`SHD sneak=${String(sneak)} plain cause=${cause} ${hit} hurts=${hurtsSince(t, t0)}`);
     }
 
     t0 = await fresh(w, t);
@@ -381,11 +413,11 @@ scenario("probe_x22_shield_raised", 2400, async (test, players) => {
 });
 
 scenario("probe_x22_shield_lethal", 1200, async (test, players) => {
-  const o = owner(test, players, { x: 3, y: 1, z: 5 }, "x22_shl_owner");
+  const o = owner(test, players, { x: 3, y: 2, z: 5 }, "x22_shl_owner");
   const causes = [EntityDamageCause.entityAttack, EntityDamageCause.sonicBoom, EntityDamageCause.override];
   const ts: SimulatedPlayer[] = [];
   for (let i = 0; i < causes.length; i++) {
-    const p = await target(test, { x: 1 + 2 * i, y: 1, z: 2 }, `x22_shl_${causes[i]}`, { shield: true });
+    const p = await target(test, { x: 1 + 2 * i, y: 2, z: 2 }, `x22_shl_${causes[i]}`, { shield: true });
     players.push(p);
     ts.push(p);
   }
@@ -411,30 +443,35 @@ scenario("probe_x22_shield_lethal", 1200, async (test, players) => {
 // ------------------------------------------------------------------ absorption
 
 scenario("probe_x22_absorption", 1200, async (test, players) => {
-  const o = owner(test, players, { x: 3, y: 1, z: 5 }, "x22_abs_owner");
-  const modes: ("pattern" | "plain" | "none")[] = ["pattern", "plain", "none"];
+  const o = owner(test, players, { x: 3, y: 2, z: 5 }, "x22_abs_owner");
+  const cases: [string, (t: SimulatedPlayer) => string][] = [
+    ["pattern", (t) => strike(t, o, "pattern")],
+    ["plain", (t) => strike(t, o, "plain")],
+    ["none", (t) => `${r2(hp(t))}-untouched`],
+    ["plain-sonicBoom", (t) => strike(t, o, "plain", EntityDamageCause.sonicBoom)],
+  ];
   const ts: SimulatedPlayer[] = [];
-  for (let i = 0; i < modes.length; i++) {
-    const p = await target(test, { x: 1 + 2 * i, y: 1, z: 2 }, `x22_abs_${modes[i]}`);
+  for (let i = 0; i < cases.length; i++) {
+    const p = await target(test, { x: 2 * i, y: 2, z: 2 }, `x22_abs_${cases[i][0]}`);
     players.push(p);
     ts.push(p);
   }
   for (const p of ts) p.addEffect("absorption", 2400, { amplifier: 3, showParticles: false });
   await test.idle(4);
   const t0 = system.currentTick;
-  const first: string[] = [];
-  for (let i = 0; i < ts.length; i++) {
-    const m = modes[i];
-    first.push(m === "none" ? `${r2(hp(ts[i]))}-untouched` : strike(ts[i], o, m));
-  }
+  const first = cases.map(([, run], i) => run(ts[i]));
   await test.idle(CLEAR);
   // 16 more after the window: whatever the absorption no longer covers comes off the health bar
+  const probes = ts.map((t) => {
+    const before = hp(t);
+    const ret = damage(t, 16, { cause: EntityDamageCause.entityAttack, damagingEntity: o });
+    return { ret, delta: before - hp(t) };
+  });
+  await test.idle(1);
   for (let i = 0; i < ts.length; i++) {
-    const before = hp(ts[i]);
-    const ret = damage(ts[i], 16, { cause: EntityDamageCause.entityAttack, damagingEntity: o });
-    const probe = before - hp(ts[i]);
+    const { ret, delta } = probes[i];
     log(
-      `ABS mode=${modes[i]} first=${first[i]} probe16(${ret}) health-delta=${r2(probe)} absorption-left-before-probe=${r2(16 - probe)} hurts=${hurtsSince(ts[i], t0)}`
+      `ABS mode=${cases[i][0]} first=${first[i]} probe16(${ret}) health-delta=${r2(delta)} absorption-left-before-probe=${r2(16 - delta)} hurts=${hurtsSince(ts[i], t0)}`
     );
   }
 });
@@ -442,8 +479,8 @@ scenario("probe_x22_absorption", 1200, async (test, players) => {
 // ------------------------------------------------------------------ causes and the bolt's own impact
 
 scenario("probe_x22_causes", 2400, async (test, players) => {
-  const at = { x: 3, y: 1, z: 2 };
-  const o = owner(test, players, { x: 3, y: 1, z: 5 }, "x22_cau_owner");
+  const at = { x: 3, y: 2, z: 2 };
+  const o = owner(test, players, { x: 3, y: 2, z: 5 }, "x22_cau_owner");
   const t = await target(test, at, "x22_cau_target", { armour: true });
   players.push(t);
   const w: Who = { test, owner: o, at };
@@ -456,15 +493,18 @@ scenario("probe_x22_causes", 2400, async (test, players) => {
     EntityDamageCause.override,
   ]) {
     const t0 = await fresh(w, t);
-    log(`CAU armoured cause=${cause} with-owner ${strike(t, o, "plain", cause)} hurts=${hurtsSince(t, t0)}`);
+    const hit = strike(t, o, "plain", cause);
+    await test.idle(1);
+    log(`CAU armoured cause=${cause} with-owner ${hit} hurts=${hurtsSince(t, t0)}`);
   }
 
   // ByProjectile form with a snowball standing in for the bolt
   {
     const t0 = await fresh(w, t);
-    const ball = test.getDimension().spawnEntity("minecraft:snowball", test.worldLocation({ x: 3.5, y: 4, z: 4.5 }));
+    const ball = test.getDimension().spawnEntity("minecraft:snowball", test.worldLocation({ x: 3.5, y: 5, z: 4.5 }));
     const before = hp(t);
     const ret = damage(t, D, { damagingProjectile: ball, damagingEntity: o });
+    await test.idle(1);
     log(`CAU armoured by-projectile(snowball) ret=${ret} delta=${r2(before - hp(t))} hurts=${hurtsSince(t, t0)}`);
     if (ball.isValid) ball.remove();
   }
@@ -480,7 +520,7 @@ scenario("probe_x22_causes", 2400, async (test, players) => {
       const ret = damage(t, D, { cause: EntityDamageCause.entityAttack, damagingEntity: o });
       seen = `hit@+${system.currentTick - t0} hp-at-hit=${r2(before)} applyDamage(${ret}) delta=${r2(before - hp(t))}`;
     });
-    await shot(test, test.worldLocation({ x: 3.5, y: 2.3, z: 4.2 }), t, "minecraft:snowball", o);
+    await shot(test, test.worldLocation({ x: 3.5, y: 3.3, z: 4.2 }), t, "minecraft:snowball", o);
     await test.idle(15);
     world.afterEvents.projectileHitEntity.unsubscribe(sub);
     log(`CAU snowball-impact ${seen} hurts=${hurtsSince(t, t0)}`);
@@ -490,8 +530,8 @@ scenario("probe_x22_causes", 2400, async (test, players) => {
 // ------------------------------------------------------------------ the shipped Scythe, live
 
 scenario("probe_x22_scythe_live", 600, async (test, players) => {
-  const o = owner(test, players, { x: 3, y: 1, z: 6 }, "x22_scy_owner");
-  const t = await target(test, { x: 3, y: 1, z: 1 }, "x22_scy_target", { armour: true });
+  const o = owner(test, players, { x: 3, y: 2, z: 6 }, "x22_scy_owner");
+  const t = await target(test, { x: 3, y: 2, z: 1 }, "x22_scy_target", { armour: true });
   players.push(t);
   await test.idle(4);
   const hits: string[] = [];
