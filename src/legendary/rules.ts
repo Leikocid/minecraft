@@ -24,6 +24,33 @@ export interface Mark {
   gen: number;
   /** Craft-time only: the crafter's nickname, for chat messages. */
   ownerName?: string;
+  /**
+   * The last player whose inventory held the stack (L0-lgnd-ent2). Absent on
+   * stacks and tokens written before holders existed; `returnTarget` then
+   * falls back to `owner`.
+   */
+  holder?: string;
+  /** The holder's nickname, so an owed entry of an offline holder is readable. */
+  holderName?: string;
+}
+
+/** Who gets a lost instance back (L0-lgnd-ad11): its last holder, else its owner. */
+export function returnTarget(mark: Mark): string {
+  return mark.holder ?? mark.owner;
+}
+
+/** `mark` with `player` as its holder; every other field is kept. */
+export function withHolder(mark: Mark, player: { id: string; name: string }): Mark {
+  return { ...mark, holder: player.id, holderName: player.name };
+}
+
+/**
+ * A holder is a player id. Anything else is dropped rather than making the
+ * mark malformed: a bad holder costs only the return target, which then falls
+ * back to the owner, never the instance's protection.
+ */
+export function isHolder(value: unknown): value is string {
+  return typeof value === "string" && value.length > 0;
 }
 
 export type CraftDecision = "ignore" | "claim" | "refund";
@@ -89,7 +116,7 @@ export function markFromValue(value: unknown): Mark | undefined {
   }
 
   const candidate = value as Record<string, unknown>;
-  const { origin, owner, id, gen, ownerName } = candidate;
+  const { origin, owner, id, gen, ownerName, holder, holderName } = candidate;
 
   if (!isMarkOrigin(origin) || typeof owner !== "string" || typeof id !== "string") {
     return undefined;
@@ -102,7 +129,16 @@ export function markFromValue(value: unknown): Mark | undefined {
   }
 
   const mark: Mark = { origin, owner, id, gen: gen ?? 0 };
-  return ownerName === undefined ? mark : { ...mark, ownerName };
+  if (ownerName !== undefined) {
+    mark.ownerName = ownerName;
+  }
+  if (isHolder(holder)) {
+    mark.holder = holder;
+    if (typeof holderName === "string") {
+      mark.holderName = holderName;
+    }
+  }
+  return mark;
 }
 
 /** Parses a `Mark` from JSON, returning undefined for any malformed input. */

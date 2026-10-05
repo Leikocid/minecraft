@@ -487,7 +487,12 @@ test('AC2: a pending value from before lists reads as a list of one', async (t) 
 
     respawn(player);
     assert.strictEqual(held(player, legacyMark.id), 1);
-    assert.deepStrictEqual(lg.getMark(WEB_SWORD, player.container.getItem(0)), { ...legacyMark, gen: 0 });
+    assert.deepStrictEqual(lg.getMark(WEB_SWORD, player.container.getItem(0)), {
+      ...legacyMark,
+      gen: 0,
+      holder: player.id,
+      holderName: player.name,
+    }, 'the legacy fields survive and the player it was handed to becomes the holder');
     assert.strictEqual(player.getDynamicProperty(PENDING_KEY), undefined);
 
     respawn(player);

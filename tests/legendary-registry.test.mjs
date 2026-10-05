@@ -179,6 +179,8 @@ test('keys from keyPrefix', async (t) => {
       pending: 'andrew:ws_pending',
       gen: 'andrew:ws_gen',
       owed: 'andrew:ws_owed',
+      holder: 'andrew:ws_holder',
+      holderName: 'andrew:ws_holder_name',
     });
   });
 
@@ -193,6 +195,8 @@ test('keys from keyPrefix', async (t) => {
       pending: 'andrew:dk_pending',
       gen: 'andrew:dk_gen',
       owed: 'andrew:dk_owed',
+      holder: 'andrew:dk_holder',
+      holderName: 'andrew:dk_holder_name',
     });
   });
 

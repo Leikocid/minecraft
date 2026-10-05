@@ -127,6 +127,14 @@ const EXPECTED_TESTS = [
   'andrew:legendary_cx09_hopper_minecart',
   'andrew:legendary_cx09_owed_two_losses',
   'andrew:legendary_cx09_owed_redeemed_on_respawn',
+  // CX-lgnd-16 — src/gametest/legendary-recovery.ts (L0-lgnd-ad11: the last holder gets a loss back)
+  'andrew:legendary_hold_void_after_transfer',
+  'andrew:legendary_hold_void_after_transfer_crafter_offline',
+  'andrew:legendary_hold_void_holder_offline',
+  'andrew:legendary_hold_void_holder_dead_redeemed',
+  'andrew:legendary_hold_legacy_mark_owner',
+  'andrew:legendary_hold_legacy_mark_stamped',
+  'andrew:legendary_hold_crafter_stays_owner',
   // LGND-DELTA-01 — src/gametest/legendary-recovery.ts (L0-xasm11 P1, L0-lgnd-p008 steps 2b and 3)
   'andrew:probe_xasm11_frames',
   'andrew:legendary_protect_ground_item',
