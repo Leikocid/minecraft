@@ -409,6 +409,14 @@ const EXPECTED_TESTS = [
   'andrew:legendary_katana_void_thrown',
   'andrew:legendary_katana_void_chest_minecart',
   'andrew:legendary_katana_jump_keeps_recovery',
+  // SCLK-PROBE-01 — src/gametest/sculk-probe.ts (L0-sclk-p001, L0-sclk-ac21)
+  'andrew:probe_sculk_swap_event',
+  'andrew:probe_sculk_bolt_media',
+  'andrew:probe_sculk_bolt_flight',
+  'andrew:probe_sculk_bolt_hits',
+  'andrew:probe_sculk_sonic_particle',
+  'andrew:probe_sculk_carve_budget',
+  'andrew:probe_sculk_surfaces_reload',
 ];
 
 /**
