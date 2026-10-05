@@ -26,4 +26,5 @@ level: 2
 - **Slot `none` plus scripted Quick Charge and Multishot from a custom upgrade.** The vanilla enchanting UX is gone, and §8 says "vanilla enchantments are allowed".
 - **Refusing the anvil result.** No stable hook exists (C-16).
 
-**Consequence.** For a moment, a stack can carry Piercing (cx01).
+**Consequence.** Piercing and Multishot exclude each other in the engine, so only a crossbow without Multishot ever reaches the strip.
+ For a moment, a stack can carry Piercing (cx01).

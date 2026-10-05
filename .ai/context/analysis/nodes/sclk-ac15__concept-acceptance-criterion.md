@@ -14,9 +14,11 @@ level: 2
 ---
 **AC-sclk-15 (T15) · Piercing cannot stay or act** · channels `bds` + node
 
-GIVEN a crossbow stack with `piercing 4` + `multishot 1`, put into a SimulatedPlayer's inventory by script (this fires `playerInventoryItemChange`), THEN by the next tick:
+GIVEN a crossbow stack with `piercing 4` + `quick_charge 3` + `unbreaking 3`, put into a SimulatedPlayer's inventory by script (this fires `playerInventoryItemChange`), THEN by the next tick:
 - the stack has no `piercing`;
-- it still has `multishot`.
+- it still has `quick_charge 3` and `unbreaking 3`.
+
+Piercing and Multishot exclude each other in the engine, so no stack ever carries both. The production strip is armed in the gametest pack: the release pack reads `event.player` as undefined for a SimulatedPlayer.
 
 AND a bolt fired by a stack that has Piercing (set in the same tick, before the strip) hitting two targets in a line damages only the first.
 

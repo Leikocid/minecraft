@@ -21,6 +21,5 @@ level: 2
 | `TRAIL_PER_TICK` | 3 | about 1 ring per 1–1.3 blocks at full arrow speed (~3 blocks/tick) |
 | `CARVE_BUDGET_PER_TICK` | 300 | one full volley in one tick; the Orbital ring carve has run at similar per-tick counts on the iPad |
 | `BOLT_LIFETIME_TICKS` | 100 | `xasm27` |
-| `MIN_BOLT_SPEED` | 90 % of the full-draw speed | `cx02`; the probe's Q5 measures it |
 
 **Impact if wrong.** These are TPS-only effects. `ufo_hold_tps_measured`-style measurement on the iPad (a 3-player Multishot burst) retunes the constants. No logic changes.

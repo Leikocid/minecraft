@@ -19,6 +19,6 @@ GIVEN the Creative inventory, THEN:
 - searching «арбалет» or "crossbow" finds it.
 
 AND in Survival:
-- the shot charges like a crossbow (or like a bow, per the `xq7` item 8 answer);
+- the shot charges like a crossbow: hold to load, press to fire;
 - a quick tap does not fire;
-- a Quick Charge copy charges visibly faster.
+- a Quick Charge copy charges visibly faster (scripted, not native).

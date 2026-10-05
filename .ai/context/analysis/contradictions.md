@@ -1,7 +1,7 @@
 ---
 title: Contradictions
 type: analysis
-generated_at: "2026-10-05T21:43:50.993Z"
+generated_at: "2026-10-05T22:05:04.967Z"
 source_channel: rollout
 node_id: rollout-contradictions
 aliases: ["rollout-contradictions","contradictions"]
