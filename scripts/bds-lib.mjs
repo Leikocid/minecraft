@@ -37,6 +37,20 @@ export const containerName = (() => {
   return m[1];
 })();
 
+// A GameTest or check run recreates its instance's container, so `compose down`
+// stops whatever is running there. ANDREW_BDS_DIR is unset far more often than
+// it is set to 'bds', and both resolve to the production LAN server the players
+// are on — so for those two runners production is opt-in, never the default.
+export function refuseProduction(what) {
+  if (instanceDir !== 'bds' || process.env.ANDREW_BDS_ALLOW_PROD === '1') return;
+  throw new Error(
+    `${what} would recreate ${containerName}, the production server: ` +
+      'ANDREW_BDS_DIR is unset or set to "bds". Name an instance instead — ' +
+      'ANDREW_BDS_DIR=bds-ci for checks, bds-qa for QA. ' +
+      'If production really is the target, set ANDREW_BDS_ALLOW_PROD=1.'
+  );
+}
+
 // Fixed install names, so a run never depends on leftovers from the last one.
 export const BP_DIR_NAME = 'andrew_bp';
 export const RP_DIR_NAME = 'andrew_rp';

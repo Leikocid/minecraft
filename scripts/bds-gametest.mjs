@@ -46,6 +46,7 @@ import {
   log,
   root,
   seedProperties,
+  refuseProduction,
   unpackAddon,
 } from './bds-lib.mjs';
 
@@ -787,6 +788,7 @@ function checkReleaseUfoFlag(lines, problems, evidence) {
 // --------------------------------------------------------------------- main
 
 function main() {
+  refuseProduction('a GameTest run');
   const opts = parseArgs(process.argv.slice(2));
   // A partial run is for iteration; only the full list proves the suite.
   const selected = opts.only.length > 0 ? opts.only : EXPECTED_TESTS;
