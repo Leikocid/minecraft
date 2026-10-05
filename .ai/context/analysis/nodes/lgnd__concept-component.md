@@ -2,79 +2,53 @@
 type: "concept-component"
 node_id: "L0-lgnd"
 source_channel: "rollout"
-analysis_version: 6
-title: "Legendary weapon framework (`src/legendary/`), v6: as built in 1.4.4, plus the Dragon Katana delta"
+analysis_version: 7
+title: "Legendary weapon framework (`src/legendary/`), v7: as built at 1.6.1, plus the passive def and the Sculk Crossbow delta"
 aliases: ["L0-lgnd"]
 is_a: ["component"]
 part_of: ["L0"]
 relates_to: ["L0"]
-priority: 600
-size_chars: 4942
-tags: ["v6", "katana", "legendary", "as-built-1.4.4"]
+priority: 610
+size_chars: 5116
+tags: ["v7", "sculk-crossbow", "legendary"]
 level: 1
 ---
----
-is_a: ["component"]
-part_of: ["L0"]
-relates_to: ["L0-katn", "L0-orbc", "L0-webs", "L0-scyt", "L0-pntr", "L0-ring", "L0-magn", "L0-stgt", "L0-adr-hold", "L0-xcx11", "L0-xcx21", "L0-xasm22", "L0-lgnd-ad12", "L0-lgnd-ad14", "L0-lgnd-r017", "L0-lgnd-cx14"]
-governs_files: ["src/legendary/", "src/websword/trap.ts", "src/scythe/targeting.ts", "src/orbital/activation.ts", "src/main.ts", "src/gametest/main.ts", "tests/legendary-registry.test.mjs"]
-see_also: ["dragonkatanaspecv1ruen-part-1", "dragonkatanaspecv1ruen-part-2", "dragonkatanaspecv1ruen-part-3", "ufomagnetspecv1ruen-part-4", "orbitalcannonspecv1ruen-part-1"]
----
-# Legendary weapon framework (`src/legendary/`), v6: as built in 1.4.4, plus the Dragon Katana delta
+# Legendary weapon framework (`src/legendary/`), v7: as built at 1.6.1, plus the passive def and the Sculk Crossbow delta
 
-**Responsibility.** Every general legendary rule is implemented once, for every def in `LEGENDARIES`:
-- the craft gate with tokens, and the first-craft broadcast
-- marks and generation
-- death retention
-- loss return and the owed list
-- protection from script-caused destruction (`protectLegendariesIn`)
-- hand priority (`resolveActivation`)
-- cooldown and busy
-- HUD
-- `hidden_until`
-- the type predicate `isLegendaryStack`
+Related: L0-sclk, L0-katn, L0-magn, L0-orbc, L0-webs, L0-scyt, L0-xcx11, L0-xcx24, L0-adr-scbs, L0-adr-hold, L0-xasm26, L0-lgnd-ad15, L0-lgnd-ad16, L0-lgnd-ad17, L0-lgnd-cx15, L0-lgnd-cx16, L0-lgnd-r016, L0-lgnd-r018.
 
-v6 adds the **fourth def, the Dragon Katana** (`katn`). It needs **no framework code**, only data (`ad14`).
+**Responsibility.** Every general legendary rule is implemented once, for every def in `LEGENDARIES`: the token craft gate and first-craft broadcast, marks and generation, death retention, loss return and the owed list, `protectLegendariesIn`, hand priority (`resolveActivation`), cooldown and busy, the HUD, `hidden_until`, and the type predicates `isLegendaryStack` / `isLegendaryWeaponStack`.
 
-## As built in 1.4.4 (verified in code, 2026-10-03), see `ad12`
-**Shipped**
-- gen guard, owed list, pending list, off hand, craft tokens, `fire_resistant`, `protectLegendariesIn`, `isLegendaryItemEntity`, departure tracking.
-- `heldLegendaries(player)` and `resolveActivation(player)` (`hands.ts:18`, `:35`). The resolver is Use-priority only: main if ready and not busy, else off. It has **no `mode` argument**, and the Cannon's LMB latch stays in `orbital/activation.ts`. That remains the as-built answer to `ad09`.
-- `isLegendaryStack` (`registry.ts`). It is type-based over every def's `itemId` and `craftTokenId`, and `magn` uses it.
-- **Void holder return** (merge `0a9d2b5`). `recovery.ts:135` `VOID_HOLDER_TYPES` = chest and hopper minecart. `beforeEvents.entityRemove` below `heightRange.min` reads the minecart's container, and every live marked instance goes through `lost()` on the next tick.
+## As built at 1.6.1 (read from code 2026-10-05)
+- **Four defs** (`registry.ts`): Web Sword `ws`, Scythe `sc`, Orbital Cannon `oc`, Dragon Katana `dk` (shipped 1.5.0, `KATA-LGND-01-AA`). The Katana needed no framework code (`ad14` held).
+- **Every def has an ability.** `abilityKey` and `cooldownTicks` are required fields (`registry.ts:12-15`). The HUD draws a line for every held def (`hud.ts:37-56`), and `resolveActivation` lets any held, ready def claim a Use (`hands.ts:35-42`).
+- **Legendary weapons are magnetic** (operator tuning, 1.6.0, `de0fc68`). The magnet uses `isLegendaryWeaponStack` (weapons, never tokens): ground, container slots, late drops, a player holding one (`magnet-hold.ts:117-136`), and a mob or armour stand holding one (`magnet-select.ts:179`, `:320`). The UFO AC 13 "never pulled" rule is retired. See `r016` and `ac21`.
+- **Armour stand in the Void** is closed in code (`decision-resolve-l0-lgnd-cx14`: stand watcher plus two return guards, `recovery.ts:326`, `:433`).
+- **Return target is still `mark.owner`.** `lost()` targets `w.mark.owner` (`recovery.ts:490`), and the protect hand-back and owed entry use it too (`:877-879`). `decision-resolve-l0-xcx11` (2026-09-29) chose the last holder and named `LGND-GEN-01-AA`. That task is archived, but the mark has no holder field (`state.ts`). See `cx16`.
 
-**Still open**
-1. **`holder`.** `lost()` targets `w.mark.owner` (`recovery.ts:477`), and the protect hand-back targets `mark.owner` (`:785-787`). Katana §3 ("последнему владельцу", to the last owner) is the fourth spec asking for the last holder. **`L0-xcx11` stays open**, and `ad11`/`ac18` are unbuilt.
-2. **Armour stand in the Void.** Its hands cannot be read on 2.10.0, so a legendary it holds is lost when the stand falls (`README.md:71`, `probe_ufo_holder_void`). Filed as `cx14`. The magnet avoids it (`r016`). Nothing else in the add-on moves an armour stand.
-3. Nested shulker and bundle contents (`cx12`). The hopper-minecart stale copy (`as15`, `cx02`).
-
-## v6 Katana delta
+## v7 delta
 | # | Change | Artifacts |
 |---|---|---|
-| 1 | Def #4 `DRAGON_KATANA`: `andrew:dragon_katana`, prefix `dk`, ability `dragon_katana`, 600 ticks, token `andrew:dragon_katana_crafted`, refund 2 golden apple + 2 ender pearl + 1 diamond sword, command `andrew:katana`, `hudKeys` for the em-dash string | `ad14`, `as17` |
-| 2 | Uniqueness-flag key `andrew:dk_crafted` (with `andrew:dk_crafted_by`), derived by `keysFor` | `ad14`, `ac23` |
-| 3 | The registry uniqueness test also covers `craftTokenId` and `textPrefix` (as `ac11` asked; today it checks 4 fields) | `ac23` |
-| 4 | No per-weapon code needed in `isLegendaryStack`, retention, recovery, `protectLegendariesIn`, the craft gate, commands or the HUD: each iterates `LEGENDARIES` or calls `defForStack`/`defForToken` | `ad14` |
-| 5 | T16–T18 for the Katana under C-16. Fire and lava are prevented; Orbital blast and rings are prevented through `protectLegendariesIn`; cactus, TNT and despawn are **returned**; the Void returns to `owner` until `xcx11` closes | `ac24`, `L0-xcx21`, `L0-xasm22` |
-| 6 | A wielder teleport is not a loss event, and every Katana teleport stays in the player's own dimension | `r017`, `ac24` |
+| 1 | Passive def: a def may have no ability. Then it has no timer key, no Use claim and no HUD line. Defs #1–#4 keep byte-identical keys and behaviour | `ad15`, `ent1`, `r018`, `ac26` (closes `L0-xcx24`) |
+| 2 | Def #5 `SCULK_CROSSBOW`: `andrew:sculk_crossbow`, token `andrew:sculk_crossbow_crafted`, refund 2 echo shard + 2 deepslate + 1 crossbow, command `andrew:crossbow`, passive | `ad16`, `as18`, `ac25` |
+| 3 | **Key prefix: not `sc`.** `sc` is the Scythe's; reuse would share the craft flag, marks, pending and owed. Proposed `sk` | `cx15`, `as18` |
+| 4 | No per-weapon code in retention, recovery, the Void paths, `protectLegendariesIn`, commands or the magnet: each iterates `LEGENDARIES` or calls `defForStack`/`defForToken` | `ad16`, `ac27` |
+| 5 | Return target for T19/T20/Void: `mark.owner` until the holder task ships, as for the Katana. Tests call one `returnTarget(mark)` helper so the holder task changes one function | `ad17`, `ac27`, `cx16` |
+| 6 | Magnet: the crossbow is pulled like the other four. Not a spec breach (the crossbow spec does not list the magnet as a hazard) | `r016`, `ac21` |
 
-## Published contracts (unchanged)
-- `LEGENDARIES`, `defForStack`, `defForToken`, `isLegendaryStack`.
+**Fallback, stated as larger.** If the `sclk` probe rejects a custom shooter and `L0-adr-scbs` falls back to the vanilla `minecraft:crossbow` (option B), identity can no longer be by type. `isLegendaryStack`, `isLegendaryWeaponStack`, `defForStack`, `heldLegendaries`, the magnet's `hasitem` holder tags (which cannot read dynamic properties), the craft gate (the recipe *input* is the same type), retention and the GameTests all become mark-aware. That is a framework rewrite of identity, not a def. It needs its own L0 decision and is **not** planned by this pass (`ad16` §Fallback).
+
+## Published contracts
+- `LEGENDARIES`, `defForStack`, `defForToken`, `defForAbility` (active defs only), `isLegendaryStack`, `isLegendaryWeaponStack`, **`hasAbility(def)`** (new).
 - `isReady`, `startCooldown`, `setBusy`, `clearBusy`, `isBusy`.
-- `heldLegendaries(player)`, `resolveActivation(player)`.
-- `protectLegendariesIn(dim, box, {avoid, reason}) → {moved, handedBack}`.
-- `isLegendaryItemEntity`.
-- `isHiddenFromTargeting`, `hideFromTargeting`.
+- `heldLegendaries(player)` (still returns passive defs; retention-neutral), `resolveActivation(player)` (active defs only).
+- `protectLegendariesIn(dim, box, {avoid, reason}) → {moved, handedBack}`; `sclk`'s crater calls it before carving (`L0-xcx25`).
+- `isLegendaryItemEntity`, `isHiddenFromTargeting`, `hideFromTargeting`.
 
 ## Does NOT own
-- The Katana's trace, safe cell, teleport, fall flag and trail (`katn`, `L0-adr-ktob`, `L0-adr-ktfl`).
-- Item, token and recipe JSON, and the lang strings (`katn`).
-- The magnet's selection (`magn`).
+The crossbow item JSON, token, recipe, lang, bolt pipeline, damage, crater, durability (custom base) and Piercing exclusion (`sclk`). The magnet's selection (`magn`).
 
-## Next task (one `lgnd` task, for the Katana; it lands with `katn` item 2)
-1. Add `DRAGON_KATANA` to `LEGENDARIES`.
-2. Extend the uniqueness test.
-3. Add key-derivation asserts for `dk`.
-4. Add the Katana instances of the framework GameTests (`ac23`, `ac24`).
-
-`holder` is a separate task, still blocked on `L0-adr-hold`.
+## Next tasks
+1. **LGND-PASSIVE** (before `sclk` item): `ad15` type split, `hasAbility`, HUD/resolver skips, registry test. Gate: the existing legendary GameTests and `npm test` pass with no assertion edits (`ac26`).
+2. **Def #5** lands with the `sclk` item task: the entry, the uniqueness and key asserts, the crossbow instances of the framework GameTests (`ac25`, `ac27`).
+3. **LGND-HOLD** (separate, unblocked by the decision): the holder field per `ad11`; `ac18` plus the holder clauses of `ac08`, `ac09`, `ac24`, `ac27`.

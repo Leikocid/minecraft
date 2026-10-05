@@ -1,13 +1,13 @@
 ---
 title: Client Questions
 type: analysis
-generated_at: "2026-10-03T14:58:23.884Z"
+generated_at: "2026-10-05T17:12:56.151Z"
 source_channel: rollout
 node_id: rollout-client-questions
 aliases: ["rollout-client-questions","client-questions"]
 is_a: ["rollout","client-questions"]
-relates_to: ["L0-xq6"]
-priority: 600
+relates_to: ["L0-xq7"]
+priority: 610
 ---
 
 # Client Questions (MUST_ASK)
@@ -16,35 +16,32 @@ priority: 600
 >
 > Заполните секцию **Answer** по каждому вопросу — аналитик использует ответы на следующей итерации.
 
-## Q-L0-6 · Katana autopilot defaults to confirm
+## Q-L0-7 · Sculk Crossbow: confirm the defaults (non-blocking)
 
 ### Question
 
 ---
-title: "Q-L0-6 · Katana: confirm the autopilot defaults at the iPad acceptance (non-blocking)"
-aliases: ["L0-xq6"]
+title: "Q-L0-7 · The Sculk Crossbow defaults the operator should confirm"
+aliases: ["L0-xq7", "Sculk Crossbow confirmation sheet"]
 is_a: ["client-question"]
 part_of: ["L0"]
-relates_to: ["L0-katn", "L0-lgnd", "L0-adr-ktgr", "L0-adr-ktob", "L0-xasm18", "L0-xasm19", "L0-xasm21", "L0-katn-as01", "L0-katn-as02", "L0-katn-as03", "L0-xcx11", "L0-xq3"]
-see_also: ["L0-katn-ac09"]
+relates_to: ["L0-sclk", "L0-lgnd", "L0-xasm23", "L0-xasm24", "L0-xasm25", "L0-xasm26", "L0-xasm27", "L0-xcx23", "L0-adr-scbs"]
+see_also: ["sculkcrossbowspecv1ruen-part-1", "sculkcrossbowspecv1ruen-part-2"]
 ---
-# Q-L0-6 · Katana autopilot defaults to confirm
+# Q-L0-7 · Sculk Crossbow: confirm the defaults (non-blocking)
 
-**Not MUST_ASK.** The build proceeds on each default. Each answer, if it overturns a default, changes one constant or one branch in the stated node. Ask these at the Katana iPad acceptance (`L0-katn-ac09` §6 already records the escape answer).
+The build proceeds on these defaults. A "no" changes only the item named.
 
-| # | Question | Default in force | If overturned |
-|---|---|---|---|
-| 1 | After TNT or cactus, is "the Katana comes back to you" acceptable instead of "it stays on the ground"? | Yes: three-tier C-16 reading (`L0-adr-ktgr` §1) | `lgnd`, all four weapons |
-| 2 | Is losing a legendary that an armour stand holds when the stand falls into the Void acceptable? | Yes: documented deviation (`L0-adr-ktgr` §3) | `lgnd` probe task (`hasitem` re-issue) |
-| 3 | Void return: to the crafter or to the last person who held it? | Crafter (`mark.owner`) as built; last holder proposed (`L0-adr-hold`, `L0-xq3`) | one line in `lost()`, all four weapons |
-| 4 | May the Katana escape a Web Sword trap and the UFO magnet's hold? | Yes (`L0-xasm21`) | a new `lgnd` "rooted" predicate, raised as an L0 contradiction |
-| 5 | Aiming further than 20 blocks: shortened jump, or no jump? | Shortened (`L0-xasm18`) | `katn` one branch |
-| 6 | Tapping a block on the iPad: go toward the screen centre, or to the tapped block? | Screen centre (`L0-katn-as02`) | `katn` one branch |
-| 7 | Landing in lava you aimed across: refused, step back to safe ground? | Yes; water is allowed (`L0-adr-ktob` §3, `L0-katn-as03`) | `katn` one constant |
+1. **Damage** is 10 HP (5 hearts) per bolt, the same at every difficulty, through any armour or shield (`xasm23`).
+2. **A hit on a shield** counts as a hit on its holder (`xcx23`).
+3. **The crater drops nothing.** Water is not removed. Bedrock, portals and similar stay. Chests in the crater spill. Structures get no protection (`xasm25`).
+4. **The patch under a target in the air**: only if there is ground at most 6 blocks below. Boats, minecarts and the UFO take no damage but still get a patch (`xasm24`).
+5. **Arrows only, no fireworks.** Tipped-arrow effects are dropped (`xasm27`).
+6. **The crossbow is pulled by the UFO magnet**, like every legendary since 1.6.0 (`xasm26`).
+7. **Void return** goes to the crafter (the current behaviour for all weapons), not to the last holder, until the holder change is built (`xasm26`).
+8. **Feel:** if the custom item cannot hold a loaded bolt like a vanilla crossbow, it is drawn and released like a bow, and Quick Charge shortens the draw (`adr-scbs`). Is that acceptable?
 
-Question 3 is the same as `L0-xq3`. Answering it once closes it for all four weapons.
-
-**Source node:** L0-xq6
+**Source node:** L0-xq7
 
 ### Answer
 

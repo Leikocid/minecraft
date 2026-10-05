@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-lgnd-ad14"
 source_channel: "rollout"
-analysis_version: 6
+analysis_version: 7
 title: "AD-lgnd-14: The Dragon Katana is def #4: data only, no framework code"
 aliases: ["L0-lgnd-ad14"]
 is_a: ["architecture-decision"]

@@ -2,7 +2,7 @@
 type: "concept-entity"
 node_id: "L0-lgnd-ent3"
 source_channel: "rollout"
-analysis_version: 6
+analysis_version: 7
 title: "AbilityState: cooldown record + busy flag (per player × abilityKey)"
 aliases: ["L0-lgnd-ent3"]
 is_a: ["entity"]

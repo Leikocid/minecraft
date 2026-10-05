@@ -1,252 +1,18 @@
 ---
 title: Glossary
 type: project-knowledge
-generated_at: "2026-10-03T23:54:07.037Z"
+generated_at: "2026-10-05T17:12:56.124Z"
 source_channel: rollout
 node_id: rollout-glossary
 aliases: ["rollout-glossary","glossary","project-knowledge/glossary"]
 is_a: ["rollout","glossary"]
-relates_to: ["L0-katn-ac01","L0-katn-ac02","L0-katn-ac03","L0-katn-ac04","L0-katn-ac05","L0-katn-ac06","L0-katn-ac07","L0-katn-ac08","L0-katn-ac09","L0-katn-gl01","L0-katn-gl02","L0-katn-gl03","L0-katn-gl04","L0-katn-gl05","L0-lgnd-ac01","L0-lgnd-ac02","L0-lgnd-ac03","L0-lgnd-ac04","L0-lgnd-ac05","L0-lgnd-ac06","L0-lgnd-ac07","L0-lgnd-ac08","L0-lgnd-ac09","L0-lgnd-ac10","L0-lgnd-ac11","L0-lgnd-ac12","L0-lgnd-ac13","L0-lgnd-ac14","L0-lgnd-ac15","L0-lgnd-ac16","L0-lgnd-ac17","L0-lgnd-ac18","L0-lgnd-ac19","L0-lgnd-ac20","L0-lgnd-ac21","L0-lgnd-ac22","L0-lgnd-ac23","L0-lgnd-ac24","L0-lgnd-gl01","L0-lgnd-gl02","L0-lgnd-gl03","L0-lgnd-gl04","L0-lgnd-gl05","L0-lgnd-gl06","L0-lgnd-gl07","L0-lgnd-gl08","L0-lgnd-gl09","L0-lgnd-gl10","L0-lgnd-gl11","L0-lgnd-gl12","L0-lgnd-gl13","L0-lgnd-gl14","L0-lgnd-gl15","L0-lgnd-gl16","L0-lgnd-gl17","L0-lgnd-gl18"]
-priority: 600
+relates_to: ["L0-lgnd-ac01","L0-lgnd-ac02","L0-lgnd-ac03","L0-lgnd-ac04","L0-lgnd-ac05","L0-lgnd-ac06","L0-lgnd-ac07","L0-lgnd-ac08","L0-lgnd-ac09","L0-lgnd-ac10","L0-lgnd-ac11","L0-lgnd-ac12","L0-lgnd-ac13","L0-lgnd-ac14","L0-lgnd-ac15","L0-lgnd-ac16","L0-lgnd-ac17","L0-lgnd-ac18","L0-lgnd-ac19","L0-lgnd-ac20","L0-lgnd-ac21","L0-lgnd-ac22","L0-lgnd-ac23","L0-lgnd-ac24","L0-lgnd-ac25","L0-lgnd-ac26","L0-lgnd-ac27","L0-lgnd-gl01","L0-lgnd-gl02","L0-lgnd-gl03","L0-lgnd-gl04","L0-lgnd-gl05","L0-lgnd-gl06","L0-lgnd-gl07","L0-lgnd-gl08","L0-lgnd-gl09","L0-lgnd-gl10","L0-lgnd-gl11","L0-lgnd-gl12","L0-lgnd-gl13","L0-lgnd-gl14","L0-lgnd-gl15","L0-lgnd-gl16","L0-lgnd-gl17","L0-lgnd-gl18","L0-lgnd-gl19","L0-lgnd-gl20","L0-lgnd-gl21","L0-sclk-ac01","L0-sclk-ac02","L0-sclk-ac03","L0-sclk-ac04","L0-sclk-ac05","L0-sclk-ac06","L0-sclk-ac07","L0-sclk-ac08","L0-sclk-ac09","L0-sclk-ac10","L0-sclk-ac11","L0-sclk-ac12","L0-sclk-ac13","L0-sclk-ac14","L0-sclk-ac15","L0-sclk-ac16","L0-sclk-ac17","L0-sclk-ac18","L0-sclk-ac19","L0-sclk-ac20","L0-sclk-ac21","L0-sclk-ac22","L0-sclk-ac23","L0-sclk-ac24","L0-sclk-ac25","L0-sclk-ac26","L0-sclk-ac27","L0-sclk-gl01","L0-sclk-gl02","L0-sclk-gl03","L0-sclk-gl04","L0-sclk-gl05","L0-sclk-gl06"]
+priority: 610
 ---
 
 # Glossary
 
 > Автогенерация из Knowledge Vault. Ручное редактирование — установи `status: manual` в frontmatter.
-
-### Katn ac01 concept acceptance criterion (L0-katn-ac01)
-
----
-title: "AC-katn-01 (T01, bds + build): the Katana recipe yields the craft token (gate assertions: L0-lgnd-ac23)"
-is_a: ["acceptance-criterion"]
-part_of: ["L0-katn"]
-relates_to: ["L0-lgnd-p001", "L0-lgnd-ac23", "L0-katn-r001", "L0-xasm22"]
----
-The rule is owned by `L0-lgnd-p001`. **The gate, flag, refund, restart, Creative/`/give` and broadcast assertions (T01–T03) are `L0-lgnd-ac23`** (reconciled at reduce v6: this card used to repeat them). `katn` owns only the recipe JSON that feeds the gate:
-- **Shape.** GIVEN a Crafter loaded by `/replaceitem` with `. G . / P S P / . G .` (G golden apple, P ender pearl, S diamond sword, any damage or enchantment), WHEN it fires, THEN it outputs exactly one `andrew:dragon_katana_crafted` token and never the item itself.
-- **Negative controls.** An iron sword in the centre, an enchanted golden apple for G, or a mirrored or shifted layout produces nothing.
-- **Build.** `packs/behavior/recipes/dragon_katana*.json` names only `andrew:dragon_katana_crafted` as output (a node grep test).
-
-
-- **node**: L0-katn-ac01
-
-### Katn ac02 concept acceptance criterion (L0-katn-ac02)
-
----
-title: "AC-katn-02 (T04, T14, T15, bds): melee equals a Diamond Sword, works on cooldown, no wear"
-is_a: ["acceptance-criterion"]
-part_of: ["L0-katn"]
-relates_to: ["L0-katn-r001", "L0-katn-r005"]
----
-- **T04.** GIVEN two identical husks (spawnWithoutBehaviors, full health), WHEN one SimulatedPlayer hits one with a vanilla Diamond Sword and the other with the Katana (no crit, same cooldown charge), THEN the health losses measured via `entityHurt` are equal.
-- **T14.** GIVEN `andrew:cd_dragon_katana` armed (cooldown > 25 s), WHEN the player attacks a husk, THEN the hit deals the T04 damage and the cooldown value is unchanged.
-- **T15.** WHEN the player lands 50 hits and 3 successful activations, THEN the stack has no durability component, and `getComponent("durability")` stays `undefined`, as it was before.
-
-
-- **node**: L0-katn-ac02
-
-### Katn ac03 concept acceptance criterion (L0-katn-ac03)
-
----
-title: "AC-katn-03 (T05, T06, bds): open-range teleport, cooldown, clamp, no-op on cooldown"
-is_a: ["acceptance-criterion"]
-part_of: ["L0-katn"]
-relates_to: ["L0-katn-p001", "L0-katn-r002", "L0-katn-r005", "L0-xasm18"]
----
-- **T05.** GIVEN a flat floor and a SimulatedPlayer facing +X, looking at a floor block 19 blocks ahead, WHEN Use runs with the Katana, THEN in the same tick the feet are on top of that block (±0.5) and the yaw is unchanged. `andrew:cd_dragon_katana − Date.now()` lies in 29 500–30 000 ms.
-- **Cooldown no-op.** WHEN Use runs again 1 s later, THEN the position is unchanged and the cooldown value is bit-identical.
-- **T06.** GIVEN open air ahead and a 60-block runway, WHEN the player looks level and uses, THEN the head displacement is ≤ 20.0 and ≥ 19.0. A play with the yaw at 45° also holds ≤ 20.0.
-- **Off hand.** The Katana in the off hand with the main hand empty → the same teleport.
-
-
-- **node**: L0-katn-ac03
-
-### Katn ac04 concept acceptance criterion (L0-katn-ac04)
-
----
-title: "AC-katn-04 (T07–T10, bds): walls, liquids, safe cell, no block edits"
-is_a: ["acceptance-criterion"]
-part_of: ["L0-katn"]
-relates_to: ["L0-katn-r003", "L0-katn-r004", "L0-katn-r002"]
----
-- **T07.** GIVEN a 3-thick stone wall 10 blocks ahead (5 wide, 5 high), WHEN the player aims at a point 15 blocks out through it, THEN the feet x is < the wall's near face, within 1.5 of it, and the player is on the near side.
-- **T08.** GIVEN a water column and, separately, a lava pool lying across the path with an open floor beyond, WHEN the player aims past them, THEN they land beyond the liquid. The lava case uses a fire-resistance effect so the test is not about the landing.
-- **T09.** GIVEN aim at a 2-high gap that is 1 block high, or a ceiling 1 block above the floor hit, WHEN the player uses, THEN the feet and head cells after the teleport are free, `entityHurt` with cause `suffocation` is absent for 40 ticks, and the player is in a different cell than at the start.
-- **Refusal.** GIVEN the player boxed in with no fit within the search, WHEN they use, THEN there is no move and the cooldown is unset.
-- **T10.** GIVEN the full test area (`getBlocks` volume) snapshotted before the use, THEN every block typeId and permutation is unchanged after it.
-
-
-- **node**: L0-katn-ac04
-
-### Katn ac05 concept acceptance criterion (L0-katn-ac05)
-
----
-title: "AC-katn-05 (T11, T12, bds): one-shot fall protection"
-is_a: ["acceptance-criterion"]
-part_of: ["L0-katn"]
-relates_to: ["L0-katn-p002", "L0-katn-r006", "L0-adr-ktfl"]
----
-- **T11.** GIVEN a player teleported to an air point 15 blocks above stone (SimulatedPlayers regenerate, so damage is measured with `entityHurt`), WHEN they land, THEN no `entityHurt` with cause `fall` fires for that landing, and the fall flag map is empty afterwards.
-- **T11 at height.** The same from a 20-block cap point over a 30-block drop, with health set to 4. The player survives.
-- **T12.** GIVEN the flag consumed, WHEN the same player drops 10 blocks with `/tp` and then lands, THEN `entityHurt` cause `fall` fires with ≥ 6 damage.
-- **Expiry.** A flag with no landing in 10 s is cleared.
-- **Negative control** (in-test): with the watcher disabled, the T11 landing hurts.
-
-
-- **node**: L0-katn-ac05
-
-### Katn ac06 concept acceptance criterion (L0-katn-ac06)
-
----
-title: "AC-katn-06 (T13, bds): the trail is harmless and bounded"
-is_a: ["acceptance-criterion"]
-part_of: ["L0-katn"]
-relates_to: ["L0-katn-r007"]
----
-GIVEN a husk and a second SimulatedPlayer standing on the A→B line, WHEN the Katana teleport passes over them:
-- no `entityHurt` fires for either;
-- their velocity stays ≤ 0.01 apart from gravity;
-- the entity count in the area does not grow;
-- the T10 block snapshot is unchanged.
-
-A wrapped `spawnParticle` counter records between 1 and 130 calls, all within ≤ 10 ticks of the use, and none on a refused or cooldown press. (Visual reading is in `L0-katn-ac09`.)
-
-
-- **node**: L0-katn-ac06
-
-### Katn ac07 concept acceptance criterion (L0-katn-ac07)
-
----
-title: "AC-katn-07 (T16–T18, bds): Katana instances of the framework's protection tests"
-is_a: ["acceptance-criterion"]
-part_of: ["L0-katn"]
-relates_to: ["L0-lgnd-ac24", "L0-lgnd-p002", "L0-lgnd-p003", "L0-lgnd-p008", "L0-xcx21", "L0-xasm22", "L0-adr-ktgr"]
----
-These are framework rules. **The test text is `L0-lgnd-ac24`** (reconciled at reduce v6: this card used to restate it, and had drifted on two points). `katn` owns none of the assertions; it contributes only:
-- the Katana def and item JSON that `L0-lgnd-ac24` runs against (`L0-katn-ent1`);
-- the one Katana-specific case in that criterion, **death after a teleport** (into lava, or below the one-shot flag's cover), which `L0-lgnd-ac24` T16 already names.
-
-**Reconciled points:**
-- T16: retention keeps the **same id and gen**. `retention.ts` restore does not bump the gen (as read during reduce at v6). The earlier `gen + 1` here was wrong.
-- T18: the return target is **`mark.owner`** until `L0-xcx11` closes. "Last owner" in Katana §3 is the open `L0-adr-hold` question, not a passing test today.
-- T17: under C-16 (`L0-xcx21`, settled by `L0-adr-ktgr`).
-
-Do not create a separate task criterion from this card. It would duplicate `L0-lgnd-ac24`.
-
-
-- **node**: L0-katn-ac07
-
-### Katn ac08 concept acceptance criterion (L0-katn-ac08)
-
----
-title: "AC-katn-08 (probe, bds): engine facts confirmed before the build"
-is_a: ["acceptance-criterion"]
-part_of: ["L0-katn"]
-relates_to: ["L0-adr-ktob", "L0-adr-ktfl", "L0-katn-ad01", "L0-katn-p002"]
----
-A probe GameTest on BDS 1.26.51 (checks instance, port 19136) records:
-1. A SimulatedPlayer falling from 25 blocks and self-teleported 2 blocks above the floor takes no fall damage. The control without the self-teleport does take it.
-2. `getBlockFromRay` with `{includePassableBlocks:false, includeLiquidBlocks:false}`:
-   - passes water, lava, grass, flowers, cobweb, carpet;
-   - stops at stone, a bottom slab, a fence and a glass pane.
-3. The same ray through a cell column hits a bottom slab and a top slab when cast vertically (`L0-katn-ad01`).
-4. The same ray reaching into an unloaded chunk: hit, no hit, or throw.
-5. `spawnParticle("minecraft:cherry_leaves_particle")` does not throw.
-
-Each fact goes to the memory and to the ADR status. A failed fact supersedes the relevant ADR before the build tasks start.
-
-
-- **node**: L0-katn-ac08
-
-### Katn ac09 concept acceptance criterion (L0-katn-ac09)
-
----
-title: "AC-katn-09 (ipad, manual): what only the operator can see"
-is_a: ["acceptance-criterion"]
-part_of: ["L0-katn"]
-relates_to: ["L0-katn-r007", "L0-katn-r008", "L0-katn-ent1", "L0-katn-as02", "L0-xasm21"]
----
-On the iPad, on the production server, the operator confirms:
-1. **Icon.** The Katana icon reads as a katana in the hotbar and in the inventory.
-2. **Creative.** It is found under Equipment → swords and by searching "Katana" / "Катана".
-3. **HUD.** Holding it shows "Dragon Katana — Ready", or "Катана дракона — Готово" in Russian. After a use, the HUD counts down whole seconds from 30.
-4. **Trail.** A pink petal trail runs visibly from A to B and fades within about 1.5 s. A second player nearby sees it too.
-5. **Aim.** Tapping on air and tapping on a block both teleport toward the screen centre (view direction), and this feels right (`L0-katn-as02`).
-6. **Escape.** The answer on a Web Sword trap and UFO magnet escape (`L0-xasm21`) is recorded.
-
-The orchestrator must not auto-verify this criterion.
-
-
-- **node**: L0-katn-ac09
-
-### Katn gl01 concept glossary term (L0-katn-gl01)
-
-**Dragon Katana** (RU: Катана дракона)
-
-The fourth legendary weapon, `andrew:dragon_katana`. It is a Diamond Sword clone whose Use teleports the holder up to 20 blocks along their view, with a 30 s cooldown. Its craft token is `andrew:dragon_katana_crafted`, its ability key `dragon_katana`, and its key prefix `dk`.
-
-**Synonyms**: Katana, `katn` (the KV node), DK.
-
-
-- **node**: L0-katn-gl01
-
-### Katn gl02 concept glossary term (L0-katn-gl02)
-
-**Trace (Katana)**
-
-The server-side block ray from the use-time head location along the view direction, ≤ 20 blocks. It uses `includePassableBlocks:false, includeLiquidBlocks:false`.
-- It stops at the first block the engine treats as collidable, or before an unreadable cell.
-- Its end is the **endpoint E**: the hit point pulled back 0.3, or the point in the air at the range.
-
-Not the Scythe's line of sight (`hasLineOfSight`), which treats every non-air, non-liquid block as blocking.
-
-**Synonyms**: ability ray, teleport ray.
-
-
-- **node**: L0-katn-gl02
-
-### Katn gl03 concept glossary term (L0-katn-gl03)
-
-**Safe cell**
-
-A feet cell B where a standing player (2 cells high, centred) can be placed. It must:
-- pass the column-ray fit check (`L0-katn-ad01`);
-- contain no lava or fire;
-- lie on the owner's side of the hit face;
-- be reachable from the head by a clear ray;
-- leave the head within 20 blocks of its start.
-
-A cell in mid-air qualifies. "Owner's side" means the half-space of the hit-face plane that contains the head.
-
-**Synonyms**: safe position, destination B, landing cell.
-
-
-- **node**: L0-katn-gl03
-
-### Katn gl04 concept glossary term (L0-katn-gl04)
-
-**Fall flag**
-
-A per-player, in-memory, one-shot protection that is armed by a successful Katana teleport. It is consumed by the first landing, liquid, climb, glide, death, dimension change or logout, or after 10 s.
-- While it is armed and the player is about to hit the ground, a self-teleport resets the fall distance, so that landing deals no damage.
-- It is never persisted and never blocks other damage.
-
-**Synonyms**: one-shot fall protection, landing flag.
-
-
-- **node**: L0-katn-gl04
-
-### Katn gl05 concept glossary term (L0-katn-gl05)
-
-**Petal trail**
-
-The one-shot visual of a successful Katana teleport. It is a line of pink cherry-blossom particles from A+1 to B+1, spawned through `dimension.spawnParticle` (`minecraft:cherry_leaves_particle`, or the fallback `andrew:katana_petal`) within ≤ 10 ticks.
-- Visual only: no entities, damage, knockback or block changes.
-
-**Synonyms**: sakura trail, cherry trail.
-
-
-- **node**: L0-katn-gl05
 
 ### Lgnd ac01 concept acceptance criterion (L0-lgnd-ac01)
 
@@ -645,7 +411,7 @@ THEN nothing happens to it.
 WHEN it passes through a hopper into another chest
 THEN `holder` stays A: a container never becomes the holder.
 
-Pending the client's confirmation of `L0-adr-hold`.
+`L0-adr-hold` was accepted by `decision-resolve-l0-xcx11` (2026-09-29); this AC is unbuilt work, filed as `LGND-HOLD` (`L0-adr-hldb`).
 
 
 - **node**: L0-lgnd-ac18
@@ -700,32 +466,27 @@ A Cannon inside a **shulker-box item** is outside this AC (`cx12`).
 
 ### Lgnd ac21 concept acceptance criterion (L0-lgnd-ac21)
 
----
-is_a: ["acceptance-criterion"]
-part_of: ["L0-lgnd"]
-relates_to: ["L0-lgnd-r016", "L0-lgnd-ad13", "L0-magn", "ufomagnetspecv1ruen-part-4"]
----
-**AC-lgnd-21: Legendary weapons are never pulled (UFO AC 13, rule side).** Channel: `build` (node unit test for the predicate) + `bds` (GameTest `ufo:legendary_*`).
+**AC-lgnd-21 (v7): Legendary weapons are pulled, tokens are not, and no instance is lost or duplicated (operator tuning 1.6.0).** Channel: `build` (node unit test) + `bds` (GameTest `ufo_magnet_legendaries` and `ufo_magnet_hold*`).
 
-**Predicate.** `isLegendaryStack` is true for each of `andrew:web_sword`, `andrew:scythe_of_calamity`, `andrew:orbital_cannon` and their three `_crafted` tokens, whether marked, unmarked or stale. It is false for `iron_sword`, for `undefined` and for an empty slot.
+Related: L0-lgnd-r016, L0-magn, L0-lgnd-ac22.
 
-GIVEN, inside a magnet zone with at least 10 iron candidates, the following and a Survival player holding iron:
+**Predicate.** `isMagneticStack` is true for every def's `itemId` (all five once def #5 lands), marked, unmarked or stale. It is false for every `_crafted` token, for `undefined` and for an empty slot.
+
+GIVEN a magnet zone with iron candidates and:
 - a marked Scythe on the ground;
-- an unmarked Web Sword in a chest next to an iron ingot;
-- a marked Orbital Cannon in a hopper **block**;
-- a chest minecart holding a marked Web Sword and an iron ingot;
-- an armour stand in iron armour holding a marked Scythe
+- a hopper **block** holding only a marked Orbital Cannon;
+- a craft token item entity on the ground;
+- a Survival player holding a marked Katana and no iron
+WHEN the magnet runs and releases
+THEN the Scythe was selected as a ground candidate,
+AND the hopper block is still in place, holding the Cannon (a non-empty hopper is a container),
+AND the token was never selected,
+AND the player was lifted,
+AND after release the world holds exactly one live copy of each marked instance, every gen is unchanged, and no owed list changed.
 
-WHEN the magnet runs its full 60 s and releases
-THEN:
-- no legendary stack is ever within 6 blocks of the saucer's hover column;
-- the ground Scythe and the chest's Web Sword have not moved;
-- the hopper block is still in place and the Cannon is still inside it, untouched. A hopper holding anything is a container and never a pulled block (`decision-resolve-l0-lgnd-cx13`); an iron ingot placed in the same hopper is extracted;
-- the chest minecart and the armour stand were not selected;
-- the iron ingot in the chest was extracted;
-- the world holds exactly one live copy of each marked instance, and neither owed list changed.
+Negative control: `isLegendaryWeapon` stubbed to `false` makes the "Scythe selected" and "player lifted" clauses fail.
 
-Negative control: the same scenario with `isLegendaryStack` stubbed to return `false` must fail the "never within 6 blocks" clause. (Reconciled at reduce v4: the earlier control, a hopper pull without `protectLegendariesIn`, has no code path to exercise once a hopper holding anything is never a block.)
+The pre-1.6.0 "never within 6 blocks of the hover column" clause is retired.
 
 
 - **node**: L0-lgnd-ac21
@@ -755,31 +516,21 @@ Variant: the same after `/andrew:ufo stop` mid-hold, and after a server restart 
 
 ### Lgnd ac23 concept acceptance criterion (L0-lgnd-ac23)
 
----
-is_a: ["acceptance-criterion"]
-part_of: ["L0-lgnd"]
-relates_to: ["L0-lgnd-ad14", "L0-lgnd-ac02", "L0-lgnd-ac15", "L0-lgnd-ac17", "L0-lgnd-ac21", "L0-katn"]
-see_also: ["dragonkatanaspecv1ruen-part-3"]
----
-**AC-lgnd-23: The Dragon Katana is def #4, with its own craft budget (Katana T01–T03, framework side).** Channel: `build` + `bds`.
+**AC-lgnd-23: The Dragon Katana is def #4, with its own craft budget (Katana T01–T03, framework side).** Channel: `build` + `bds`. Shipped in 1.5.0 (`KATA-LGND-01-AA`).
+
+Related: L0-lgnd-ad14, L0-lgnd-ac02, L0-lgnd-ac15, L0-lgnd-ac17, L0-lgnd-ac21, L0-katn.
 
 **Build.**
 - `tests/legendary-registry.test.mjs` asserts `keysFor(DRAGON_KATANA).crafted === "andrew:dk_crafted"` and the other `dk_*` keys.
-- The uniqueness test covers `itemId`, `keyPrefix`, `abilityKey`, `command`, **`craftTokenId` and `textPrefix`** over all four defs.
+- The uniqueness test covers `itemId`, `keyPrefix`, `abilityKey`, `command`, `craftTokenId` and `textPrefix` over all defs.
 - `isLegendaryStack` is true for `andrew:dragon_katana` and `andrew:dragon_katana_crafted`, and false for `minecraft:diamond_sword`.
 
 **BDS.** GIVEN the Web Sword, Scythe and Cannon flags are set and `andrew:dk_crafted` is unset
-WHEN Survival player A crafts the Katana (the token reaches the inventory)
-THEN exactly one broadcast names A and the localized "Dragon Katana",
-AND A holds a marked `andrew:dragon_katana` with origin `craft`,
-AND `dk_crafted` is set.
-
-AND after a restart, player B's Survival craft is refunded with exactly 2 golden apples, 2 ender pearls and 1 diamond sword, with `andrew.katana.craft_blocked` and no broadcast.
-
-AND `/give B andrew:dragon_katana` and a Creative copy leave the flag unchanged.
-AND `/andrew:katana reset` clears only `dk_crafted`.
-AND the other three flags never change.
-AND the UFO `ufo:legendary_*` "never pulled" test passes with an added Katana stack, with no edit to `magn`.
+WHEN Survival player A crafts the Katana
+THEN exactly one broadcast names A and the localized "Dragon Katana", A holds a marked `andrew:dragon_katana` with origin `craft`, and `dk_crafted` is set.
+AND after a restart, B's Survival craft is refunded with exactly 2 golden apples, 2 ender pearls and 1 diamond sword, with `andrew.katana.craft_blocked` and no broadcast.
+AND `/give` and Creative copies leave the flag unchanged; `/andrew:katana reset` clears only `dk_crafted`; the other flags never change.
+AND (v7, replaces the "never pulled" clause) the Katana is magnetic like the other weapons with no edit to `magn` (`ac21`).
 
 
 - **node**: L0-lgnd-ac23
@@ -807,6 +558,71 @@ see_also: ["dragonkatanaspecv1ruen-part-3"]
 
 
 - **node**: L0-lgnd-ac24
+
+### Lgnd ac25 concept acceptance criterion (L0-lgnd-ac25)
+
+**AC-lgnd-25: The Sculk Crossbow is def #5 with its own craft budget (Crossbow T01–T03, framework side).** Channel: `build` + `bds`.
+
+Related: L0-lgnd-ad16, L0-lgnd-as18, L0-lgnd-cx15, L0-lgnd-ac23, L0-sclk.
+
+**Build.**
+- `keysFor(SCULK_CROSSBOW).crafted === "andrew:sk_crafted"`, and the other `sk_*` keys.
+- The uniqueness test covers `itemId`, `keyPrefix`, `craftTokenId`, `textPrefix`, `command` over all five defs, and `abilityKey` over the four active ones. It fails if def #5 uses `sc`.
+- `isLegendaryStack` is true for `andrew:sculk_crossbow` and its token; `isLegendaryWeaponStack` is true for the crossbow only; both are false for `minecraft:crossbow`.
+
+**BDS.** GIVEN the other four flags are set and `andrew:sk_crafted` is unset
+WHEN Survival player A crafts the crossbow (the token reaches the inventory)
+THEN exactly one broadcast names A and the localized "Sculk Crossbow",
+AND A holds a marked `andrew:sculk_crossbow` with origin `craft`, and `sk_crafted` is set,
+AND no `andrew:sc_*` key changed.
+AND after a restart, B's Survival craft is refunded with exactly 2 echo shards, 2 deepslate and 1 crossbow, with `andrew.crossbow.craft_blocked` and no broadcast (T02).
+AND `/give B andrew:sculk_crossbow` and a Creative copy leave the flag unchanged (T03).
+AND `/andrew:crossbow reset` clears only `sk_crafted`.
+
+
+- **node**: L0-lgnd-ac25
+
+### Lgnd ac26 concept acceptance criterion (L0-lgnd-ac26)
+
+**AC-lgnd-26: A passive def has no timer, no Use claim and no HUD line; defs #1–#4 are unchanged.** Channel: `build` (node unit tests, stubbed hands) + `bds`.
+
+Related: L0-lgnd-ad15, L0-lgnd-r018, L0-xcx24.
+
+**Build.**
+- `hasAbility` is true for the four shipped defs and false for `SCULK_CROSSBOW`. `defForAbility` never returns a passive def.
+- `cooldownKey`/`busyKey` for the four shipped abilities are byte-identical to 1.6.1.
+
+**BDS.** GIVEN P holds the crossbow in the main hand and a ready Katana in the off hand
+WHEN P presses Use
+THEN `resolveActivation(P)` returns the Katana (off hand),
+AND P's Action Bar shows only the Katana line.
+
+GIVEN P holds only the crossbow, in either hand, for 5 s
+THEN the HUD makes no `setActionBar` call for P,
+AND P has no `andrew:cd_*` or `andrew:busy_*` property that was not there before.
+
+**Regression gate.** `npm test` and the legendary, Web Sword, Scythe, Orbital and Katana GameTests pass **without assertion edits**.
+
+
+- **node**: L0-lgnd-ac26
+
+### Lgnd ac27 concept acceptance criterion (L0-lgnd-ac27)
+
+**AC-lgnd-27: Crossbow T19, T20 and Void return under C-16, against `returnTarget(mark)`.** Channel: `bds` (the shipped legendary scenarios parameterised by def).
+
+Related: L0-lgnd-ad16, L0-lgnd-ad17, L0-lgnd-cx16, L0-lgnd-ac24, L0-xcx21, L0-xcx25.
+
+`returnTarget(mark)` is `mark.owner` until `LGND-HOLD` ships, then `holder ?? owner` (`ad17`).
+
+- **T19.** P has a marked crossbow in the hotbar or off hand and dies (also by a magnet fall). On respawn P holds the same id and gen; no item entity remains.
+- **T20, prevent.** A marked crossbow item entity in fire or lava is still there after 10 s, same id and gen. In a chest in an Orbital LMB column, in an RMB/ring AABB, **or inside a crossbow crater** (`sclk` calls `protectLegendariesIn` first), it ends outside the volume with the same id and gen, no message, nothing in `sk_owed`.
+- **T20, return.** On cactus or hit by primed vanilla TNT: exactly one live crossbow exists, with `returnTarget(mark)` (gen + 1, `andrew.legendary.recovered`) or in `sk_owed` if that player is offline.
+- **Void.** Dropped into the Void, or inside a chest minecart or held by an armour stand that falls in: it returns to `returnTarget(mark)` exactly once; offline → `sk_owed`, redeemed once on the next join, also after a restart.
+- **Known deviation until `LGND-HOLD`:** A crafts, gives to B, B loses it in the Void → A receives it.
+- No crossbow-specific line in `src/legendary/` is needed for any clause above.
+
+
+- **node**: L0-lgnd-ac27
 
 ### Lgnd gl01 concept glossary term (L0-lgnd-gl01)
 
@@ -1069,4 +885,463 @@ An ability that moves the **player** holding the legendary, rather than a target
 
 
 - **node**: L0-lgnd-gl18
+
+### Lgnd gl19 concept glossary term (L0-lgnd-gl19)
+
+**Passive legendary (passive def)**
+
+A `LegendaryDef` with no ability (`PassiveLegendaryDef`, `hasAbility(def) === false`). It obeys every legendary rule (craft gate, mark, retention, return, protection, magnetism) but has no cooldown or busy key, never claims a Use in `resolveActivation`, and never draws an Action Bar line. The first one is the Sculk Crossbow (def #5). Opposite: **active def** (Web Sword, Scythe, Orbital Cannon, Dragon Katana).
+
+**Synonyms**: no-ability def. Not to be confused with a **stale** copy, which is a voided instance, not a kind of def.
+
+
+- **node**: L0-lgnd-gl19
+
+### Lgnd gl20 concept glossary term (L0-lgnd-gl20)
+
+**Return target**
+
+The player who receives a legendary after a tier-3 loss (Void, cactus, vanilla TNT, despawn) or a protect hand-back, and whose id keys the `<prefix>_owed` entry when offline. As built at 1.6.1 it is `mark.owner` (the crafter, or the `/give` target of an admin copy). After `LGND-HOLD` it becomes `holder ?? owner` (the last player whose inventory held the stack). GameTests read it through `returnTarget(mark)`.
+
+**Synonyms**: "последний владелец" (spec wording, = last holder); not the same as **owner** (crafter) while the holder is unbuilt.
+
+
+- **node**: L0-lgnd-gl20
+
+### Lgnd gl21 concept glossary term (L0-lgnd-gl21)
+
+**Magnetic legendary**
+
+A legendary **weapon** stack (any def's `itemId`, marked or not) that the UFO magnet treats like iron since 1.6.0: pulled from the ground and containers, a player holding one is lifted, and a mob or armour stand holding one is a class-3 holder. Decided by `isLegendaryWeaponStack`. A **craft token** is never magnetic. An operator-tuned exception to the UFO spec's "legendaries are never pulled".
+
+
+- **node**: L0-lgnd-gl21
+
+### Sclk ac01 concept acceptance criterion (L0-sclk-ac01)
+
+**AC-sclk-01 (T01) · First Survival craft** · channel `bds` · the rule is in `lgnd`, this is the crossbow call site
+
+GIVEN a fresh world and a Survival SimulatedPlayer, WHEN a Crafter (a real recipe craft, loaded via `/replaceitem`) is loaded with the pattern ` E / DCD / E ` (E echo shard, D deepslate, C crossbow) and crafts,
+THEN:
+- the output token becomes one marked `andrew:sculk_crossbow` in the player's inventory;
+- the world's `sk` craft flag is set (`L0-adr-sckp`);
+- the localized first-craft broadcast names the player.
+
+The same pattern with cobbled deepslate produces nothing.
+
+
+- **node**: L0-sclk-ac01
+
+### Sclk ac02 concept acceptance criterion (L0-sclk-ac02)
+
+**AC-sclk-02 (T02) · A repeat craft is blocked after a restart** · channel `bds` · the rule is in `lgnd`
+
+GIVEN the `sk` flag was set (ac01) and the BDS was restarted, WHEN the recipe is crafted again in Survival,
+THEN:
+- no crossbow is produced;
+- the token is swapped for the refund (echo shard ×2, deepslate ×2, crossbow ×1);
+- the localized `craft_blocked` message is shown.
+
+The proof uses the restart harness: SimulatedPlayers do not survive a restart, so a fresh one is spawned after it.
+
+
+- **node**: L0-sclk-ac02
+
+### Sclk ac03 concept acceptance criterion (L0-sclk-ac03)
+
+**AC-sclk-03 (T03) · Creative and `/give` do not spend the flag** · channel `bds`
+
+GIVEN the `sk` flag is unset, WHEN `/give @s andrew:sculk_crossbow` runs and a copy is taken from the Creative inventory,
+THEN:
+- both stacks are usable crossbows (they fire bolts);
+- the flag is still unset;
+- a following Survival craft still succeeds as a first craft.
+
+
+- **node**: L0-sclk-ac03
+
+### Sclk ac04 concept acceptance criterion (L0-sclk-ac04)
+
+**AC-sclk-04 (T04) · A shot spawns a bolt with a trail along its real path** · channel `bds` (visual on the iPad: ac23)
+
+GIVEN a shooter SimulatedPlayer with the crossbow and arrows, aimed level at a wall 20 blocks away, WHEN it fires one charged shot,
+THEN:
+- exactly one `andrew:sculk_bolt` exists and no `minecraft:arrow` survives the spawn tick;
+- the bolt's owner is the shooter, and its initial speed is within 5 % of the arrow's;
+- the log shows trail emissions on ≥ 5 ticks, at points whose y drops over the flight (they follow gravity, not a straight ray).
+
+
+- **node**: L0-sclk-ac04
+
+### Sclk ac05 concept acceptance criterion (L0-sclk-ac05)
+
+**AC-sclk-05 (T05) · The trail harms nothing** · channel `bds`
+
+GIVEN a bystander SimulatedPlayer standing 0.6 blocks beside the bolt's line (no collision), plus a column of glass and grass 0.6 blocks off the line, WHEN a bolt flies past both and ends in the Void or expires,
+THEN:
+- the bystander's health and position are unchanged (an `entityHurt` witness records none);
+- no block within 2 of the line changed;
+- the record ends as `expired`.
+
+
+- **node**: L0-sclk-ac05
+
+### Sclk ac06 concept acceptance criterion (L0-sclk-ac06)
+
+**AC-sclk-06 (T06) · A direct hit deals exactly D, and no arrow damage** · channel `bds`
+
+GIVEN an unarmoured target SimulatedPlayer at 20 HP, 8 blocks from the shooter, WHEN one bolt hits it,
+THEN:
+- its health is exactly `20 − SONIC_BOOM_DAMAGE` (10) after the hit tick, with exactly one `entityHurt` from the shooter;
+- no `minecraft:arrow` entity existed during the test.
+
+**Negative control:** with Power V on the crossbow the result is still 10.
+
+
+- **node**: L0-sclk-ac06
+
+### Sclk ac07 concept acceptance criterion (L0-sclk-ac07)
+
+**AC-sclk-07 (T07) · Difficulty does not change D** · channel `bds`
+
+GIVEN the setup of ac06, WHEN it is repeated at `/difficulty easy` and at `/difficulty hard` (peaceful is skipped: it heals players and empties hostile structures),
+THEN the target loses exactly D on each.
+
+The test restores the original difficulty in `finally`.
+
+
+- **node**: L0-sclk-ac07
+
+### Sclk ac08 concept acceptance criterion (L0-sclk-ac08)
+
+**AC-sclk-08 (T08) · Armour, Protection and a shield do not reduce D** · channel `bds`
+
+GIVEN a target SimulatedPlayer in full netherite with Protection IV,
+WHEN:
+- (a) it is hit by one bolt;
+- (b) it holds a shield in the off hand, raised by sneaking, faces the shooter, and is hit by one bolt;
+
+THEN in each case it loses exactly D. The case (b) bolt resolves once, as an entity hit, either through `projectileHitEntity` or through the shield fallback (`as02`). The log names the path used.
+
+
+- **node**: L0-sclk-ac08
+
+### Sclk ac09 concept acceptance criterion (L0-sclk-ac09)
+
+**AC-sclk-09 (T09) · Neighbours take nothing** · channel `bds`
+
+GIVEN a target SimulatedPlayer and a bystander SimulatedPlayer 1.5 blocks beside it, plus a zombie 2 blocks behind it (`spawnWithoutBehaviors`), WHEN one bolt hits the target,
+THEN:
+- only the target loses health;
+- the bystander and the zombie record no `entityHurt` during the hit tick and the 40 ticks after it (the patch placement included).
+
+
+- **node**: L0-sclk-ac09
+
+### Sclk ac10 concept acceptance criterion (L0-sclk-ac10)
+
+**AC-sclk-10 (T10) · An entity hit makes a patch and no crater** · channel `bds`
+
+GIVEN a target standing on a flat 9×9 stone floor, WHEN a bolt hits it,
+THEN:
+- no floor cell became air;
+- 9 ≤ (sculk cells) ≤ 25, all within the 5×5 centred on the target's feet column and all on the top surface;
+- at least one 5×5 cell is not sculk (irregular).
+
+A second case: a target 10 blocks above the floor gets no patch (`xasm24`).
+
+
+- **node**: L0-sclk-ac10
+
+### Sclk ac11 concept acceptance criterion (L0-sclk-ac11)
+
+**AC-sclk-11 (T11) · A block hit carves an irregular crater ≤ 5×5×3** · channels `bds` + node
+
+GIVEN a solid stone block 7×7×5, WHEN a bolt hits the top face centre,
+THEN:
+- every air cell created lies within the 5×5 footprint and ≤ 3 deep;
+- the centre column is ≥ 2 deep;
+- 12 ≤ (air cells) ≤ 75, and the footprint is not a full 5×5;
+- no item entity spawned.
+
+**Node:** `craterCells` is deterministic for a given seed and never leaves the box across 1000 seeds × 6 faces. Deny-list cells and liquids in the fixture stay.
+
+
+- **node**: L0-sclk-ac11
+
+### Sclk ac12 concept acceptance criterion (L0-sclk-ac12)
+
+**AC-sclk-12 (T12) · The crater does no explosion damage** · channel `bds`
+
+GIVEN a bystander SimulatedPlayer standing 2 blocks from the impact cell, on a cell outside the crater box, WHEN a bolt hits the block,
+THEN:
+- the bystander records no `entityHurt` from any cause in the hit tick and the 20 ticks after it;
+- no `minecraft:tnt` entity and no explosion event occurred.
+
+
+- **node**: L0-sclk-ac12
+
+### Sclk ac13 concept acceptance criterion (L0-sclk-ac13)
+
+**AC-sclk-13 (T13) · Permanent sculk around the crater** · channel `bds`
+
+GIVEN the crater of ac11, THEN:
+- ≥ 8 exposed surface cells inside the 5×5 around the impact are `minecraft:sculk`;
+- no `sculk_sensor`, `sculk_shrieker`, `sculk_catalyst` or `sculk_vein` is present in the box.
+
+AND after a BDS restart (the restart harness), the same cells are still sculk.
+
+
+- **node**: L0-sclk-ac13
+
+### Sclk ac14 concept acceptance criterion (L0-sclk-ac14)
+
+**AC-sclk-14 (T14) · Quick Charge works, and the reload still limits** · channel `bds`
+
+GIVEN two shooter SimulatedPlayers, one with Quick Charge III and one without, WHEN each repeatedly holds use until the shot fires,
+THEN the Quick Charge III shooter's measured charge-to-shot time is ≤ 50 % of the plain one's (vanilla: 0.5 s vs 1.25 s, ±2 ticks).
+
+AND a release after 2 ticks spawns **no** bolt for either shooter (`cx02`).
+
+
+- **node**: L0-sclk-ac14
+
+### Sclk ac15 concept acceptance criterion (L0-sclk-ac15)
+
+**AC-sclk-15 (T15) · Piercing cannot stay or act** · channels `bds` + node
+
+GIVEN a crossbow stack with `piercing 4` + `multishot 1`, put into a SimulatedPlayer's inventory by script (this fires `playerInventoryItemChange`), THEN by the next tick:
+- the stack has no `piercing`;
+- it still has `multishot`.
+
+AND a bolt fired by a stack that has Piercing (set in the same tick, before the strip) hitting two targets in a line damages only the first.
+
+**Node:** the strip helper keeps the other enchantments.
+
+
+- **node**: L0-sclk-ac15
+
+### Sclk ac16 concept acceptance criterion (L0-sclk-ac16)
+
+**AC-sclk-16 (T16) · Multishot: three independent bolts** · channel `bds`
+
+GIVEN a Survival shooter with a Multishot crossbow and 10 arrows, aiming at a wall 15 blocks away, WHEN it fires one charged shot,
+THEN:
+- three bolts with distinct records exist;
+- exactly one arrow was spent;
+- three separate block-hit outcomes are logged, each with its own seed and its own crater/sculk job;
+- no record resolves twice.
+
+
+- **node**: L0-sclk-ac16
+
+### Sclk ac17 concept acceptance criterion (L0-sclk-ac17)
+
+**AC-sclk-17 (T17) · Three Multishot bolts, three full hits on one player** · channel `bds`
+
+GIVEN a target SimulatedPlayer in full netherite with Protection IV at 40 HP (health boosted by an effect), placed 2 blocks in front of the shooter so that all three bolts connect within ≤ 2 ticks, WHEN one Multishot shot fires,
+THEN:
+- three entity-hit outcomes are logged for that target;
+- its health drops by exactly 3 × D = 30, despite the invulnerability window (`xcx22`).
+
+**In-test negative control:** the same volley with the `setCurrentValue` step disabled by a test flag must lose less than 30.
+
+
+- **node**: L0-sclk-ac17
+
+### Sclk ac18 concept acceptance criterion (L0-sclk-ac18)
+
+**AC-sclk-18 (T18) · No durability loss** · channels `bds` + node
+
+GIVEN a Survival shooter, WHEN it fires 30 charged shots and lands 10 melee hits with the crossbow,
+THEN:
+- the stack's `minecraft:durability` component is absent (option A), or its damage is 0 (option B);
+- the stack is the same item, not broken or replaced.
+
+**Node:** the item JSON has no `minecraft:durability`.
+
+
+- **node**: L0-sclk-ac18
+
+### Sclk ac19 concept acceptance criterion (L0-sclk-ac19)
+
+**AC-sclk-19 (T19) · Death retention, crossbow instance** · channel `bds` · the rule is in `lgnd`
+
+GIVEN a SimulatedPlayer holding a marked crossbow, WHEN it dies, THEN:
+- no `andrew:sculk_crossbow` item entity spawns where it died;
+- after respawn, the player's inventory holds exactly one marked crossbow, with its enchantments kept.
+
+The framework's per-def retention scenario covers it with def #5 added to its def list.
+
+
+- **node**: L0-sclk-ac19
+
+### Sclk ac20 concept acceptance criterion (L0-sclk-ac20)
+
+**AC-sclk-20 (T20) · The item entity survives hazards, crossbow instance** · channel `bds` · the rule is in `lgnd` (C-16 reading of `xcx21`)
+
+GIVEN a dropped marked crossbow, WHEN it is put through fire, lava, cactus, TNT, an Orbital LMB blast and the Void,
+THEN after each, **exactly one** marked crossbow exists, held or owed to `mark.owner` (`xasm26`).
+
+AND a crossbow lying inside a crossbow crater box is protected by `protectLegendariesIn` before the carve.
+
+
+- **node**: L0-sclk-ac20
+
+### Sclk ac21 concept acceptance criterion (L0-sclk-ac21)
+
+**AC-sclk-21 · The probe is recorded before any build task** · channel `bds` (checks, 19136)
+
+GIVEN the probe pack (p001), THEN:
+- Q1–Q9 each have a logged yes/no and a measured value in the probe artifact;
+- `L0-adr-scbs` and `L0-adr-scdm` are marked `accepted` or `superseded`, citing those values;
+- `cx01` and `cx02` are updated with the Q2 and Q5 results.
+
+No `sclk` item, pipeline or crater task starts before this.
+
+
+- **node**: L0-sclk-ac21
+
+### Sclk ac22 concept acceptance criterion (L0-sclk-ac22)
+
+**AC-sclk-22 · The deny-list move changes nothing for the Orbital** · channels `bds` + node
+
+GIVEN `PENETRATOR_KEEP` moved to `src/terrain/keep.ts`, THEN:
+- the node set-equality test against the pre-move list passes;
+- the Orbital LMB, penetrator and ring GameTests are green (blast-radius gate);
+- a crossbow bolt hitting bedrock or a barrier leaves it in place.
+
+
+- **node**: L0-sclk-ac22
+
+### Sclk ac23 concept acceptance criterion (L0-sclk-ac23)
+
+**AC-sclk-23 · iPad: the trail looks like a Sonic Boom and follows the bolt** · channel `ipad` (manual, by the operator)
+
+GIVEN the production world on the iPad, WHEN the operator fires a bolt at a target 25 blocks away, THEN they see:
+- a row of teal Sonic Boom rings that follows the bolt's arc, not a straight beam;
+- the rings fade within about 1 s after the bolt ends;
+- no visible frame drop with a Multishot volley.
+
+Reopen after every `sclk` epic merge.
+
+
+- **node**: L0-sclk-ac23
+
+### Sclk ac24 concept acceptance criterion (L0-sclk-ac24)
+
+**AC-sclk-24 · iPad: the crater reads as a small irregular hole** · channel `ipad` (manual)
+
+WHEN the operator shoots grass/dirt ground and a stone wall, THEN:
+- each hit leaves a ragged hole about 5 wide and 2–3 deep, not a cube and not a TNT-sized pit;
+- no item drops lie around;
+- there is no explosion sound or flash.
+
+
+- **node**: L0-sclk-ac24
+
+### Sclk ac25 concept acceptance criterion (L0-sclk-ac25)
+
+**AC-sclk-25 · iPad: the sculk looks natural and stays** · channel `ipad` (manual)
+
+WHEN the operator hits a mob on flat ground and then shoots the ground, THEN:
+- each time, a ragged sculk patch about 5×5 appears on the surface, under the mob or around the crater;
+- after leaving and rejoining the world, the sculk is still there;
+- there are no sensors or shriekers.
+
+
+- **node**: L0-sclk-ac25
+
+### Sclk ac26 concept acceptance criterion (L0-sclk-ac26)
+
+**AC-sclk-26 · iPad: icon, name and tooltip** · channel `ipad` (manual)
+
+GIVEN the operator holds the crossbow, THEN:
+- the hotbar and inventory icon is a recognisable crossbow with sculk colouring (not the missing-texture square);
+- the name reads «Скалковый арбалет» in Russian and "Sculk Crossbow" in English;
+- the tooltip line is localized;
+- no "Ready" Action Bar line appears while it is held (r009).
+
+
+- **node**: L0-sclk-ac26
+
+### Sclk ac27 concept acceptance criterion (L0-sclk-ac27)
+
+**AC-sclk-27 · iPad: Creative entry and shooting feel** · channel `ipad` (manual)
+
+GIVEN the Creative inventory, THEN:
+- the crossbow appears under Снаряжение/Equipment next to the crossbows;
+- searching «арбалет» or "crossbow" finds it.
+
+AND in Survival:
+- the shot charges like a crossbow (or like a bow, per the `xq7` item 8 answer);
+- a quick tap does not fire;
+- a Quick Charge copy charges visibly faster.
+
+
+- **node**: L0-sclk-ac27
+
+### Sclk gl01 concept glossary term (L0-sclk-gl01)
+
+**Sculk bolt (`andrew:sculk_bolt`)**
+
+The snowball-runtime projectile entity that replaces every arrow fired from the Sculk Crossbow, at spawn, with the same velocity and owner. It carries no damage of its own. Its single outcome (an entity hit, a block hit or expiry) is resolved by script.
+
+**Synonyms:** bolt, болт. **Not:** the vanilla arrow, which is removed in its spawn tick.
+
+
+- **node**: L0-sclk-gl01
+
+### Sclk gl02 concept glossary term (L0-sclk-gl02)
+
+**`SONIC_BOOM_DAMAGE` (D)**
+
+The fixed per-bolt hit damage: 10 HP (5 hearts), the Warden's Sonic Boom on Normal (`xasm23`). It is exactly subtracted through armour, Protection, the shield and the invulnerability window (C-28). One exported constant.
+
+**Synonyms:** fixed damage, Sonic Boom damage, урон Sonic Boom.
+
+
+- **node**: L0-sclk-gl02
+
+### Sclk gl03 concept glossary term (L0-sclk-gl03)
+
+**Crater (кратер)**
+
+The scripted, drop-free set of cells turned to air on a bolt's **block** hit. It stays inside a 5×5 footprint × 3 deep box into the hit face, is irregular, and is seeded per bolt (`r003`). It is not an explosion: it causes no entity damage and no `createExplosion`.
+
+**Not:** the Orbital Cannon's penetrator or ring carve, which shares only the deny list.
+
+
+- **node**: L0-sclk-gl03
+
+### Sclk gl04 concept glossary term (L0-sclk-gl04)
+
+**Sculk patch (скалковое пятно)**
+
+Permanent plain `minecraft:sculk` placed on the exposed solid full-block surfaces within ≤ 5×5. It goes under the struck entity (entity hit), or around and inside the crater (block hit), and has a ragged edge (`r004`). It never includes a sensor, shrieker, catalyst or vein.
+
+**Synonyms:** sculk infection, скалковое заражение.
+
+
+- **node**: L0-sclk-gl04
+
+### Sclk gl05 concept glossary term (L0-sclk-gl05)
+
+**Bolt record (`BoltRecord`)**
+
+The in-memory, never-persisted state of one live bolt: owner, seed, birth tick, last position and volley id (`ent3`). Deleting it is the resolve-once guard (C-26). A bolt with no record (after a reload) is removed with no outcome.
+
+
+- **node**: L0-sclk-gl05
+
+### Sclk gl06 concept glossary term (L0-sclk-gl06)
+
+**Passive legendary**
+
+A legendary def with no ability block: no cooldown key, no `resolveActivation` claim and no HUD line (`xcx24`). The Sculk Crossbow is the first one. All other legendary framework rules (craft gate, retention, protection, Void return, magnetism) still apply.
+
+**Synonyms:** no-ability def.
+
+
+- **node**: L0-sclk-gl06
 

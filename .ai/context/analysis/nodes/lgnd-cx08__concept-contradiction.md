@@ -2,7 +2,7 @@
 type: "concept-contradiction"
 node_id: "L0-lgnd-cx08"
 source_channel: "rollout"
-analysis_version: 6
+analysis_version: 7
 title: "CX-lgnd-08 · Hand priority is coded, but neither item can be held in the off hand"
 aliases: ["L0-lgnd-cx08"]
 is_a: ["contradiction"]

@@ -2,7 +2,7 @@
 type: "concept-contradiction"
 node_id: "L0-lgnd-cx09"
 source_channel: "rollout"
-analysis_version: 6
+analysis_version: 7
 title: "CX-lgnd-09 · Loss return in code: owner instead of last holder, and no generation guard"
 aliases: ["L0-lgnd-cx09"]
 is_a: ["contradiction"]

@@ -1,273 +1,55 @@
 ---
 title: Business Rules
 type: project-knowledge
-generated_at: "2026-10-03T23:54:07.046Z"
+generated_at: "2026-10-05T17:12:56.135Z"
 source_channel: rollout
 node_id: rollout-business-rules
 aliases: ["rollout-business-rules","business-rules","project-knowledge/business-rules"]
 is_a: ["rollout","business-rules"]
-relates_to: ["L0","L0-katn-r001","L0-katn-r002","L0-katn-r003","L0-katn-r004","L0-katn-r005","L0-katn-r006","L0-katn-r007","L0-katn-r008","L0-lgnd-r001","L0-lgnd-r002","L0-lgnd-r003","L0-lgnd-r004","L0-lgnd-r005","L0-lgnd-r006","L0-lgnd-r007","L0-lgnd-r008","L0-lgnd-r009","L0-lgnd-r010","L0-lgnd-r011","L0-lgnd-r012","L0-lgnd-r013","L0-lgnd-r014","L0-lgnd-r015","L0-lgnd-r016","L0-lgnd-r017"]
-priority: 600
+relates_to: ["L0","L0-lgnd-r001","L0-lgnd-r002","L0-lgnd-r003","L0-lgnd-r004","L0-lgnd-r005","L0-lgnd-r006","L0-lgnd-r007","L0-lgnd-r008","L0-lgnd-r009","L0-lgnd-r010","L0-lgnd-r011","L0-lgnd-r012","L0-lgnd-r013","L0-lgnd-r014","L0-lgnd-r015","L0-lgnd-r016","L0-lgnd-r017","L0-lgnd-r018","L0-sclk-cons","L0-sclk-r001","L0-sclk-r002","L0-sclk-r003","L0-sclk-r004","L0-sclk-r005","L0-sclk-r006","L0-sclk-r007","L0-sclk-r008","L0-sclk-r009","L0-sclk-r010"]
+priority: 610
 ---
 
 # Business Rules
 
 > Автогенерация из Knowledge Vault. Ручное редактирование — установи `status: manual` в frontmatter.
 
-### Global Constraints (L0)
+### Global Constraints (v7) (L0)
 
 ---
 title: "Global Constraints"
 aliases: ["L0-constraint", "Constraints"]
 is_a: ["constraint"]
 part_of: ["L0"]
-relates_to: ["L0", "L0-adr-ktob", "L0-adr-ktfl", "L0-katn"]
-see_also: ["constraints", "dragonkatanaspecv1ruen-part-2", "dragonkatanaspecv1ruen-part-3", "ufomagnetspecv1ruen-part-4"]
-supersedes: ["L0-constraint@v4"]
+relates_to: ["L0", "L0-sclk", "L0-adr-scdm", "L0-adr-sctr"]
+see_also: ["constraints", "sculkcrossbowspecv1ruen-part-2", "sculkcrossbowspecv1ruen-part-3", "sculkcrossbowspecv1ruen-part-4"]
+supersedes: ["L0-constraint@v6"]
 ---
-# Global Constraints
+# Global Constraints (v7)
 
-**Carried unchanged:**
-- C-1 … C-14 (v2);
-- C-5a′ and C-15 … C-20 (v3);
-- C-5d, C-7″, C-12′ and C-21 … C-23 (v4).
-
-All of them bind the Katana. The ones it leans on most:
+**Carried unchanged:** C-1 … C-25, C-5a′, C-5d, C-5e, C-7″, C-12′, C-20″. All of them bind the crossbow. The ones it leans on most:
 - C-2: stable 2.10.0, no Experiments.
-- C-7: no duplication. The craft gate and protection come from `lgnd`.
-- C-12: never write into unloaded chunks. An unreadable trace cell is a blocker.
-- C-15: the priority order.
-- C-16: closest stable equivalent, documented.
-- C-21: the cooldown is in epoch ms.
+- C-7: no duplication. The craft gate, protection and the deny list come from `lgnd` and `orbc`.
+- C-12: never write into unloaded chunks.
+- C-15: the priority order; crossbow §14 restates it for this weapon.
+- C-16: the closest stable equivalent, documented.
 - C-22: filter out `undefined` players.
+- C-23: in-flight state is not persisted.
 
-v6 adds:
+v7 adds:
 
 | ID | Constraint | Source |
 |---|---|---|
-| C-24 | *(new)* **Wielder movement is server-authoritative and conservative.** The destination is computed only by the script from the server-side head location and view direction at activation, and capped at 20 blocks. The player is never placed in a cell the obstacle predicate (`L0-adr-ktob`) calls solid. Nothing is placed into a cell that cannot be read (unloaded chunk or outside the height range): such a cell counts as solid. A movement ability never edits blocks. | Katana §5, §6, §11, §14 |
-| C-25 | *(new)* **Protective flags are one-shot and bounded.** A protection granted by an ability (the Katana's fall flag) is consumed by its first qualifying event and also expires after a wall-clock bound (epoch ms, C-21), whichever comes first. Like in-flight events (C-23), it is not persisted across a restart. It must never become a standing immunity. | Katana §7; T12 |
-| C-5e | *(new)* **Ability visuals are one-shot.** A trail is spawned once, on success, as a bounded number of particle emissions in the activation tick (or spread over ≤ 10 ticks via the shared interval), with no lingering entities and no per-tick scans. The fall-flag watch costs nothing while no player carries the flag. | Katana §8, §14; C-5d |
-| C-20″ | *(extended)* Katana acceptance uses ≥ 2 players: the trail is visible to an observer, and the cooldown belongs to the owner only. | Katana §8, §11 |
+| C-26 | *(new)* **One projectile, one outcome, decided by the server.** Each bolt is tracked separately (a Multishot volley is three records) and resolves **at most once**, to exactly one of: an entity hit (fixed damage to the struck entity only, plus a patch), a block hit (crater plus sculk), or expiry/unload (nothing). Vanilla projectile damage is never applied on top of the fixed damage, and no other entity is ever damaged by a bolt, a crater or a patch. | §5, §6, §9, §11, §14 |
+| C-27 | *(new)* **Terrain edits by a weapon are bounded, protected and permanent.** A crossbow bolt edits only cells inside its own box: crater ≤ 5×5 footprint × 3 deep, sculk ≤ 5×5 around the impact. Before any edit, `protectLegendariesIn` runs on that box. The Survival-unbreakable deny list is never edited. Cells in unloaded chunks or outside the height range are skipped. The edits are ordinary world changes: synced to every client, saved, never rolled back. | §6, §7, §11, §14; C-12 |
+| C-5f | *(new)* **Visuals of a flying projectile are bounded.** Boom particles are emitted only while a bolt is alive, at a fixed small count per bolt per tick, from the shared interval. A bolt has a lifetime cap. There are no lingering effect entities. With no bolts in flight, the cost is zero. | §4, §11 |
+| C-28 | *(new)* **Fixed damage is fixed.** The crossbow's hit damage is one constant: the same at every difficulty and whatever the armour, Protection, the shield or the hurt-invulnerability window. Kill credit, the death message and totems still work (the true-damage pattern from `decision-scythe-true-damage`). | §5, §8, §9; T06–T08, T17 |
+| C-20‴ | *(extended)* Crossbow acceptance uses ≥ 2 players: a SimulatedPlayer target for T08 (armour and shield) and T17 (three hits), and a bystander for T09 and T12. | §12 |
 
 
 
 
 - **node**: L0
-
-### Katn r001 concept rule (L0-katn-r001)
-
----
-title: "R-katn-001: Recipe, damage and durability"
-is_a: ["rule"]
-part_of: ["L0-katn"]
-relates_to: ["L0-lgnd-p001", "L0-xasm22", "L0-katn-ent1"]
-see_also: ["dragonkatanaspecv1ruen-part-1"]
----
-**Rule.**
-1. **Recipe.** It is a shaped 3×3 recipe:
-   ```
-   . G .
-   P S P
-   . G .
-   ```
-   G is `minecraft:golden_apple` (not the enchanted one), P is `minecraft:ender_pearl`, S is `minecraft:diamond_sword` (any damage or enchantment, none carried over, `L0-xasm22`).
-   - The output is the craft token `andrew:dragon_katana_crafted`, never the item.
-   - Gate, refund and broadcast are `L0-lgnd-p001`.
-2. **Melee.** An ordinary hit deals exactly what a vanilla Diamond Sword deals in the same situation: no hidden bonus and no script damage (§4).
-   - Vanilla enchantments for the sword slot apply as usual.
-   - Melee is unaffected by the ability's cooldown (T14). The ability never runs on attack: the Katana def has no attack activation.
-3. **Durability.** There is no durability component. Hits and uses never damage the item (T15).
-4. **Ability harm.** The ability itself deals no damage to entities or blocks (§4, §8).
-
-Source: Katana §2, §4, T04, T14, T15.
-
-
-
-
-- **node**: L0-katn-r001
-
-### Katn r002 concept rule (L0-katn-r002)
-
----
-title: "R-katn-002: Server-authoritative 20-block cap, same dimension, no block edits"
-is_a: ["rule"]
-part_of: ["L0-katn"]
-relates_to: ["L0-xasm18", "L0-katn-p001", "L0-katn-ent2"]
-see_also: ["dragonkatanaspecv1ruen-part-2", "dragonkatanaspecv1ruen-part-3"]
----
-**Rule** (C-24).
-- The destination is computed only from the server's `getHeadLocation()` and `getViewDirection()` at the moment of use. No client-supplied point is ever read.
-- **Cap.** The resulting head position lies within 20.0 blocks of the use-time head: `|B + (0,1.62,0) − H| ≤ 20`. Aim further than 20 is **clamped**, not refused (`L0-xasm18`).
-- **Dimension.** The teleport is always in the player's current dimension. A teleport is never attempted into another dimension's chunks.
-- **No edits.** The ability never calls `setType`, `setPermutation`, `fillBlocks` or any command that changes blocks. If no cell fits, there is no teleport. Space is never created.
-- **Facing.** The teleport keeps the use-time rotation.
-- **Particles.** Particles are never a source of truth for position (§11).
-
-Source: Katana §5, §6, §11, §14; T05, T06, T10.
-
-
-
-
-- **node**: L0-katn-r002
-
-### Katn r003 concept rule (L0-katn-r003)
-
----
-title: "R-katn-003: Obstacle semantics of the trace"
-is_a: ["rule"]
-part_of: ["L0-katn"]
-relates_to: ["L0-adr-ktob", "L0-katn-ad01", "L0-katn-cx01", "L0-xasm21"]
-see_also: ["dragonkatanaspecv1ruen-part-2"]
----
-**Rule.** The trace stops at the first block that the engine's block ray reports with `includePassableBlocks: false, includeLiquidBlocks: false` (`L0-adr-ktob`).
-- **Do not stop it:** water, lava, air, and passable blocks (grass, flowers, torches, signs, ladders, carpet, cobweb; to be confirmed by probe (2)).
-- **Stop it:** full blocks and partial-collision blocks (slabs, stairs, fences, walls, glass panes, doors). The Katana stops short rather than risk a stuck player.
-- **Unreadable = solid.** A point of the segment in an unloaded chunk (`dimension.getBlock` returns `undefined` or throws) or outside `dimension.heightRange` ends the trace just before it.
-- The Katana never phases through a stopping block. The landing cell is always reached from the head by a clear ray.
-- A Web Sword trap does not hold the player: cobweb is passable (`L0-xasm21`). The UFO magnet does not cancel the ability.
-
-These semantics deliberately differ from the Scythe's `hasLineOfSight` (any non-air, non-liquid block blocks). Each module's README names the difference.
-
-Source: Katana §5, §13; T07, T08; C-12, C-24.
-
-
-
-
-- **node**: L0-katn-r003
-
-### Katn r004 concept rule (L0-katn-r004)
-
----
-title: "R-katn-004: Safe standing cell"
-is_a: ["rule"]
-part_of: ["L0-katn"]
-relates_to: ["L0-xasm19", "L0-adr-ktob", "L0-katn-ad01", "L0-katn-as01", "L0-katn-as03", "L0-katn-cx01"]
-see_also: ["dragonkatanaspecv1ruen-part-2"]
----
-**Rule.** A candidate feet cell `F` is safe when all of these hold:
-1. **Fits** (`L0-katn-ad01`): the feet cell `F` and the head cell `F+up` are each free (air, water, or a block the column ray passes).
-2. **Not a hazard** (`L0-katn-as03`): neither cell is lava, fire or soul fire. A powder-snow, sweet-berry or magma *floor* is allowed: the spec forbids only suffocation and walls.
-3. **Owner's side**: the centre of `F` is on the head's side of the hit-face plane, when there was a hit.
-4. **Reachable**: a clear ray (same flags) runs from `H` to the centre of the head cell of `F`.
-5. **In range**: `|centre(F) + (0,1.62,0) − H| ≤ 20`.
-
-**Order** (`L0-xasm19`, nearest first): the desired feet cell; then cells back along the ray in 0.5-block steps; at each step the offsets +1 and +2 up and ±1 to the side (perpendicular to `d` in the horizontal plane). The first safe one wins. The search stops at the player's own cell. Nothing safe → refusal: no teleport, no cooldown.
-
-- **Placement.** Teleport to the cell centre (x+0.5, y, z+0.5). A 0.6-wide hitbox centred in a free cell cannot overlap the neighbouring full blocks.
-- **Pose.** No crawling or lying pose is simulated; a standing 2-high fit is required (§6).
-- **Air.** A cell in the air is a valid B (fall protection covers it).
-
-Source: Katana §5, §6; T07, T09.
-
-
-
-
-- **node**: L0-katn-r004
-
-### Katn r005 concept rule (L0-katn-r005)
-
----
-title: "R-katn-005: Cooldown only on a successful teleport; an attempt on cooldown changes nothing"
-is_a: ["rule"]
-part_of: ["L0-katn"]
-relates_to: ["L0-lgnd-p004", "L0-lgnd-p005", "L0-katn-p001"]
-see_also: ["dragonkatanaspecv1ruen-part-2"]
----
-**Rule.**
-- `startCooldown(player, "dragon_katana")` (600 ticks = 30 000 ms, epoch ms) is called **only** after `player.teleport` returned without throwing, in the same turn.
-- The cooldown is per player and ability (`andrew:cd_dragon_katana`), synchronised by the server, and survives a restart (`L0-lgnd-p005`).
-- A refusal (no safe cell, all unreadable, wrong def resolved) never writes the timer.
-- **On cooldown**, a Use press is a no-op. There is no teleport, `andrew:cd_dragon_katana` is unchanged, and there is no chat message. Only the HUD shows the remaining seconds.
-- The Katana never sets the framework's busy window: the ability is instant. Swapping hands after a success changes nothing.
-- **Off hand.** With another legendary ready in the main hand, the main hand wins. With the main hand on cooldown and the Katana ready in the off hand, the Katana fires (`L0-lgnd-p004`).
-- Melee hits work at any cooldown state.
-
-Source: Katana §5, §9, §11; T05, T14.
-
-
-
-
-- **node**: L0-katn-r005
-
-### Katn r006 concept rule (L0-katn-r006)
-
----
-title: "R-katn-006: Fall protection is one-shot and bounded"
-is_a: ["rule"]
-part_of: ["L0-katn"]
-relates_to: ["L0-adr-ktfl", "L0-xasm20", "L0-katn-p002", "L0-katn-ent2"]
-see_also: ["dragonkatanaspecv1ruen-part-2"]
----
-**Rule** (C-25).
-- After a successful teleport, the first landing caused by it deals no fall damage (T11).
-- The protection ends at the first of these: an on-ground tick, a liquid, a climb, a glide, death, a dimension change, logout, or 10 s of wall-clock time.
-- The next ordinary fall deals vanilla damage (T12).
-- The protection never blocks any other damage: PvP, mobs, lava, the Void, suffocation.
-- It never alters the visible descent: no slow-falling float, unless the probe-failure fallback in `L0-katn-p002` §4 is adopted by a superseding ADR.
-- It is not persisted.
-
-Source: Katana §7; T11, T12.
-
-
-
-
-- **node**: L0-katn-r006
-
-### Katn r007 concept rule (L0-katn-r007)
-
----
-title: "R-katn-007: Cherry-petal trail A→B, one-shot and harmless"
-is_a: ["rule"]
-part_of: ["L0-katn"]
-relates_to: ["L0-katn-p001", "L0-katn-as03"]
-see_also: ["dragonkatanaspecv1ruen-part-2", "dragonkatanaspecv1ruen-part-3"]
----
-**Rule** (C-5e).
-- The trail is spawned **only** on a successful teleport.
-- `dimension.spawnParticle` is called at points every 0.5 block from A+1 to B+1: at most 41 points, about 3 particles per point.
-- It runs in the activation tick, or spread over ≤ 10 ticks through the shared interval. Nothing is scheduled after that.
-- **Particle.** `minecraft:cherry_leaves_particle` if probe (4) shows it renders when spawned by script on iPad. Otherwise a custom RP particle `andrew:katana_petal`: a pink billboard, lifetime ≤ 1.5 s, no collision.
-- **Visibility.** `spawnParticle` is broadcast to clients in range, so nearby players see it (§8).
-- **Harmless.** No entity is spawned, no damage, no knockback, no block change, no sound requirement.
-- Points in unloaded chunks are skipped silently.
-
-Source: Katana §8, §14; T13.
-
-
-
-
-- **node**: L0-katn-r007
-
-### Katn r008 concept rule (L0-katn-r008)
-
----
-title: "R-katn-008: HUD and localization strings"
-is_a: ["rule"]
-part_of: ["L0-katn"]
-relates_to: ["L0-lgnd-p005", "L0-katn-ent1"]
-see_also: ["dragonkatanaspecv1ruen-part-2"]
----
-**Rule.** The shared HUD pass (`L0-lgnd-p005`) renders the Katana through the def's `hudKeys`, the field the Orbital Cannon already uses. No framework code changes.
-
-| Key | en_US | ru_RU |
-|---|---|---|
-| `item.andrew:dragon_katana.name` | Dragon Katana | Катана дракона |
-| `andrew.katana.hud_ready` | `%s — Ready` | `%s — Готово` |
-| `andrew.katana.hud_cooldown` | `%s — %s s` | `%s — %s с` |
-
-- Ready reads exactly "Dragon Katana — Ready" / "Катана дракона — Готово" (§10). The shared `%s: Ready` would not match.
-- `hudKeys` takes both keys (`registry.ts:34`), so the Katana carries its own cooldown line too, in the same em-dash shape. The Orbital Cannon set the precedent (`andrew.orbital.hud_cooldown`). Key names: `L0-lgnd-ad14` (reconciled at reduce v6).
-- During cooldown the HUD shows the whole seconds left, rounded up.
-- Both lang files also carry the `andrew.katana.*` texts that `lgnd` needs: first_craft, craft_blocked, returned, admin_given, reset.
-- Creative inventory: Equipment → swords group, and found by search; `/give @s andrew:dragon_katana` works.
-
-Source: Katana §10.
-
-
-
-
-- **node**: L0-katn-r008
 
 ### Lgnd r001 concept rule (L0-lgnd-r001)
 
@@ -628,25 +410,21 @@ relates_to: ["L0-lgnd-ad09", "L0-lgnd-r004", "L0-lgnd-r003", "L0-lgnd-p009", "L0
 
 ### Lgnd r016 concept rule (L0-lgnd-r016)
 
----
-is_a: ["rule"]
-part_of: ["L0-lgnd"]
-relates_to: ["L0-lgnd-ad13", "L0-magn", "L0-lgnd-r013", "L0-lgnd-ac21", "L0-lgnd-ac22", "L0-lgnd-cx13"]
----
-**R-lgnd-016: The magnet never moves a legendary, and anything it moves that holds one stays recoverable.** Source: UFO §4, AC 13; Agent priorities (1).
+**R-lgnd-016 (v7): Legendary weapons are magnetic by operator tuning; craft tokens never are, and magnetism never destroys or duplicates an instance.**
 
-1. **Predicate.** "Legendary" for the magnet means `isLegendaryStack(stack)`: the type is a def's `itemId` or `craftTokenId`, in any mark state (`ad13`).
-2. **Ground / container stacks.** A stack for which the predicate is true is never selected, never extracted and never teleported. It does not count towards the 10-element limit.
-3. **Whole-entity elements.** The magnet does not select:
-   - a chest or hopper minecart with any slot holding a legendary;
-   - an armour stand or mob with a legendary in a hand slot.
-   It takes the next candidate instead.
-4. **Holder blocks.** *Reduce v4: dormant.* the magnet pulls a hopper only when it is empty (`L0-magn-adhp`), so it turns no `HOLDER_TYPES` block with contents into air. The clause stays as the floor for any future change to that list. Turning a `HOLDER_TYPES` block into air is script-caused destruction. `protectLegendariesIn` runs first, in the same synchronous step (`r013`, tier 1). The legendary is then dropped next to the cell with the same id and gen, and is **not** pulled.
-5. **Players.** A player is pulled by iron in either hand. A legendary in the other hand rides along as part of the player. That is not "pulling the weapon", and death retention covers it (`ac22`).
-6. **Late drops.** A legendary dropped during the magnet within 12 blocks of the hover point is not iron, so it is not pulled beyond the limit either.
-7. **Release / stop / restart.** The magnet holds no legendary, so it never has to release, persist or restore one.
+Related: L0-magn, L0-lgnd-ad13, L0-lgnd-ac21, L0-lgnd-ac22.
 
-**Why the entity case is a rule, not a nicety.** A pulled entity is teleported every tick and dropped with vanilla physics. It may land in lava, cactus or the Void. Its contents then spill as item entities, and recovery only catches them through `entitySpawn`, after the magnet has already moved the weapon. That is visible "pulling" (AC 13).
+**History.** UFO §4 / AC 13 said legendaries are never pulled. The operator reversed it on 2026-10-04 (1.6.0, `de0fc68`, "Replaces UFO AC 13 / R-lgnd-016"). This rule is now an **operator-tuned exception** to the spec.
+
+**As built (1.6.1).**
+1. The magnet's predicate is `isMagneticStack(stack) = isIronItem || isLegendaryWeaponStack` (`iron.ts:139-140`, `magnet-select.ts:393`). A legendary **weapon** (any def's `itemId`, marked, unmarked or stale) is pulled like iron:
+   - on the ground, from container slots, and as a late drop;
+   - a player holding one in a hand is lifted (`magnet-hold.ts:117-136`);
+   - a mob or armour stand holding one is a class-3 holder, tagged via `hasitem` over `HELD_LEGENDARY_IDS` (`magnet-select.ts:179`, `:320`).
+2. A **craft token** is never magnetic: `hasitem` rejects `menu_category: none` items, and a token is a craft in flight (`ad08`).
+3. A hopper holding anything is a container, never a pulled block (`decision-resolve-l0-lgnd-cx13`), so no block pull ever removes a holder with a legendary in it; `protectLegendariesIn` has no magnet call site.
+4. **The framework invariants still hold under magnetism:** after a pull the world holds exactly one live copy of each marked instance, its gen is unchanged unless a tier-3 loss happened, and a fall death after the hold keeps every held legendary (`ac22`).
+5. Every new def is magnetic with no `magn` edit, because the predicate is built from `LEGENDARIES`. The Katana and the crossbow are pulled; the crossbow spec does not list the magnet as a hazard, so this is no breach.
 
 
 
@@ -685,4 +463,227 @@ relates_to: ["L0-katn", "L0-lgnd-p003", "L0-lgnd-ad12", "L0-lgnd-ac24", "L0-adr-
 
 
 - **node**: L0-lgnd-r017
+
+### Lgnd r018 concept rule (L0-lgnd-r018)
+
+**R-lgnd-018: A passive legendary has every legendary property and no ability property.**
+
+Related: L0-lgnd-ad15, L0-lgnd-r004, L0-lgnd-r007, L0-xcx24.
+
+A def with `hasAbility(def) === false`:
+1. **Never claims a Use.** `resolveActivation` skips it. With a passive def in the main hand and a ready active def in the off hand, the off hand answers the Use. This is a new case of `r004`: a passive main hand counts as "no ready ability", like a cooling one.
+2. **Never draws a HUD line.** A player holding only passive legendaries receives no `setActionBar` call from the HUD. Holding a passive and an active one shows only the active line.
+3. **Never writes or reads a timer.** No `andrew:cd_*` or `andrew:busy_*` key exists for it, and `defForAbility` never returns it.
+4. **Keeps every other legendary rule unchanged**: the craft gate and broadcast, marks and generation, death retention (both hands), loss return and the owed list, `protectLegendariesIn`, magnetism (`r016`), operator commands.
+
+Defs #1–#4 are active. Their behaviour, keys and HUD strings do not change.
+
+
+
+
+- **node**: L0-lgnd-r018
+
+### Constraints · `sclk` (component NFRs; inherits C-1 … C-28) (L0-sclk-cons)
+
+# Constraints · `sclk` (component NFRs; inherits C-1 … C-28)
+
+**Links:** `part_of: ["L0-sclk"]` · `is_a: ["constraints"]` · `relates_to: ["L0-sclk-as04", "L0-sclk-ad04"]`
+
+| Id | Constraint | From |
+|---|---|---|
+| K-sclk-1 | Zero per-tick cost when no bolt is alive and the carve queue is empty. No world scans, ever. | C-5f, §11 |
+| K-sclk-2 | ≤ 3 trail particles per bolt per tick; bolt lifetime ≤ 100 ticks | C-5f, `xasm27` |
+| K-sclk-3 | ≤ 300 `setType` per tick from the carve queue; no `runJob`, no new `runInterval` | ad04 |
+| K-sclk-4 | Stable `@minecraft/server` 2.10.0 only; no Experiments; deviations are documented in the README | C-16, §13 |
+| K-sclk-5 | Server-authoritative: every hit, damage and edit decision is in the BP script; the RP is cosmetic | §11 |
+| K-sclk-6 | Edits respect C-12 (no unloaded writes) and C-27 (box, protect-first, deny list) | C-27 |
+| K-sclk-7 | Acceptance with ≥ 2 SimulatedPlayers per combat test (a shooter plus a target or bystander) on the **checks** BDS; GameTests never default to production | C-20‴ |
+| K-sclk-8 | Pure planners (`crater-plan.ts`, the speed gate, Piercing stripping) are node-tested with no `@minecraft/server` import | the repo pattern |
+| K-sclk-9 | Defs #1–#4 keep byte-identical behaviour; the Orbital carve is unchanged after the deny-list move | `xcx24`, `xcx25` |
+
+
+
+
+- **node**: L0-sclk-cons
+
+### Sclk r001 concept rule (L0-sclk-r001)
+
+**R-sclk-001 · One arrow → one bolt → at most one outcome (C-26, §8, §11)**
+
+**Links:** `part_of: ["L0-sclk"]` · `is_a: ["rule"]` · `relates_to: ["L0-sclk-p002", "L0-sclk-p004", "L0-sclk-p005", "L0-sclk-ent3"]`
+
+- Each substituted arrow gives **exactly one** bolt. Emulated Multishot gives exactly two more. Each bolt has its own `BoltRecord`.
+- A record resolves **at most once**, to exactly one of: `entity` (p004), `block` (p005) or `expired` (p003). The handler deletes the record **before** acting, so a duplicate event (hit-entity then hit-block, or the shield fallback after an event) is a no-op.
+- Three Multishot bolts are three records. They are never merged into one hit, one damage call or one carve job.
+- No other path damages an entity: not the trail, not the crater and not the patch.
+
+Source: §8 ("each processed independently"), §11 ("cannot merge three arrows into one hit event"), §14.
+
+
+
+
+- **node**: L0-sclk-r001
+
+### Sclk r002 concept rule (L0-sclk-r002)
+
+**R-sclk-002 · Fixed Sonic Boom damage (C-28)**
+
+**Links:** `part_of: ["L0-sclk"]` · `is_a: ["rule"]` · `relates_to: ["L0-xasm23", "L0-xcx22", "L0-adr-scdm", "L0-scyt", "L0-sclk-p004"]`
+
+- `SONIC_BOOM_DAMAGE = 10` (HP). It is exported from one module (`src/sculk/constants.ts`) and read by the GameTests (`xasm23`; the probe's Q8 may replace the value, never the shape).
+- Every living direct hit lowers the target's health by **exactly D**, or kills it if hp ≤ D. This holds:
+  - at any difficulty (T07);
+  - with any armour, Protection level or raised shield (T08);
+  - inside the hurt-invulnerability window (T17, `xcx22`).
+- The mechanism is the Scythe true-damage pattern (`volley.ts:114-136`): `applyDamage` for the flash, sound and credit, then `setCurrentValue(hp − D)`. If hp ≤ D, it is an overkill `applyDamage(hp + 100)`.
+- `damagingEntity` is the bolt's owner while the owner is valid, so the kill credit and the death message name the shooter.
+- No vanilla arrow damage, no Power bonus, no crit bonus and no tipped effect is ever added (§9, §14).
+- A totem of undying still works, because the lethal path goes through `applyDamage`.
+
+
+
+
+- **node**: L0-sclk-r002
+
+### Sclk r003 concept rule (L0-sclk-r003)
+
+**R-sclk-003 · Crater shape and bounds (§6, C-27)**
+
+**Links:** `part_of: ["L0-sclk"]` · `is_a: ["rule"]` · `relates_to: ["L0-adr-sctr", "L0-sclk-ent4", "L0-sclk-p005"]`
+
+- The footprint is a 5×5 square centred on the impact cell, in the plane of the hit face. The depth goes ≤ 3 cells into the face, from the impact cell inward. The crater never leaves this 5×5×3 box.
+- Shape: an ellipsoid with semi-axes ≈ (2.5, 2.5, 3), each surface cell jittered by `seed`. **The impact cell and the cell behind it are always carved**, so the centre is ≥ 2 deep.
+- Irregularity: on flat stone, at least one of the 25 footprint columns at the rim is left uncarved, so it is never a perfect box.
+- The same `(impact, face, seed)` always gives the same cells (a pure function, node-tested).
+- Side and ceiling hits carve into the face hit, not downward.
+- The skip rules are r010 and `xasm25`: air, liquids, the deny list, unloaded cells and cells out of height range.
+
+
+
+
+- **node**: L0-sclk-r003
+
+### Sclk r004 concept rule (L0-sclk-r004)
+
+**R-sclk-004 · Sculk placement (§5, §7, C-27)**
+
+**Links:** `part_of: ["L0-sclk"]` · `is_a: ["rule"]` · `relates_to: ["L0-xasm24", "L0-sclk-ent4", "L0-sclk-p004", "L0-sclk-p005"]`
+
+- The only block placed is `minecraft:sculk`. Never a sensor, shrieker, catalyst or vein.
+- **Eligible cell:** a solid full block (not a liquid, a container, a block entity, the deny list, or air) with an air or passable block on the exposed side.
+  - Block hit: the cells form the crater's new inner surface plus the rim surface, inside the 5×5 around the impact.
+  - Entity hit: the top surface under the target.
+- **Box:** ≤ 5×5 in footprint, centred on the impact column (block hit) or on the target's feet column (entity hit). For an entity hit, the surface is searched ≤ 6 blocks below the feet (`xasm24`); if there is none, there is no patch.
+- **Ragged edge:** the corner cells and about 30 % of the outer-ring cells are skipped by `seed` (§5, "not a perfect square").
+- Sculk is permanent. There is no timer and no rollback. It survives a chunk or server reload as an ordinary block.
+- The patch happens only as a bolt outcome. No other path places sculk (§7).
+
+
+
+
+- **node**: L0-sclk-r004
+
+### Sclk r005 concept rule (L0-sclk-r005)
+
+**R-sclk-005 · Enchantments (§8)**
+
+**Links:** `part_of: ["L0-sclk"]` · `is_a: ["rule"]` · `relates_to: ["L0-sclk-ad01", "L0-sclk-cx01", "L0-adr-scbs", "L0-sclk-as05"]`
+
+- **Allowed:** Quick Charge (I–III), Multishot, Unbreaking (no effect, since there is no durability) and Mending (no effect).
+- **Piercing is forbidden.**
+  - Any `andrew:sculk_crossbow` stack found with `piercing` loses it. This is checked on `playerInventoryItemChange`, on a held-item change and on craft-token delivery.
+  - The stack keeps its other enchantments. No XP is refunded.
+  - Log `sculk: stripped piercing from <player>`.
+- Even before a strip lands, Piercing never changes an outcome. A bolt resolves once (r001), so a pierce-through is impossible by construction.
+- **Quick Charge** shortens the required charge time. Natively it is the vanilla 1.25 s − 0.25 s × level. When emulated (`as05`), the release-speed gate (r006) takes the same table.
+- **Multishot** gives three bolts: native or emulated at ±10° yaw (`as05`), one arrow consumed.
+
+
+
+
+- **node**: L0-sclk-r005
+
+### Sclk r006 concept rule (L0-sclk-r006)
+
+**R-sclk-006 · Ammunition and charge (§9, `xasm27`)**
+
+**Links:** `part_of: ["L0-sclk"]` · `is_a: ["rule"]` · `relates_to: ["L0-xasm27", "L0-sclk-cx02", "L0-sclk-ad01", "L0-sclk-p002"]`
+
+- **Ammunition:** `minecraft:arrow` in every variant (plain, tipped, spectral). No firework rockets. Tipped and spectral effects are discarded.
+- **Consumption:** as the engine spends it. In Survival, one arrow per shot, Multishot included. In Creative, none.
+- **The reload is the only limiter** (§9: no cooldown).
+  - A shot counts only if it was fully charged. A charged shot is an arrow whose spawn speed is ≥ `MIN_BOLT_SPEED`, measured by the probe (Q5) as 90 % of the full-draw speed.
+  - With Quick Charge, the time to full charge shortens, never the speed threshold.
+  - Under-charged releases: the arrow is removed, the ammunition stays spent, and no bolt is spawned (`cx02`).
+- **Bolts are never picked up.** They are removed on their outcome or on expiry.
+- **Lifetime:** `BOLT_LIFETIME_TICKS = 100`.
+
+
+
+
+- **node**: L0-sclk-r006
+
+### Sclk r007 concept rule (L0-sclk-r007)
+
+**R-sclk-007 · The trail is visual only and bounded (§4, §11, C-5f)**
+
+**Links:** `part_of: ["L0-sclk"]` · `is_a: ["rule"]` · `relates_to: ["L0-sclk-p003", "L0-sclk-ad02"]`
+
+- The trail is emitted only for a bolt with a live record, from the shared interval, at ≤ `TRAIL_PER_TICK` = 3 particles per bolt per tick. It is placed on the segment between the bolt's last and current real positions.
+- Worst case: one player, a Multishot volley of 3 bolts × 3 particles × 100 ticks = 900 particle spawns in 5 s.
+- The trail has no damage, no knockback, no block edits, no sound loop and no entity. No dummy entity carries it.
+- Nothing lingers after the bolt dies: the particle's own lifetime is ≤ 1 s (an RP look-alike sets `max_lifetime ≤ 1`).
+- The bolt itself is the physical projectile. The trail is never a hitscan ray (§9).
+
+
+
+
+- **node**: L0-sclk-r007
+
+### Sclk r008 concept rule (L0-sclk-r008)
+
+**R-sclk-008 · Infinite durability (§1, §3, T18)**
+
+**Links:** `part_of: ["L0-sclk"]` · `is_a: ["rule"]` · `relates_to: ["L0-sclk-ent1", "L0-adr-scbs"]`
+
+- Under option A (`adr-scbs`), the item JSON has **no `minecraft:durability`** component, so shots, melee and use never create a damage value. `ItemStack.getComponent("minecraft:durability")` is `undefined`.
+- Under option B (a fallback, `lgnd`-owned): after each shot, the script resets `durability.damage = 0` on the marked stack. T18 then goes to `lgnd` (plan routing).
+- An anvil cannot "repair" it, and Unbreaking or Mending change nothing. Both are allowed (r005).
+
+
+
+
+- **node**: L0-sclk-r008
+
+### Sclk r009 concept rule (L0-sclk-r009)
+
+**R-sclk-009 · Passive legendary: no ability, no cooldown, no HUD (§1, §9, §10, `xcx24`)**
+
+**Links:** `part_of: ["L0-sclk"]` · `is_a: ["rule"]` · `relates_to: ["L0-xcx24", "L0-lgnd"]`
+
+- Def #5 has no ability block. It writes no cooldown or busy key, never claims a Use in `resolveActivation`, and never adds an Action Bar line.
+- With the crossbow in one hand and the Katana, Cannon or Scythe in the other, the other weapon's Use and HUD behave as they do today.
+- Holding the crossbow alone shows **no** "Ready" line.
+- `sclk` adds no other framework hook. Any further need is a new L0 contradiction (plan, reduce §1).
+
+
+
+
+- **node**: L0-sclk-r009
+
+### Sclk r010 concept rule (L0-sclk-r010)
+
+**R-sclk-010 · One shared deny list for weapon terrain edits (C-7, `xcx25`)**
+
+**Links:** `part_of: ["L0-sclk"]` · `is_a: ["rule"]` · `relates_to: ["L0-xcx25", "L0-adr-sctr", "L0-orbc", "L0-pntr", "L0-xasm6"]`
+
+- `PENETRATOR_KEEP` (`src/orbital/penetrator-keep.ts:34`) moves to `src/terrain/keep.ts`, exported as `TERRAIN_KEEP`. `penetrator-keep.ts` re-exports it, or its imports are updated, so the Orbital behaviour is byte-identical.
+- The crossbow crater and the sculk patch never `setType` a block in `TERRAIN_KEEP`.
+- No per-weapon copy or extension. If the crossbow needs an extra exclusion, it goes into the shared list and the Orbital gate re-runs.
+- Liquids are skipped by the crater (`xasm25`), not by the list. The list keeps its Orbital meaning.
+
+
+
+
+- **node**: L0-sclk-r010
 

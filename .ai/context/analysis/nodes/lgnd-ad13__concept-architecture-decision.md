@@ -2,44 +2,32 @@
 type: "concept-architecture-decision"
 node_id: "L0-lgnd-ad13"
 source_channel: "rollout"
-analysis_version: 6
-title: "AD-lgnd-13: `isLegendaryStack(stack)` is type-based, and a magnet block pull of a holder goes through `protectLegendariesIn`"
+analysis_version: 7
+title: "AD-lgnd-13 (v7): Type-based legendary predicates; the magnet now uses the weapon predicate to *include*, not to exclude"
 aliases: ["L0-lgnd-ad13"]
 is_a: ["architecture-decision"]
 part_of: ["L0-lgnd"]
 relates_to: ["L0-lgnd"]
-priority: 580
-size_chars: 2504
-tags: ["ufo", "magn", "contract"]
+priority: 610
+size_chars: 1508
+tags: ["v7", "magnet", "predicate"]
 level: 2
 ---
----
-is_a: ["architecture-decision"]
-part_of: ["L0-lgnd"]
-relates_to: ["L0-magn", "L0-lgnd-r016", "L0-lgnd-ac21", "L0-lgnd-ad12", "L0-lgnd-p008", "ufomagnetspecv1ruen-part-2", "ufomagnetspecv1ruen-part-4"]
----
-# AD-lgnd-13: `isLegendaryStack(stack)` is type-based, and a magnet block pull of a holder goes through `protectLegendariesIn`
+# AD-lgnd-13 (v7): Type-based legendary predicates; the magnet now uses the weapon predicate to *include*, not to exclude
 
-**Context.**
-- UFO §4: *«Легендарные оружия не являются железными и не притягиваются никогда, где бы они ни лежали»*. AC 13: "Legendary weapons are never pulled."
-- `magn` selects ground stacks, container stacks, whole entities (minecarts, armour stands, mobs) and blocks, including the `hopper` block (§4 "Блоки в мире").
-- The only published predicate is `isLegendaryItemEntity(entity)`. It is entity-level and true only for a **live marked** stack.
+Related: L0-magn, L0-lgnd-r016, L0-lgnd-ac21, L0-lgnd-ad16.
 
-**Decision.**
-1. `lgnd` exports `isLegendaryStack(stack?: ItemStack): boolean` from `registry.ts`. It is true when `stack.typeId` is any def's `itemId` **or** `craftTokenId`, **whatever its mark state**: marked, unmarked (`/give`, Creative) or stale. It is a pure function with no dynamic-property read, so it costs O(1) per slot.
-2. `magn` consults it for:
-   - every candidate ground stack;
-   - every container slot it extracts;
-   - every slot of a chest or hopper minecart it would pull whole;
-   - the hand slots of an armour stand it would pull.
-   An entity that **carries** a legendary is skipped as an element (`r016`).
-3. `magn` turns a `HOLDER_TYPES` block into air only when it is an empty hopper, checked in the same synchronous call (`iron.ts:141`, `magnet-select.ts:237`, `:384`); there is nothing to protect, so it makes no `protectLegendariesIn` call. A holder block added to the pulled list later needs that call first (r016 §4).
+**Context.** v4–v6: `magn` consulted `isLegendaryStack` to skip legendaries (UFO AC 13). Since 1.6.0 (`de0fc68`) the operator made legendary weapons magnetic.
+
+**Decision (as built).**
+1. `registry.ts` exports two pure, type-only predicates, with no dynamic-property read (O(1) per slot):
+   - `isLegendaryStack(stack)`: any def's `itemId` **or** `craftTokenId`. Answers "is it legendary or a craft in flight".
+   - `isLegendaryWeaponStack(stack)`: any def's `itemId` only. Answers "is it a legendary weapon".
+2. `magn` uses `isLegendaryWeaponStack` to **include** weapons as magnetic (`iron.ts:139-140`, `magnet-select.ts:8`, `:393`), and `HELD_LEGENDARY_IDS` (from `LEGENDARIES`) for `hasitem` holder tags.
+3. Neither predicate reads the mark. Marked, unmarked (`/give`, Creative) and stale copies are treated alike.
+4. `isLegendaryItemEntity` keeps its live-marked-only meaning for `ring` drop suppression.
+5. **Type identity is a framework invariant.** Every def's `itemId` must be an `andrew:` id. A vanilla base item (`adr-scbs` B) would make both predicates true for every vanilla crossbow; see `ad16` §Fallback.
 
 **Rejected.**
-- (a) **Reuse `isLegendaryItemEntity`.** It needs an entity, so it cannot judge a container slot. It is also false for unmarked and stale copies, which are still "legendary weapons" to a player reading AC 13.
-- (b) **Rely on "legendaries are not in the iron list".** It holds for whole stacks, but not for whole-entity pulls: a chest minecart or armour stand carrying a legendary would drag it along.
-- (c) **Mark-based predicate (live only).** It lets the magnet carry off a Creative test copy, which fails AC 13 as written. The cost difference is nil.
-
-**Consequence.**
-- `isLegendaryItemEntity` keeps its live-only meaning for `ring` drop suppression, where only a protected instance matters.
-- The two predicates differ on purpose: one answers "is it a legendary", the other "is it a protected instance".
+- (a) A mark-based predicate: a dynamic-property read per slot, and `hasitem` (magnet class 3) cannot express it.
+- (b) Keep the exclusion: contradicts the operator decision of 2026-10-04.

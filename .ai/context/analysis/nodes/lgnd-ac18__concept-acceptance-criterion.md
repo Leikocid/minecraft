@@ -2,7 +2,7 @@
 type: "concept-acceptance-criterion"
 node_id: "L0-lgnd-ac18"
 source_channel: "rollout"
-analysis_version: 6
+analysis_version: 7
 aliases: ["L0-lgnd-ac18"]
 is_a: ["acceptance-criterion"]
 part_of: ["L0-lgnd"]
@@ -34,4 +34,4 @@ THEN nothing happens to it.
 WHEN it passes through a hopper into another chest
 THEN `holder` stays A: a container never becomes the holder.
 
-Pending the client's confirmation of `L0-adr-hold`.
+`L0-adr-hold` was accepted by `decision-resolve-l0-xcx11` (2026-09-29); this AC is unbuilt work, filed as `LGND-HOLD` (`L0-adr-hldb`).

@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-lgnd-ad01"
 source_channel: "rollout"
-analysis_version: 6
+analysis_version: 7
 title: "AD-lgnd-01: Per-weapon key prefix, with the Web Sword pinned to `ws`"
 aliases: ["L0-lgnd-ad01"]
 is_a: ["architecture-decision"]

@@ -1,13 +1,13 @@
 ---
 title: Domain Model
 type: project-knowledge
-generated_at: "2026-10-03T14:58:23.872Z"
+generated_at: "2026-10-05T17:12:56.140Z"
 source_channel: rollout
 node_id: rollout-domain-model
 aliases: ["rollout-domain-model","domain-model","project-knowledge/domain-model"]
 is_a: ["rollout","domain-model"]
-relates_to: ["L0-katn","L0-katn-ent1","L0-katn-ent2","L0-lgnd","L0-lgnd-ent1","L0-lgnd-ent2","L0-lgnd-ent3","L0-lgnd-ent4"]
-priority: 600
+relates_to: ["L0-lgnd","L0-lgnd-ent1","L0-lgnd-ent2","L0-lgnd-ent3","L0-lgnd-ent4","L0-sclk","L0-sclk-ent1","L0-sclk-ent2","L0-sclk-ent3","L0-sclk-ent4"]
+priority: 610
 ---
 
 # Domain Model
@@ -16,127 +16,48 @@ priority: 600
 
 ## Entities
 
-### E-katn-1: The Dragon Katana item (L0-katn-ent1)
+### LegendaryDef (static registry entry, `src/legendary/registry.ts`), v7 (L0-lgnd-ent1)
 
----
-title: "E-katn-1: The Dragon Katana item and its LegendaryDef"
-is_a: ["entity"]
-part_of: ["L0-katn"]
-relates_to: ["L0-lgnd", "L0-lgnd-ent1", "L0-webs-ent1", "L0-katn-r001", "L0-xasm22"]
-see_also: ["dragonkatanaspecv1ruen-part-1"]
----
-# E-katn-1: The Dragon Katana item
+# LegendaryDef (static registry entry, `src/legendary/registry.ts`), v7
 
-**Item JSON** (`packs/behavior/items/dragon_katana.json`). It is a copy of `web_sword.json` with these changes:
+Related: L0-lgnd-ad07, L0-lgnd-ad14, L0-lgnd-ad15, L0-lgnd-ad16, L0-lgnd-cx15.
 
-| Field | Value |
+`LEGENDARIES` is a `const` array (`ad07` §1). Adding a weapon means appending an entry. Two variants (`ad15`):
+
+## Common fields (every def)
+| Field | Meaning | Unique across defs |
+|---|---|---|
+| `itemId` | the weapon's item type id | yes |
+| `keyPrefix` | namespace of `keysFor(def)`: `andrew:<p>_origin|owner|id|owner_name|crafted|crafted_by|pending|gen|owed`, and `andrew:<p>_gen:<id>`. Frozen once a world ships (`r006`) | **yes** (`cx15`) |
+| `nameKey` | item name translation key without `.name` | — |
+| `craftGate` | whether the token gate applies | — |
+| `craftTokenId` | what the recipe outputs (`ad08`) | yes |
+| `refund` | items a blocked craft hands back | — |
+| `textPrefix` | prefix of `first_craft`, `craft_blocked`, `returned`, `admin_given`, `reset` | yes |
+| `command` | `<command> give [player]` / `reset` | yes |
+
+## Active def only (`ActiveLegendaryDef`)
+| Field | Meaning |
 |---|---|
-| `identifier` | `andrew:dragon_katana` |
-| `menu_category` | `equipment`, group `minecraft:itemGroup.name.sword` |
-| `display_name` | `item.andrew:dragon_katana.name`: EN "Dragon Katana", RU "Катана дракона" |
-| `icon` | `andrew_dragon_katana` (new RP texture) |
-| `max_stack_size` | 1 |
-| `hand_equipped` | true |
-| `allow_off_hand` | true (needed for the off-hand slot, even for scripts) |
-| `fire_resistant` | true |
-| `enchantable` | slot `sword`, value 10 |
-| `damage` | 7, the same value that makes the Web Sword match a Diamond Sword |
-| `digger` | `is_sword_item_destructible`, speed 15 (no digger-tag trap) |
-| `tags` | `minecraft:is_sword`, `minecraft:is_tool` |
-| durability | **none**: no `minecraft:durability` component (T15) |
+| `abilityKey` | timers `andrew:cd_<key>`, `andrew:busy_<key>`; unique across active defs |
+| `cooldownTicks` | read by `startCooldown` |
+| `hudKeys?` | the weapon's own HUD lang keys; absent = `andrew.legendary.ready|cooldown` |
 
-**Craft token.** `andrew:dragon_katana_crafted`: the recipe output that the framework swaps for a marked Katana (`L0-lgnd-p001`). `menu_category: none`. (Engine fact: `hasitem` on it is a syntax error; tests check it via the inventory.)
+## Passive def (`PassiveLegendaryDef`)
+No `abilityKey`, `cooldownTicks` or `hudKeys`. `hasAbility(def)` is false.
 
-**LegendaryDef #4.** The final values are fixed by `L0-lgnd-ad14` (reconciled at reduce v6); they are repeated here only for reading:
-```
-itemId: "andrew:dragon_katana", keyPrefix: "dk", abilityKey: "dragon_katana",
-nameKey: "item.andrew:dragon_katana", cooldownTicks: 600, craftGate: true,
-craftTokenId: "andrew:dragon_katana_crafted",
-refund: [["minecraft:golden_apple",2],["minecraft:ender_pearl",2],["minecraft:diamond_sword",1]],
-textPrefix: "andrew.katana", command: "andrew:katana",
-hudKeys: { ready: "andrew.katana.hud_ready", cooldown: "andrew.katana.hud_cooldown" }
-```
-`keyPrefix "dk"` must not collide with `ws`, `sc` or `oc`. Once a world holds it, it is frozen (a changed key orphans crafted instances).
-
-**Lifecycle.** craft or `/give` → marked instance (owner, id, gen) → held, dropped, contained, traded freely → death, Void and hazard handling by `lgnd`. The Katana carries no state of its own: the cooldown lives on the player (`andrew:cd_dragon_katana`), and the fall flag lives in memory (`L0-katn-ent2`).
-
-
-
-
-
-### E-katn-2: FallFlag and TeleportPlan (L0-katn-ent2)
-
----
-title: "E-katn-2: FallFlag and TeleportPlan (in-memory, per activation)"
-is_a: ["entity"]
-part_of: ["L0-katn"]
-relates_to: ["L0-katn-p001", "L0-katn-p002", "L0-adr-ktfl", "L0-xasm20"]
----
-# E-katn-2: FallFlag and TeleportPlan
-
-**FallFlag**: one per player at most, in a module `Map<playerId, FallFlag>`. It is never persisted.
-
-| Attribute | Type | Meaning |
-|---|---|---|
-| `until` | epoch ms | `Date.now() + 10_000` at arm time (C-21, `L0-xasm20`) |
-| `dimId` | string | dimension of B; a mismatch consumes the flag |
-
-States: *absent* → armed (successful teleport) → absent (consumed by landing, liquid, climb, glide, death, dimension change, logout or expiry; or protected landing done). Re-arming replaces it.
-
-**TeleportPlan**: the pure result of the trace and search. It is built in `src/katana/plan.ts` with no engine imports, so node tests can cover it with a fake block reader.
-
-| Attribute | Type | Meaning |
-|---|---|---|
-| `origin` | Vector3 | A, feet location at use |
-| `head` | Vector3 | H, head location at use |
-| `dir` | Vector3 | unit view direction at use |
-| `endpoint` | Vector3 | E, hit point pulled back 0.3, or `H + maxDistance·dir` |
-| `hitFace` | Direction \| undefined | face of the stopping block |
-| `stoppedBy` | `"block" \| "unreadable" \| "range"` | why the trace ended |
-| `feet` | Vector3 \| undefined | chosen cell centre (B); undefined → refused |
-
-Invariant: if `feet` is set, then `|feet + (0,1.62,0) − head| ≤ 20` and `feet` lies on the owner's side of the hit-face plane (`L0-katn-r004`).
-
-
-
-
-
-### LegendaryDef (static registry entry, `src/legendary/registry.ts`) (L0-lgnd-ent1)
-
----
-is_a: ["entity"]
-part_of: ["L0-lgnd"]
-relates_to: ["L0-lgnd-p006", "L0-lgnd-r006", "L0-lgnd-ad07", "L0-lgnd-ad08", "L0-lgnd-ad09", "L0-adr-orbc", "L0-orbc"]
----
-# LegendaryDef (static registry entry, `src/legendary/registry.ts`)
-
-This replaces the pre-code shape (`registerLegendary`, `readyMode`, `ability` callback). Those were superseded by `ad07`: the registry is a `const` array, Ready is continuous for everyone, and each weapon subscribes itself.
-
-| Field | Web Sword | Scythe | **Orbital Cannon (v3)** |
-|---|---|---|---|
-| `itemId` | `andrew:web_sword` | `andrew:scythe_of_calamity` | `andrew:orbital_cannon` |
-| `keyPrefix` | `ws` (frozen) | `sc` (frozen) | `oc` |
-| `abilityKey` | `web_sword` | `scythe_of_calamity` | `orbital_cannon`, one key shared by both modes (Orbital §6) |
-| `nameKey` | `item.andrew:web_sword` | `item.andrew:scythe_of_calamity` | `item.andrew:orbital_cannon` |
-| `cooldownTicks` | 600 | 600 | 600 |
-| `craftGate` | true | true | true |
-| `refund` | web ×4, diamond_sword ×1 | golden_apple ×2, obsidian ×2, diamond_hoe ×1 | `minecraft:tnt` ×4, `minecraft:fishing_rod` ×1 |
-| `textPrefix` | `andrew.web_sword` | `andrew.scythe` | `andrew.orbital` |
-| `command` | `andrew:websword` | `andrew:scythe` | `andrew:orbital` |
-| **`activations`** (new) | `["use"]` | `["use"]` | `["use", "attack"]` |
-| **`craftTokenId`** (new) | `andrew:web_sword_crafted` | `andrew:scythe_of_calamity_crafted` | `andrew:orbital_cannon_crafted` |
-
-## Derived durable keys
-- **World:** `andrew:<p>_crafted`, `andrew:<p>_crafted_by`, `andrew:<p>_owed` (a list, `ent4`), `andrew:<p>_gen:<id>` (`wpn2`, not yet built).
-- **Player:** `andrew:<p>_pending`, `andrew:cd_<abilityKey>`, `andrew:busy_<abilityKey>`.
-- **ItemStack:** `andrew:<p>_origin`, `_owner`, `_id`, `_owner_name`, `_gen`, `_holder`, `_holder_name` (`ent2`).
+## Registered (v7 target)
+| # | Const | itemId | prefix | ability | Variant |
+|---|---|---|---|---|---|
+| 1 | `WEB_SWORD` | `andrew:web_sword` | `ws` | `web_sword`, 600 | active |
+| 2 | `SCYTHE_OF_CALAMITY` | `andrew:scythe_of_calamity` | `sc` | `scythe_of_calamity`, 600 | active |
+| 3 | `ORBITAL_CANNON` | `andrew:orbital_cannon` | `oc` | `orbital_cannon`, 600, own `hudKeys` | active |
+| 4 | `DRAGON_KATANA` | `andrew:dragon_katana` | `dk` | `dragon_katana`, 600, own `hudKeys` | active |
+| 5 | `SCULK_CROSSBOW` | `andrew:sculk_crossbow` | `sk` (proposed, `as18`) | — | passive |
 
 ## Invariants
-- `itemId`, `keyPrefix`, `abilityKey`, `command` and `craftTokenId` are each unique across the registry. A node test asserts this, because there is no runtime registration to throw.
-- `keyPrefix` and `abilityKey` are frozen once a world has written them (`r006`). `oc` / `orbital_cannon` freeze with the first v3 world.
-- `activations` is non-empty. `"attack"` is legal only for weapons whose module subscribes to an attack event (the Cannon, `L0-adr-orbc` §2).
-- `refund` equals the recipe's ingredients. The recipe JSON is owned by the weapon's node, and a node test compares the two.
-- The weapon calls `startCooldown` itself and only on a successful activation (`L0-adr-cast` §1). For the Cannon, that means in the same tick as its charges spawn (`L0-xasm10`).
+- The uniqueness test covers `itemId`, `keyPrefix`, `craftTokenId`, `textPrefix`, `command` over all defs, and `abilityKey` over active defs.
+- `LEGENDARY_TYPE_IDS` = every `itemId` and `craftTokenId`. Identity is **by type**; a def whose `itemId` is a vanilla id (`minecraft:*`) is forbidden while identity is type-based (`ad16` §Fallback).
 
 
 
@@ -244,140 +165,221 @@ Durable state that makes retention and return idempotent.
 
 
 
+### E-sclk-1 · Item `andrew:sculk_crossbow` (option A, `adr-scbs`) (L0-sclk-ent1)
+
+# E-sclk-1 · Item `andrew:sculk_crossbow` (option A, `adr-scbs`)
+
+**Links:** `part_of: ["L0-sclk"]` · `is_a: ["entity"]` · `relates_to: ["L0-adr-scbs", "L0-sclk-r005", "L0-sclk-r008", "L0-lgnd"]`
+
+File: `packs/behavior/items/sculk_crossbow.json`. It mirrors `dragon_katana.json`: format 1.21.90.
+
+| Attribute | Value |
+|---|---|
+| `identifier` | `andrew:sculk_crossbow` |
+| `menu_category` | `{category: "equipment", group: "minecraft:itemGroup.name.crossbow"}`: Creative "Снаряжение/Equipment", the search and `/give` |
+| `display_name` | `item.andrew:sculk_crossbow.name` |
+| `icon` | `andrew_sculk_crossbow` (an RP texture in a crossbow silhouette with sculk teal) |
+| `max_stack_size` | 1 |
+| `minecraft:shooter` | `ammunition: [{item: "minecraft:arrow", use_offhand: true, search_inventory: true, use_in_creative: true}]`, `charge_on_draw: true`, `max_draw_duration` = 1.25 s (a probe-tuned value) |
+| `minecraft:use_modifiers` | `use_duration` ≥ the draw time, `movement_modifier` 0.35 (like a crossbow) |
+| `minecraft:enchantable` | `slot: "crossbow"`, value 1 (the vanilla crossbow's enchantability) |
+| `minecraft:fire_resistant` | true (the item entity's fire immunity is `lgnd`'s, but this is the cheap first line) |
+| `minecraft:durability` | **absent** (r008) |
+| `allow_off_hand` | false (a shooter fires from the main hand only) |
+
+**Identity.** Legendary by type id (`isLegendaryStack`, `registry.ts`). It carries the `lgnd` mark (`keyPrefix "sk"`, `L0-adr-sckp`; `sc` is the Scythe's) from the token swap. Creative and `/give` copies are unmarked test copies (`lgnd`).
+
+**Token.** `andrew:sculk_crossbow_crafted` (`menu_category none`, the same name and icon).
+
+**Option B fallback.** The item is a vanilla `minecraft:crossbow` with a dynamic-property mark. This entity is replaced, and `lgnd` re-opens.
+
+
+
+
+
+### E-sclk-2 · Entity `andrew:sculk_bolt` (L0-sclk-ent2)
+
+# E-sclk-2 · Entity `andrew:sculk_bolt`
+
+**Links:** `part_of: ["L0-sclk"]` · `is_a: ["entity"]` · `relates_to: ["L0-adr-scdm", "L0-sclk-as01", "L0-sclk-p002", "L0-sclk-p003"]`
+
+The BP is `packs/behavior/entities/sculk_bolt.json`, format 1.26.0 like `orbital_charge.json`. It must not use `minecraft:pushable`, which was dropped in 1.26.50 and makes the engine refuse the whole entity.
+
+| Component | Value |
+|---|---|
+| `runtime_identifier` | `minecraft:snowball`. Without it the entity pushes mobs (engine fact) |
+| `is_spawnable` / `is_summonable` | false / true (tests summon it) |
+| `minecraft:projectile` | `on_hit: {remove_on_hit: {}}` is **absent**: the script removes the bolt after resolving it. `power` 0, `gravity` and `inertia` from the probe (`as01`), `uncertainty_base` 0, `anchor` 1, `offset` [0,0,0], no `impact_damage` (zero damage) |
+| `minecraft:collision_box` | 0.25 × 0.25 |
+| `minecraft:physics` | {} |
+| `minecraft:damage_sensor` | all causes → `deals_damage: no` |
+| despawn | none in JSON; the script's lifetime cap (100 ticks) rules |
+
+**RP.** `packs/resource/entity/sculk_bolt.entity.json`: a small teal arrow-like quad, or invisible with the trail carrying the look (ad02, iPad check).
+
+**Runtime facts it inherits.**
+- Snowball-runtime entities persist and reload through `entityLoad`; a reloaded bolt has no record and is removed (C-23).
+- The entity ray stops at blocks. Bolt hits come from the projectile component, not from rays.
+
+
+
+
+
+### E-sclk-3 · `BoltRecord` (in memory, never persisted) (L0-sclk-ent3)
+
+# E-sclk-3 · `BoltRecord` (in memory, never persisted)
+
+**Links:** `part_of: ["L0-sclk"]` · `is_a: ["entity"]` · `relates_to: ["L0-sclk-r001", "L0-sclk-ad03", "L0-sclk-p003"]`
+
+The store is `Map<string, BoltRecord>` in `src/sculk/bolts.ts`, keyed by `bolt.id`.
+
+| Field | Type | Meaning |
+|---|---|---|
+| `bolt` | Entity | the `andrew:sculk_bolt` |
+| `ownerId` | string | the shooter's entity id; the Entity is re-resolved at hit time for `damagingEntity` |
+| `ownerName` | string | for logs and the death message fallback |
+| `dimensionId` | string | |
+| `seed` | uint32 | a per-bolt RNG seed for the crater and the patch, logged so a GameTest can replay it |
+| `bornTick` | number | `system.currentTick` at the spawn |
+| `lastPos` | Vector3 | the start of the next trail segment |
+| `volleyId` | string | the same for the 3 Multishot bolts (logs only; it never merges outcomes) |
+
+**Lifecycle.** Created in p002. Deleted exactly once: by p004 or p005 (claimed before acting) or by p003 (expired, invalid or unloaded). On a world reload the map starts empty (C-23).
+
+
+
+
+
+### E-sclk-4 · Carve plan and carve queue (L0-sclk-ent4)
+
+# E-sclk-4 · Carve plan and carve queue
+
+**Links:** `part_of: ["L0-sclk"]` · `is_a: ["entity"]` · `relates_to: ["L0-sclk-r003", "L0-sclk-r004", "L0-sclk-ad04", "L0-adr-sctr"]`
+
+**`CarvePlan`** (pure, `src/sculk/crater-plan.ts`, node-tested with no `@minecraft/server`):
+
+| Field | Meaning |
+|---|---|
+| `kind` | `"crater"` (block hit) or `"patch"` (entity hit) |
+| `origin` | the impact cell or the feet column |
+| `face` | the hit face (`Up`/`Down`/`North`/…); `Up` for a patch |
+| `seed` | from `BoltRecord.seed` |
+| `air` | `Vector3[]`, ≤ 75 cells inside 5×5×3 (empty for a patch) |
+| `sculk` | `Vector3[]`, ≤ 25 candidate cells inside 5×5 |
+| `box` | the union AABB, for the `protectLegendariesIn` call and the clip |
+
+The planner sees only a `BlockProbe` callback (`isSolidFull`, `isAirLike`, `isKeep`, `isLiquid`). The runtime builds it from `Block` and `TERRAIN_KEEP`, and tests use a fixture grid.
+
+**`CarveJob`** (runtime, `src/sculk/carve.ts`): `{plan, dimension, cursor}` in a FIFO. The shared interval drains up to `CARVE_BUDGET_PER_TICK` = 300 `setType` calls per tick. Before each write, a cell in an unloaded chunk is skipped.
+
+
+
+
+
 ## Components (code-derived)
 
-### Dragon Katana (`andrew:dragon_katana`) (L0-katn)
+### Legendary weapon framework (`src/legendary/`), v7: as built at 1.6.1, plus the passive def and the Sculk Crossbow delta (L0-lgnd)
 
----
-is_a: ["component"]
-part_of: ["L0"]
-relates_to: ["L0-lgnd", "L0-lgnd-p001", "L0-lgnd-p002", "L0-lgnd-p003", "L0-lgnd-p004", "L0-lgnd-p005", "L0-lgnd-p008", "L0-webs", "L0-scyt", "L0-magn", "L0-adr-ktob", "L0-adr-ktfl", "L0-xasm18", "L0-xasm19", "L0-xasm20", "L0-xasm21", "L0-xasm22", "L0-xcx21"]
-see_also: ["dragonkatanaspecv1ruen-part-1", "dragonkatanaspecv1ruen-part-2", "dragonkatanaspecv1ruen-part-3"]
-governs_files: ["src/katana/", "packs/behavior/items/dragon_katana.json", "packs/behavior/recipes/dragon_katana*.json", "packs/resource/texts/*.lang"]
----
-# Dragon Katana (`andrew:dragon_katana`)
+# Legendary weapon framework (`src/legendary/`), v7: as built at 1.6.1, plus the passive def and the Sculk Crossbow delta
 
-**Responsibility.** This component owns what is unique to the fourth legendary weapon:
-- the item and recipe identity (`L0-katn-ent1`, `L0-katn-r001`);
-- the teleport ability body: trace → safe cell → teleport → cooldown (`L0-katn-p001`, rules `r002`–`r005`);
-- the one-shot fall flag (`L0-katn-p002`, `L0-katn-ent2`, `r006`);
-- the cherry-petal trail (`L0-katn-r007`);
-- the Katana HUD strings (`L0-katn-r008`);
-- the GameTests for T04–T15 and the Katana call sites of T01–T03 and T16–T18.
+Related: L0-sclk, L0-katn, L0-magn, L0-orbc, L0-webs, L0-scyt, L0-xcx11, L0-xcx24, L0-adr-scbs, L0-adr-hold, L0-xasm26, L0-lgnd-ad15, L0-lgnd-ad16, L0-lgnd-ad17, L0-lgnd-cx15, L0-lgnd-cx16, L0-lgnd-r016, L0-lgnd-r018.
 
-It is the Katana's counterpart to `L0-webs` (trap body) and `L0-sprj`/`L0-scyt` (volley body). All four plug into `L0-lgnd`.
+**Responsibility.** Every general legendary rule is implemented once, for every def in `LEGENDARIES`: the token craft gate and first-craft broadcast, marks and generation, death retention, loss return and the owed list, `protectLegendariesIn`, hand priority (`resolveActivation`), cooldown and busy, the HUD, `hidden_until`, and the type predicates `isLegendaryStack` / `isLegendaryWeaponStack`.
 
-**Not owned here (cite `lgnd`, do not restate).**
-- One Survival craft per world, the persistent flag, refund, Creative and `/give` copies, first-craft broadcast: `L0-lgnd-p001`.
-- Death retention, and a contained item left alone: `L0-lgnd-p002`.
-- Void, offline and owed return: `L0-lgnd-p003`.
-- Orbital blast and ring protection: `L0-lgnd-p008`.
-- Hand priority (main hand first, then a ready off hand): `L0-lgnd-p004`, through the shipped `resolveActivation` (`src/legendary/hands.ts:35`).
-- The cooldown clock (`startCooldown`, epoch ms, `src/legendary/cooldown.ts:47`) and the shared HUD pass: `L0-lgnd-p005`.
-- The T17 reading under C-16: `L0-xcx21`, `L0-xasm22`.
+## As built at 1.6.1 (read from code 2026-10-05)
+- **Four defs** (`registry.ts`): Web Sword `ws`, Scythe `sc`, Orbital Cannon `oc`, Dragon Katana `dk` (shipped 1.5.0, `KATA-LGND-01-AA`). The Katana needed no framework code (`ad14` held).
+- **Every def has an ability.** `abilityKey` and `cooldownTicks` are required fields (`registry.ts:12-15`). The HUD draws a line for every held def (`hud.ts:37-56`), and `resolveActivation` lets any held, ready def claim a Use (`hands.ts:35-42`).
+- **Legendary weapons are magnetic** (operator tuning, 1.6.0, `de0fc68`). The magnet uses `isLegendaryWeaponStack` (weapons, never tokens): ground, container slots, late drops, a player holding one (`magnet-hold.ts:117-136`), and a mob or armour stand holding one (`magnet-select.ts:179`, `:320`). The UFO AC 13 "never pulled" rule is retired. See `r016` and `ac21`.
+- **Armour stand in the Void** is closed in code (`decision-resolve-l0-lgnd-cx14`: stand watcher plus two return guards, `recovery.ts:326`, `:433`).
+- **Return target is still `mark.owner`.** `lost()` targets `w.mark.owner` (`recovery.ts:490`), and the protect hand-back and owed entry use it too (`:877-879`). `decision-resolve-l0-xcx11` (2026-09-29) chose the last holder and named `LGND-GEN-01-AA`. That task is archived, but the mark has no holder field (`state.ts`). See `cx16`.
 
-**What `katn` adds to the framework.** Def #4 in `LEGENDARIES` with `hudKeys` set: the def field already exists and the Orbital Cannon uses it. Nothing else. If a probe shows a framework hook is needed, that is an L0 contradiction, not a local patch (plan §"lgnd answers first").
-
-**Inputs.**
-- `world.afterEvents.itemUse`, plus `playerInteractWithBlock` for the same press, de-duplicated as in `src/websword/trap.ts`.
-- The server-side `player.getHeadLocation()` and `getViewDirection()`.
-- Block state along the segment.
-
-**Outputs.**
-- One `player.teleport(B, { keepVelocity: false, rotation kept })` in the same dimension.
-- `startCooldown(player, "dragon_katana")`.
-- An in-memory fall flag.
-- A bounded burst of pink petal particles A→B.
-- No block edits, no damage and no entities.
-
-**Core flow** (`L0-katn-p001`): resolve → trace (`L0-adr-ktob`, refined by `L0-katn-ad01`) → endpoint (`L0-xasm18`, `L0-katn-as01`) → safe-cell search (`L0-xasm19`, `L0-katn-r004`) → teleport → cooldown → fall flag → trail. Any refusal leaves no state: no teleport, no cooldown, no message.
-
-**Constraints honoured.**
-- C-24: server-authoritative, ≤ 20, unreadable = solid, no block edits.
-- C-25: the fall flag is one-shot, bounded and not persisted.
-- C-5e: a one-shot trail; the watcher costs nothing while no flag is set.
-- C-21: epoch-ms clocks.
-- C-16: closest stable behaviour, deviations documented.
-
-**Open items.**
-- `L0-katn-cx01`: resolved at reduce v6 by amending `L0-adr-ktob` §3 (fits ≠ safe).
-- `L0-katn-as01` … `as04`: endpoint geometry, aim source on iPad, hazards, the fall look-ahead.
-
-**Probe first** (before any build task): (1) a self-teleport mid-fall resets fall distance (`L0-adr-ktfl`); (2) the ray flags: liquids skipped, cobweb/grass/carpet passable, slabs and fences hit; (3) `getBlockFromRay` behaviour at an unloaded chunk; (4) `minecraft:cherry_leaves_particle` via `spawnParticle` renders on iPad.
-
-**Channels.** `bds`: T01–T18 as GameTests (`L0-katn-ac01` … `ac08`). `ipad`: trail, HUD, icon, Creative placement, aim feel (`L0-katn-ac09`).
-
-
-
-
-
-### Legendary weapon framework (`src/legendary/`), v6: as built in 1.4.4, plus the Dragon Katana delta (L0-lgnd)
-
----
-is_a: ["component"]
-part_of: ["L0"]
-relates_to: ["L0-katn", "L0-orbc", "L0-webs", "L0-scyt", "L0-pntr", "L0-ring", "L0-magn", "L0-stgt", "L0-adr-hold", "L0-xcx11", "L0-xcx21", "L0-xasm22", "L0-lgnd-ad12", "L0-lgnd-ad14", "L0-lgnd-r017", "L0-lgnd-cx14"]
-governs_files: ["src/legendary/", "src/websword/trap.ts", "src/scythe/targeting.ts", "src/orbital/activation.ts", "src/main.ts", "src/gametest/main.ts", "tests/legendary-registry.test.mjs"]
-see_also: ["dragonkatanaspecv1ruen-part-1", "dragonkatanaspecv1ruen-part-2", "dragonkatanaspecv1ruen-part-3", "ufomagnetspecv1ruen-part-4", "orbitalcannonspecv1ruen-part-1"]
----
-# Legendary weapon framework (`src/legendary/`), v6: as built in 1.4.4, plus the Dragon Katana delta
-
-**Responsibility.** Every general legendary rule is implemented once, for every def in `LEGENDARIES`:
-- the craft gate with tokens, and the first-craft broadcast
-- marks and generation
-- death retention
-- loss return and the owed list
-- protection from script-caused destruction (`protectLegendariesIn`)
-- hand priority (`resolveActivation`)
-- cooldown and busy
-- HUD
-- `hidden_until`
-- the type predicate `isLegendaryStack`
-
-v6 adds the **fourth def, the Dragon Katana** (`katn`). It needs **no framework code**, only data (`ad14`).
-
-## As built in 1.4.4 (verified in code, 2026-10-03), see `ad12`
-**Shipped**
-- gen guard, owed list, pending list, off hand, craft tokens, `fire_resistant`, `protectLegendariesIn`, `isLegendaryItemEntity`, departure tracking.
-- `heldLegendaries(player)` and `resolveActivation(player)` (`hands.ts:18`, `:35`). The resolver is Use-priority only: main if ready and not busy, else off. It has **no `mode` argument**, and the Cannon's LMB latch stays in `orbital/activation.ts`. That remains the as-built answer to `ad09`.
-- `isLegendaryStack` (`registry.ts`). It is type-based over every def's `itemId` and `craftTokenId`, and `magn` uses it.
-- **Void holder return** (merge `0a9d2b5`). `recovery.ts:135` `VOID_HOLDER_TYPES` = chest and hopper minecart. `beforeEvents.entityRemove` below `heightRange.min` reads the minecart's container, and every live marked instance goes through `lost()` on the next tick.
-
-**Still open**
-1. **`holder`.** `lost()` targets `w.mark.owner` (`recovery.ts:477`), and the protect hand-back targets `mark.owner` (`:785-787`). Katana §3 ("последнему владельцу", to the last owner) is the fourth spec asking for the last holder. **`L0-xcx11` stays open**, and `ad11`/`ac18` are unbuilt.
-2. **Armour stand in the Void.** Its hands cannot be read on 2.10.0, so a legendary it holds is lost when the stand falls (`README.md:71`, `probe_ufo_holder_void`). Filed as `cx14`. The magnet avoids it (`r016`). Nothing else in the add-on moves an armour stand.
-3. Nested shulker and bundle contents (`cx12`). The hopper-minecart stale copy (`as15`, `cx02`).
-
-## v6 Katana delta
+## v7 delta
 | # | Change | Artifacts |
 |---|---|---|
-| 1 | Def #4 `DRAGON_KATANA`: `andrew:dragon_katana`, prefix `dk`, ability `dragon_katana`, 600 ticks, token `andrew:dragon_katana_crafted`, refund 2 golden apple + 2 ender pearl + 1 diamond sword, command `andrew:katana`, `hudKeys` for the em-dash string | `ad14`, `as17` |
-| 2 | Uniqueness-flag key `andrew:dk_crafted` (with `andrew:dk_crafted_by`), derived by `keysFor` | `ad14`, `ac23` |
-| 3 | The registry uniqueness test also covers `craftTokenId` and `textPrefix` (as `ac11` asked; today it checks 4 fields) | `ac23` |
-| 4 | No per-weapon code needed in `isLegendaryStack`, retention, recovery, `protectLegendariesIn`, the craft gate, commands or the HUD: each iterates `LEGENDARIES` or calls `defForStack`/`defForToken` | `ad14` |
-| 5 | T16–T18 for the Katana under C-16. Fire and lava are prevented; Orbital blast and rings are prevented through `protectLegendariesIn`; cactus, TNT and despawn are **returned**; the Void returns to `owner` until `xcx11` closes | `ac24`, `L0-xcx21`, `L0-xasm22` |
-| 6 | A wielder teleport is not a loss event, and every Katana teleport stays in the player's own dimension | `r017`, `ac24` |
+| 1 | Passive def: a def may have no ability. Then it has no timer key, no Use claim and no HUD line. Defs #1–#4 keep byte-identical keys and behaviour | `ad15`, `ent1`, `r018`, `ac26` (closes `L0-xcx24`) |
+| 2 | Def #5 `SCULK_CROSSBOW`: `andrew:sculk_crossbow`, token `andrew:sculk_crossbow_crafted`, refund 2 echo shard + 2 deepslate + 1 crossbow, command `andrew:crossbow`, passive | `ad16`, `as18`, `ac25` |
+| 3 | **Key prefix: not `sc`.** `sc` is the Scythe's; reuse would share the craft flag, marks, pending and owed. Proposed `sk` | `cx15`, `as18` |
+| 4 | No per-weapon code in retention, recovery, the Void paths, `protectLegendariesIn`, commands or the magnet: each iterates `LEGENDARIES` or calls `defForStack`/`defForToken` | `ad16`, `ac27` |
+| 5 | Return target for T19/T20/Void: `mark.owner` until the holder task ships, as for the Katana. Tests call one `returnTarget(mark)` helper so the holder task changes one function | `ad17`, `ac27`, `cx16` |
+| 6 | Magnet: the crossbow is pulled like the other four. Not a spec breach (the crossbow spec does not list the magnet as a hazard) | `r016`, `ac21` |
 
-## Published contracts (unchanged)
-- `LEGENDARIES`, `defForStack`, `defForToken`, `isLegendaryStack`.
+**Fallback, stated as larger.** If the `sclk` probe rejects a custom shooter and `L0-adr-scbs` falls back to the vanilla `minecraft:crossbow` (option B), identity can no longer be by type. `isLegendaryStack`, `isLegendaryWeaponStack`, `defForStack`, `heldLegendaries`, the magnet's `hasitem` holder tags (which cannot read dynamic properties), the craft gate (the recipe *input* is the same type), retention and the GameTests all become mark-aware. That is a framework rewrite of identity, not a def. It needs its own L0 decision and is **not** planned by this pass (`ad16` §Fallback).
+
+## Published contracts
+- `LEGENDARIES`, `defForStack`, `defForToken`, `defForAbility` (active defs only), `isLegendaryStack`, `isLegendaryWeaponStack`, **`hasAbility(def)`** (new).
 - `isReady`, `startCooldown`, `setBusy`, `clearBusy`, `isBusy`.
-- `heldLegendaries(player)`, `resolveActivation(player)`.
-- `protectLegendariesIn(dim, box, {avoid, reason}) → {moved, handedBack}`.
-- `isLegendaryItemEntity`.
-- `isHiddenFromTargeting`, `hideFromTargeting`.
+- `heldLegendaries(player)` (still returns passive defs; retention-neutral), `resolveActivation(player)` (active defs only).
+- `protectLegendariesIn(dim, box, {avoid, reason}) → {moved, handedBack}`; `sclk`'s crater calls it before carving (`L0-xcx25`).
+- `isLegendaryItemEntity`, `isHiddenFromTargeting`, `hideFromTargeting`.
 
 ## Does NOT own
-- The Katana's trace, safe cell, teleport, fall flag and trail (`katn`, `L0-adr-ktob`, `L0-adr-ktfl`).
-- Item, token and recipe JSON, and the lang strings (`katn`).
-- The magnet's selection (`magn`).
+The crossbow item JSON, token, recipe, lang, bolt pipeline, damage, crater, durability (custom base) and Piercing exclusion (`sclk`). The magnet's selection (`magn`).
 
-## Next task (one `lgnd` task, for the Katana; it lands with `katn` item 2)
-1. Add `DRAGON_KATANA` to `LEGENDARIES`.
-2. Extend the uniqueness test.
-3. Add key-derivation asserts for `dk`.
-4. Add the Katana instances of the framework GameTests (`ac23`, `ac24`).
+## Next tasks
+1. **LGND-PASSIVE** (before `sclk` item): `ad15` type split, `hasAbility`, HUD/resolver skips, registry test. Gate: the existing legendary GameTests and `npm test` pass with no assertion edits (`ac26`).
+2. **Def #5** lands with the `sclk` item task: the entry, the uniqueness and key asserts, the crossbow instances of the framework GameTests (`ac25`, `ac27`).
+3. **LGND-HOLD** (separate, unblocked by the decision): the holder field per `ad11`; `ac18` plus the holder clauses of `ac08`, `ac09`, `ac24`, `ac27`.
 
-`holder` is a separate task, still blocked on `L0-adr-hold`.
+
+
+
+
+### Sculk Crossbow (`andrew:sculk_crossbow`): component v1 (L0-sclk)
+
+# Sculk Crossbow (`andrew:sculk_crossbow`): component v1
+
+**Links:** `part_of: ["L0"]` · `is_a: ["component"]` · `relates_to: ["L0-lgnd", "L0-orbc", "L0-pntr", "L0-magn", "L0-scyt", "L0-katn", "L0-adr-scbs", "L0-adr-scdm", "L0-adr-sctr", "L0-xcx22", "L0-xcx23", "L0-xcx24", "L0-xcx25", "L0-xasm23", "L0-xasm24", "L0-xasm25", "L0-xasm26", "L0-xasm27", "L0-xq7"]`
+
+Source: `docs/Sculk_Crossbow_Spec_v1_RU_EN.docx` (raw `sculkcrossbowspecv1ruen-part-1..4`, priority 610). Legendary def #5. It is the first legendary with **no active ability, no cooldown and no HUD line** (`L0-xcx24`).
+
+## Responsibility
+A passive ranged legendary. Every projectile its holder fires is replaced at spawn by one `andrew:sculk_bolt`. The bolt flies physically, with a Warden-style Sonic Boom trail, and resolves exactly once (C-26):
+- **entity hit:** fixed `SONIC_BOOM_DAMAGE` = 10 HP through armour, the shield and the invulnerability window (C-28), plus a sculk patch under the target, with no crater;
+- **block hit:** an irregular crater ≤ 5×5×3 plus a ring of plain sculk ≤ 5×5, with no entity damage (C-27);
+- **expiry:** after 100 ticks, on leaving loaded chunks, or in the Void, nothing happens.
+
+## What `sclk` owns, and what it does not
+| Owned here | Delegated (cited, not restated) |
+|---|---|
+| the item def JSON, icon, RP texture, RU/EN item and tooltip lang | craft gate, first-craft broadcast, token swap and refund → `lgnd` (R-lgnd-001: one implementation) |
+| the recipe JSON (echo shard / deepslate / crossbow → token) | death retention, hazard protection, Void return, Creative/`/give` copies → `lgnd` (T19, T20; `xasm26`) |
+| the bolt entity (BP + RP), the shot→bolt swap, the flight, the trail | the no-ability def shape → `lgnd` v7 (`xcx24`) |
+| hit resolution, damage, patch, crater, carve queue | `protectLegendariesIn` → `lgnd` (`recovery.ts`) |
+| enforcing that Piercing is stripped | magnetism → `magn` (def-driven, `xasm26`) |
+| moving the deny list from `penetrator-keep.ts` to `src/terrain/keep.ts` (`xcx25`) | the Orbital carve itself → `orbc`/`pntr` (unchanged) |
+| the probe and the outcomes of the three ADRs | |
+
+## Inputs
+- `world.afterEvents.entitySpawn` (or `projectileShoot`, per the probe) for arrow-type projectiles whose owner holds `andrew:sculk_crossbow`.
+- `projectileHitEntity` and `projectileHitBlock`, filtered to `andrew:sculk_bolt`.
+- The shared interval (one `runInterval`, never `runJob`) for trail emission, lifetime and the carve queue.
+- `playerInventoryItemChange` and held-item changes, used to strip Piercing.
+
+## Outputs
+- Health changes on the struck entity only, via `applyDamage` + `setCurrentValue`, with kill credit to the owner.
+- Block edits: air for the crater and `minecraft:sculk` for the patch. These are ordinary world changes, synced and saved.
+- `minecraft:sonic_explosion` particles (or an RP look-alike, `L0-sclk-ad02`) along each bolt's path.
+- `[andrew] sculk:` log lines, which GameTests and the probe read as witnesses.
+
+## Stage-7 order (from the plan)
+1. Probe on checks (19136): `L0-sclk-p001`. It gates `adr-scbs`/`adr-scdm`. A failed gate supersedes the ADR before any build task.
+2. `lgnd` v7 (no-ability def, def #5).
+3. Item, token, recipe, RP.
+4. Bolt pipeline and damage.
+5. Crater and sculk, together with the deny-list extraction (Orbital scenarios as its gate).
+
+## Child artifacts
+- **Processes:** p001 probe · p002 shot→bolt · p003 flight/trail/expiry · p004 entity hit · p005 block hit/carve · p006 craft wiring.
+- **Rules:** r001–r010.
+- **Entities:** ent1 item · ent2 bolt entity · ent3 bolt record · ent4 carve plan.
+- **ACs:** ac01–ac20 = T01–T20 (T01–T03, T19 and T20 as crossbow call sites of `lgnd`), ac21 probe, ac22 Orbital regression, ac23–ac27 iPad.
+- **Decisions:** ad01–ad04 · **Assumptions:** as01–as05 · **Contradictions:** cx01–cx02 · **Glossary:** gl01–gl06 · **Constraints:** cons.
+
+## Seams the reduce re-checks
+- Orbital protection stays green after the deny-list move.
+- The magnet's GameTests include def #5.
+- A Katana ray stops on sculk (a full solid block).
+- Crater vs a structure `protect` box: check, do not assume (`xasm25` says structures get no protection).
 
 
 

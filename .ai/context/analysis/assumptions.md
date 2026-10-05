@@ -1,116 +1,18 @@
 ---
 title: Assumptions
 type: analysis
-generated_at: "2026-10-03T23:54:07.054Z"
+generated_at: "2026-10-05T17:12:56.146Z"
 source_channel: rollout
 node_id: rollout-assumptions
 aliases: ["rollout-assumptions","assumptions"]
 is_a: ["rollout","assumptions"]
-relates_to: ["L0-katn-as01","L0-katn-as02","L0-katn-as03","L0-katn-as04","L0-lgnd-as01","L0-lgnd-as02","L0-lgnd-as03","L0-lgnd-as04","L0-lgnd-as05","L0-lgnd-as06","L0-lgnd-as07","L0-lgnd-as08","L0-lgnd-as09","L0-lgnd-as10","L0-lgnd-as11","L0-lgnd-as12","L0-lgnd-as13","L0-lgnd-as14","L0-lgnd-as15","L0-lgnd-as16","L0-lgnd-as17","L0-xasm18","L0-xasm19","L0-xasm20","L0-xasm21","L0-xasm22"]
-priority: 600
+relates_to: ["L0-lgnd-as01","L0-lgnd-as02","L0-lgnd-as03","L0-lgnd-as04","L0-lgnd-as05","L0-lgnd-as06","L0-lgnd-as07","L0-lgnd-as08","L0-lgnd-as09","L0-lgnd-as10","L0-lgnd-as11","L0-lgnd-as12","L0-lgnd-as13","L0-lgnd-as14","L0-lgnd-as15","L0-lgnd-as16","L0-lgnd-as17","L0-lgnd-as18","L0-sclk-as01","L0-sclk-as02","L0-sclk-as03","L0-sclk-as04","L0-sclk-as05","L0-xasm23","L0-xasm24","L0-xasm25","L0-xasm26","L0-xasm27","L0-xasm28"]
+priority: 610
 ---
 
 # Assumptions (CAN_ASSUME)
 
 > Автогенерация из Knowledge Vault. Ручное редактирование — установи `status: manual` в frontmatter.
-
-### Katn as01 concept assumption (L0-katn-as01)
-
----
-title: "AS-katn-01 · The head lands where the player looked; the feet cell is derived from it"
-is_a: ["assumption"]
-part_of: ["L0-katn"]
-relates_to: ["L0-xasm18", "L0-xasm19", "L0-katn-p001", "L0-katn-r004"]
----
-**Gap.** `L0-xasm19` starts the search at "the endpoint cell" as the feet cell. `L0-xasm18` says the result is never further than 20 from the head.
-- Taking an eye-level endpoint 20 blocks out as the **feet** cell raises the player by about 1.6 blocks.
-- That puts the head about 20.06+ from the start, which breaks the cap.
-- It also makes the player float a step above where they aimed.
-
-**Assumption (CAN_ASSUME).**
-- Floor hit (Up face): the feet cell is the cell above the hit block.
-- Any other case: the desired feet = endpoint − (0, 1.62, 0), so the head arrives at the aimed point.
-- Every candidate must satisfy |head after − head before| ≤ 20.
-
-**Impact if wrong.** If the client expects the feet at the aimed point, change one line in `plan.ts`. T06's bound then shifts by the eye height, and the T05 and T07 tests are unchanged. Local to `katn`.
-
-
-
-
-
-
-### Katn as02 concept assumption (L0-katn-as02)
-
----
-title: "AS-katn-02 · Aim is the server view direction, also for a tap on a block"
-is_a: ["assumption"]
-part_of: ["L0-katn"]
-relates_to: ["L0-katn-p001", "L0-katn-ac09", "L0-webs"]
----
-**Gap.** On the iPad without a crosshair, a tap can land anywhere on screen, and `playerInteractWithBlock` reports the tapped block. The spec says only "the point the player looks at".
-
-**Assumption (CAN_ASSUME).**
-- Both triggers trace along `getViewDirection()` from `getHeadLocation()`, the screen centre.
-- The tapped block is ignored as an aim point. It is only within vanilla reach (about 6 blocks), so it cannot express a 20-block jump, and mixing the two would give two aim models.
-
-**Impact if wrong.** If the operator wants "tap a block = go there", a block-tap branch uses `event.block` + `faceLocation` as the endpoint, still capped and safety-checked. It is limited to reach, a small local change, and checked on the iPad (`L0-katn-ac09` §5).
-
-
-
-
-
-
-### Katn as03 concept assumption (L0-katn-as03)
-
----
-title: "AS-katn-03 · A landing cell must not be lava or fire; water is fine"
-is_a: ["assumption"]
-part_of: ["L0-katn"]
-relates_to: ["L0-katn-cx01", "L0-katn-ad01", "L0-katn-r004", "L0-adr-ktob"]
----
-**Gap.** §5 says lava does not block the **trace**. §6 says the destination is a **safe** position. `L0-adr-ktob` §3 lets liquids count as "fits", which would land a player inside a lava pool they aimed across.
-
-**Assumption (CAN_ASSUME).**
-- Lava, flowing lava, fire and soul fire in the feet or head cell make the candidate unsafe. The search steps back past them.
-- Water is allowed: drowning is not immediate, and water breaks a fall.
-- Hazardous floors (magma, campfire, powder snow) are allowed: §6 forbids only walls and suffocation.
-
-**Impact if wrong.**
-- If the client wants "land in lava if you aimed there", drop the filter.
-- If the client wants hazard floors excluded too, extend the set.
-
-One constant in `plan.ts`; T08 is unaffected (it aims *past* the lava).
-
-
-
-
-
-
-### Katn as04 concept assumption (L0-katn-as04)
-
----
-title: "AS-katn-04 · Fall look-ahead scales with speed; riding and other cases are not special"
-is_a: ["assumption"]
-part_of: ["L0-katn"]
-relates_to: ["L0-adr-ktfl", "L0-xasm20", "L0-katn-p002"]
----
-**Gap.**
-- `L0-adr-ktfl` fixes a 2-block look-ahead and notes it may need to scale.
-- The spec says nothing about using the Katana while riding, sleeping or in a minecart.
-
-**Assumption (CAN_ASSUME).**
-1. The look-ahead is `max(2, ceil(|velocity.y|) + 1)` blocks. At ~3.9 blocks per tick that is 5, so the self-teleport can never be skipped over between two ticks.
-2. Using it while riding is allowed. The engine's teleport dismounts the player, and the vehicle stays.
-3. A self-teleport that lands within 0.3 of a ledge is accepted. The re-teleport uses the current exact location, so it cannot move the player.
-
-**Impact if wrong.**
-- If probe (1) shows the self-teleport snags or fails, the `slow_falling` fallback in `L0-katn-p002` §4 applies.
-- If riding must be blocked, add one guard (`player.getComponent("riding")`) in `p001` step 2.
-
-
-
-
-
 
 ### Lgnd as01 concept assumption (L0-lgnd-as01)
 
@@ -438,173 +340,288 @@ The refund mirrors the Web Sword's, which returns its consumed diamond sword. Th
 
 
 
-### ASM-L0-18 · Range clamp (L0-xasm18)
+### Lgnd as18 concept assumption (L0-lgnd-as18)
 
----
-title: "ASM-L0-18 · Aim beyond 20 blocks is clamped along the ray, measured from the head"
-aliases: ["L0-xasm18", "Katana range clamp"]
-is_a: ["assumption"]
-part_of: ["L0"]
-relates_to: ["L0-katn", "L0-adr-ktob"]
-see_also: ["dragonkatanaspecv1ruen-part-1", "dragonkatanaspecv1ruen-part-2"]
----
-# ASM-L0-18 · Range clamp
+**ASM-lgnd-18: Def #5's data that the spec does not name.**
 
-**Gap.** §5 says "the player aims at a point within at most 20 blocks". T06 says "a point further than 20 does not allow exceeding the max range". Neither says whether aiming further *refuses* the use or *shortens* it. Neither says where the 20 is measured from.
+Related: L0-lgnd-ad16, L0-lgnd-cx15, L0-sclk.
 
-**Assumption (CAN_ASSUME).**
-- The trace runs from the player's **head location** along the view, for at most 20 blocks.
-- If nothing solid is hit within 20, the endpoint is the point 20 blocks out, in the air. This counts as a valid use, consistent with "a point in the air is allowed", and it consumes the cooldown.
-- The resulting feet position may differ from the endpoint by the safe-cell correction (`L0-xasm19`), but never lies further than 20 blocks from the head.
+The crossbow spec gives the recipe (§2: echo shard top and bottom, deepslate left and right, crossbow in the centre) but no keys, ids, refund or command. Filled with defaults:
+| Field | Value | Basis |
+|---|---|---|
+| `itemId` | `andrew:sculk_crossbow` | L0 plan (`sclk`), `adr-scbs` option A |
+| `keyPrefix` | `sk` | `cx15`; `sc` is taken |
+| `craftTokenId` | `andrew:sculk_crossbow_crafted` | `ad08` naming |
+| `refund` | `minecraft:echo_shard` ×2, `minecraft:deepslate` ×2, `minecraft:crossbow` ×1 | the recipe inputs, as for every shipped def. "Deepslate" = the plain block `minecraft:deepslate` (§2 "обычный блок"), not cobbled |
+| `textPrefix` | `andrew.crossbow` | |
+| `command` | `andrew:crossbow` | |
+| `nameKey` | `item.andrew:sculk_crossbow` | |
 
-**Impact if wrong.** If the client wants a refusal for over-range aim:
-- the trace stays the same;
-- `katn` adds a "no target" branch: no teleport, no cooldown, and a HUD hint;
-- T06's GameTest flips from "lands at ≤ 20" to "does not move".
+The refunded crossbow is a fresh, unenchanted, full-durability `minecraft:crossbow`. An enchanted or damaged input crossbow loses its enchantments and damage on a blocked craft (as the Web Sword's and Katana's diamond sword already do).
 
-The cost is small, and the decision is local to `katn`.
+**Impact if wrong.** All are one-line data changes **until the first world ships**. After that, `keyPrefix` and the command are frozen (`r006`). If the operator wants the input crossbow's enchantments preserved on refund, the gate needs the consumed stack, which stable 2.10.0 does not expose (no craft event): that would be an L0 contradiction.
 
 
 
 
 
 
-### ASM-L0-19 · Safe-cell search (L0-xasm19)
+### Sclk as01 concept assumption (L0-sclk-as01)
 
----
-title: "ASM-L0-19 · The safe-cell search walks back along the ray and never crosses the obstacle"
-aliases: ["L0-xasm19", "Katana safe-cell search"]
-is_a: ["assumption"]
-part_of: ["L0"]
-relates_to: ["L0-katn", "L0-adr-ktob"]
-see_also: ["dragonkatanaspecv1ruen-part-1", "dragonkatanaspecv1ruen-part-2"]
----
-# ASM-L0-19 · Safe-cell search
+**AS-sclk-01 · The bolt's gravity and drag can be tuned to match an arrow (CAN_ASSUME)**
 
-**Gap.** §5 says that at an obstacle the player goes to "the nearest safe position on the side facing the owner". §6 allows shifting the final position "a little up or sideways". Moving *up* in front of a low wall could put the player on top of it, which is arguably "past" the obstacle. "A little" has no number.
+**Links:** `part_of: ["L0-sclk"]` · `is_a: ["assumption"]` · `relates_to: ["L0-sclk-ent2", "L0-sclk-p001", "L0-adr-scdm"]`
 
-**Assumption (CAN_ASSUME).**
-1. Candidate feet cells are taken, nearest first, from:
-   - the endpoint cell;
-   - then the cells stepping back toward the head along the ray (0.5-block steps);
-   - at each step, offsets of +1 and +2 up and ±1 sideways.
-2. A candidate must:
-   - fit (per `L0-adr-ktob`);
-   - lie on the owner's side of the hit face's plane;
-   - be reachable from the head by a clear ray, so the player is never placed behind a solid block.
-3. The search stops at the player's own cell. If nothing fits, there is **no teleport and no cooldown**, and the HUD says nothing.
-4. A floor hit (aiming at the ground) is the same case: the feet cell sits on top of the hit face.
+**Assumption.** With the snowball runtime, `minecraft:projectile.gravity` and `inertia` can be set so that a bolt fired at an arrow's spawn velocity lands within 1 block of where the arrow would land, at 30 blocks on a flat range. The starting values are the vanilla arrow's (gravity 0.05, inertia 0.99), corrected by probe Q9.
+
+**Impact if wrong.** The bolt drops faster or slower than an arrow. Gameplay still works (physical, not hitscan), but aiming feels different from a vanilla crossbow. That is a C-16 deviation noted in the README. No design change.
+
+
+
+
+
+
+### Sclk as02 concept assumption (L0-sclk-as02)
+
+**AS-sclk-02 · Shield fallback geometry (CAN_ASSUME)**
+
+**Links:** `part_of: ["L0-sclk"]` · `is_a: ["assumption"]` · `relates_to: ["L0-xcx23", "L0-sclk-p004", "L0-sclk-ac08"]`
+
+**Assumption.** If probe Q6 shows that a snowball-runtime bolt is deflected by a raised shield with no `projectileHitEntity`, the interval resolves the bolt as an entity hit on a player when **both** hold:
+- the bolt is ≤ `SHIELD_HIT_RADIUS` = 0.8 blocks from that player's eye-height axis;
+- the player is blocking (`isSneaking` with a shield in either hand: the Bedrock shield is raised by sneaking).
+
+The first match wins, and the record is claimed (r001).
 
 **Impact if wrong.**
-- If "on top of a 1-high wall" must be allowed, the plane rule relaxes for upward offsets only.
-- If a failed search must still consume the cooldown, add one line.
+- If the radius is too wide, a near-miss past a sneaking shield-holder counts as a hit, against §9.
+- If it is too narrow, deflections sometimes deal nothing, against T08.
 
-Neither change touches other nodes.
-
-
-
-
-
-
-### ASM-L0-20 · Fall-flag expiry (L0-xasm20)
-
----
-title: "ASM-L0-20 · The fall flag ends at the first landing, a liquid, a climb, death, a dimension change, logout or 10 s"
-aliases: ["L0-xasm20", "Katana fall-flag expiry"]
-is_a: ["assumption"]
-part_of: ["L0"]
-relates_to: ["L0-katn", "L0-adr-ktfl"]
-see_also: ["dragonkatanaspecv1ruen-part-2", "dragonkatanaspecv1ruen-part-3"]
----
-# ASM-L0-20 · Fall-flag expiry
-
-**Gap.** §7 says "the nearest landing related to this teleport" and "one-shot", but it does not define the cases where there is no landing:
-- falling into water;
-- grabbing a ladder or vine;
-- an elytra glide;
-- dying;
-- a second teleport after the cooldown.
-
-It also gives no time bound.
-
-**Assumption (CAN_ASSUME).** The flag is consumed by whichever comes first:
-- the first on-ground tick;
-- entering a liquid;
-- climbing;
-- gliding;
-- death;
-- a dimension change;
-- leaving the game;
-- **10 s** of wall-clock time after the teleport (epoch ms, C-21, C-25).
-
-A new Katana teleport replaces the flag rather than stacking it. The longest fall from the 20-block cap down to bedrock-level void takes well under 10 s at terminal velocity, so the bound never cuts off a legitimate landing in the Overworld.
-
-**Impact if wrong.** If the client wants protection to survive a water bounce or a glide, the end conditions change in one function inside `katn`. The T12 test ("the next ordinary fall hurts") is unaffected.
+Either way only one constant and the T08 shield instance change.
 
 
 
 
 
 
-### ASM-L0-21 · Escape interplay with other features (L0-xasm21)
+### Sclk as03 concept assumption (L0-sclk-as03)
 
----
-title: "ASM-L0-21 · The Katana may teleport out of a Web Sword trap and out of the UFO magnet's hold"
-aliases: ["L0-xasm21", "Katana escape interplay"]
-is_a: ["assumption"]
-part_of: ["L0"]
-relates_to: ["L0-katn", "L0-webs", "L0-magn"]
-see_also: ["dragonkatanaspecv1ruen-part-1", "webswordspecv1ruen-part-1", "ufomagnetspecv1ruen-part-2"]
----
-# ASM-L0-21 · Escape interplay with other features
+**AS-sclk-03 · No extra knockback on a hit (CAN_ASSUME)**
 
-**Gap.** The Katana spec names no interaction with the other legendaries or with events. Two follow from the mechanics:
-1. **Web Sword trap.** A player caught in the 3×3×3 cobweb cube can use the Katana. Cobweb is passable to the block ray (`L0-adr-ktob`), so the trace leaves the cube.
-2. **UFO magnet hold.** A player held under the saucer for iron in hand can teleport away. The magnet re-applies knockback each tick while iron is held, so they may be pulled back.
+**Links:** `part_of: ["L0-sclk"]` · `is_a: ["assumption"]` · `relates_to: ["L0-sclk-p004", "L0-sclk-r002"]`
 
-**Assumption (CAN_ASSUME).** Both escapes are **allowed**, and no feature blocks another's ability. This matches the spec's single rule that only solid blocks stop the trace. It also keeps the nodes independent: no change to `webs` or `magn`.
+**Gap.** The vanilla Warden Sonic Boom knocks targets back hard. The spec says only that the **visual** does not knock back (§4) and says nothing about the hit.
+
+**Assumption.** A hit applies only the knockback that `applyDamage(…, cause projectile)` itself gives. There is no `applyKnockback`. The weapon's identity is damage plus sculk, not displacement.
+
+**Impact if wrong.** If the operator wants a Warden-like shove: one `applyKnockback` along the bolt's velocity in p004, with a tuned strength. GameTests that check the target's position after a hit would change.
+
+
+
+
+
+
+### Sclk as04 concept assumption (L0-sclk-as04)
+
+**AS-sclk-04 · Performance constants (CAN_ASSUME)**
+
+**Links:** `part_of: ["L0-sclk"]` · `is_a: ["assumption"]` · `relates_to: ["L0-sclk-ad04", "L0-sclk-r007", "L0-sclk-cons"]`
+
+| Constant | Value | Basis |
+|---|---|---|
+| `TRAIL_PER_TICK` | 3 | about 1 ring per 1–1.3 blocks at full arrow speed (~3 blocks/tick) |
+| `CARVE_BUDGET_PER_TICK` | 300 | one full volley in one tick; the Orbital ring carve has run at similar per-tick counts on the iPad |
+| `BOLT_LIFETIME_TICKS` | 100 | `xasm27` |
+| `MIN_BOLT_SPEED` | 90 % of the full-draw speed | `cx02`; the probe's Q5 measures it |
+
+**Impact if wrong.** These are TPS-only effects. `ufo_hold_tps_measured`-style measurement on the iPad (a 3-player Multishot burst) retunes the constants. No logic changes.
+
+
+
+
+
+
+### Sclk as05 concept assumption (L0-sclk-as05)
+
+**AS-sclk-05 · Emulation of Quick Charge and Multishot if the custom shooter ignores them (CAN_ASSUME)**
+
+**Links:** `part_of: ["L0-sclk"]` · `is_a: ["assumption"]` · `relates_to: ["L0-adr-scbs", "L0-sclk-r005", "L0-sclk-p002", "L0-xq7"]`
+
+**Assumption.** If probe Q3 shows no native effect:
+- **Multishot:** the substitution of one arrow from a stack with `multishot` spawns 3 bolts, at 0° and ±10° yaw at the same speed. One arrow is spent (vanilla Multishot spends one).
+- **Quick Charge:** the shooter's draw stays at 1.25 s. Script-side, the full-charge requirement (r006) is measured in **ticks since `itemStartUse`** rather than by spawn speed: `25 − 5 × level` ticks. A release before that spawns no bolt.
 
 **Impact if wrong.**
-- If the client wants a trap to be inescapable, `katn` would need a new `lgnd`-level "rooted" predicate, published like the hidden seam (`lgnd-r010`), that `webs` sets and `katn` reads. That is a framework change, and the reduce would raise it as a contradiction.
-- If the magnet must win, `magn` ignores teleports, which is already its behaviour.
-
-Worth asking the client during the iPad acceptance of the Katana.
+- If the operator rejects the bow-like feel (`xq7` item 8): fall back to `adr-scbs` option B (the vanilla crossbow), which re-opens `lgnd`.
+- If the ±10° spread is off: one constant.
 
 
 
 
 
 
-### ASM-L0-22 · The framework as built satisfies the Katana's global rules (L0-xasm22)
+### ASM-L0-23 · Sonic Boom damage = 10 (L0-xasm23)
 
 ---
-title: "ASM-L0-22 · Katana §3/§13 rules and the recipe are met by registering with the framework as built"
-aliases: ["L0-xasm22", "Katana uses the framework as built"]
+title: "ASM-L0-23 · The Sonic Boom (Normal) damage is 10 HP, one constant"
+aliases: ["L0-xasm23", "Sonic Boom damage = 10"]
 is_a: ["assumption"]
 part_of: ["L0"]
-relates_to: ["L0-lgnd", "L0-katn", "L0-xcx21", "L0-xcx11"]
-see_also: ["dragonkatanaspecv1ruen-part-1", "dragonkatanaspecv1ruen-part-3"]
+relates_to: ["L0-sclk", "L0-adr-scdm", "L0-xq7"]
+see_also: ["sculkcrossbowspecv1ruen-part-1", "sculkcrossbowspecv1ruen-part-3"]
 ---
-# ASM-L0-22 · The framework as built satisfies the Katana's global rules
+# ASM-L0-23 · Sonic Boom damage = 10
 
-**Assumption (CAN_ASSUME).** Katana §3 and §13 ("preserve all global legendary-item rules") are satisfied by adding a fourth `LegendaryDef` with its craft token, with **no new framework behaviour**.
+**Gap.** §5 and T06 say "equal to vanilla Warden Sonic Boom on Normal difficulty", but give no number.
 
-| Spec | How it is met |
+**Assumption (CAN_ASSUME).** `SONIC_BOOM_DAMAGE = 10` HP (5 hearts): the Warden's ranged attack on Normal. It is exported as one constant that the GameTests read. It ignores difficulty (T07), armour and the shield (T08, C-28).
+
+**Verification.** The probe measures a real Warden's Sonic Boom on an unarmoured SimulatedPlayer at Normal on BDS 1.26.51. If the value differs, the constant takes the measured value.
+
+**Impact if wrong.** One number changes. The T06–T08 and T17 expectations follow the constant. No design change.
+
+
+
+
+
+
+### ASM-L0-24 · Entity-hit scope and patch placement (L0-xasm24)
+
+---
+title: "ASM-L0-24 · What counts as a 'living entity' hit, and where the sculk patch goes"
+aliases: ["L0-xasm24", "Crossbow entity-hit scope and patch placement"]
+is_a: ["assumption"]
+part_of: ["L0"]
+relates_to: ["L0-sclk", "L0-adr-sctr", "L0-xq7"]
+see_also: ["sculkcrossbowspecv1ruen-part-1", "sculkcrossbowspecv1ruen-part-2"]
+---
+# ASM-L0-24 · Entity-hit scope and patch placement
+
+**Gaps.** §5 says "a living entity" and "a sculk patch under the target". It does not say:
+- what happens on a hit on an entity without health;
+- what happens when the target is in the air (a jumping player, a flying mob, the UFO saucer).
+
+**Assumption (CAN_ASSUME).**
+- **Living** = the entity has `minecraft:health` and is not in Creative or Spectator.
+  - A living hit deals D (C-28) and places a patch.
+  - An entity hit on a non-living or immune entity (boat, minecart, the damage-immune saucer, a Creative player) deals no damage and places **no crater**. It still places a patch: the bolt "hit an entity".
+- **The patch** is centred on the target's feet column. It is placed on the first solid full-block surface at most **6 blocks** below the feet. If there is none (a target in the air over the Void, a high flier, the saucer), **no patch** is placed.
+- A patch never replaces liquids, containers or deny-list blocks (C-27).
+
+**Impact if wrong.** Only placement rules change, in `sculkCells`. If the operator wants damage to non-living entities, armour stands would break, which then touches the `lgnd` stand rules.
+
+
+
+
+
+
+### ASM-L0-25 · Crater contents (L0-xasm25)
+
+---
+title: "ASM-L0-25 · The crater drops nothing; liquids, deny-list blocks and unloaded cells are spared; containers spill"
+aliases: ["L0-xasm25", "Crossbow crater drops and exclusions"]
+is_a: ["assumption"]
+part_of: ["L0"]
+relates_to: ["L0-sclk", "L0-adr-sctr", "L0-xcx25", "L0-xasm6", "L0-xq7"]
+see_also: ["sculkcrossbowspecv1ruen-part-2"]
+---
+# ASM-L0-25 · Crater contents
+
+**Gap.** §6 says "destruction is controlled by the script", but says nothing about drops, liquids, containers or unbreakable blocks.
+
+**Assumption (CAN_ASSUME).**
+- Crater cells become air **without item drops**. A drop-free carve fits "not a TNT explosion" and avoids a resource farm.
+- **Liquids** are not removed. Water may flow into the crater.
+- **Deny-list blocks** (bedrock, portals, command and structure blocks, barriers, reinforced deepslate, …; the shared list from `L0-xasm6`) stay.
+- **Containers** removed by the carve **spill their contents**. This is an engine fact: `setType` spills containers even with `doTileDrops` false. Any legendary inside is first taken out by `protectLegendariesIn`.
+- **Structure blocks** of the shipped structures (Warden City, Bastion, …) get no special protection. A crater is an ordinary world edit, like a player's pickaxe.
+- In the Nether and the End the same rules apply. Sculk is placed in every dimension.
+
+**Impact if wrong.**
+- If drops are wanted: one flag in the carve (`setType` → `/setblock … destroy`), which raises the per-tick cost.
+- If structures must be protected: a new protect-box rule that `strf` would own (a new L0 contradiction).
+
+
+
+
+
+
+### ASM-L0-26 · Def #5 inherits the framework as built (L0-xasm26)
+
+---
+title: "ASM-L0-26 · The crossbow joins the framework as def #5 and inherits the 1.6.x rules as built, including magnetism and the crafter-target Void return"
+aliases: ["L0-xasm26", "Crossbow inherits the framework as built"]
+is_a: ["assumption"]
+part_of: ["L0"]
+relates_to: ["L0-lgnd", "L0-sclk", "L0-magn", "L0-xcx11", "L0-xcx24", "L0-xcx21"]
+see_also: ["sculkcrossbowspecv1ruen-part-1", "sculkcrossbowspecv1ruen-part-4"]
+governs_files: ["src/legendary/registry.ts", "src/ufo/magnet-select.ts", "src/ufo/magnet-hold.ts", "src/legendary/recovery.ts"]
+---
+# ASM-L0-26 · Def #5 inherits the framework as built
+
+**Assumption (CAN_ASSUME).** Crossbow §3 and §13 ("preserve all global legendary rules") are met by def #5 (`keyPrefix "sk"`, corrected at reduce from `sc`, which the Scythe holds: `L0-lgnd-cx15`, `L0-adr-sckp`; a craft token, a refund of echo shard ×2, deepslate ×2 and crossbow ×1) plus the no-ability change (`xcx24`), with these readings carried over from earlier weapons:
+
+| Rule | As built at 1.6.1 |
 |---|---|
-| One Survival craft, persistent; Creative and `/give` are free; announcement | craft gate + craft token + world flag, as for the other three |
-| Infinite durability | no `minecraft:durability` component, as for the Web Sword |
-| Transfer and containers | no binding, as for the others |
-| Death retention, and a contained item untouched | `retention.ts`, cause-agnostic |
-| Fire and lava | `fire_resistant` (prevented) |
-| Cactus, TNT | **returned** to the owner (C-16): see `L0-xcx21` |
-| Orbital Cannon (T17) | `protectLegendariesIn` on blast and ring volumes |
-| Void, offline, then next join | recovery + owed list. The target is `mark.owner` until `xcx11` closes |
+| Hazards: fire and lava prevented; cactus and TNT get a return | the C-16 reading of `L0-xcx21`/`adr-ktgr`. T20 is proven as "exactly one exists, held or owed" |
+| Orbital blast and rings | prevented by `protectLegendariesIn` |
+| Void return to "the last owner" | **`mark.owner` (the crafter or `/give` target)**. `decision-resolve-l0-xcx11` chose the last holder, but it is not built (`state.ts:66`, `recovery.ts:490`) |
+| UFO Magnet | the crossbow **is pulled**: since 1.6.0 the selector takes any `isLegendaryWeaponStack` (`magnet-select.ts:8`). The spec does not list the magnet as a hazard, so this is not a breach |
 
-**The recipe ingredient.** A Diamond Sword in the centre is accepted whatever its damage or enchantments, as in vanilla shaped recipes. Its enchantments are **not** carried onto the Katana.
+**Impact if wrong.** If the operator wants the holder built now, `lgnd` v7 takes on the holder field (`LGND`-scope task), and T20/Void tests for all five weapons change. If the crossbow must be exempt from the magnet, a per-def `magnetic: false` is needed (touches `magn`).
 
-**Impact if wrong.**
-- If enchantments must carry over, `katn` needs a craft-time hook. The craft token pipeline would have to read the consumed sword, which it cannot do today.
-- If any rule needs per-weapon behaviour, it is an `lgnd` change.
+
+
+
+
+
+### ASM-L0-27 · Ammunition and the bolt's life (L0-xasm27)
+
+---
+title: "ASM-L0-27 · Ammunition: arrows only (plain, tipped, spectral) with arrow effects dropped; no fireworks; bolts are not picked up; lifetime 100 ticks"
+aliases: ["L0-xasm27", "Crossbow ammunition and bolt lifetime"]
+is_a: ["assumption"]
+part_of: ["L0"]
+relates_to: ["L0-sclk", "L0-adr-scbs", "L0-adr-scdm", "L0-xq7"]
+see_also: ["sculkcrossbowspecv1ruen-part-1", "sculkcrossbowspecv1ruen-part-2"]
+---
+# ASM-L0-27 · Ammunition and the bolt's life
+
+**Gap.** §4 says "every fired arrow/bolt". A vanilla crossbow also loads **firework rockets**, and tipped arrows carry effects. The spec says nothing about pickup or how long a bolt lives.
+
+**Assumption (CAN_ASSUME).**
+- **Ammunition:** `minecraft:arrow` in all its variants (plain, tipped, spectral). **No fireworks.** A rocket's explosion would be area damage, which §5 and §9 forbid. If the base item is the vanilla crossbow (`adr-scbs` B), a loaded rocket is fired as one bolt and its explosion never happens.
+- **Tipped and spectral effects are not applied.** The Sonic Boom hit replaces the arrow's whole hit (§5, "instead").
+- **A bolt is never picked up.** It is removed on its outcome. Ammunition is spent as vanilla spends it: none in Creative, and the Infinity enchantment does not exist for crossbows.
+- **Lifetime:** 100 ticks (5 s), or leaving loaded chunks, or falling into the Void. Then the bolt is removed with no outcome (C-26 "expiry").
+
+**Impact if wrong.** If fireworks must work, the rocket path needs its own rule (a boom hit plus a crater?), and the operator must define it. If tipped effects must apply, the hit adds `addEffect` from the stored potion, which is a small change.
+
+
+
+
+
+
+### ASM-L0-28 · A sculk bolt is invisible to every legendary and magnet predicate (L0-xasm28)
+
+---
+title: "ASM-L0-28 · A sculk bolt is invisible to every legendary and magnet predicate"
+aliases: ["L0-xasm28", "Bolts are not legendaries"]
+is_a: ["assumption"]
+part_of: ["L0"]
+relates_to: ["L0-sclk", "L0-lgnd", "L0-magn", "L0-sclk-ent2", "L0-sclk-ad03", "L0-lgnd-r016", "L0-xasm26"]
+governs_files: ["src/sculk/", "src/legendary/registry.ts", "src/ufo/magnet-select.ts"]
+---
+# ASM-L0-28 · A sculk bolt is invisible to every legendary and magnet predicate
+
+**Assumption (CAN_ASSUME).** `andrew:sculk_bolt` is a projectile entity (`sclk-ent2`), not an item stack, and it holds no item. So:
+- `isLegendaryStack` / `isLegendaryWeaponStack` / `isLegendaryItemEntity` never match it, and `protectLegendariesIn` never moves it out of a crater box. That is harmless, because a bolt has already resolved by the time its own crater is planned.
+- The UFO magnet (`magn`) selects legendary item entities and holders through `hasitem` (`lgnd-r016`). A bolt is neither, so a magnet in flight range never captures it.
+- A bolt that leaves loaded chunks or exceeds 100 ticks is removed with no outcome. It has no owed entry or recovery path in `lgnd`.
+
+**Why it is an L0 assumption.** Each child states only its own half: `sclk` says "bolts are not item stacks", and `lgnd`/`magn` select by stack type. Neither checks the other.
+
+**Check (cheap, in the `sclk` pipeline task).** A GameTest fires a bolt across an active magnet zone and asserts that it resolves exactly once on its natural path. If the magnet turns out to move generic projectile entities, the bolt needs a magnet exclusion. That exclusion would be a `magn` change, filed as a new L0 contradiction, not patched in `sclk`.
 
 
 

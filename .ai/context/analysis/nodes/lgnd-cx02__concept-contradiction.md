@@ -2,7 +2,7 @@
 type: "concept-contradiction"
 node_id: "L0-lgnd-cx02"
 source_channel: "rollout"
-analysis_version: 6
+analysis_version: 7
 title: "CX-lgnd-02 · Loss return can leave a stale but still melee-usable copy (hopper/allay pickup)"
 aliases: ["L0-lgnd-cx02"]
 is_a: ["contradiction"]

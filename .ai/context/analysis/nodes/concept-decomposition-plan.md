@@ -2,61 +2,74 @@
 type: "concept-decomposition-plan"
 node_id: "L0"
 source_channel: "rollout"
-analysis_version: 6
+analysis_version: 7
 level: 0
-title: "L0 Decomposition Plan (v6)"
+title: "L0 Decomposition Plan (v7)"
 aliases: ["L0"]
 is_a: ["decomposition-plan"]
 part_of: ["L0"]
 relates_to: ["L0"]
-priority: 600
-size_chars: 5587
-tags: ["v6", "title:L0 Decomposition Plan (v6)", "alias:L0-plan", "is_a:plan", "relates_to:L0", "see_also:dragonkatanaspecv1ruen-part-1", "see_also:dragonkatanaspecv1ruen-part-2", "see_also:dragonkatanaspecv1ruen-part-3", "supersedes:L0-plan@v4"]
+priority: 610
+size_chars: 6918
+tags: ["v7", "sculk-crossbow", "supersedes:L0-plan@v6"]
 ---
 ---
-title: "L0 Decomposition Plan (v6)"
+title: "L0 Decomposition Plan (v7)"
 aliases: ["L0-plan", "Decomposition Plan"]
 is_a: ["plan"]
 part_of: ["L0"]
-relates_to: ["L0", "L0-katn", "L0-lgnd", "L0-adr-ktob", "L0-adr-ktfl"]
-see_also: ["dragonkatanaspecv1ruen-part-1", "dragonkatanaspecv1ruen-part-2", "dragonkatanaspecv1ruen-part-3"]
-supersedes: ["L0-plan@v4"]
+relates_to: ["L0", "L0-sclk", "L0-lgnd", "L0-adr-scbs", "L0-adr-scdm", "L0-adr-sctr", "L0-xcx22", "L0-xcx23", "L0-xcx24", "L0-xcx25"]
+see_also: ["sculkcrossbowspecv1ruen-part-1", "sculkcrossbowspecv1ruen-part-2", "sculkcrossbowspecv1ruen-part-3", "sculkcrossbowspecv1ruen-part-4"]
+supersedes: ["L0-plan@v6"]
 ---
-# L0 Decomposition Plan (v6)
+# L0 Decomposition Plan (v7)
 
 ## Survey
-- **Volume.** There are 30 primary inputs, about 120 KB raw, and the KV holds 904 artifacts. The v6 delta is **one new spec**: the Dragon Katana. It has 3 fragments and about 12.6 K characters with overlap (part 2 repeats §5; part 3 repeats T03–T10), so about 9 K unique. It covers 14 sections and T01–T18. No other raw changed.
-- **Diversity.** There is one topic: one weapon. It touches three areas:
-  1. **item and framework**: def, recipe, craft gate, retention, protection, Void, HUD, hands;
-  2. **ability physics**: trace, obstacle semantics, safe cell, teleport, cooldown;
-  3. **after-effects**: the one-shot fall flag and the trail.
+- **Volume.** There are 34 primary inputs, about 135 KB raw, and the KV holds 336 indexed artifacts. The v7 delta is **one new spec**: the Sculk Crossbow. It has 4 fragments and about 15.5 K characters with overlap (parts 2–4 repeat §5, §11–§13), so about 10 K unique. It covers 14 sections and T01–T20. No other raw changed. The code moved under the KV: 1.5.0 shipped the Katana, and 1.6.0/1.6.1 retuned the UFO and made legendaries magnetic.
+- **Diversity.** There is one topic: one weapon. It touches four areas:
+  1. **item and framework:** def, recipe, gate, durability, retention, Void, Creative;
+  2. **projectile pipeline:** fire → bolt per projectile → visual → hit;
+  3. **hit resolution:** fixed damage;
+  4. **terrain:** crater, sculk patch.
 
-  Area 1 is almost entirely the existing `lgnd` contract. Areas 2 and 3 are new and small.
-- **Coherence.** High. One weapon, one activation path. It has exactly one outward seam: the legendary framework. There are soft interactions with `webs` (trap escape) and `magn` (hold escape, never-pulled). Those are settled by assumption, not by code in those nodes.
-- **Dependencies.** A short pipeline: `itemUse` → `resolveActivation` → trace → safe cell → teleport → cooldown → fall flag → trail. It is linear and thin, so there is no case for a pipeline split.
+  Area 1 is the `lgnd` contract plus one new capability (a def with no ability). Areas 2–4 are new.
+- **Coherence.** High. One weapon, one event path. It has two outward seams:
+  - `lgnd`: the no-ability def, protection before carving, and the magnet now pulling the item;
+  - `orbc`: the shared deny list for terrain edits.
+- **Dependencies.** A linear pipeline: fire → swap → fly → hit → (damage | carve). It is thin and lives in one module, so there is no case for a pipeline split. The four areas fit one child.
 
 ## Decomposition strategy: coherent-coverage
-`webs` and `scyt` set the precedent: one node per weapon. The Katana spec goes to a single new child, `katn`. **`lgnd` is re-run** for two reasons:
-- It must register def #4.
-- Its v5 card is stale against the code. `resolveActivation` is listed as "not built", yet `src/legendary/hands.ts` ships it; and the Void-minecart holder fix has merged.
+`webs`, `scyt` and `katn` set the precedent: one node per weapon. The crossbow goes to a single new child, `sclk`. **`lgnd` is re-run** for three reasons:
+- It must register def #5 with no ability (`L0-xcx24`).
+- Its v6 card is stale against 1.6.1: the magnet pulls legendaries, and the Katana has shipped.
+- The holder target (`xcx11`) is decided but not built.
 
-Every other node keeps its version and is **not** re-run.
+`orbc` is **not** re-run. Moving its deny list to a shared module is a refactor with no change in behaviour, and `sclk` owns the task (`L0-xcx25`). `magn` is not re-run: its selector is def-driven.
 
 | id_suffix | label | prompt | model_hint |
 |-----------|-------|--------|------------|
-| katn | Dragon Katana (`andrew:dragon_katana`). **Item:** a Diamond Sword clone on the `web_sword.json` template: damage 7, `is_sword`, sword enchant slot, `fire_resistant`, `allow_off_hand`, no durability, Creative "Equipment", RU/EN names. **Recipe:** golden apple / ender pearl ×2 / Diamond Sword, through the framework's craft token (T01–T03). **Ability:** `itemUse` (and the block-tap path as in `webs`/`scyt`) → `resolveActivation` → server-side trace from the head along the view, capped at 20 blocks (clamp per `L0-xasm18`), with obstacle semantics per `L0-adr-ktob` (water and lava pass, unreadable = solid) → the nearest safe standing cell on the owner's side (`L0-xasm19`), with no block edits → `teleport` keeping the facing → `startCooldown` 30 s epoch ms. A cooldown attempt is a no-op that does not reset the timer (T05–T10). **Fall:** a one-shot flag per `L0-adr-ktfl` / `L0-xasm20` (T11, T12). **Trail:** a pink cherry-petal trail A→B under C-5e, harmless (T13). **HUD:** the RU/EN ready string and seconds. **GameTests:** T04–T15 with SimulatedPlayers, plus the Katana instances of T16–T18 against the framework. **iPad:** the trail, the HUD, the icon and the Creative placement. Probe first: fall-distance reset and the ray flags (`includePassableBlocks`, liquids). | component-deep-dive | |
-| lgnd | Legendary framework, v6 pass. **(1) Reconcile with as-built 1.4.4:** `resolveActivation` and `heldLegendaries` are shipped (`hands.ts`). The Void-minecart holder return has merged (`recovery.ts` `VOID_HOLDER_TYPES`). Re-state what is still open (`holder` for the last owner, `xcx11`; the armour stand). **(2) Katana delta:** def #4 and its craft token, and the uniqueness-flag key. Confirm that `isLegendaryStack`, retention, `protectLegendariesIn` (Orbital blast and rings, T17) and the HUD need no per-weapon code beyond the def. State T17 under C-16 (`L0-xcx21`, `L0-xasm22`). Make sure the Katana's self-teleport does not trip recovery (a player teleport moves no item entity) and that a teleport into another dimension's chunks is never attempted (same-dimension only). | component-deep-dive | |
+| sclk | Sculk Crossbow (`andrew:sculk_crossbow`). **Probe first** (gates `L0-adr-scbs` and `L0-adr-scdm`): does a custom `minecraft:shooter` item get a loaded state, and do Quick Charge and Multishot apply to it? Does the vanilla crossbow's projectile spawn expose its owner and velocity at `entitySpawn`, so it can be swapped for a bolt? Snowball-runtime bolt against a shield-holder (`xcx23`). Hurt-invulnerability on three hits in the same tick (`xcx22`). The `sonic_explosion` particle on the iPad. **Item:** the def from `L0-adr-scbs`, infinite durability, an enchant slot without Piercing (strip it on sight if the slot cannot exclude it), RU/EN lang, the Creative "Equipment" entry. **Recipe:** echo shard / deepslate / crossbow through the craft token (T01–T03). **Pipeline:** each projectile spawned by a marked crossbow becomes exactly one `andrew:sculk_bolt` with the same velocity and owner (C-26). It emits boom particles along its real path while in flight (C-5f), and has a lifetime cap. **Entity hit:** fixed `SONIC_BOOM_DAMAGE` (10, `xasm23`) through the Scythe true-damage pattern (C-28); a sculk patch under the target (`xasm24`); no crater. **Block hit:** an irregular crater seeded per bolt, ≤ 5×5×3, plus sculk on the exposed surfaces ≤ 5×5, under C-27 (`L0-adr-sctr`, `xasm25`); no entity damage. **Ammunition** per `xasm27`. **GameTests:** T04–T18 with SimulatedPlayers (≥ 2, C-20‴), plus the crossbow instances of T19–T20 against the framework. **iPad:** trail, crater, sculk, icon, Creative. | component-deep-dive | |
+| lgnd | Legendary framework, v7 pass. **(1) Reconcile with 1.6.1:** the Katana shipped (1.5.0). Legendaries are magnetic (`magnet-select.ts`, `magnet-hold.ts`): restate the old "never pulled" rule as an operator-tuned exception. **(2) No-ability def (`L0-xcx24`):** `LegendaryDef` gains an optional ability. Without it: no cooldown key, no `resolveActivation` claim and no HUD line (`hud.ts:37`). `cooldownTicks`/`abilityKey` become optional or are moved into an `ability` block, with no behaviour change for defs #1–#4. **(3) Crossbow delta:** def #5 (`keyPrefix: "sk"`; the plan first said `"sc"`, the Scythe's prefix, corrected at reduce per `L0-lgnd-cx15`), the craft token and refund (echo shard ×2, deepslate ×2, crossbow). Confirm that retention, recovery, Void and `protectLegendariesIn` need no per-weapon code. If `L0-adr-scbs` falls back to the vanilla crossbow, `isLegendaryStack` must become mark-aware; that is a larger change and must be stated as such. **(4) Holder (`xcx11`):** the decision says "the last holder" and the code returns to `mark.owner`. Either plan the holder field or restate T20 / the Void return against `mark.owner`, as v6 did for the Katana. | component-deep-dive | |
 
 ## Reduce plan
-- **`lgnd` answers first.** `katn` cites `lgnd-*` rules by id for the craft gate, retention, protection, Void and hands. It must not restate them. If `katn` needs a framework change (a new hook or a new HUD state), that is a contradiction on L0, not a local patch.
-- **`katn` owns the ADR details** under `L0-adr-ktob` and `L0-adr-ktfl`. If a probe overturns the fall mechanism, `katn` writes a superseding ADR and the reduce updates the L0 constraint C-25 wording.
-- **AC routing** is as in the overview table: T01–T03 and T16–T18 rules go to `lgnd`, with Katana call sites and tests in `katn`; T04–T15 go to `katn`. Each child splits its ACs into the `bds` and `ipad` channels.
-- **Roll-up.** The `katn` overview goes into the L0 diagram. New constraints are de-duplicated against C-1 … C-25. The reduce re-checks the soft seams: `webs` trap escape and `magn` hold escape (`L0-xasm21`), and that the UFO "never pulled" GameTest still passes with def #4.
+- **`lgnd` answers first.** `sclk` cites `lgnd-*` rules by id for the craft gate, retention, protection, Void and Creative copies. It must not restate them. The no-ability def is the only framework change allowed. Any other framework hook `sclk` needs is a new L0 contradiction.
+- **`sclk` owns the three ADRs** `L0-adr-scbs`, `L0-adr-scdm` and `L0-adr-sctr`, and their probe outcomes. A failed probe supersedes its ADR before the build tasks. If `scbs` falls back to the vanilla crossbow, the reduce re-opens `lgnd` (3).
+- **AC routing:**
+  - T01–T03, T19 and T20 rules go to `lgnd`, with crossbow call sites in `sclk`.
+  - T04–T18 go to `sclk`.
+  - T18 (durability) goes to `sclk` if the base is a custom item; it goes to `lgnd` if a vanilla crossbow must be kept repaired.
+  - Each child splits its ACs into the `bds` and `ipad` channels.
+- **Roll-up.** The `sclk` overview goes into the L0 diagram. New constraints are de-duplicated against C-1 … C-28. The reduce re-checks the seams:
+  - Orbital protection is still green after the deny-list move.
+  - The magnet's legendary GameTests include def #5.
+  - The Katana's ray passes a sculk block (a full solid block, so it is an obstacle).
+  - A crossbow crater never lands inside a structure's `protect` box, if one exists (check, do not assume).
 - **Stage 7 order:**
-  1. `lgnd` v6 (def #4, reconcile);
-  2. `katn` item, recipe and RP;
-  3. `katn` trace and teleport;
-  4. `katn` fall flag and trail.
+  1. The `sclk` probe on checks (19136);
+  2. `lgnd` v7 (no-ability def, def #5);
+  3. `sclk` item, token, recipe and RP;
+  4. `sclk` bolt pipeline and damage;
+  5. `sclk` crater and sculk (with the deny-list extraction).
 
-  After the merge, run the full suite, then reopen the auto-closed `ipad` criteria.
-- **Not in this run:** `xcx16` (the Orbital v1.4.4 reconcile) and `xcx12` (the structure scan-code reconcile). Both are still queued separately.
+  Gate each merge by blast radius, plus the legendary and Orbital scenarios. After each epic merge, reopen the crossbow `ipad` criteria.
+- **Not in this run:** `xcx12` (the structure reconcile) and the Orbital v1.4.4 reconcile. Both are still queued separately.

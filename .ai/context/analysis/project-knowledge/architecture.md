@@ -1,13 +1,13 @@
 ---
 title: Architecture
 type: project-knowledge
-generated_at: "2026-10-03T14:58:23.875Z"
+generated_at: "2026-10-05T17:12:56.143Z"
 source_channel: rollout
 node_id: rollout-architecture
 aliases: ["rollout-architecture","architecture","project-knowledge/architecture"]
 is_a: ["rollout","architecture"]
-relates_to: ["L0-adr-ktfl","L0-adr-ktgr","L0-adr-ktob","L0-katn","L0-lgnd"]
-priority: 600
+relates_to: ["L0-adr-hldb","L0-adr-scbs","L0-adr-scdm","L0-adr-scfc","L0-adr-sckp","L0-adr-scpi","L0-adr-sctr","L0-lgnd","L0-sclk"]
+priority: 610
 ---
 
 # Architecture
@@ -16,140 +16,110 @@ priority: 600
 
 ## Components
 
-### Dragon Katana (`andrew:dragon_katana`) (L0-katn)
+### Legendary weapon framework (`src/legendary/`), v7: as built at 1.6.1, plus the passive def and the Sculk Crossbow delta (L0-lgnd)
 
----
-is_a: ["component"]
-part_of: ["L0"]
-relates_to: ["L0-lgnd", "L0-lgnd-p001", "L0-lgnd-p002", "L0-lgnd-p003", "L0-lgnd-p004", "L0-lgnd-p005", "L0-lgnd-p008", "L0-webs", "L0-scyt", "L0-magn", "L0-adr-ktob", "L0-adr-ktfl", "L0-xasm18", "L0-xasm19", "L0-xasm20", "L0-xasm21", "L0-xasm22", "L0-xcx21"]
-see_also: ["dragonkatanaspecv1ruen-part-1", "dragonkatanaspecv1ruen-part-2", "dragonkatanaspecv1ruen-part-3"]
-governs_files: ["src/katana/", "packs/behavior/items/dragon_katana.json", "packs/behavior/recipes/dragon_katana*.json", "packs/resource/texts/*.lang"]
----
-# Dragon Katana (`andrew:dragon_katana`)
+# Legendary weapon framework (`src/legendary/`), v7: as built at 1.6.1, plus the passive def and the Sculk Crossbow delta
 
-**Responsibility.** This component owns what is unique to the fourth legendary weapon:
-- the item and recipe identity (`L0-katn-ent1`, `L0-katn-r001`);
-- the teleport ability body: trace → safe cell → teleport → cooldown (`L0-katn-p001`, rules `r002`–`r005`);
-- the one-shot fall flag (`L0-katn-p002`, `L0-katn-ent2`, `r006`);
-- the cherry-petal trail (`L0-katn-r007`);
-- the Katana HUD strings (`L0-katn-r008`);
-- the GameTests for T04–T15 and the Katana call sites of T01–T03 and T16–T18.
+Related: L0-sclk, L0-katn, L0-magn, L0-orbc, L0-webs, L0-scyt, L0-xcx11, L0-xcx24, L0-adr-scbs, L0-adr-hold, L0-xasm26, L0-lgnd-ad15, L0-lgnd-ad16, L0-lgnd-ad17, L0-lgnd-cx15, L0-lgnd-cx16, L0-lgnd-r016, L0-lgnd-r018.
 
-It is the Katana's counterpart to `L0-webs` (trap body) and `L0-sprj`/`L0-scyt` (volley body). All four plug into `L0-lgnd`.
+**Responsibility.** Every general legendary rule is implemented once, for every def in `LEGENDARIES`: the token craft gate and first-craft broadcast, marks and generation, death retention, loss return and the owed list, `protectLegendariesIn`, hand priority (`resolveActivation`), cooldown and busy, the HUD, `hidden_until`, and the type predicates `isLegendaryStack` / `isLegendaryWeaponStack`.
 
-**Not owned here (cite `lgnd`, do not restate).**
-- One Survival craft per world, the persistent flag, refund, Creative and `/give` copies, first-craft broadcast: `L0-lgnd-p001`.
-- Death retention, and a contained item left alone: `L0-lgnd-p002`.
-- Void, offline and owed return: `L0-lgnd-p003`.
-- Orbital blast and ring protection: `L0-lgnd-p008`.
-- Hand priority (main hand first, then a ready off hand): `L0-lgnd-p004`, through the shipped `resolveActivation` (`src/legendary/hands.ts:35`).
-- The cooldown clock (`startCooldown`, epoch ms, `src/legendary/cooldown.ts:47`) and the shared HUD pass: `L0-lgnd-p005`.
-- The T17 reading under C-16: `L0-xcx21`, `L0-xasm22`.
+## As built at 1.6.1 (read from code 2026-10-05)
+- **Four defs** (`registry.ts`): Web Sword `ws`, Scythe `sc`, Orbital Cannon `oc`, Dragon Katana `dk` (shipped 1.5.0, `KATA-LGND-01-AA`). The Katana needed no framework code (`ad14` held).
+- **Every def has an ability.** `abilityKey` and `cooldownTicks` are required fields (`registry.ts:12-15`). The HUD draws a line for every held def (`hud.ts:37-56`), and `resolveActivation` lets any held, ready def claim a Use (`hands.ts:35-42`).
+- **Legendary weapons are magnetic** (operator tuning, 1.6.0, `de0fc68`). The magnet uses `isLegendaryWeaponStack` (weapons, never tokens): ground, container slots, late drops, a player holding one (`magnet-hold.ts:117-136`), and a mob or armour stand holding one (`magnet-select.ts:179`, `:320`). The UFO AC 13 "never pulled" rule is retired. See `r016` and `ac21`.
+- **Armour stand in the Void** is closed in code (`decision-resolve-l0-lgnd-cx14`: stand watcher plus two return guards, `recovery.ts:326`, `:433`).
+- **Return target is still `mark.owner`.** `lost()` targets `w.mark.owner` (`recovery.ts:490`), and the protect hand-back and owed entry use it too (`:877-879`). `decision-resolve-l0-xcx11` (2026-09-29) chose the last holder and named `LGND-GEN-01-AA`. That task is archived, but the mark has no holder field (`state.ts`). See `cx16`.
 
-**What `katn` adds to the framework.** Def #4 in `LEGENDARIES` with `hudKeys` set: the def field already exists and the Orbital Cannon uses it. Nothing else. If a probe shows a framework hook is needed, that is an L0 contradiction, not a local patch (plan §"lgnd answers first").
-
-**Inputs.**
-- `world.afterEvents.itemUse`, plus `playerInteractWithBlock` for the same press, de-duplicated as in `src/websword/trap.ts`.
-- The server-side `player.getHeadLocation()` and `getViewDirection()`.
-- Block state along the segment.
-
-**Outputs.**
-- One `player.teleport(B, { keepVelocity: false, rotation kept })` in the same dimension.
-- `startCooldown(player, "dragon_katana")`.
-- An in-memory fall flag.
-- A bounded burst of pink petal particles A→B.
-- No block edits, no damage and no entities.
-
-**Core flow** (`L0-katn-p001`): resolve → trace (`L0-adr-ktob`, refined by `L0-katn-ad01`) → endpoint (`L0-xasm18`, `L0-katn-as01`) → safe-cell search (`L0-xasm19`, `L0-katn-r004`) → teleport → cooldown → fall flag → trail. Any refusal leaves no state: no teleport, no cooldown, no message.
-
-**Constraints honoured.**
-- C-24: server-authoritative, ≤ 20, unreadable = solid, no block edits.
-- C-25: the fall flag is one-shot, bounded and not persisted.
-- C-5e: a one-shot trail; the watcher costs nothing while no flag is set.
-- C-21: epoch-ms clocks.
-- C-16: closest stable behaviour, deviations documented.
-
-**Open items.**
-- `L0-katn-cx01`: resolved at reduce v6 by amending `L0-adr-ktob` §3 (fits ≠ safe).
-- `L0-katn-as01` … `as04`: endpoint geometry, aim source on iPad, hazards, the fall look-ahead.
-
-**Probe first** (before any build task): (1) a self-teleport mid-fall resets fall distance (`L0-adr-ktfl`); (2) the ray flags: liquids skipped, cobweb/grass/carpet passable, slabs and fences hit; (3) `getBlockFromRay` behaviour at an unloaded chunk; (4) `minecraft:cherry_leaves_particle` via `spawnParticle` renders on iPad.
-
-**Channels.** `bds`: T01–T18 as GameTests (`L0-katn-ac01` … `ac08`). `ipad`: trail, HUD, icon, Creative placement, aim feel (`L0-katn-ac09`).
-
-
-
-
-
-
-
-### Legendary weapon framework (`src/legendary/`), v6: as built in 1.4.4, plus the Dragon Katana delta (L0-lgnd)
-
----
-is_a: ["component"]
-part_of: ["L0"]
-relates_to: ["L0-katn", "L0-orbc", "L0-webs", "L0-scyt", "L0-pntr", "L0-ring", "L0-magn", "L0-stgt", "L0-adr-hold", "L0-xcx11", "L0-xcx21", "L0-xasm22", "L0-lgnd-ad12", "L0-lgnd-ad14", "L0-lgnd-r017", "L0-lgnd-cx14"]
-governs_files: ["src/legendary/", "src/websword/trap.ts", "src/scythe/targeting.ts", "src/orbital/activation.ts", "src/main.ts", "src/gametest/main.ts", "tests/legendary-registry.test.mjs"]
-see_also: ["dragonkatanaspecv1ruen-part-1", "dragonkatanaspecv1ruen-part-2", "dragonkatanaspecv1ruen-part-3", "ufomagnetspecv1ruen-part-4", "orbitalcannonspecv1ruen-part-1"]
----
-# Legendary weapon framework (`src/legendary/`), v6: as built in 1.4.4, plus the Dragon Katana delta
-
-**Responsibility.** Every general legendary rule is implemented once, for every def in `LEGENDARIES`:
-- the craft gate with tokens, and the first-craft broadcast
-- marks and generation
-- death retention
-- loss return and the owed list
-- protection from script-caused destruction (`protectLegendariesIn`)
-- hand priority (`resolveActivation`)
-- cooldown and busy
-- HUD
-- `hidden_until`
-- the type predicate `isLegendaryStack`
-
-v6 adds the **fourth def, the Dragon Katana** (`katn`). It needs **no framework code**, only data (`ad14`).
-
-## As built in 1.4.4 (verified in code, 2026-10-03), see `ad12`
-**Shipped**
-- gen guard, owed list, pending list, off hand, craft tokens, `fire_resistant`, `protectLegendariesIn`, `isLegendaryItemEntity`, departure tracking.
-- `heldLegendaries(player)` and `resolveActivation(player)` (`hands.ts:18`, `:35`). The resolver is Use-priority only: main if ready and not busy, else off. It has **no `mode` argument**, and the Cannon's LMB latch stays in `orbital/activation.ts`. That remains the as-built answer to `ad09`.
-- `isLegendaryStack` (`registry.ts`). It is type-based over every def's `itemId` and `craftTokenId`, and `magn` uses it.
-- **Void holder return** (merge `0a9d2b5`). `recovery.ts:135` `VOID_HOLDER_TYPES` = chest and hopper minecart. `beforeEvents.entityRemove` below `heightRange.min` reads the minecart's container, and every live marked instance goes through `lost()` on the next tick.
-
-**Still open**
-1. **`holder`.** `lost()` targets `w.mark.owner` (`recovery.ts:477`), and the protect hand-back targets `mark.owner` (`:785-787`). Katana §3 ("последнему владельцу", to the last owner) is the fourth spec asking for the last holder. **`L0-xcx11` stays open**, and `ad11`/`ac18` are unbuilt.
-2. **Armour stand in the Void.** Its hands cannot be read on 2.10.0, so a legendary it holds is lost when the stand falls (`README.md:71`, `probe_ufo_holder_void`). Filed as `cx14`. The magnet avoids it (`r016`). Nothing else in the add-on moves an armour stand.
-3. Nested shulker and bundle contents (`cx12`). The hopper-minecart stale copy (`as15`, `cx02`).
-
-## v6 Katana delta
+## v7 delta
 | # | Change | Artifacts |
 |---|---|---|
-| 1 | Def #4 `DRAGON_KATANA`: `andrew:dragon_katana`, prefix `dk`, ability `dragon_katana`, 600 ticks, token `andrew:dragon_katana_crafted`, refund 2 golden apple + 2 ender pearl + 1 diamond sword, command `andrew:katana`, `hudKeys` for the em-dash string | `ad14`, `as17` |
-| 2 | Uniqueness-flag key `andrew:dk_crafted` (with `andrew:dk_crafted_by`), derived by `keysFor` | `ad14`, `ac23` |
-| 3 | The registry uniqueness test also covers `craftTokenId` and `textPrefix` (as `ac11` asked; today it checks 4 fields) | `ac23` |
-| 4 | No per-weapon code needed in `isLegendaryStack`, retention, recovery, `protectLegendariesIn`, the craft gate, commands or the HUD: each iterates `LEGENDARIES` or calls `defForStack`/`defForToken` | `ad14` |
-| 5 | T16–T18 for the Katana under C-16. Fire and lava are prevented; Orbital blast and rings are prevented through `protectLegendariesIn`; cactus, TNT and despawn are **returned**; the Void returns to `owner` until `xcx11` closes | `ac24`, `L0-xcx21`, `L0-xasm22` |
-| 6 | A wielder teleport is not a loss event, and every Katana teleport stays in the player's own dimension | `r017`, `ac24` |
+| 1 | Passive def: a def may have no ability. Then it has no timer key, no Use claim and no HUD line. Defs #1–#4 keep byte-identical keys and behaviour | `ad15`, `ent1`, `r018`, `ac26` (closes `L0-xcx24`) |
+| 2 | Def #5 `SCULK_CROSSBOW`: `andrew:sculk_crossbow`, token `andrew:sculk_crossbow_crafted`, refund 2 echo shard + 2 deepslate + 1 crossbow, command `andrew:crossbow`, passive | `ad16`, `as18`, `ac25` |
+| 3 | **Key prefix: not `sc`.** `sc` is the Scythe's; reuse would share the craft flag, marks, pending and owed. Proposed `sk` | `cx15`, `as18` |
+| 4 | No per-weapon code in retention, recovery, the Void paths, `protectLegendariesIn`, commands or the magnet: each iterates `LEGENDARIES` or calls `defForStack`/`defForToken` | `ad16`, `ac27` |
+| 5 | Return target for T19/T20/Void: `mark.owner` until the holder task ships, as for the Katana. Tests call one `returnTarget(mark)` helper so the holder task changes one function | `ad17`, `ac27`, `cx16` |
+| 6 | Magnet: the crossbow is pulled like the other four. Not a spec breach (the crossbow spec does not list the magnet as a hazard) | `r016`, `ac21` |
 
-## Published contracts (unchanged)
-- `LEGENDARIES`, `defForStack`, `defForToken`, `isLegendaryStack`.
+**Fallback, stated as larger.** If the `sclk` probe rejects a custom shooter and `L0-adr-scbs` falls back to the vanilla `minecraft:crossbow` (option B), identity can no longer be by type. `isLegendaryStack`, `isLegendaryWeaponStack`, `defForStack`, `heldLegendaries`, the magnet's `hasitem` holder tags (which cannot read dynamic properties), the craft gate (the recipe *input* is the same type), retention and the GameTests all become mark-aware. That is a framework rewrite of identity, not a def. It needs its own L0 decision and is **not** planned by this pass (`ad16` §Fallback).
+
+## Published contracts
+- `LEGENDARIES`, `defForStack`, `defForToken`, `defForAbility` (active defs only), `isLegendaryStack`, `isLegendaryWeaponStack`, **`hasAbility(def)`** (new).
 - `isReady`, `startCooldown`, `setBusy`, `clearBusy`, `isBusy`.
-- `heldLegendaries(player)`, `resolveActivation(player)`.
-- `protectLegendariesIn(dim, box, {avoid, reason}) → {moved, handedBack}`.
-- `isLegendaryItemEntity`.
-- `isHiddenFromTargeting`, `hideFromTargeting`.
+- `heldLegendaries(player)` (still returns passive defs; retention-neutral), `resolveActivation(player)` (active defs only).
+- `protectLegendariesIn(dim, box, {avoid, reason}) → {moved, handedBack}`; `sclk`'s crater calls it before carving (`L0-xcx25`).
+- `isLegendaryItemEntity`, `isHiddenFromTargeting`, `hideFromTargeting`.
 
 ## Does NOT own
-- The Katana's trace, safe cell, teleport, fall flag and trail (`katn`, `L0-adr-ktob`, `L0-adr-ktfl`).
-- Item, token and recipe JSON, and the lang strings (`katn`).
-- The magnet's selection (`magn`).
+The crossbow item JSON, token, recipe, lang, bolt pipeline, damage, crater, durability (custom base) and Piercing exclusion (`sclk`). The magnet's selection (`magn`).
 
-## Next task (one `lgnd` task, for the Katana; it lands with `katn` item 2)
-1. Add `DRAGON_KATANA` to `LEGENDARIES`.
-2. Extend the uniqueness test.
-3. Add key-derivation asserts for `dk`.
-4. Add the Katana instances of the framework GameTests (`ac23`, `ac24`).
+## Next tasks
+1. **LGND-PASSIVE** (before `sclk` item): `ad15` type split, `hasAbility`, HUD/resolver skips, registry test. Gate: the existing legendary GameTests and `npm test` pass with no assertion edits (`ac26`).
+2. **Def #5** lands with the `sclk` item task: the entry, the uniqueness and key asserts, the crossbow instances of the framework GameTests (`ac25`, `ac27`).
+3. **LGND-HOLD** (separate, unblocked by the decision): the holder field per `ad11`; `ac18` plus the holder clauses of `ac08`, `ac09`, `ac24`, `ac27`.
 
-`holder` is a separate task, still blocked on `L0-adr-hold`.
+
+
+
+
+
+
+### Sculk Crossbow (`andrew:sculk_crossbow`): component v1 (L0-sclk)
+
+# Sculk Crossbow (`andrew:sculk_crossbow`): component v1
+
+**Links:** `part_of: ["L0"]` · `is_a: ["component"]` · `relates_to: ["L0-lgnd", "L0-orbc", "L0-pntr", "L0-magn", "L0-scyt", "L0-katn", "L0-adr-scbs", "L0-adr-scdm", "L0-adr-sctr", "L0-xcx22", "L0-xcx23", "L0-xcx24", "L0-xcx25", "L0-xasm23", "L0-xasm24", "L0-xasm25", "L0-xasm26", "L0-xasm27", "L0-xq7"]`
+
+Source: `docs/Sculk_Crossbow_Spec_v1_RU_EN.docx` (raw `sculkcrossbowspecv1ruen-part-1..4`, priority 610). Legendary def #5. It is the first legendary with **no active ability, no cooldown and no HUD line** (`L0-xcx24`).
+
+## Responsibility
+A passive ranged legendary. Every projectile its holder fires is replaced at spawn by one `andrew:sculk_bolt`. The bolt flies physically, with a Warden-style Sonic Boom trail, and resolves exactly once (C-26):
+- **entity hit:** fixed `SONIC_BOOM_DAMAGE` = 10 HP through armour, the shield and the invulnerability window (C-28), plus a sculk patch under the target, with no crater;
+- **block hit:** an irregular crater ≤ 5×5×3 plus a ring of plain sculk ≤ 5×5, with no entity damage (C-27);
+- **expiry:** after 100 ticks, on leaving loaded chunks, or in the Void, nothing happens.
+
+## What `sclk` owns, and what it does not
+| Owned here | Delegated (cited, not restated) |
+|---|---|
+| the item def JSON, icon, RP texture, RU/EN item and tooltip lang | craft gate, first-craft broadcast, token swap and refund → `lgnd` (R-lgnd-001: one implementation) |
+| the recipe JSON (echo shard / deepslate / crossbow → token) | death retention, hazard protection, Void return, Creative/`/give` copies → `lgnd` (T19, T20; `xasm26`) |
+| the bolt entity (BP + RP), the shot→bolt swap, the flight, the trail | the no-ability def shape → `lgnd` v7 (`xcx24`) |
+| hit resolution, damage, patch, crater, carve queue | `protectLegendariesIn` → `lgnd` (`recovery.ts`) |
+| enforcing that Piercing is stripped | magnetism → `magn` (def-driven, `xasm26`) |
+| moving the deny list from `penetrator-keep.ts` to `src/terrain/keep.ts` (`xcx25`) | the Orbital carve itself → `orbc`/`pntr` (unchanged) |
+| the probe and the outcomes of the three ADRs | |
+
+## Inputs
+- `world.afterEvents.entitySpawn` (or `projectileShoot`, per the probe) for arrow-type projectiles whose owner holds `andrew:sculk_crossbow`.
+- `projectileHitEntity` and `projectileHitBlock`, filtered to `andrew:sculk_bolt`.
+- The shared interval (one `runInterval`, never `runJob`) for trail emission, lifetime and the carve queue.
+- `playerInventoryItemChange` and held-item changes, used to strip Piercing.
+
+## Outputs
+- Health changes on the struck entity only, via `applyDamage` + `setCurrentValue`, with kill credit to the owner.
+- Block edits: air for the crater and `minecraft:sculk` for the patch. These are ordinary world changes, synced and saved.
+- `minecraft:sonic_explosion` particles (or an RP look-alike, `L0-sclk-ad02`) along each bolt's path.
+- `[andrew] sculk:` log lines, which GameTests and the probe read as witnesses.
+
+## Stage-7 order (from the plan)
+1. Probe on checks (19136): `L0-sclk-p001`. It gates `adr-scbs`/`adr-scdm`. A failed gate supersedes the ADR before any build task.
+2. `lgnd` v7 (no-ability def, def #5).
+3. Item, token, recipe, RP.
+4. Bolt pipeline and damage.
+5. Crater and sculk, together with the deny-list extraction (Orbital scenarios as its gate).
+
+## Child artifacts
+- **Processes:** p001 probe · p002 shot→bolt · p003 flight/trail/expiry · p004 entity hit · p005 block hit/carve · p006 craft wiring.
+- **Rules:** r001–r010.
+- **Entities:** ent1 item · ent2 bolt entity · ent3 bolt record · ent4 carve plan.
+- **ACs:** ac01–ac20 = T01–T20 (T01–T03, T19 and T20 as crossbow call sites of `lgnd`), ac21 probe, ac22 Orbital regression, ac23–ac27 iPad.
+- **Decisions:** ad01–ad04 · **Assumptions:** as01–as05 · **Contradictions:** cx01–cx02 · **Glossary:** gl01–gl06 · **Constraints:** cons.
+
+## Seams the reduce re-checks
+- Orbital protection stays green after the deny-list move.
+- The magnet's GameTests include def #5.
+- A Katana ray stops on sculk (a full solid block).
+- Crater vs a structure `protect` box: check, do not assume (`xasm25` says structures get no protection).
 
 
 
@@ -159,46 +129,27 @@ v6 adds the **fourth def, the Dragon Katana** (`katn`). It needs **no framework 
 
 ## Architecture Decisions
 
-### ADR-L0-ktfl · One-shot fall protection (L0-adr-ktfl)
+### ADR-L0-hldb · Holder: decided, unbuilt, one seam (status: accepted, resolves `L0-lgnd-cx16`) (L0-adr-hldb)
 
 ---
-title: "ADR-L0-ktfl · One-shot fall protection by resetting fall distance just before the landing"
-aliases: ["L0-adr-ktfl", "Katana fall ADR"]
+title: "ADR-L0-hldb · The last-holder return is decided and unbuilt; tests target `mark.owner` through one helper until `LGND-HOLD` ships"
+aliases: ["L0-adr-hldb", "Holder build-out"]
 is_a: ["architecture-decision"]
 part_of: ["L0"]
-relates_to: ["L0-katn", "L0-xasm20"]
-see_also: ["dragonkatanaspecv1ruen-part-2", "dragonkatanaspecv1ruen-part-3"]
-governs_files: ["src/katana/"]
+relates_to: ["L0-lgnd", "L0-sclk", "L0-katn", "L0-adr-hold", "L0-xcx11", "L0-lgnd-cx16", "L0-lgnd-ad11", "L0-lgnd-ad17", "L0-lgnd-ac18", "L0-lgnd-ac27", "L0-sclk-ac20", "L0-xasm26"]
+requires: ["L0-adr-hold"]
+governs_files: ["src/legendary/state.ts", "src/legendary/recovery.ts"]
 ---
-# ADR-L0-ktfl · One-shot fall protection
+# ADR-L0-hldb · Holder: decided, unbuilt, one seam (status: accepted, resolves `L0-lgnd-cx16`)
 
-**Status:** proposed (autopilot default). It is subject to a `katn` probe before the build.
+**Context.** `decision-resolve-l0-xcx11` (2026-09-29) chose "return to the last holder" and named `LGND-GEN-01-AA`. That task shipped the mark generation only. As read in this run (`lgnd`, 2026-10-05): the mark has no holder field (`state.ts`), and `lost()` and the protect hand-back target `mark.owner` (`recovery.ts:490`, `:877-879`). `L0-adr-hold` still says "proposed", and `lgnd-ac18` said "pending confirmation". The crossbow spec §3 is the fifth spec asking for the last holder. `sclk-ac20` was written against `mark.owner` (`xasm26`).
 
-## Context
-- Katana §7 / T11 / T12: the first landing that follows a teleport deals no fall damage. The next ordinary fall deals normal damage. This must not become standing immunity (C-25).
-- Stable 2.10.0 has **no damage before-event**. `entityHurt` is an after-event: it cannot stop a lethal fall.
-- A measured engine fact: a player who is teleported carries **no stored fall distance**. So the risk is only the fall that **starts at B**, when B is in the air or above a drop.
+**Decision.**
+1. `L0-adr-hold` is **accepted**: the operator decision is final, and there is no client question left. `lgnd-ac18` was corrected in place to drop "pending confirmation".
+2. The holder field is **its own task, `LGND-HOLD`**, per `lgnd-ad11`. It is independent of and not blocking the crossbow epics.
+3. Until it ships, every weapon's T20/Void test (the crossbow's `sclk-ac20` included) resolves the expected recipient through a single `returnTarget(mark)` test helper that returns `mark.owner` (`lgnd-ad17`). `LGND-HOLD` changes that helper and the holder clauses of `lgnd-ac08`/`ac09`/`ac24`/`ac27`, and no per-weapon test.
 
-## Decision
-1. On a successful teleport, set a per-player, in-memory flag `{ until: Date.now() + bound }` (bound: `L0-xasm20`).
-   - If B is already supported, the flag is still set. The first `isOnGround` tick consumes it.
-2. One `katn`-local watcher interval visits only flagged players (C-5e). It exists only while a flag is armed, following the Orbital precedent; it is not a framework hook (`L0-katn-p002`, reconciled at reduce v6):
-   - It consumes the flag on the first tick the player is on the ground, in a liquid, climbing, or gliding, or when they die, change dimension or leave.
-   - While the player is falling (`velocity.y < 0`) and the ground is within the look-ahead (`max(2, ceil(|velocity.y|)+1)` blocks, `L0-katn-as04`), it **re-teleports the player to their own current location**, keeping the facing. That resets fall distance, and the landing deals no damage. It clears the flag in the same tick.
-3. The flag is never persisted (C-23, C-25). A restart mid-fall drops the protection; that is accepted.
-
-## Rejected alternatives
-- **`resistance` amplifier 255 until landing.** It blocks *all* damage, PvP hits included, during the window. That is standing immunity in disguise.
-- **`slow_falling` from B.** It changes how the descent looks and plays: a visible float that the spec does not ask for, and an exploitable glide.
-- **Heal the damage in `entityHurt`.** A lethal fall kills before the after-event, so it fails T11 at height.
-- **Teleport B to the ground below.** That contradicts "a point in the air is a valid destination" (§5).
-
-## Consequences
-- The probe must confirm three things on BDS 1.26.51 with a SimulatedPlayer:
-  - that a self-teleport mid-fall resets fall distance;
-  - the 2-block look-ahead at terminal velocity (about 3.9 blocks per tick). The look-ahead may need to scale with `velocity.y`;
-  - that a self-teleport near a ledge does not snag on it.
-- If the reset does not hold, `katn` supersedes this ADR. The fallback is `slow_falling` applied only in the last ticks before landing.
+**Consequence.** The crossbow ships with the same documented deviation as the Katana: Void and loss go to the crafter or `/give` target. That remains true only until `LGND-HOLD` lands.
 
 
 
@@ -206,49 +157,39 @@ governs_files: ["src/katana/"]
 
 
 
-### ADR-L0-ktgr · The Katana inherits the framework's C-16 deviations (L0-adr-ktgr)
+### ADR-L0-scbs · The crossbow's base item (status: proposed, probe-gated) (L0-adr-scbs)
 
 ---
-title: "ADR-L0-ktgr · The Katana inherits the framework's documented C-16 deviations unchanged; no Katana-specific recovery code"
-aliases: ["L0-adr-ktgr", "Katana global-rules ADR"]
+title: "ADR-L0-scbs · The Sculk Crossbow's base item: a custom shooter, not a marked vanilla crossbow"
+aliases: ["L0-adr-scbs", "Sculk Crossbow base item"]
 is_a: ["architecture-decision"]
 part_of: ["L0"]
-relates_to: ["L0-katn", "L0-lgnd", "L0-xcx21", "L0-lgnd-cx14", "L0-xcx11", "L0-adr-hold", "L0-xasm22", "L0-lgnd-ad14", "L0-lgnd-r016", "L0-lgnd-r017", "L0-lgnd-ac24", "L0-katn-ac07", "L0-katn-r002"]
-requires: ["L0-lgnd-ad14", "L0-lgnd-r017"]
-see_also: ["dragonkatanaspecv1ruen-part-1", "dragonkatanaspecv1ruen-part-3", "L0-xq6"]
-governs_files: ["src/legendary/", "src/katana/"]
+relates_to: ["L0-sclk", "L0-lgnd", "L0-xcx24", "L0-xasm27"]
+see_also: ["sculkcrossbowspecv1ruen-part-1", "sculkcrossbowspecv1ruen-part-2"]
 ---
-# ADR-L0-ktgr · The Katana inherits the framework's C-16 deviations
+# ADR-L0-scbs · The crossbow's base item (status: proposed, probe-gated)
 
-**Status:** accepted at reduce v6 as the autopilot default. The operator confirms or overturns it through `L0-xq6`, which does not block the build.
+**Context.** Spec §1 says "base: Vanilla Crossbow". It requires infinite durability, a Creative/search/`/give` entry, Quick Charge and Multishot working (T14, T16), and Piercing impossible (T15). The framework identifies legendaries **by type id** (`isLegendaryStack`, `registry.ts:127`). Every shipped legendary is a custom `andrew:` item: the Web Sword and Katana clone a sword, and the Cannon looks like a fishing rod.
 
-## Context
-Katana §3/§13 asks to "preserve all global legendary-item rules". Both children agree that the framework meets those rules as built, by registering def #4 (`L0-lgnd-ad14`, `L0-xasm22`). Two child findings asked the reduce whether the **existing** deviations also bind the new weapon:
-- `L0-xcx21`: T17 says the item "survives" cactus and TNT. As built, the item is destroyed and a marked copy is **returned** (C-16, the reading accepted when `xcx10` closed).
-- `L0-lgnd-cx14`: a legendary held by an **armour stand** that falls into the Void is lost. Stand hands cannot be read on 2.10.0, and only chest and hopper minecarts are `VOID_HOLDER_TYPES` (`recovery.ts:135`, as read 2026-10-03).
+**Options.**
+- **A: a custom `andrew:sculk_crossbow`** with `minecraft:shooter` (arrow ammunition), `minecraft:enchantable` (slot `crossbow`), no `minecraft:durability`, and a crossbow icon.
+  - Pros: framework identity is unchanged, as are Creative/`/give` (T03) and infinite durability by omission.
+  - Risks: a custom shooter draws and releases like a bow, with no stored "loaded" state. Quick Charge and Multishot may not apply natively. If they do not, the script emulates them: Multishot = two extra bolts at ±10°; Quick Charge = a shorter required use duration, read from the enchantment level.
+- **B: the vanilla `minecraft:crossbow`** with the legendary mark in item dynamic properties.
+  - Pros: real loading; Quick Charge and Multishot are native.
+  - Cons: `isLegendaryStack` has to become mark-aware throughout the framework, the magnet and the GameTests. There is no Creative entry (§10). Durability must be refilled after every shot (T18). The unmarked vanilla crossbow is the recipe input and looks identical.
 
-## Decision
-1. **T17 = the shipped three-tier reading** for the Katana, as for the other three weapons:
-   - fire and lava are prevented (`fire_resistant`);
-   - Orbital blast and ring are prevented (`protectLegendariesIn`);
-   - cactus, TNT and despawn are returned (immediately, or owed).
-   - The test text is `L0-lgnd-ac24`, which `L0-katn-ac07` now cites instead of restating. **Resolves `L0-xcx21`.**
-2. **T18 target is `mark.owner`** until `L0-xcx11` / `L0-adr-hold` closes. The Katana's "последнему владельцу" adds a fourth spec voice to that open question but does not change it. Nothing in `katn` reads or writes `holder`.
-3. **The armour stand in the Void is a documented C-16 deviation for all four legendaries** (`cx14` option a). The Katana adds no exposure:
-   - its ability moves only the wielder, edits no block and spawns no entity (`L0-katn-r002`, `L0-lgnd-r017`);
-   - the magnet skips holders that carry a legendary (`L0-lgnd-r016`).
+**Decision (proposed).** **A.** It keeps C-7 (one identity mechanism) and needs only the no-ability framework delta (`L0-xcx24`).
 
-   Option (b), a `hasitem` probe, stays a backlog note: it could detect a legendary type but never read its mark, so the best it could do is re-issue the ledger's last instance. **Resolves `L0-lgnd-cx14`** as a recorded deviation.
-4. **No Katana-specific recovery, retention or HUD code.** The only framework delta is def #4 (`L0-lgnd-ad14`). Any later need for a hook ("rooted" for traps, `L0-xasm21`; a craft-time ingredient read, `L0-lgnd-as17`) is raised as an L0 contradiction, not patched locally.
+**Gate.** It is accepted only after the `sclk` probe records:
+1. that the custom shooter fires arrows in Survival and consumes ammunition;
+2. whether the enchanting table and the anvil offer Quick Charge, Multishot and Piercing for slot `crossbow`;
+3. whether Multishot and Quick Charge change the custom shooter's behaviour natively.
+4. (added at reduce, `L0-sclk-cx02`, `L0-adr-scfc`) the minimum release time (probe Q5). Under A a full-charge gate is mandatory: a bolt is spawned only for a release at or past the Quick-Charge-adjusted charge time. If neither the native draw nor the scripted gate holds reliably, B is adopted.
 
-## Rejected
-- **A per-weapon Void or TNT path for the Katana.** It splits one policy into four, against `L0-lgnd-ad14`.
-- **Holding the Katana build until `xcx11` closes.** T18 already passes against `mark.owner`; the holder change is one line in `lost()` and is reused by all four weapons.
+If (1) or (4) fails, B is adopted. Under B, T18 (durability kept at 0) moves from `sclk` to `lgnd`, together with mark-aware identity. The reduce then re-opens `lgnd` for mark-based identity. Under C-16, emulated Quick Charge is a documented deviation from the vanilla feel.
 
-## Consequences
-- `L0-xcx21` and `L0-lgnd-cx14` close as resolved, pointing here.
-- The module README's deviation list gains one line, "armour stand in the Void: lost", which covers all four legendaries.
-- If the operator rejects item 1 or 3 via `L0-xq6`, the fix belongs in `lgnd` and applies to all four weapons.
+**Rejected: C, a custom item that shoots nothing** (the script spawns bolts on `itemUse`). It loses the crossbow's charge, the ammunition use and vanilla enchantment handling altogether, and §9 makes the standard reload the weapon's only limiter.
 
 
 
@@ -256,48 +197,160 @@ Katana §3/§13 asks to "preserve all global legendary-item rules". Both childre
 
 
 
-### ADR-L0-ktob · The Katana's obstacle semantics (L0-adr-ktob)
+### ADR-L0-scdm · How a bolt hits (status: proposed, probe-gated) (L0-adr-scdm)
 
 ---
-title: "ADR-L0-ktob · The Katana's obstacle semantics: the engine's solid ray, not the Scythe's line of sight"
-aliases: ["L0-adr-ktob", "Katana obstacle ADR"]
+title: "ADR-L0-scdm · Bolt substitution and true damage for the Sculk Crossbow"
+aliases: ["L0-adr-scdm", "Sculk bolt and damage pipeline"]
 is_a: ["architecture-decision"]
 part_of: ["L0"]
-relates_to: ["L0-katn", "L0-scyt", "L0-xasm18", "L0-xasm19", "L0-katn-ad01", "L0-katn-as03", "L0-katn-cx01", "L0-lgnd-r017"]
-see_also: ["dragonkatanaspecv1ruen-part-1", "dragonkatanaspecv1ruen-part-2", "dragonkatanaspecv1ruen-part-3"]
-governs_files: ["src/katana/"]
+relates_to: ["L0-sclk", "L0-xcx22", "L0-xcx23", "L0-xasm23", "L0-xasm27"]
+see_also: ["sculkcrossbowspecv1ruen-part-2", "sculkcrossbowspecv1ruen-part-3", "sculkcrossbowspecv1ruen-part-4"]
+governs_files: ["src/scythe/volley.ts", "src/scythe/volley-rules.ts"]
 ---
-# ADR-L0-ktob · The Katana's obstacle semantics
+# ADR-L0-scdm · How a bolt hits (status: proposed, probe-gated)
 
-**Status:** proposed (autopilot default). `katn` confirms it by probe.
+**Context.** §5, §9 and §14 put the most weight on this: vanilla arrow damage must be **replaced**, never stacked. Stable 2.10.0 has no before-event that cancels projectile damage. `projectileHitEntity` is an after-event: by the time it fires, the arrow has already dealt armour-reduced, shield-blocked damage.
 
-## Context
-- Katana §5/§13 says "solid blocks stop the trace, water and lava do not", and "never phase through a solid obstacle".
-- Stable `@minecraft/server` 2.10.0 has **no runtime `Block.isSolid`** (an engine fact).
-- The only shipped precedent is the Scythe's `hasLineOfSight` (`src/scythe/targeting.ts`). It treats **every non-air, non-liquid block** as an obstacle, including tall grass, flowers, cobweb and glass. That is right for "can I see a target". For a teleport it is wrong: a flower 3 blocks ahead would stop a 20-block jump.
+**Decision (proposed).**
+1. **Substitution at spawn.** When an arrow-type projectile spawns whose owner holds a marked crossbow (main or off hand), the script removes it in the same tick. It spawns one `andrew:sculk_bolt` in its place with the same location, velocity and owner (`minecraft:projectile` `shoot`). One spawn gives one bolt, so each Multishot projectile has its own record (C-26).
+   - The bolt is a **snowball-runtime** entity with zero damage. Engine facts: an entity without `runtime_identifier` pushes mobs; snowball-runtime entities persist and reload through `entityLoad`, and the reload removes them (C-23).
+   - Gravity and drag match the arrow (tuned constants, probe-measured), so the bolt still falls like a bolt (§9: physical, not hitscan).
+2. **Hit.** `projectileHitEntity` and `projectileHitBlock` are filtered to `andrew:sculk_bolt`. The bolt's record is resolved exactly once, then the bolt is removed.
+3. **Damage.** `SONIC_BOOM_DAMAGE` (`xasm23`) goes through the shipped Scythe true-damage pattern (`volley.ts:114`, `decision-scythe-true-damage`): `applyDamage(D, {cause: projectile, damagingEntity: owner})` for the flash, the sound and kill credit, then `health.setCurrentValue(hp − D)`. If D ≥ hp, it is an overkill `applyDamage`. This makes D exact through armour, Protection and the invulnerability window (`xcx22`).
+4. **Visual.** While a bolt lives, the shared interval emits `minecraft:sonic_explosion` (or a look-alike RP particle if the iPad shows it badly) at the bolt's real position and the previous one (C-5f).
 
-## Decision
-1. **Trace.** Use `dimension.getBlockFromRay(head, viewDir, { maxDistance: 20, includePassableBlocks: false, includeLiquidBlocks: false })`.
-   - The engine's own collision notion decides "solid".
-   - Passable blocks (grass, flowers, torches) and liquids do not stop the trace.
-   - The hit face gives the endpoint. With no hit, the endpoint is `head + 20·dir` (`L0-xasm18`).
-2. **Unreadable means solid.** If any cell along the segment is in an unloaded chunk or outside the height range, the trace stops before it (C-12, C-24).
-3. **Fit and safety** (amended at reduce v6, resolving `L0-katn-cx01`).
-   - **Fits:** one vertical ray down the centre of the feet and head cells, with the trace flags, hits nothing (`L0-katn-ad01`). Both cells being `isAir` skips the ray. The cell below is not counted against the player. No hand-kept solid list is used.
-   - **Safe:** it fits, **and** neither cell is `lava`, `flowing_lava`, `fire` or `soul_fire` (`L0-katn-as03`). Water is allowed. That list names hazards, not solids, so it does not reintroduce the hand-kept solid list rejected below.
-   - Liquids do not stop the **trace** (§1); that is not the same as being a valid landing.
-4. Documented deviations (C-16):
-   - Blocks the ray treats as passable but the player cannot walk through: **none known**.
-   - Blocks with partial collision (slabs, fences, glass panes): they count as solid for the trace and as occupied for the fit check. The Katana stops short rather than risk a stuck player.
+**Gate.** The probe confirms:
+- that the spawn event carries the owner and velocity of a crossbow/shooter arrow in time to swap it with no damage;
+- what a snowball-runtime bolt does against a raised shield (`xcx23`);
+- that three bolts in one tick each take the full D (T17).
 
-## Rejected alternatives
-- **Reuse the Scythe's line of sight.** Grass and flowers would block the ability, and wall-jumping off foliage would feel broken.
-- **A hand-maintained solid/passable id list.** It drifts with every Bedrock update and contradicts the "engine-measured facts" practice.
-- **Cell-step DDA over `getBlock` with `isAir`/`isLiquid` only.** Same flaw as line of sight, and it costs up to 20+ reads per use.
+**Rejected.**
+- **Keep the vanilla arrow and top up the difference after the hit.** The arrow's damage depends on armour, Power and the shield. A lethal arrow cannot be undone. There is also no reliable way to tell "arrow damage" from other damage in the same tick (violates C-26 and §14 "no stacking").
+- **A hitscan ray from the shooter.** Forbidden by §9.
+- **Arrow runtime with damage 0.** The arrow runtime keeps knockback, sticks in targets and can be picked up, and the shield still deflects it.
 
-## Consequences
-- `katn` must probe the ray flags on 1.26.51 before building. Memory notes record that the block ray passes carpet, signs and ladders. The probe confirms that liquids are skipped only with `includeLiquidBlocks: false`, and that cobweb is passable.
-- The Scythe keeps its own stricter rule. The two notions are deliberately different and are named in each module's README.
+
+
+
+
+
+
+### ADR-L0-scfc · Full-charge gate (status: accepted, probe-gated; resolves `L0-sclk-cx02`) (L0-adr-scfc)
+
+---
+title: "ADR-L0-scfc · Full charge is the crossbow's fire-rate gate; a failed gate falls back to option B and re-opens `lgnd` identity"
+aliases: ["L0-adr-scfc", "Crossbow full-charge gate"]
+is_a: ["architecture-decision"]
+part_of: ["L0"]
+relates_to: ["L0-sclk", "L0-lgnd", "L0-adr-scbs", "L0-sclk-cx02", "L0-sclk-r006", "L0-sclk-as05", "L0-sclk-p001", "L0-sclk-ac18", "L0-xasm27", "L0-xq7"]
+requires: ["L0-adr-scbs"]
+governs_files: ["src/sculk/", "packs/behavior/items/sculk_crossbow.json"]
+---
+# ADR-L0-scfc · Full-charge gate (status: accepted, probe-gated; resolves `L0-sclk-cx02`)
+
+**Context.** Spec §9 makes the standard crossbow reload (with Quick Charge) the weapon's only limiter: there is no cooldown. Option A of `adr-scbs` is a custom `minecraft:shooter`, which may release like a bow at any draw. Damage is fixed (C-28) and every block hit carves a full crater, so a tap-release would multiply both the DPS and the terrain edits.
+
+**Decision.**
+- Under option A, a bolt is spawned **only** for a release at or past the Quick-Charge-adjusted full-charge time (`sclk-r006`, `as05`). An early projectile is removed with no bolt, and the ammunition stays spent.
+- Probe **Q5** (release at 1/5/10/20/25 ticks) is now gate (4) of `adr-scbs`, edited in place at reduce. If `charge_on_draw` / `max_draw_duration` already blocks an early release natively, the scripted check stays as a guard, and its test still runs.
+- If neither the native nor the scripted gate holds reliably on BDS **and** the iPad, `adr-scbs` falls to **option B**.
+
+**Why this is cross-component.** Option B is not a `sclk`-local change. It makes legendary identity mark-based across `lgnd` (`isLegendaryStack`, `defForStack`, the craft gate, retention) and `magn` (`hasitem` holder tags cannot read a mark). It also moves **T18** (durability) from `sclk` to `lgnd`, which has to keep a vanilla crossbow repaired. A Q1 or Q5 failure therefore needs a new L0 decision before any build task. This ADR does not pre-approve that rewrite.
+
+**T18 routing (plan invariant).** Option A: T18 is in `sclk` (`sclk-ac18`: the item JSON has no `minecraft:durability`). Option B: T18 is in `lgnd`.
+
+
+
+
+
+
+
+### ADR-L0-sckp · The Sculk Crossbow's key prefix is `sk` (status: accepted, resolves `L0-lgnd-cx15`) (L0-adr-sckp)
+
+---
+title: "ADR-L0-sckp · The Sculk Crossbow's key prefix is `sk`"
+aliases: ["L0-adr-sckp", "Crossbow key prefix"]
+is_a: ["architecture-decision"]
+part_of: ["L0"]
+relates_to: ["L0-lgnd", "L0-sclk", "L0-lgnd-cx15", "L0-xasm26", "L0-lgnd-as18", "L0-lgnd-ad16", "L0-sclk-p006", "L0-sclk-ent1", "L0-sclk-ac01", "L0-sclk-ac02", "L0-sclk-ac03"]
+requires: ["L0-lgnd"]
+governs_files: ["src/legendary/registry.ts"]
+---
+# ADR-L0-sckp · The Sculk Crossbow's key prefix is `sk` (status: accepted, resolves `L0-lgnd-cx15`)
+
+**Context.** The v7 plan row for `lgnd` and `L0-xasm26` gave def #5 `keyPrefix "sc"`. `sclk` built on that (p006, ent1, ac01–ac03). `lgnd` read `registry.ts` and found `sc` is the **Scythe's** prefix. It has been live since v3, and worlds already hold `andrew:sc_crafted`, `sc_owed`, `sc_pending` and `sc_gen:*`. Sharing it would merge the two weapons' craft flags and ledgers, and the registry uniqueness test (`lgnd-ac23`) would stop the build.
+
+**Decision.** Def #5 uses **`keyPrefix: "sk"`**. No `andrew:sk_` key exists anywhere. Like every prefix, it is frozen once a world ships (`lgnd-r006`).
+
+**Reconciled in place at reduce.** All of these were written in this run, so they were corrected rather than filed against: `sclk-p006`, `sclk-ent1`, `sclk-ac01`–`ac03` (flag `sk`), `L0-xasm26`, and the `lgnd` row of the v7 decomposition plan (now annotated). The `lgnd` side (`as18`, component delta #3) already said `sk`.
+
+**Consequence.** The token id, item id and command `andrew:crossbow` are unaffected. A test asserting the craft flag reads `andrew:sk_crafted`.
+
+
+
+
+
+
+
+### ADR-L0-scpi · Piercing on the Sculk Crossbow (status: accepted, probe-gated; resolves `L0-sclk-cx01`) (L0-adr-scpi)
+
+---
+title: "ADR-L0-scpi · T15 reads as \"Piercing is stripped on entry and never acts\" (C-16 deviation)"
+aliases: ["L0-adr-scpi", "Crossbow Piercing reading"]
+is_a: ["architecture-decision"]
+part_of: ["L0"]
+relates_to: ["L0-sclk", "L0-sclk-cx01", "L0-sclk-ad01", "L0-sclk-r005", "L0-sclk-ac15", "L0-adr-scbs", "L0-sclk-p001"]
+see_also: ["constraints"]
+governs_files: ["src/sculk/"]
+---
+# ADR-L0-scpi · Piercing on the Sculk Crossbow (status: accepted, probe-gated; resolves `L0-sclk-cx01`)
+
+**Context.** T15: "Piercing cannot be applied or used." `minecraft:enchantable.slot = "crossbow"` is needed for Quick Charge and Multishot (T14, T16), and it admits Piercing. Stable 2.10.0 has no hook to refuse an anvil or enchanting-table result (C-16). The v7 plan already allowed "strip it on sight if the slot cannot exclude it".
+
+**Decision.**
+- T15 passes when the following hold. (a) Every sculk-crossbow stack that gains Piercing loses it in the same tick the inventory-change event reports it (`sclk-r005`). (b) No bolt behaves differently with Piercing, because each bolt resolves once (`sclk-r001`).
+- The momentary tooltip is listed in the README C-16 deviation list.
+- If probe **Q2** shows that neither the table nor the anvil offers Piercing for the custom item, the deviation is dropped, and T15 is tested only as "cannot be applied".
+
+**Scope.** This applies only to `sclk`. No `lgnd` hook is involved: the strip is crossbow code on `playerInventoryItemChange`, so the plan's single framework change still holds.
+
+
+
+
+
+
+
+### ADR-L0-sctr · Crater and sculk (status: proposed) (L0-adr-sctr)
+
+---
+title: "ADR-L0-sctr · Crater and sculk: a scripted, bounded, protected carve with a shared deny list"
+aliases: ["L0-adr-sctr", "Sculk crater carve"]
+is_a: ["architecture-decision"]
+part_of: ["L0"]
+relates_to: ["L0-sclk", "L0-orbc", "L0-lgnd", "L0-xcx25", "L0-xasm24", "L0-xasm25"]
+see_also: ["sculkcrossbowspecv1ruen-part-2", "sculkcrossbowspecv1ruen-part-4"]
+governs_files: ["src/orbital/penetrator-keep.ts", "src/legendary/recovery.ts"]
+---
+# ADR-L0-sctr · Crater and sculk (status: proposed)
+
+**Context.** §6, §7, §11 and §14 ask for an irregular crater of up to about 5×5×(2–3) with no explosion damage, then permanent plain sculk around it. The edits are event-driven, synced and saved. With Multishot and Quick Charge, one player can cause about 3 carves every ~0.6 s.
+
+**Decision (proposed).**
+1. **Shape.** A pure, node-tested `craterCells(impact, face, seed)`. It returns cells inside a 5×5 footprint and down to 3 deep: an ellipsoid with radius jitter, seeded per bolt so a GameTest can replay it. The centre column is always at least 2 deep. The **patch** is `sculkCells(…)`: the top exposed solid full-block faces within ≤ 5×5, with a ragged edge.
+2. **Order in the hit tick:**
+   1. clip the box to loaded chunks and the height range (C-12);
+   2. `protectLegendariesIn(dimension, box)` (`recovery.ts:679`);
+   3. set each crater cell to air if it is not on the deny list and not a liquid;
+   4. turn each patch cell into `minecraft:sculk`.
+
+   There are no item drops (`xasm25`) and no entity damage. Each bolt does at most 75 + 25 `setType` calls. A per-tick budget (for example 300 calls) queues overflow to the next tick of the shared interval, keeping the order per bolt.
+3. **The deny list is shared.** `penetrator-keep.ts` (the Orbital LMB Survival-unbreakable list, `L0-xasm6`) moves to a neutral module, for example `src/terrain/keep.ts`. Both weapons import it, with no change in behaviour for the Orbital (C-7, `xcx25`).
+
+**Rejected.**
+- **`dimension.createExplosion`.** It always damages entities, breaks blocks by blast resistance rather than to the bounds asked for, and drops items (§6, T12).
+- **Spreading the carve over a `runJob`.** The engine fact: starting `runJob` stalls the next tick by 15–30 ms. The interval budget achieves the same thing without that.
+- **A per-weapon copy of the deny list.** It would drift (C-7).
 
 
 

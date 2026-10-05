@@ -2,7 +2,7 @@
 type: "concept-contradiction"
 node_id: "L0-lgnd-cx01"
 source_channel: "rollout"
-analysis_version: 6
+analysis_version: 7
 title: "CX-lgnd-01 · \\"Ready\\" on the Action Bar: shown once (Web Sword, shipped) vs shown while held (Scythe)"
 aliases: ["L0-lgnd-cx01"]
 is_a: ["contradiction"]

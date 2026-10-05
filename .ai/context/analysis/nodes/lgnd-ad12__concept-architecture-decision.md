@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-lgnd-ad12"
 source_channel: "rollout"
-analysis_version: 6
+analysis_version: 7
 title: "AD-lgnd-12: As-built framework shape up to 1.4.4 (recorded from code 2026-10-03; supersedes parts of ad09/ad10)"
 aliases: ["L0-lgnd-ad12"]
 is_a: ["architecture-decision"]
