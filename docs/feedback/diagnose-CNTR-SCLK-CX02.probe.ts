@@ -46,6 +46,9 @@ interface ArrowSeen {
   v1?: number;
   /** |position(+2) − position(+1)|: the speed a script can recover without trusting getVelocity at spawn. */
   d12?: number;
+  /** What ended the arrow before the probe removed it at +2: a hit or an engine removal. */
+  fate?: string;
+  spawnTick: number;
 }
 
 interface Phase {
@@ -66,7 +69,7 @@ function ammo(p: SimulatedPlayer): number {
 }
 
 function show(ph: Phase): string {
-  const arrows = ph.arrows.map((a) => `+${a.dt} v0=${f2(a.v0)} v1=${f2(a.v1)} d12=${f2(a.d12)} owner=${a.owner}`).join("; ");
+  const arrows = ph.arrows.map((a) => `+${a.dt} v0=${f2(a.v0)} v1=${f2(a.v1)} d12=${f2(a.d12)} owner=${a.owner} fate=${a.fate ?? "flying"}`).join("; ");
   return `ev=[${ph.events.join(" ")}] arrows=${ph.arrows.length}[${arrows}]`;
 }
 
@@ -108,9 +111,15 @@ for (const v of VARIANTS) {
       const owner = a.getComponent("minecraft:projectile")?.owner;
       const near = len({ x: a.location.x - p.location.x, y: a.location.y - p.location.y, z: a.location.z - p.location.z }) < 4;
       if (owner?.id !== p.id && !near) return;
-      const seen: ArrowSeen = { dt: system.currentTick - cur.t0, owner: owner === undefined ? "undefined" : owner.id === p.id ? "self" : owner.typeId, v0: len(a.getVelocity()) };
+      const seen: ArrowSeen = {
+        dt: system.currentTick - cur.t0,
+        owner: owner === undefined ? "undefined" : owner.id === p.id ? "self" : owner.typeId,
+        v0: len(a.getVelocity()),
+        spawnTick: system.currentTick,
+      };
       cur.arrows.push(seen);
       tracked.push(a);
+      fates.set(a.id, seen);
       let p1: Vector3 | undefined;
       system.runTimeout(() => {
         if (!a.isValid) return;
@@ -121,13 +130,43 @@ for (const v of VARIANTS) {
         if (!a.isValid || p1 === undefined) return;
         const p2 = a.location;
         seen.d12 = len({ x: p2.x - p1.x, y: p2.y - p1.y, z: p2.z - p1.z });
+        fates.delete(a.id);
         a.remove();
       }, 2);
+    });
+    const fates = new Map<string, ArrowSeen>();
+    const fate = (id: string, what: string): void => {
+      const seen = fates.get(id);
+      if (seen !== undefined && seen.fate === undefined) seen.fate = `${what}@+${system.currentTick - seen.spawnTick}`;
+    };
+    const hitBlockSub = world.afterEvents.projectileHitBlock.subscribe((e) => fate(e.projectile.id, `hit-block ${e.getBlockHit().block.typeId}`));
+    const hitEntitySub = world.afterEvents.projectileHitEntity.subscribe((e) => {
+      const hit = e.getEntityHit().entity;
+      fate(e.projectile.id, `hit-entity ${hit?.id === p.id ? "shooter" : (hit?.typeId ?? "?")}`);
+    });
+    const removeSub = world.afterEvents.entityRemove.subscribe((e) => fate(e.removedEntityId, "removed"));
+    const harm: string[] = [];
+    const hurtSub = world.afterEvents.entityHurt.subscribe((e) => {
+      if (e.hurtEntity.id === p.id) harm.push(`hurt ${e.damageSource.cause} ${e.damage.toFixed(1)} by ${e.damageSource.damagingEntity?.typeId ?? "-"} @${system.currentTick}`);
+    });
+    const dieSub = world.afterEvents.entityDie.subscribe((e) => {
+      if (e.deadEntity.id === p.id) harm.push(`DIED ${e.damageSource.cause} by ${e.damageSource.damagingEntity?.typeId ?? "-"} @${system.currentTick}`);
     });
     const begin = (): Phase => {
       cur = { t0: system.currentTick, events: [], arrows: [] };
       return cur;
     };
+    // A use right after a one-tick use returns false and starts nothing (seen on all nine
+    // variants); a second call one tick later starts it. t0 is the call that started.
+    const startUse = async (ph: Phase): Promise<number> => {
+      for (let attempt = 1; attempt <= 4; attempt++) {
+        ph.t0 = system.currentTick;
+        if (p.useItemInSlot(SLOT)) return attempt;
+        await test.idle(1);
+      }
+      return 0;
+    };
+    const state = (): string => `hp=${p.getComponent("minecraft:health")?.currentValue ?? "?"} gm=${p.getGameMode()} y=${(p.location.y - test.worldLocation({ x: 0, y: 1, z: 0 }).y).toFixed(2)}`;
     try {
       const { stack, enchant } = weapon(v);
       p.setItem(stack, SLOT, true);
@@ -135,32 +174,44 @@ for (const v of VARIANTS) {
       await test.idle(10);
       p.lookAtLocation(test.worldLocation({ x: 60, y: 2.62, z: 3.5 }));
       await test.idle(2);
-      log(`${v.name} item=${v.item} enchant=${enchant} ammo=${ammo(p)}`);
+      log(`${v.name} item=${v.item} enchant=${enchant} ammo=${ammo(p)} ${state()}`);
 
       const fired: string[] = [];
       for (const hold of [...HOLDS, AUTO_HOLD]) {
         const a0 = ammo(p);
+        const harmed = harm.length;
         const shot = begin();
-        const started = p.useItemInSlot(SLOT);
+        const started = await startUse(shot);
         await test.idle(hold);
         const inUse = p.stopUsingItem() !== undefined;
-        await test.idle(SETTLE);
+        await test.idle(1);
+        const a1now = ammo(p);
+        await test.idle(SETTLE - 1);
         const a1 = ammo(p);
         // A tap after every shot: a crossbow-like item fires a loaded charge on it.
         const tap = begin();
-        const tapStarted = p.useItemInSlot(SLOT);
+        const tapStarted = await startUse(tap);
         await test.idle(1);
         p.stopUsingItem();
         await test.idle(SETTLE);
         cur = undefined;
         const a2 = ammo(p);
         log(
-          `${v.name} hold=${hold === AUTO_HOLD ? `${hold}(no release)` : hold} started=${started} stopFoundInUse=${inUse} ` +
-            `shot: ${show(shot)} ammo ${a0}->${a1} | tap: started=${tapStarted} ${show(tap)} ammo ${a1}->${a2}`
+          `${v.name} hold=${hold === AUTO_HOLD ? `${hold}(no release)` : hold} startedOnTry=${started} stopFoundInUse=${inUse} ` +
+            `shot: ${show(shot)} ammo ${a0}->${a1now}(+1)->${a1} | tap: startedOnTry=${tapStarted} ${show(tap)} ammo ${a1}->${a2} | ${state()}` +
+            (harm.length > harmed ? ` HARM=[${harm.slice(harmed).join("; ")}]` : "")
         );
         fired.push(`${hold}:${shot.arrows.length}${shot.arrows.length > 0 ? `@${f2(shot.arrows[0].v0)}` : ""}+tap${tap.arrows.length}`);
+        if (a2 < 1) {
+          p.getComponent("minecraft:inventory")?.container?.setItem(AMMO_SLOT, new ItemStack(ARROW, 64));
+          log(`${v.name} refilled ammo after hold=${hold}`);
+        }
+        if (p.getComponent("minecraft:inventory")?.container?.getItem(SLOT)?.typeId !== v.item) {
+          log(`${v.name} the weapon left slot ${SLOT} after hold=${hold}: re-equipped`);
+          p.setItem(weapon(v).stack, SLOT, true);
+        }
       }
-      log(`${v.name} RESULT hold:arrows@v0+tap -> ${fired.join(" ")}`);
+      log(`${v.name} RESULT hold:arrows@v0+tap -> ${fired.join(" ")} | harm total ${harm.length}: [${harm.join("; ")}]`);
       test.assert(p.isValid, `${v.name}: the shooter is gone`);
     } finally {
       cur = undefined;
@@ -170,12 +221,17 @@ for (const v of VARIANTS) {
       world.afterEvents.itemCompleteUse.unsubscribe(completeSub);
       world.afterEvents.itemUse.unsubscribe(useSub);
       world.afterEvents.entitySpawn.unsubscribe(spawnSub);
+      world.afterEvents.projectileHitBlock.unsubscribe(hitBlockSub);
+      world.afterEvents.projectileHitEntity.unsubscribe(hitEntitySub);
+      world.afterEvents.entityRemove.unsubscribe(removeSub);
+      world.afterEvents.entityHurt.unsubscribe(hurtSub);
+      world.afterEvents.entityDie.unsubscribe(dieSub);
       for (const a of tracked) if (a.isValid) a.remove();
       if (p.isValid) test.removeSimulatedPlayer(p);
     }
     test.succeed();
   })
     .structureName(STRUCTURE)
-    .maxTicks(1600)
+    .maxTicks(2400)
     .tag("andrew");
 }
