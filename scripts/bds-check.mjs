@@ -35,6 +35,7 @@ import {
   runServer,
   SCRIPT_LOADED,
   stageDataDir,
+  refuseProduction,
   unpackAddon,
 } from './bds-lib.mjs';
 import { bundleSelfTest } from './build.mjs';
@@ -237,6 +238,7 @@ function analyzeLog(text, { behavior, resource, selftest }) {
 // --------------------------------------------------------------------- main
 
 function main() {
+  refuseProduction('an automated check');
   const opts = parseArgs(process.argv.slice(2));
 
   assertComposePinsVersion();
