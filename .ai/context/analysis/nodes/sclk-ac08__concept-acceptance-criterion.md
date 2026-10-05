@@ -19,4 +19,7 @@ WHEN:
 - (a) it is hit by one bolt;
 - (b) it holds a shield in the off hand, raised by sneaking, faces the shooter, and is hit by one bolt;
 
-THEN in each case it loses exactly D. The case (b) bolt resolves once, as an entity hit, either through `projectileHitEntity` or through the shield fallback (`as02`). The log names the path used.
+- (c) it holds a raised shield and its health is ≤ D;
+- (d) it holds a raised shield and a totem of undying in the other hand.
+
+THEN in (a) and (b) it loses exactly D; the case (b) bolt resolves once, as an entity hit, through `projectileHitEntity` — a raised shield neither deflects the bolt nor suppresses the event (measured 5/5). In (c) it dies from the one bolt, with the kill credited to the shooter. In (d) the totem is used. The log names the path used.

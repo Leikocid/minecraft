@@ -1,7 +1,7 @@
 ---
 title: Risks
 type: analysis
-generated_at: "2026-10-05T21:43:51.008Z"
+generated_at: "2026-10-05T22:05:04.978Z"
 source_channel: rollout
 node_id: rollout-risks
 aliases: ["rollout-risks","risks"]

@@ -19,8 +19,8 @@ level: 2
 - **Ammunition:** `minecraft:arrow` in every variant (plain, tipped, spectral). No firework rockets. Tipped and spectral effects are discarded.
 - **Consumption:** as the engine spends it. In Survival, one arrow per shot, Multishot included. In Creative, none.
 - **The reload is the only limiter** (§9: no cooldown).
-  - A shot counts only if it was fully charged. A charged shot is an arrow whose spawn speed is ≥ `MIN_BOLT_SPEED`, measured by the probe (Q5) as 90 % of the full-draw speed.
-  - With Quick Charge, the time to full charge shortens, never the speed threshold.
-  - Under-charged releases: the arrow is removed, the ammunition stays spent, and no bolt is spawned (`cx02`).
+  - A shot is charged if its **loading draw** lasted ≥ 25 − 5·QC ticks. Speed cannot tell: every fired arrow leaves at full speed (2.965–3.041 measured), so there is no under-charged arrow to detect.
+  - Quick Charge does **not** natively shorten the time to full charge; shortening it is script work (`as05`).
+  - An under-length release fires nothing and spends nothing — the native gate admits no early shot (`cx02`).
 - **Bolts are never picked up.** They are removed on their outcome or on expiry.
 - **Lifetime:** `BOLT_LIFETIME_TICKS = 100`.

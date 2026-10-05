@@ -1,7 +1,7 @@
 ---
 title: Architecture
 type: project-knowledge
-generated_at: "2026-10-05T17:12:56.143Z"
+generated_at: "2026-10-05T22:05:04.960Z"
 source_channel: rollout
 node_id: rollout-architecture
 aliases: ["rollout-architecture","architecture","project-knowledge/architecture"]
@@ -74,7 +74,7 @@ Source: `docs/Sculk_Crossbow_Spec_v1_RU_EN.docx` (raw `sculkcrossbowspecv1ruen-p
 
 ## Responsibility
 A passive ranged legendary. Every projectile its holder fires is replaced at spawn by one `andrew:sculk_bolt`. The bolt flies physically, with a Warden-style Sonic Boom trail, and resolves exactly once (C-26):
-- **entity hit:** fixed `SONIC_BOOM_DAMAGE` = 10 HP through armour, the shield and the invulnerability window (C-28), plus a sculk patch under the target, with no crater;
+- **entity hit:** fixed `SONIC_BOOM_DAMAGE` = 10 HP, absorption first, through armour, the shield and the invulnerability window (C-28), plus a sculk patch under the target, with no crater;
 - **block hit:** an irregular crater ≤ 5×5×3 plus a ring of plain sculk ≤ 5×5, with no entity damage (C-27);
 - **expiry:** after 100 ticks, on leaving loaded chunks, or in the Void, nothing happens.
 
@@ -174,7 +174,7 @@ see_also: ["sculkcrossbowspecv1ruen-part-1", "sculkcrossbowspecv1ruen-part-2"]
 **Options.**
 - **A: a custom `andrew:sculk_crossbow`** with `minecraft:shooter` (arrow ammunition), `minecraft:enchantable` (slot `crossbow`), no `minecraft:durability`, and a crossbow icon.
   - Pros: framework identity is unchanged, as are Creative/`/give` (T03) and infinite durability by omission.
-  - Risks: a custom shooter draws and releases like a bow, with no stored "loaded" state. Quick Charge and Multishot may not apply natively. If they do not, the script emulates them: Multishot = two extra bolts at ±10°; Quick Charge = a shorter required use duration, read from the enchantment level.
+  - Measured: with `charge_on_draw` it loads at `max_draw_duration` and fires on the next press, like a crossbow — not like a bow. Quick Charge has **no** native effect; Multishot was not measured. Quick Charge is therefore emulated: set the native draw to the QC III floor (0.5 s) and gate on the length of the loading draw, 25 − 5·level ticks. Multishot, if it is not native, is two extra bolts at ±10°.
 - **B: the vanilla `minecraft:crossbow`** with the legendary mark in item dynamic properties.
   - Pros: real loading; Quick Charge and Multishot are native.
   - Cons: `isLegendaryStack` has to become mark-aware throughout the framework, the magnet and the GameTests. There is no Creative entry (§10). Durability must be refilled after every shot (T18). The unmarked vanilla crossbow is the recipe input and looks identical.
@@ -185,7 +185,7 @@ see_also: ["sculkcrossbowspecv1ruen-part-1", "sculkcrossbowspecv1ruen-part-2"]
 1. that the custom shooter fires arrows in Survival and consumes ammunition;
 2. whether the enchanting table and the anvil offer Quick Charge, Multishot and Piercing for slot `crossbow`;
 3. whether Multishot and Quick Charge change the custom shooter's behaviour natively.
-4. (added at reduce, `L0-sclk-cx02`, `L0-adr-scfc`) the minimum release time (probe Q5). Under A a full-charge gate is mandatory: a bolt is spawned only for a release at or past the Quick-Charge-adjusted charge time. If neither the native draw nor the scripted gate holds reliably, B is adopted.
+4. ~~(added at reduce) the minimum release time (probe Q5)~~ — **satisfied natively on BDS**: `charge_on_draw` + `max_draw_duration` admit no early shot at all, so §9's limiter needs no script.
 
 If (1) or (4) fails, B is adopted. Under B, T18 (durability kept at 0) moves from `sclk` to `lgnd`, together with mark-aware identity. The reduce then re-opens `lgnd` for mark-based identity. Under C-16, emulated Quick Charge is a documented deviation from the vanilla feel.
 
@@ -210,25 +210,25 @@ governs_files: ["src/scythe/volley.ts", "src/scythe/volley-rules.ts"]
 ---
 # ADR-L0-scdm · How a bolt hits (status: proposed, probe-gated)
 
-**Context.** §5, §9 and §14 put the most weight on this: vanilla arrow damage must be **replaced**, never stacked. Stable 2.10.0 has no before-event that cancels projectile damage. `projectileHitEntity` is an after-event: by the time it fires, the arrow has already dealt armour-reduced, shield-blocked damage.
+**Context.** §5, §9 and §14 put the most weight on this: vanilla arrow damage must be **replaced**, never stacked. Stable 2.10.0 has `world.beforeEvents.entityHurt`, and it does fire for arrow damage (`projectile:6.00:minecraft:arrow`), but its `cancel` was not tested, so no before-event is relied on to cancel projectile damage. `projectileHitEntity` is an after-event: by the time it fires, the arrow has already dealt armour-reduced, shield-blocked damage.
 
 **Decision (proposed).**
 1. **Substitution at spawn.** When an arrow-type projectile spawns whose owner holds a marked crossbow (main or off hand), the script removes it in the same tick. It spawns one `andrew:sculk_bolt` in its place with the same location, velocity and owner (`minecraft:projectile` `shoot`). One spawn gives one bolt, so each Multishot projectile has its own record (C-26).
    - The bolt is a **snowball-runtime** entity with zero damage. Engine facts: an entity without `runtime_identifier` pushes mobs; snowball-runtime entities persist and reload through `entityLoad`, and the reload removes them (C-23).
    - Gravity and drag match the arrow (tuned constants, probe-measured), so the bolt still falls like a bolt (§9: physical, not hitscan).
 2. **Hit.** `projectileHitEntity` and `projectileHitBlock` are filtered to `andrew:sculk_bolt`. The bolt's record is resolved exactly once, then the bolt is removed.
-3. **Damage.** `SONIC_BOOM_DAMAGE` (`xasm23`) goes through the shipped Scythe true-damage pattern (`volley.ts:114`, `decision-scythe-true-damage`): `applyDamage(D, {cause: projectile, damagingEntity: owner})` for the flash, the sound and kill credit, then `health.setCurrentValue(hp − D)`. If D ≥ hp, it is an overkill `applyDamage`. This makes D exact through armour, Protection and the invulnerability window (`xcx22`).
+3. **Damage.** `SONIC_BOOM_DAMAGE` (`xasm23`) goes through the shipped Scythe true-damage pattern (`volley.ts:114`, `decision-scythe-true-damage`): `applyDamage(D, {cause: sonicBoom, damagingEntity: owner})` for the flash, the sound and kill credit, then `health.setCurrentValue(hp − D)` **only inside a known window**. If D ≥ hp, it is an overkill `applyDamage` with the same cause. Cause `projectile` throws when `damagingEntity` is set; `entityAttack` is cancelled by a raised shield, so the holder survives the lethal hit. `sonicBoom` passes armour, Protection and the shield, credits the owner and still lets a totem save (measured, diagnose-CNTR-X22 / -X23).
 4. **Visual.** While a bolt lives, the shared interval emits `minecraft:sonic_explosion` (or a look-alike RP particle if the iPad shows it badly) at the bolt's real position and the previous one (C-5f).
 
 **Gate.** The probe confirms:
 - that the spawn event carries the owner and velocity of a crossbow/shooter arrow in time to swap it with no damage;
-- what a snowball-runtime bolt does against a raised shield (`xcx23`);
+- ~~what a snowball-runtime bolt does against a raised shield (`xcx23`)~~ — answered: no deflection, `projectileHitEntity` fires on the shield holder (5/5);
 - that three bolts in one tick each take the full D (T17).
 
 **Rejected.**
 - **Keep the vanilla arrow and top up the difference after the hit.** The arrow's damage depends on armour, Power and the shield. A lethal arrow cannot be undone. There is also no reliable way to tell "arrow damage" from other damage in the same tick (violates C-26 and §14 "no stacking").
 - **A hitscan ray from the shooter.** Forbidden by §9.
-- **Arrow runtime with damage 0.** The arrow runtime keeps knockback, sticks in targets and can be picked up, and the shield still deflects it.
+- **Arrow runtime with damage 0.** The arrow runtime keeps knockback, sticks in targets and can be picked up. A raised shield deflects it, and the deflected arrow still raises `projectileHitEntity` and then a second `projectileHitBlock` where it lands — two events for one shot. The rejection stands, for that reason.
 
 
 
@@ -249,11 +249,11 @@ governs_files: ["src/sculk/", "packs/behavior/items/sculk_crossbow.json"]
 ---
 # ADR-L0-scfc · Full-charge gate (status: accepted, probe-gated; resolves `L0-sclk-cx02`)
 
-**Context.** Spec §9 makes the standard crossbow reload (with Quick Charge) the weapon's only limiter: there is no cooldown. Option A of `adr-scbs` is a custom `minecraft:shooter`, which may release like a bow at any draw. Damage is fixed (C-28) and every block hit carves a full crater, so a tap-release would multiply both the DPS and the terrain edits.
+**Context.** Spec §9 makes the standard crossbow reload (with Quick Charge) the weapon's only limiter: there is no cooldown. Option A of `adr-scbs` is a custom `minecraft:shooter`, which, with `charge_on_draw`, cannot fire before `max_draw_duration` (measured). Damage is fixed (C-28) and every block hit carves a full crater, so a tap-release would multiply both the DPS and the terrain edits.
 
 **Decision.**
-- Under option A, a bolt is spawned **only** for a release at or past the Quick-Charge-adjusted full-charge time (`sclk-r006`, `as05`). An early projectile is removed with no bolt, and the ammunition stays spent.
-- Probe **Q5** (release at 1/5/10/20/25 ticks) is now gate (4) of `adr-scbs`, edited in place at reduce. If `charge_on_draw` / `max_draw_duration` already blocks an early release natively, the scripted check stays as a guard, and its test still runs.
+- Under option A, no early projectile exists: the native gate admits none. A load shorter than the Quick-Charge-adjusted time — possible only if the native draw is set below 25 ticks to emulate Quick Charge — is caught when its arrow spawns on the **next** press; that arrow is removed, and the arrow spent at load stays spent.
+- Probe **Q5** is answered: `charge_on_draw` / `max_draw_duration` blocks an early release natively. The scripted check stays as a guard, but it measures the **length of the loading draw**, not the arrow's speed — every fired arrow is full speed.
 - If neither the native nor the scripted gate holds reliably on BDS **and** the iPad, `adr-scbs` falls to **option B**.
 
 **Why this is cross-component.** Option B is not a `sclk`-local change. It makes legendary identity mark-based across `lgnd` (`isLegendaryStack`, `defForStack`, the craft gate, retention) and `magn` (`hasitem` holder tags cannot read a mark). It also moves **T18** (durability) from `sclk` to `lgnd`, which has to keep a vanilla crossbow repaired. A Q1 or Q5 failure therefore needs a new L0 decision before any build task. This ADR does not pre-approve that rewrite.
@@ -310,8 +310,8 @@ governs_files: ["src/sculk/"]
 
 **Decision.**
 - T15 passes when the following hold. (a) Every sculk-crossbow stack that gains Piercing loses it in the same tick the inventory-change event reports it (`sclk-r005`). (b) No bolt behaves differently with Piercing, because each bolt resolves once (`sclk-r001`).
-- The momentary tooltip is listed in the README C-16 deviation list.
-- If probe **Q2** shows that neither the table nor the anvil offers Piercing for the custom item, the deviation is dropped, and T15 is tested only as "cannot be applied".
+- The README C-16 list states the cost: Piercing from a table roll or an anvil book is removed with no refund. `enchant_with_levels 30` gives Piercing in 65 % of rolls and Piercing alone in 19 % (levels 1–30: 70 % / 42 %), and such a roll leaves the crossbow bare.
+- Probe **Q2** is answered: the engine does admit Piercing for the custom item, so the deviation is kept and T15 is tested as "removed at once".
 
 **Scope.** This applies only to `sclk`. No `lgnd` hook is involved: the strip is crossbow code on `playerInventoryItemChange`, so the plan's single framework change still holds.
 

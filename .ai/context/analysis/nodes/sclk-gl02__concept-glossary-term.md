@@ -14,6 +14,6 @@ level: 2
 ---
 **`SONIC_BOOM_DAMAGE` (D)**
 
-The fixed per-bolt hit damage: 10 HP (5 hearts), the Warden's Sonic Boom on Normal (`xasm23`). It is exactly subtracted through armour, Protection, the shield and the invulnerability window (C-28). One exported constant.
+The fixed per-bolt hit damage: 10 HP (5 hearts), the Warden's Sonic Boom on Normal (`xasm23`). It is exactly subtracted — absorption first, then health — through armour, Protection, the shield and the invulnerability window (C-28). One exported constant.
 
 **Synonyms:** fixed damage, Sonic Boom damage, урон Sonic Boom.
