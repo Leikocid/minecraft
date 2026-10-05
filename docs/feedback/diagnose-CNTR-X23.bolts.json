@@ -1,0 +1,106 @@
+{
+  "x23_bolt_zero.json": {
+    "format_version": "1.26.0",
+    "minecraft:entity": {
+      "description": {
+        "identifier": "andrew:x23_bolt_zero",
+        "runtime_identifier": "minecraft:snowball",
+        "is_summonable": true,
+        "is_spawnable": false
+      },
+      "components": {
+        "minecraft:type_family": { "family": ["x23_probe_bolt", "inanimate"] },
+        "minecraft:collision_box": { "width": 0.25, "height": 0.25 },
+        "minecraft:physics": {},
+        "minecraft:projectile": {
+          "on_hit": {
+            "impact_damage": { "damage": 0, "knockback": false },
+            "remove_on_hit": {}
+          },
+          "power": 3.0,
+          "gravity": 0.05,
+          "anchor": 1,
+          "offset": [0, -0.1, 0]
+        }
+      }
+    }
+  },
+  "x23_bolt_dmg.json": {
+    "format_version": "1.26.0",
+    "minecraft:entity": {
+      "description": {
+        "identifier": "andrew:x23_bolt_dmg",
+        "runtime_identifier": "minecraft:snowball",
+        "is_summonable": true,
+        "is_spawnable": false
+      },
+      "components": {
+        "minecraft:type_family": { "family": ["x23_probe_bolt", "inanimate"] },
+        "minecraft:collision_box": { "width": 0.25, "height": 0.25 },
+        "minecraft:physics": {},
+        "minecraft:projectile": {
+          "on_hit": {
+            "impact_damage": { "damage": 1, "knockback": false },
+            "remove_on_hit": {}
+          },
+          "power": 3.0,
+          "gravity": 0.05,
+          "anchor": 1,
+          "offset": [0, -0.1, 0]
+        }
+      }
+    }
+  },
+  "x23_bolt_bounce.json": {
+    "format_version": "1.26.0",
+    "minecraft:entity": {
+      "description": {
+        "identifier": "andrew:x23_bolt_bounce",
+        "runtime_identifier": "minecraft:snowball",
+        "is_summonable": true,
+        "is_spawnable": false
+      },
+      "components": {
+        "minecraft:type_family": { "family": ["x23_probe_bolt", "inanimate"] },
+        "minecraft:collision_box": { "width": 0.25, "height": 0.25 },
+        "minecraft:physics": {},
+        "minecraft:projectile": {
+          "on_hit": {
+            "impact_damage": { "damage": 0, "knockback": false },
+            "remove_on_hit": {}
+          },
+          "power": 3.0,
+          "gravity": 0.05,
+          "anchor": 1,
+          "offset": [0, -0.1, 0],
+          "should_bounce": true
+        }
+      }
+    }
+  },
+  "x23_bolt_bare.json": {
+    "format_version": "1.26.0",
+    "minecraft:entity": {
+      "description": {
+        "identifier": "andrew:x23_bolt_bare",
+        "runtime_identifier": "minecraft:snowball",
+        "is_summonable": true,
+        "is_spawnable": false
+      },
+      "components": {
+        "minecraft:type_family": { "family": ["x23_probe_bolt", "inanimate"] },
+        "minecraft:collision_box": { "width": 0.25, "height": 0.25 },
+        "minecraft:physics": {},
+        "minecraft:projectile": {
+          "on_hit": {
+            "remove_on_hit": {}
+          },
+          "power": 3.0,
+          "gravity": 0.05,
+          "anchor": 1,
+          "offset": [0, -0.1, 0]
+        }
+      }
+    }
+  }
+}
