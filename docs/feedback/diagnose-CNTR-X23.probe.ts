@@ -358,6 +358,8 @@ async function dmgTrial(test: Test, target: SimulatedPlayer, c: Condition, label
   await revive(test, target, c);
   aim(test, target, c);
   const health = target.getComponent("minecraft:health");
+  // A totem leaves absorption and regeneration that would soak or refill the next trial.
+  for (const effect of target.getEffects()) target.removeEffect(effect.typeId);
   health?.resetToMaxValue();
   await test.idle(12);
   if (startHp < 20) health?.setCurrentValue(startHp);
