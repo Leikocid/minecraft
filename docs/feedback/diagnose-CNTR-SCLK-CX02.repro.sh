@@ -4,7 +4,7 @@
 # scale_power_by_draw_duration) does when a SimulatedPlayer releases it 1–40
 # ticks into the draw, against a vanilla bow and crossbow as controls.
 #
-# Exit 0: all nine probe scenarios ran to the end and printed their RESULT line.
+# Exit 0: every selected probe scenario ran to the end and printed its RESULT line.
 # The answers are the "[probe] SCX2" lines; the verdict is read by a human.
 #
 # The probe is not part of the shipped gametest pack: this script copies it into
@@ -18,7 +18,8 @@ export ANDREW_BDS_DIR="${ANDREW_BDS_DIR:-bds-ci}"
 log=dist/bds-gametest.log
 probe=src/gametest/probe-sclk-cx02.ts
 items=packs/gametest/items
-names=(vanilla_bow vanilla_crossbow vanilla_crossbow_qc3 cod cod_sp bow_sp bow cod_sp_ud25 cod_sp_qc3)
+# SCX2_ONLY="cod_md05 bow_sp_qc3" runs a subset; the default is the first nine.
+read -r -a names <<< "${SCX2_ONLY:-vanilla_bow vanilla_crossbow vanilla_crossbow_qc3 cod cod_sp bow_sp bow cod_sp_ud25 cod_sp_qc3}"
 
 [ -e "$items" ] && { echo "$items already exists; this script would delete it on exit"; exit 1; }
 cp docs/feedback/diagnose-CNTR-SCLK-CX02.probe.ts "$probe"

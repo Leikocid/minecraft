@@ -25,6 +25,8 @@ interface Variant {
   name: string;
   item: string;
   quickCharge?: number;
+  /** Release ticks; HOLDS when absent. */
+  holds?: readonly number[];
 }
 
 const VARIANTS: readonly Variant[] = [
@@ -37,6 +39,11 @@ const VARIANTS: readonly Variant[] = [
   { name: "bow", item: "andrew:probe_sx_bow" },
   { name: "cod_sp_ud25", item: "andrew:probe_sx_cod_sp_ud25" },
   { name: "cod_sp_qc3", item: "andrew:probe_sx_cod_sp", quickCharge: 3 },
+  // A native draw cut to the Quick Charge III time (0.5 s): does it still gate, and can a
+  // script read the loading draw's length to hold a non-QC player to 25 ticks?
+  { name: "cod_md05", item: "andrew:probe_sx_cod_md05", holds: [1, 2, 5, 8, 9, 10, 11, 15, 25] },
+  { name: "cod_md05_qc3", item: "andrew:probe_sx_cod_md05", quickCharge: 3, holds: [1, 2, 5, 8, 9, 10, 11, 15, 25] },
+  { name: "bow_sp_qc3", item: "andrew:probe_sx_bow_sp", quickCharge: 3, holds: [1, 2, 3, 5, 10, 15, 20, 25] },
 ];
 
 interface ArrowSeen {
@@ -178,7 +185,7 @@ for (const v of VARIANTS) {
       log(`${v.name} item=${v.item} enchant=${enchant} ammo=${ammo(p)} ${state()}`);
 
       const fired: string[] = [];
-      for (const hold of [...HOLDS, AUTO_HOLD]) {
+      for (const hold of [...(v.holds ?? HOLDS), AUTO_HOLD]) {
         const a0 = ammo(p);
         const harmed = harm.length;
         const shot = begin();
