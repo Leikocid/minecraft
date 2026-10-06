@@ -298,11 +298,17 @@ There are no rotations, so the draw does not depend on the engine's rotation sig
    string drops from the latch to 1/25 of the way for one tick, then home.
 4. **In the off hand the crossbow follows the main hand's use.** The queries are the main hand's. A bow drawn there
    moves it by 12/72000 (Q3 bow row), i.e. not at all. Other items in use there are not measured.
-5. **Quick Charge starts the pull part-way.** Quick Charge shortens the session by 5 ticks a level and leaves
-   `main_hand_item_max_duration` at 25, so a QC I draw starts at 0.24 and a QC III draw at 0.64. Each still ends
-   with its session (measured, probe report addendum). **Such a copy never loads:** the session ends at +20 / +10,
-   before the 25-tick charge gate, and the next press fires nothing (SimulatedPlayer on BDS). This is an open defect
-   of the item (`use_duration` = `max_draw_duration`, SCLK-PRESS-01), not of the attachable.
+5. **Quick Charge shortens the session, but the charge is no longer missed.** `use_duration` is 2.5 s (50 ticks,
+   SCLK-QC-RESTORE-01); Quick Charge still takes 5 ticks a level off that session (QC I → 45, QC III → 35), and
+   `main_hand_item_max_duration` stays at 25 — the 25-tick charge gate (`max_draw_duration`) is unchanged. All three
+   copies now fire on the first press after the charge (`product`/`product_qc1`/`product_qc3`, 3 of 3, private
+   instance `andrew-bds-qcfix`, probe report addendum). Before the fix, a QC copy's session ended at +20 / +10,
+   short of the 25-tick gate, and never fired (SCLK-PRESS-01's regression, fixed by SCLK-QC-RESTORE-01).
+   **Not re-measured for this deviation:** what fraction of `v.draw` a QC I/III session starts at under the new
+   50-tick session. The old figures (0.24 / 0.64) were computed from the pre-fix session lengths (20 / 10 ticks)
+   against the same `main_hand_item_max_duration` = 25 and no longer apply — at a 45/35-tick session the same
+   formula clamps to 0 until `main_hand_item_use_duration` drops below 25, which would need a fresh probe reading
+   of `main_hand_item_use_duration` on `product_qc1`/`product_qc3` to confirm, not computed from memory.
 6. **This attachable draws no enchantment glint.** Whether the engine adds one over an attachable is not measured:
    an iPad check.
 
@@ -352,8 +358,10 @@ There is no wood, flint or white feather of the vanilla arrow.
    hotbar switch (measured). The latch lives in the attachable's variables, and BDS cannot show what the client keeps
    when the crossbow is put away and taken back, after a death, a rejoin, or on another player's screen. If the client
    rebuilds the attachable, a loaded crossbow comes back looking empty until its shot.
-4. **A Quick Charge copy never looks loaded**, because it never loads (deviation 5 of the draw). If that defect is
-   fixed, `sculk_look_loaded_sessions` goes red on `quick_charge_*`, and the full-length check has to follow.
+4. **Whether a Quick Charge copy looks loaded is not re-checked.** The item-level defect this depended on (deviation
+   5 of the draw: a QC copy never reached the charge) is fixed by SCLK-QC-RESTORE-01 — `quick_charge_*` fires on the
+   first tap again. The attachable's own loaded-state read for `quick_charge_*` under the new 45/35-tick session has
+   not been re-run on `sculk_look_loaded_sessions`; treat it as open until that probe is repeated.
 5. **In the off hand the crossbow follows the main hand's sessions** (deviation 4 of the draw). A vanilla crossbow
    drawn in the main hand runs the same 25-tick session, so an off-hand Sculk Crossbow then looks loaded.
 6. **Below 20 frames a second the last tick can be missed.** The latch has to see the session's last value, 1. A
