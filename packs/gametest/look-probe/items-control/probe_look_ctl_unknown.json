@@ -1,0 +1,18 @@
+{
+  "format_version": "1.21.90",
+  "minecraft:item": {
+    "description": {
+      "identifier": "andrew:probe_look_ctl_unknown",
+      "menu_category": {
+        "category": "none"
+      }
+    },
+    "components": {
+      "minecraft:display_name": {
+        "value": "Control: unknown component"
+      },
+      "minecraft:icon": "andrew_probe_look_rest",
+      "minecraft:andrew_no_such_component": {}
+    }
+  }
+}
