@@ -119,6 +119,7 @@ const EXPECTED_TESTS = [
   'andrew:probe_cactus_items',
   'andrew:legendary_returns_from_cactus',
   'andrew:legendary_returns_when_it_vanishes',
+  'andrew:legendary_survives_orbital_column',
   'andrew:legendary_pickup_sighting_not_consumed',
   'andrew:legendary_in_a_chest_stays_there',
   'andrew:legendary_pickup_no_duplicate',
@@ -454,6 +455,14 @@ const EXPECTED_TESTS = [
   'andrew:sculk_hit_only_target',
   'andrew:sculk_hit_patch_no_crater',
   'andrew:sculk_hit_kill_credit',
+  // SCLK-LGND-01 — the crossbow under the legendary rules (L0-lgnd-ac27; L0-sclk-ac15, ac19, ac20):
+  // src/gametest/legendary-recovery.ts, src/gametest/sculk-enchant.ts
+  'andrew:legendary_sculk_crossbow_death_kill',
+  'andrew:legendary_sculk_crossbow_death_lava',
+  'andrew:legendary_sculk_crossbow_death_offhand',
+  'andrew:legendary_sculk_crossbow_void_thrown',
+  'andrew:sculk_enchant_piercing_stripped',
+  'andrew:sculk_enchant_piercing_hand_change',
 ];
 
 /**

@@ -62,16 +62,46 @@ export const system = {
     mc.intervals.delete(id);
   },
 };
+export class EnchantmentType {
+  constructor(id) {
+    this.id = id;
+  }
+}
+// Enchantments, the anvil name and the lore: what a returned copy must carry again.
+// An enchantment named 'refused' stands for one the item no longer admits.
 export class ItemStack {
   constructor(typeId, amount = 1) {
     this.typeId = typeId;
     this.amount = amount;
     this.props = new Map();
+    this.enchants = new Map();
+    this.nameTag = undefined;
+    this.lore = [];
     Object.assign(this, props(this.props));
+  }
+  getComponent(id) {
+    if (id !== 'minecraft:enchantable') return undefined;
+    const enchants = this.enchants;
+    return {
+      getEnchantments: () => [...enchants].map(([type, level]) => ({ type: { id: type }, level })),
+      addEnchantment({ type, level }) {
+        if (type.id === 'refused') throw new Error('EnchantmentTypeUnknownIdError');
+        enchants.set(type.id, level);
+      },
+    };
+  }
+  getLore() {
+    return [...this.lore];
+  }
+  setLore(lore) {
+    this.lore = [...(lore ?? [])];
   }
   clone() {
     const copy = new ItemStack(this.typeId, this.amount);
     for (const [k, v] of this.props) copy.props.set(k, v);
+    copy.enchants = new Map(this.enchants);
+    copy.nameTag = this.nameTag;
+    copy.lore = [...this.lore];
     return copy;
   }
 }
@@ -1345,5 +1375,43 @@ test('holder: a lost instance goes back to whoever held it last, not to its craf
     flush();
     assert.deepStrictEqual(gensOf(b, id2), [0]);
     assert.deepStrictEqual(lg.readOwed(WEB_SWORD), {});
+  });
+});
+
+// A loss return mints a new generation from the watched mark, so the mark
+// carries the look read off the stack it was watched on.
+test('look: a loss return and a redeemed debt are the same item, at the next generation', async (t) => {
+  function dressed(owner) {
+    const stack = markedSword(owner);
+    stack.enchants.set('sharpness', 4);
+    stack.nameTag = 'Lost and found';
+    stack.lore = ['line one', 'line two'];
+    return stack;
+  }
+  const lookOf = (stack) => ({ enchants: [...stack.enchants].sort(), nameTag: stack.nameTag, lore: stack.lore });
+  const copyOf = (player, id) => player.container.slots.find((s) => s !== undefined && lg.getMark(WEB_SWORD, s)?.id === id);
+
+  await t.test('online: the copy handed back carries the look of the stack that vanished', () => {
+    const owner = makePlayer('look-loss');
+    online(owner);
+    const stack = dressed(owner);
+    loseUnseen(stack);
+    const id = lg.getMark(WEB_SWORD, stack).id;
+    assert.deepStrictEqual(gensOf(owner, id), [1]);
+    assert.deepStrictEqual(lookOf(copyOf(owner, id)), lookOf(stack));
+  });
+
+  await t.test('offline: the debt stores the look and the copy paid on join carries it', () => {
+    const owner = makePlayer('look-owed');
+    online();
+    const stack = dressed(owner);
+    loseUnseen(stack);
+    const id = lg.getMark(WEB_SWORD, stack).id;
+    assert.deepStrictEqual(owedOf(owner).map((e) => e.mark.look), [{ enchantments: [['sharpness', 4]], nameTag: 'Lost and found', lore: ['line one', 'line two'] }]);
+    online(owner);
+    fire('playerSpawn', { player: owner, initialSpawn: true });
+    flush();
+    assert.deepStrictEqual(gensOf(owner, id), [1]);
+    assert.deepStrictEqual(lookOf(copyOf(owner, id)), lookOf(stack));
   });
 });

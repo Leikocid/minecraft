@@ -2,7 +2,8 @@
 // one owner that must not overwrite each other (CX-lgnd-09 items 2–3;
 // L0-lgnd-ad02, r005, ent4, p003); a loss going back to the last holder, not
 // to the crafter (CX-lgnd-16, L0-lgnd-ad11). The Dragon Katana's death, Void
-// and jump cases of L0-lgnd-ac24 close the file.
+// and jump cases of L0-lgnd-ac24, and the Sculk Crossbow's death and Void cases
+// of L0-lgnd-ac27 through the same scenarios, close the file.
 //
 // The oracle reads the persisted keys itself — the stack's `andrew:ws_gen`
 // and the world ledger `andrew:ws_gen:<id>`, both absent = 0 — rather than
@@ -14,6 +15,7 @@ import {
   BlockVolume,
   type Container,
   Direction,
+  EnchantmentType,
   type Dimension,
   type Entity,
   EntityComponentTypes,
@@ -28,7 +30,7 @@ import {
 import { type SimulatedPlayer, type Test, registerAsync } from "@minecraft/server-gametest";
 import { type Activation, observeActivations } from "../katana";
 import { clearCooldown } from "../legendary/cooldown";
-import { DRAGON_KATANA, type LegendaryDef, WEB_SWORD } from "../legendary/registry";
+import { DRAGON_KATANA, type LegendaryDef, SCULK_CROSSBOW, WEB_SWORD, hasAbility } from "../legendary/registry";
 import type { Mark } from "../legendary/rules";
 import { type BlockBox, forgetWatched, protectLegendariesIn } from "../legendary/recovery";
 import * as state from "../legendary/state";
@@ -972,14 +974,50 @@ function recoveryVerdicts(lines: string[], ids: string[]): string[] {
   );
 }
 
-/** A Survival player at `at` holding a marked Katana in the main hand, its cooldown clear. */
-async function katanaHolder(test: Test, at: Vector3, name: string): Promise<{ player: SimulatedPlayer; mark: Mark }> {
+type Hand = "main" | "off";
+
+/** What a returned copy must carry again besides its mark (L0-sclk-ac19). */
+interface Dress {
+  enchants?: ReadonlyArray<readonly [string, number]>;
+  nameTag?: string;
+  lore?: string[];
+}
+
+/** Enchantments, anvil name and lore of a stack, as one comparable line. */
+function lookText(stack: ItemStack | undefined): string {
+  const list = stack?.getComponent("minecraft:enchantable")?.getEnchantments() ?? [];
+  const enchants = list
+    .map((e) => `${e.type.id}${e.level}`)
+    .sort()
+    .join("+");
+  return `${enchants || "-"} name ${stack?.nameTag ?? "-"} lore ${stack?.getLore().join("/") || "-"}`;
+}
+
+/** Generation and look of every copy of instance `id` the player carries. */
+function copiesOf(def: LegendaryDef, player: Player, id: string): Array<{ gen: number; look: string }> {
+  return carried(player).flatMap((stack) => gensOf(def, [stack], id).map((gen) => ({ gen, look: lookText(stack) })));
+}
+
+/** A Survival player at `at` holding a marked `def` in `hand`, dressed with `dress`, its cooldown clear. */
+async function armedHolder(
+  test: Test,
+  at: Vector3,
+  name: string,
+  def: LegendaryDef = DRAGON_KATANA,
+  hand: Hand = "main",
+  dress: Dress = {}
+): Promise<{ player: SimulatedPlayer; mark: Mark }> {
   const player = test.spawnSimulatedPlayer(at, name, GameMode.Survival);
   await test.idle(4);
   const mark = state.makeMark("admin", player);
+  const stack = new ItemStack(def.itemId, 1);
+  for (const [id, level] of dress.enchants ?? []) stack.getComponent("minecraft:enchantable")?.addEnchantment({ type: new EnchantmentType(id), level });
+  if (dress.nameTag !== undefined) stack.nameTag = dress.nameTag;
+  if (dress.lore !== undefined) stack.setLore(dress.lore);
   player.selectedSlotIndex = KATANA_SLOT;
-  inventoryOf(player)?.setItem(KATANA_SLOT, state.markItem(DRAGON_KATANA, new ItemStack(DRAGON_KATANA.itemId, 1), mark));
-  clearCooldown(player, DRAGON_KATANA.abilityKey);
+  if (hand === "main") inventoryOf(player)?.setItem(KATANA_SLOT, state.markItem(def, stack, mark));
+  else state.setOffhand(player, state.markItem(def, stack, mark));
+  if (hasAbility(def)) clearCooldown(player, def.abilityKey);
   await test.idle(2);
   return { player, mark };
 }
@@ -1084,7 +1122,15 @@ const RUNWAY_TO_X = 26;
 const LAVA_HEALTH = 4;
 const DEATH_DEADLINE_TICKS = 300;
 
-function katanaDeath(name: string, cause: "kill" | "lava", afterJump: boolean): void {
+/** `afterJump` is the Katana's own; every def dies by `cause` with the stack in `hand`. */
+function deathRetention(
+  def: LegendaryDef,
+  name: string,
+  cause: "kill" | "lava",
+  afterJump: boolean,
+  hand: Hand = "main",
+  dress: Dress = {}
+): void {
   registerAsync("andrew", name, async (test: Test): Promise<void> => {
     const dim = test.getDimension();
     const cells = new Cells(test);
@@ -1095,7 +1141,10 @@ function katanaDeath(name: string, cause: "kill" | "lava", afterJump: boolean): 
         cells.fill({ x: 0, y: RUNWAY_FLOOR_Y, z: RUNWAY_START.z - 1 }, { x: RUNWAY_TO_X, y: RUNWAY_FLOOR_Y, z: RUNWAY_START.z + 1 }, "minecraft:stone");
         cells.fill({ x: 0, y: RUNWAY_FLOOR_Y + 1, z: RUNWAY_START.z - 1 }, { x: RUNWAY_TO_X, y: RUNWAY_FLOOR_Y + 5, z: RUNWAY_START.z + 1 }, "minecraft:air");
       }
-      const { player, mark } = await katanaHolder(test, afterJump ? RUNWAY_START : STAND_A, `klg_${name.replace("legendary_katana_", "")}`);
+      const { player, mark } = await armedHolder(test, afterJump ? RUNWAY_START : STAND_A, `lg_${name.replace("legendary_", "")}`, def, hand, dress);
+      const lookBefore = copiesOf(def, player, mark.id)
+        .map((c) => c.look)
+        .join();
       const startedAt = { ...player.location };
       let death: { cause: string; at: Vector3; tick: number } | undefined;
       dieSub = world.afterEvents.entityDie.subscribe((event) => {
@@ -1124,27 +1173,31 @@ function katanaDeath(name: string, cause: "kill" | "lava", afterJump: boolean): 
 
       // Past retention's next-tick sweep, before the respawn: what lies there now stays.
       await test.idle(10);
-      const atDeath = groundCopies(dim, died.at, DRAGON_KATANA, mark.id).length;
+      const atDeath = groundCopies(dim, died.at, def, mark.id).length;
       cells.restore();
       player.respawn();
       await test.idle(KATANA_SETTLE_TICKS);
 
-      const held = gensOf(DRAGON_KATANA, carried(player), mark.id);
-      const ground = groundCopies(dim, died.at, DRAGON_KATANA, mark.id).length + groundCopies(dim, startedAt, DRAGON_KATANA, mark.id).length;
-      const ledger = state.ledgerGen(DRAGON_KATANA, mark.id);
-      const pending = state.readPending(DRAGON_KATANA, player).length;
-      const owed = owedEntries(DRAGON_KATANA, mark.id);
+      const copies = copiesOf(def, player, mark.id);
+      const held = copies.map((c) => c.gen);
+      const lookAfter = copies.map((c) => c.look).join();
+      const ground = groundCopies(dim, died.at, def, mark.id).length + groundCopies(dim, startedAt, def, mark.id).length;
+      const ledger = state.ledgerGen(def, mark.id);
+      const pending = state.readPending(def, player).length;
+      const owed = owedEntries(def, mark.id);
       const verdicts = recoveryVerdicts(capture.lines, [mark.id]);
       klog(
         `${name} RESULT ${jump === undefined ? "no jump" : `jump ${describeJump(jump)}, died ${died.tick - jump.activation.tick} tick(s) later`}; ` +
-          `died of ${died.cause} at ${f1(died.at)}; ${DRAGON_KATANA.itemId} id ${mark.id}: ` +
+          `died of ${died.cause} at ${f1(died.at)}; ${def.itemId} (${hand} hand) id ${mark.id}: ` +
           `on the ground at death+10 ${atDeath}, after respawn held gens [${held.join(" ")}] ground ${ground} ledger ${ledger} pending ${pending} owed ${owed}; ` +
+          `look [${lookBefore}] -> [${lookAfter}]; ` +
           `recovery verdicts: ${verdicts.join(" | ") || "none"}`
       );
       if (cause === "lava") test.assert(["lava", "fire", "fireTick"].includes(died.cause), `${player.name} died of ${died.cause}, not in the lava`);
-      test.assert(held.join() === String(mark.gen), `after respawn the Katana is held at gens [${held.join(" ")}], expected once at gen ${mark.gen}`);
-      test.assert(ledger === mark.gen, `the ledger moved to gen ${ledger}: the Katana came back as a loss, not retained`);
-      test.assert(atDeath === 0 && ground === 0, `Katana item entities left on the ground: ${atDeath} at death, ${ground} after the respawn`);
+      test.assert(held.join() === String(mark.gen), `after respawn ${def.itemId} is held at gens [${held.join(" ")}], expected once at gen ${mark.gen}`);
+      test.assert(ledger === mark.gen, `the ledger moved to gen ${ledger}: ${def.itemId} came back as a loss, not retained`);
+      test.assert(atDeath === 0 && ground === 0, `${def.itemId} item entities left on the ground: ${atDeath} at death, ${ground} after the respawn`);
+      test.assert(lookAfter === lookBefore, `${def.itemId} came back as [${lookAfter}], was [${lookBefore}]`);
       test.assert(pending === 0 && owed === 0, `a return is still outstanding (pending ${pending}, owed ${owed})`);
       test.assert(verdicts.length === 0, `recovery read the death as a loss: ${verdicts.join(" | ")}`);
     } finally {
@@ -1159,66 +1212,104 @@ function katanaDeath(name: string, cause: "kill" | "lava", afterJump: boolean): 
     .tag("andrew");
 }
 
-katanaDeath("legendary_katana_death_kill", "kill", false);
-katanaDeath("legendary_katana_death_lava", "lava", false);
-katanaDeath("legendary_katana_death_after_jump", "kill", true);
-katanaDeath("legendary_katana_death_lava_after_jump", "lava", true);
+deathRetention(DRAGON_KATANA, "legendary_katana_death_kill", "kill", false);
+deathRetention(DRAGON_KATANA, "legendary_katana_death_lava", "lava", false);
+deathRetention(DRAGON_KATANA, "legendary_katana_death_after_jump", "kill", true);
+deathRetention(DRAGON_KATANA, "legendary_katana_death_lava_after_jump", "lava", true);
+
+// Crossbow T19 (L0-sclk-ac19, L0-lgnd-ac27): the same retention, in either hand,
+// and the copy that comes back is the same item: Quick Charge, Multishot, the
+// anvil name and the lore.
+const CROSSBOW_DRESS: Dress = {
+  enchants: [
+    ["quick_charge", 3],
+    ["multishot", 1],
+  ],
+  nameTag: "Echo",
+  lore: ["sk retention"],
+};
+deathRetention(SCULK_CROSSBOW, "legendary_sculk_crossbow_death_kill", "kill", false, "main", CROSSBOW_DRESS);
+deathRetention(SCULK_CROSSBOW, "legendary_sculk_crossbow_death_lava", "lava", false, "main", CROSSBOW_DRESS);
+deathRetention(SCULK_CROSSBOW, "legendary_sculk_crossbow_death_offhand", "kill", false, "off", CROSSBOW_DRESS);
 
 // T18 (L0-lgnd-ac24): a Katana that falls into the Void, thrown or inside a
 // chest minecart, comes back to its last holder exactly once, at gen + 1.
+// Crossbow T20 (L0-lgnd-ac27): the thrown case for the Sculk Crossbow.
 
 /** Waits for the owner to hold the instance, then a further 40 ticks, and judges "returned exactly once". */
-async function judgeVoidReturn(test: Test, name: string, owner: Player, mark: Mark, lines: string[], near: Vector3, extra: string): Promise<void> {
+async function judgeVoidReturn(
+  test: Test,
+  def: LegendaryDef,
+  name: string,
+  owner: Player,
+  mark: Mark,
+  lines: string[],
+  near: Vector3,
+  extra: string,
+  lookBefore = lookText(new ItemStack(def.itemId, 1))
+): Promise<void> {
   let held: number[] = [];
   let waited = 0;
   for (; waited < VOID_RETURN_TICKS && held.length === 0; waited++) {
     await test.idle(1);
-    held = gensOf(DRAGON_KATANA, carried(owner), mark.id);
+    held = gensOf(def, carried(owner), mark.id);
   }
   await test.idle(40);
-  held = gensOf(DRAGON_KATANA, carried(owner), mark.id);
-  const ledger = state.ledgerGen(DRAGON_KATANA, mark.id);
-  const ground = groundCopies(test.getDimension(), near, DRAGON_KATANA, mark.id).length;
+  held = gensOf(def, carried(owner), mark.id);
+  const ledger = state.ledgerGen(def, mark.id);
+  const ground = groundCopies(test.getDimension(), near, def, mark.id).length;
   const losses = lossLines(lines, mark.id);
-  const owed = owedEntries(DRAGON_KATANA, mark.id);
+  const owed = owedEntries(def, mark.id);
+  const lookAfter = copiesOf(def, owner, mark.id)
+    .map((c) => c.look)
+    .join();
   klog(
     `${name} RESULT ${extra}; returned after ${waited} tick(s); owner holds gens [${held.join(" ")}] 40 ticks later, ledger ${ledger}, ` +
-      `ground ${ground}, owed ${owed}; loss lines: ${losses.join(" | ") || "none"}`
+      `ground ${ground}, owed ${owed}; look [${lookBefore}] -> [${lookAfter}]; loss lines: ${losses.join(" | ") || "none"}`
   );
-  test.assert(held.join() === String(mark.gen + 1), `the owner holds the Katana at gens [${held.join(" ")}], expected once at gen ${mark.gen + 1}`);
+  test.assert(lookAfter === lookBefore, `${def.itemId} came back as [${lookAfter}], was [${lookBefore}]`);
+  test.assert(held.join() === String(mark.gen + 1), `the owner holds ${def.itemId} at gens [${held.join(" ")}], expected once at gen ${mark.gen + 1}`);
   test.assert(ledger === mark.gen + 1, `the ledger is at gen ${ledger}, expected ${mark.gen + 1}`);
-  test.assert(ground === 0, `${ground} copies of the Katana lie on the ground`);
-  test.assert(owed === 0, `the Katana is also owed ${owed} time(s): it would come back twice`);
+  test.assert(ground === 0, `${ground} copies of ${def.itemId} lie on the ground`);
+  test.assert(owed === 0, `${def.itemId} is also owed ${owed} time(s): it would come back twice`);
   test.assert(losses.length === 1, `expected exactly one loss return, got ${losses.length}: ${losses.join(" | ") || "none"}`);
 }
 
-registerAsync("andrew", "legendary_katana_void_thrown", async (test: Test): Promise<void> => {
-  const dim = test.getDimension();
-  const { player, mark } = await katanaHolder(test, STAND_A, "klg_void_thrower");
-  const capture = captureWarnings();
-  try {
-    test.assert(player.dropSelectedItem(), "dropSelectedItem refused to throw the Katana");
-    let thrown: Entity | undefined;
-    for (let t = 0; t < 10 && thrown === undefined; t++) {
-      await test.idle(1);
-      thrown = groundCopies(dim, player.location, DRAGON_KATANA, mark.id)[0]?.entity;
+function voidThrown(def: LegendaryDef, name: string, who: string, dress: Dress = {}): void {
+  registerAsync("andrew", name, async (test: Test): Promise<void> => {
+    const dim = test.getDimension();
+    const { player, mark } = await armedHolder(test, STAND_A, who, def, "main", dress);
+    const lookBefore = copiesOf(def, player, mark.id)
+      .map((c) => c.look)
+      .join();
+    const capture = captureWarnings();
+    try {
+      test.assert(player.dropSelectedItem(), `dropSelectedItem refused to throw ${def.itemId}`);
+      let thrown: Entity | undefined;
+      for (let t = 0; t < 10 && thrown === undefined; t++) {
+        await test.idle(1);
+        thrown = groundCopies(dim, player.location, def, mark.id)[0]?.entity;
+      }
+      test.assert(thrown !== undefined, `no ${def.itemId} item entity appeared after the throw`);
+      // Watched on the platform first: an item already below the floor at its
+      // spawn reads as unloaded with its chunk, not as lost.
+      await test.idle(3);
+      const entity = thrown as Entity;
+      const at = { ...entity.location };
+      entity.teleport({ x: at.x, y: dim.heightRange.min - 8, z: at.z });
+      await judgeVoidReturn(test, def, name.replace("legendary_", ""), player, mark, capture.lines, at, `${def.itemId} thrown from ${f1(at)} below the floor`, lookBefore);
+    } finally {
+      capture.stop();
     }
-    test.assert(thrown !== undefined, "no Katana item entity appeared after the throw");
-    // Watched on the platform first: an item already below the floor at its
-    // spawn reads as unloaded with its chunk, not as lost.
-    await test.idle(3);
-    const entity = thrown as Entity;
-    const at = { ...entity.location };
-    entity.teleport({ x: at.x, y: dim.heightRange.min - 8, z: at.z });
-    await judgeVoidReturn(test, "void_thrown", player, mark, capture.lines, at, `thrown from ${f1(at)} below the floor`);
-  } finally {
-    capture.stop();
-  }
-  test.succeed();
-})
-  .structureName(STRUCTURE)
-  .maxTicks(VOID_RETURN_TICKS + 200)
-  .tag("andrew");
+    test.succeed();
+  })
+    .structureName(STRUCTURE)
+    .maxTicks(VOID_RETURN_TICKS + 200)
+    .tag("andrew");
+}
+
+voidThrown(DRAGON_KATANA, "legendary_katana_void_thrown", "klg_void_thrower");
+voidThrown(SCULK_CROSSBOW, "legendary_sculk_crossbow_void_thrown", "sklg_void_thrower", CROSSBOW_DRESS);
 
 registerAsync("andrew", "legendary_katana_void_chest_minecart", async (test: Test): Promise<void> => {
   const dim = test.getDimension();
@@ -1236,7 +1327,7 @@ registerAsync("andrew", "legendary_katana_void_chest_minecart", async (test: Tes
     test.assert(gensOf(DRAGON_KATANA, carried(owner), mark.id).length === 0, "the owner already holds the Katana the minecart is meant to carry");
     const at = { ...cart.location };
     cart.teleport({ x: at.x, y: dim.heightRange.min - 8, z: at.z });
-    await judgeVoidReturn(test, "void_chest_minecart", owner, mark, capture.lines, at, `minecart from ${f1(at)} below the floor`);
+    await judgeVoidReturn(test, DRAGON_KATANA, "katana_void_chest_minecart", owner, mark, capture.lines, at, `minecart from ${f1(at)} below the floor`);
     test.assert(!cart.isValid, "the chest minecart is still in the world below the floor after the return");
   } finally {
     capture.stop();

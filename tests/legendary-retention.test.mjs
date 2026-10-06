@@ -62,16 +62,46 @@ export const system = {
     mc.intervals.delete(id);
   },
 };
+export class EnchantmentType {
+  constructor(id) {
+    this.id = id;
+  }
+}
+// Enchantments, the anvil name and the lore: what a returned copy must carry again.
+// An enchantment named 'refused' stands for one the item no longer admits.
 export class ItemStack {
   constructor(typeId, amount = 1) {
     this.typeId = typeId;
     this.amount = amount;
     this.props = new Map();
+    this.enchants = new Map();
+    this.nameTag = undefined;
+    this.lore = [];
     Object.assign(this, props(this.props));
+  }
+  getComponent(id) {
+    if (id !== 'minecraft:enchantable') return undefined;
+    const enchants = this.enchants;
+    return {
+      getEnchantments: () => [...enchants].map(([type, level]) => ({ type: { id: type }, level })),
+      addEnchantment({ type, level }) {
+        if (type.id === 'refused') throw new Error('EnchantmentTypeUnknownIdError');
+        enchants.set(type.id, level);
+      },
+    };
+  }
+  getLore() {
+    return [...this.lore];
+  }
+  setLore(lore) {
+    this.lore = [...(lore ?? [])];
   }
   clone() {
     const copy = new ItemStack(this.typeId, this.amount);
     for (const [k, v] of this.props) copy.props.set(k, v);
+    copy.enchants = new Map(this.enchants);
+    copy.nameTag = this.nameTag;
+    copy.lore = [...this.lore];
     return copy;
   }
 }
@@ -534,5 +564,80 @@ test('AC2: a pending value from before lists reads as a list of one', async (t) 
     const raw = player.getDynamicProperty(PENDING_KEY);
     assert.strictEqual(lg.keysFor(WEB_SWORD).pending, PENDING_KEY);
     assert.ok(Array.isArray(JSON.parse(raw)), `pending is stored as ${raw}`);
+  });
+});
+
+// A returned copy is minted from the pending entry, so the entry carries what
+// the stack looked like (spec §3 "остаётся/возвращается"; L0-sclk-ac19).
+test('look: a copy returned after death is the same item — enchantments, anvil name, lore', async (t) => {
+  function dressed(owner) {
+    const stack = marked(owner);
+    stack.enchants.set('sharpness', 5);
+    stack.enchants.set('unbreaking', 3);
+    stack.nameTag = 'Thread';
+    stack.lore = ['first craft'];
+    return stack;
+  }
+  const lookOf = (stack) => ({ enchants: [...stack.enchants].sort(), nameTag: stack.nameTag, lore: stack.lore });
+  const returnedCopy = (player, id) => [...player.container.slots, player.offhand].find((s) => s !== undefined && lg.getMark(WEB_SWORD, s)?.id === id);
+
+  await t.test('path B: the look read off the dropped stack comes back with the instance', () => {
+    dimension.ground = [];
+    const player = makePlayer('look-b');
+    const stack = dressed(player);
+    player.container.setItem(3, stack);
+    spill(player);
+    die(player);
+    respawn(player);
+    const back = returnedCopy(player, idOf(stack));
+    assert.ok(back !== undefined, 'nothing came back');
+    assert.deepStrictEqual(lookOf(back), lookOf(stack));
+    assert.strictEqual(swordsCarried(player), 1);
+  });
+
+  await t.test('path A, inventory and off hand: each copy keeps its own look', () => {
+    const player = makePlayer('look-a');
+    const bag = dressed(player);
+    const off = marked(player);
+    off.enchants.set('fire_aspect', 2);
+    player.container.setItem(0, bag);
+    player.offhand = off;
+    die(player);
+    respawn(player);
+    assert.deepStrictEqual(lookOf(returnedCopy(player, idOf(bag))), lookOf(bag));
+    assert.deepStrictEqual(lookOf(returnedCopy(player, idOf(off))), lookOf(off));
+  });
+
+  await t.test('a bare stack comes back bare, and its pending entry stores no look', () => {
+    dimension.ground = [];
+    const player = makePlayer('look-bare');
+    const stack = marked(player);
+    player.container.setItem(0, stack);
+    spill(player);
+    die(player);
+    assert.deepStrictEqual(JSON.parse(player.getDynamicProperty(PENDING_KEY)).map((m) => m.look), [undefined]);
+    respawn(player);
+    assert.deepStrictEqual(lookOf(returnedCopy(player, idOf(stack))), { enchants: [], nameTag: undefined, lore: [] });
+  });
+
+  await t.test('an enchantment the item refuses is left off; the rest of the look and the return still land', () => {
+    const player = makePlayer('look-refused');
+    const mark = lg.makeMark('admin', player);
+    player.setDynamicProperty(PENDING_KEY, JSON.stringify([{ ...mark, look: { enchantments: [['refused', 1], ['sharpness', 2]], nameTag: 'Kept' } }]));
+    player.health = 0;
+    respawn(player);
+    const back = returnedCopy(player, mark.id);
+    assert.deepStrictEqual(lookOf(back), { enchants: [['sharpness', 2]], nameTag: 'Kept', lore: [] });
+  });
+
+  await t.test('a pending entry from before looks, or with a malformed look, returns a bare copy rather than nothing', () => {
+    const player = makePlayer('look-legacy');
+    const old = lg.makeMark('admin', player);
+    const broken = lg.makeMark('admin', player);
+    player.setDynamicProperty(PENDING_KEY, JSON.stringify([old, { ...broken, look: { enchantments: 'sharpness', lore: [1] } }]));
+    assert.strictEqual(lg.readPending(WEB_SWORD, player)[1].look, undefined, 'a malformed look is dropped, the mark is kept');
+    player.health = 0;
+    respawn(player);
+    for (const id of [old.id, broken.id]) assert.deepStrictEqual(lookOf(returnedCopy(player, id)), { enchants: [], nameTag: undefined, lore: [] });
   });
 });

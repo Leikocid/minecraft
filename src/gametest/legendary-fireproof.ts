@@ -5,15 +5,19 @@
 // 1.21.90) keeps the marked entity in place, so recovery.ts never sees a loss.
 // Cactus, a primed TNT and despawn have no stable component, so the entity is
 // destroyed and recovery.ts hands the instance back at gen + 1 (C-16, L0-xcx21).
-// The Void, the other return path, is held by legendary_returns_from_void
-// (main.ts) and legendary_katana_void_* (legendary-recovery.ts).
+// The Orbital LMB column empties the chest it passes through; protection moves
+// every legendary out first (L0-lgnd-ac24, ac27). The Void, the other return
+// path, is held by legendary_returns_from_void (main.ts) and
+// legendary_{katana,sculk_crossbow}_void_* (legendary-recovery.ts).
 
-import { type Container, type Dimension, type Entity, GameMode, ItemStack, type Player, type Vector3 } from "@minecraft/server";
+import { BlockVolume, type Container, type Dimension, type Entity, GameMode, ItemStack, type Player, type Vector3, system } from "@minecraft/server";
 import { type Test, registerAsync } from "@minecraft/server-gametest";
 import { LEGENDARIES, type LegendaryDef } from "../legendary/registry";
 import { isLegendaryItemEntity } from "../legendary/recovery";
 import { type Mark } from "../legendary/rules";
-import { findAllMarked, getMark, ledgerGen, makeMark, markItem, readPending } from "../legendary/state";
+import { findAllMarked, getMark, isItemOf, ledgerGen, makeMark, markItem, readOwed, readPending } from "../legendary/state";
+import { PENETRATOR_EFFECT, type PenetratorReport, observePenetratorReports } from "../orbital/penetrator";
+import { loadBox } from "./structures-place";
 
 const STRUCTURE = "andrew:platform";
 // Clear of every grid cell (x=1,3 × z=1,3,5) and CONTROL_CELL (5,3): a fifth
@@ -36,6 +40,9 @@ interface Cell {
 
 /** The platform scripts/bds-gametest.mjs writes is PLATFORM_SIZE × PLATFORM_SIZE. */
 const PLATFORM_SIZE = 7;
+/** Its stone floor, test-relative. */
+const FLOOR_Y = 1;
+const FLOOR_TYPE = "minecraft:stone";
 
 // One cell per legendary, two apart on the platform floor (stone at
 // test-relative y=1), generated from the registry. Columns x=1,3 and rows
@@ -49,10 +56,29 @@ const CELLS: Cell[] = LEGENDARIES.map((def, i) => ({
 }));
 const CONTROL_CELL: Vector3 = { x: 5, y: 2, z: 3 };
 
-function assertOnPlatform(test: Test): void {
-  for (const { def, cell } of CELLS) {
-    const on = cell.x >= 0 && cell.x < PLATFORM_SIZE && cell.z >= 0 && cell.z < PLATFORM_SIZE;
-    test.assert(on, `${def.itemId}'s cell ${cell.x},${cell.z} lies off the ${PLATFORM_SIZE}×${PLATFORM_SIZE} platform`);
+/**
+ * Every cell lies on the platform by arithmetic and by the engine's own read:
+ * the block under it is the platform's stone floor, read before any scenario
+ * writes there. The cell one past the platform's edge in the same row is
+ * logged beside it, so the reading is seen to tell the two apart.
+ */
+function assertOnPlatform(test: Test, scenario: string): void {
+  const dim = test.getDimension();
+  const floorAt = (x: number, z: number): string => typeOf(dim, test.worldBlockLocation({ x, y: FLOOR_Y, z }));
+  const rows = [...CELLS, { def: undefined, cell: CONTROL_CELL }].map(({ def, cell }) => ({
+    name: def?.itemId ?? CONTROL_ITEM_ID,
+    cell,
+    on: cell.x >= 0 && cell.x < PLATFORM_SIZE && cell.z >= 0 && cell.z < PLATFORM_SIZE,
+    floor: floorAt(cell.x, cell.z),
+  }));
+  log(
+    `${scenario} platform ${PLATFORM_SIZE}×${PLATFORM_SIZE}: ` +
+      rows.map((r) => `${r.name} cell ${r.cell.x},${r.cell.z} floor ${r.floor}`).join(" | ") +
+      `; past the edge at ${PLATFORM_SIZE},${CELLS[CELLS.length - 1].cell.z} floor ${floorAt(PLATFORM_SIZE, CELLS[CELLS.length - 1].cell.z)}`
+  );
+  for (const r of rows) {
+    test.assert(r.on, `${r.name}'s cell ${r.cell.x},${r.cell.z} lies off the ${PLATFORM_SIZE}×${PLATFORM_SIZE} platform`);
+    test.assert(r.floor === FLOOR_TYPE, `${r.name}'s cell ${r.cell.x},${r.cell.z} has ${r.floor} under it, not the platform's ${FLOOR_TYPE} floor`);
   }
 }
 
@@ -69,7 +95,7 @@ function spawnMarked(test: Test, dim: Dimension, owner: Player, def: LegendaryDe
  * while the control is gone.
  */
 async function scenario(test: Test, block: string): Promise<void> {
-  assertOnPlatform(test);
+  assertOnPlatform(test, block);
   const dim = test.getDimension();
   const owner = test.spawnSimulatedPlayer(STAND, `andrew_fireproof_${block.replace("minecraft:", "")}`, GameMode.Survival);
   await test.idle(2);
@@ -100,7 +126,8 @@ async function scenario(test: Test, block: string): Promise<void> {
     const now = stack === undefined ? undefined : getMark(def, stack);
     const at = entity.isValid ? entity.location : undefined;
     const home = test.worldBlockLocation(cell);
-    const inCell = at !== undefined && Math.floor(at.x) === home.x && Math.floor(at.z) === home.z;
+    // Resting on its own floor: an item with no floor under it falls out of the cell.
+    const inCell = at !== undefined && Math.floor(at.x) === home.x && Math.floor(at.z) === home.z && at.y >= home.y - 0.05;
     const where = at === undefined ? "gone" : `${(at.x - home.x).toFixed(2)},${(at.y - home.y).toFixed(2)},${(at.z - home.z).toFixed(2)} from its cell`;
     return { def, mark, alive: entity.isValid, now, inCell, where, ledger: ledgerGen(def, mark.id), pending: readPending(def, owner).length };
   });
@@ -175,7 +202,7 @@ async function returnPath(
   /** Blocks added under every item, when the path builds a column to drop onto. */
   lift = 0
 ): Promise<void> {
-  assertOnPlatform(test);
+  assertOnPlatform(test, name);
   const dim = test.getDimension();
   const owner = test.spawnSimulatedPlayer(STAND, name, mode);
   await test.idle(2);
@@ -433,4 +460,107 @@ registerAsync("andrew", "legendary_in_a_chest_stays_there", async (test: Test): 
 })
   .structureName(STRUCTURE)
   .maxTicks(400)
+  .tag("andrew");
+
+// ---------------------------------------------------------------- the Orbital LMB column
+
+/** A site of its own, away from the platform and from every other scenario's site. */
+const COLUMN_OFFSET = { x: -260, z: 180 };
+const COLUMN_TOP = 80;
+/** The pad's half-width: room outside the column's ±3 footprint for protection to drop onto. */
+const COLUMN_PAD = 8;
+/** Twice the 40-tick recovery check after the report: a loss misread as a removal would have been handed out. */
+const COLUMN_SETTLE_TICKS = 100;
+/** A column's whole removal stays far below this (L0-pntr-r001). */
+const COLUMN_REPORT_TICKS = 300;
+
+/**
+ * Every legendary and a vanilla control in one chest inside the column: the
+ * column empties the chest with no spill, so the control is gone, and every
+ * legendary was moved out first — exactly one copy, same id and generation,
+ * outside the footprint, nothing owed.
+ */
+registerAsync("andrew", "legendary_survives_orbital_column", async (test: Test): Promise<void> => {
+  const dim = test.getDimension();
+  const origin = test.worldBlockLocation({ x: 0, y: 0, z: 0 });
+  const cx = origin.x + COLUMN_OFFSET.x;
+  const cz = origin.z + COLUMN_OFFSET.z;
+  const owner = test.spawnSimulatedPlayer(STAND, "andrew_column_owner", GameMode.Survival);
+  const reports = new Map<string, PenetratorReport>();
+  const stopReports = observePenetratorReports((r) => reports.set(r.attackId, r));
+  const unload = await loadBox(test, dim, "andrew_gt_lgnd_column", { min: [cx - 16, 0, cz - 16], max: [cx + 16, 0, cz + 16] });
+  try {
+    dim.fillBlocks(new BlockVolume({ x: cx - COLUMN_PAD, y: COLUMN_TOP - 3, z: cz - COLUMN_PAD }, { x: cx + COLUMN_PAD, y: COLUMN_TOP, z: cz + COLUMN_PAD }), "minecraft:stone");
+    dim.fillBlocks(new BlockVolume({ x: cx - COLUMN_PAD, y: COLUMN_TOP + 1, z: cz - COLUMN_PAD }, { x: cx + COLUMN_PAD, y: COLUMN_TOP + 12, z: cz + COLUMN_PAD }), "minecraft:air");
+    const chestAt = { x: cx, y: COLUMN_TOP + 1, z: cz };
+    dim.setBlockType(chestAt, "minecraft:chest");
+    const chest = dim.getBlock(chestAt)?.getComponent("minecraft:inventory")?.container;
+    test.assert(chest !== undefined, "the chest has no inventory container");
+    const placed = LEGENDARIES.map((def, slot) => {
+      const mark = makeMark("admin", owner);
+      (chest as Container).setItem(slot, markItem(def, new ItemStack(def.itemId, 1), mark));
+      return { def, mark };
+    });
+    (chest as Container).setItem(LEGENDARIES.length, new ItemStack(CONTROL_ITEM_ID, 1));
+    await test.idle(4);
+
+    const attackId = `gt-lgnd-column-${system.currentTick}`;
+    PENETRATOR_EFFECT.onDetonate(dim, chestAt, "gametest", "lmb", attackId);
+    let report: PenetratorReport | undefined;
+    for (let t = 0; t < COLUMN_REPORT_TICKS && report === undefined; t++) {
+      await test.idle(1);
+      report = reports.get(attackId);
+    }
+    test.assert(report !== undefined, `the column sent no report within ${COLUMN_REPORT_TICKS} ticks`);
+    await test.idle(COLUMN_SETTLE_TICKS);
+
+    const site = { x: cx + 0.5, y: COLUMN_TOP + 1, z: cz + 0.5 };
+    const items = dim.getEntities({ type: "minecraft:item", location: site, maxDistance: 48 });
+    const stackOf = (e: Entity) => (e.isValid ? e.getComponent("minecraft:item")?.itemStack : undefined);
+    const controlLeft = items.filter((e) => stackOf(e)?.typeId === CONTROL_ITEM_ID).length;
+    const container = containerOf(owner);
+    const rows = placed.map(({ def, mark }) => {
+      const ground = items.flatMap((e) => {
+        const stack = stackOf(e);
+        const now = stack !== undefined && isItemOf(def, stack) ? getMark(def, stack) : undefined;
+        return now?.id === mark.id ? [{ gen: now.gen, at: e.location }] : [];
+      });
+      const held = findAllMarked(def, container).filter((x) => x.mark.id === mark.id);
+      const inFootprint = ground.some((g) => Math.abs(Math.floor(g.at.x) - cx) <= 3 && Math.abs(Math.floor(g.at.z) - cz) <= 3);
+      return {
+        def,
+        mark,
+        copies: ground.length + held.length,
+        gens: [...ground.map((g) => g.gen), ...held.map((h) => h.mark.gen)],
+        where: ground.map((g) => `${(g.at.x - cx).toFixed(1)},${(g.at.y - COLUMN_TOP).toFixed(1)},${(g.at.z - cz).toFixed(1)}`).join(" ") + (held.length > 0 ? ` held ${held.length}` : ""),
+        inFootprint,
+        ledger: ledgerGen(def, mark.id),
+        owed: JSON.stringify(readOwed(def)).includes(mark.id),
+        pending: readPending(def, owner).length,
+      };
+    });
+    const r = report as PenetratorReport;
+    const chestNow = typeOf(dim, chestAt);
+    log(
+      `orbital column RESULT attack ${attackId}: removed ${r.removed} containersCleared ${r.containersCleared} legendariesProtected ${r.legendariesProtected} ` +
+        `keptProtectFailed ${r.keptProtectFailed} errors ${r.errors}; chest cell now ${chestNow}; ${CONTROL_ITEM_ID} left ${controlLeft}; ` +
+        rows.map((x) => `${x.def.itemId} copies ${x.copies} gens [${x.gens.join(" ")}] at [${x.where}] ledger ${x.ledger} owed ${x.owed} pending ${x.pending}`).join(" | ")
+    );
+    test.assert(chestNow === "minecraft:air", `the chest is still standing (${chestNow}): nothing was at stake`);
+    test.assert(controlLeft === 0, `${controlLeft} ${CONTROL_ITEM_ID} survived the column — it does not destroy what the chest held, so nothing below proves anything`);
+    test.assert(r.legendariesProtected === LEGENDARIES.length, `protection moved ${r.legendariesProtected} legendaries, expected ${LEGENDARIES.length}`);
+    for (const x of rows) {
+      test.assert(x.copies === 1, `${x.def.itemId} exists ${x.copies} times after the column, expected exactly once`);
+      test.assert(x.gens[0] === x.mark.gen && x.ledger === x.mark.gen, `${x.def.itemId}: gen ${x.gens[0]}, ledger ${x.ledger}, marked ${x.mark.gen} — it went through loss recovery`);
+      test.assert(!x.inFootprint, `${x.def.itemId} lies inside the column's footprint: [${x.where}]`);
+      test.assert(!x.owed && x.pending === 0, `${x.def.itemId} is owed or pending: a second copy would be issued`);
+    }
+  } finally {
+    stopReports();
+    unload();
+  }
+  test.succeed();
+})
+  .structureName(STRUCTURE)
+  .maxTicks(COLUMN_REPORT_TICKS + COLUMN_SETTLE_TICKS + 200)
   .tag("andrew");
