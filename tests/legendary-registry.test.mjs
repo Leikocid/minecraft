@@ -66,6 +66,7 @@ const {
   hudMessage,
   SCYTHE_OF_CALAMITY,
   ORBITAL_CANNON,
+  SCULK_CROSSBOW,
   hasAbility,
   heldLegendaries,
   genLedgerKey,
@@ -105,10 +106,16 @@ test('registry', async (t) => {
     assert.strictEqual(defForAbility('nope'), undefined);
   });
 
-  await t.test('the four shipped defs are active, each found by its own ability key (L0-lgnd-ac26)', () => {
+  await t.test('the five shipped defs, in order, the first four active (L0-lgnd-ac26)', () => {
     assert.deepStrictEqual(
       LEGENDARIES.map((def) => def.itemId),
-      ['andrew:web_sword', 'andrew:scythe_of_calamity', 'andrew:orbital_cannon', 'andrew:dragon_katana']
+      [
+        'andrew:web_sword',
+        'andrew:scythe_of_calamity',
+        'andrew:orbital_cannon',
+        'andrew:dragon_katana',
+        'andrew:sculk_crossbow',
+      ]
     );
     for (const def of [WEB_SWORD, SCYTHE_OF_CALAMITY, ORBITAL_CANNON, DRAGON_KATANA]) {
       assert.strictEqual(hasAbility(def), true, `${def.itemId} lost its ability`);
@@ -131,11 +138,16 @@ test('registry', async (t) => {
     ]);
   });
 
-  await t.test('item ids, prefixes and ability keys are unique across the registry', () => {
-    for (const field of ['itemId', 'keyPrefix', 'abilityKey', 'command', 'craftTokenId', 'textPrefix']) {
+  await t.test('item ids, prefixes, tokens, commands and text prefixes are unique across all five defs', () => {
+    for (const field of ['itemId', 'keyPrefix', 'command', 'craftTokenId', 'textPrefix']) {
       const values = LEGENDARIES.map((def) => def[field]);
       assert.strictEqual(new Set(values).size, values.length, `duplicate ${field}`);
     }
+  });
+
+  await t.test('ability keys are unique across the active defs only — a passive def has none to collide with', () => {
+    const values = LEGENDARIES.filter(hasAbility).map((def) => def.abilityKey);
+    assert.strictEqual(new Set(values).size, values.length, 'duplicate abilityKey');
   });
 
   await t.test('Dragon Katana is def #4 (AD-lgnd-14)', () => {
@@ -164,6 +176,31 @@ test('registry', async (t) => {
     assert.strictEqual(isLegendaryStack({ typeId: 'andrew:dragon_katana' }), true);
     assert.strictEqual(isLegendaryStack({ typeId: 'andrew:dragon_katana_crafted' }), true);
     assert.strictEqual(isLegendaryStack({ typeId: 'minecraft:diamond_sword' }), false);
+  });
+
+  await t.test('Sculk Crossbow is def #5: sk prefix, no ability, craft gate wired like every other def (CNTR-LGND-CX15-AA)', () => {
+    assert.ok(LEGENDARIES.includes(SCULK_CROSSBOW));
+    assert.strictEqual(SCULK_CROSSBOW.itemId, 'andrew:sculk_crossbow');
+    assert.strictEqual(SCULK_CROSSBOW.keyPrefix, 'sk');
+    assert.strictEqual(SCULK_CROSSBOW.nameKey, 'item.andrew:sculk_crossbow');
+    assert.strictEqual(SCULK_CROSSBOW.craftGate, true);
+    assert.strictEqual(SCULK_CROSSBOW.craftTokenId, 'andrew:sculk_crossbow_crafted');
+    assert.deepStrictEqual(SCULK_CROSSBOW.refund, [
+      ['minecraft:echo_shard', 2],
+      ['minecraft:deepslate', 2],
+      ['minecraft:crossbow', 1],
+    ]);
+    assert.strictEqual(SCULK_CROSSBOW.textPrefix, 'andrew.sculk_crossbow');
+    assert.strictEqual(SCULK_CROSSBOW.command, 'andrew:crossbow');
+    assert.strictEqual(hasAbility(SCULK_CROSSBOW), false, 'the crossbow must stay passive (R-lgnd-018)');
+    assert.strictEqual(SCULK_CROSSBOW.abilityKey, undefined);
+    assert.strictEqual(SCULK_CROSSBOW.cooldownTicks, undefined);
+    assert.strictEqual(SCULK_CROSSBOW.hudKeys, undefined);
+  });
+
+  await t.test('isLegendaryStack is true for the Sculk Crossbow item and its token', () => {
+    assert.strictEqual(isLegendaryStack({ typeId: 'andrew:sculk_crossbow' }), true);
+    assert.strictEqual(isLegendaryStack({ typeId: 'andrew:sculk_crossbow_crafted' }), true);
   });
 });
 
@@ -198,6 +235,26 @@ test('keys from keyPrefix', async (t) => {
       holder: 'andrew:dk_holder',
       holderName: 'andrew:dk_holder_name',
     });
+  });
+
+  await t.test('Sculk Crossbow keys live under andrew:sk_*, not andrew:sc_* (CNTR-LGND-CX15-AA: sc is the Scythe\'s)', () => {
+    assert.deepStrictEqual(keysFor(SCULK_CROSSBOW), {
+      origin: 'andrew:sk_origin',
+      owner: 'andrew:sk_owner',
+      id: 'andrew:sk_id',
+      ownerName: 'andrew:sk_owner_name',
+      crafted: 'andrew:sk_crafted',
+      craftedBy: 'andrew:sk_crafted_by',
+      pending: 'andrew:sk_pending',
+      gen: 'andrew:sk_gen',
+      owed: 'andrew:sk_owed',
+      holder: 'andrew:sk_holder',
+      holderName: 'andrew:sk_holder_name',
+    });
+    const scytheKeys = new Set(Object.values(keysFor(SCYTHE_OF_CALAMITY)));
+    for (const key of Object.values(keysFor(SCULK_CROSSBOW))) {
+      assert.ok(!scytheKeys.has(key), `${key} collides with a Scythe key`);
+    }
   });
 
   await t.test('another prefix gets its own namespace', () => {

@@ -184,6 +184,10 @@ const EXPECTED_TESTS = [
   'andrew:legendary_give_then_craft_dragon_katana',
   'andrew:legendary_second_real_craft_refunded',
   'andrew:legendary_katana_recipe_negative_controls',
+  // SCLK-ITEM-01-AA — src/gametest/legendary-craftgate.ts
+  'andrew:legendary_give_then_craft_sculk_crossbow',
+  'andrew:legendary_sculk_crossbow_other_flags_untouched',
+  'andrew:sculk_crossbow_no_durability',
   // LGND-OFFHAND-01 — src/gametest/legendary-offhand.ts
   'andrew:legendary_offhand_admitted',
   'andrew:legendary_offhand_resolves',
