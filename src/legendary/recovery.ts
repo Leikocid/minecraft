@@ -60,7 +60,7 @@ import {
 } from "@minecraft/server";
 import { LEGENDARIES, type LegendaryDef, defForStack } from "./registry";
 import { grant } from "./retention";
-import { bumpGen, carriesInstance, getMark, isItemOf, isLive, offhandOf, readOwed, stampHolder, writeOwed } from "./state";
+import { bumpGen, carriesInstance, getMark, isItemOf, isLive, offhandOf, readOwed, stampHolder, withLook, writeOwed } from "./state";
 import { type Mark, returnTarget, withOwed, withoutOwed } from "./rules";
 
 const CHECK_INTERVAL_TICKS = 40;
@@ -192,7 +192,7 @@ export function registerRecovery(): void {
       const stack = container.getItem(slot);
       const def = defForStack(stack);
       const mark = def === undefined || stack === undefined ? undefined : getMark(def, stack);
-      if (def !== undefined && mark !== undefined) inside.push({ def, mark });
+      if (def !== undefined && stack !== undefined && mark !== undefined) inside.push({ def, mark: withLook(mark, stack) });
     }
     if (inside.length === 0) {
       return;
@@ -237,7 +237,7 @@ function noteDeparture(player: Player, container: Container, before: ItemStack |
   const at = player.location;
   inFlight.set(mark.id, {
     def,
-    mark,
+    mark: withLook(mark, before),
     dimension: player.dimension,
     location: { x: Math.floor(at.x), y: Math.floor(at.y), z: Math.floor(at.z) },
     playerId: player.id,
@@ -323,7 +323,7 @@ function watch(entity: Entity, via: string): void {
     console.warn(`[andrew] legendary recovery: removed a stale ${def.itemId} id ${mark.id} gen ${mark.gen} (via ${via})`);
     return;
   }
-  watched.set(entity.id, { entity, def, mark, dimension: entity.dimension, location: entity.location });
+  watched.set(entity.id, { entity, def, mark: withLook(mark, stack), dimension: entity.dimension, location: entity.location });
   seenInInventory.delete(mark.id);
   inFlight.delete(mark.id);
   console.warn(`[andrew] legendary recovery: watching ${def.itemId} id ${mark.id} on the ground (via ${via})`);
@@ -901,7 +901,7 @@ function handBack(def: LegendaryDef, mark: Mark, stack: ItemStack, reason: strin
   const target = returnTarget(mark);
   const online = reachable(target);
   if (online === undefined) {
-    writeOwed(def, withOwed(readOwed(def), target, { mark, reason }));
+    writeOwed(def, withOwed(readOwed(def), target, { mark: withLook(mark, stack), reason }));
     console.warn(`[andrew] legendary protect: no safe spot for ${def.itemId} id ${mark.id}; ${describeTarget(mark)} offline or dead, owed on next spawn`);
     return;
   }

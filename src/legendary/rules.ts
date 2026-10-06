@@ -32,6 +32,52 @@ export interface Mark {
   holder?: string;
   /** The holder's nickname, so an owed entry of an offline holder is readable. */
   holderName?: string;
+  /**
+   * Ledger entries only (pending, owed): what the stack carried when it left
+   * the world. markItem never writes it into a stack.
+   */
+  look?: ItemLook;
+}
+
+/**
+ * What a stack carries besides its mark. A death or a loss return mints a new
+ * stack from the ledger entry, and this is what makes it the same item: the
+ * enchantments, the anvil name and the lore (spec §3 "остаётся/возвращается").
+ */
+export interface ItemLook {
+  /** `[enchantment type id, level]`. */
+  enchantments?: Array<[string, number]>;
+  nameTag?: string;
+  lore?: string[];
+}
+
+/**
+ * Reads a look out of an already-parsed value; undefined when nothing in it
+ * is valid. A malformed look costs the returned copy its extras, never the
+ * return itself, so markFromValue drops it rather than the mark.
+ */
+export function lookFromValue(value: unknown): ItemLook | undefined {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return undefined;
+  }
+  const { enchantments, nameTag, lore } = value as Record<string, unknown>;
+  const look: ItemLook = {};
+  if (Array.isArray(enchantments)) {
+    const valid = (enchantments as unknown[]).filter(
+      (e): e is [string, number] =>
+        Array.isArray(e) && e.length === 2 && typeof e[0] === "string" && e[0].length > 0 && Number.isSafeInteger(e[1]) && (e[1] as number) > 0
+    );
+    if (valid.length > 0) {
+      look.enchantments = valid.map(([id, level]) => [id, level]);
+    }
+  }
+  if (typeof nameTag === "string" && nameTag.length > 0) {
+    look.nameTag = nameTag;
+  }
+  if (Array.isArray(lore) && lore.length > 0 && (lore as unknown[]).every((line) => typeof line === "string")) {
+    look.lore = [...(lore as string[])];
+  }
+  return Object.keys(look).length > 0 ? look : undefined;
 }
 
 /** Who gets a lost instance back (L0-lgnd-ad11): its last holder, else its owner. */
@@ -116,7 +162,7 @@ export function markFromValue(value: unknown): Mark | undefined {
   }
 
   const candidate = value as Record<string, unknown>;
-  const { origin, owner, id, gen, ownerName, holder, holderName } = candidate;
+  const { origin, owner, id, gen, ownerName, holder, holderName, look } = candidate;
 
   if (!isMarkOrigin(origin) || typeof owner !== "string" || typeof id !== "string") {
     return undefined;
@@ -137,6 +183,10 @@ export function markFromValue(value: unknown): Mark | undefined {
     if (typeof holderName === "string") {
       mark.holderName = holderName;
     }
+  }
+  const parsedLook = lookFromValue(look);
+  if (parsedLook !== undefined) {
+    mark.look = parsedLook;
   }
   return mark;
 }
