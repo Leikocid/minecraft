@@ -83,7 +83,7 @@ function entityFixture(files) {
   cpSync(join(fixturesDir, 'valid'), dir, { recursive: true });
   for (const [path, json] of Object.entries(files)) {
     mkdirSync(dirname(join(dir, path)), { recursive: true });
-    writeFileSync(join(dir, path), JSON.stringify(json));
+    writeFileSync(join(dir, path), Buffer.isBuffer(json) ? json : JSON.stringify(json));
   }
   return { behaviorDir: join(dir, 'behavior'), resourceDir: join(dir, 'resource'), cleanup: () => rmSync(dir, { recursive: true, force: true }) };
 }
@@ -185,4 +185,79 @@ test('an entity outside the andrew: namespace is rejected', () => {
   entity['minecraft:entity'].description.identifier = 'minecraft:fixture_entity';
   const errors = validateEntities({ 'behavior/entities/fixture.json': entity });
   assert.ok(errors.some((e) => /must carry the andrew: namespace/.test(e.message)));
+});
+
+// ------------------------------------------------------------------ attachables
+
+const attachable = ({ id = 'andrew:fixture_item', geometry = 'geometry.andrew.held', animation = 'animation.andrew.held.pull', controller = 'controller.render.andrew.held', texture = 'textures/items/andrew_held' } = {}) => ({
+  format_version: '1.10.0',
+  'minecraft:attachable': {
+    description: {
+      identifier: id,
+      materials: { default: 'entity_alphatest' },
+      textures: { default: texture },
+      geometry: { default: geometry },
+      animations: { pull: animation },
+      scripts: { animate: ['pull'] },
+      render_controllers: [controller],
+    },
+  },
+});
+
+const heldAssets = (bones = ['root', 'string']) => ({
+  'resource/models/entity/held.geo.json': { format_version: '1.16.0', 'minecraft:geometry': [{ description: { identifier: 'geometry.andrew.held' }, bones: bones.map((name) => ({ name, pivot: [0, 0, 0] })) }] },
+  'resource/animations/held.animation.json': { format_version: '1.8.0', animations: { 'animation.andrew.held.pull': { loop: true, bones: { string: { position: [0, 0, 'v.draw'] } } } } },
+  'resource/render_controllers/held.render_controllers.json': {
+    format_version: '1.8.0',
+    render_controllers: { 'controller.render.andrew.held': { geometry: 'Geometry.default', materials: [{ '*': 'Material.default' }], textures: ['Texture.default'] } },
+  },
+  'resource/textures/items/andrew_held.png': Buffer.from([0x89, 0x50, 0x4e, 0x47]),
+});
+
+test('an attachable with its item, geometry, animation, controller and texture passes', () => {
+  const errors = validateEntities({ 'resource/attachables/held.json': attachable(), ...heldAssets() });
+  assert.deepStrictEqual(errors.map((e) => e.message), []);
+});
+
+test('the shipped Sculk Crossbow attachable resolves against the real packs', () => {
+  const errors = validatePacks({ behaviorDir: join(__dirname, '..', 'packs', 'behavior'), resourceDir: join(__dirname, '..', 'packs', 'resource') });
+  assert.deepStrictEqual(errors.filter((e) => /attachables/.test(e.file)).map((e) => e.message), []);
+});
+
+test('an attachable for an item that does not exist is rejected', () => {
+  const errors = validateEntities({ 'resource/attachables/held.json': attachable({ id: 'andrew:no_such_item' }), ...heldAssets() });
+  assert.ok(errors.some((e) => e.field === 'minecraft:attachable.description.identifier' && /andrew:no_such_item has no behavior-pack item/.test(e.message)));
+});
+
+test('an attachable naming a missing geometry, animation, controller or texture is rejected', () => {
+  const errors = validateEntities({
+    'resource/attachables/held.json': attachable({
+      geometry: 'geometry.andrew.typo',
+      animation: 'animation.andrew.typo',
+      controller: 'controller.render.andrew.typo',
+      texture: 'textures/items/andrew_typo',
+    }),
+    ...heldAssets(),
+  });
+  assert.deepStrictEqual(
+    errors.map((e) => e.field).sort(),
+    ['description.animations.pull', 'description.geometry.default', 'description.render_controllers', 'description.textures.default']
+  );
+});
+
+test('an attachable animation moving a bone its geometry lacks is rejected', () => {
+  const errors = validateEntities({ 'resource/attachables/held.json': attachable(), ...heldAssets(['root']) });
+  assert.ok(errors.some((e) => /moves bone string, which the attachable's geometry does not have/.test(e.message)));
+});
+
+test('a controller asking for a texture key the attachable does not define is rejected', () => {
+  const assets = heldAssets();
+  assets['resource/render_controllers/held.render_controllers.json'].render_controllers['controller.render.andrew.held'].textures = ['Texture.charged'];
+  const errors = validateEntities({ 'resource/attachables/held.json': attachable(), ...assets });
+  assert.ok(errors.some((e) => /uses Texture\.charged, which the attachable does not define/.test(e.message)));
+});
+
+test('vanilla attachable ids, controllers and textures are not resolved against this repository', () => {
+  const vanilla = attachable({ id: 'minecraft:bow', geometry: 'geometry.bow_standby', animation: 'animation.bow.wield', controller: 'controller.render.bow', texture: 'textures/items/bow_standby' });
+  assert.deepStrictEqual(validateEntities({ 'resource/attachables/held.json': vanilla }).map((e) => e.message), []);
 });

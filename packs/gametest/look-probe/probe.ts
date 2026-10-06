@@ -3,7 +3,7 @@
 // losing its charge. Dev-only: packs/gametest/look-probe/run.sh copies this file into
 // src/gametest/ for one run, next to the player.json readout built by player-molang.mjs.
 
-import { type Entity, GameMode, ItemStack, type RGB, system, world } from "@minecraft/server";
+import { EnchantmentType, type Entity, GameMode, ItemStack, type RGB, system, world } from "@minecraft/server";
 import { type SimulatedPlayer, type Test, registerAsync } from "@minecraft/server-gametest";
 
 const STRUCTURE = "andrew:platform";
@@ -97,8 +97,10 @@ function watch(p: SimulatedPlayer): { session: () => Session; open: () => Sessio
   };
 }
 
-async function arm(test: Test, p: SimulatedPlayer, item: string): Promise<void> {
-  p.setItem(new ItemStack(item, 1), SLOT, true);
+async function arm(test: Test, p: SimulatedPlayer, item: string, quickCharge?: number): Promise<void> {
+  const stack = new ItemStack(item, 1);
+  if (quickCharge !== undefined) stack.getComponent("minecraft:enchantable")?.addEnchantment({ type: new EnchantmentType("quick_charge"), level: quickCharge });
+  p.setItem(stack, SLOT, true);
   p.getComponent("minecraft:inventory")?.container?.setItem(AMMO_SLOT, new ItemStack(ARROW, 64));
   await test.idle(10);
   p.lookAtLocation(test.worldLocation({ x: 60, y: 3.62, z: 3.5 }));
@@ -120,10 +122,13 @@ interface Weapon {
   item: string;
   /** Bow: release this many ticks into the draw. Crossbows end their own session. */
   release?: number;
+  quickCharge?: number;
 }
 
 const WEAPONS: readonly Weapon[] = [
   { name: "product", item: "andrew:sculk_crossbow" },
+  { name: "product_qc1", item: "andrew:sculk_crossbow", quickCharge: 1 },
+  { name: "product_qc3", item: "andrew:sculk_crossbow", quickCharge: 3 },
   { name: "probe", item: PROBE },
   { name: "crossbow", item: "minecraft:crossbow" },
   { name: "bow", item: "minecraft:bow", release: 25 },
@@ -134,14 +139,15 @@ for (const w of WEAPONS) {
     const p = test.spawnSimulatedPlayer({ x: 1, y: 2, z: 3 }, `look_${w.name}`, GameMode.Survival);
     const ev = watch(p);
     try {
-      await arm(test, p, w.item);
+      await arm(test, p, w.item, w.quickCharge);
       const rest: Reading[] = [];
       for (let i = 0; i < 3; i++) {
         await test.idle(1);
         rest.push(readMolang(p));
       }
       assertPipe(test, rest[2], `${w.name} rest`);
-      log(`${w.name} item=${w.item} rest: ${show(rest[2])} | hp=${rest[2].hp} c1=${rest[2].c1} c2=${rest[2].c2}`);
+      const qc = p.getComponent("minecraft:inventory")?.container?.getItem(SLOT)?.getComponent("minecraft:enchantable")?.getEnchantment("quick_charge")?.level ?? 0;
+      log(`${w.name} item=${w.item} quick_charge=${qc} rest: ${show(rest[2])} | hp=${rest[2].hp} c1=${rest[2].c1} c2=${rest[2].c2}`);
 
       const draw = ev.open();
       const tries = await startUse(test, p, draw);

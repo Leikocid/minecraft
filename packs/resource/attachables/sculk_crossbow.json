@@ -1,0 +1,31 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:attachable": {
+    "description": {
+      "identifier": "andrew:sculk_crossbow",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/items/andrew_sculk_crossbow"
+      },
+      "geometry": {
+        "default": "geometry.andrew.sculk_crossbow"
+      },
+      "animations": {
+        "draw": "animation.andrew.sculk_crossbow.draw",
+        "hold_first_person": "animation.andrew.sculk_crossbow.hold_first_person"
+      },
+      "scripts": {
+        "pre_animation": [
+          "v.draw = ((q.main_hand_item_use_duration > 0) && (q.main_hand_item_max_duration > 0)) ? math.clamp(1 - q.main_hand_item_use_duration / q.main_hand_item_max_duration, 0, 1) : 0;"
+        ],
+        "animate": [
+          "draw",
+          { "hold_first_person": "c.is_first_person" }
+        ]
+      },
+      "render_controllers": ["controller.render.andrew.sculk_crossbow"]
+    }
+  }
+}
