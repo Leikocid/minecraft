@@ -16,7 +16,12 @@ import { type Mark } from "../legendary/rules";
 import { findAllMarked, getMark, ledgerGen, makeMark, markItem, readPending } from "../legendary/state";
 
 const STRUCTURE = "andrew:platform";
-const STAND: Vector3 = { x: 2, y: 2, z: 5 };
+// Clear of every grid cell (x=1,3 × z=1,3,5) and CONTROL_CELL (5,3): a fifth
+// legendary at (1,5) sat one block from the old (2,5), and the owner picked it
+// up by proximity before the hazard landed — "alive" turned into "DESTROYED"
+// with no hazard involved (measured, SCLK-ITEM-01-AA). legendary_pickup_sighting_not_consumed
+// still wants the owner standing on top of its own drop, which any STAND value satisfies.
+const STAND: Vector3 = { x: 5, y: 2, z: 6 };
 /** Katana T17: still in place after 10 s. */
 const SURVIVE_TICKS = 200;
 const CONTROL_ITEM_ID = "minecraft:diamond_sword";

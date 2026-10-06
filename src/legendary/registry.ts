@@ -122,7 +122,33 @@ export const DRAGON_KATANA: ActiveLegendaryDef = {
   hudKeys: { ready: "andrew.katana.hud_ready", cooldown: "andrew.katana.hud_cooldown" },
 };
 
-export const LEGENDARIES: ReadonlyArray<LegendaryDef> = [WEB_SWORD, SCYTHE_OF_CALAMITY, ORBITAL_CANNON, DRAGON_KATANA];
+/**
+ * The first passive def (L0-lgnd-ad15, L0-xcx24): no `abilityKey`, no cooldown
+ * and no HUD line. `sk` is its own namespace — `sc` already belongs to the
+ * Scythe in shipped worlds (CNTR-LGND-CX15-AA).
+ */
+export const SCULK_CROSSBOW: PassiveLegendaryDef = {
+  itemId: "andrew:sculk_crossbow",
+  keyPrefix: "sk",
+  nameKey: "item.andrew:sculk_crossbow",
+  craftGate: true,
+  craftTokenId: "andrew:sculk_crossbow_crafted",
+  refund: [
+    ["minecraft:echo_shard", 2],
+    ["minecraft:deepslate", 2],
+    ["minecraft:crossbow", 1],
+  ],
+  textPrefix: "andrew.sculk_crossbow",
+  command: "andrew:crossbow",
+};
+
+export const LEGENDARIES: ReadonlyArray<LegendaryDef> = [
+  WEB_SWORD,
+  SCYTHE_OF_CALAMITY,
+  ORBITAL_CANNON,
+  DRAGON_KATANA,
+  SCULK_CROSSBOW,
+];
 
 export function defFor(itemId: string): LegendaryDef | undefined {
   return LEGENDARIES.find((def) => def.itemId === itemId);

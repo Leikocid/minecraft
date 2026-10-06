@@ -1,0 +1,46 @@
+{
+  "format_version": "1.21.90",
+  "minecraft:item": {
+    "description": {
+      "identifier": "andrew:sculk_crossbow",
+      "menu_category": {
+        "category": "equipment",
+        "group": "minecraft:itemGroup.name.crossbow"
+      }
+    },
+    "components": {
+      "minecraft:display_name": {
+        "value": "item.andrew:sculk_crossbow.name"
+      },
+      "minecraft:icon": "andrew_sculk_crossbow",
+      "minecraft:max_stack_size": 1,
+      "minecraft:hand_equipped": true,
+      "minecraft:allow_off_hand": {
+        "value": true
+      },
+      "minecraft:fire_resistant": {
+        "value": true
+      },
+      "minecraft:enchantable": {
+        "slot": "crossbow",
+        "value": 1
+      },
+      "minecraft:use_modifiers": {
+        "use_duration": 3600,
+        "movement_modifier": 0.35
+      },
+      "minecraft:shooter": {
+        "ammunition": [
+          {
+            "item": "minecraft:arrow",
+            "use_offhand": true,
+            "search_inventory": true,
+            "use_in_creative": true
+          }
+        ],
+        "max_draw_duration": 1.25,
+        "charge_on_draw": true
+      }
+    }
+  }
+}

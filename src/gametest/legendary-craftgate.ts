@@ -7,9 +7,9 @@
 // picks it up — the recipe's own output reaching an inventory, not a script
 // insert of it.
 
-import { BlockPermutation, type Container, GameMode, type Player, type Vector3, world } from "@minecraft/server";
-import { type Test, register } from "@minecraft/server-gametest";
-import { DRAGON_KATANA, type LegendaryDef, SCYTHE_OF_CALAMITY, WEB_SWORD } from "../legendary/registry";
+import { BlockPermutation, type Container, GameMode, ItemStack, type Player, type Vector3, world } from "@minecraft/server";
+import { type SimulatedPlayer, type Test, register, registerAsync } from "@minecraft/server-gametest";
+import { DRAGON_KATANA, type LegendaryDef, ORBITAL_CANNON, SCULK_CROSSBOW, SCYTHE_OF_CALAMITY, WEB_SWORD } from "../legendary/registry";
 import * as state from "../legendary/state";
 
 /** Must match the structure written by scripts/bds-gametest.mjs. */
@@ -48,6 +48,14 @@ const GRIDS = new Map<LegendaryDef, ReadonlyArray<string | undefined>>([
       undefined, "minecraft:golden_apple", undefined,
       "minecraft:ender_pearl", "minecraft:diamond_sword", "minecraft:ender_pearl",
       undefined, "minecraft:golden_apple", undefined,
+    ],
+  ],
+  [
+    SCULK_CROSSBOW,
+    [
+      undefined, "minecraft:echo_shard", undefined,
+      "minecraft:deepslate", "minecraft:crossbow", "minecraft:deepslate",
+      undefined, "minecraft:echo_shard", undefined,
     ],
   ],
 ]);
@@ -204,6 +212,41 @@ function giveThenCraft(name: string, def: LegendaryDef): void {
 giveThenCraft("web_sword", WEB_SWORD);
 giveThenCraft("scythe", SCYTHE_OF_CALAMITY);
 giveThenCraft("dragon_katana", DRAGON_KATANA);
+giveThenCraft("sculk_crossbow", SCULK_CROSSBOW);
+
+// The Sculk Crossbow is def #5, with its own `sk` key namespace (CNTR-LGND-
+// CX15-AA). Crafting it must not touch the other four defs' world-level craft
+// flags, which live under their own prefixes but share the same gate code.
+register("andrew", "legendary_sculk_crossbow_other_flags_untouched", (test: Test): void => {
+  const others = [WEB_SWORD, SCYTHE_OF_CALAMITY, ORBITAL_CANNON, DRAGON_KATANA];
+  for (const def of [...others, SCULK_CROSSBOW]) {
+    state.resetCrafted(def);
+  }
+  placeCrafter(test);
+  const player = test.spawnSimulatedPlayer(STAND, "cg_sk_flags", GameMode.Survival);
+  let arrivedBefore: number | undefined;
+
+  test.runAfterDelay(4, () => {
+    arrivedBefore = arrivalsOf(SCULK_CROSSBOW, player);
+    craftWithCrafter(test, SCULK_CROSSBOW);
+  });
+
+  test.succeedWhen(() => {
+    test.assert(arrivedBefore !== undefined, "the crafter has not been run yet");
+    test.assert(
+      arrivalsOf(SCULK_CROSSBOW, player) > (arrivedBefore ?? 0),
+      `no ${SCULK_CROSSBOW.craftTokenId} from the crafter has reached ${player.name} yet`
+    );
+    test.assert(state.isCrafted(SCULK_CROSSBOW), "the crossbow craft did not claim its own flag");
+    for (const def of others) {
+      test.assert(!state.isCrafted(def), `${def.itemId}'s craft flag changed after crafting the Sculk Crossbow`);
+    }
+    console.warn("[gametest] sculk crossbow craft left the other four legendaries' flags untouched");
+  });
+})
+  .structureName(STRUCTURE)
+  .maxTicks(400)
+  .tag("andrew");
 
 // The fix must not open the gate: a second real craft is still refunded.
 register("andrew", "legendary_second_real_craft_refunded", (test: Test): void => {
@@ -231,6 +274,60 @@ register("andrew", "legendary_second_real_craft_refunded", (test: Test): void =>
     test.assert(held.plain === 0 && held.tokens === 0, `second craft left a weapon or token: ${describe(held)}`);
     console.warn(`[gametest] craftgate second craft: flag=${state.isCrafted(WEB_SWORD)} ${describe(held)}`);
   });
+})
+  .structureName(STRUCTURE)
+  .maxTicks(400)
+  .tag("andrew");
+
+// AC#5: the Sculk Crossbow has no minecraft:durability — infinite durability by
+// omission, like every other legendary — and firing it does not grow one.
+// max_draw_duration is 1.25 s = 25 ticks (L0-sclk-ent1): a press, a hold past
+// that, a release and a second press fire the loaded shot (measured CX-sclk-02).
+const DRAW_TICKS = 26;
+
+/**
+ * A use right after a one-tick use returns false and starts nothing (measured
+ * CX-sclk-02); a retry a few ticks later starts it.
+ */
+async function startDraw(test: Test, player: SimulatedPlayer, slot: number): Promise<void> {
+  for (let attempt = 1; attempt <= 20; attempt++) {
+    if (player.useItemInSlot(slot)) return;
+    await test.idle(1);
+  }
+  test.assert(false, `the draw never started after 20 attempts`);
+}
+
+registerAsync("andrew", "sculk_crossbow_no_durability", async (test: Test): Promise<void> => {
+  const bare = new ItemStack(SCULK_CROSSBOW.itemId, 1);
+  test.assert(
+    bare.getComponent("minecraft:durability") === undefined,
+    `${SCULK_CROSSBOW.itemId} has minecraft:durability — it would wear out`
+  );
+
+  const player = test.spawnSimulatedPlayer(STAND, "sk_durability", GameMode.Survival);
+  await test.idle(4);
+  const container = inventoryOf(player);
+  container.setItem(0, new ItemStack(SCULK_CROSSBOW.itemId, 1));
+  container.setItem(1, new ItemStack("minecraft:arrow", 64));
+  player.selectedSlotIndex = 0;
+
+  for (let shot = 0; shot < 3; shot++) {
+    await startDraw(test, player, 0);
+    await test.idle(DRAW_TICKS);
+    player.stopUsingItem();
+    await test.idle(1);
+    await startDraw(test, player, 0);
+    await test.idle(4);
+  }
+
+  const held = container.getItem(0);
+  test.assert(held?.typeId === SCULK_CROSSBOW.itemId, `the Sculk Crossbow left slot 0 after firing: ${held?.typeId}`);
+  test.assert(
+    held?.getComponent("minecraft:durability") === undefined,
+    "the held Sculk Crossbow gained a durability component after firing"
+  );
+  console.warn("[gametest] sculk crossbow: no durability component before or after firing");
+  test.succeed();
 })
   .structureName(STRUCTURE)
   .maxTicks(400)
