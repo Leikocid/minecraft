@@ -12,11 +12,13 @@ import {
 } from "@minecraft/server";
 import { type LegendaryDef, genLedgerKey, keysFor } from "./registry";
 import {
+  type ItemLook,
   type Mark,
   type MarkOrigin,
   type OwedLedger,
   isGen,
   isHolder,
+  lookFromValue,
   parseOwed,
   parsePending,
   serializeOwed,
@@ -56,6 +58,21 @@ export function getMark(def: LegendaryDef, stack: ItemStack): Mark | undefined {
 }
 
 /** Clones `stack` and stamps it with `mark`. The input stack is untouched. */
+/** What `stack` carries besides its mark; undefined for a bare stack. */
+export function lookOf(stack: ItemStack): ItemLook | undefined {
+  return lookFromValue({
+    enchantments: stack.getComponent("minecraft:enchantable")?.getEnchantments().map((e) => [e.type.id, e.level]),
+    nameTag: stack.nameTag,
+    lore: stack.getLore(),
+  });
+}
+
+/** `mark` read off `stack`, carrying the stack's look into whichever ledger it goes to. */
+export function withLook(mark: Mark, stack: ItemStack): Mark {
+  const look = lookOf(stack);
+  return look === undefined ? mark : { ...mark, look };
+}
+
 export function markItem(def: LegendaryDef, stack: ItemStack, mark: Mark): ItemStack {
   const keys = keysFor(def);
   const marked = stack.clone();

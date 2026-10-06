@@ -1,7 +1,9 @@
 # Sculk Crossbow
 
-`registerSculkCrossbow()` (`index.ts`) arms the bolt pipeline, the block-hit crater and the entity hit. `src/main.ts` and the GameTest pack each arm their own copy:
-the release pack reads no owner on a SimulatedPlayer's arrow, so the GameTest copy is the one the scenarios drive.
+`registerSculkCrossbow()` (`index.ts`) arms the bolt pipeline, the block-hit crater, the entity hit and the Piercing strip. `src/main.ts` and the GameTest pack each arm their own copy:
+the release pack reads no owner on a SimulatedPlayer's arrow and no SimulatedPlayer on an inventory event, so the GameTest copy is the one the scenarios drive.
+
+The legendary rules (one craft, death, hazards, the Void) are `src/legendary`'s, with no crossbow code; `src/legendary/README.md` lists the crossbow's scenarios.
 
 ## `bolt.ts` — shot → bolt, flight, trail, expiry (`L0-sclk-p002`, `p003`, `ent2`, `ent3`)
 
@@ -191,3 +193,46 @@ non-living targets and the negative control. The BDS half is `src/gametest/sculk
 - `sculk_hit_only_target` (ac09);
 - `sculk_hit_patch_no_crater` (ac10);
 - `sculk_hit_kill_credit`.
+
+## `enchant.ts` — Piercing never stays (`L0-sclk-r005`, `ad01`, `adr-scpi`; T15)
+
+Slot `crossbow` gives the item Quick Charge and Multishot from the vanilla table and anvil, and Piercing with them. Any
+`andrew:sculk_crossbow` stack that carries Piercing loses it:
+- on `playerInventoryItemChange`, for the slot the event names. This covers `setItem`, `addItem`, a pickup, a chest
+  transfer, the craft-token delivery and an in-place `/enchant`;
+- on `playerHotbarSelectedSlotChange`, for the newly selected slot and the off hand. No inventory event names the off hand.
+
+The strip reads the live slot, removes `piercing` and nothing else, and writes the stack back with its mark. That write
+raises a second event, which finds nothing to strip. It logs `sculk: stripped piercing <level> from <player> …`, and
+`observeStrips` hands each strip to GameTests. A vanilla `minecraft:crossbow` is never touched. No XP is refunded.
+
+### Deviations (C-16)
+
+1. **Piercing is removed, not refused.** T15 says Piercing "cannot be applied". What the engine does not allow:
+   - stable 2.10.0 has no before-event for an anvil or an enchanting table: `WorldBeforeEvents` has none, and
+     `playerInteractWithBlock` can only keep the block from opening, which would also take away the Quick Charge and
+     Multishot §8 allows;
+   - the slot-`crossbow` item admits Piercing exactly as the vanilla crossbow does (CNTR-SCLK-CX01 §1:
+     `canAddEnchantment`, `/enchant`, `enchant_with_levels`).
+
+   So a stack leaves the anvil or the table with Piercing, and loses it in the tick it reaches the inventory (a pickup:
+   the tick it is picked up). Measured on BDS (`sculk_enchant_piercing_stripped`): on six entry paths the strip lands
+   in the tick of the event that reports the stack.
+   - **The cost to the player.** Piercing from a table roll or an anvil book is removed with no refund. The table does
+     offer it: `enchant_with_levels 30` put Piercing on the crossbow in 520 of 800 rolls (65 %), and as the only
+     enchantment in 154 of 800 (19 %). Over levels 1–30 it was 561/800 (70 %) and 335/800 (42 %) (CNTR-SCLK-CX01 §1,
+     §4). A roll of Piercing alone leaves the crossbow bare.
+   - **Not measured on BDS:** the anvil and table screens themselves, because a SimulatedPlayer has no container-screen
+     API. That a result taken from them reaches the inventory through `playerInventoryItemChange` is an iPad check.
+2. **The off hand is stripped on the next hotbar change, not on arrival.** A crossbow put straight into the off hand
+   keeps Piercing until its holder changes the hotbar slot (`sculk_enchant_piercing_hand_change`). Piercing never acts
+   meanwhile: bolts are fired only from the main hand, and a bolt resolves once (`R-sclk-001`).
+3. **Multishot never reaches the strip.** The engine refuses Piercing on a stack with Multishot, and Multishot on a
+   stack with Piercing (CNTR-SCLK-CX01 §2: `/enchant piercing` answers success=0; 0 of 2 800 table rolls carried both).
+   So a Multishot crossbow passes untouched (`multishot_untouched`, `multishot_enchant_piercing_refused`), and T15's
+   "Quick Charge and Multishot stay" is proven on two stacks, not one.
+
+**Proof.** The node half is `tests/sculk-enchant.test.mjs`: the strip itself, the event and hand triggers, the off hand,
+no loop on the second event, and the live-slot read. The BDS half is `src/gametest/sculk-enchant.ts`:
+- `sculk_enchant_piercing_stripped` (ac15): six entry paths, a Multishot crossbow, a refused `/enchant` and a vanilla control;
+- `sculk_enchant_piercing_hand_change`: the off hand, through a hotbar change.
