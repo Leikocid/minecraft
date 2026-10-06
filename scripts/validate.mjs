@@ -157,6 +157,118 @@ function checkEntities({ behaviorDir, resourceDir, parsed, errors }) {
 }
 
 /**
+ * Cross-checks resource-pack `attachables/` against behavior-pack `items/` and
+ * the resource pack's own models, animations, render controllers and textures.
+ *
+ * An attachable replaces its item's look in the hand. One that names no item is
+ * never used; one whose geometry, animation, controller or texture is missing
+ * leaves the item invisible in hand; an animation naming a bone the geometry
+ * lacks moves nothing; a controller asking for a Texture/Geometry/Material key
+ * the attachable does not define draws nothing. BDS loads none of this.
+ * Only `andrew.`-namespaced ids and `andrew_` texture files are resolved.
+ */
+function checkAttachables({ behaviorDir, resourceDir, parsed, errors }) {
+  const items = new Set();
+  for (const [, json] of parsedUnder(parsed, join(behaviorDir, 'items'))) {
+    const id = json?.['minecraft:item']?.description?.identifier;
+    if (typeof id === 'string') items.add(id);
+  }
+  const geometryBones = new Map();
+  for (const [, json] of parsedUnder(parsed, join(resourceDir, 'models'))) {
+    for (const geometry of json?.['minecraft:geometry'] ?? []) {
+      const id = geometry?.description?.identifier;
+      if (typeof id === 'string') geometryBones.set(id, new Set((geometry.bones ?? []).map((b) => b?.name)));
+    }
+  }
+  const animations = new Map();
+  for (const [, json] of parsedUnder(parsed, join(resourceDir, 'animations'))) {
+    for (const [id, animation] of Object.entries(json?.animations ?? {})) animations.set(id, animation);
+  }
+  const animationControllers = new Set();
+  for (const [, json] of parsedUnder(parsed, join(resourceDir, 'animation_controllers'))) {
+    for (const id of Object.keys(json?.animation_controllers ?? {})) animationControllers.add(id);
+  }
+  const controllers = new Map();
+  for (const [, json] of parsedUnder(parsed, join(resourceDir, 'render_controllers'))) {
+    for (const [id, controller] of Object.entries(json?.render_controllers ?? {})) controllers.set(id, controller);
+  }
+
+  for (const [file, json] of parsedUnder(parsed, join(resourceDir, 'attachables'))) {
+    const description = json?.['minecraft:attachable']?.description;
+    const id = description?.identifier;
+    if (typeof id !== 'string') {
+      errors.push(new ValidationError(file, 'minecraft:attachable.description.identifier', 'missing attachable identifier'));
+      continue;
+    }
+    if (id.startsWith('andrew:') && !items.has(id)) {
+      errors.push(new ValidationError(file, 'minecraft:attachable.description.identifier', `${id} has no behavior-pack item under items/`));
+    }
+
+    const bones = new Set();
+    for (const [key, geometry] of Object.entries(description.geometry ?? {})) {
+      if (!String(geometry).startsWith('geometry.andrew.')) continue;
+      if (!geometryBones.has(geometry)) {
+        errors.push(new ValidationError(file, `description.geometry.${key}`, `${geometry} is not defined under models/`));
+      } else {
+        for (const bone of geometryBones.get(geometry)) bones.add(bone);
+      }
+    }
+
+    for (const [key, animationId] of Object.entries(description.animations ?? {})) {
+      const name = String(animationId);
+      if (name.startsWith('controller.animation.andrew.')) {
+        if (!animationControllers.has(name)) {
+          errors.push(new ValidationError(file, `description.animations.${key}`, `${name} is not defined under animation_controllers/`));
+        }
+        continue;
+      }
+      if (!name.startsWith('animation.andrew.')) continue;
+      const animation = animations.get(name);
+      if (!animation) {
+        errors.push(new ValidationError(file, `description.animations.${key}`, `${name} is not defined under animations/`));
+        continue;
+      }
+      if (bones.size === 0) continue;
+      for (const bone of Object.keys(animation.bones ?? {})) {
+        if (!bones.has(bone)) {
+          errors.push(new ValidationError(file, `description.animations.${key}`, `${name} moves bone ${bone}, which the attachable's geometry does not have`));
+        }
+      }
+    }
+
+    for (const entry of description.render_controllers ?? []) {
+      const controllerId = typeof entry === 'string' ? entry : Object.keys(entry ?? {})[0];
+      if (!String(controllerId).startsWith('controller.render.andrew.')) continue;
+      const controller = controllers.get(controllerId);
+      if (!controller) {
+        errors.push(new ValidationError(file, 'description.render_controllers', `${controllerId} is not defined under render_controllers/`));
+        continue;
+      }
+      const text = JSON.stringify(controller);
+      for (const [kind, map] of [
+        ['Geometry', description.geometry],
+        ['Material', description.materials],
+        ['Texture', description.textures],
+      ]) {
+        for (const [, key] of text.matchAll(new RegExp(`\\b${kind}\\.(\\w+)`, 'g'))) {
+          if (!Object.hasOwn(map ?? {}, key)) {
+            errors.push(new ValidationError(file, 'description.render_controllers', `${controllerId} uses ${kind}.${key}, which the attachable does not define`));
+          }
+        }
+      }
+    }
+
+    for (const [key, path] of Object.entries(description.textures ?? {})) {
+      const base = String(path).split('/').pop();
+      if (!base.startsWith('andrew')) continue;
+      if (!existsSync(join(resourceDir, `${path}.png`)) && !existsSync(join(resourceDir, `${path}.tga`))) {
+        errors.push(new ValidationError(file, `description.textures.${key}`, `${path} has no .png or .tga in the resource pack`));
+      }
+    }
+  }
+}
+
+/**
  * Validate the behavior pack and resource pack directories.
  *
  * @param {object} opts
@@ -276,6 +388,7 @@ export function validatePacks({ behaviorDir, resourceDir, requireScriptEntry = f
   }
 
   checkEntities({ behaviorDir, resourceDir, parsed, errors });
+  checkAttachables({ behaviorDir, resourceDir, parsed, errors });
 
   // After build, the script module's entry file must exist.
   if (requireScriptEntry) {

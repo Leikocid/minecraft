@@ -20,7 +20,7 @@ export ANDREW_BDS_DIR
 log=dist/bds-gametest.log
 data="docker/$ANDREW_BDS_DIR/data"
 probe=src/gametest/probe-look.ts
-names=(probe_look_items probe_look_molang_product probe_look_molang_probe probe_look_molang_crossbow probe_look_molang_bow probe_look_dye)
+names=(probe_look_items probe_look_molang_product probe_look_molang_product_qc1 probe_look_molang_product_qc3 probe_look_molang_probe probe_look_molang_crossbow probe_look_molang_bow probe_look_dye)
 [ -n "${LOOK_ONLY:-}" ] && read -r -a names <<< "$LOOK_ONLY"
 
 for f in packs/gametest/entities/player.json packs/gametest/animation_controllers "$probe" src/gametest/main.ts.bak; do

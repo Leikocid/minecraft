@@ -236,3 +236,42 @@ dye E2 tap: startedOnTry=1 arrows=1 … | dye=undefined
 
 Повтор на BDS: `env ANDREW_BDS_DIR=../dist/<приватная копия> bash packs/gametest/look-probe/run.sh`
 (`LOOK_ONLY="probe_look_dye"` — подмножество).
+
+## Дополнение: Quick Charge на продуктовом арбалете (SCLKUI-CHARGE-01-AA)
+
+Q3 мерил продуктовый арбалет без чар. Анимации натяжения нужно было знать, как те же запросы ведут себя у копии с
+Quick Charge, поэтому в `probe.ts` добавлены два варианта: `product_qc1` и `product_qc3` (тот же предмет плюс
+`quick_charge` 1 / 3).
+
+- **Стенд и прогон.** Приватный инстанс `dist/bds-charge` (`andrew-bds-charge`, порты 19938 / 19980–19989 / 7893).
+  Прогон 2026-10-06, 20:09–20:10 UTC:
+
+  ```
+  LOOK_ONLY="probe_look_molang_product probe_look_molang_product_qc1 probe_look_molang_product_qc3 probe_look_molang_crossbow"
+  ```
+
+  Итог: 4/4 RESULT, exit 0.
+- **Контроль.** Контроли считывателя сошлись (1234.5, −3.25, health 20). Ванильный арбалет дал те же числа, что в Q3.
+
+| Копия | Сессия использования | `mhud` на +1 … последний тик | `mhmd` | Нажатие после сессии |
+|---|---|---|---|---|
+| без чар | `start(ud=25)` → `complete@+25` | 24 … 1 на +24, 0 с +25 | 25 | `bolt@+0`: выстрел |
+| QC I | `start(ud=20)` → `complete@+20` | 19 … 1 на +19, 0 с +20 | 25 | **ничего не вылетело** (`arrows=0`) |
+| QC III | `start(ud=10)` → `complete@+10` | 9 … 1 на +9, 0 с +10 | 25 | **ничего не вылетело** (`arrows=0`) |
+
+- Quick Charge укорачивает сессию использования на 5 тиков за уровень. `main_hand_item_max_duration` при этом
+  остаётся 25.
+- Нативный заряд кастомного shooter на Quick Charge не реагирует: он наступает на `max_draw_duration` = 25 тиков
+  (CNTR-SCLK-CX02). После SCLK-PRESS-01 `use_duration` равен 1.25 с, поэтому сессия с QC закрывается раньше
+  заряда. **Копия с Quick Charge не заряжается вообще.**
+- До PRESS-01 сессия длилась 3600 с, и QC III заряжался на 25-м тике (CX02, `cod_sp_qc3`).
+- Это дефект предмета, анимация тут ни при чём. Для анимации следует одно: натяжение копии с QC начинается не с
+  нуля (QC I с 0.24, QC III с 0.64) и кончается вместе с сессией.
+
+```
+product after tap (+7): tapStartedOnTry=1 arrows=1 events=[use@+0 start@+0(ud=25) bolt@+0 release@+1(ud=24) stop@+1(ud=24)]
+product_qc1 after draw (+42): stillUsingAt+34=false arrows=0 events=[use@+0 start@+0(ud=20) complete@+20(ud=0) stop@+20(ud=0)]
+product_qc1 after tap (+7): tapStartedOnTry=1 arrows=0 events=[use@+0 start@+0(ud=20) release@+1(ud=19) stop@+1(ud=19)]
+product_qc3 after draw (+42): stillUsingAt+34=false arrows=0 events=[use@+0 start@+0(ud=10) complete@+10(ud=0) stop@+10(ud=0)]
+product_qc3 after tap (+7): tapStartedOnTry=1 arrows=0 events=[use@+0 start@+0(ud=10) release@+1(ud=9) stop@+1(ud=9)]
+```
