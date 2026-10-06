@@ -441,6 +441,12 @@ const EXPECTED_TESTS = [
   'andrew:sculk_bolt_expires_past_simulation_distance',
   'andrew:sculk_bolt_expires_leaving_loaded_chunks',
   'andrew:sculk_bolt_unloaded_under_it_and_reloaded',
+  // SCLK-CARVE-01 — src/gametest/sculk-carve.ts (L0-sclk-p005; ac11, ac12, ac13, ac22)
+  'andrew:sculk_carve_crater_bounds',
+  'andrew:sculk_carve_no_damage',
+  'andrew:sculk_carve_sculk_survives_reload',
+  'andrew:sculk_carve_keep_list',
+  'andrew:sculk_carve_legendary_survives',
 ];
 
 /**
