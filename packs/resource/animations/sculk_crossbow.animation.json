@@ -1,0 +1,33 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.andrew.sculk_crossbow.draw": {
+      "loop": true,
+      "bones": {
+        "string_0": {"position": [0, 0, "v.draw * 3.75"]},
+        "limb_xp1": {"position": [0, 0, "v.draw * 0.5"]},
+        "limb_xn1": {"position": [0, 0, "v.draw * 0.5"]},
+        "limb_xp2": {"position": [0, 0, "v.draw * 1.25"]},
+        "limb_xn2": {"position": [0, 0, "v.draw * 1.25"]},
+        "limb_xp3": {"position": [0, 0, "v.draw * 2.25"]},
+        "limb_xn3": {"position": [0, 0, "v.draw * 2.25"]},
+        "string_xp1": {"position": [0, 0, "v.draw * 3.45"]},
+        "string_xn1": {"position": [0, 0, "v.draw * 3.45"]},
+        "string_xp2": {"position": [0, 0, "v.draw * 3.15"]},
+        "string_xn2": {"position": [0, 0, "v.draw * 3.15"]},
+        "string_xp3": {"position": [0, 0, "v.draw * 2.85"]},
+        "string_xn3": {"position": [0, 0, "v.draw * 2.85"]},
+        "string_xp4": {"position": [0, 0, "v.draw * 2.55"]},
+        "string_xn4": {"position": [0, 0, "v.draw * 2.55"]},
+        "string_xp5": {"position": [0, 0, "v.draw * 2.25"]},
+        "string_xn5": {"position": [0, 0, "v.draw * 2.25"]}
+      }
+    },
+    "animation.andrew.sculk_crossbow.hold_first_person": {
+      "loop": true,
+      "bones": {
+        "crossbow": {"rotation": [90, 0, 0]}
+      }
+    }
+  }
+}

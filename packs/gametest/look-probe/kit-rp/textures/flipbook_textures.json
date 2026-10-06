@@ -1,0 +1,7 @@
+[
+  {
+    "flipbook_texture": "textures/andrew_probe/icon_flip",
+    "atlas_tile": "andrew_probe_look_flip",
+    "ticks_per_frame": 10
+  }
+]

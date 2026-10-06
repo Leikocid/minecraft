@@ -1,0 +1,21 @@
+{
+  "resource_pack_name": "andrew_look_probe",
+  "texture_name": "atlas.items",
+  "texture_data": {
+    "andrew_probe_look_rest": {
+      "textures": "textures/andrew_probe/icon_rest"
+    },
+    "andrew_probe_look_pull": {
+      "textures": "textures/andrew_probe/icon_pull"
+    },
+    "andrew_probe_look_charged": {
+      "textures": "textures/andrew_probe/icon_charged"
+    },
+    "andrew_probe_look_dyed": {
+      "textures": "textures/andrew_probe/icon_dyed"
+    },
+    "andrew_probe_look_flip": {
+      "textures": "textures/andrew_probe/icon_flip"
+    }
+  }
+}

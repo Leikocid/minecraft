@@ -236,3 +236,146 @@ raises a second event, which finds nothing to strip. It logs `sculk: stripped pi
 no loop on the second event, and the live-slot read. The BDS half is `src/gametest/sculk-enchant.ts`:
 - `sculk_enchant_piercing_stripped` (ac15): six entry paths, a Multishot crossbow, a refused `/enchant` and a vanilla control;
 - `sculk_enchant_piercing_hand_change`: the off hand, through a hotbar change.
+
+## `packs/resource/attachables/sculk_crossbow.json` — the crossbow in hand and its draw (SCLKUI-CHARGE-01)
+
+**The method is the probe's** (`docs/feedback/probe-crossbow-look.md`): an attachable on the custom id (Q2), driven by
+the two draw queries Q3 measured live on `andrew:sculk_crossbow` (the "2а" row of its summary). Nothing else is read.
+
+```
+v.draw = (v.loaded > 0) ? 1 : (((q.main_hand_item_use_duration > 0) && (q.main_hand_item_max_duration > 0))
+  ? math.clamp(1 - q.main_hand_item_use_duration / q.main_hand_item_max_duration, 0, 1) : 0)
+```
+
+`main_hand_item_use_duration` is the engine's own count of the use session's remaining ticks: 24 at +1 … 1 at +24, and 0
+from +25, the tick of `complete@+25`, which is when `charge_on_draw` loads the item (`max_draw_duration` 1.25 s). So the
+pull grows 0.04 → 0.96 over the draw and, on the tick the charge completes, goes to the loaded state (below), or
+home if the session did not load. It has no timer of its own: the
+animation is an expression per bone with no keyframes, no length and no `anim_time`. `main_hand_item_max_duration` is
+25 throughout.
+
+**The model** (`models/entity/sculk_crossbow.geo.json`) is drawn here, not taken from Mojang. Every face samples one
+pixel of the item's own icon, so the colours are the icon's: stock `§3` teal, limbs and butt dark sculk, string `§b`
+aqua. It is symmetric across the stock. The draw (`animations/sculk_crossbow.animation.json`) only slides bones toward
+the butt by `v.draw` × a fixed distance:
+- the string, in 1-px segments, from straight behind the limbs to a V whose centre reaches the latch;
+- the limbs, three steps a side, bending back more toward the tips.
+
+There are no rotations, so the draw does not depend on the engine's rotation signs.
+
+**Placement in hand** is not measured: BDS draws nothing, and the probe's kit is not yet seen on the iPad.
+- The root bone is bound to the hand slot (`q.item_slot_to_bone_name(c.item_slot)`). The engine takes 24 px off a
+  bound bone in y (Bedrock Wiki, Attachables; Mcblend docs), so the grip is modelled at y 24, where the hand pivot
+  lands.
+- Third person: no transform. The stock points the way the hand faces.
+- First person: the stock is turned 90° about x onto the forearm, the way the fist points. Microsoft's attachable
+  guide says first person needs its own animation. The angle is derived, not measured.
+
+**Proof.**
+- `tests/sculk-crossbow-attachable.test.mjs`:
+  - evaluates the attachable's own Molang on the measured sessions: no enchantment, Quick Charge I and III, a
+    firing press, and a bow in the main hand;
+  - pins the query set and that the animations have no timer;
+  - checks the bracket rule: the client binds `&&` tighter than `==`;
+  - checks the colours against the icon's pixels, the symmetry, and that the string stays one piece at every draw.
+- `scripts/validate.mjs` (`checkAttachables`) resolves the attachable's item, geometry, animations, controller keys,
+  bones and texture on every build.
+
+### Deviations (C-16)
+
+1. **No draw animation in the inventory.** The client cannot change a custom item's icon by its state:
+   - `minecraft:icon` has no state keys: the parser checks the map (it rejects a map without `default`), and the
+     server code compares only `default` and `dyed` (probe Q1);
+   - an attachable never touches the icon (Q2);
+   - `flipbook_textures.json` is documented for blocks only and has no state field (Q5);
+   - `dyeable` gives one second picture and its tint, not frames (Q4).
+
+   Only the hand is animated.
+2. **"Loaded" is read from the session's shape, not asked.** For this id no query tells loaded from rest:
+   `item_is_charged` reads 0, and `get_animation_frame` reads 0 where the vanilla crossbow reads 4 (Q3). The loaded
+   state below and its own deviations follow from that.
+3. **A firing press shows one tick of draw.** That press opens a session too (`start@+0 … release@+1`, Q3), so the
+   string drops from the latch to 1/25 of the way for one tick, then home.
+4. **In the off hand the crossbow follows the main hand's use.** The queries are the main hand's. A bow drawn there
+   moves it by 12/72000 (Q3 bow row), i.e. not at all. Other items in use there are not measured.
+5. **Quick Charge shortens the session, but the charge is no longer missed.** `use_duration` is 2.5 s (50 ticks,
+   SCLK-QC-RESTORE-01); Quick Charge still takes 5 ticks a level off that session (QC I → 45, QC III → 35), and
+   `main_hand_item_max_duration` stays at 25 — the 25-tick charge gate (`max_draw_duration`) is unchanged. All three
+   copies now fire on the first press after the charge (`product`/`product_qc1`/`product_qc3`, 3 of 3, private
+   instance `andrew-bds-qcfix`, probe report addendum). Before the fix, a QC copy's session ended at +20 / +10,
+   short of the 25-tick gate, and never fired (SCLK-PRESS-01's regression, fixed by SCLK-QC-RESTORE-01).
+   **Not re-measured for this deviation:** what fraction of `v.draw` a QC I/III session starts at under the new
+   50-tick session. The old figures (0.24 / 0.64) were computed from the pre-fix session lengths (20 / 10 ticks)
+   against the same `main_hand_item_max_duration` = 25 and no longer apply — at a 45/35-tick session the same
+   formula clamps to 0 until `main_hand_item_use_duration` drops below 25, which would need a fresh probe reading
+   of `main_hand_item_use_duration` on `product_qc1`/`product_qc3` to confirm, not computed from memory.
+6. **This attachable draws no enchantment glint.** Whether the engine adds one over an attachable is not measured:
+   an iPad check.
+
+## The loaded state — a bolt on the stock until the shot (SCLKUI-LOADED-01)
+
+It is the third state of the same attachable, after rest and the draw: the same two queries, the same geometry and
+the same render controller. The attachable keeps two readings of `main_hand_item_use_duration` from frame to frame:
+`v.ud_first`, the session's first value, and `v.ud_last`, the last frame's. When the value returns to 0:
+- the crossbow is shown **loaded** if the session ran out from full length: its last value was ≤ 1 and its first
+  ≥ `main_hand_item_max_duration` − 1. That is `complete@+25`, the tick `charge_on_draw` loads;
+- a release leaves a larger last value (`release@+k`, ud = 25 − k), and a Quick Charge session starts short (20 / 10),
+  so neither shows a load.
+
+Any value above 0 takes the state off. The press that fires a loaded crossbow opens its session in the tick of the
+shot (`start@+0` with `bolt@+0`), so the bolt leaves the stock in that tick. A press held on after the shot draws
+again and ends loaded, as the engine reloads (an arrow spent, the next tap fires).
+
+While loaded, `v.draw` is 1: the string sits on the latch and the limbs stay bent. The `bolt` bone is shown by
+`part_visibility` on `v.loaded`. It has no timer: the variables only hold engine readings, and none is computed from
+itself.
+
+**The bolt** (`bolt` bone) is drawn here, from icon pixels like the rest of the model, and reads as the bolt the
+crossbow fires, an echo shard:
+- a dark sculk shaft on the stock's centre line, nocked on the string held at the latch;
+- an aqua shard head standing 2 px out past the front;
+- three sculk fins at the back.
+
+There is no wood, flint or white feather of the vanilla arrow.
+
+**Proof.**
+- `sculk_look_loaded_sessions` (`src/gametest/sculk-look.ts`) drives the product crossbow on BDS through 12 kinds of
+  session and pins each one's shape and the engine's answer: an arrow spent at the load, and a shot on the next tap.
+  The sessions are a full draw, releases at +1/+12/+23/+24, a held firing press, a hotbar switch, no arrows in
+  Survival and in Creative, Creative with arrows, and Quick Charge I/III.
+- `tests/sculk-crossbow-attachable.test.mjs` runs the same shapes through the attachable's own Molang at 1 and 3
+  frames a tick. Every session ends in the engine's state except the two below, which are pinned as such.
+
+### Deviations (C-16)
+
+1. **A release one tick short of the charge looks loaded.** `release@+24` (ud = 1) reads like a full draw's last
+   tick, and the engine leaves the crossbow empty. The next press fires nothing and takes the look off.
+2. **A draw with no arrows in Survival looks loaded.** The custom shooter runs the whole session (`start` ud 25,
+   `complete@+25`) and loads nothing: no arrow spent, and the next tap fires nothing. The attachable has no query for
+   ammunition. The cause is in the item, not the look: the vanilla crossbow does not draw without arrows. A fix has
+   to refuse such a draw and still let a loaded crossbow with no arrows left fire, so it is out of this task.
+3. **Whether the look survives the crossbow leaving the hand is not measured.** The engine keeps the load across a
+   hotbar switch (measured). The latch lives in the attachable's variables, and BDS cannot show what the client keeps
+   when the crossbow is put away and taken back, after a death, a rejoin, or on another player's screen. If the client
+   rebuilds the attachable, a loaded crossbow comes back looking empty until its shot.
+4. **Whether a Quick Charge copy looks loaded is not re-checked.** The item-level defect this depended on (deviation
+   5 of the draw: a QC copy never reached the charge) is fixed by SCLK-QC-RESTORE-01 — `quick_charge_*` fires on the
+   first tap again. The attachable's own loaded-state read for `quick_charge_*` under the new 45/35-tick session has
+   not been re-run on `sculk_look_loaded_sessions`; treat it as open until that probe is repeated.
+5. **In the off hand the crossbow follows the main hand's sessions** (deviation 4 of the draw). A vanilla crossbow
+   drawn in the main hand runs the same 25-tick session, so an off-hand Sculk Crossbow then looks loaded.
+6. **Below 20 frames a second the last tick can be missed.** The latch has to see the session's last value, 1. A
+   client that skips it sees a real load as empty.
+7. **The hotbar icon does not show the load** (deviation 1 of the draw).
+
+### On the iPad (Andrew)
+
+First and third person, Survival, arrows in the inventory:
+1. The crossbow is a 3-D crossbow in the hand, pointing forward, not the flat icon.
+2. While the press is held, the string slides back into a V and the limbs bend, for 1.25 s.
+3. On the charge the string stays on the latch, and a bolt with an aqua shard head lies on the stock.
+4. The loaded look holds for as long as you wait, until the press.
+5. The press fires, and the bolt is gone from the stock at once.
+6. Let go before the 1.25 s are up: the string goes home and no bolt appears.
+7. Loaded, switch the hotbar away and back: does the bolt come back (deviation 3)? Then fire to check it was loaded.
+8. The hotbar icon does not change.
