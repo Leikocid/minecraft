@@ -4,7 +4,6 @@
 // observers; damage, crater and sculk are theirs. Deviations: README.md (C-16).
 
 import {
-  type Block,
   type Dimension,
   type Direction,
   type Entity,
@@ -60,14 +59,27 @@ export interface BoltRecord {
  */
 export type ExpiryReason = "lifetime" | "unloaded" | "stalled" | "void" | "gone";
 
+/** The block as hit, read in the hit tick: a live Block would already read as the crater carved it. */
+export interface HitBlock {
+  readonly typeId: string;
+  readonly location: Vector3;
+  readonly dimension: Dimension;
+}
+
 export type BoltEvent =
   | { kind: "launched"; record: BoltRecord; arrowVelocity: Vector3 | undefined }
   | { kind: "trail"; record: BoltRecord; points: readonly Vector3[] }
   | { kind: "entity"; record: BoltRecord; entity: Entity | undefined; location: Vector3 }
-  | { kind: "block"; record: BoltRecord; block: Block; face: Direction; location: Vector3 }
+  | { kind: "block"; record: BoltRecord; block: HitBlock; face: Direction; location: Vector3 }
   | { kind: "expired"; record: BoltRecord; reason: ExpiryReason };
 
 export type BoltObserver = (event: BoltEvent) => void;
+
+/** Work that rides the bolt interval, such as the carve queue; the interval outlives the bolts while it is busy. */
+export interface LoopRider {
+  step(): void;
+  busy(): boolean;
+}
 
 interface Volley {
   tick: number;
@@ -96,6 +108,7 @@ interface Flight {
 const records = new Map<string, BoltRecord>();
 const flights = new Map<string, Flight>();
 const observers: BoltObserver[] = [];
+const riders: LoopRider[] = [];
 const volleys = new Map<string, Volley>();
 let handle: number | undefined;
 let loopStarts = 0;
@@ -112,6 +125,15 @@ export function observeBolts(observer: BoltObserver): () => void {
     const i = observers.indexOf(observer);
     if (i >= 0) observers.splice(i, 1);
   };
+}
+
+export function rideBoltLoop(rider: LoopRider): void {
+  if (!riders.includes(rider)) riders.push(rider);
+}
+
+/** Starts the interval for a rider with work and no bolt in the air; a running interval is left as it is. */
+export function wakeBoltLoop(): void {
+  startLoop();
 }
 
 export function liveBoltCount(): number {
@@ -165,7 +187,7 @@ function startLoop(): void {
 }
 
 function settle(): void {
-  if (records.size > 0 || handle === undefined) return;
+  if (records.size > 0 || handle === undefined || riders.some((r) => r.busy())) return;
   system.clearRun(handle);
   handle = undefined;
   volleys.clear();
@@ -365,6 +387,13 @@ function step(): void {
     if (reason !== undefined) expire(record, reason, at);
     else if (moved) drawTrail(dimension, record, at);
   }
+  for (const rider of riders) {
+    try {
+      rider.step();
+    } catch (err) {
+      log(`loop rider threw: ${errText(err)}`);
+    }
+  }
   settle();
 }
 
@@ -410,9 +439,10 @@ function onHitBlock(event: ProjectileHitBlockAfterEvent): void {
   const record = claim(event.projectile);
   if (record === undefined) return;
   const { block, face } = event.getBlockHit();
+  const hit: HitBlock = { typeId: block.typeId, location: { x: block.location.x, y: block.location.y, z: block.location.z }, dimension: event.dimension };
   drawTrail(event.dimension, record, event.location);
-  log(`bolt ${record.id} hit block ${block.typeId}@${fmt(block.location)} face ${face} age ${system.currentTick - record.bornTick}`);
-  emit({ kind: "block", record, block, face, location: event.location });
+  log(`bolt ${record.id} hit block ${hit.typeId}@${fmt(hit.location)} face ${face} age ${system.currentTick - record.bornTick}`);
+  emit({ kind: "block", record, block: hit, face, location: event.location });
   settle();
 }
 

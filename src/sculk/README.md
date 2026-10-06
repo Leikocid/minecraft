@@ -1,6 +1,6 @@
 # Sculk Crossbow
 
-`registerSculkCrossbow()` (`index.ts`) arms the bolt pipeline. `src/main.ts` and the GameTest pack each arm their own copy:
+`registerSculkCrossbow()` (`index.ts`) arms the bolt pipeline and the block-hit crater. `src/main.ts` and the GameTest pack each arm their own copy:
 the release pack reads no owner on a SimulatedPlayer's arrow, so the GameTest copy is the one the scenarios drive.
 
 ## `bolt.ts` — shot → bolt, flight, trail, expiry (`L0-sclk-p002`, `p003`, `ent2`, `ent3`)
@@ -75,5 +75,68 @@ damage, no crater, no sculk.
      simulated area, and it is removed with no outcome.
 4. **The interval is the module's own.** `L0-sclk-p003` drives the bolts from "the add-on's shared `runInterval`", but no
    such interval exists: the only add-on-wide one is the HUD's, every 10 ticks, and it runs whether or not anyone
-   shoots. The bolt loop is one interval for every bolt, alive only while a record is, so it is the one `K-sclk-3`'s
-   carve queue can join without adding another.
+   shoots. The bolt loop is one interval for every bolt, alive only while a record is or while a rider has work.
+   The carve queue rides it (`rideBoltLoop`), so the interval outlives the last bolt only while a crater is still
+   queued.
+5. **A block hit carries a snapshot, not the live `Block`.** The `block` of a `block` event holds the type, cell and
+   dimension read in the hit tick (`HitBlock`). A live `Block` read a tick later would already show the crater: the
+   hit cell is always carved.
+
+## `carve.ts`, `crater-plan.ts` — block hit → crater and sculk (`L0-sclk-p005`, `adr-sctr`, `ad04`, `ent4`, `r003`, `r004`, `r010`)
+
+**The plan** (`crater-plan.ts`, pure, `tests/sculk-carve.test.mjs`) is made in the hit tick from the impact cell, the
+hit face and the bolt's `seed`. The face plane spans a 5×5 footprint; layer `k` is `k` cells into the block from the
+impact cell.
+- **Crater.** Each of the 25 columns gets a depth 0–3 from an ellipsoid with semi-axes ≈ (2.5, 2.5, 3). Each column's
+  radius is jittered ±20 % and its depth ±0.5 by `seed`. The inner 3×3 is always ≥ 2 deep, so the impact cell and the
+  one behind it always go. If no column came out at 0, one corner is set to 0, so the footprint is never a full 5×5.
+  Cells that are air, liquid, on the deny list or unloaded are left out. A bolt whose impact block is kept, liquid or
+  unloaded carves nothing (`p005` step 1).
+- **Sculk.** Corners never get sculk, and about 30 % of the rest of the outer ring is left bare by `seed`. In every
+  other column the search comes in from 3 cells outside the face, treating planned crater cells as air. It stops at
+  the first cell that is not air or passable. That cell turns to sculk if it is a solid full block and the cell before
+  it is air or passable, and its layer is −2 or deeper. So the crater floor and the rim turn to sculk, and the crater
+  walls stay as they are.
+
+**The queue** (`carve.ts`). One job per hit, FIFO, crater cells before sculk cells. Each job drains on the bolt
+interval at `CARVE_BUDGET_PER_TICK` = 300 cells a tick across all jobs. SCLK-PROBE-01 §4 measured 300 `getBlock` +
+`setType` at 6–16 ms, with ticks staying at 50–55 ms and first stretching at 2400. A hit runs what the tick's budget
+allows inline, so a single volley lands in the hit tick. Every cell is checked again at write time:
+- a crater cell that is now air, liquid, kept or unloaded is skipped;
+- a sculk cell that is no longer a solid full block with an exposed face is skipped.
+
+Writes are `Block.setType` only: never `createExplosion` and never `fillBlocks`. `fillBlocks` erases a container's
+contents with no spill (probe P4), and its 32 768-cell cap never comes into play here. A job logs
+`sculk: crater <bolt> done: crater n/N cells, sculk m/M cells at … seed …`, and `observeCarves` hands the report to
+GameTests.
+
+### Deviations (C-16)
+
+1. **"Solid full block" is read from water.** Stable 2.10.0 has no "is solid" query. A cell is `solid` when water
+   cannot pass it (`isLiquidBlocking`) and it cannot be waterlogged (`canContainLiquid`). A slab, a stair and a fence
+   can be waterlogged, and a flower or a torch lets water through. A block with an inventory, a holder in
+   `HOLDER_TYPES`, or a full block with state of its own (`NOT_SCULK`: spawners, jukebox, beehive, piston,
+   suspicious sand, …) is never turned to sculk.
+2. **lgnd protection runs in every tick a job writes**, not only in the hit tick (`ad04`, `p005` step 4). It covers
+   the plan's box plus one layer out of the face. Over a queued job, a legendary dropped into the zone after the hit
+   is still taken out first, and so is one lying on the cells about to go.
+3. **When lgnd refuses the zone**, nothing was moved: a crafter with no script inventory, a frame that would not
+   break, or an unloaded chunk. The holder and frame cells of that job then stay, and the rest is carved (the
+   penetrator's PN-5).
+4. **Side effects that are the engine's, not the crater's:**
+   - a frame anywhere in the zone is broken open by lgnd and its item drops, as with the Orbital rings;
+   - a container in a crater cell spills its ordinary contents on `setType` (`xasm25`);
+   - a flower on a surface turned to sculk pops as an item (probe P5).
+   Carved cells themselves drop nothing.
+5. **No entity is touched.** Falling into the crater is a drop of at most 3 blocks, and fall damage on this engine is
+   drop − 3. A player on a carved rim column takes none (`sculk_carve_no_damage`).
+
+**Proof.** The node half is `tests/sculk-carve.test.mjs`: bounds over 1000 seeds × 6 faces, determinism, the skip
+rules, the budget, FIFO order, protection order, and write-time re-checks. The BDS half is `src/gametest/sculk-carve.ts`:
+- `sculk_carve_crater_bounds` (ac11);
+- `sculk_carve_no_damage` (ac12);
+- `sculk_carve_sculk_survives_reload` (ac13, chunk reload);
+- `sculk_carve_keep_list` (ac22);
+- `sculk_carve_legendary_survives`.
+
+The shared deny list is `src/terrain/keep.ts` (`tests/terrain-keep.test.mjs`).

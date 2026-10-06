@@ -15,7 +15,7 @@ Each line is what ships in this module today, with the KV id that owns it.
 
 Measured on BDS 1.26.51.1 (Rosetta, the dev Mac); the probes are `probe_pntr_*` in `src/gametest/penetrator.ts`.
 
-1. **The keep list is a list, not a hardness query** (`L0-xasm6`, `L0-pntr-r002`). Stable 2.10.0 has no hardness or "unbreakable" query, so `PENETRATOR_KEEP` in `penetrator-keep.ts` is the only way to spare engine-protected blocks: a Survival-unbreakable block missing from it is removed. xasm6 names the light block once; a placed one is `light_block_<level>` (setting `minecraft:light_block` reads back as `light_block_0`), so all sixteen levels are listed.
+1. **The keep list is a list, not a hardness query** (`L0-xasm6`, `L0-pntr-r002`). Stable 2.10.0 has no hardness or "unbreakable" query, so the keep list `TERRAIN_KEEP` in `src/terrain/keep.ts` is the only way to spare engine-protected blocks: a Survival-unbreakable block missing from it is removed. The Sculk Crossbow crater reads the same list (`L0-sclk-r010`); `penetrator-keep.ts` re-exports it as `PENETRATOR_KEEP`. xasm6 names the light block once; a placed one is `light_block_<level>` (setting `minecraft:light_block` reads back as `light_block_0`), so all sixteen levels are listed.
 2. **Item frames** (`L0-pntr-cx01`, settled by `L0-adr-oprt` §3). A frame in a planned cell goes through `protectLegendariesIn` like a container: lgnd breaks it open with `setblock … destroy` (that break sound and its particles are the engine's, not a second pntr sound), a legendary is moved out, and whatever else spilled — the frame's own item and its contents — is removed with the column. A frame outside the column that loses its wall pops by vanilla rules (`L0-pntr-as06`).
 3. **Nested storage items** (`L0-pntr-as05`). pntr hands lgnd only the cell; a legendary inside a bundle or shulker-box *item* in a column container survives only as far as lgnd can read nested storage, otherwise it goes with the container.
 4. **Waterlogged cells** (`L0-pntr-as04`). The solid part goes and the cell becomes a `minecraft:water` source — a waterlogged container too, after protection. Which types can hold water is the engine's answer, `canContainLiquid(Water)` on each type's default permutation, read once at world load (714 ids); a type that holds water only in a non-default state is removed like stone and its water with it.
@@ -77,7 +77,7 @@ Measured on BDS 1.26.51.1 (Rosetta, the dev Mac); the probe is `probe_ring_drops
 | `stub-effect.ts` | Both modes until the real effects register: one log line and one sound per detonation; LMB one column, RMB 160 |
 | `penetrator.ts` | `p001`–`p003`, `ad01`, `ad03`, `ent2`, `r004`–`r009`: the LMB effect — the sound, the removal job, the wave, the report |
 | `penetrator-plan.ts` | `ent1`, `ad02`, `ent3`: the column plan and the cell classifier |
-| `penetrator-keep.ts` | `xasm6`: the keep list |
+| `penetrator-keep.ts` | `xasm6`: the keep list, re-exported from the shared `src/terrain/keep.ts` (`L0-sclk-r010`) |
 | `ring-layout.ts` | `L0-ring-p001`, `r001`, `ent1`: the five closed rings as a constant offset table, 201 columns |
 | `ring.ts` | `L0-ring-p002`, `p003`, `ad01`–`ad04`, `r004`–`r010`: the RMB effect — the detonation queue, protection, the `doTileDrops` window, one TNT explosion per charge, the report |
 
