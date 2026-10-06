@@ -63,18 +63,16 @@ test('png.mjs adds no dependency: only node:zlib is imported', () => {
   assert.deepEqual(imports, ['node:zlib']);
 });
 
-// Colours are sourced from resources already in the pack, not invented:
-// - dark/mid teal: the sculk block-colour palette scripts/render-structure.mjs uses to
-//   preview this add-on's own Warden-city structures (andrew:sculk / andrew:sculk_sensor).
-// - bright accent: Bedrock's standard §3/§b formatting codes, the same ones
-//   packs/resource/texts/{ru_RU,en_US}.lang already use to highlight this item's own
-//   name in the first-craft announcement (andrew.sculk_crossbow.first_craft).
+// Palette provenance — see docs/feedback/icon-palette.md for the verification commands
+// and their output. Two colours are pack resources, byte-exact; two are chosen for
+// silhouette readability and carry no pack source (neither §3 nor §b formatting codes
+// are pack-specific — they are Bedrock's built-in text codes, the same on every pack).
 const PALETTE = {
   '.': null,
-  d: [26, 38, 44], // outline — render-structure.mjs:110 minecraft:sculk
-  m: [42, 74, 82], // limbs   — render-structure.mjs:112 minecraft:sculk_sensor
-  h: [0, 170, 170], // stock  — Bedrock §3 dark_aqua
-  w: [85, 255, 255], // string — Bedrock §b aqua (ru_RU.lang:36 / en_US.lang:36)
+  d: [26, 38, 44], // outline — render-structure.mjs:110 minecraft:sculk (byte-exact)
+  m: [42, 74, 82], // limbs   — render-structure.mjs:112 minecraft:sculk_sensor (byte-exact)
+  h: [0, 170, 170], // stock  — chosen for readability, no pack source
+  w: [85, 255, 255], // string — chosen for readability, no pack source
 };
 
 const SIZE = 16;
@@ -163,7 +161,7 @@ function gridToRgba(grid) {
   return rgba;
 }
 
-test('sculk crossbow icon: 16x16 RGBA silhouette in sculk colours, written to the resource pack', () => {
+test('sculk crossbow icon: 16x16 RGBA silhouette, documented palette, written to the resource pack', () => {
   const grid = drawCrossbowGrid();
   const rgba = gridToRgba(grid);
   const bytes = encodePngRgba({ width: SIZE, height: SIZE, rgba });
