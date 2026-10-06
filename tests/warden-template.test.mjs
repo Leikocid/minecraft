@@ -310,8 +310,9 @@ test('AC3: a purely decorative reinforced deepslate monument ≈5 wide × 6–7 
   // No script refers to the monument. Three classification lists name the block
   // type for their own reasons (structure detection, blocks the Web Sword never
   // replaces, blocks the dig-down GameTest cannot break), the penetrator
-  // GameTest places one as a fixture the LMB must remove (L0-pntr-ac03), and
-  // the ring GameTest one a TNT blast must leave (L0-ring-ac14); any other
+  // GameTest places one as a fixture the LMB must remove (L0-pntr-ac03), the
+  // ring GameTest one a TNT blast must leave (L0-ring-ac14), and the Sculk
+  // Crossbow GameTest one its crater must carve (L0-sclk-ac22); any other
   // mention would be code acting on it.
   const LISTS = new Set([
     'src/structures/collision.ts',
@@ -319,6 +320,7 @@ test('AC3: a purely decorative reinforced deepslate monument ≈5 wide × 6–7 
     'src/gametest/warden.ts',
     'src/gametest/penetrator.ts',
     'src/gametest/ring.ts',
+    'src/gametest/sculk-carve.ts',
     'src/structures/templates/warden-city.ts',
   ]);
   const files = [];

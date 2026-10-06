@@ -26,10 +26,8 @@ import { heldLegendaries, resolveActivation } from "../legendary/hands";
 import { hudMessage } from "../legendary/hud";
 import {
   DRAGON_KATANA,
-  LEGENDARIES,
-  type LegendaryDef,
   ORBITAL_CANNON,
-  type PassiveLegendaryDef,
+  SCULK_CROSSBOW,
   SCYTHE_OF_CALAMITY,
   WEB_SWORD,
 } from "../legendary/registry";
@@ -251,32 +249,6 @@ registerAsync("andrew", "legendary_offhand_token_refused", async (test: Test): P
   .maxTicks(100)
   .tag("andrew");
 
-// R-lgnd-018 on the engine. The crossbow item does not exist yet, so a passive
-// def stands in for it on a shield, which both hands admit. It is registered
-// only inside one synchronous block: no event handler, interval or other test
-// runs in between, so nothing else in the world ever sees a shield as legendary.
-const PASSIVE_STAND_IN: PassiveLegendaryDef = {
-  itemId: "minecraft:shield",
-  keyPrefix: "tp",
-  nameKey: "item.shield",
-  craftGate: false,
-  craftTokenId: "andrew:test_passive_crafted",
-  refund: [],
-  textPrefix: "andrew.test_passive",
-  command: "andrew:testpassive",
-};
-
-function withPassiveStandIn<T>(measure: () => T): T {
-  // Read-only by type for product code; a plain array at runtime.
-  const registry = LEGENDARIES as LegendaryDef[];
-  registry.push(PASSIVE_STAND_IN);
-  try {
-    return measure();
-  } finally {
-    registry.splice(registry.indexOf(PASSIVE_STAND_IN), 1);
-  }
-}
-
 const KATANA_READY_HUD =
   '{"rawtext":[{"translate":"andrew.katana.hud_ready","with":{"rawtext":[{"translate":"item.andrew:dragon_katana.name"}]}}]}';
 
@@ -315,16 +287,17 @@ registerAsync("andrew", "legendary_offhand_passive_yields", async (test: Test): 
     return row;
   };
 
-  const shield = PASSIVE_STAND_IN.itemId;
-  const rows = withPassiveStandIn(() => ({
-    passiveMainKatanaOff: measure(shield, DRAGON_KATANA.itemId),
-    passiveMainCannonOff: measure(shield, ORBITAL_CANNON.itemId),
-    passiveMainKatanaOffCooling: measure(shield, DRAGON_KATANA.itemId, DRAGON_KATANA.abilityKey),
-    katanaMainPassiveOff: measure(DRAGON_KATANA.itemId, shield),
-    passiveMainAlone: measure(shield, undefined),
-    passiveOffAlone: measure(undefined, shield),
-  }));
-  const afterWindow = measure(shield, DRAGON_KATANA.itemId);
+  const passive = SCULK_CROSSBOW.itemId;
+  const rows = {
+    passiveMainKatanaOff: measure(passive, DRAGON_KATANA.itemId),
+    passiveMainCannonOff: measure(passive, ORBITAL_CANNON.itemId),
+    passiveMainKatanaOffCooling: measure(passive, DRAGON_KATANA.itemId, DRAGON_KATANA.abilityKey),
+    katanaMainPassiveOff: measure(DRAGON_KATANA.itemId, passive),
+    passiveMainAlone: measure(passive, undefined),
+    passiveOffAlone: measure(undefined, passive),
+  };
+  // Repeats the first row: nothing in between should have left a side effect.
+  const afterWindow = measure(passive, DRAGON_KATANA.itemId);
   const timersAfter = timers();
 
   for (const [name, row] of Object.entries(rows)) {
@@ -336,11 +309,11 @@ registerAsync("andrew", "legendary_offhand_passive_yields", async (test: Test): 
   const expect = (what: string, got: string, want: string): void => {
     if (got !== want) failures.push(`${what}: got ${got}, expected ${want}`);
   };
-  // Control: while registered, the stand-in is a held legendary — otherwise
-  // every row below would pass for a plain shield.
-  expect("held, shield main + Katana off", rows.passiveMainKatanaOff.held, `Mainhand:${shield},Offhand:${DRAGON_KATANA.itemId}`);
-  expect("held, shield off alone", rows.passiveOffAlone.held, `Offhand:${shield}`);
-  expect("held after the window", afterWindow.held, `Offhand:${DRAGON_KATANA.itemId}`);
+  // Control: the Sculk Crossbow is a held legendary — otherwise every row
+  // below would pass for any plain item.
+  expect("held, crossbow main + Katana off", rows.passiveMainKatanaOff.held, `Mainhand:${passive},Offhand:${DRAGON_KATANA.itemId}`);
+  expect("held, crossbow off alone", rows.passiveOffAlone.held, `Offhand:${passive}`);
+  expect("held after the window", afterWindow.held, `Mainhand:${passive},Offhand:${DRAGON_KATANA.itemId}`);
 
   expect("Use, passive main + ready Katana off", rows.passiveMainKatanaOff.use, `Offhand:${DRAGON_KATANA.itemId}`);
   expect("HUD, passive main + ready Katana off", rows.passiveMainKatanaOff.hud, KATANA_READY_HUD);

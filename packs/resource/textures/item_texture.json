@@ -16,6 +16,9 @@
     },
     "andrew_dragon_katana": {
       "textures": "textures/items/andrew_dragon_katana"
+    },
+    "andrew_sculk_crossbow": {
+      "textures": "textures/items/andrew_sculk_crossbow"
     }
   }
 }

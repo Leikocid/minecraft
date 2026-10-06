@@ -35,6 +35,7 @@
 import {
   type Container,
   type Dimension,
+  EnchantmentType,
   type Entity,
   ItemStack,
   Player,
@@ -44,7 +45,7 @@ import {
 } from "@minecraft/server";
 import { forgetWatched } from "./recovery";
 import { LEGENDARIES, type LegendaryDef, defForStack } from "./registry";
-import { type Mark, withHolder, withoutPending } from "./rules";
+import { type ItemLook, type Mark, withHolder, withoutPending } from "./rules";
 import {
   addPending,
   carriesInstance,
@@ -58,6 +59,7 @@ import {
   readPending,
   setOffhand,
   voidStale,
+  withLook,
   writePending,
 } from "./state";
 
@@ -130,7 +132,7 @@ function retain(player: Player): void {
     const found = container === undefined ? [] : findAllMarked(def, container);
     const offhand = offhandOf(player);
     const offMark = isItemOf(def, offhand) ? getMark(def, offhand) : undefined;
-    const marks = [...found.map((f) => f.mark), ...(offMark === undefined ? [] : [offMark])];
+    const marks = [...found.map((f) => withLook(f.mark, f.stack)), ...(offMark === undefined || offhand === undefined ? [] : [withLook(offMark, offhand)])];
     if (marks.length === 0) {
       console.warn(
         `[andrew] legendary retention: path A — ${player.name} had no marked ${def.itemId} in inventory or off hand at entityDie`
@@ -198,7 +200,7 @@ function sweep(player: Player, dimension: Dimension, location: Vector3): void {
     }
     const live = isLive(def, mark);
     if (live) {
-      addPending(def, player, [mark]);
+      addPending(def, player, [withLook(mark, stack)]);
     }
     // Order: unwatched before removal, or recovery reads this removal as a
     // loss and owes the mark a second time.
@@ -268,15 +270,47 @@ export function restore(def: LegendaryDef, player: Player, messageKey = `${def.t
  * the token that makes it happen once.
  */
 export function grant(def: LegendaryDef, player: Player, container: Container, mark: Mark, messageKey: string): void {
-  const leftover = container.addItem(markItem(def, new ItemStack(def.itemId, 1), withHolder(mark, player)));
+  const stack = new ItemStack(def.itemId, 1);
+  const refused = applyLook(stack, mark.look);
+  const leftover = container.addItem(markItem(def, stack, withHolder(mark, player)));
   if (leftover !== undefined) {
     // Nowhere in the inventory to put it. At their feet is still "returned to
     // the owner", and it beats destroying the world's only copy.
     player.dimension.spawnItem(leftover, player.location);
   }
   player.sendMessage({ translate: messageKey });
+  const enchants = (mark.look?.enchantments ?? []).map(([id, level]) => `${id}${level}`);
   console.warn(
     `[andrew] legendary retention: returned ${def.itemId} id ${mark.id} gen ${mark.gen} to ${player.name}` +
+      (enchants.length === 0 ? "" : ` with ${enchants.join("+")}`) +
+      (mark.look?.nameTag === undefined ? "" : ` named "${mark.look.nameTag}"`) +
+      (refused.length === 0 ? "" : `; the item refused ${refused.join(", ")}`) +
       (leftover === undefined ? "" : " (inventory full — dropped at their feet)")
   );
+}
+
+/** Puts `look` on `stack` in place; returns the enchantments the item refused, which are left off. */
+function applyLook(stack: ItemStack, look: ItemLook | undefined): string[] {
+  if (look === undefined) {
+    return [];
+  }
+  const refused: string[] = [];
+  const enchantable = stack.getComponent("minecraft:enchantable");
+  for (const [id, level] of look.enchantments ?? []) {
+    try {
+      if (enchantable === undefined) {
+        throw new Error("no minecraft:enchantable");
+      }
+      enchantable.addEnchantment({ type: new EnchantmentType(id), level });
+    } catch (err) {
+      refused.push(`${id}${level} (${String(err).split("\n")[0]})`);
+    }
+  }
+  if (look.nameTag !== undefined) {
+    stack.nameTag = look.nameTag;
+  }
+  if (look.lore !== undefined) {
+    stack.setLore(look.lore);
+  }
+  return refused;
 }

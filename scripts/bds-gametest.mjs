@@ -119,6 +119,7 @@ const EXPECTED_TESTS = [
   'andrew:probe_cactus_items',
   'andrew:legendary_returns_from_cactus',
   'andrew:legendary_returns_when_it_vanishes',
+  'andrew:legendary_survives_orbital_column',
   'andrew:legendary_pickup_sighting_not_consumed',
   'andrew:legendary_in_a_chest_stays_there',
   'andrew:legendary_pickup_no_duplicate',
@@ -184,6 +185,10 @@ const EXPECTED_TESTS = [
   'andrew:legendary_give_then_craft_dragon_katana',
   'andrew:legendary_second_real_craft_refunded',
   'andrew:legendary_katana_recipe_negative_controls',
+  // SCLK-ITEM-01-AA — src/gametest/legendary-craftgate.ts
+  'andrew:legendary_give_then_craft_sculk_crossbow',
+  'andrew:legendary_sculk_crossbow_other_flags_untouched',
+  'andrew:sculk_crossbow_no_durability',
   // LGND-OFFHAND-01 — src/gametest/legendary-offhand.ts
   'andrew:legendary_offhand_admitted',
   'andrew:legendary_offhand_resolves',
@@ -420,6 +425,44 @@ const EXPECTED_TESTS = [
   'andrew:legendary_katana_void_thrown',
   'andrew:legendary_katana_void_chest_minecart',
   'andrew:legendary_katana_jump_keeps_recovery',
+  // SCLK-PROBE-01 — src/gametest/sculk-probe.ts (L0-sclk-p001, L0-sclk-ac21)
+  'andrew:probe_sculk_swap_event',
+  'andrew:probe_sculk_bolt_media',
+  'andrew:probe_sculk_bolt_flight',
+  'andrew:probe_sculk_bolt_hits',
+  'andrew:probe_sculk_sonic_particle',
+  'andrew:probe_sculk_carve_budget',
+  'andrew:probe_sculk_surfaces_reload',
+  // SCLK-BOLT-01 — src/gametest/sculk-bolt.ts (L0-sclk-p002, p003; ac04, ac05)
+  'andrew:sculk_bolt_one_arrow_one_bolt',
+  'andrew:sculk_bolt_multishot_three_bolts',
+  'andrew:sculk_bolt_trail_harmless',
+  'andrew:sculk_bolt_expires_after_lifetime',
+  'andrew:sculk_bolt_expires_in_void',
+  'andrew:sculk_bolt_expires_past_simulation_distance',
+  'andrew:sculk_bolt_expires_leaving_loaded_chunks',
+  'andrew:sculk_bolt_unloaded_under_it_and_reloaded',
+  // SCLK-CARVE-01 — src/gametest/sculk-carve.ts (L0-sclk-p005; ac11, ac12, ac13, ac22)
+  'andrew:sculk_carve_crater_bounds',
+  'andrew:sculk_carve_no_damage',
+  'andrew:sculk_carve_sculk_survives_reload',
+  'andrew:sculk_carve_keep_list',
+  'andrew:sculk_carve_legendary_survives',
+  // SCLK-HIT-01 — src/gametest/sculk-hit.ts (L0-sclk-p004; ac06, ac07, ac08, ac09, ac10, ac17)
+  'andrew:sculk_hit_fixed_damage',
+  'andrew:sculk_hit_armour_shield',
+  'andrew:sculk_hit_multishot_window',
+  'andrew:sculk_hit_only_target',
+  'andrew:sculk_hit_patch_no_crater',
+  'andrew:sculk_hit_kill_credit',
+  // SCLK-LGND-01 — the crossbow under the legendary rules (L0-lgnd-ac27; L0-sclk-ac15, ac19, ac20):
+  // src/gametest/legendary-recovery.ts, src/gametest/sculk-enchant.ts
+  'andrew:legendary_sculk_crossbow_death_kill',
+  'andrew:legendary_sculk_crossbow_death_lava',
+  'andrew:legendary_sculk_crossbow_death_offhand',
+  'andrew:legendary_sculk_crossbow_void_thrown',
+  'andrew:sculk_enchant_piercing_stripped',
+  'andrew:sculk_enchant_piercing_hand_change',
 ];
 
 /**

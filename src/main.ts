@@ -22,6 +22,7 @@ import { registerRetention } from "./legendary/retention";
 import { registerOrbitalCannon } from "./orbital";
 import { registerInterceptor } from "./orbital/flight";
 import { registerScytheVolley } from "./scythe/volley";
+import { registerSculkCrossbow } from "./sculk";
 import { registerStructureCommands } from "./structures/commands";
 import { DISCOVER_INTERVAL_TICKS, EnabledTypes, enabledLine } from "./structures/config";
 import type { PlayerPos } from "./structures/discovery";
@@ -42,6 +43,7 @@ registerTrap();
 registerScytheVolley();
 registerOrbitalCannon();
 registerDragonKatana();
+registerSculkCrossbow();
 // Must run at script load: custom commands can only be registered during the
 // engine's startup phase, which is over by the time the world exists.
 registerLegendaryCommands();
