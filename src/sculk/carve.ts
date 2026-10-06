@@ -1,8 +1,8 @@
 // Block hit → crater and sculk (spec §6, §7, §11; L0-sclk-p005, L0-adr-sctr, ad04, ent4, r003, r004, r010).
 // The plan is made in the hit tick (crater-plan.ts). Writes drain from one FIFO on the bolt interval at
 // CARVE_BUDGET_PER_TICK cells a tick, crater cells before sculk cells, and protectLegendariesIn runs over
-// a job's zone in every tick that writes it. No explosion, no entity is touched, no item is dropped by a
-// carved block. Deviations: README.md (C-16).
+// a crater's zone in every tick that writes it. An entity hit's sculk patch (patch.ts) rides the same queue.
+// No explosion, no entity is touched, no item is dropped by a carved block. Deviations: README.md (C-16).
 
 import { type Block, type Dimension, LiquidType, type Vector3, system } from "@minecraft/server";
 import { type BlockBox, HOLDER_TYPES, type ProtectResult, protectLegendariesIn } from "../legendary/recovery";
@@ -32,14 +32,18 @@ const NOT_SCULK: ReadonlySet<string> = new Set(
 );
 const HOLDERS: ReadonlySet<string> = new Set(HOLDER_TYPES);
 
+/** A block hit's crater, or an entity hit's patch: sculk only, no crater cells, no protect pass. */
+export type CarveKind = "crater" | "patch";
+
 export interface CarveReport {
+  kind: CarveKind;
   boltId: string;
   dimensionId: string;
   impact: Vector3;
   face: Face;
   seed: number;
   plan: CarvePlan;
-  /** What protectLegendariesIn clears: the plan's box and the layer outside the face above it. */
+  /** What protectLegendariesIn clears: the plan's box and the layer outside the face above it. Never set for a patch. */
   zone: BlockBox | undefined;
   /** Planned cells this job actually turned to air / to sculk. */
   carved: Vector3[];
@@ -125,7 +129,7 @@ function emit(report: CarveReport): void {
     try {
       observer(report);
     } catch (err) {
-      log(`carve observer threw for bolt ${report.boltId}: ${errText(err)}`);
+      log(`${report.kind} observer threw for bolt ${report.boltId}: ${errText(err)}`);
     }
   }
 }
@@ -190,7 +194,7 @@ function finish(job: CarveJob): void {
   const r = job.report;
   r.doneTick = system.currentTick;
   log(
-    `crater ${r.boltId} done: crater ${r.carved.length}/${r.plan.air.length} cells, sculk ${r.sculked.length}/${r.plan.sculk.length} cells ` +
+    `${r.kind} ${r.boltId} done: crater ${r.carved.length}/${r.plan.air.length} cells, sculk ${r.sculked.length}/${r.plan.sculk.length} cells ` +
       `at ${fmt(r.impact)} face ${r.face} seed ${r.seed}; skipped ${r.skipped}, holders kept ${r.keptHolders}, ` +
       `legendaries moved ${r.protect.moved} handed back ${r.protect.handedBack}, ticks ${r.doneTick - r.hitTick + 1}`
   );
@@ -233,19 +237,20 @@ function zoneOf(plan: CarvePlan): BlockBox | undefined {
 }
 
 /**
- * Plans the crater of one block hit and queues it. The writes this tick's budget allows land at once, the
- * rest on the following ticks of the bolt interval.
+ * Queues a ready plan. The writes this tick's budget allows land at once, the rest on the following ticks of the
+ * bolt interval. A patch gets no protect zone: it removes no cell and never writes a holder or a frame, while
+ * protectLegendariesIn breaks every frame in its box.
  */
-export function carveBlockHit(boltId: string, dimension: Dimension, impact: Vector3, face: Face, seed: number): CarveReport {
-  const plan = planCrater(impact, face, seed, probeOf(dimension));
+export function queueCarve(kind: CarveKind, boltId: string, dimension: Dimension, plan: CarvePlan): CarveReport {
   const report: CarveReport = {
+    kind,
     boltId,
     dimensionId: dimension.id,
-    impact: { ...impact },
-    face,
-    seed,
+    impact: { ...plan.impact },
+    face: plan.face,
+    seed: plan.seed,
     plan,
-    zone: zoneOf(plan),
+    zone: kind === "crater" ? zoneOf(plan) : undefined,
     carved: [],
     sculked: [],
     skipped: 0,
@@ -255,11 +260,18 @@ export function carveBlockHit(boltId: string, dimension: Dimension, impact: Vect
     hitTick: system.currentTick,
     doneTick: -1,
   };
-  log(`crater ${boltId} planned: crater ${plan.air.length} cells, sculk ${plan.sculk.length} cells at ${fmt(impact)} face ${face} seed ${seed}`);
+  log(
+    `${kind} ${boltId} planned: crater ${plan.air.length} cells, sculk ${plan.sculk.length} cells at ${fmt(plan.impact)} face ${plan.face} seed ${plan.seed}`
+  );
   jobs.push({ boltId, dimension, plan, hitTick: report.hitTick, cursor: 0, protectedTick: -1, holdersLocked: false, report });
   drain();
   if (jobs.length > 0) wakeBoltLoop();
   return report;
+}
+
+/** Plans the crater of one block hit and queues it. */
+export function carveBlockHit(boltId: string, dimension: Dimension, impact: Vector3, face: Face, seed: number): CarveReport {
+  return queueCarve("crater", boltId, dimension, planCrater(impact, face, seed, probeOf(dimension)));
 }
 
 function onBolt(event: BoltEvent): void {

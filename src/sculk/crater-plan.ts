@@ -182,7 +182,7 @@ export function sculkCells(impact: Vector3, face: Face, seed: number, carved: Re
   return cells;
 }
 
-function boxOf(cells: readonly Vector3[]): CarvePlan["box"] {
+export function boxOf(cells: readonly Vector3[]): CarvePlan["box"] {
   if (cells.length === 0) return undefined;
   const min = { ...cells[0] };
   const max = { ...cells[0] };

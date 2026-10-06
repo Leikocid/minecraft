@@ -95,6 +95,7 @@ import "./katana-trail";
 import "./sculk-probe";
 import "./sculk-bolt";
 import "./sculk-carve";
+import "./sculk-hit";
 import { parkPenetrator } from "./penetrator";
 import { parkRing } from "./ring";
 import { registerOrbitalCannon } from "../orbital";
@@ -192,8 +193,8 @@ parkRing();
 registerDragonKatana();
 
 // Same binding problem: the release pack reads no owner on a SimulatedPlayer's
-// arrow and leaves it alone, so src/gametest/sculk-bolt.ts and sculk-carve.ts
-// drive this copy, its crater queue included.
+// arrow and leaves it alone, so src/gametest/sculk-bolt.ts, sculk-carve.ts and
+// sculk-hit.ts drive this copy, its crater queue and entity hits included.
 registerSculkCrossbow();
 
 // Which use-event a press actually produces on BDS 1.26.51.1 is an engine fact,
