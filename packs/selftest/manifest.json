@@ -4,20 +4,20 @@
     "name": "Andrew SelfTest BP",
     "description": "Dev-only behavior pack: runs in-engine self-checks and prints [selftest] lines. Never shipped in andrew.mcaddon.",
     "uuid": "9a1d7db6-8c9c-42a5-977d-fc396e14bae3",
-    "version": [1, 7, 1],
+    "version": [1, 7, 2],
     "min_engine_version": [1, 26, 50]
   },
   "modules": [
     {
       "type": "data",
       "uuid": "5ac74a10-8917-4fa9-a78c-7a276941f0d6",
-      "version": [1, 7, 1]
+      "version": [1, 7, 2]
     },
     {
       "type": "script",
       "language": "javascript",
       "uuid": "e53158e2-142a-4ea9-9425-fdff56b1835f",
-      "version": [1, 7, 1],
+      "version": [1, 7, 2],
       "entry": "scripts/main.js"
     }
   ],
@@ -28,7 +28,7 @@
     },
     {
       "uuid": "059934a3-e3d0-4cbb-a4c9-e11fda9bf905",
-      "version": [1, 7, 1]
+      "version": [1, 7, 2]
     }
   ]
 }
