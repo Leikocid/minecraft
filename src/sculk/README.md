@@ -1,6 +1,6 @@
 # Sculk Crossbow
 
-`registerSculkCrossbow()` (`index.ts`) arms the bolt pipeline and the block-hit crater. `src/main.ts` and the GameTest pack each arm their own copy:
+`registerSculkCrossbow()` (`index.ts`) arms the bolt pipeline, the block-hit crater and the entity hit. `src/main.ts` and the GameTest pack each arm their own copy:
 the release pack reads no owner on a SimulatedPlayer's arrow, so the GameTest copy is the one the scenarios drive.
 
 ## `bolt.ts` — shot → bolt, flight, trail, expiry (`L0-sclk-p002`, `p003`, `ent2`, `ent3`)
@@ -140,3 +140,54 @@ rules, the budget, FIFO order, protection order, and write-time re-checks. The B
 - `sculk_carve_legendary_survives`.
 
 The shared deny list is `src/terrain/keep.ts` (`tests/terrain-keep.test.mjs`).
+
+## `hit.ts`, `patch.ts` — entity hit → fixed damage and a sculk patch (`L0-sclk-p004`, `r002`, `r004`, `adr-scdm` §3, `xasm24`)
+
+**Damage.** `SONIC_BOOM_DAMAGE` = 10 HP is the Warden's boom on Normal (`xasm23`), the same at every difficulty. Every direct
+hit on a living target takes exactly D: absorption first, then health. Armour, Protection and a raised shield do not
+reduce it. The mechanism is the one diagnose-CNTR-X22 and -X23 measured; it is not the shipped Scythe pattern:
+- the cause is `sonicBoom`. `projectile` throws without a projectile entity, and a raised shield cancels `entityAttack`.
+  `sonicBoom` passes armour, Protection and the shield, credits `damagingEntity` (the bolt's owner while it is valid)
+  and lets a totem save;
+- if hp ≤ D, one `applyDamage(hp + 100)` kills inside a window and through a shield;
+- otherwise `applyDamage(D)` gives the flash, the sound and the exact damage. Inside the engine's hurt window (10 ticks
+  from the last hit that landed) it takes 0 or the difference, so health is then written to hp − D. The write is made
+  **only inside a window the script knows of**:
+  - the crossbow's own hits that took health, or that landed on a target with the absorption effect;
+  - any `entityHurt` on the target, from any source.
+
+  Outside a window a write would take D a second time from health after `applyDamage` took it from absorption.
+  `setWindowWrite(false)` turns the write off. Only the T17 negative control uses it.
+
+**Living** = it has `minecraft:health` and is not a Creative or Spectator player, an armour stand, an end crystal, a boat or
+a minecart (`xasm24`). Any other entity hit gets no damage and still gets the patch. A target that is already gone ends
+with neither.
+
+**Patch** (`patch.ts`, pure, `tests/sculk-hit.test.mjs`). The patch uses the crater's ragged footprint (`sculkColumns(seed)`):
+5×5, no corners, about 30 % of the outer ring bare. It is centred on the target's feet column. In each column it takes the
+first cell met coming down from one cell above the feet that is not air or passable. That cell turns to sculk if it is
+`solid` and has air or a passable block above it. The search goes at most 6 cells below the feet. So a step beside the
+target gets sculk, a wall two high stays bare, and a target 7 or more above the ground gets no patch. The plan has no
+crater cells. It rides the carve queue as a `patch` job (`queueCarve`), with the same budget and the same write-time
+re-checks, and logs `sculk: patch <bolt> done: …`.
+
+### Deviations (C-16)
+
+1. **A patch runs no `protectLegendariesIn`.** `p004` step 5 queues it "behind" the protect pass. But a patch removes no cell
+   and never writes a holder, a frame or a container, so there is nothing to protect. The pass itself would break every
+   frame in the box and empty legendaries out of chests next to the target. A frame is a cell, so that would also break
+   T10's "no cell removed".
+2. **Bolts 2 and 3 of a volley take their D from health, even when absorption is left.** Stable 2.10.0 cannot read
+   absorption. Inside the window `applyDamage` takes nothing, so the write is the only way to deal D. It still takes D
+   once per bolt, and the first bolt of the window takes D from absorption first.
+3. **A plant on a cell that turns to sculk pops**, as it does on the crater's sculk.
+
+**Proof.** The node half is `tests/sculk-hit.test.mjs`. It covers the patch planner over 1000 seeds, and the damage decision
+against an engine model built from the X22 measurements: the window, absorption, the shield, the lethal path,
+non-living targets and the negative control. The BDS half is `src/gametest/sculk-hit.ts`:
+- `sculk_hit_fixed_damage` (ac06, ac07, absorption);
+- `sculk_hit_armour_shield` (ac08, with entityAttack controls);
+- `sculk_hit_multishot_window` (ac17, a real Multishot volley and its negative control);
+- `sculk_hit_only_target` (ac09);
+- `sculk_hit_patch_no_crater` (ac10);
+- `sculk_hit_kill_credit`.

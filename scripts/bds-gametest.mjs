@@ -447,6 +447,13 @@ const EXPECTED_TESTS = [
   'andrew:sculk_carve_sculk_survives_reload',
   'andrew:sculk_carve_keep_list',
   'andrew:sculk_carve_legendary_survives',
+  // SCLK-HIT-01 — src/gametest/sculk-hit.ts (L0-sclk-p004; ac06, ac07, ac08, ac09, ac10, ac17)
+  'andrew:sculk_hit_fixed_damage',
+  'andrew:sculk_hit_armour_shield',
+  'andrew:sculk_hit_multishot_window',
+  'andrew:sculk_hit_only_target',
+  'andrew:sculk_hit_patch_no_crater',
+  'andrew:sculk_hit_kill_credit',
 ];
 
 /**

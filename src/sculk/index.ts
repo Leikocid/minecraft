@@ -1,9 +1,12 @@
 // The Sculk Crossbow module. Deviations from the spec: README.md (C-16).
 
 import { registerBolts } from "./bolt";
-export { CARVE_BUDGET_PER_TICK, type CarveReport, SCULK, carveBlockHit, kindOf, observeCarves, pendingCarves, probeOf } from "./carve";
+export { CARVE_BUDGET_PER_TICK, type CarveKind, type CarveReport, SCULK, carveBlockHit, kindOf, observeCarves, pendingCarves, probeOf, queueCarve } from "./carve";
 export { CRATER_DEPTH, CRATER_HALF, type CarvePlan, type CellKind, type Face, cellAt, craterColumns, planCrater, sculkColumns } from "./crater-plan";
 import { registerCarve } from "./carve";
+export { HURT_WINDOW_TICKS, type HitObserver, type HitPath, type HitReport, SONIC_BOOM_DAMAGE, observeHits, setWindowWrite } from "./hit";
+import { registerHit } from "./hit";
+export { PATCH_REACH_DOWN, PATCH_REACH_UP, feetCell, planPatch } from "./patch";
 
 export {
   BOLT_ID,
@@ -26,5 +29,6 @@ export {
 export function registerSculkCrossbow(): void {
   registerBolts();
   registerCarve();
-  console.warn("[andrew] sculk crossbow armed (entitySpawn + projectile hits, block-hit crater)");
+  registerHit();
+  console.warn("[andrew] sculk crossbow armed (entitySpawn + projectile hits, block-hit crater, entity-hit damage and patch)");
 }
