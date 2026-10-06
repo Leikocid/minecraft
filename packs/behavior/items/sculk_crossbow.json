@@ -26,7 +26,7 @@
         "value": 1
       },
       "minecraft:use_modifiers": {
-        "use_duration": 1.25,
+        "use_duration": 2.5,
         "movement_modifier": 0.35
       },
       "minecraft:shooter": {
