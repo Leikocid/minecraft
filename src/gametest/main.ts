@@ -93,10 +93,12 @@ import "./katana";
 import "./katana-fall";
 import "./katana-trail";
 import "./sculk-probe";
+import "./sculk-bolt";
 import { parkPenetrator } from "./penetrator";
 import { parkRing } from "./ring";
 import { registerOrbitalCannon } from "../orbital";
 import { registerDragonKatana } from "../katana";
+import { registerSculkCrossbow } from "../sculk";
 import { SPAWN_EVENT } from "../structures/spawn-search";
 
 const WEB_SWORD_ID = WEB_SWORD.itemId;
@@ -187,6 +189,10 @@ parkRing();
 // Same binding problem: the release pack's Katana handlers receive no
 // SimulatedPlayer, so src/gametest/katana.ts drives this copy.
 registerDragonKatana();
+
+// Same binding problem: the release pack reads no owner on a SimulatedPlayer's
+// arrow and leaves it alone, so src/gametest/sculk-bolt.ts drives this copy.
+registerSculkCrossbow();
 
 // Which use-event a press actually produces on BDS 1.26.51.1 is an engine fact,
 // not a documented one, and src/websword/trap.ts subscribes to both. This

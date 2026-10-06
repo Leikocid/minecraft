@@ -432,6 +432,15 @@ const EXPECTED_TESTS = [
   'andrew:probe_sculk_sonic_particle',
   'andrew:probe_sculk_carve_budget',
   'andrew:probe_sculk_surfaces_reload',
+  // SCLK-BOLT-01 — src/gametest/sculk-bolt.ts (L0-sclk-p002, p003; ac04, ac05)
+  'andrew:sculk_bolt_one_arrow_one_bolt',
+  'andrew:sculk_bolt_multishot_three_bolts',
+  'andrew:sculk_bolt_trail_harmless',
+  'andrew:sculk_bolt_expires_after_lifetime',
+  'andrew:sculk_bolt_expires_in_void',
+  'andrew:sculk_bolt_expires_past_simulation_distance',
+  'andrew:sculk_bolt_expires_leaving_loaded_chunks',
+  'andrew:sculk_bolt_unloaded_under_it_and_reloaded',
 ];
 
 /**
