@@ -256,6 +256,12 @@ function checkAttachables({ behaviorDir, resourceDir, parsed, errors }) {
           }
         }
       }
+      if (bones.size === 0) continue;
+      for (const bone of (controller.part_visibility ?? []).flatMap((entry) => Object.keys(entry ?? {}))) {
+        if (bone !== '*' && !bones.has(bone)) {
+          errors.push(new ValidationError(file, 'description.render_controllers', `${controllerId} shows or hides bone ${bone}, which the attachable's geometry does not have`));
+        }
+      }
     }
 
     for (const [key, path] of Object.entries(description.textures ?? {})) {

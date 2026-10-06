@@ -17,8 +17,16 @@
         "hold_first_person": "animation.andrew.sculk_crossbow.hold_first_person"
       },
       "scripts": {
+        "initialize": [
+          "v.loaded = 0;",
+          "v.ud_first = 0;",
+          "v.ud_last = 0;"
+        ],
         "pre_animation": [
-          "v.draw = ((q.main_hand_item_use_duration > 0) && (q.main_hand_item_max_duration > 0)) ? math.clamp(1 - q.main_hand_item_use_duration / q.main_hand_item_max_duration, 0, 1) : 0;"
+          "v.loaded = (q.main_hand_item_use_duration > 0) ? 0 : ((((v.ud_last > 0) && (v.ud_last <= 1)) && (v.ud_first >= (q.main_hand_item_max_duration - 1))) ? 1 : v.loaded);",
+          "v.ud_first = ((q.main_hand_item_use_duration > 0) && (v.ud_last <= 0)) ? q.main_hand_item_use_duration : v.ud_first;",
+          "v.ud_last = q.main_hand_item_use_duration;",
+          "v.draw = (v.loaded > 0) ? 1 : (((q.main_hand_item_use_duration > 0) && (q.main_hand_item_max_duration > 0)) ? math.clamp(1 - q.main_hand_item_use_duration / q.main_hand_item_max_duration, 0, 1) : 0);"
         ],
         "animate": [
           "draw",

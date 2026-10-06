@@ -463,6 +463,8 @@ const EXPECTED_TESTS = [
   'andrew:legendary_sculk_crossbow_void_thrown',
   'andrew:sculk_enchant_piercing_stripped',
   'andrew:sculk_enchant_piercing_hand_change',
+  // SCLKUI-LOADED-01 — src/gametest/sculk-look.ts: the session shapes the crossbow's loaded look reads
+  'andrew:sculk_look_loaded_sessions',
 ];
 
 /**

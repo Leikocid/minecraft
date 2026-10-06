@@ -8,6 +8,10 @@
       ],
       "textures": [
         "Texture.default"
+      ],
+      "part_visibility": [
+        { "*": true },
+        { "bolt": "v.loaded" }
       ]
     }
   }
