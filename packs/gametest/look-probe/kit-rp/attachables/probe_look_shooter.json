@@ -1,0 +1,39 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:attachable": {
+    "description": {
+      "identifier": "andrew:probe_look_shooter",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "rest": "textures/andrew_probe/look_rest",
+        "pull": "textures/andrew_probe/look_pull",
+        "charged": "textures/andrew_probe/look_charged"
+      },
+      "geometry": {
+        "default": "geometry.andrew.probe_look"
+      },
+      "animations": {
+        "readout": "animation.andrew.probe_look.readout"
+      },
+      "scripts": {
+        "pre_animation": [
+          "v.mhud = q.main_hand_item_use_duration;",
+          "v.irun = q.item_remaining_use_duration('main_hand', 1.0);",
+          "v.imud = q.item_max_use_duration;",
+          "v.iui = q.is_using_item;",
+          "v.iic = q.item_is_charged;",
+          "v.gaf = q.get_animation_frame;",
+          "v.look_state = (v.iic > 0.0) ? 2 : ((v.mhud > 0.0) ? 1 : 0);"
+        ],
+        "animate": [
+          "readout"
+        ]
+      },
+      "render_controllers": [
+        "controller.render.andrew.probe_look"
+      ]
+    }
+  }
+}

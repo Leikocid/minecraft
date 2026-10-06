@@ -1,0 +1,18 @@
+{
+  "format_version": "1.21.90",
+  "minecraft:item": {
+    "description": {
+      "identifier": "andrew:probe_look_flip",
+      "menu_category": {
+        "category": "equipment"
+      }
+    },
+    "components": {
+      "minecraft:display_name": {
+        "value": "Probe: flipbook icon"
+      },
+      "minecraft:icon": "andrew_probe_look_flip",
+      "minecraft:max_stack_size": 1
+    }
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.andrew.probe_look.readout": {
+      "loop": true,
+      "bones": {
+        "bar1": {
+          "scale": [
+            1,
+            "math.clamp(v.iic, 0, 1)",
+            1
+          ]
+        },
+        "bar2": {
+          "scale": [
+            1,
+            "math.clamp(v.gaf / 5, 0, 1)",
+            1
+          ]
+        },
+        "bar3": {
+          "scale": [
+            1,
+            "math.clamp(v.iui, 0, 1)",
+            1
+          ]
+        },
+        "bar4": {
+          "scale": [
+            1,
+            "math.clamp(v.mhud / 25, 0, 1)",
+            1
+          ]
+        },
+        "bar5": {
+          "scale": [
+            1,
+            "math.clamp(v.irun, 0, 1)",
+            1
+          ]
+        },
+        "bar6": {
+          "scale": [
+            1,
+            "math.clamp(v.imud / 500, 0, 1)",
+            1
+          ]
+        }
+      }
+    }
+  }
+}
