@@ -1,7 +1,9 @@
-// The Sculk Crossbow in hand: an attachable whose string and limbs follow the draw.
-// The pull is driven by the two queries SCLKUI-PROBE-01 measured live on this item
-// (docs/feedback/probe-crossbow-look.md, Q3): it must reach full exactly as the
-// engine's own use countdown runs out, i.e. the tick the charge completes.
+// The Sculk Crossbow in hand: an attachable whose string and limbs follow the draw, and which
+// shows a bolt on the stock from the end of a full draw until the press that fires it.
+// Both states are read from the two queries SCLKUI-PROBE-01 measured live on this item
+// (docs/feedback/probe-crossbow-look.md, Q3). No query tells "loaded" for this id, so the
+// loaded state is the shape of the use session; src/gametest/sculk-look.ts checks that shape
+// against the engine's own answer on BDS, session kind by session kind.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -17,6 +19,7 @@ const item = readJson(join(root, 'packs', 'behavior', 'items', 'sculk_crossbow.j
 const attachable = readJson(join(rp, 'attachables', 'sculk_crossbow.json'))['minecraft:attachable'].description;
 const geometry = readJson(join(rp, 'models', 'entity', 'sculk_crossbow.geo.json'))['minecraft:geometry'][0];
 const animations = readJson(join(rp, 'animations', 'sculk_crossbow.animation.json')).animations;
+const controller = readJson(join(rp, 'render_controllers', 'sculk_crossbow.render_controllers.json')).render_controllers[attachable.render_controllers[0]];
 const DRAW = animations[attachable.animations.draw];
 const HOLD_FIRST_PERSON = animations[attachable.animations.hold_first_person];
 const DRAW_TICKS = Math.round(item.components['minecraft:shooter'].max_draw_duration * 20);
@@ -33,6 +36,7 @@ function tokenize(src) {
 }
 
 const COMPARE = new Set(['<', '>', '<=', '>=', '==', '!=']);
+const ARITHMETIC = new Set(['+', '-', '*', '/', 'u-']);
 
 function parse(src) {
   const t = tokenize(src);
@@ -86,7 +90,7 @@ function parse(src) {
     }
     return { op: 'id', name: tok };
   }
-  // `v.name = expr;` statements, as pre_animation carries them.
+  // `v.name = expr;` statements, as initialize and pre_animation carry them.
   let target;
   if (t[1] === '=' && /^(v|variable)\./.test(t[0])) {
     target = t[0].replace(/^variable\./, 'v.');
@@ -146,33 +150,80 @@ function walk(node, visit) {
   for (const arg of node.args ?? []) walk(arg, visit);
 }
 
-/** Every Molang string of the attachable and its animations. */
+const visibility = controller.part_visibility ?? [];
+
+/** Every Molang string of the attachable, its animations and its render controller. */
 function molangStrings() {
-  const out = [...attachable.scripts.pre_animation];
+  const out = [...attachable.scripts.initialize, ...attachable.scripts.pre_animation];
   for (const entry of attachable.scripts.animate) if (typeof entry === 'object') out.push(...Object.values(entry));
   for (const anim of [DRAW, HOLD_FIRST_PERSON])
     for (const channels of Object.values(anim.bones)) for (const values of Object.values(channels)) for (const v of [values].flat()) if (typeof v === 'string') out.push(v);
+  for (const entry of visibility) for (const v of Object.values(entry)) if (typeof v === 'string') out.push(v);
   return out;
 }
 
+const initialize = attachable.scripts.initialize.map(parse);
 const preAnimation = attachable.scripts.pre_animation.map(parse);
+const boltShown = parse(visibility.find((entry) => 'bolt' in entry)?.bolt ?? '0').ast;
 
-/** v.draw for one frame, from what the client's queries answer. */
-function pull(mhud, mhmd) {
-  const env = { q: { main_hand_item_use_duration: mhud, main_hand_item_max_duration: mhmd }, v: {}, c: {} };
-  for (const { target, ast } of preAnimation) env.v[target.slice(2)] = evaluate(ast, env);
-  return env.v.draw;
+/**
+ * One attachable instance: its variables live from frame to frame, as the client keeps them.
+ * `frame()` answers what one rendered frame shows for what the client's queries read.
+ */
+function hand() {
+  const v = {};
+  for (const { target, ast } of initialize) v[target.slice(2)] = evaluate(ast, { q: {}, v, c: {} });
+  return {
+    v,
+    frame(mhud, mhmd = 25) {
+      const env = { q: { main_hand_item_use_duration: mhud, main_hand_item_max_duration: mhmd }, v, c: {} };
+      for (const { target, ast } of preAnimation) v[target.slice(2)] = evaluate(ast, env);
+      return { draw: v.draw, bolt: Boolean(evaluate(boltShown, env)) };
+    },
+  };
 }
 
 // ------------------------------------------------------------------ measured use sessions
 
 // main_hand_item_use_duration counts the remaining ticks of the use session and reads 0 once it
-// has ended; main_hand_item_max_duration is 25 throughout. Measured on BDS 1.26.51.1 with the
-// probe's Molang readout: probe-crossbow-look.md Q3 (product row) and its Quick Charge addendum.
-const session = (start, ticks = 34) => Array.from({ length: ticks + 1 }, (_, t) => (t === 0 ? start : Math.max(start - t, 0)));
-const PRODUCT = { start: 25, complete: 25, mhmd: 25 };
-const QC1 = { start: 20, complete: 20, mhmd: 25 };
-const QC3 = { start: 10, complete: 10, mhmd: 25 };
+// has ended; main_hand_item_max_duration is 25 throughout (probe-crossbow-look.md Q3 and its
+// Quick Charge addendum). A session opens at its start ud and loses one a tick; a release at +k
+// leaves ud = start − k, the last value the client reads before 0.
+const opened = (start, until, endUd = 0) => Array.from({ length: until }, (_, t) => start - t).concat(endUd > 0 ? [endUd] : []);
+const idle = (ticks) => Array(ticks).fill(0);
+
+// src/gametest/sculk-look.ts pins these on BDS 1.26.51.1: every kind of session a player can make
+// on the product crossbow, and the engine's own answer — an arrow spent at the load and a shot on
+// the next tap. `ticks` is the session as the attachable reads it.
+const SESSIONS = [
+  { name: 'full_draw', ticks: opened(25, 25), loaded: true }, // start(ud=25) complete@+25, arrow spent, tap SHOT
+  { name: 'release_at_1', ticks: opened(25, 1, 24), loaded: false }, // release@+1(ud=24): the tap of an empty crossbow
+  { name: 'release_at_12', ticks: opened(25, 12, 13), loaded: false },
+  { name: 'release_at_23', ticks: opened(25, 23, 2), loaded: false },
+  { name: 'quick_charge_1', ticks: opened(20, 20), loaded: false }, // start(ud=20) complete@+20, never loads (README deviation 5)
+  { name: 'quick_charge_3', ticks: opened(10, 10), loaded: false },
+  { name: 'no_arrows_creative', ticks: opened(25, 25), loaded: true },
+  { name: 'creative_with_arrows', ticks: opened(25, 25), loaded: true },
+];
+// The same shapes as a loaded draw, with the engine answering "empty": what the look cannot tell
+// (README, the loaded state's deviations 1 and 2).
+const BLIND = [
+  { name: 'release_at_24', ticks: opened(25, 24, 1), loaded: false }, // release@+24(ud=1)
+  { name: 'no_arrows_survival', ticks: opened(25, 25), loaded: false }, // start(ud=25) complete@+25, nothing spent, tap nothing
+];
+
+/** Feed ticks to a hand at `fps` frames per game tick; returns the frame shown on each tick's last frame. */
+function play(h, ticks, fps) {
+  const out = [];
+  for (const mhud of ticks) {
+    let shown;
+    for (let f = 0; f < fps; f++) shown = h.frame(mhud);
+    out.push(shown);
+  }
+  return out;
+}
+
+const FRAME_RATES = [1, 3];
 
 test('the attachable belongs to the Sculk Crossbow and draws with its own geometry and icon', () => {
   assert.equal(attachable.identifier, item.description.identifier);
@@ -181,11 +232,17 @@ test('the attachable belongs to the Sculk Crossbow and draws with its own geomet
   assert.deepEqual(attachable.render_controllers, ['controller.render.andrew.sculk_crossbow']);
 });
 
-test('the pull reads only the two queries the probe measured live, and no clock', () => {
+test('both states read only the two queries the probe measured live, and no clock or counter', () => {
   const names = new Set();
   for (const src of molangStrings()) walk(parse(src).ast, (n) => n.op === 'id' && names.add(n.name.replace(/^query\./, 'q.').replace(/^variable\./, 'v.').replace(/^context\./, 'c.')));
   assert.deepEqual([...names].filter((n) => n.startsWith('q.')).sort(), ['q.main_hand_item_max_duration', 'q.main_hand_item_use_duration']);
   assert.deepEqual([...names].filter((n) => n.startsWith('c.')), ['c.is_first_person']);
+  // A counter advances a variable from its own value; here a variable only ever holds its value.
+  for (const { target, ast } of preAnimation)
+    walk(ast, (n) => {
+      if (!ARITHMETIC.has(n.op)) return;
+      walk(n, (m) => assert.ok(!(m.op === 'id' && m.name === target), `${target} is computed from itself: a counter`));
+    });
   // No timeline of its own: an expression per bone, no keyframes, no length, no anim_time.
   for (const anim of [DRAW, HOLD_FIRST_PERSON]) {
     assert.equal(anim.animation_length, undefined);
@@ -203,28 +260,86 @@ test('every comparison is parenthesised: the client binds && tighter than ==', (
   }
 });
 
-test('the pull rises over the draw and is gone on the tick the charge completes', async (t) => {
-  for (const [name, s] of [['no enchantment', PRODUCT], ['Quick Charge I', QC1], ['Quick Charge III', QC3]]) {
-    await t.test(name, () => {
-      const p = session(s.start).map((mhud) => pull(mhud, s.mhmd));
-      assert.equal(pull(0, s.mhmd), 0, 'at rest the string is home');
-      for (let tick = 1; tick < s.complete; tick++) assert.ok(p[tick] > p[tick - 1], `+${tick}: the pull only grows while the session runs`);
-      assert.ok(p[s.complete - 1] > 0.9, `the last tick of the session is drawn nearly full, got ${p[s.complete - 1]}`);
-      for (let tick = s.complete; tick < p.length; tick++) assert.equal(p[tick], 0, `+${tick}: no pull outlives the session`);
-    });
-  }
-  assert.equal(PRODUCT.complete, DRAW_TICKS, 'without enchantment the session ends with max_draw_duration');
+test('the loaded state is the third state of the same model: same attachable, geometry and controller', () => {
+  assert.ok(geometry.bones.some((b) => b.name === 'bolt' && b.parent === 'crossbow'), 'the bolt is a bone of the crossbow geometry');
+  assert.deepEqual(visibility, [{ '*': true }, { bolt: 'v.loaded' }]);
+  assert.equal(DRAW.bones.bolt, undefined, 'the bolt does not slide with the draw');
+  assert.equal(Object.keys(attachable.animations).length, 2, 'no animation of its own');
 });
 
-test('a press that fires opens a one-tick session, and the string moves by one tick of the draw', () => {
-  // start@+0 (ud=25), release@+1 (ud=24): probe Q3, "нажатие-выстрел тоже открывает сессию".
-  const p = [25, 24, 0].map((mhud) => pull(mhud, 25));
-  assert.ok(Math.max(...p) <= 1 / 25 + 1e-9, `got ${p}`);
+test('at rest: the string is home and there is no bolt', () => {
+  const h = hand();
+  for (const shown of play(h, idle(40), 3)) assert.deepEqual(shown, { draw: 0, bolt: false });
+});
+
+test('the pull rises over the draw; a full draw ends loaded, and the loaded look holds until the next press', async (t) => {
+  for (const fps of FRAME_RATES) {
+    await t.test(`${fps} frame(s) a tick`, () => {
+      const h = hand();
+      const shown = play(h, [...idle(3), ...opened(25, 25), ...idle(200)], fps);
+      const draw = shown.slice(3, 28);
+      for (let tick = 1; tick < 25; tick++) assert.ok(draw[tick].draw > draw[tick - 1].draw, `+${tick}: the pull only grows while the session runs`);
+      assert.ok(draw.every((s) => !s.bolt), 'no bolt while drawing');
+      assert.ok(draw[24].draw > 0.9, `the last tick of the session is drawn nearly full, got ${draw[24].draw}`);
+      for (const [i, s] of shown.slice(28).entries()) assert.deepEqual(s, { draw: 1, bolt: true }, `+${25 + i}: loaded: string on the latch, bolt on the stock`);
+    });
+  }
+  assert.equal(DRAW_TICKS, 25, 'without enchantment the session ends with max_draw_duration');
+});
+
+test('the press that fires takes the loaded look off in the tick of the shot', async (t) => {
+  // start@+0 (ud=25) with bolt@+0, release@+1 (ud=24): the tap of a loaded crossbow (probe Q3, sculk-look).
+  for (const fps of FRAME_RATES) {
+    await t.test(`${fps} frame(s) a tick`, () => {
+      const h = hand();
+      play(h, [...opened(25, 25), ...idle(10)], fps);
+      const [shot, next, ...after] = play(h, [25, 24, ...idle(20)], fps);
+      assert.equal(shot.bolt, false, 'the bolt is gone on the shot tick');
+      assert.ok(shot.draw <= 1 / 25 && next.draw <= 1 / 25 + 1e-9, `the string is released, got ${shot.draw}, ${next.draw}`);
+      for (const s of after) assert.deepEqual(s, { draw: 0, bolt: false });
+    });
+  }
+});
+
+test('a press held after the shot draws again and ends loaded, as the engine reloads', () => {
+  // fire_then_hold: start(ud=25) bolt@+0 complete@+25, an arrow spent, the next tap SHOT.
+  const h = hand();
+  play(h, [...opened(25, 25), ...idle(10)], 3);
+  const shown = play(h, [...opened(25, 25), ...idle(5)], 3);
+  assert.equal(shown[0].bolt, false, 'the shot takes the bolt off');
+  assert.deepEqual(shown.at(-1), { draw: 1, bolt: true });
+});
+
+test('every measured session ends in the state the engine left the crossbow in', async (t) => {
+  for (const s of SESSIONS) {
+    await t.test(s.name, () => {
+      for (const fps of FRAME_RATES) {
+        const h = hand();
+        const end = play(h, [...idle(2), ...s.ticks, ...idle(40)], fps).at(-1);
+        assert.deepEqual(end, s.loaded ? { draw: 1, bolt: true } : { draw: 0, bolt: false }, `${fps} fps`);
+      }
+    });
+  }
+});
+
+test('what the look cannot tell: a release one tick short and a draw with no arrows read as loaded', async (t) => {
+  for (const s of BLIND) {
+    await t.test(s.name, () => {
+      assert.equal(s.loaded, false, 'the engine left it empty');
+      const h = hand();
+      const end = play(h, [...s.ticks, ...idle(5)], 3).at(-1);
+      // The next tap opens a session, and that takes the look off as it does after a real load.
+      assert.deepEqual(play(h, [25, 24, ...idle(3)], 3).at(-1), { draw: 0, bolt: false });
+      assert.deepEqual(end, { draw: 1, bolt: true }, 'and the look shows it loaded: README, the loaded state, deviations 1–2');
+    });
+  }
 });
 
 test('a bow drawn in the main hand leaves an off-hand crossbow at rest', () => {
-  // Probe Q3 bow row: 71988 of 72000 at +12.
-  assert.ok(pull(71988, 72000) < 0.001);
+  // Probe Q3 bow row: 71988 of 72000 at +12; released after 25 ticks.
+  const h = hand();
+  for (const ud of opened(72000, 25, 71975)) assert.ok(h.frame(ud, 72000).draw < 0.001);
+  assert.deepEqual(h.frame(0, 25), { draw: 0, bolt: false });
 });
 
 // ------------------------------------------------------------------ geometry
@@ -322,4 +437,24 @@ test('the string stays one piece: on the limbs at rest, a V to the latch when dr
   const centre = strings[0];
   assert.ok(Math.abs(front(centre, 1) + depth - latch.origin[2]) < 1e-9, 'fully drawn, the string reaches the latch');
   for (let i = 1; i < limbs.length; i++) assert.ok(back(limbs[i].bone) > back(limbs[i - 1].bone), 'the limbs bend more towards the tips');
+});
+
+test('the bolt lies on the stock, nocked on the drawn string, its shard head out past the front', () => {
+  const bolt = cubesOf('bolt');
+  const [shaft, ...rest] = bolt;
+  const stockTop = bones.get('crossbow').cubes[0].origin[1] + bones.get('crossbow').cubes[0].size[1];
+  assert.equal(shaft.origin[1], stockTop, 'the shaft rests on top of the stock');
+  assert.equal(shaft.origin[0] + shaft.size[0] / 2, 0, 'on the centre line');
+  const string = bones.get('string_0').cubes[0];
+  assert.ok(Math.abs(shaft.origin[2] + shaft.size[2] - (string.origin[2] + back('string_0'))) < 1e-9, 'its nock is on the string held at the latch');
+  const front = Math.min(...geometry.bones.filter((b) => b.name !== 'bolt').flatMap((b) => (b.cubes ?? []).map((c) => c.origin[2])));
+  const tip = Math.min(...bolt.map((c) => c.origin[2]));
+  assert.ok(tip <= front - 2, `the head stands out past the front of the crossbow: tip ${tip}, front ${front}`);
+  // Our bolt flies as an echo shard: a dark shaft, an aqua shard for a head, sculk fins. No wood, flint or feathers.
+  assert.equal(colourOf(shaft), DARK);
+  const head = rest.filter((c) => c.origin[2] < front);
+  const fins = rest.filter((c) => c.origin[2] >= front);
+  assert.ok(head.length >= 2 && head.every((c) => colourOf(c) === STRING), 'the head is aqua');
+  assert.ok(fins.length >= 2 && fins.every((c) => colourOf(c) === LIMB), 'the fins are sculk');
+  for (const c of fins) assert.ok(c.origin[2] > shaft.origin[2] && c.origin[2] + c.size[2] < shaft.origin[2] + shaft.size[2], 'the fins sit on the shaft');
 });

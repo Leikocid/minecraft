@@ -257,6 +257,14 @@ test('a controller asking for a texture key the attachable does not define is re
   assert.ok(errors.some((e) => /uses Texture\.charged, which the attachable does not define/.test(e.message)));
 });
 
+test('a controller showing or hiding a bone the geometry lacks is rejected', () => {
+  const assets = heldAssets();
+  assets['resource/render_controllers/held.render_controllers.json'].render_controllers['controller.render.andrew.held'].part_visibility = [{ '*': true }, { string: 'v.loaded' }, { bolt: 'v.loaded' }];
+  const errors = validateEntities({ 'resource/attachables/held.json': attachable(), ...assets });
+  assert.equal(errors.length, 1, errors.map((e) => e.message).join('\n'));
+  assert.match(errors[0].message, /controller\.render\.andrew\.held shows or hides bone bolt, which the attachable's geometry does not have/);
+});
+
 test('vanilla attachable ids, controllers and textures are not resolved against this repository', () => {
   const vanilla = attachable({ id: 'minecraft:bow', geometry: 'geometry.bow_standby', animation: 'animation.bow.wield', controller: 'controller.render.bow', texture: 'textures/items/bow_standby' });
   assert.deepStrictEqual(validateEntities({ 'resource/attachables/held.json': vanilla }).map((e) => e.message), []);
