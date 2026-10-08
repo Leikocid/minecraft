@@ -51,6 +51,19 @@ const LAG1_MAX_GAP = 0.08;
 const log = (msg: string): void => console.warn(`[gametest] storm-passive ${msg}`);
 const r2 = (n: number | undefined): string => (n === undefined ? "-" : Number.isFinite(n) ? n.toFixed(2) : String(n));
 const r4 = (n: number): string => n.toFixed(4);
+
+/** Uniformity of draws: share below the chance, ten-bin counts and their χ² (9 df; the 5 % point is 16.9). */
+function uniformity(draws: readonly number[]): string {
+  const bins = new Array<number>(10).fill(0);
+  let below = 0;
+  for (const d of draws) {
+    bins[Math.min(9, Math.floor(d * 10))]++;
+    if (d < PASSIVE_CHANCE) below++;
+  }
+  const e = draws.length / 10;
+  const chi = bins.reduce((acc, b) => acc + ((b - e) * (b - e)) / e, 0);
+  return `n=${draws.length} below-${PASSIVE_CHANCE}=${r4(below / Math.max(1, draws.length))} chi2=${r2(chi)} bins=[${bins.join(",")}]`;
+}
 const errText = (err: unknown): string => (err instanceof Error ? `${err.name}: ${err.message}` : String(err)).split("\n")[0];
 const close = (a: number, b: number): boolean => Math.abs(a - b) <= TOL + 1e-9;
 const cellKey = (v: Vector3): string => `${v.x},${v.y},${v.z}`;
@@ -551,6 +564,11 @@ scenario("storm_passive_rate", 7000, async (test, players, fails, arena) => {
   check(fails, "RATE", ref.ok && ref.delta > 0 && ref.rolls.length === 0, `golem reference ${r2(ref.delta)}`);
   await test.idle(CLEAR);
 
+  // Diagnostics, not gates: Math.random in a tight loop of this pack, and one draw per swing from this continuation,
+  // beside the passive's own draws (one per event callback).
+  const loop: number[] = [];
+  for (let i = 0; i < 200000; i++) loop.push(Math.random());
+  const continuation: number[] = [];
   const ids = new Set(units.map((u) => u.a.id));
   const from = reports.length;
   const struck = strikes.length;
@@ -570,6 +588,7 @@ scenario("storm_passive_rate", 7000, async (test, players, fails, arena) => {
       u.a.lookAtEntity(g);
       swings++;
       if (u.a.attackEntity(g)) accepted++;
+      continuation.push(Math.random());
     }
     round++;
     await test.idle(10);
@@ -586,6 +605,10 @@ scenario("storm_passive_rate", 7000, async (test, players, fails, arena) => {
     `RATE ROW P6 N=${RATE_N} window=[${RATE_LO};${RATE_HI}] chance=${PASSIVE_CHANCE} procs=${procs}/${sample.length} share=${r4(share)} ` +
       `rounds=${round} swings=${swings} accepted=${accepted} rolls-total=${all.length} ticks=${ticks} ms=${Date.now() - startMs}`
   );
+
+  log(`RATE ROW draws passive-callback ${uniformity(sample.map((r) => r.roll))}`);
+  log(`RATE ROW draws continuation ${uniformity(continuation)}`);
+  log(`RATE ROW draws tight-loop ${uniformity(loop)}`);
 
   // AC4 at scale: the half on cooldown procs at the same rate as the ready half.
   const coolingIds = new Set(units.filter((u) => u.cooling).map((u) => u.a.id));

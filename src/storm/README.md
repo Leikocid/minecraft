@@ -85,10 +85,16 @@ Scenarios `src/gametest/storm-passive.ts`: `storm_passive_damage` (sword referen
 N = 3 700 landed hits from 12 wielders, half on cooldown, share in [27.5 %; 32.5 %], every roll one landed hit, every
 miss the sword's hit and every proc the sword's hit + f(6)), `storm_passive_scripted` (Scythe volleys, inanimate).
 
+The rate scenario also logs the uniformity of the passive's own draws beside a tight loop (`RATE ROW draws`). Three
+samples gave 0.2838, 0.2822 and 0.2973 (pooled 0.2877, z = −2.8); the third logged the callback draws uniform (χ² 7.37
+over ten bins, 9 df) and the loop at 0.2991. A share that falls out low again is read from those rows first.
+
 ### Deviations (C-16), passive
 
 4. **The strike is the passive's own column**: `minecraft:electric_spark_particle` every 0.5 block for 8 blocks over a
    `minecraft:huge_explosion_lab_misc_emitter` flash, with `ambient.weather.lightning.impact` (probe-storm P1 ids;
    Bedrock has no "flash" particle). `visuals.ts` belongs to the active (STRM-ACTIVE-01); one call where both are
    wired, `setStrikeVisual(<its strike>)`, gives both the same look.
-5. **A melee on an armour stand never reaches the hurt events**, so the `inanimate` filter is proven by a scripted hit.
+5. **The `inanimate` filter is unproven on BDS.** An armour stand takes neither a melee nor a scripted `entityAttack`
+   into the hurt events at all (0 before-events, 0 hurts): nothing reached the filter. It stays for an inanimate that
+   does (probe-storm P5: "health" alone does not exclude the stand).
