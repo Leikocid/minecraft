@@ -99,6 +99,8 @@ export type StormObserver = (report: StormReport) => void;
 const landed = new Map<string, number>();
 const observers: StormObserver[] = [];
 let armed = false;
+/** This module's own applyDamage calls in flight. */
+let dealing = 0;
 
 const log = (msg: string): void => console.warn(`[andrew] storm: ${msg}`);
 const f2 = (n: number | undefined): string => (n === undefined ? "-" : n.toFixed(2));
@@ -196,6 +198,24 @@ function resistanceOf(entity: Entity): number {
   }
 }
 
+/**
+ * Whether the hit being processed is one of this module's own applyDamage calls. beforeEvents.entityHurt runs inside
+ * applyDamage, and the call is an entityAttack from the wielder, so the passive's handler cannot tell it from a melee
+ * any other way: without this check it rolls on the active's 10 and on its own overkill.
+ */
+export function isStormDealing(): boolean {
+  return dealing > 0;
+}
+
+function deal(target: Entity, amount: number, options: EntityApplyDamageOptions): boolean {
+  dealing++;
+  try {
+    return target.applyDamage(amount, options);
+  } finally {
+    dealing--;
+  }
+}
+
 function attackOptions(wielder: Entity | undefined): EntityApplyDamageOptions {
   const options: EntityApplyDamageOptions = { cause: EntityDamageCause.entityAttack };
   if (wielder?.isValid === true) options.damagingEntity = wielder;
@@ -264,7 +284,7 @@ export function stormDamage(target: Entity, damage: number, wielder: Entity | un
     const path = planStrike(hp, dPrime, known, absorbs);
     Object.assign(report, { defence, dPrime, hpBefore: hp, inWindow: known, path });
     const options = attackOptions(wielder);
-    const applied = target.applyDamage(path === "lethal" ? hp + OVERKILL : damage, options);
+    const applied = deal(target, path === "lethal" ? hp + OVERKILL : damage, options);
     report.applied = applied;
     let after = hpOf(health);
     if (path === "window" && after !== undefined) {
@@ -295,7 +315,7 @@ function finishLethal(target: Entity, wielder: Entity | undefined, damage: numbe
       return;
     }
     report.hpBefore = hp;
-    report.applied = target.applyDamage(hp + OVERKILL, attackOptions(wielder));
+    report.applied = deal(target, hp + OVERKILL, attackOptions(wielder));
     report.hpAfter = hpOf(health);
   } catch (err) {
     log(`lethal passive on ${report.targetType} ${report.targetId} refused: ${errText(err)}`);

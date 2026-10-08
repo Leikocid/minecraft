@@ -480,6 +480,10 @@ const EXPECTED_TESTS = [
   'andrew:storm_damage_active',
   'andrew:storm_damage_shield',
   'andrew:storm_damage_lethal',
+  // STRM-PASSIVE-01 — src/gametest/storm-passive.ts (L0-strm-ppas; probe-storm P6 sample)
+  'andrew:storm_passive_damage',
+  'andrew:storm_passive_cooldown',
+  'andrew:storm_passive_rate',
 ];
 
 /**
