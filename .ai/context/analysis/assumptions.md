@@ -1,7 +1,7 @@
 ---
 title: Assumptions
 type: analysis
-generated_at: "2026-10-08T18:47:14.763Z"
+generated_at: "2026-10-08T20:34:41.347Z"
 source_channel: rollout
 node_id: rollout-assumptions
 aliases: ["rollout-assumptions","assumptions"]
@@ -834,7 +834,7 @@ relates_to: ["L0-strm-acd", "L0-xasm30", "L0-strm-pprb"]
 
 
 
-### AS-ufoc-3 · \ (L0-ufoc-as03)
+### AS-ufoc-3 · "Exactly 15 minutes" allows the 5 s idle-check granularity (L0-ufoc-as03)
 
 # AS-ufoc-3 · "Exactly 15 minutes" allows the 5 s idle-check granularity
 

@@ -27,8 +27,8 @@ governs_files: ["src/storm/damage.ts"]
 It has three modes, mirroring `src/sculk/hit.ts` modes but **not importing them**:
 - **native**: the target is in no window. `applyDamage(D, { cause: entityAttack, damagingEntity: wielder })`.
 - **window**: the target was hit L ticks-ago < `HURT_WINDOW_TICKS` (10) by a hit of strength L.
-  - If P1 passes, `applyDamage(L + D, …)`; the engine takes the difference D and armours it.
-  - If P1 fails, compute D′ (vanilla armour reduction of D) and subtract it from health, *unless* `health − D′ ≤ 0`, in which case take the lethal path.
+  - Passive: raise the melee in beforeEvents.entityHurt by f(6) (P1 failed, diagnose-CNTR-X26).
+  - Active in a known window: D′ = f(10) from `equippable.totalArmor`/`totalToughness` + Protection EPF; `applyDamage(10)`, then write hp − D′, *unless* `health − D′ ≤ 0`, in which case take the lethal path.
 - **lethal**: `applyDamage` with a value that guarantees death after armour, so totems, the death message and kill credit fire natively.
 
 **Invariants**
@@ -37,4 +37,4 @@ It has three modes, mirroring `src/sculk/hit.ts` modes but **not importing them*
 - The helper records `(targetId → lastHitStrength, tick)` for every landed Storm hit, so a passive on an active (or the reverse) within 10 ticks still nets D.
 - Active and passive are **separate calls** (§05). They are never merged into one 16-HP call.
 - The return value of `applyDamage` is **not** evidence of damage, because it returns true when swallowed (`hit.ts:25`). Tests read health.
-- A raised shield cancels the call (platform). This is deviation (a) of `xcx27` until `xq8` is answered.
+- A raised shield facing the wielder (< 90°) cancels the call, `applyDamage` returns `false` and the shield wears D + 1, as for a vanilla hit; at ≥ 90° the call lands with armour. No deviation. On `false`, write nothing (window mode's write would pass the shield).

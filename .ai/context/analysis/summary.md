@@ -1,7 +1,7 @@
 ---
 title: Project Summary
 type: analysis
-generated_at: "2026-10-08T18:47:14.773Z"
+generated_at: "2026-10-08T20:34:41.356Z"
 source_channel: rollout
 node_id: rollout-summary
 aliases: ["rollout-summary","summary"]
@@ -69,7 +69,7 @@ The spec "Storm Blade + Elytra + Totem v1" (priority 620) is the only new raw. O
 - **The recipe book stays distinct.** The blade's outline ` L / WSW / L ` matches the **Web Sword's** (` W / WSW / W `, also with a diamond sword in the centre) more closely than the crossbow's (` E / DCD / E `). The keys differ (lightning rod and wind charge vs cobweb), so neither recipe shadows the other. Neither vanilla recipe overlaps a pack recipe.
 
 ## Decisions at L0 (v8)
-- `L0-adr-sbdm`: damage by difference-stacking in the hurt window, probe-gated (P1/P2).
+- `L0-adr-sbdm`: passive: before-event raise by f(6); active in window: write hp − f(10) (P1 failed, diagnose-CNTR-X26).
 - `L0-adr-sblt`: visuals from particles and sound; no `lightning_bolt`.
 - `L0-adr-sbvr`: the vanilla recipes.
 - **`L0-adr-sbkb` (reduce):** the beam hit's native knockback is allowed; the strikes add none. This resolves `L0-strm-cxkb`.
@@ -86,26 +86,26 @@ The spec "Storm Blade + Elytra + Totem v1" (priority 620) is the only new raw. O
 Reopen the iPad criteria after each epic merge.
 
 ## Still open at L0
-- **v8:** `xcx26` (the passive is swallowed by the hurt window). P1/P2 decide the mode, and it closes only on the build's negative-control GameTest. `xcx27` with `xq8` (a shield vs the beam; default deviation is a full block).
+- **v8:** `xcx26` (the passive is swallowed by the hurt window). P1/P2 decide the mode, and it closes only on the build's negative-control GameTest. `xcx27` resolved by measurement: the shield blocks the beam from the front only, as in vanilla; `xq8` default is option 2, with no deviation.
 - **Carried:** `xcx22`/`xcx23` (settled, kept for the record), `xq7`, `xcx3`, `xcx5`–`xcx8`, `xcx12`–`xcx14`, `lgnd-cx09`/`cx11`/`cx12`.
 
 
 ## Statistics
 
-- **Total artifacts:** 1263
-- **concept-aggregate:** 90 (229 KB)
-- **concept-atomic:** 901 (851 KB)
-- **concept-special:** 74 (110 KB)
+- **Total artifacts:** 583
+- **concept-atomic:** 340 (350 KB)
+- **concept-aggregate:** 41 (108 KB)
+- **concept-special:** 33 (52 KB)
+- **other:** 14 (491 KB)
 - **raw:** 36 (143 KB)
-- **decision:** 116 (77 KB)
-- **other:** 46 (362 KB)
+- **decision:** 119 (81 KB)
 
 ### By level
 
-- L0: 14 artifacts
-- L1: 102 artifacts
-- L2: 925 artifacts
-- L3: 11 artifacts
+- L0: 4 artifacts
+- L1: 35 artifacts
+- L2: 357 artifacts
+- L3: 5 artifacts
 
 
 _Analysis version: 8_

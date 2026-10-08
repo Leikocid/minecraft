@@ -24,10 +24,10 @@ relates_to: ["L0-strm-rdmg", "L0-xcx26", "L0-strm-asm1"]
 1. **Active, out of window.**
    - GIVEN an armoured SimulatedPlayer A and a twin B, WHEN A is hit by the beam and B by `applyDamage(10, entityAttack)` from a control source, THEN Δhealth(A) = Δhealth(B), and both are > 0 and < 10.
    - The same holds against a zombie with armour.
-2. **Passive, in window, with the RNG forced to proc.**
+2. **Passive, in window, with the RNG forced to proc.** Stands: R meets this (3.80 = 2.24 + 1.56 on diamond, diagnose-CNTR-X26).
    - Δhealth(target) after a blade melee + bonus = Δhealth(twin, vanilla diamond sword) + Δhealth(twin2, a native `applyDamage(6)` out of window).
    - **Negative control (red proof) in the same test:** a plain `applyDamage(6)` inside the window takes 0 while returning true.
-3. **Active inside a melee window** (meleed ≤ 10 ticks before) nets the full armoured 10, not 10 − L.
+3. **Active inside a melee window** (meleed ≤ 10 ticks before) nets the full armoured 10, not f(10) − f(L) (2.00 bare, 0.76 in diamond).
 4. **No double count.** A forced passive with no active, and an active with no passive, each change health by exactly one event's amount.
 5. **Lethal path.** At low health a target holding a totem pops it. A target without one dies, the death message names the wielder, and XP and kill credit go to the wielder.
 6. **Bystanders.** A second mob ≤ 2 blocks from the target has Δhealth = 0 for both events.
