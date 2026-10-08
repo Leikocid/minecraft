@@ -543,7 +543,7 @@ test('legendary weapons count towards the 10 like iron', () => {
   assert.equal(sel.elements.filter((e) => e.from === 'minecraft:iron_ingot').length, 9, 'the farthest ingot is left');
 });
 
-test('holders (L0-magn-adar, UFO-TUNE-01): iron armour by four tag commands, a legendary weapon held by fifteen; minecarts by type', () => {
+test('holders (L0-magn-adar, UFO-TUNE-01): iron armour by four tag commands, a legendary weapon held by eighteen; minecarts by type', () => {
   const dim = new FakeDimension();
   const golem = dim.mob('iron_golem', E(12, 12));
   const helmet = dim.mob('zombie', E(-10, -10), { armour: { head: 'minecraft:iron_helmet' } });
@@ -571,9 +571,9 @@ test('holders (L0-magn-adar, UFO-TUNE-01): iron armour by four tag commands, a l
   assert.equal(armour.length, 4, 'one command per armour piece, never a list');
   assert.ok(armour.every((c) => /hasitem=\{item=minecraft:iron_\w+,location=slot\.armor\.\w+\}/.test(c) && c.includes('type=!minecraft:player')));
   const weapons = adds.filter((c) => c.includes('item=andrew:'));
-  assert.equal(weapons.length, 15, 'five weapons, each asked with no location, in the main hand and in the off hand');
+  assert.equal(weapons.length, 18, 'six weapons, each asked with no location, in the main hand and in the off hand');
   assert.ok(weapons.every((c) => c.includes('type=!minecraft:player') && c.includes('type=!minecraft:item')));
-  assert.equal(adds.length, 19);
+  assert.equal(adds.length, 22);
   assert.ok(!dim.commands.some((c) => c.includes('_crafted')), 'tokens are hidden from commands; never asked by hasitem');
   assert.deepEqual(sel.failures, []);
 });

@@ -7,9 +7,9 @@
 // picks it up — the recipe's own output reaching an inventory, not a script
 // insert of it.
 
-import { BlockPermutation, type Container, GameMode, ItemStack, type Player, type Vector3, world } from "@minecraft/server";
+import { BlockPermutation, type Container, Difficulty, type Entity, GameMode, ItemStack, type Player, type Vector3, world } from "@minecraft/server";
 import { type SimulatedPlayer, type Test, register, registerAsync } from "@minecraft/server-gametest";
-import { DRAGON_KATANA, type LegendaryDef, ORBITAL_CANNON, SCULK_CROSSBOW, SCYTHE_OF_CALAMITY, WEB_SWORD } from "../legendary/registry";
+import { DRAGON_KATANA, type LegendaryDef, ORBITAL_CANNON, SCULK_CROSSBOW, SCYTHE_OF_CALAMITY, STORM_BLADE, WEB_SWORD } from "../legendary/registry";
 import * as state from "../legendary/state";
 
 /** Must match the structure written by scripts/bds-gametest.mjs. */
@@ -56,6 +56,14 @@ const GRIDS = new Map<LegendaryDef, ReadonlyArray<string | undefined>>([
       undefined, "minecraft:echo_shard", undefined,
       "minecraft:deepslate", "minecraft:crossbow", "minecraft:deepslate",
       undefined, "minecraft:echo_shard", undefined,
+    ],
+  ],
+  [
+    STORM_BLADE,
+    [
+      undefined, "minecraft:lightning_rod", undefined,
+      "minecraft:wind_charge", "minecraft:diamond_sword", "minecraft:wind_charge",
+      undefined, "minecraft:lightning_rod", undefined,
     ],
   ],
 ]);
@@ -213,6 +221,7 @@ giveThenCraft("web_sword", WEB_SWORD);
 giveThenCraft("scythe", SCYTHE_OF_CALAMITY);
 giveThenCraft("dragon_katana", DRAGON_KATANA);
 giveThenCraft("sculk_crossbow", SCULK_CROSSBOW);
+giveThenCraft("storm_blade", STORM_BLADE);
 
 // The Sculk Crossbow is def #5, with its own `sk` key namespace (CNTR-LGND-
 // CX15-AA). Crafting it must not touch the other four defs' world-level craft
@@ -242,6 +251,40 @@ register("andrew", "legendary_sculk_crossbow_other_flags_untouched", (test: Test
       test.assert(!state.isCrafted(def), `${def.itemId}'s craft flag changed after crafting the Sculk Crossbow`);
     }
     console.warn("[gametest] sculk crossbow craft left the other four legendaries' flags untouched");
+  });
+})
+  .structureName(STRUCTURE)
+  .maxTicks(400)
+  .tag("andrew");
+
+// Storm Blade is def #6. Crafting it must not touch the other five defs'
+// world-level craft flags, which live under their own prefixes but share the
+// same gate code (AC#4).
+register("andrew", "legendary_storm_blade_other_flags_untouched", (test: Test): void => {
+  const others = [WEB_SWORD, SCYTHE_OF_CALAMITY, ORBITAL_CANNON, DRAGON_KATANA, SCULK_CROSSBOW];
+  for (const def of [...others, STORM_BLADE]) {
+    state.resetCrafted(def);
+  }
+  placeCrafter(test);
+  const player = test.spawnSimulatedPlayer(STAND, "cg_sb_flags", GameMode.Survival);
+  let arrivedBefore: number | undefined;
+
+  test.runAfterDelay(4, () => {
+    arrivedBefore = arrivalsOf(STORM_BLADE, player);
+    craftWithCrafter(test, STORM_BLADE);
+  });
+
+  test.succeedWhen(() => {
+    test.assert(arrivedBefore !== undefined, "the crafter has not been run yet");
+    test.assert(
+      arrivalsOf(STORM_BLADE, player) > (arrivedBefore ?? 0),
+      `no ${STORM_BLADE.craftTokenId} from the crafter has reached ${player.name} yet`
+    );
+    test.assert(state.isCrafted(STORM_BLADE), "the Storm Blade craft did not claim its own flag");
+    for (const def of others) {
+      test.assert(!state.isCrafted(def), `${def.itemId}'s craft flag changed after crafting the Storm Blade`);
+    }
+    console.warn("[gametest] storm blade craft left the other five legendaries' flags untouched");
   });
 })
   .structureName(STRUCTURE)
@@ -378,6 +421,63 @@ register("andrew", "legendary_katana_recipe_negative_controls", (test: Test): vo
     console.warn(`[gametest] katana recipe negative controls: none matched, ${describe(held)}`);
     test.succeed();
   });
+})
+  .structureName(STRUCTURE)
+  .maxTicks(400)
+  .tag("andrew");
+
+// AC#5: the Storm Blade has no minecraft:durability — infinite durability by
+// omission, like every other legendary. Unlike the Sculk Crossbow (a ranged
+// weapon fired by holding Use), its wear path is a landed melee hit, so the
+// held copy is swung at a zombie instead.
+const STORM_ZOMBIE_CELL: Vector3 = { x: 3, y: 2, z: 3 };
+/** Past the 10-tick hurt immunity, so every swing lands in full. */
+const STORM_HIT_SPACING_TICKS = 20;
+
+registerAsync("andrew", "storm_blade_no_durability", async (test: Test): Promise<void> => {
+  const bare = new ItemStack(STORM_BLADE.itemId, 1);
+  test.assert(
+    bare.getComponent("minecraft:durability") === undefined,
+    `${STORM_BLADE.itemId} has minecraft:durability — it would wear out`
+  );
+
+  const difficulty = world.getDifficulty();
+  const leftovers: Entity[] = [];
+  try {
+    // A zombie is deleted on Peaceful, where the checks world runs.
+    world.setDifficulty(Difficulty.Easy);
+    const player = test.spawnSimulatedPlayer(STAND, "sb_durability", GameMode.Survival);
+    await test.idle(4);
+    const container = inventoryOf(player);
+    container.setItem(0, new ItemStack(STORM_BLADE.itemId, 1));
+    player.selectedSlotIndex = 0;
+
+    const zombie = test.spawnWithoutBehaviors("minecraft:zombie", STORM_ZOMBIE_CELL);
+    leftovers.push(zombie);
+
+    for (let hit = 0; hit < 3; hit++) {
+      zombie.teleport(
+        test.worldLocation({ x: STORM_ZOMBIE_CELL.x + 0.5, y: STORM_ZOMBIE_CELL.y, z: STORM_ZOMBIE_CELL.z + 0.5 })
+      );
+      zombie.clearVelocity();
+      zombie.getComponent("minecraft:health")?.resetToMaxValue();
+      await test.idle(STORM_HIT_SPACING_TICKS);
+      test.assert(player.attackEntity(zombie), `swing ${hit} did not reach the zombie`);
+      await test.idle(2);
+    }
+
+    const held = container.getItem(0);
+    test.assert(held?.typeId === STORM_BLADE.itemId, `the Storm Blade left slot 0 after melee hits: ${held?.typeId}`);
+    test.assert(
+      held?.getComponent("minecraft:durability") === undefined,
+      "the held Storm Blade gained a durability component after melee hits"
+    );
+    console.warn("[gametest] storm blade: no durability component before or after melee hits");
+    test.succeed();
+  } finally {
+    world.setDifficulty(difficulty);
+    for (const entity of leftovers) if (entity.isValid) entity.remove();
+  }
 })
   .structureName(STRUCTURE)
   .maxTicks(400)

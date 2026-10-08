@@ -67,6 +67,7 @@ const {
   SCYTHE_OF_CALAMITY,
   ORBITAL_CANNON,
   SCULK_CROSSBOW,
+  STORM_BLADE,
   hasAbility,
   heldLegendaries,
   genLedgerKey,
@@ -106,7 +107,7 @@ test('registry', async (t) => {
     assert.strictEqual(defForAbility('nope'), undefined);
   });
 
-  await t.test('the five shipped defs, in order, the first four active (L0-lgnd-ac26)', () => {
+  await t.test('the six shipped defs, in order, all but the Sculk Crossbow active (L0-lgnd-ac26)', () => {
     assert.deepStrictEqual(
       LEGENDARIES.map((def) => def.itemId),
       [
@@ -115,9 +116,10 @@ test('registry', async (t) => {
         'andrew:orbital_cannon',
         'andrew:dragon_katana',
         'andrew:sculk_crossbow',
+        'andrew:storm_blade',
       ]
     );
-    for (const def of [WEB_SWORD, SCYTHE_OF_CALAMITY, ORBITAL_CANNON, DRAGON_KATANA]) {
+    for (const def of [WEB_SWORD, SCYTHE_OF_CALAMITY, ORBITAL_CANNON, DRAGON_KATANA, STORM_BLADE]) {
       assert.strictEqual(hasAbility(def), true, `${def.itemId} lost its ability`);
       assert.strictEqual(defForAbility(def.abilityKey), def);
       assert.strictEqual(def.cooldownTicks, 600);
@@ -138,7 +140,7 @@ test('registry', async (t) => {
     ]);
   });
 
-  await t.test('item ids, prefixes, tokens, commands and text prefixes are unique across all five defs', () => {
+  await t.test('item ids, prefixes, tokens, commands and text prefixes are unique across all six defs', () => {
     for (const field of ['itemId', 'keyPrefix', 'command', 'craftTokenId', 'textPrefix']) {
       const values = LEGENDARIES.map((def) => def[field]);
       assert.strictEqual(new Set(values).size, values.length, `duplicate ${field}`);
@@ -202,6 +204,34 @@ test('registry', async (t) => {
     assert.strictEqual(isLegendaryStack({ typeId: 'andrew:sculk_crossbow' }), true);
     assert.strictEqual(isLegendaryStack({ typeId: 'andrew:sculk_crossbow_crafted' }), true);
   });
+
+  await t.test('Storm Blade is def #6: sb prefix, an ability again, own em-dash HUD keys (L0-strm-edef)', () => {
+    assert.ok(LEGENDARIES.includes(STORM_BLADE));
+    assert.strictEqual(STORM_BLADE.itemId, 'andrew:storm_blade');
+    assert.strictEqual(STORM_BLADE.keyPrefix, 'sb');
+    assert.strictEqual(STORM_BLADE.abilityKey, 'storm_blade');
+    assert.strictEqual(STORM_BLADE.nameKey, 'item.andrew:storm_blade');
+    assert.strictEqual(STORM_BLADE.cooldownTicks, 600);
+    assert.strictEqual(STORM_BLADE.craftGate, true);
+    assert.strictEqual(STORM_BLADE.craftTokenId, 'andrew:storm_blade_crafted');
+    assert.deepStrictEqual(STORM_BLADE.refund, [
+      ['minecraft:lightning_rod', 2],
+      ['minecraft:wind_charge', 2],
+      ['minecraft:diamond_sword', 1],
+    ]);
+    assert.strictEqual(STORM_BLADE.textPrefix, 'andrew.storm_blade');
+    assert.strictEqual(STORM_BLADE.command, 'andrew:storm');
+    assert.deepStrictEqual(STORM_BLADE.hudKeys, {
+      ready: 'andrew.storm_blade.hud_ready',
+      cooldown: 'andrew.storm_blade.hud_cooldown',
+    });
+  });
+
+  await t.test('isLegendaryStack is true for the Storm Blade item and its token, false for a plain Diamond Sword', () => {
+    assert.strictEqual(isLegendaryStack({ typeId: 'andrew:storm_blade' }), true);
+    assert.strictEqual(isLegendaryStack({ typeId: 'andrew:storm_blade_crafted' }), true);
+    assert.strictEqual(isLegendaryStack({ typeId: 'minecraft:diamond_sword' }), false);
+  });
 });
 
 test('keys from keyPrefix', async (t) => {
@@ -255,6 +285,22 @@ test('keys from keyPrefix', async (t) => {
     for (const key of Object.values(keysFor(SCULK_CROSSBOW))) {
       assert.ok(!scytheKeys.has(key), `${key} collides with a Scythe key`);
     }
+  });
+
+  await t.test('Storm Blade keys live under andrew:sb_*', () => {
+    assert.deepStrictEqual(keysFor(STORM_BLADE), {
+      origin: 'andrew:sb_origin',
+      owner: 'andrew:sb_owner',
+      id: 'andrew:sb_id',
+      ownerName: 'andrew:sb_owner_name',
+      crafted: 'andrew:sb_crafted',
+      craftedBy: 'andrew:sb_crafted_by',
+      pending: 'andrew:sb_pending',
+      gen: 'andrew:sb_gen',
+      owed: 'andrew:sb_owed',
+      holder: 'andrew:sb_holder',
+      holderName: 'andrew:sb_holder_name',
+    });
   });
 
   await t.test('another prefix gets its own namespace', () => {
