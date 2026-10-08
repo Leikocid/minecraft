@@ -2,74 +2,75 @@
 type: "concept-decomposition-plan"
 node_id: "L0"
 source_channel: "rollout"
-analysis_version: 7
+analysis_version: 8
 level: 0
-title: "L0 Decomposition Plan (v7)"
+title: "L0 Decomposition Plan (v8)"
 aliases: ["L0"]
 is_a: ["decomposition-plan"]
 part_of: ["L0"]
 relates_to: ["L0"]
-priority: 610
-size_chars: 6918
-tags: ["v7", "sculk-crossbow", "supersedes:L0-plan@v6"]
+priority: 620
+size_chars: 6983
+tags: ["v8", "storm-blade", "supersedes:L0-plan@v7"]
 ---
 ---
-title: "L0 Decomposition Plan (v7)"
+title: "L0 Decomposition Plan (v8)"
 aliases: ["L0-plan", "Decomposition Plan"]
 is_a: ["plan"]
 part_of: ["L0"]
-relates_to: ["L0", "L0-sclk", "L0-lgnd", "L0-adr-scbs", "L0-adr-scdm", "L0-adr-sctr", "L0-xcx22", "L0-xcx23", "L0-xcx24", "L0-xcx25"]
-see_also: ["sculkcrossbowspecv1ruen-part-1", "sculkcrossbowspecv1ruen-part-2", "sculkcrossbowspecv1ruen-part-3", "sculkcrossbowspecv1ruen-part-4"]
-supersedes: ["L0-plan@v6"]
+relates_to: ["L0", "L0-strm", "L0-lgnd", "L0-adr-sbdm", "L0-adr-sblt", "L0-adr-sbvr", "L0-xcx26", "L0-xcx27", "L0-xq8", "L0-xasm29", "L0-xasm30", "L0-xasm31", "L0-xasm32"]
+see_also: ["stormbladeelytratotemspecruen-part-1", "stormbladeelytratotemspecruen-part-2"]
+supersedes: ["L0-plan@v7"]
 ---
-# L0 Decomposition Plan (v7)
+# L0 Decomposition Plan (v8)
 
 ## Survey
-- **Volume.** There are 34 primary inputs, about 135 KB raw, and the KV holds 336 indexed artifacts. The v7 delta is **one new spec**: the Sculk Crossbow. It has 4 fragments and about 15.5 K characters with overlap (parts 2–4 repeat §5, §11–§13), so about 10 K unique. It covers 14 sections and T01–T20. No other raw changed. The code moved under the KV: 1.5.0 shipped the Katana, and 1.6.0/1.6.1 retuned the UFO and made legendaries magnetic.
-- **Diversity.** There is one topic: one weapon. It touches four areas:
-  1. **item and framework:** def, recipe, gate, durability, retention, Void, Creative;
-  2. **projectile pipeline:** fire → bolt per projectile → visual → hit;
-  3. **hit resolution:** fixed damage;
-  4. **terrain:** crater, sculk patch.
+- **Volume.** The KV has 36 raw fragments, about 143 KB, and 543 indexed artifacts. The v8 delta is **one new spec**, "Storm Blade + Elytra + Totem v1", in 2 fragments of about 8.6 K characters. Part 2 repeats §03, so it is about 7 K unique: 7 sections and 9 acceptance bullets. No other raw changed. The code is at 1.8.0. Since v7 the crossbow has shipped and been accepted, and `LGND-HOLD-01` (Void return to the last holder) has shipped.
+- **Diversity.** Low. There is one weapon and two data-only recipes. The weapon touches four areas:
+  1. item and framework (def #6, recipe, gate, HUD, hands, rules);
+  2. the active trace and its hit;
+  3. the passive melee proc;
+  4. visuals.
 
-  Area 1 is the `lgnd` contract plus one new capability (a def with no ability). Areas 2–4 are new.
-- **Coherence.** High. One weapon, one event path. It has two outward seams:
-  - `lgnd`: the no-ability def, protection before carving, and the magnet now pulling the item;
-  - `orbc`: the shared deny list for terrain edits.
-- **Dependencies.** A linear pipeline: fire → swap → fly → hit → (damage | carve). It is thin and lives in one module, so there is no case for a pipeline split. The four areas fit one child.
+  Area 1 is the `lgnd` contract with **no new capability**: the blade is an active def like #1–#4. The recipes are two JSON files.
+- **Coherence.** High. Its outward seams:
+  - `lgnd`: a def only;
+  - `katn`: ray helpers, reused;
+  - `sclk`: the hurt-window technique, mirrored but not shared, because true damage ≠ armour damage;
+  - the magnet: def-driven, no change.
+- **Dependencies.** Two short independent paths, Use → trace → hit and melee → roll → bonus. They meet only in the damage helper. That is too thin for a pipeline split.
 
 ## Decomposition strategy: coherent-coverage
-`webs`, `scyt` and `katn` set the precedent: one node per weapon. The crossbow goes to a single new child, `sclk`. **`lgnd` is re-run** for three reasons:
-- It must register def #5 with no ability (`L0-xcx24`).
-- Its v6 card is stale against 1.6.1: the magnet pulls legendaries, and the Katana has shipped.
-- The holder target (`xcx11`) is decided but not built.
+This follows the one-node-per-weapon precedent (`webs`, `scyt`, `katn`, `sclk`). One new child, `strm`, covers the blade **and** the two vanilla recipes. The recipes are too small for a node, they share the spec and acceptance doc, and `L0-adr-sbvr` already settles them.
 
-`orbc` is **not** re-run. Moving its deny list to a shared module is a refactor with no change in behaviour, and `sclk` owns the task (`L0-xcx25`). `magn` is not re-run: its selector is def-driven.
+**`lgnd` is not re-run.**
+- Def #6 is an active def. The shape, gate, token and refund, retention, recovery, last-holder Void return, `protectLegendariesIn`, HUD and `resolveActivation` take it with no code change (`xasm32`).
+- `strm` adds the def to `registry.ts` and cites `lgnd-*` rules by id.
+- `katn`, `sclk` and `magn` are not re-run either.
 
 | id_suffix | label | prompt | model_hint |
 |-----------|-------|--------|------------|
-| sclk | Sculk Crossbow (`andrew:sculk_crossbow`). **Probe first** (gates `L0-adr-scbs` and `L0-adr-scdm`): does a custom `minecraft:shooter` item get a loaded state, and do Quick Charge and Multishot apply to it? Does the vanilla crossbow's projectile spawn expose its owner and velocity at `entitySpawn`, so it can be swapped for a bolt? Snowball-runtime bolt against a shield-holder (`xcx23`). Hurt-invulnerability on three hits in the same tick (`xcx22`). The `sonic_explosion` particle on the iPad. **Item:** the def from `L0-adr-scbs`, infinite durability, an enchant slot without Piercing (strip it on sight if the slot cannot exclude it), RU/EN lang, the Creative "Equipment" entry. **Recipe:** echo shard / deepslate / crossbow through the craft token (T01–T03). **Pipeline:** each projectile spawned by a marked crossbow becomes exactly one `andrew:sculk_bolt` with the same velocity and owner (C-26). It emits boom particles along its real path while in flight (C-5f), and has a lifetime cap. **Entity hit:** fixed `SONIC_BOOM_DAMAGE` (10, `xasm23`) through the Scythe true-damage pattern (C-28); a sculk patch under the target (`xasm24`); no crater. **Block hit:** an irregular crater seeded per bolt, ≤ 5×5×3, plus sculk on the exposed surfaces ≤ 5×5, under C-27 (`L0-adr-sctr`, `xasm25`); no entity damage. **Ammunition** per `xasm27`. **GameTests:** T04–T18 with SimulatedPlayers (≥ 2, C-20‴), plus the crossbow instances of T19–T20 against the framework. **iPad:** trail, crater, sculk, icon, Creative. | component-deep-dive | |
-| lgnd | Legendary framework, v7 pass. **(1) Reconcile with 1.6.1:** the Katana shipped (1.5.0). Legendaries are magnetic (`magnet-select.ts`, `magnet-hold.ts`): restate the old "never pulled" rule as an operator-tuned exception. **(2) No-ability def (`L0-xcx24`):** `LegendaryDef` gains an optional ability. Without it: no cooldown key, no `resolveActivation` claim and no HUD line (`hud.ts:37`). `cooldownTicks`/`abilityKey` become optional or are moved into an `ability` block, with no behaviour change for defs #1–#4. **(3) Crossbow delta:** def #5 (`keyPrefix: "sk"`; the plan first said `"sc"`, the Scythe's prefix, corrected at reduce per `L0-lgnd-cx15`), the craft token and refund (echo shard ×2, deepslate ×2, crossbow). Confirm that retention, recovery, Void and `protectLegendariesIn` need no per-weapon code. If `L0-adr-scbs` falls back to the vanilla crossbow, `isLegendaryStack` must become mark-aware; that is a larger change and must be stated as such. **(4) Holder (`xcx11`):** the decision says "the last holder" and the code returns to `mark.owner`. Either plan the holder field or restate T20 / the Void return against `mark.owner`, as v6 did for the Katana. | component-deep-dive | |
+| strm | **The Storm Blade (`andrew:storm_blade`) and the Elytra/Totem recipes.**<br>**Probe first, on checks (19136).** It gates `L0-adr-sbdm` and `L0-adr-sblt`:<br>• P1/P2: inside the hurt window, does `applyDamage(L + D, entityAttack)` take D with armour applied to D, for players and mobs (`xcx26`)?<br>• A raised shield against the beam from behind (`xcx27`).<br>• Which particle ids exist for the spark/wind/flash on 1.26.51, and whether the thunder sound plays at the point.<br>• Diamond-sword melee on BDS, measured against vanilla (`xasm30`).<br>**Item:** def #6 (`sb`, 600 ticks, `xasm32`); a custom sword with diamond-sword damage, no durability, and the vanilla sword enchant slot; `allow_off_hand`; RU/EN lang; a Creative "Equipment" entry; an RP icon.<br>**Recipe:** lightning rod top and bottom, wind charge left and right, diamond sword in the centre → craft token; refund on a blocked craft. Covers simultaneous crafts, the recipe book and shift-craft through the existing gate.<br>**Active:** Use → `resolveActivation` → a trace ≤ 10 blocks Euclidean, reusing `src/katana/plan.ts` helpers (`xasm31`). The first living entity, never through walls, never a second one, takes 10 HP pre-armour through `src/storm/damage.ts` (`adr-sbdm`, C-29). Three visual strikes at the hit point, or at the stop point on a miss (`adr-sblt`, C-30). Cooldown on any valid release; invalid attempts are free. HUD «Клинок бури — Готово» / "Storm Blade — Ready" / seconds left.<br>**Passive:** `entityHitEntity` with the blade in the main hand → an independent 30 % roll with an injectable RNG (C-32) → +6 HP pre-armour through the same helper, plus one visual strike. It never reads or writes the cooldown.<br>**Vanilla recipes (`adr-sbvr`, C-31):** `elytra.json` and `totem_of_undying.json`, plain shaped recipes outputting the vanilla ids.<br>**GameTests (`bds`):**<br>• every §06 bullet: once-only craft across a restart, Creative copy free; melee = vanilla diamond sword; passive rate on N ≥ 1000 seeded and a ±5 % band on a live sample; exact +6 and 10 pre-armour against an armoured SimulatedPlayer, with an in-window negative control; ≤ 10 blocks, wall stop, second target untouched; 30 s cooldown, passive independent; no lightning entity and no fire; death, hazards and Void through the `lgnd` scenarios with def #6; Elytra and Totem crafted twice each through a Crafter.<br>• The magnet's legendary scenarios include def #6.<br>**iPad (`ipad`):** the trace and strikes read as lightning; the icon; the HUD line; the Creative entry; both recipes in the recipe book; a real totem pop and an elytra glide. | component-deep-dive | |
 
 ## Reduce plan
-- **`lgnd` answers first.** `sclk` cites `lgnd-*` rules by id for the craft gate, retention, protection, Void and Creative copies. It must not restate them. The no-ability def is the only framework change allowed. Any other framework hook `sclk` needs is a new L0 contradiction.
-- **`sclk` owns the three ADRs** `L0-adr-scbs`, `L0-adr-scdm` and `L0-adr-sctr`, and their probe outcomes. A failed probe supersedes its ADR before the build tasks. If `scbs` falls back to the vanilla crossbow, the reduce re-opens `lgnd` (3).
+- **Cite, do not restate.** `strm` cites `lgnd-*` rules for the gate, retention, protection, Void, Creative copies and hand priority. It also cites `katn` for ray semantics. **The only framework edit allowed is adding def #6** to `registry.ts`, plus subscriptions in `main.ts`. Any other framework hook is a new L0 contradiction (`xasm32`).
+- **`strm` owns `L0-adr-sbdm` and `L0-adr-sblt`** and their probe outcomes. A failed probe supersedes its ADR before the build tasks. `xcx26` closes only on a BDS proof with a negative control. `xcx27` closes either on Andrey's answer to `xq8` or on a documented deviation (default: full block).
 - **AC routing:**
-  - T01–T03, T19 and T20 rules go to `lgnd`, with crossbow call sites in `sclk`.
-  - T04–T18 go to `sclk`.
-  - T18 (durability) goes to `sclk` if the base is a custom item; it goes to `lgnd` if a vanilla crossbow must be kept repaired.
-  - Each child splits its ACs into the `bds` and `ipad` channels.
-- **Roll-up.** The `sclk` overview goes into the L0 diagram. New constraints are de-duplicated against C-1 … C-28. The reduce re-checks the seams:
-  - Orbital protection is still green after the deny-list move.
-  - The magnet's legendary GameTests include def #5.
-  - The Katana's ray passes a sculk block (a full solid block, so it is an obstacle).
-  - A crossbow crater never lands inside a structure's `protect` box, if one exists (check, do not assume).
-- **Stage 7 order:**
-  1. The `sclk` probe on checks (19136);
-  2. `lgnd` v7 (no-ability def, def #5);
-  3. `sclk` item, token, recipe and RP;
-  4. `sclk` bolt pipeline and damage;
-  5. `sclk` crater and sculk (with the deny-list extraction).
+  - Craft-once, death, hazards and Void are `lgnd` rules, with Storm Blade call sites in `strm`.
+  - Damage, trace, passive, cooldown, visuals and both vanilla recipes go to `strm`.
+  - Split every AC into `bds` and `ipad` channels.
+- **Roll-up.** The `strm` overview goes into the L0 diagram. De-duplicate new constraints against C-1 … C-32. At reduce, re-check these seams:
+  - The Katana's ray helpers are imported, not copied.
+  - `src/storm/damage.ts` does not import the crossbow's true-damage write.
+  - The blade's recipe outline (` L / WSW / L `) equals the crossbow's (` E / DCD / E `) but its keys differ, so both recipes stay distinct in the recipe book.
+  - Neither vanilla recipe collides with a pack recipe.
+- **Stage-10 order:**
+  1. The `strm` probe on checks.
+  2. Vanilla recipes. They are independent and can ship first.
+  3. Def #6, item, token, recipe, RP and lang.
+  4. The damage helper with the hurt-window proof.
+  5. The active trace, visuals, cooldown and HUD.
+  6. The passive.
 
-  Gate each merge by blast radius, plus the legendary and Orbital scenarios. After each epic merge, reopen the crossbow `ipad` criteria.
+  Gate each merge by blast radius plus the legendary scenarios. Reopen the `ipad` criteria after each epic merge.
 - **Not in this run:** `xcx12` (the structure reconcile) and the Orbital v1.4.4 reconcile. Both are still queued separately.
