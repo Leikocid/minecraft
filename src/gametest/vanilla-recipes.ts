@@ -103,32 +103,23 @@ function craftTwice(name: string, recipe: Recipe): void {
   register("andrew", `vanilla_recipe_${name}_unlimited`, (test: Test): void => {
     placeCrafter(test);
     const player = test.spawnSimulatedPlayer(STAND, `vr_${name}`, GameMode.Survival);
-    let craftsDone = 0;
-    let arrivedBefore = Number.NEGATIVE_INFINITY;
 
-    function craft(): void {
+    function craft(label: string): void {
       loadFullGrid(test, recipe.grid);
       test.pulseRedstone(POWER, 2);
+      console.warn(`[gametest] vanilla recipe ${name}: ${label} craft pulsed`);
     }
 
-    test.runAfterDelay(4, () => {
-      arrivedBefore = arrivalsOf(player, recipe.resultId);
-      craft();
-    });
+    test.runAfterDelay(4, () => craft("first"));
+    test.runAfterDelay(4 + SETTLE_TICKS, () => craft("second"));
+    test.runAfterDelay(4 + 2 * SETTLE_TICKS, () => craft("third"));
 
-    test.succeedWhen(() => {
-      test.assert(arrivalsOf(player, recipe.resultId) > arrivedBefore, `no ${recipe.resultId} from the crafter has reached ${player.name} yet (craftsDone=${craftsDone})`);
-      craftsDone += 1;
+    test.runAfterDelay(4 + 3 * SETTLE_TICKS, () => {
+      test.assert(arrivalsOf(player, recipe.resultId) === 3, `expected 3 arrivals of ${recipe.resultId}, got ${arrivalsOf(player, recipe.resultId)}`);
       const held = countOf(player, recipe.resultId);
-      test.assert(held === craftsDone, `expected ${craftsDone} accumulated ${recipe.resultId} after ${craftsDone} crafts, got ${held}`);
-
-      if (craftsDone < 3) {
-        arrivedBefore = arrivalsOf(player, recipe.resultId);
-        craft();
-        test.assert(false, `craft ${craftsDone} succeeded; waiting for the next`);
-      }
-
+      test.assert(held === 3, `expected 3 accumulated ${recipe.resultId} after three unlimited crafts, got ${held}`);
       console.warn(`[gametest] vanilla recipe ${name}: three unlimited crafts, no flags, no messages`);
+      test.succeed();
     });
   })
     .structureName(STRUCTURE)
