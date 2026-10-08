@@ -58,6 +58,7 @@ import "./probe-give";
 import "./legendary-craftgate";
 import "./vanilla-recipes";
 import "./storm-damage";
+import "./storm-active";
 import "./probe-retention";
 import "./legendary-fireproof";
 import "./legendary-offhand";
@@ -105,6 +106,7 @@ import { parkRing } from "./ring";
 import { registerOrbitalCannon } from "../orbital";
 import { registerDragonKatana } from "../katana";
 import { registerSculkCrossbow } from "../sculk";
+import { registerStormActive } from "../storm/active";
 import { SPAWN_EVENT } from "../structures/spawn-search";
 
 const WEB_SWORD_ID = WEB_SWORD.itemId;
@@ -200,6 +202,10 @@ registerDragonKatana();
 // arrow and leaves it alone, so src/gametest/sculk-bolt.ts, sculk-carve.ts and
 // sculk-hit.ts drive this copy, its crater queue and entity hits included.
 registerSculkCrossbow();
+
+// Same binding problem: src/gametest/storm-active.ts drives this copy. It must come after every other legendary's
+// input (see registerStormActive).
+registerStormActive();
 
 // Which use-event a press actually produces on BDS 1.26.51.1 is an engine fact,
 // not a documented one, and src/websword/trap.ts subscribes to both. This

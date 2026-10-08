@@ -198,13 +198,13 @@ function hitPoint(hit: RayHit): Vector3 {
   return { x: b.x + wrap(f.x, n?.x ?? 0), y: b.y + wrap(f.y, n?.y ?? 0), z: b.z + wrap(f.z, n?.z ?? 0) };
 }
 
-interface Hit {
+export interface Hit {
   face: Direction;
   block: Vector3;
   point: Vector3;
 }
 
-interface Trace {
+export interface Trace {
   endpoint: Vector3;
   stoppedBy: StopReason;
   hit: Hit | undefined;
@@ -212,26 +212,26 @@ interface Trace {
   failed: boolean;
 }
 
-/** L0-katn-p001 steps 4–5. */
-function trace(world: KatanaWorld, head: Vector3, dir: Vector3): Trace {
-  const walk = cellsAlong(head, dir, KATANA_RANGE);
+/** L0-katn-p001 steps 4–5. `dir` is a unit vector; the Storm Blade passes its own `range` (L0-strm-adtr). */
+export function trace(world: KatanaWorld, head: Vector3, dir: Vector3, range: number = KATANA_RANGE): Trace {
+  const walk = cellsAlong(head, dir, range);
   const readable = readability(world);
-  let range = KATANA_RANGE;
+  let reach = range;
   let stoppedBy: StopReason = "range";
-  const blind = walk.find((s) => s.t <= KATANA_RANGE && !readable(s.cell));
+  const blind = walk.find((s) => s.t <= range && !readable(s.cell));
   if (blind !== undefined) {
-    range = Math.max(0, blind.t - UNREADABLE_MARGIN);
+    reach = Math.max(0, blind.t - UNREADABLE_MARGIN);
     stoppedBy = "unreadable";
   }
   let last = 0;
-  while (walk[last + 1].t <= range) {
+  while (walk[last + 1].t <= reach) {
     last++;
   }
   // A part-block is caught only as the ray steps out of its cell (P3), so the
   // ray runs one cell past the end — unless that cell is unreadable, where a
   // step into it throws or silently misses (P5).
   const steps = last + (readable(walk[last + 1].cell) ? 1 : 0);
-  if (range > 0 && steps > 0) {
+  if (reach > 0 && steps > 0) {
     const hit = cast(world, head, dir, { ...TRACE_FLAGS, maxDistance: steps });
     if (hit === "threw") {
       return { endpoint: head, stoppedBy: "unreadable", hit: undefined, failed: true };
@@ -239,8 +239,8 @@ function trace(world: KatanaWorld, head: Vector3, dir: Vector3): Trace {
     if (hit !== undefined) {
       const point = hitPoint(hit);
       const t = distance(point, head);
-      // The step budget reaches past `range`; the Euclidean cut is ours.
-      if (t <= range) {
+      // The step budget reaches past `reach`; the Euclidean cut is ours.
+      if (t <= reach) {
         return {
           endpoint: sub(point, scale(dir, Math.min(PULLBACK, t))),
           stoppedBy: "block",
@@ -250,7 +250,7 @@ function trace(world: KatanaWorld, head: Vector3, dir: Vector3): Trace {
       }
     }
   }
-  return { endpoint: add(head, scale(dir, range)), stoppedBy, hit: undefined, failed: false };
+  return { endpoint: add(head, scale(dir, reach)), stoppedBy, hit: undefined, failed: false };
 }
 
 /**
