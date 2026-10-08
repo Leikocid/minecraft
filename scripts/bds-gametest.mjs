@@ -189,6 +189,10 @@ const EXPECTED_TESTS = [
   'andrew:legendary_give_then_craft_sculk_crossbow',
   'andrew:legendary_sculk_crossbow_other_flags_untouched',
   'andrew:sculk_crossbow_no_durability',
+  // STRM-ITEM-01-AA — src/gametest/legendary-craftgate.ts
+  'andrew:legendary_give_then_craft_storm_blade',
+  'andrew:legendary_storm_blade_other_flags_untouched',
+  'andrew:storm_blade_no_durability',
   // LGND-OFFHAND-01 — src/gametest/legendary-offhand.ts
   'andrew:legendary_offhand_admitted',
   'andrew:legendary_offhand_resolves',
@@ -196,6 +200,8 @@ const EXPECTED_TESTS = [
   'andrew:legendary_offhand_token_refused',
   // LGND-PASSIVE-01 (R-lgnd-018, L0-lgnd-ac26) — src/gametest/legendary-offhand.ts
   'andrew:legendary_offhand_passive_yields',
+  // STRM-ITEM-01-AA — src/gametest/legendary-offhand.ts
+  'andrew:legendary_storm_blade_hud_and_priority',
   // LGND-UFO-01 — src/gametest/legendary-ufo.ts
   'andrew:legendary_ufo_fall_death_keeps',
   'andrew:legendary_ufo_holder_chest_minecart',
