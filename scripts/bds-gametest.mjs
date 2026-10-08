@@ -475,6 +475,11 @@ const EXPECTED_TESTS = [
   'andrew:vanilla_recipe_elytra_unlimited',
   'andrew:vanilla_recipe_totem_unlimited',
   'andrew:vanilla_recipe_negative_controls',
+  // STRM-DMG-01 — src/gametest/storm-damage.ts (L0-strm-rdmg, L0-adr-sbdm R and C, L0-xcx26)
+  'andrew:storm_damage_passive',
+  'andrew:storm_damage_active',
+  'andrew:storm_damage_shield',
+  'andrew:storm_damage_lethal',
 ];
 
 /**
