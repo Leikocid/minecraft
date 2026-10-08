@@ -48,11 +48,12 @@ function note(id: string, kind: string, text: string): void {
 
 interface Boost {
   from: string;
-  add: number;
+  /** The value written to the before-event's damage, from the value read. */
+  to: (read: number) => number;
   armed: boolean;
   result: string;
 }
-/** Target id → a one-shot raise of the next melee hit from `from`, applied in beforeEvents.entityHurt. */
+/** Target id → a one-shot rewrite of the next entityAttack hurt from `from`, applied in beforeEvents.entityHurt. */
 const boosts = new Map<string, Boost>();
 
 interface Hook {
@@ -83,7 +84,7 @@ world.beforeEvents.entityHurt.subscribe((e) => {
       hand = `threw(${errText(err)})`;
     }
     try {
-      e.damage = read + boost.add;
+      e.damage = boost.to(read);
       boost.result = `read=${r2(read)} set=${r2(e.damage)} hand=${hand}`;
     } catch (err) {
       boost.result = `read=${r2(read)} set-threw(${errText(err)}) hand=${hand}`;
@@ -145,6 +146,28 @@ function hit(t: Entity, amount: number, from: Entity): { ret: string; delta: num
     ret = `threw(${errText(err)})`;
   }
   return { ret, delta: before - hp(t) };
+}
+
+interface Armour {
+  a: number;
+  t: number;
+  epf: number;
+}
+
+const ARMOUR_SLOTS = [EquipmentSlot.Head, EquipmentSlot.Chest, EquipmentSlot.Legs, EquipmentSlot.Feet];
+
+function armourOf(e: Entity): Armour {
+  const eq = e.getComponent("minecraft:equippable");
+  if (eq === undefined) return { a: 0, t: 0, epf: 0 };
+  let epf = 0;
+  for (const slot of ARMOUR_SLOTS) epf += eq.getEquipment(slot)?.getComponent("minecraft:enchantable")?.getEnchantment("protection")?.level ?? 0;
+  return { a: eq.totalArmor, t: eq.totalToughness, epf: Math.min(20, epf) };
+}
+
+/** Armour + toughness + Protection on d (the Java formula); no Resistance, no specialised Protection. */
+function reduced(d: number, ar: Armour): number {
+  const f = Math.min(20, Math.max(ar.a / 5, ar.a - d / (2 + ar.t / 4)));
+  return d * (1 - f / 25) * (1 - ar.epf / 25);
 }
 
 function swing(a: SimulatedPlayer, t: Entity): { ok: boolean; delta: number } {
@@ -281,9 +304,9 @@ const onHurtApply = (w: Rig, add: number) => async (t0: number): Promise<string>
   return `swing(${s.ok})=${r2(s.delta)} ${out}`;
 };
 
-/** Swing with the melee hit itself raised by `add` in beforeEvents.entityHurt. */
-const raisedSwing = (w: Rig, add: number) => async (): Promise<string> => {
-  const boost: Boost = { from: w.a.id, add, armed: true, result: "before-event never fired" };
+/** Swing with the melee hit's damage rewritten in beforeEvents.entityHurt. */
+const raisedSwing = (w: Rig, to: (read: number) => number) => async (): Promise<string> => {
+  const boost: Boost = { from: w.a.id, to, armed: true, result: "before-event never fired" };
   boosts.set(w.t.id, boost);
   const s = swing(w.a, w.t);
   await w.test.idle(2);
@@ -298,6 +321,17 @@ const swingThenWrite = (w: Rig, amount: number) => (): string => {
   const wrote = setHp(w.t, now - amount);
   return `swing(${s.ok})=${r2(s.delta)} write(${String(wrote)})=${r2(now - hp(w.t))}`;
 };
+
+/** Swing, then a health write of hp − f(amount): ADR option C, armour computed in script. */
+const swingThenManual = (w: Rig, amount: number) => (): string => {
+  const s = swing(w.a, w.t);
+  const now = hp(w.t);
+  const d = reduced(amount, armourOf(w.t));
+  const wrote = setHp(w.t, now - d);
+  return `swing(${s.ok})=${r2(s.delta)} f(${amount})=${r2(d)} write(${String(wrote)})=${r2(now - hp(w.t))}`;
+};
+
+const add = (n: number) => (read: number): number => read + n;
 
 function scenario(name: string, maxTicks: number, body: (test: Test, players: SimulatedPlayer[]) => Promise<void>): void {
   registerAsync("andrew", name, async (test: Test): Promise<void> => {
@@ -366,19 +400,27 @@ for (const kit of ["bare", "diamond", "netherite_p4"] as Kit[]) {
     const t = await playerTarget(test, players, `x26_pas_${kit}_t`, kit);
     const w: Rig = { test, a, t, full: 40, tag: `PAS ${kit}` };
     log(`${w.tag} wielder holds ${await wielderHeld(w)}`);
+    const ar = armourOf(t);
+    log(`${w.tag} ARMOUR totalArmor=${r2(ar.a)} totalToughness=${r2(ar.t)} protectionEPF=${ar.epf}`);
     const melee = await kase(w, "melee alone", swingOnly(w));
     const r6 = await kase(w, "reference apply6 alone", applyOnly(w, PASSIVE));
     const r14 = await kase(w, "reference apply14 alone", applyOnly(w, L_SWORD + PASSIVE));
+    log(
+      `${w.tag} FIT f(8)=${r2(reduced(L_SWORD, ar))} melee=${r2(melee)} | f(6)=${r2(reduced(PASSIVE, ar))} apply6=${r2(r6)} | ` +
+        `f(14)=${r2(reduced(L_SWORD + PASSIVE, ar))} apply14=${r2(r14)}`
+    );
     const naive = await kase(w, "NEGATIVE-CONTROL swing+apply6 same block", swingThenApply(w, PASSIVE));
     const naiveHit = await kase(w, "NEGATIVE-CONTROL apply6 in entityHitEntity", onHitApply(w, PASSIVE));
     const stack = await kase(w, "stack swing+apply(8+6) same block", swingThenApply(w, L_SWORD + PASSIVE));
     const stackHit = await kase(w, "stack apply(8+6) in entityHitEntity", onHitApply(w, L_SWORD + PASSIVE));
     const stackHurt = await kase(w, "stack apply(hurt.damage+6) in entityHurt", onHurtApply(w, PASSIVE));
-    const raised = await kase(w, "beforeEvents.entityHurt raises the melee by 6", raisedSwing(w, PASSIVE));
+    const raised = await kase(w, "beforeEvents.entityHurt raises the melee by 6", raisedSwing(w, add(PASSIVE)));
     const wrote = await kase(w, "swing then health write hp-6", swingThenWrite(w, PASSIVE));
+    const manual = await kase(w, "C swing then health write hp-f(6)", swingThenManual(w, PASSIVE));
+    const raisedF = await kase(w, "beforeEvents.entityHurt raises the melee by f(6)", raisedSwing(w, add(reduced(PASSIVE, ar))));
     log(
       `${w.tag} SUM melee=${r2(melee)} apply6=${r2(r6)} melee+apply6=${r2(melee + r6)} apply14=${r2(r14)} | naive=${r2(naive)} naive-onHit=${r2(naiveHit)} ` +
-        `stack=${r2(stack)} stack-onHit=${r2(stackHit)} stack-hurtL=${r2(stackHurt)} raised=${r2(raised)} write=${r2(wrote)}`
+        `stack=${r2(stack)} stack-onHit=${r2(stackHit)} stack-hurtL=${r2(stackHurt)} raised=${r2(raised)} write=${r2(wrote)} manual-f6=${r2(manual)} raised-f6=${r2(raisedF)}`
     );
     noise(w);
   });
@@ -397,7 +439,7 @@ for (const kit of ["bare", "diamond"] as Kit[]) {
     const naive = await kase(w, "NEGATIVE-CONTROL swing+apply6 same block", swingThenApply(w, PASSIVE));
     const stack8 = await kase(w, "stack swing+apply(8+6) same block (constant L)", swingThenApply(w, L_SWORD + PASSIVE));
     const stackHurt = await kase(w, "stack apply(hurt.damage+6) in entityHurt", onHurtApply(w, PASSIVE));
-    const raised = await kase(w, "beforeEvents.entityHurt raises the melee by 6", raisedSwing(w, PASSIVE));
+    const raised = await kase(w, "beforeEvents.entityHurt raises the melee by 6", raisedSwing(w, add(PASSIVE)));
     log(
       `${w.tag} SUM melee=${r2(melee)} apply6=${r2(r6)} melee+apply6=${r2(melee + r6)} | naive=${r2(naive)} stack-constL=${r2(stack8)} ` +
         `stack-hurtL=${r2(stackHurt)} raised=${r2(raised)}`
@@ -441,7 +483,7 @@ for (const kit of ["bare", "diamond"] as Kit[]) {
     log(`${w.tag} STACK apply(8+10) after melee: ${stacked.join(" ")} (reference apply10=${r2(r10)} apply18=${r2(r18)})`);
     for (const amount of [ACTIVE, L_SWORD + PASSIVE + ACTIVE]) {
       await kase(w, `raised melee (+6) then apply${amount} k=3`, async (t0) => {
-        const boost: Boost = { from: w.a.id, add: PASSIVE, armed: true, result: "before-event never fired" };
+        const boost: Boost = { from: w.a.id, to: add(PASSIVE), armed: true, result: "before-event never fired" };
         boosts.set(w.t.id, boost);
         const s = swing(w.a, w.t);
         await w.test.idle(3);
@@ -451,9 +493,74 @@ for (const kit of ["bare", "diamond"] as Kit[]) {
         return `swing(${s.ok})=${r2(s.delta)} before:${boost.result} gap=${gap} apply${amount}(${h.ret})=${r2(h.delta)}`;
       });
     }
+    const ar = armourOf(t);
+    const f10 = reduced(ACTIVE, ar);
+    log(`${w.tag} FIT f(10)=${r2(f10)} apply10=${r2(r10)} | f(18)=${r2(reduced(L_SWORD + ACTIVE, ar))} apply18=${r2(r18)}`);
+    const exact: string[] = [];
+    for (const raise of [0, PASSIVE]) {
+      const melee = raise === 0 ? "melee" : "melee raised by f(6)";
+      await kase(w, `${melee} then C apply10 + write to hp-f(10) k=3`, async () => {
+        const boost: Boost = { from: w.a.id, to: add(reduced(raise, ar)), armed: raise > 0, result: "-" };
+        boosts.set(w.t.id, boost);
+        const s = swing(w.a, w.t);
+        await w.test.idle(3);
+        boosts.delete(w.t.id);
+        const before = hp(w.t);
+        const h = hit(w.t, ACTIVE, w.a);
+        const wrote = setHp(w.t, before - f10);
+        const d = before - hp(w.t);
+        exact.push(`${melee}/C=${r2(d)}`);
+        return `swing(${s.ok})=${r2(s.delta)} apply10(${h.ret})=${r2(h.delta)} write(${String(wrote)}) active=${r2(d)}`;
+      });
+      await kase(w, `${melee} then before-event sets f(10) on apply(10+40) k=3`, async () => {
+        const boost: Boost = { from: w.a.id, to: add(reduced(raise, ar)), armed: raise > 0, result: "-" };
+        boosts.set(w.t.id, boost);
+        const s = swing(w.a, w.t);
+        await w.test.idle(3);
+        const set: Boost = { from: w.a.id, to: () => f10, armed: true, result: "before-event never fired" };
+        boosts.set(w.t.id, set);
+        const h = hit(w.t, ACTIVE + 40, w.a);
+        boosts.delete(w.t.id);
+        exact.push(`${melee}/set=${r2(h.delta)}`);
+        return `swing(${s.ok})=${r2(s.delta)} apply50(${h.ret})=${r2(h.delta)} before:${set.result}`;
+      });
+    }
+    log(`${w.tag} EXACT active in window k=3: ${exact.join(" ")} (reference apply10 alone=${r2(r10)})`);
     noise(w);
   });
 }
+
+// ------------------------------------------------------------------ absorption on each passive path
+
+scenario("probe_x26_absorption", 3600, async (test, players) => {
+  const a = attacker(test, players, "x26_abs_a", 0);
+  const t = await playerTarget(test, players, "x26_abs_t", "bare");
+  const w: Rig = { test, a, t, full: 40, tag: "ABS bare" };
+  const modes: [string, () => Promise<string> | string][] = [
+    ["none", () => "untouched"],
+    ["melee alone", swingOnly(w)],
+    ["beforeEvents raise +6", raisedSwing(w, add(PASSIVE))],
+    ["stack apply(8+6)", swingThenApply(w, L_SWORD + PASSIVE)],
+    ["write hp-6", swingThenWrite(w, PASSIVE)],
+  ];
+  for (const [label, body] of modes) {
+    await kase(w, `absorption16 ${label}`, async () => {
+      t.removeEffect("absorption");
+      t.addEffect("absorption", 600, { amplifier: 3, showParticles: false });
+      await test.idle(2);
+      const h0 = hp(t);
+      const detail = await body();
+      await test.idle(12);
+      const lost = h0 - hp(t);
+      const p0 = hp(t);
+      const probe = hit(t, 16, a);
+      const left = 16 - (p0 - hp(t));
+      t.removeEffect("absorption");
+      return `${detail} health-lost=${r2(lost)} probe16(${probe.ret}) absorption-left=${r2(left)}`;
+    });
+  }
+  noise(w);
+});
 
 // ------------------------------------------------------------------ P2: a mob
 
@@ -471,7 +578,7 @@ scenario("probe_x26_mob", 2400, async (test, players) => {
   const naiveHit = await kase(w, "NEGATIVE-CONTROL apply6 in entityHitEntity", onHitApply(w, PASSIVE));
   const stack = await kase(w, "stack swing+apply(8+6) same block", swingThenApply(w, L_SWORD + PASSIVE));
   const stackHit = await kase(w, "stack apply(8+6) in entityHitEntity", onHitApply(w, L_SWORD + PASSIVE));
-  const raised = await kase(w, "beforeEvents.entityHurt raises the melee by 6", raisedSwing(w, PASSIVE));
+  const raised = await kase(w, "beforeEvents.entityHurt raises the melee by 6", raisedSwing(w, add(PASSIVE)));
   let act = Number.NaN;
   let actStack = Number.NaN;
   await kase(w, "melee then apply10 k=3", async () => {

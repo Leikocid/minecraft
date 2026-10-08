@@ -18,7 +18,7 @@ export ANDREW_BDS_DIR
 log=dist/bds-gametest.log
 probe=src/gametest/probe-x26.ts
 tests=""
-for s in passive_bare passive_diamond passive_netherite_p4 sharp_bare sharp_diamond active_bare active_diamond mob; do
+for s in passive_bare passive_diamond passive_netherite_p4 sharp_bare sharp_diamond active_bare active_diamond mob absorption; do
   tests="$tests andrew:probe_x26_$s"
 done
 
