@@ -1,55 +1,270 @@
 ---
 title: Business Rules
 type: project-knowledge
-generated_at: "2026-10-05T22:05:04.951Z"
+generated_at: "2026-10-08T18:47:14.738Z"
 source_channel: rollout
 node_id: rollout-business-rules
 aliases: ["rollout-business-rules","business-rules","project-knowledge/business-rules"]
 is_a: ["rollout","business-rules"]
-relates_to: ["L0","L0-lgnd-r001","L0-lgnd-r002","L0-lgnd-r003","L0-lgnd-r004","L0-lgnd-r005","L0-lgnd-r006","L0-lgnd-r007","L0-lgnd-r008","L0-lgnd-r009","L0-lgnd-r010","L0-lgnd-r011","L0-lgnd-r012","L0-lgnd-r013","L0-lgnd-r014","L0-lgnd-r015","L0-lgnd-r016","L0-lgnd-r017","L0-lgnd-r018","L0-sclk-cons","L0-sclk-r001","L0-sclk-r002","L0-sclk-r003","L0-sclk-r004","L0-sclk-r005","L0-sclk-r006","L0-sclk-r007","L0-sclk-r008","L0-sclk-r009","L0-sclk-r010"]
-priority: 610
+relates_to: ["L0","L0-katn-r001","L0-katn-r002","L0-katn-r003","L0-katn-r004","L0-katn-r005","L0-katn-r006","L0-katn-r007","L0-katn-r008","L0-lgnd-r001","L0-lgnd-r002","L0-lgnd-r003","L0-lgnd-r004","L0-lgnd-r005","L0-lgnd-r006","L0-lgnd-r007","L0-lgnd-r008","L0-lgnd-r009","L0-lgnd-r010","L0-lgnd-r011","L0-lgnd-r012","L0-lgnd-r013","L0-lgnd-r014","L0-lgnd-r015","L0-lgnd-r016","L0-lgnd-r017","L0-lgnd-r018","L0-magn-rblk","L0-magn-rcnt","L0-magn-rdup","L0-magn-rexm","L0-magn-rleg","L0-magn-rlim","L0-magn-rply","L0-magn-rrel","L0-magn-rrng","L0-sauc-r001","L0-sauc-r002","L0-sauc-r003","L0-sauc-r004","L0-sauc-r005","L0-sauc-r006","L0-sclk-cons","L0-sclk-r001","L0-sclk-r002","L0-sclk-r003","L0-sclk-r004","L0-sclk-r005","L0-sclk-r006","L0-sclk-r007","L0-sclk-r008","L0-sclk-r009","L0-sclk-r010","L0-strm-rcd","L0-strm-rdmg","L0-strm-rvis","L0-ufoc-r001","L0-ufoc-r002","L0-ufoc-r003","L0-ufoc-r004","L0-ufoc-r005","L0-ufoc-r006"]
+priority: 620
 ---
 
 # Business Rules
 
 > Автогенерация из Knowledge Vault. Ручное редактирование — установи `status: manual` в frontmatter.
 
-### Global Constraints (v7) (L0)
+### Global Constraints (v8) (L0)
 
 ---
 title: "Global Constraints"
 aliases: ["L0-constraint", "Constraints"]
 is_a: ["constraint"]
 part_of: ["L0"]
-relates_to: ["L0", "L0-sclk", "L0-adr-scdm", "L0-adr-sctr"]
-see_also: ["constraints", "sculkcrossbowspecv1ruen-part-2", "sculkcrossbowspecv1ruen-part-3", "sculkcrossbowspecv1ruen-part-4"]
-supersedes: ["L0-constraint@v6"]
+relates_to: ["L0", "L0-strm", "L0-adr-sbdm", "L0-adr-sblt", "L0-adr-sbvr"]
+see_also: ["constraints", "stormbladeelytratotemspecruen-part-2"]
+supersedes: ["L0-constraint@v7"]
 ---
-# Global Constraints (v7)
+# Global Constraints (v8)
 
-**Carried unchanged:** C-1 … C-25, C-5a′, C-5d, C-5e, C-7″, C-12′, C-20″. All of them bind the crossbow. The ones it leans on most:
+**Carried unchanged:** C-1 … C-28, C-5a′, C-5d, C-5e, C-5f, C-7″, C-12′, C-20‴. All of them bind the Storm Blade. The ones it leans on most:
 - C-2: stable 2.10.0, no Experiments.
-- C-7: no duplication. The craft gate, protection and the deny list come from `lgnd` and `orbc`.
-- C-12: never write into unloaded chunks.
-- C-15: the priority order; crossbow §14 restates it for this weapon.
+- C-7: no duplication. The craft gate covers simultaneous crafts, the recipe book and shift-craft (storm §05).
+- C-15: priority order.
 - C-16: the closest stable equivalent, documented.
 - C-22: filter out `undefined` players.
-- C-23: in-flight state is not persisted.
+- C-26: the outcome is decided once, on the server. It applies to the trace: a trace resolves once, to one entity or to none.
 
-v7 adds:
+**C-28 does not apply to the blade.** The blade's damage is *armour-respecting*, not fixed.
+
+v8 adds:
 
 | ID | Constraint | Source |
 |---|---|---|
-| C-26 | *(new)* **One projectile, one outcome, decided by the server.** Each bolt is tracked separately (a Multishot volley is three records) and resolves **at most once**, to exactly one of: an entity hit (fixed damage to the struck entity only, plus a patch), a block hit (crater plus sculk), or expiry/unload (nothing). Vanilla projectile damage is never applied on top of the fixed damage, and no other entity is ever damaged by a bolt, a crater or a patch. | §5, §6, §9, §11, §14 |
-| C-27 | *(new)* **Terrain edits by a weapon are bounded, protected and permanent.** A crossbow bolt edits only cells inside its own box: crater ≤ 5×5 footprint × 3 deep, sculk ≤ 5×5 around the impact. Before any edit, `protectLegendariesIn` runs on that box. The Survival-unbreakable deny list is never edited. Cells in unloaded chunks or outside the height range are skipped. The edits are ordinary world changes: synced to every client, saved, never rolled back. | §6, §7, §11, §14; C-12 |
-| C-5f | *(new)* **Visuals of a flying projectile are bounded.** Boom particles are emitted only while a bolt is alive, at a fixed small count per bolt per tick, from the shared interval. A bolt has a lifetime cap. There are no lingering effect entities. With no bolts in flight, the cost is zero. | §4, §11 |
-| C-28 | *(new)* **Fixed damage is fixed.** The crossbow's hit damage is one constant: the same at every difficulty and whatever the armour, Protection, the shield or the hurt-invulnerability window. Kill credit, the death message and totems still work (the true-damage pattern from `decision-scythe-true-damage`). Holds with cause `sonicBoom` and a write only inside the window (diagnose-CNTR-X22); with any other cause the shield clause fails. | §5, §8, §9; T06–T08, T17 |
-| C-20‴ | *(extended)* Crossbow acceptance uses ≥ 2 players: a SimulatedPlayer target for T08 (armour and shield) and T17 (three hits), and a bystander for T09 and T12. | §12 |
+| C-29 | *(new)* **Armour-respecting bonus damage is exact and never stacks.** The active hit deals 10 HP and the passive bonus 6 HP, each *before* armour, Protection and Resistance, which then reduce it as for any `entityAttack`. Neither may be swallowed by the hurt-invulnerability window, nor counted twice. Active and passive are separate damage events. No other entity takes damage from either. Kill credit, the death message and totems work. | §02, §05, §06 |
+| C-30 | *(new)* **Spectacle never deals damage.** Any lightning, wind or electric visual from a weapon causes no damage, fire, knockback, mob conversion (pig → piglin, villager → witch, creeper charge) or block change. If vanilla `lightning_bolt` cannot meet this on stable, it is not spawned (`L0-adr-sblt`). | §02, §05 |
+| C-31 | *(new)* **Vanilla output stays vanilla.** A recipe that promises a vanilla item yields that exact `minecraft:` id, with no lore, dynamic property or mark. No script observes or alters it, and the legendary systems (magnet, protection, retention) treat it as an ordinary item. | §03, §04, §05 |
+| C-32 | *(new)* **A chance is rolled per event, on the server.** The 30 % passive is an independent roll per landed hit, with no pity timer and no per-player streak state. The RNG is injectable so a GameTest can prove both branches deterministically and the rate statistically. | §02, §06 |
+| C-20⁗ | *(extended)* Storm Blade acceptance uses ≥ 2 entities in a line for the "first target only" test, a wall test for "stopped by a solid block", and an armoured SimulatedPlayer for the pre-armour checks. | §06 |
 
 
 
 
 - **node**: L0
+
+### Katn r001 concept rule (L0-katn-r001)
+
+---
+title: "R-katn-001: Recipe, damage and durability"
+is_a: ["rule"]
+part_of: ["L0-katn"]
+relates_to: ["L0-lgnd-p001", "L0-xasm22", "L0-katn-ent1"]
+see_also: ["dragonkatanaspecv1ruen-part-1"]
+---
+**Rule.**
+1. **Recipe.** It is a shaped 3×3 recipe:
+   ```
+   . G .
+   P S P
+   . G .
+   ```
+   G is `minecraft:golden_apple` (not the enchanted one), P is `minecraft:ender_pearl`, S is `minecraft:diamond_sword` (any damage or enchantment, none carried over, `L0-xasm22`).
+   - The output is the craft token `andrew:dragon_katana_crafted`, never the item.
+   - Gate, refund and broadcast are `L0-lgnd-p001`.
+2. **Melee.** An ordinary hit deals exactly what a vanilla Diamond Sword deals in the same situation: no hidden bonus and no script damage (§4).
+   - Vanilla enchantments for the sword slot apply as usual.
+   - Melee is unaffected by the ability's cooldown (T14). The ability never runs on attack: the Katana def has no attack activation.
+3. **Durability.** There is no durability component. Hits and uses never damage the item (T15).
+4. **Ability harm.** The ability itself deals no damage to entities or blocks (§4, §8).
+
+Source: Katana §2, §4, T04, T14, T15.
+
+
+
+
+- **node**: L0-katn-r001
+
+### Katn r002 concept rule (L0-katn-r002)
+
+---
+title: "R-katn-002: Server-authoritative 20-block cap, same dimension, no block edits"
+is_a: ["rule"]
+part_of: ["L0-katn"]
+relates_to: ["L0-xasm18", "L0-katn-p001", "L0-katn-ent2"]
+see_also: ["dragonkatanaspecv1ruen-part-2", "dragonkatanaspecv1ruen-part-3"]
+---
+**Rule** (C-24).
+- The destination is computed only from the server's `getHeadLocation()` and `getViewDirection()` at the moment of use. No client-supplied point is ever read.
+- **Cap.** The resulting head position lies within 20.0 blocks of the use-time head: `|B + (0,1.62,0) − H| ≤ 20`. Aim further than 20 is **clamped**, not refused (`L0-xasm18`).
+- **Dimension.** The teleport is always in the player's current dimension. A teleport is never attempted into another dimension's chunks.
+- **No edits.** The ability never calls `setType`, `setPermutation`, `fillBlocks` or any command that changes blocks. If no cell fits, there is no teleport. Space is never created.
+- **Facing.** The teleport keeps the use-time rotation.
+- **Particles.** Particles are never a source of truth for position (§11).
+
+Source: Katana §5, §6, §11, §14; T05, T06, T10.
+
+
+
+
+- **node**: L0-katn-r002
+
+### Katn r003 concept rule (L0-katn-r003)
+
+---
+title: "R-katn-003: Obstacle semantics of the trace"
+is_a: ["rule"]
+part_of: ["L0-katn"]
+relates_to: ["L0-adr-ktob", "L0-katn-ad01", "L0-katn-cx01", "L0-xasm21"]
+see_also: ["dragonkatanaspecv1ruen-part-2"]
+---
+**Rule.** The trace stops at the first block that the engine's block ray reports with `includePassableBlocks: false, includeLiquidBlocks: false` (`L0-adr-ktob`).
+- **Do not stop it:** water, lava, air, and passable blocks (grass, flowers, torches, signs, ladders, carpet, cobweb; to be confirmed by probe (2)).
+- **Stop it:** full blocks and partial-collision blocks (slabs, stairs, fences, walls, glass panes, doors). The Katana stops short rather than risk a stuck player.
+- **Unreadable = solid.** A point of the segment in an unloaded chunk (`dimension.getBlock` returns `undefined` or throws) or outside `dimension.heightRange` ends the trace just before it.
+- The Katana never phases through a stopping block. The landing cell is always reached from the head by a clear ray.
+- A Web Sword trap does not hold the player: cobweb is passable (`L0-xasm21`). The UFO magnet does not cancel the ability.
+
+These semantics deliberately differ from the Scythe's `hasLineOfSight` (any non-air, non-liquid block blocks). Each module's README names the difference.
+
+Source: Katana §5, §13; T07, T08; C-12, C-24.
+
+
+
+
+- **node**: L0-katn-r003
+
+### Katn r004 concept rule (L0-katn-r004)
+
+---
+title: "R-katn-004: Safe standing cell"
+is_a: ["rule"]
+part_of: ["L0-katn"]
+relates_to: ["L0-xasm19", "L0-adr-ktob", "L0-katn-ad01", "L0-katn-as01", "L0-katn-as03", "L0-katn-cx01"]
+see_also: ["dragonkatanaspecv1ruen-part-2"]
+---
+**Rule.** A candidate feet cell `F` is safe when all of these hold:
+1. **Fits** (`L0-katn-ad01`): the feet cell `F` and the head cell `F+up` are each free (air, water, or a block the column ray passes).
+2. **Not a hazard** (`L0-katn-as03`): neither cell is lava, fire or soul fire. A powder-snow, sweet-berry or magma *floor* is allowed: the spec forbids only suffocation and walls.
+3. **Owner's side**: the centre of `F` is on the head's side of the hit-face plane, when there was a hit.
+4. **Reachable**: a clear ray (same flags) runs from `H` to the centre of the head cell of `F`.
+5. **In range**: `|centre(F) + (0,1.62,0) − H| ≤ 20`.
+
+**Order** (`L0-xasm19`, nearest first): the desired feet cell; then cells back along the ray in 0.5-block steps; at each step the offsets +1 and +2 up and ±1 to the side (perpendicular to `d` in the horizontal plane). The first safe one wins. The search stops at the player's own cell. Nothing safe → refusal: no teleport, no cooldown.
+
+- **Placement.** Teleport to the cell centre (x+0.5, y, z+0.5). A 0.6-wide hitbox centred in a free cell cannot overlap the neighbouring full blocks.
+- **Pose.** No crawling or lying pose is simulated; a standing 2-high fit is required (§6).
+- **Air.** A cell in the air is a valid B (fall protection covers it).
+
+Source: Katana §5, §6; T07, T09.
+
+
+
+
+- **node**: L0-katn-r004
+
+### Katn r005 concept rule (L0-katn-r005)
+
+---
+title: "R-katn-005: Cooldown only on a successful teleport; an attempt on cooldown changes nothing"
+is_a: ["rule"]
+part_of: ["L0-katn"]
+relates_to: ["L0-lgnd-p004", "L0-lgnd-p005", "L0-katn-p001"]
+see_also: ["dragonkatanaspecv1ruen-part-2"]
+---
+**Rule.**
+- `startCooldown(player, "dragon_katana")` (600 ticks = 30 000 ms, epoch ms) is called **only** after `player.teleport` returned without throwing, in the same turn.
+- The cooldown is per player and ability (`andrew:cd_dragon_katana`), synchronised by the server, and survives a restart (`L0-lgnd-p005`).
+- A refusal (no safe cell, all unreadable, wrong def resolved) never writes the timer.
+- **On cooldown**, a Use press is a no-op. There is no teleport, `andrew:cd_dragon_katana` is unchanged, and there is no chat message. Only the HUD shows the remaining seconds.
+- The Katana never sets the framework's busy window: the ability is instant. Swapping hands after a success changes nothing.
+- **Off hand.** With another legendary ready in the main hand, the main hand wins. With the main hand on cooldown and the Katana ready in the off hand, the Katana fires (`L0-lgnd-p004`).
+- Melee hits work at any cooldown state.
+
+Source: Katana §5, §9, §11; T05, T14.
+
+
+
+
+- **node**: L0-katn-r005
+
+### Katn r006 concept rule (L0-katn-r006)
+
+---
+title: "R-katn-006: Fall protection is one-shot and bounded"
+is_a: ["rule"]
+part_of: ["L0-katn"]
+relates_to: ["L0-adr-ktfl", "L0-xasm20", "L0-katn-p002", "L0-katn-ent2"]
+see_also: ["dragonkatanaspecv1ruen-part-2"]
+---
+**Rule** (C-25).
+- After a successful teleport, the first landing caused by it deals no fall damage (T11).
+- The protection ends at the first of these: an on-ground tick, a liquid, a climb, a glide, death, a dimension change, logout, or 10 s of wall-clock time.
+- The next ordinary fall deals vanilla damage (T12).
+- The protection never blocks any other damage: PvP, mobs, lava, the Void, suffocation.
+- It never alters the visible descent: no slow-falling float, unless the probe-failure fallback in `L0-katn-p002` §4 is adopted by a superseding ADR.
+- It is not persisted.
+
+Source: Katana §7; T11, T12.
+
+
+
+
+- **node**: L0-katn-r006
+
+### Katn r007 concept rule (L0-katn-r007)
+
+---
+title: "R-katn-007: Cherry-petal trail A→B, one-shot and harmless"
+is_a: ["rule"]
+part_of: ["L0-katn"]
+relates_to: ["L0-katn-p001", "L0-katn-as03"]
+see_also: ["dragonkatanaspecv1ruen-part-2", "dragonkatanaspecv1ruen-part-3"]
+---
+**Rule** (C-5e).
+- The trail is spawned **only** on a successful teleport.
+- `dimension.spawnParticle` is called at points every 0.5 block from A+1 to B+1: at most 41 points, about 3 particles per point.
+- It runs in the activation tick, or spread over ≤ 10 ticks through the shared interval. Nothing is scheduled after that.
+- **Particle.** `minecraft:cherry_leaves_particle` if probe (4) shows it renders when spawned by script on iPad. Otherwise a custom RP particle `andrew:katana_petal`: a pink billboard, lifetime ≤ 1.5 s, no collision.
+- **Visibility.** `spawnParticle` is broadcast to clients in range, so nearby players see it (§8).
+- **Harmless.** No entity is spawned, no damage, no knockback, no block change, no sound requirement.
+- Points in unloaded chunks are skipped silently.
+
+Source: Katana §8, §14; T13.
+
+
+
+
+- **node**: L0-katn-r007
+
+### Katn r008 concept rule (L0-katn-r008)
+
+---
+title: "R-katn-008: HUD and localization strings"
+is_a: ["rule"]
+part_of: ["L0-katn"]
+relates_to: ["L0-lgnd-p005", "L0-katn-ent1"]
+see_also: ["dragonkatanaspecv1ruen-part-2"]
+---
+**Rule.** The shared HUD pass (`L0-lgnd-p005`) renders the Katana through the def's `hudKeys`, the field the Orbital Cannon already uses. No framework code changes.
+
+| Key | en_US | ru_RU |
+|---|---|---|
+| `item.andrew:dragon_katana.name` | Dragon Katana | Катана дракона |
+| `andrew.katana.hud_ready` | `%s — Ready` | `%s — Готово` |
+| `andrew.katana.hud_cooldown` | `%s — %s s` | `%s — %s с` |
+
+- Ready reads exactly "Dragon Katana — Ready" / "Катана дракона — Готово" (§10). The shared `%s: Ready` would not match.
+- `hudKeys` takes both keys (`registry.ts:34`), so the Katana carries its own cooldown line too, in the same em-dash shape. The Orbital Cannon set the precedent (`andrew.orbital.hud_cooldown`). Key names: `L0-lgnd-ad14` (reconciled at reduce v6).
+- During cooldown the HUD shows the whole seconds left, rounded up.
+- Both lang files also carry the `andrew.katana.*` texts that `lgnd` needs: first_craft, craft_blocked, returned, admin_given, reset.
+- Creative inventory: Equipment → swords group, and found by search; `/give @s andrew:dragon_katana` works.
+
+Source: Katana §10.
+
+
+
+
+- **node**: L0-katn-r008
 
 ### Lgnd r001 concept rule (L0-lgnd-r001)
 
@@ -483,6 +698,377 @@ Defs #1–#4 are active. Their behaviour, keys and HUD strings do not change.
 
 - **node**: L0-lgnd-r018
 
+### Magn rblk concept rule (L0-magn-rblk)
+
+**Rule (UFO §5 Blocks, U6, U3; AC-10, AC-11).**
+
+**Built block.** A selected built iron block becomes `minecraft:air` plus **exactly one** item entity of that block's own item, spawned at the block centre. There is no vanilla drop for the block itself; U6 found that `setType(air)` drops nothing.
+
+**Door.** An iron door is removed whole (both halves) and yields **one** `iron_door`. The lower half is removed, and the upper half goes with it (U6).
+
+**Ore.** `iron_ore` and `deepslate_iron_ore` yield **one `raw_iron`** (like Survival mining without Fortune), never the ore block. The cavity remains as air.
+
+**Underground.** Items born underground fly to their ring slot **through** stone. They move by teleport each tick with velocity cleared, so they neither collide nor fall (U3). This holds for ore 20 blocks deep (the zone floor is centre − 20).
+
+**The hopper** is selected as a block only when empty (`L0-magn-adhp`); with anything in it, it is a container (`L0-magn-rcnt`).
+
+**Other block entities.** No other block entity is ever removed by the magnet.
+
+
+
+
+- **node**: L0-magn-rblk
+
+### Magn rcnt concept rule (L0-magn-rcnt)
+
+**Rule (UFO §5 Containers, U5, AC-9).** From a placed container, only stacks whose typeId is in IRON_ITEMS are removed. Each one becomes one element. Everything else is untouched: non-iron stacks, legendaries, shulker-box *items* held inside, and the container block itself.
+
+**Containers in scope:**
+- chest, double chest, trapped chest, barrel;
+- **hopper** holding anything; an empty one is a built block (`L0-magn-adhp`);
+- furnace, blast furnace, smoker;
+- dispenser, dropper, brewing stand;
+- every placed shulker box.
+
+**Out of scope:**
+- The crafter, which has no inventory in the API.
+- Contents of bundles or nested shulker items.
+
+**Double chest.**
+- Either half exposes the 54-slot paired container (U5).
+- The pair is visited **once**, keyed by its canonical half (the lower x, then the lower z). Slots therefore cannot be listed twice, and one stack cannot take two of the 10 places.
+
+**Minecarts.** A chest or hopper minecart is not a container source. It is pulled whole, as a class 3 entity, with its contents (but see `L0-magn-rleg`).
+
+**Order.** Containers go nearest first; within a container, slots go in index order. Partial extraction is fine: if the limit is reached mid-container, the remaining iron stays.
+
+
+
+
+- **node**: L0-magn-rcnt
+
+### Magn rdup concept rule (L0-magn-rdup)
+
+**Rule (C-7″, C-15 priority 1).** Every materialisation is **remove first, spawn second, roll back on failure**.
+
+**Container slot.**
+1. Re-read the stack.
+2. Run `setItem(k, undefined)`.
+3. Run `spawnItem`.
+4. If the spawn throws, run `setItem(k, stack)`.
+
+**Block.**
+1. Save the permutation and the item.
+2. Run `setType(air)`.
+3. Run `spawnItem`.
+4. If the spawn throws, run `setPermutation(saved)`.
+
+**Never** spawn before the removal. A throw after the spawn would duplicate.
+
+**Invariant, checked by GameTest.** For each source, the number of iron items in the world after the event equals the number before. Block sources follow this mapping:
+- block → 1 item;
+- door → 1 item;
+- ore → 1 raw_iron.
+
+Non-iron container contents are byte-identical before and after.
+
+**Ownership.** The magnet never writes to a block or entity in an unloaded chunk (C-12′). It never touches inventories of players, minecarts or armour stands.
+
+
+
+
+- **node**: L0-magn-rdup
+
+### Magn rexm concept rule (L0-magn-rexm)
+
+**Rule (UFO §5, AC-6).** Iron dropped near the saucer during the magnet is pulled **in addition to** the 10-element limit.
+
+- **Trigger.** An `entitySpawn` of `minecraft:item` happens while the magnet is on. The stack is in IRON_ITEMS and is not legendary. The spawn point is ≤ 12 blocks (3-D) from the hover point, the saucer position.
+- **Effect.** The item is appended as a class `X` element with the next ring slot (the ring is re-spaced over n slots).
+- **Source.** No attribution is made to a player; any iron item spawning in that sphere qualifies (`L0-magn-adex`). Items spawned by the magnet itself (extraction, block items) are already elements and are ignored by the listener.
+- **No cap.** Each drop needs a player action, so the number of `X` elements is not capped.
+- **Further out.** An iron item dropped more than 12 blocks from the hover point (a player on the ground, for example) is not pulled.
+
+
+
+
+- **node**: L0-magn-rexm
+
+### Magn rleg concept rule (L0-magn-rleg)
+
+**Rule (UFO §4, AC-13, C-7″).** A legendary weapon is never iron and is never pulled, wherever it lies.
+
+**Predicate.** "Legendary" means `isLegendaryStack(stack)` from `lgnd` v4 (`L0-lgnd-ad13`): the stack's type is a def's `itemId` **or** `craftTokenId`, in any mark state.
+- **Before `lgnd` v4 ships**, use `defForStack(s) !== undefined || defForToken(s) !== undefined` from `src/legendary/registry.ts`. `defForStack` alone matches only `itemId`, so it would miss a craft token inside a pulled minecart.
+- **Item entities** are judged by that predicate on their `minecraft:item` stack, **not** by `isLegendaryItemEntity`. That one is true only for a live marked instance, so it would let the magnet take an unmarked `/give` or Creative copy (`lgnd-ad13`, rejected option a).
+
+**Call sites in `magn`:**
+- ground items;
+- container stacks;
+- the player hand test;
+- the drop exemption;
+- every slot of a chest or hopper minecart, and the hand and armour slots of an armour stand or mob, before it is selected as a holder.
+
+**Holders.** A class 3 holder whose inventory or equipment holds a legendary is **not selected**; the next candidate takes its place. A legendary therefore never moves through the magnet, not even inside its holder (`L0-magn-aslh`).
+
+**Players.** A pulled player who carries a legendary is still pulled. The player is not "the legendary", and `lgnd` retention covers their death.
+
+**Owned by `lgnd`, not restated here:** the predicate itself (`L0-lgnd-ad13`), the never-pulled rule including holders and players (`L0-lgnd-r016`), the watching of moved holders (`L0-lgnd-as15`), and death retention (`L0-lgnd-ac22`). The call sites above implement `L0-lgnd-r016` §2, §3, §5 and §6. Its §4 (holder blocks) is dormant, because the only holder block the magnet turns into air is an empty hopper (`L0-magn-adhp`). Where the two read differently, `lgnd` wins.
+
+
+
+
+- **node**: L0-magn-rleg
+
+### Magn rlim concept rule (L0-magn-rlim)
+
+**Rule (UFO §5, AC-8).** One event pulls at most **10 non-player elements**.
+
+- **An element** is one entity: a ground item stack, a stack extracted from one container slot, a mob, a minecart, or the single item produced by a block (a door counts once).
+- **When.** The set is chosen once, at magnet-on. Nothing found later joins it, except exempt drops (`L0-magn-rexm`).
+- **Priority** is strict between classes:
+  1. iron ground items;
+  2. iron container stacks;
+  3. mobs and minecarts;
+  4. built iron blocks;
+  5. ore.
+
+  A lower class is considered only if the higher classes leave free slots.
+- **Within a class,** candidates are ordered nearest first by 3-D distance from the event centre (the block under the target at arrival). Ties go by entity id or block position, so the order is deterministic in tests.
+- **Players** never count toward the 10 and are never in the set (`L0-magn-rply`).
+- **A lost slot is not refilled.** An element that becomes invalid during the hold (picked up, killed) leaves its slot empty.
+
+
+
+
+- **node**: L0-magn-rlim
+
+### Magn rply concept rule (L0-magn-rply)
+
+**Rule (UFO §5, §6; AC-4, AC-5, AC-6).** A player is pulled in a given tick **if and only if** all of the following hold:
+- they are inside the zone cylinder and alive;
+- their game mode is neither Creative nor Spectator; Adventure is pulled (`L0-xasm14`);
+- the **main-hand or off-hand** stack is in IRON_ITEMS.
+
+**What does not count.** Iron in the inventory or in worn armour slots. A legendary in hand is never iron.
+
+**How.**
+- `applyKnockback`, each tick, toward the point 6 blocks below the saucer, with the step capped at **0.6 blocks per tick**.
+- Once there, the player is held, with a measured deviation of ≤ 0.03 (U1).
+
+**Stop and resume (U10).**
+- The hand state is re-read every tick. After a drop (`Q`) or a slot switch to non-iron, no knockback is sent from that tick on, and the player falls.
+- Taking iron back into a hand while the magnet is on resumes the pull on the next tick.
+- Leaving the zone horizontally stops the pull in the same way.
+
+**Unlimited.** Any number of players can be pulled; they are outside the 10-element limit.
+
+
+
+
+- **node**: L0-magn-rply
+
+### Magn rrel concept rule (L0-magn-rrel)
+
+**Rule (UFO §6; U1, U2; AC-7, AC-14).**
+
+**One tick.** When the magnet goes off, every element and every held player is released in the **same tick**, with no staggering.
+
+**Vanilla physics.**
+- After the release the magnet applies no impulse and no teleport.
+- Things fall from where they are, under vanilla gravity.
+
+**Fall damage.**
+- Fall damage is vanilla, counted **from the release point only**; time spent hovering adds nothing.
+- U2: release at 37 blocks dealt 33 damage, a death; this is intended.
+- A player lowered near the ground before release takes none (U1).
+- If `applyKnockback` holding is found to accumulate fall distance, `magn` resets it before release (`L0-xasm16`, `L0-magn-a07`).
+
+**Mobs.** Mobs take vanilla fall damage; iron golems are immune.
+
+**Afterwards.** Released items are ordinary items: they can be picked up and despawn on the vanilla timer.
+
+**Death from the fall.** A player who dies from the fall keeps legendaries under `lgnd` death retention; the other drops are vanilla.
+
+
+
+
+- **node**: L0-magn-rrel
+
+### Magn rrng concept rule (L0-magn-rrng)
+
+**Rule (UFO §6, U11).** Elements hold on a ring of **radius 5 at 3 blocks below the saucer**, spaced evenly and rotating slowly. Players are held 6 blocks below the saucer on its axis, so a held player is about 5.8 blocks from every slot.
+
+**Keep-away.** A hovering player picks up items within about 2 blocks (U11). In every tick, an **item** element's target that comes within 3 blocks of any player (for example, a player rising past the ring) is moved radially outward until it is 3 blocks clear. If it cannot clear radially, it is moved up instead. The margin is an assumption (`L0-magn-asrg`).
+
+**Scope.** Mobs, minecarts and armour stands are not subject to pickup, but they use the same ring.
+
+**On the way in.** Elements still flying toward the ring use the same keep-away offset for their next step.
+
+
+
+
+- **node**: L0-magn-rrng
+
+### R-sauc-1 · Hull hit test: a charge's swept segment against a cylinder of r 6 × h 3, in any phase (L0-sauc-r001)
+
+# R-sauc-1 · Hull hit test: a charge's swept segment against a cylinder of r 6 × h 3, in any phase
+
+**Links:** `part_of: ["L0-sauc"]` · `is_a: ["rule"]` · `relates_to: ["L0-sauc-p002", "L0-sauc-p003", "L0-sauc-as01", "L0-adr-ufoi"]`
+
+**Rule.** A charge hits the saucer in a tick when all of the following hold:
+1. `attack.dimensionId` is the Overworld.
+2. The horizontal distance between the charge column `(x, z)` and the saucer position `(sx, sz)` **in that tick** is ≤ 6.0.
+3. The vertical segment `[to.y, from.y]` swept this tick overlaps the hull band `[sy, sy + 3]`, closed at both ends (`as01`).
+
+The test holds in every phase while the saucer entity exists: arrival, magnet, departure, and the downed fall (`as05`).
+
+**Why a segment.** Charges fall 1 block per tick, so a point test at the charge position could miss nothing at today's speed. But `FALL_SPEED` is a tunable, and the sweep keeps the test exact at any speed, the same way the block-contact sweep does.
+
+**Saucer position.** The test uses the position the saucer holds when the flight loop runs. The order of `ufoc`'s interval relative to the orbital interval is not fixed. A ≤ 0.225 block-per-tick lag during arrival is accepted: the hull edge tolerance is effectively ±0.25.
+
+**Not a hit:**
+- A charge column at a horizontal distance greater than 6.
+- A charge whose whole fall lies above or below the band.
+- Charges in the Nether or the End.
+
+
+
+
+- **node**: L0-sauc-r001
+
+### R-sauc-2 · Flight-path geometry and timing (L0-sauc-r002)
+
+# R-sauc-2 · Flight-path geometry and timing
+
+**Links:** `part_of: ["L0-sauc"]` · `is_a: ["rule"]` · `relates_to: ["L0-sauc-p001", "L0-sauc-as04", "L0-ufoc"]`
+
+**Rule** (UFO §2 table, AC-2):
+
+| Leg | From | To | Duration |
+|---|---|---|---|
+| Arrival | horizontal distance 90 from the centre on bearing θ, at `hoverY + 10` | hover point `(centre, hoverY)` | 400 ticks (20 s) |
+| Hover | hover point | hover point | 1200 ticks (60 s), set by `ufoc` |
+| Departure | hover point | horizontal distance 90 on bearing θ + 180°, at `hoverY + 10` | 300 ticks (15 s) |
+
+After that the saucer is removed in the same tick.
+
+**Constraints.**
+- The horizontal distance from the centre stays ≤ 90 on every tick, and so never exceeds the 100-block U8 limit (C-12′). The 100 is read as horizontal (`as04`).
+- θ is uniform in [0, 2π). The departure bearing is exactly opposite.
+- The motion is continuous: the position step is ≤ 0.5 blocks per tick on every leg. The fastest step is at the middle of an eased leg, and stays under 0.5 blocks per tick for both legs.
+- `hoverY` comes from `ufoc`: centre + 40, capped at ceiling − 15. `sauc` never recomputes it.
+- The arrival and departure height is `min(hoverY + 10, ceiling − 4)`, so the hull never rises above the build limit and stays reachable by a charge in every phase (`L0-adr-ufht`, which resolves `sauc-cx01`).
+- Nothing in the world changes the path: the saucer has no physics or collision, and it passes through terrain (UFO §7).
+
+
+
+
+- **node**: L0-sauc-r002
+
+### R-sauc-3 · Immune, unpushable, non-colliding (within the known engine traps) (L0-sauc-r003)
+
+# R-sauc-3 · Immune, unpushable, non-colliding (within the known engine traps)
+
+**Links:** `part_of: ["L0-sauc"]` · `is_a: ["rule"]` · `relates_to: ["L0-sauc-ent1", "L0-sauc-ac02"]`
+
+**Rule** (UFO §7, AC-16): nothing but an Orbital charge crossing the hull affects the saucer or the beam. Not damage, not knockback, not a push, not collision. The Cannon itself acts **only** through the script hull test (`r001`), never through entity damage.
+
+**Required BP shape.** This is the same pattern as the shipped `orbital_charge.json` and the U-probe entities:
+- `format_version` **1.26.0**. The 1.26.50 format drops `minecraft:pushable` and refuses the whole entity.
+- `runtime_identifier: "minecraft:snowball"`. Without it, a custom entity pushes mobs.
+- `collision_box` 0 × 0, so players cannot hit or target it and it does not block anything.
+- `physics {has_gravity: false, has_collision: false}`.
+- `pushable {is_pushable: false, is_pushable_by_piston: false}`.
+- `knockback_resistance 1`.
+- `damage_sensor {cause: "all", deals_damage: "no"}`.
+- No `health` component and no `projectile` component.
+- `is_spawnable false`. `is_summonable true` for tests only.
+
+**Consequences.**
+- Arrows, tridents, TNT and other explosions, lightning, lava, fire, and the `/damage` command change nothing.
+- `/kill` and `/andrew:ufo stop` are removals, not damage. They fall outside AC-16 and are handled as an aborted event (`p001`).
+- Charges are never stopped by the entity. They are stopped by the interceptor.
+
+
+
+
+- **node**: L0-sauc-r003
+
+### R-sauc-4 · One shoot-down per event: a harmless blast, the reward exactly once, and a broadcast naming the charge owner (L0-sauc-r004)
+
+# R-sauc-4 · One shoot-down per event: a harmless blast, the reward exactly once, and a broadcast naming the charge owner
+
+**Links:** `part_of: ["L0-sauc"]` · `is_a: ["rule"]` · `relates_to: ["L0-sauc-p002", "L0-sauc-ad03", "L0-sauc-as03", "L0-ufoc"]`
+
+**Rule** (UFO §8, AC-15; priority (1), C-7):
+1. **First crossing wins.** Only the first charge to satisfy `r001` triggers the shoot-down. It is latched on `eventId`. Later crossings are absorbed but produce no second reward, broadcast or `reportShotDown`.
+2. **The blast is harmless:**
+   - no `createExplosion` (even `breaksBlocks: false` deals entity damage);
+   - no block is changed;
+   - no entity takes damage or knockback;
+   - no fire.
+
+   It is only particles plus the `random.explode` sound.
+3. **The reward** is exactly `minecraft:diamond × 8` and `minecraft:totem_of_undying × 1`, as two item entities at the blast point. It is spawned once per `eventId`, never on a departure, a `stop` or a restart.
+4. **The broadcast** goes to every online player: `andrew.ufo.shot_down` = RU "%s сбил НЛО!" / EN "%s shot down the UFO!". `%s` is the **owner of the absorbed charge** (`attack.ownerId`), not the closest player and not the event target.
+5. **The schedule** is the next arrival at 15 min after the shot, set by `ufoc` from `reportShotDown`.
+
+
+
+
+- **node**: L0-sauc-r004
+
+### R-sauc-5 · The beam: translucent green, saucer underside to the ground, shown only during the magnet phase (L0-sauc-r005)
+
+# R-sauc-5 · The beam: translucent green, saucer underside to the ground, shown only during the magnet phase
+
+**Links:** `part_of: ["L0-sauc"]` · `is_a: ["rule"]` · `relates_to: ["L0-sauc-ad01", "L0-sauc-ent1", "L0-sauc-ac05"]`
+
+**Rule** (UFO §7, DoD):
+- **Visibility.**
+  - The beam is visible if and only if `ufoc`'s phase is `magnet`.
+  - It turns on in the magnet-on tick.
+  - It turns off in the release tick, or in the shoot-down tick.
+  - It is never visible during arrival, departure or the fall.
+- **Look.**
+  - A cone, wide end at the bottom, apex at the underside of the saucer.
+  - The bottom radius is ≈ 5 blocks, a tunable judged on the iPad. It is not tied to the 50-block magnet zone.
+  - Green with alpha ≈ 0.35–0.5. Terrain and pulled items are visible through it.
+  - It is rendered without back-face culling and does not cast a shadow.
+- **Length.** `hoverY − centre.y` (normally 40) is sent to the client as an int actor property `andrew:beam_len`. The geometry bone scales by it. The beam ends at the centre block. It does not follow terrain under the cone.
+- **Visible whole.** `visible_bounds` covers the disc and the full beam length, so the client does not cull the beam when the disc is off screen. The beam is not damageable and not collidable: it is part of the saucer entity (`ad01`), so `r003` covers it.
+
+
+
+
+- **node**: L0-sauc-r005
+
+### R-sauc-6 · Sounds (L0-sauc-r006)
+
+# R-sauc-6 · Sounds
+
+**Links:** `part_of: ["L0-sauc"]` · `is_a: ["rule"]` · `relates_to: ["L0-sauc-r005", "L0-sauc-p002", "L0-sauc-as02"]`
+
+**Rule** (UFO §7: vanilla `beacon.*` is allowed):
+
+| Moment | Sound | Where |
+|---|---|---|
+| Magnet on | `beacon.activate` | saucer position |
+| Every 40 ticks during the magnet (first at +40) | `beacon.ambient` | saucer position |
+| Magnet off (release or shoot-down while the magnet is on) | `beacon.deactivate` | saucer position |
+| Shoot-down blast | `random.explode` | blast point |
+
+- The sounds are played with `dimension.playSound(id, pos, {volume: 4})`. Bedrock attenuates over about 16 × volume blocks, so 4 gives a ~64-block range and covers a player on the ground 40 below, inside the 50-block zone (`as02`).
+- All calls go through one `playUfoSound()` wrapper so GameTests can count them (`ac05`).
+- There is no arrival or departure sound; the spec asks for none.
+- The hum stops on the release tick. No sound plays after the saucer is removed.
+
+
+
+
+- **node**: L0-sauc-r006
+
 ### Constraints · `sclk` (component NFRs; inherits C-1 … C-28) (L0-sclk-cons)
 
 # Constraints · `sclk` (component NFRs; inherits C-1 … C-28)
@@ -686,4 +1272,217 @@ Source: §8 ("each processed independently"), §11 ("cannot merge three arrows i
 
 
 - **node**: L0-sclk-r010
+
+### Rule: when the active fires, and what it costs (L0-strm-rcd)
+
+---
+title: "Storm Blade activation validity, cooldown spend and trace limits"
+is_a: ["rule"]
+part_of: ["L0-strm"]
+relates_to: ["L0-xasm31", "L0-strm-pact", "L0-lgnd"]
+---
+# Rule: when the active fires, and what it costs
+
+1. **A valid release spends 600 ticks (30 s), always.** A hit, a miss into air, and a wall at 0.5 blocks all count. That follows §02: "кулдаун начинается при валидном выпуске".
+2. **An invalid attempt spends nothing and shows nothing new.** Invalid means:
+   - on cooldown, or busy;
+   - a stale (duplicate) stack;
+   - a dead or spectating player;
+   - the blade in neither hand;
+   - the eye's chunk not loaded.
+3. **The passive is independent.** It never reads or writes `sb` cooldown keys, and the active never gates the passive.
+4. **Range.** The trace is ≤ **10.0 blocks Euclidean** from the eye along the view vector. The block-ray budget (cell steps) is set larger and then clamped by distance.
+5. **The stop** is the first block that `katn`'s `TRACE_FLAGS` treat as solid. Liquids and passable blocks do not stop it. The trace never passes a stop, and no entity beyond the stop is eligible ("never through walls").
+6. **One target.** It is the nearest living non-wielder whose ray distance is less than the stop distance. A second target is never damaged, even if the first dies.
+7. **HUD.** The action bar shows «Клинок бури — Готово» / "Storm Blade — Ready" when ready, otherwise the whole seconds left (ceil), through the shared legendary HUD and lang keys.
+8. **Cooldown persistence** follows the `lgnd` rules for def cooldowns (cited, not restated).
+
+
+
+
+- **node**: L0-strm-rcd
+
+### Rule: `stormDamage(target, D, wielder, opts?)` (L0-strm-rdmg)
+
+---
+title: "Storm damage helper: exact pre-armour D, never swallowed, never doubled"
+is_a: ["rule"]
+part_of: ["L0-strm"]
+relates_to: ["L0-adr-sbdm", "L0-xasm29", "L0-xcx26", "L0-xcx27", "L0-sclk"]
+governs_files: ["src/storm/damage.ts"]
+---
+# Rule: `stormDamage(target, D, wielder, opts?)`
+
+**Rule.** Every Storm Blade damage event (active D = 10, passive D = 6) goes through one helper. Armour, toughness, Protection and Resistance then reduce D **exactly as for a vanilla `entityAttack` of D** (xasm29, C-29).
+
+It has three modes, mirroring `src/sculk/hit.ts` modes but **not importing them**:
+- **native**: the target is in no window. `applyDamage(D, { cause: entityAttack, damagingEntity: wielder })`.
+- **window**: the target was hit L ticks-ago < `HURT_WINDOW_TICKS` (10) by a hit of strength L.
+  - If P1 passes, `applyDamage(L + D, …)`; the engine takes the difference D and armours it.
+  - If P1 fails, compute D′ (vanilla armour reduction of D) and subtract it from health, *unless* `health − D′ ≤ 0`, in which case take the lethal path.
+- **lethal**: `applyDamage` with a value that guarantees death after armour, so totems, the death message and kill credit fire natively.
+
+**Invariants**
+- Exactly one target per call. No area effect, so a bystander's Δhealth = 0.
+- No true-damage write in the native path. The `sonicBoom` cause is never used, because it bypasses armour, which C-28 does not grant this weapon.
+- The helper records `(targetId → lastHitStrength, tick)` for every landed Storm hit, so a passive on an active (or the reverse) within 10 ticks still nets D.
+- Active and passive are **separate calls** (§05). They are never merged into one 16-HP call.
+- The return value of `applyDamage` is **not** evidence of damage, because it returns true when swallowed (`hit.ts:25`). Tests read health.
+- A raised shield cancels the call (platform). This is deviation (a) of `xcx27` until `xq8` is answered.
+
+
+
+
+- **node**: L0-strm-rdmg
+
+### Rule: spectacle never acts (C-30) (L0-strm-rvis)
+
+---
+title: "Storm visuals are particles and sound only"
+is_a: ["rule"]
+part_of: ["L0-strm"]
+relates_to: ["L0-adr-sblt", "L0-strm-pprb"]
+---
+# Rule: spectacle never acts (C-30)
+
+- No `minecraft:lightning_bolt` is spawned or summoned, and the id does not appear in `src/storm/`. A grep check enforces this.
+- A **strike** is a vertical column (~6 blocks above the point down to the point) of spark and flash particles from the P4 list, plus `ambient.weather.lightning.impact` at the point.
+  - The active plays **3** strikes, staggered ≤ 6 ticks.
+  - The passive plays **1**.
+- The **trace** is wind and spark particles every ~0.5 block from the eye to the hit or stop point. It is drawn once.
+- Visuals cause no damage, fire, knockback, mob conversion or block change. They add no entity, so the entity count in the test volume is unchanged.
+- The work is scheduled on the shared `runInterval` (memory: `runJob` stalls). There is no work after the last strike (C-5f analogue).
+- The deviation "lightning drawn with particles, not a vanilla bolt" is recorded under C-16 in the deviations doc. Spec §05 explicitly allows it.
+
+
+
+
+- **node**: L0-strm-rvis
+
+### R-ufoc-1 · Schedule timing (L0-ufoc-r001)
+
+# R-ufoc-1 · Schedule timing
+
+**Links:** `part_of: ["L0-ufoc"]` · `is_a: ["rule"]` · `relates_to: ["L0-ufoc-ent1", "L0-ufoc-p001", "L0-ufoc-as03", "L0-xasm14"]`
+
+**Rule** (UFO §2, §8, §10; AC-1):
+1. **First arrival** = first join + U[10, 20] min of real time. The draw is uniform and is made once, when `next_ms` is written.
+2. **Next arrival** = the end of the departure + exactly 15 min. After a shoot-down, it is the shot + 15 min.
+3. **Restart mid-event:** the next arrival is the restart + 15 min.
+4. **Restart in a pause:** the stored `next_ms` holds, so the timer survives the restart.
+5. **Due with no Overworld player:** the arrival waits and starts at the first check after such a player is present. Missed arrivals do not accumulate.
+6. **Durable times** are epoch ms from `env.now()`, which is `Date.now` in the product. A tick count or `getAbsoluteTime` must never be used (C-21).
+
+**Precision:** the idle check runs every 100 ticks, so an arrival may start up to 5 s late, or more under lag (`as03`). Phase durations are counted in ticks (`ad01`).
+
+
+
+
+- **node**: L0-ufoc-r001
+
+### R-ufoc-2 · Target and centre selection (L0-ufoc-r002)
+
+# R-ufoc-2 · Target and centre selection
+
+**Links:** `part_of: ["L0-ufoc"]` · `is_a: ["rule"]` · `relates_to: ["L0-ufoc-ent2", "L0-ufoc-as02", "L0-ufoc-p001"]`
+
+**Rule** (UFO §2, §10):
+- **Candidates** = `env.overworldPlayers()`, the online players for which all of these hold:
+  - `isValid === true`;
+  - `dimension.id === "minecraft:overworld"`;
+  - health > 0.
+
+  Unreadable (`undefined`) entries are dropped; product packs see simulated players that way. Game mode is not a filter (`as02`).
+- **Target** = one candidate drawn uniformly through `env.random()`. For `come`, the target is the invoker when they are a candidate (`p004`).
+- **Centre** = `{floor(x), floor(y) − 1, floor(z)}` of the target at arrival start, which is the block under their feet (`as02`). It is frozen for the whole event.
+- The event goes on at the centre if the target leaves, dies, changes dimension or logs out (§10). After selection, no `ufoc` logic reads the target again.
+
+
+
+
+- **node**: L0-ufoc-r002
+
+### R-ufoc-3 · Hover height (L0-ufoc-r003)
+
+# R-ufoc-3 · Hover height
+
+**Links:** `part_of: ["L0-ufoc"]` · `is_a: ["rule"]` · `relates_to: ["L0-adr-ufht", "L0-sauc-r002", "L0-magn"]`
+
+**Rule** (UFO §2, `L0-adr-ufht`):
+
+`hoverY = min(centre.y + 40, ceiling − 15)`, where `ceiling = world.getDimension("overworld").heightRange.max`. On current Bedrock that is 320, so `hoverY` ≤ 305.
+
+- It is computed once at arrival start and is part of every `onPhase` payload.
+- `sauc` and `magn` never recompute it. `sauc` caps its legs at `min(hoverY + 10, ceiling − 4)` from the same `ceiling`.
+- The magnet zone's top is `hoverY`, and its bottom is `centre.y − 20` (UFO §3, `magn`).
+- With a centre at or above 276, `hoverY` is the cap and the saucer hovers less than 40 blocks above the centre. That is intended (`adr-ufht`).
+
+
+
+
+- **node**: L0-ufoc-r003
+
+### R-ufoc-4 · One event, Overworld only, one interval, fixed tick order (L0-ufoc-r004)
+
+# R-ufoc-4 · One event, Overworld only, one interval, fixed tick order
+
+**Links:** `part_of: ["L0-ufoc"]` · `is_a: ["rule"]` · `relates_to: ["L0-adr-ufpc", "L0-adr-ufom", "L0-ufoc-ad02", "L0-ufoc-p002"]`
+
+**Rule** (UFO §2, §11; C-5d; AC-3):
+1. At most one session, and therefore at most one saucer, exists in the world. An arrival never starts while a session exists, from the schedule or from `come`.
+2. The event exists only in the Overworld. The centre, the saucer and the zone are always in `minecraft:overworld`. Players in the Nether or the End are never candidates and never make an arrival start.
+3. All UFO world mutation runs inside the one UFO `runInterval`:
+   - phase changes;
+   - the saucer step;
+   - the magnet scan, hold and release.
+
+   The only exception is `sauc`'s charge absorption inside `orbc`'s step (`adr-ufpc`).
+4. `ufoc`, `sauc` and `magn` create no `runTimeout`, no `runJob` and no second interval. The command defers its work through one `system.run` (`p004`).
+5. Order within a tick: latch → liveness → advance phase → `saucerStep` → `magnetStep`.
+6. With no session, a tick costs one counter check, and the clock and properties are read every 100 ticks.
+
+
+
+
+- **node**: L0-ufoc-r004
+
+### R-ufoc-5 · Arrival notice and localization (L0-ufoc-r005)
+
+# R-ufoc-5 · Arrival notice and localization
+
+**Links:** `part_of: ["L0-ufoc"]` · `is_a: ["rule"]` · `relates_to: ["L0-ufoc-as05", "L0-sauc", "L0-ufoc-ac07"]`
+
+**Rule** (UFO §7, §12):
+- **When:** once, at arrival start, in the same tick the session is created. This applies to `come` too.
+- **Who:** every valid Overworld player whose horizontal distance to the centre is ≤ 150 blocks (`as05`). Players in other dimensions never receive it.
+- **What:** `player.sendMessage({ rawtext: [{ translate: "andrew.ufo.arrival" }] })`. The client renders it in its own language:
+  - `en_US.lang`: `andrew.ufo.arrival=A UFO is in the sky!`
+  - `ru_RU.lang`: `andrew.ufo.arrival=В небе НЛО!`
+- The shoot-down broadcast `andrew.ufo.shot_down` (`%s`) belongs to `sauc`, not here.
+- Lang files must keep the UTF-8 encoding of the existing entries.
+
+
+
+
+- **node**: L0-ufoc-r005
+
+### R-ufoc-6 · Enable flag and how commands affect the schedule (L0-ufoc-r006)
+
+# R-ufoc-6 · Enable flag and how commands affect the schedule
+
+**Links:** `part_of: ["L0-ufoc"]` · `is_a: ["rule"]` · `relates_to: ["L0-ufoc-p004", "L0-ufoc-as01", "L0-ufoc-ent1"]`
+
+**Rule** (UFO §9; AC-17):
+1. `andrew:ufo_enabled` defaults to true when absent. It is stored in the world and survives a restart.
+2. While it is false, no scheduled arrival starts. The first-join write of `next_ms` still happens, so the first window is known once the event is enabled.
+3. `disable` during a live event stops the event exactly like `stop`: everything held is released and the saucer is removed (`as01`).
+4. `enable` with `next_ms` in the past pushes `next_ms` to now + 15 min, so re-enabling never drops a saucer the same second (`as01`).
+5. `stop` ends the event, and the next arrival is set to now + 15 min. `stop` does not change the flag.
+6. `come` ignores the flag and the schedule. When the event it starts ends, the usual +15 min rule applies (`r001`).
+7. The commands run for operators only (`GameDirectors`). A non-operator invocation changes nothing.
+
+
+
+
+- **node**: L0-ufoc-r006
 

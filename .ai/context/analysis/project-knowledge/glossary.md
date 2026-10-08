@@ -1,18 +1,252 @@
 ---
 title: Glossary
 type: project-knowledge
-generated_at: "2026-10-05T22:05:04.940Z"
+generated_at: "2026-10-08T18:47:14.720Z"
 source_channel: rollout
 node_id: rollout-glossary
 aliases: ["rollout-glossary","glossary","project-knowledge/glossary"]
 is_a: ["rollout","glossary"]
-relates_to: ["L0-lgnd-ac01","L0-lgnd-ac02","L0-lgnd-ac03","L0-lgnd-ac04","L0-lgnd-ac05","L0-lgnd-ac06","L0-lgnd-ac07","L0-lgnd-ac08","L0-lgnd-ac09","L0-lgnd-ac10","L0-lgnd-ac11","L0-lgnd-ac12","L0-lgnd-ac13","L0-lgnd-ac14","L0-lgnd-ac15","L0-lgnd-ac16","L0-lgnd-ac17","L0-lgnd-ac18","L0-lgnd-ac19","L0-lgnd-ac20","L0-lgnd-ac21","L0-lgnd-ac22","L0-lgnd-ac23","L0-lgnd-ac24","L0-lgnd-ac25","L0-lgnd-ac26","L0-lgnd-ac27","L0-lgnd-gl01","L0-lgnd-gl02","L0-lgnd-gl03","L0-lgnd-gl04","L0-lgnd-gl05","L0-lgnd-gl06","L0-lgnd-gl07","L0-lgnd-gl08","L0-lgnd-gl09","L0-lgnd-gl10","L0-lgnd-gl11","L0-lgnd-gl12","L0-lgnd-gl13","L0-lgnd-gl14","L0-lgnd-gl15","L0-lgnd-gl16","L0-lgnd-gl17","L0-lgnd-gl18","L0-lgnd-gl19","L0-lgnd-gl20","L0-lgnd-gl21","L0-sclk-ac01","L0-sclk-ac02","L0-sclk-ac03","L0-sclk-ac04","L0-sclk-ac05","L0-sclk-ac06","L0-sclk-ac07","L0-sclk-ac08","L0-sclk-ac09","L0-sclk-ac10","L0-sclk-ac11","L0-sclk-ac12","L0-sclk-ac13","L0-sclk-ac14","L0-sclk-ac15","L0-sclk-ac16","L0-sclk-ac17","L0-sclk-ac18","L0-sclk-ac19","L0-sclk-ac20","L0-sclk-ac21","L0-sclk-ac22","L0-sclk-ac23","L0-sclk-ac24","L0-sclk-ac25","L0-sclk-ac26","L0-sclk-ac27","L0-sclk-gl01","L0-sclk-gl02","L0-sclk-gl03","L0-sclk-gl04","L0-sclk-gl05","L0-sclk-gl06"]
-priority: 610
+relates_to: ["L0-katn-ac01","L0-katn-ac02","L0-katn-ac03","L0-katn-ac04","L0-katn-ac05","L0-katn-ac06","L0-katn-ac07","L0-katn-ac08","L0-katn-ac09","L0-katn-gl01","L0-katn-gl02","L0-katn-gl03","L0-katn-gl04","L0-katn-gl05","L0-lgnd-ac01","L0-lgnd-ac02","L0-lgnd-ac03","L0-lgnd-ac04","L0-lgnd-ac05","L0-lgnd-ac06","L0-lgnd-ac07","L0-lgnd-ac08","L0-lgnd-ac09","L0-lgnd-ac10","L0-lgnd-ac11","L0-lgnd-ac12","L0-lgnd-ac13","L0-lgnd-ac14","L0-lgnd-ac15","L0-lgnd-ac16","L0-lgnd-ac17","L0-lgnd-ac18","L0-lgnd-ac19","L0-lgnd-ac20","L0-lgnd-ac21","L0-lgnd-ac22","L0-lgnd-ac23","L0-lgnd-ac24","L0-lgnd-ac25","L0-lgnd-ac26","L0-lgnd-ac27","L0-lgnd-gl01","L0-lgnd-gl02","L0-lgnd-gl03","L0-lgnd-gl04","L0-lgnd-gl05","L0-lgnd-gl06","L0-lgnd-gl07","L0-lgnd-gl08","L0-lgnd-gl09","L0-lgnd-gl10","L0-lgnd-gl11","L0-lgnd-gl12","L0-lgnd-gl13","L0-lgnd-gl14","L0-lgnd-gl15","L0-lgnd-gl16","L0-lgnd-gl17","L0-lgnd-gl18","L0-lgnd-gl19","L0-lgnd-gl20","L0-lgnd-gl21","L0-magn-a04","L0-magn-a05","L0-magn-a06","L0-magn-a07","L0-magn-a08","L0-magn-a09","L0-magn-a10","L0-magn-a11","L0-magn-a12","L0-magn-a13","L0-magn-a14","L0-magn-aipd","L0-magn-atps","L0-magn-gcls","L0-magn-gelm","L0-magn-gexm","L0-magn-glat","L0-magn-gring","L0-magn-gtag","L0-magn-gzon","L0-sauc-ac01","L0-sauc-ac02","L0-sauc-ac03","L0-sauc-ac04","L0-sauc-ac05","L0-sauc-ac06","L0-sauc-gl01","L0-sauc-gl02","L0-sauc-gl03","L0-sauc-gl04","L0-sauc-gl05","L0-sclk-ac01","L0-sclk-ac02","L0-sclk-ac03","L0-sclk-ac04","L0-sclk-ac05","L0-sclk-ac06","L0-sclk-ac07"]
+priority: 620
 ---
 
 # Glossary
 
 > Автогенерация из Knowledge Vault. Ручное редактирование — установи `status: manual` в frontmatter.
+
+### Katn ac01 concept acceptance criterion (L0-katn-ac01)
+
+---
+title: "AC-katn-01 (T01, bds + build): the Katana recipe yields the craft token (gate assertions: L0-lgnd-ac23)"
+is_a: ["acceptance-criterion"]
+part_of: ["L0-katn"]
+relates_to: ["L0-lgnd-p001", "L0-lgnd-ac23", "L0-katn-r001", "L0-xasm22"]
+---
+The rule is owned by `L0-lgnd-p001`. **The gate, flag, refund, restart, Creative/`/give` and broadcast assertions (T01–T03) are `L0-lgnd-ac23`** (reconciled at reduce v6: this card used to repeat them). `katn` owns only the recipe JSON that feeds the gate:
+- **Shape.** GIVEN a Crafter loaded by `/replaceitem` with `. G . / P S P / . G .` (G golden apple, P ender pearl, S diamond sword, any damage or enchantment), WHEN it fires, THEN it outputs exactly one `andrew:dragon_katana_crafted` token and never the item itself.
+- **Negative controls.** An iron sword in the centre, an enchanted golden apple for G, or a mirrored or shifted layout produces nothing.
+- **Build.** `packs/behavior/recipes/dragon_katana*.json` names only `andrew:dragon_katana_crafted` as output (a node grep test).
+
+
+- **node**: L0-katn-ac01
+
+### Katn ac02 concept acceptance criterion (L0-katn-ac02)
+
+---
+title: "AC-katn-02 (T04, T14, T15, bds): melee equals a Diamond Sword, works on cooldown, no wear"
+is_a: ["acceptance-criterion"]
+part_of: ["L0-katn"]
+relates_to: ["L0-katn-r001", "L0-katn-r005"]
+---
+- **T04.** GIVEN two identical husks (spawnWithoutBehaviors, full health), WHEN one SimulatedPlayer hits one with a vanilla Diamond Sword and the other with the Katana (no crit, same cooldown charge), THEN the health losses measured via `entityHurt` are equal.
+- **T14.** GIVEN `andrew:cd_dragon_katana` armed (cooldown > 25 s), WHEN the player attacks a husk, THEN the hit deals the T04 damage and the cooldown value is unchanged.
+- **T15.** WHEN the player lands 50 hits and 3 successful activations, THEN the stack has no durability component, and `getComponent("durability")` stays `undefined`, as it was before.
+
+
+- **node**: L0-katn-ac02
+
+### Katn ac03 concept acceptance criterion (L0-katn-ac03)
+
+---
+title: "AC-katn-03 (T05, T06, bds): open-range teleport, cooldown, clamp, no-op on cooldown"
+is_a: ["acceptance-criterion"]
+part_of: ["L0-katn"]
+relates_to: ["L0-katn-p001", "L0-katn-r002", "L0-katn-r005", "L0-xasm18"]
+---
+- **T05.** GIVEN a flat floor and a SimulatedPlayer facing +X, looking at a floor block 19 blocks ahead, WHEN Use runs with the Katana, THEN in the same tick the feet are on top of that block (±0.5) and the yaw is unchanged. `andrew:cd_dragon_katana − Date.now()` lies in 29 500–30 000 ms.
+- **Cooldown no-op.** WHEN Use runs again 1 s later, THEN the position is unchanged and the cooldown value is bit-identical.
+- **T06.** GIVEN open air ahead and a 60-block runway, WHEN the player looks level and uses, THEN the head displacement is ≤ 20.0 and ≥ 19.0. A play with the yaw at 45° also holds ≤ 20.0.
+- **Off hand.** The Katana in the off hand with the main hand empty → the same teleport.
+
+
+- **node**: L0-katn-ac03
+
+### Katn ac04 concept acceptance criterion (L0-katn-ac04)
+
+---
+title: "AC-katn-04 (T07–T10, bds): walls, liquids, safe cell, no block edits"
+is_a: ["acceptance-criterion"]
+part_of: ["L0-katn"]
+relates_to: ["L0-katn-r003", "L0-katn-r004", "L0-katn-r002"]
+---
+- **T07.** GIVEN a 3-thick stone wall 10 blocks ahead (5 wide, 5 high), WHEN the player aims at a point 15 blocks out through it, THEN the feet x is < the wall's near face, within 1.5 of it, and the player is on the near side.
+- **T08.** GIVEN a water column and, separately, a lava pool lying across the path with an open floor beyond, WHEN the player aims past them, THEN they land beyond the liquid. The lava case uses a fire-resistance effect so the test is not about the landing.
+- **T09.** GIVEN aim at a 2-high gap that is 1 block high, or a ceiling 1 block above the floor hit, WHEN the player uses, THEN the feet and head cells after the teleport are free, `entityHurt` with cause `suffocation` is absent for 40 ticks, and the player is in a different cell than at the start.
+- **Refusal.** GIVEN the player boxed in with no fit within the search, WHEN they use, THEN there is no move and the cooldown is unset.
+- **T10.** GIVEN the full test area (`getBlocks` volume) snapshotted before the use, THEN every block typeId and permutation is unchanged after it.
+
+
+- **node**: L0-katn-ac04
+
+### Katn ac05 concept acceptance criterion (L0-katn-ac05)
+
+---
+title: "AC-katn-05 (T11, T12, bds): one-shot fall protection"
+is_a: ["acceptance-criterion"]
+part_of: ["L0-katn"]
+relates_to: ["L0-katn-p002", "L0-katn-r006", "L0-adr-ktfl"]
+---
+- **T11.** GIVEN a player teleported to an air point 15 blocks above stone (SimulatedPlayers regenerate, so damage is measured with `entityHurt`), WHEN they land, THEN no `entityHurt` with cause `fall` fires for that landing, and the fall flag map is empty afterwards.
+- **T11 at height.** The same from a 20-block cap point over a 30-block drop, with health set to 4. The player survives.
+- **T12.** GIVEN the flag consumed, WHEN the same player drops 10 blocks with `/tp` and then lands, THEN `entityHurt` cause `fall` fires with ≥ 6 damage.
+- **Expiry.** A flag with no landing in 10 s is cleared.
+- **Negative control** (in-test): with the watcher disabled, the T11 landing hurts.
+
+
+- **node**: L0-katn-ac05
+
+### Katn ac06 concept acceptance criterion (L0-katn-ac06)
+
+---
+title: "AC-katn-06 (T13, bds): the trail is harmless and bounded"
+is_a: ["acceptance-criterion"]
+part_of: ["L0-katn"]
+relates_to: ["L0-katn-r007"]
+---
+GIVEN a husk and a second SimulatedPlayer standing on the A→B line, WHEN the Katana teleport passes over them:
+- no `entityHurt` fires for either;
+- their velocity stays ≤ 0.01 apart from gravity;
+- the entity count in the area does not grow;
+- the T10 block snapshot is unchanged.
+
+A wrapped `spawnParticle` counter records between 1 and 130 calls, all within ≤ 10 ticks of the use, and none on a refused or cooldown press. (Visual reading is in `L0-katn-ac09`.)
+
+
+- **node**: L0-katn-ac06
+
+### Katn ac07 concept acceptance criterion (L0-katn-ac07)
+
+---
+title: "AC-katn-07 (T16–T18, bds): Katana instances of the framework's protection tests"
+is_a: ["acceptance-criterion"]
+part_of: ["L0-katn"]
+relates_to: ["L0-lgnd-ac24", "L0-lgnd-p002", "L0-lgnd-p003", "L0-lgnd-p008", "L0-xcx21", "L0-xasm22", "L0-adr-ktgr"]
+---
+These are framework rules. **The test text is `L0-lgnd-ac24`** (reconciled at reduce v6: this card used to restate it, and had drifted on two points). `katn` owns none of the assertions; it contributes only:
+- the Katana def and item JSON that `L0-lgnd-ac24` runs against (`L0-katn-ent1`);
+- the one Katana-specific case in that criterion, **death after a teleport** (into lava, or below the one-shot flag's cover), which `L0-lgnd-ac24` T16 already names.
+
+**Reconciled points:**
+- T16: retention keeps the **same id and gen**. `retention.ts` restore does not bump the gen (as read during reduce at v6). The earlier `gen + 1` here was wrong.
+- T18: the return target is **`mark.owner`** until `L0-xcx11` closes. "Last owner" in Katana §3 is the open `L0-adr-hold` question, not a passing test today.
+- T17: under C-16 (`L0-xcx21`, settled by `L0-adr-ktgr`).
+
+Do not create a separate task criterion from this card. It would duplicate `L0-lgnd-ac24`.
+
+
+- **node**: L0-katn-ac07
+
+### Katn ac08 concept acceptance criterion (L0-katn-ac08)
+
+---
+title: "AC-katn-08 (probe, bds): engine facts confirmed before the build"
+is_a: ["acceptance-criterion"]
+part_of: ["L0-katn"]
+relates_to: ["L0-adr-ktob", "L0-adr-ktfl", "L0-katn-ad01", "L0-katn-p002"]
+---
+A probe GameTest on BDS 1.26.51 (checks instance, port 19136) records:
+1. A SimulatedPlayer falling from 25 blocks and self-teleported 2 blocks above the floor takes no fall damage. The control without the self-teleport does take it.
+2. `getBlockFromRay` with `{includePassableBlocks:false, includeLiquidBlocks:false}`:
+   - passes water, lava, grass, flowers, cobweb, carpet;
+   - stops at stone, a bottom slab, a fence and a glass pane.
+3. The same ray through a cell column hits a bottom slab and a top slab when cast vertically (`L0-katn-ad01`).
+4. The same ray reaching into an unloaded chunk: hit, no hit, or throw.
+5. `spawnParticle("minecraft:cherry_leaves_particle")` does not throw.
+
+Each fact goes to the memory and to the ADR status. A failed fact supersedes the relevant ADR before the build tasks start.
+
+
+- **node**: L0-katn-ac08
+
+### Katn ac09 concept acceptance criterion (L0-katn-ac09)
+
+---
+title: "AC-katn-09 (ipad, manual): what only the operator can see"
+is_a: ["acceptance-criterion"]
+part_of: ["L0-katn"]
+relates_to: ["L0-katn-r007", "L0-katn-r008", "L0-katn-ent1", "L0-katn-as02", "L0-xasm21"]
+---
+On the iPad, on the production server, the operator confirms:
+1. **Icon.** The Katana icon reads as a katana in the hotbar and in the inventory.
+2. **Creative.** It is found under Equipment → swords and by searching "Katana" / "Катана".
+3. **HUD.** Holding it shows "Dragon Katana — Ready", or "Катана дракона — Готово" in Russian. After a use, the HUD counts down whole seconds from 30.
+4. **Trail.** A pink petal trail runs visibly from A to B and fades within about 1.5 s. A second player nearby sees it too.
+5. **Aim.** Tapping on air and tapping on a block both teleport toward the screen centre (view direction), and this feels right (`L0-katn-as02`).
+6. **Escape.** The answer on a Web Sword trap and UFO magnet escape (`L0-xasm21`) is recorded.
+
+The orchestrator must not auto-verify this criterion.
+
+
+- **node**: L0-katn-ac09
+
+### Katn gl01 concept glossary term (L0-katn-gl01)
+
+**Dragon Katana** (RU: Катана дракона)
+
+The fourth legendary weapon, `andrew:dragon_katana`. It is a Diamond Sword clone whose Use teleports the holder up to 20 blocks along their view, with a 30 s cooldown. Its craft token is `andrew:dragon_katana_crafted`, its ability key `dragon_katana`, and its key prefix `dk`.
+
+**Synonyms**: Katana, `katn` (the KV node), DK.
+
+
+- **node**: L0-katn-gl01
+
+### Katn gl02 concept glossary term (L0-katn-gl02)
+
+**Trace (Katana)**
+
+The server-side block ray from the use-time head location along the view direction, ≤ 20 blocks. It uses `includePassableBlocks:false, includeLiquidBlocks:false`.
+- It stops at the first block the engine treats as collidable, or before an unreadable cell.
+- Its end is the **endpoint E**: the hit point pulled back 0.3, or the point in the air at the range.
+
+Not the Scythe's line of sight (`hasLineOfSight`), which treats every non-air, non-liquid block as blocking.
+
+**Synonyms**: ability ray, teleport ray.
+
+
+- **node**: L0-katn-gl02
+
+### Katn gl03 concept glossary term (L0-katn-gl03)
+
+**Safe cell**
+
+A feet cell B where a standing player (2 cells high, centred) can be placed. It must:
+- pass the column-ray fit check (`L0-katn-ad01`);
+- contain no lava or fire;
+- lie on the owner's side of the hit face;
+- be reachable from the head by a clear ray;
+- leave the head within 20 blocks of its start.
+
+A cell in mid-air qualifies. "Owner's side" means the half-space of the hit-face plane that contains the head.
+
+**Synonyms**: safe position, destination B, landing cell.
+
+
+- **node**: L0-katn-gl03
+
+### Katn gl04 concept glossary term (L0-katn-gl04)
+
+**Fall flag**
+
+A per-player, in-memory, one-shot protection that is armed by a successful Katana teleport. It is consumed by the first landing, liquid, climb, glide, death, dimension change or logout, or after 10 s.
+- While it is armed and the player is about to hit the ground, a self-teleport resets the fall distance, so that landing deals no damage.
+- It is never persisted and never blocks other damage.
+
+**Synonyms**: one-shot fall protection, landing flag.
+
+
+- **node**: L0-katn-gl04
+
+### Katn gl05 concept glossary term (L0-katn-gl05)
+
+**Petal trail**
+
+The one-shot visual of a successful Katana teleport. It is a line of pink cherry-blossom particles from A+1 to B+1, spawned through `dimension.spawnParticle` (`minecraft:cherry_leaves_particle`, or the fallback `andrew:katana_petal`) within ≤ 10 ticks.
+- Visual only: no entities, damage, knockback or block changes.
+
+**Synonyms**: sakura trail, cherry trail.
+
+
+- **node**: L0-katn-gl05
 
 ### Lgnd ac01 concept acceptance criterion (L0-lgnd-ac01)
 
@@ -917,6 +1151,534 @@ A legendary **weapon** stack (any def's `itemId`, marked or not) that the UFO ma
 
 - **node**: L0-lgnd-gl21
 
+### Magn a04 concept acceptance criterion (L0-magn-a04)
+
+**UFO AC-4 (bds).**
+- **GIVEN** two Survival players in the zone, A with `iron_ingot` in the main hand and B with `shears` in the off hand (`allow_off_hand` via `/replaceitem`),
+- **WHEN** the magnet turns on,
+- **THEN**:
+  - both rise at ≤ 0.6 blocks per tick (per-tick displacement measured);
+  - within (hover depth / 0.6 + 20) ticks, both are within 0.5 blocks of saucer − (0, 6, 0);
+  - both stay within 0.5 blocks of it until release.
+- An Adventure player behaves the same (`L0-xasm14`).
+
+The iPad check that the lift looks smooth is in `L0-magn-aipd`.
+
+
+- **node**: L0-magn-a04
+
+### Magn a05 concept acceptance criterion (L0-magn-a05)
+
+**UFO AC-5 (bds).**
+- **GIVEN** the following players in the zone during the magnet:
+  - C, in Survival, with a stack of iron_ingot in inventory and empty hands;
+  - D, in Survival, wearing a full iron armour set with a dirt block in hand;
+  - E, in Creative, holding an iron_sword;
+  - F, in Spectator, holding an iron_sword;
+- **WHEN** 60 ticks pass,
+- **THEN** no player's y rises by more than 0.1 blocks, and no player is moved toward the saucer.
+
+
+- **node**: L0-magn-a05
+
+### Magn a06 concept acceptance criterion (L0-magn-a06)
+
+**UFO AC-6 (bds).**
+- **GIVEN** player A held 6 blocks below the saucer with an iron_ingot in the main hand,
+- **WHEN** A runs `dropSelectedItem()`,
+- **THEN**:
+  - from the next tick A's y decreases monotonically until landing;
+  - the dropped ingot entity becomes an `X` element and reaches a ring slot, beyond 10 already-selected elements (the element count becomes 11).
+
+**Second case.**
+- **GIVEN** a player B held the same way,
+- **WHEN** B's selected slot is switched to a non-iron slot,
+- **THEN** B falls, and is pulled again after switching back during the magnet.
+
+**Negative control.** An ingot dropped by a ground player more than 12 blocks from the hover point is not pulled.
+
+
+- **node**: L0-magn-a06
+
+### Magn a07 concept acceptance criterion (L0-magn-a07)
+
+**UFO AC-7 (bds).**
+
+**Case 1.**
+- **GIVEN** a Survival player held at the hover target (≥ 34 blocks above the ground) for the full 60 s,
+- **WHEN** the magnet goes off,
+- **THEN** the player takes vanilla fall damage and dies (with 20 HP and no armour).
+
+**Case 2.**
+- **GIVEN** a player held by the same knockback mechanism for 60 s at a target only 2 blocks above the ground (a test hook lowers the target),
+- **WHEN** the magnet goes off,
+- **THEN** no damage is taken (`entityHurt` with cause fall is never seen). This proves that knockback holding does not accumulate fall distance.
+
+The iPad check that the fall is visible is in `L0-magn-aipd`.
+
+
+- **node**: L0-magn-a07
+
+### Magn a08 concept acceptance criterion (L0-magn-a08)
+
+**UFO AC-8 (bds).**
+- **GIVEN** a zone seeded with:
+  - 3 iron ground items;
+  - a chest with 4 iron stacks;
+  - 2 iron golems and 1 minecart;
+  - 3 iron blocks;
+  - 2 iron ore;
+- **WHEN** the magnet turns on,
+- **THEN** exactly 10 elements are held: 3 ground items, then 4 stacks, then the 3 entities nearest first. No blocks are pulled and the ore is untouched.
+
+**Second scenario.** With 1 ground item and 12 iron blocks at distinct distances, the item and the 9 nearest blocks are pulled, and the 3 farthest remain.
+
+Players held at the same time do not reduce the count.
+
+
+- **node**: L0-magn-a08
+
+### Magn a09 concept acceptance criterion (L0-magn-a09)
+
+**UFO AC-9 (bds).**
+- **GIVEN** these containers, each holding 1 iron stack in slot 0 and 3 dirt in its last slot:
+  - chest, double chest (iron in its second half), trapped chest, barrel, hopper;
+  - furnace, blast furnace, smoker;
+  - dispenser, dropper, brewing stand;
+  - undyed shulker box;
+
+  Across several runs at ≤ 10 per event, every type is covered.
+- **WHEN** the magnet turns on,
+- **THEN**:
+  - each iron stack becomes an item element with the same id and amount;
+  - the slot is empty;
+  - the dirt is unchanged;
+  - every container block, the hopper included, is still in place;
+  - the double chest yields its stack exactly once;
+  - a crafter holding iron is untouched.
+
+
+- **node**: L0-magn-a09
+
+### Magn a10 concept acceptance criterion (L0-magn-a10)
+
+**UFO AC-10 (bds).**
+- **GIVEN** isolated iron_block, iron_bars, rail, anvil, cauldron, chain and lantern, an iron door (2 high), and one iron_ore, with nothing else in the zone,
+- **WHEN** the magnet turns on,
+- **THEN**:
+  - every source position (both door cells included) is air;
+  - exactly one new item entity exists per source: the block's item, one `iron_door`, and one `raw_iron` for the ore;
+  - the total count of new item entities in the zone equals the number of sources (9);
+  - this holds again 10 ticks later.
+
+
+- **node**: L0-magn-a10
+
+### Magn a11 concept acceptance criterion (L0-magn-a11)
+
+**UFO AC-11 (bds).**
+- **GIVEN** iron_ore 20 blocks below the centre, enclosed in stone, and no other iron in the zone,
+- **WHEN** the magnet turns on,
+- **THEN**:
+  - the ore cell becomes air;
+  - one raw_iron entity is spawned there;
+  - within 80 ticks it is within 1 block of its ring slot (saucer − 3, r 5);
+  - the stone between them is unchanged (no other cell becomes air).
+
+
+- **node**: L0-magn-a11
+
+### Magn a12 concept acceptance criterion (L0-magn-a12)
+
+**UFO AC-12 (bds).**
+- **GIVEN** the following in the zone, with no other iron:
+  - an iron golem;
+  - an empty minecart;
+  - a zombie wearing an iron_helmet (`/replaceitem`);
+  - an armour stand wearing iron_leggings;
+  - a bare zombie;
+  - a zombie holding only an iron_sword;
+- **WHEN** the magnet turns on,
+- **THEN**:
+  - the golem, the minecart, the helmeted zombie and the armour stand reach ring slots;
+  - the bare zombie and the sword zombie are never moved toward the saucer;
+  - after release, no entity still carries the tag `andrew:ufo_iron`.
+
+
+- **node**: L0-magn-a12
+
+### Magn a13 concept acceptance criterion (L0-magn-a13)
+
+**UFO AC-13, call-site half (bds; the rule half is in `lgnd`).**
+- **GIVEN** each of the three legendaries placed in the zone:
+  - on the ground;
+  - in a chest together with an iron stack;
+  - in a chest minecart;
+  - held by an armour stand wearing iron armour;
+  - in the off hand of a player whose main hand is empty;
+- **WHEN** the magnet runs its full 60 s,
+- **THEN**:
+  - no legendary entity or stack moves or changes container;
+  - the chest's iron stack is extracted;
+  - the chest minecart and the armour stand are not pulled (`L0-magn-aslh`);
+  - the player is not pulled;
+  - legendary ledger counts are unchanged.
+
+
+- **node**: L0-magn-a13
+
+### Magn a14 concept acceptance criterion (L0-magn-a14)
+
+**UFO AC-14 (bds).**
+- **GIVEN** 10 held elements (items, a golem, a minecart, a zombie) and a held player,
+- **WHEN** the magnet goes off,
+- **THEN**:
+  - in the release tick, every element's velocity is ≈ 0;
+  - from the next tick, every y decreases with no script teleport (no `teleport` calls are logged after release);
+  - every element lands on the ground below its last slot;
+  - the items can be picked up;
+  - the zombie takes fall damage and the golem takes none.
+- Release from a shoot-down and from `/andrew:ufo stop` behaves identically. Both go through the `requestMagnetOff` latch (`L0-adr-ufpc`), so the release runs at the start of the next UFO interval tick, at most one hold step after the request.
+
+The iPad check that the cloud and the fall are visible is in `L0-magn-aipd`.
+
+
+- **node**: L0-magn-a14
+
+### Magn aipd concept acceptance criterion (L0-magn-aipd)
+
+**UFO DoD, iPad eye check for the magnet (ipad, manual).** This is the iPad half of AC-4, AC-7 and AC-14, lifted out of those GameTest criteria (`L0-xcx19`). It is written like `L0-sauc-ac06`.
+
+- **GIVEN** the production world on the iPad, with a second player (or a held sim player on QA) and some iron in the zone: ground items, a chest stack and a golem,
+- **WHEN** a person triggers `/andrew:ufo come` and watches the whole magnet phase and the release,
+- **THEN** that person confirms on the iPad, with screenshots or a short recording attached to the task:
+  1. **Lift (AC-4).** A player holding iron rises smoothly under the saucer, with no visible stutter or rubber-banding while held.
+  2. **Cloud (AC-14).** The pulled iron is visible as a cloud circling under the saucer for the whole hold, and items visibly fly in from the ground, including any that rise through stone.
+  3. **Fall (AC-7, AC-14).** On release the player and every element visibly fall at once.
+
+**Closing rule.**
+- No GameTest can close this criterion. A passing `bds` run of `a04`, `a07` or `a14` is not evidence for it.
+- It is reopened after every epic merge that touches `src/ufo/`.
+
+
+- **node**: L0-magn-aipd
+
+### Magn atps concept acceptance criterion (L0-magn-atps)
+
+**UFO DoD, "the event does not drop TPS" (bds).**
+- **GIVEN** a zone with ≥ 200 chests, a full scan type list, 2 players and 10 + 2 elements,
+- **WHEN** a full magnet phase runs,
+- **THEN**:
+  - the magnet-on tick cost (scan + selection + extraction) is logged and is ≤ 12 ms;
+  - the mean per-tick hold step is ≤ 2 ms and p99 ≤ 5 ms;
+  - all three numbers are written to the task's run-check artifact.
+
+
+- **node**: L0-magn-atps
+
+### Magn gcls concept glossary term (L0-magn-gcls)
+
+**Priority class**
+
+The selection tier of a candidate element:
+1. ground item;
+2. container stack;
+3. mob or minecart;
+4. built block;
+5. ore.
+
+Lower classes fill only the slots that higher classes leave free. Within a class, candidates go nearest to the centre first.
+
+**Built block** means any placed iron block from IRON_BLOCKS (an empty hopper included; one holding anything is a container), natural structures included.
+
+
+- **node**: L0-magn-gcls
+
+### Magn gelm concept glossary term (L0-magn-gelm)
+
+**Element (magnet element)**
+
+One non-player entity pulled by the UFO magnet. It is one of:
+- a ground item stack;
+- a stack extracted from one container slot;
+- a mob, minecart or armour stand;
+- the single item produced from a block or ore.
+
+At most 10 elements are chosen per event, plus exempt drops. Players are never elements.
+
+**Synonyms:** pulled thing, «элемент».
+
+
+- **node**: L0-magn-gelm
+
+### Magn gexm concept glossary term (L0-magn-gexm)
+
+**Exempt drop (class X)**
+
+An iron item that spawns within 12 blocks of the hover point while the magnet is on, typically one dropped by a held player. It is pulled beyond the 10-element limit.
+
+
+- **node**: L0-magn-gexm
+
+### Magn glat concept glossary term (L0-magn-glat)
+
+**Magnet-off latch**
+
+The way `requestMagnetOff(reason)` works (`L0-adr-ufpc`). The call only records the request, with reason `"shot"`, `"stop"` or `"abort"`. `ufoc` runs the release (`L0-magn-prel`) at the start of its next interval tick. Every UFO world mutation therefore stays inside the one shared interval, whichever interval detected the shoot-down.
+
+**Synonyms:** release latch.
+
+
+- **node**: L0-magn-glat
+
+### Magn gring concept glossary term (L0-magn-gring)
+
+**Cloud ring (ring slot)**
+
+The hold formation for elements: evenly spaced slots on a circle of radius 5, 3 blocks below the saucer, rotating slowly. Items are kept ≥ 3 blocks from players to avoid pickup.
+
+**Hold point** (players) is a separate point: 6 blocks below the saucer, on its axis.
+
+**Synonyms:** cloud, «облако», «кольцо».
+
+
+- **node**: L0-magn-gring
+
+### Magn gtag concept glossary term (L0-magn-gtag)
+
+**`andrew:ufo_iron`**
+
+A transient entity tag that the four `hasitem` selector commands set at magnet-on on mobs and armour stands wearing iron armour. It is used only to fetch them through `getEntities({tags})`, and is removed at release and at world load.
+
+
+- **node**: L0-magn-gtag
+
+### Magn gzon concept glossary term (L0-magn-gzon)
+
+**Magnet zone**
+
+The cylinder of radius 50 blocks around the event centre (the block under the target player at arrival). It spans vertically from centre − 20 to the hover height, and only loaded chunks count.
+
+**Synonyms:** zone, «зона магнита».
+
+
+- **node**: L0-magn-gzon
+
+### AC-sauc-1 (bds · UFO AC-2, path half) · The saucer comes in from 90 blocks, hovers at the centre + 40, and leaves 90 blocks the opposite way (L0-sauc-ac01)
+
+# AC-sauc-1 (bds · UFO AC-2, path half) · The saucer comes in from 90 blocks, hovers at the centre + 40, and leaves 90 blocks the opposite way
+
+**GIVEN**
+- a flat Overworld test area with a `tickingarea` covering 100 blocks around the centre (`as04`);
+- 2 simulated players (C-20′);
+- `/andrew:ufo come` (or the `ufoc` test seam) at real phase durations.
+
+**WHEN** the event runs to its end.
+
+**THEN**
+- At the spawn tick, exactly one `andrew:ufo_saucer` exists:
+  - horizontal distance from the centre = 90 ± 0.5;
+  - y = `hoverY` + 10 ± 0.1.
+- At arrival + 400 ticks, the saucer is within 0.1 of `(centre.x + 0.5, hoverY, centre.z + 0.5)`, with `hoverY` = centre.y + 40.
+- It holds there through the magnet.
+- At release + 300 ticks:
+  - the last sampled position is 90 ± 0.5 horizontal on the bearing opposite the spawn (the dot product of the unit bearings ≤ −0.99);
+  - in the next tick no `andrew:ufo_saucer` exists.
+- On every sampled tick, the horizontal distance is ≤ 100 and the step between ticks is ≤ 0.5.
+- The saucer stays valid for the whole ~95 s.
+
+**Negative control:** the same scenario with the departure leg forced to the same bearing must fail the opposite-bearing assertion.
+
+
+- **node**: L0-sauc-ac01
+
+### AC-sauc-2 (bds · UFO AC-16) · Nothing but the Cannon affects the saucer or the beam (L0-sauc-ac02)
+
+# AC-sauc-2 (bds · UFO AC-16) · Nothing but the Cannon affects the saucer or the beam
+
+**GIVEN** a hovering saucer with the beam on, and 2 simulated players.
+
+**WHEN** the following are applied to it in turn:
+1. `entity.applyDamage(1000, {cause})` for every `EntityDamageCause`;
+2. `/damage @e[type=andrew:ufo_saucer] 100`;
+3. `dimension.createExplosion` at its position (power 4);
+4. an arrow fired through the disc;
+5. a zombie spawned overlapping the hull, and a player teleported into it;
+6. a stone wall placed across the departure path.
+
+**THEN**
+- After each one, the saucer is valid and its position equals the scripted path position (Δ < 0.01). No knockback.
+- The zombie and the player are not displaced by the saucer (Δ < 0.05 over 20 ticks).
+- The saucer passes through the wall on schedule, and the wall is unchanged.
+- `downed` stays false, and there is no reward and no broadcast.
+
+**Control:** an Orbital charge whose column crosses the hull in the same scenario *does* shoot the saucer down (`ac03`).
+
+
+- **node**: L0-sauc-ac02
+
+### AC-sauc-3 (bds · UFO AC-15) · A Cannon charge through the hull shoots the saucer down in any phase (L0-sauc-ac03)
+
+# AC-sauc-3 (bds · UFO AC-15) · A Cannon charge through the hull shoots the saucer down in any phase
+
+**Links:** `part_of: ["L0-sauc"]` · `is_a: ["acceptance-criterion"]` · `relates_to: ["L0-sauc-r001", "L0-sauc-r004", "L0-sauc-p002", "L0-sauc-as05", "L0-sauc-as06", "L0-orbc", "L0-ring"]`
+
+**GIVEN**
+- 2 simulated players: shooter A on the ground, and B, held by the magnet with an iron ingot.
+- A aims at a ground block whose column is ≤ 6 from the saucer axis. The block is ≤ 25 from A's eye, and **≥ 7 for RMB** (Orbital v1.4.4, `RING_MIN_RANGE`; a nearer RMB aim is refused silently and would leave the scenario with nothing to test).
+- Block snapshots of the 13 × 13 column under the saucer and of 8 blocks around the blast point.
+
+**WHEN** A fires once per phase (arrival, magnet, departure) and once per mode (LMB, RMB). The phases need separate scenarios; the modes can be parametrised.
+
+**THEN**
+- Every charge whose column is ≤ 6 from the axis ends `"intercepted"`, with no column or ring effect. For RMB that is the centre plus the ring-3.5 columns inside the hull (`as06`), counted through `observeChargeEnds`.
+- On the same tick, `ufoc` is released and B and the pulled items start falling (magnet phase only).
+- The saucer descends for ≤ 60 ticks, then it is gone.
+- At the blast:
+  - **LMB:** no block in either snapshot changed.
+  - **RMB:** the RMB columns outside the hull detonate normally at their ring power (7 → 2, 10.5 and 14 → 1). Ring 7's craters reach into the 13 × 13 snapshot. So for RMB the check is a diff of the 8-block blast area from the tick before the blast to the tick after it, plus "no `onDetonate` for an intercepted offset".
+  - No player's health drops **in the blast tick**.
+  - Exactly 8 `diamond` and 1 `totem_of_undying` item entities appear within 2 blocks of the blast point.
+- One `andrew.ufo.shot_down` message with A's name reaches both A and B.
+- `ufoc`'s next arrival = shot time + 15 min ± 1 s.
+
+**Sub-cases:**
+- *Two charges cross in one tick* (an RMB salvo does this): one reward, one broadcast.
+- *An LMB charge 7 from the axis*: no shoot-down, and a normal detonation.
+- *A charge crossing during the fall*: absorbed, with no second reward (`as05`).
+
+
+- **node**: L0-sauc-ac03
+
+### AC-sauc-4 (bds · gate) · The `orbc` interceptor seam is additive: the Orbital suite stays unchanged (L0-sauc-ac04)
+
+# AC-sauc-4 (bds · gate) · The `orbc` interceptor seam is additive: the Orbital suite stays unchanged
+
+**GIVEN** the task branch with the `registerInterceptor` change in `src/orbital/flight.ts`.
+
+**WHEN** the full GameTest suite runs (every Orbital flight, penetrator and ring scenario, plus every other scenario), along with the node tests.
+
+**THEN**
+- Every pre-existing scenario passes with unchanged assertions.
+- A node test shows that `advance()` returns identical results with an empty interceptor set.
+- A new scenario with a stub interceptor at target + 30 shows:
+  - the charge ends `intercepted`;
+  - zero blocks changed;
+  - no `onDetonate` call;
+  - the cooldown was started;
+  - `observeChargeEnds` saw the outcome `intercepted`.
+- The same scenario with the stub unregistered detonates normally. This is the in-test negative control.
+- An interceptor that throws is logged, and the charge detonates normally.
+
+The merge happens only after the whole suite is green on the task branch, not after an `--only` run.
+
+
+- **node**: L0-sauc-ac04
+
+### AC-sauc-5 (bds) · The beam property and the sounds follow the magnet phase (L0-sauc-ac05)
+
+# AC-sauc-5 (bds) · The beam property and the sounds follow the magnet phase
+
+**GIVEN** a full event on scaled or real durations, with the `playUfoSound` wrapper spied.
+
+**THEN**
+- `andrew:beam` is false on every tick of arrival and departure.
+- It is true from the magnet-on tick through the last magnet tick.
+- It is false from the release tick on.
+- `andrew:beam_len` = `hoverY` − centre.y.
+- The sound log is exactly:
+  - `beacon.activate` once, at magnet-on;
+  - `beacon.ambient` every 40 ticks during the magnet (29 or 30 calls for 1200 ticks);
+  - `beacon.deactivate` once, at release.
+- No UFO sound plays after removal.
+
+**Shoot-down variant** (in the magnet phase): the beam turns false and `beacon.deactivate` plays in the shot tick, then `random.explode` plays once at the blast. If the shot comes during arrival there is no `beacon.deactivate`.
+
+
+- **node**: L0-sauc-ac05
+
+### AC-sauc-6 (ipad · UFO DoD visuals + AC-2 look) · Looked at on the iPad by a person (L0-sauc-ac06)
+
+# AC-sauc-6 (ipad · UFO DoD visuals + AC-2 look) · Looked at on the iPad by a person
+
+This is a manual criterion. It must be reopened after every epic merge, and an orchestrator auto-verify does not count.
+
+**GIVEN** the production or QA world on the iPad at default render settings, with `/andrew:ufo come`.
+
+**THEN the person confirms:**
+1. The saucer is visible from the moment it appears ~90 blocks out and comes in smoothly, with no jumps.
+2. It reads as a metal disc about 12 blocks across, with a glass dome and glowing rim lights, and it spins slowly.
+3. During the magnet, a green **translucent** cone joins the underside to the ground. It is visible **whole**, top to bottom, including when the disc itself is off screen. The terrain shows through it, and it vanishes at release.
+4. The hum is audible from the ground every ~2 s, and the on and off sounds play.
+5. After a Cannon hit, the saucer falls with smoke for up to 3 s and explodes visibly and audibly, with no crater. The diamonds and the totem lie at the spot, and the chat shows "<name> сбил НЛО!" (RU client) or "<name> shot down the UFO!".
+6. It leaves the opposite way and disappears in the distance.
+
+**Evidence:** screenshots or a screen recording for points 1, 3 and 5, attached to the task. Item 1 also notes the client's render distance (`as04`).
+
+
+- **node**: L0-sauc-ac06
+
+### Sauc gl01 concept glossary term (L0-sauc-gl01)
+
+**Saucer** (тарелка, НЛО)
+
+The single custom entity `andrew:ufo_saucer` that plays the UFO Magnet event: a disc, a dome, rim lights and the beam bone. It is moved only by script, immune to everything, and removed at the end of every event.
+
+**Synonyms:** UFO, flying saucer. Not "UFO event", which is the whole cycle owned by `ufoc`.
+
+
+- **node**: L0-sauc-gl01
+
+### Sauc gl02 concept glossary term (L0-sauc-gl02)
+
+**Hull** (корпус)
+
+The script-side hit volume of the saucer: a vertical cylinder of radius 6 and height 3 at the saucer's position (`[y, y + 3]`, `L0-sauc-as01`). It exists only in the interceptor test. It is not a collision box, so nothing physically collides with it.
+
+**Synonyms:** hull cylinder, hit volume.
+
+
+- **node**: L0-sauc-gl02
+
+### Sauc gl03 concept glossary term (L0-sauc-gl03)
+
+**Beam** (луч, луч-магнит)
+
+The translucent green cone under the saucer, visible only during the magnet phase. It is a bone of the saucer model toggled by the actor property `andrew:beam` (`L0-sauc-ad01`). It is purely visual: the magnet's reach is the 50-block zone owned by `magn`, not the cone's footprint.
+
+**Synonyms:** magnet beam, tractor beam.
+
+
+- **node**: L0-sauc-gl03
+
+### Sauc gl04 concept glossary term (L0-sauc-gl04)
+
+**Interceptor** / **`intercepted` outcome**
+
+A callback registered on the Orbital charge flight loop (`registerInterceptor`, `L0-adr-ufoi`). It sees each charge's swept segment per tick and can end the charge mid-air. The charge then ends with the new `Outcome` value `"intercepted"`: it is removed and no effect runs. The saucer's hull test is the only interceptor.
+
+**Synonyms:** absorption ("the charge is absorbed").
+
+
+- **node**: L0-sauc-gl04
+
+### Sauc gl05 concept glossary term (L0-sauc-gl05)
+
+**Shoot-down / downed** (сбитие, сбить НЛО)
+
+The terminal branch of an event, started by the first charge that crosses the hull. The steps are:
+1. the magnet goes off;
+2. `ufoc` enters `downed` and schedules the next arrival at +15 min;
+3. a smoking fall of ≤ 3 s;
+4. a harmless blast;
+5. 8 diamonds + 1 totem;
+6. a broadcast naming the **shooter**, the owner of that charge.
+
+**Hover point** (точка зависания): `(centre, hoverY)`, with `hoverY` = centre + 40, capped at ceiling − 4. **Arrival bearing** θ: the random horizontal direction the saucer arrives from. It departs along θ + 180°.
+
+
+- **node**: L0-sauc-gl05
+
 ### Sclk ac01 concept acceptance criterion (L0-sclk-ac01)
 
 **AC-sclk-01 (T01) · First Survival craft** · channel `bds` · the rule is in `lgnd`, this is the crossbow call site
@@ -1011,343 +1773,4 @@ The test restores the original difficulty in `finally`.
 
 
 - **node**: L0-sclk-ac07
-
-### Sclk ac08 concept acceptance criterion (L0-sclk-ac08)
-
-**AC-sclk-08 (T08) · Armour, Protection and a shield do not reduce D** · channel `bds`
-
-GIVEN a target SimulatedPlayer in full netherite with Protection IV,
-WHEN:
-- (a) it is hit by one bolt;
-- (b) it holds a shield in the off hand, raised by sneaking, faces the shooter, and is hit by one bolt;
-
-- (c) it holds a raised shield and its health is ≤ D;
-- (d) it holds a raised shield and a totem of undying in the other hand.
-
-THEN in (a) and (b) it loses exactly D; the case (b) bolt resolves once, as an entity hit, through `projectileHitEntity` — a raised shield neither deflects the bolt nor suppresses the event (measured 5/5). In (c) it dies from the one bolt, with the kill credited to the shooter. In (d) the totem is used. The log names the path used.
-
-
-- **node**: L0-sclk-ac08
-
-### Sclk ac09 concept acceptance criterion (L0-sclk-ac09)
-
-**AC-sclk-09 (T09) · Neighbours take nothing** · channel `bds`
-
-GIVEN a target SimulatedPlayer and a bystander SimulatedPlayer 1.5 blocks beside it, plus a zombie 2 blocks behind it (`spawnWithoutBehaviors`), WHEN one bolt hits the target,
-THEN:
-- only the target loses health;
-- the bystander and the zombie record no `entityHurt` during the hit tick and the 40 ticks after it (the patch placement included).
-
-
-- **node**: L0-sclk-ac09
-
-### Sclk ac10 concept acceptance criterion (L0-sclk-ac10)
-
-**AC-sclk-10 (T10) · An entity hit makes a patch and no crater** · channel `bds`
-
-GIVEN a target standing on a flat 9×9 stone floor, WHEN a bolt hits it,
-THEN:
-- no floor cell became air;
-- 9 ≤ (sculk cells) ≤ 25, all within the 5×5 centred on the target's feet column and all on the top surface;
-- at least one 5×5 cell is not sculk (irregular).
-
-A second case: a target 10 blocks above the floor gets no patch (`xasm24`).
-
-
-- **node**: L0-sclk-ac10
-
-### Sclk ac11 concept acceptance criterion (L0-sclk-ac11)
-
-**AC-sclk-11 (T11) · A block hit carves an irregular crater ≤ 5×5×3** · channels `bds` + node
-
-GIVEN a solid stone block 7×7×5, WHEN a bolt hits the top face centre,
-THEN:
-- every air cell created lies within the 5×5 footprint and ≤ 3 deep;
-- the centre column is ≥ 2 deep;
-- 12 ≤ (air cells) ≤ 75, and the footprint is not a full 5×5;
-- no item entity spawned.
-
-**Node:** `craterCells` is deterministic for a given seed and never leaves the box across 1000 seeds × 6 faces. Deny-list cells and liquids in the fixture stay.
-
-
-- **node**: L0-sclk-ac11
-
-### Sclk ac12 concept acceptance criterion (L0-sclk-ac12)
-
-**AC-sclk-12 (T12) · The crater does no explosion damage** · channel `bds`
-
-GIVEN a bystander SimulatedPlayer standing 2 blocks from the impact cell, on a cell outside the crater box, WHEN a bolt hits the block,
-THEN:
-- the bystander records no `entityHurt` from any cause in the hit tick and the 20 ticks after it;
-- no `minecraft:tnt` entity and no explosion event occurred.
-
-
-- **node**: L0-sclk-ac12
-
-### Sclk ac13 concept acceptance criterion (L0-sclk-ac13)
-
-**AC-sclk-13 (T13) · Permanent sculk around the crater** · channel `bds`
-
-GIVEN the crater of ac11, THEN:
-- ≥ 8 exposed surface cells inside the 5×5 around the impact are `minecraft:sculk`;
-- no `sculk_sensor`, `sculk_shrieker`, `sculk_catalyst` or `sculk_vein` is present in the box.
-
-AND after a BDS restart (the restart harness), the same cells are still sculk.
-
-
-- **node**: L0-sclk-ac13
-
-### Sclk ac14 concept acceptance criterion (L0-sclk-ac14)
-
-**AC-sclk-14 (T14) · Quick Charge works, and the reload still limits** · channel `bds`
-
-GIVEN two shooter SimulatedPlayers, one with Quick Charge III and one without, WHEN each repeatedly holds use until the shot fires,
-THEN the Quick Charge III shooter's measured charge-to-shot time is ≤ 50 % of the plain one's (vanilla: 0.5 s vs 1.25 s, ±2 ticks). This does **not** hold natively — it rests on the scripted scheme in `as05`.
-
-AND a release after 2 ticks spawns **no** bolt for either shooter (`cx02`) — this one the engine already enforces; it stays as a guard.
-
-
-- **node**: L0-sclk-ac14
-
-### Sclk ac15 concept acceptance criterion (L0-sclk-ac15)
-
-**AC-sclk-15 (T15) · Piercing cannot stay or act** · channels `bds` + node
-
-GIVEN a crossbow stack with `piercing 4` + `quick_charge 3` + `unbreaking 3`, put into a SimulatedPlayer's inventory by script (this fires `playerInventoryItemChange`), THEN by the next tick:
-- the stack has no `piercing`;
-- it still has `quick_charge 3` and `unbreaking 3`.
-
-Piercing and Multishot exclude each other in the engine, so no stack ever carries both. The production strip is armed in the gametest pack: the release pack reads `event.player` as undefined for a SimulatedPlayer.
-
-AND a bolt fired by a stack that has Piercing (set in the same tick, before the strip) hitting two targets in a line damages only the first.
-
-**Node:** the strip helper keeps the other enchantments.
-
-
-- **node**: L0-sclk-ac15
-
-### Sclk ac16 concept acceptance criterion (L0-sclk-ac16)
-
-**AC-sclk-16 (T16) · Multishot: three independent bolts** · channel `bds`
-
-GIVEN a Survival shooter with a Multishot crossbow and 10 arrows, aiming at a wall 15 blocks away, WHEN it fires one charged shot,
-THEN:
-- three bolts with distinct records exist;
-- exactly one arrow was spent;
-- three separate block-hit outcomes are logged, each with its own seed and its own crater/sculk job;
-- no record resolves twice.
-
-
-- **node**: L0-sclk-ac16
-
-### Sclk ac17 concept acceptance criterion (L0-sclk-ac17)
-
-**AC-sclk-17 (T17) · Three Multishot bolts, three full hits on one player** · channel `bds`
-
-GIVEN a target SimulatedPlayer in full netherite with Protection IV at 40 HP (health boosted by an effect), placed 2 blocks in front of the shooter so that all three bolts connect within ≤ 2 ticks, WHEN one Multishot shot fires,
-THEN:
-- three entity-hit outcomes are logged for that target;
-- its health drops by exactly 3 × D = 30, despite the invulnerability window (`xcx22`).
-
-**In-test negative control:** the same volley with the `setCurrentValue` step disabled by a test flag must lose less than 30.
-
-
-- **node**: L0-sclk-ac17
-
-### Sclk ac18 concept acceptance criterion (L0-sclk-ac18)
-
-**AC-sclk-18 (T18) · No durability loss** · channels `bds` + node
-
-GIVEN a Survival shooter, WHEN it fires 30 charged shots and lands 10 melee hits with the crossbow,
-THEN:
-- the stack's `minecraft:durability` component is absent (option A), or its damage is 0 (option B);
-- the stack is the same item, not broken or replaced.
-
-**Node:** the item JSON has no `minecraft:durability`.
-
-
-- **node**: L0-sclk-ac18
-
-### Sclk ac19 concept acceptance criterion (L0-sclk-ac19)
-
-**AC-sclk-19 (T19) · Death retention, crossbow instance** · channel `bds` · the rule is in `lgnd`
-
-GIVEN a SimulatedPlayer holding a marked crossbow, WHEN it dies, THEN:
-- no `andrew:sculk_crossbow` item entity spawns where it died;
-- after respawn, the player's inventory holds exactly one marked crossbow, with its enchantments kept.
-
-The framework's per-def retention scenario covers it with def #5 added to its def list.
-
-
-- **node**: L0-sclk-ac19
-
-### Sclk ac20 concept acceptance criterion (L0-sclk-ac20)
-
-**AC-sclk-20 (T20) · The item entity survives hazards, crossbow instance** · channel `bds` · the rule is in `lgnd` (C-16 reading of `xcx21`)
-
-GIVEN a dropped marked crossbow, WHEN it is put through fire, lava, cactus, TNT, an Orbital LMB blast and the Void,
-THEN after each, **exactly one** marked crossbow exists, held or owed to `mark.owner` (`xasm26`).
-
-AND a crossbow lying inside a crossbow crater box is protected by `protectLegendariesIn` before the carve.
-
-
-- **node**: L0-sclk-ac20
-
-### Sclk ac21 concept acceptance criterion (L0-sclk-ac21)
-
-**AC-sclk-21 · The probe is recorded before any build task** · channel `bds` (checks, 19136)
-
-GIVEN the probe pack (p001), THEN:
-- Q1–Q9 each have a logged yes/no and a measured value in the probe artifact;
-- `L0-adr-scbs` and `L0-adr-scdm` are marked `accepted` or `superseded`, citing those values;
-- `cx01` and `cx02` are updated with the Q2 and Q5 results.
-
-No `sclk` item, pipeline or crater task starts before this.
-
-
-- **node**: L0-sclk-ac21
-
-### Sclk ac22 concept acceptance criterion (L0-sclk-ac22)
-
-**AC-sclk-22 · The deny-list move changes nothing for the Orbital** · channels `bds` + node
-
-GIVEN `PENETRATOR_KEEP` moved to `src/terrain/keep.ts`, THEN:
-- the node set-equality test against the pre-move list passes;
-- the four `pntr_*` GameTests and the node bundle are green (blast-radius gate; the ring is not a consumer of the list);
-- reinforced deepslate is carved, like obsidian and ancient debris — asserted explicitly, so nobody turns the shared list into a per-weapon extension;
-- a crossbow bolt hitting bedrock or a barrier leaves it in place.
-
-
-- **node**: L0-sclk-ac22
-
-### Sclk ac23 concept acceptance criterion (L0-sclk-ac23)
-
-**AC-sclk-23 · iPad: the trail looks like a Sonic Boom and follows the bolt** · channel `ipad` (manual, by the operator)
-
-GIVEN the production world on the iPad, WHEN the operator fires a bolt at a target 25 blocks away, THEN they see:
-- a row of teal Sonic Boom rings that follows the bolt's arc, not a straight beam;
-- the rings fade within about 1 s after the bolt ends;
-- no visible frame drop with a Multishot volley.
-
-Reopen after every `sclk` epic merge.
-
-
-- **node**: L0-sclk-ac23
-
-### Sclk ac24 concept acceptance criterion (L0-sclk-ac24)
-
-**AC-sclk-24 · iPad: the crater reads as a small irregular hole** · channel `ipad` (manual)
-
-WHEN the operator shoots grass/dirt ground and a stone wall, THEN:
-- each hit leaves a ragged hole about 5 wide and 2–3 deep, not a cube and not a TNT-sized pit;
-- no item drops lie around;
-- there is no explosion sound or flash.
-
-
-- **node**: L0-sclk-ac24
-
-### Sclk ac25 concept acceptance criterion (L0-sclk-ac25)
-
-**AC-sclk-25 · iPad: the sculk looks natural and stays** · channel `ipad` (manual)
-
-WHEN the operator hits a mob on flat ground and then shoots the ground, THEN:
-- each time, a ragged sculk patch about 5×5 appears on the surface, under the mob or around the crater;
-- after leaving and rejoining the world, the sculk is still there;
-- there are no sensors or shriekers.
-
-
-- **node**: L0-sclk-ac25
-
-### Sclk ac26 concept acceptance criterion (L0-sclk-ac26)
-
-**AC-sclk-26 · iPad: icon, name and tooltip** · channel `ipad` (manual)
-
-GIVEN the operator holds the crossbow, THEN:
-- the hotbar and inventory icon is a recognisable crossbow with sculk colouring (not the missing-texture square);
-- the name reads «Скалковый арбалет» in Russian and "Sculk Crossbow" in English;
-- the tooltip line is localized;
-- no "Ready" Action Bar line appears while it is held (r009).
-
-
-- **node**: L0-sclk-ac26
-
-### Sclk ac27 concept acceptance criterion (L0-sclk-ac27)
-
-**AC-sclk-27 · iPad: Creative entry and shooting feel** · channel `ipad` (manual)
-
-GIVEN the Creative inventory, THEN:
-- the crossbow appears under Снаряжение/Equipment next to the crossbows;
-- searching «арбалет» or "crossbow" finds it.
-
-AND in Survival:
-- the shot charges like a crossbow: hold to load, press to fire;
-- a quick tap does not fire;
-- a Quick Charge copy charges visibly faster (scripted, not native).
-
-
-- **node**: L0-sclk-ac27
-
-### Sclk gl01 concept glossary term (L0-sclk-gl01)
-
-**Sculk bolt (`andrew:sculk_bolt`)**
-
-The snowball-runtime projectile entity that replaces every arrow fired from the Sculk Crossbow, at spawn, with the same velocity and owner. It carries no damage of its own. Its single outcome (an entity hit, a block hit or expiry) is resolved by script.
-
-**Synonyms:** bolt, болт. **Not:** the vanilla arrow, which is removed in its spawn tick.
-
-
-- **node**: L0-sclk-gl01
-
-### Sclk gl02 concept glossary term (L0-sclk-gl02)
-
-**`SONIC_BOOM_DAMAGE` (D)**
-
-The fixed per-bolt hit damage: 10 HP (5 hearts), the Warden's Sonic Boom on Normal (`xasm23`). It is exactly subtracted — absorption first, then health — through armour, Protection, the shield and the invulnerability window (C-28). One exported constant.
-
-**Synonyms:** fixed damage, Sonic Boom damage, урон Sonic Boom.
-
-
-- **node**: L0-sclk-gl02
-
-### Sclk gl03 concept glossary term (L0-sclk-gl03)
-
-**Crater (кратер)**
-
-The scripted, drop-free set of cells turned to air on a bolt's **block** hit. It stays inside a 5×5 footprint × 3 deep box into the hit face, is irregular, and is seeded per bolt (`r003`). It is not an explosion: it causes no entity damage and no `createExplosion`.
-
-**Not:** the Orbital Cannon's penetrator or ring carve, which shares only the deny list.
-
-
-- **node**: L0-sclk-gl03
-
-### Sclk gl04 concept glossary term (L0-sclk-gl04)
-
-**Sculk patch (скалковое пятно)**
-
-Permanent plain `minecraft:sculk` placed on the exposed solid full-block surfaces within ≤ 5×5. It goes under the struck entity (entity hit), or around and inside the crater (block hit), and has a ragged edge (`r004`). It never includes a sensor, shrieker, catalyst or vein.
-
-**Synonyms:** sculk infection, скалковое заражение.
-
-
-- **node**: L0-sclk-gl04
-
-### Sclk gl05 concept glossary term (L0-sclk-gl05)
-
-**Bolt record (`BoltRecord`)**
-
-The in-memory, never-persisted state of one live bolt: owner, seed, birth tick, last position and volley id (`ent3`). Deleting it is the resolve-once guard (C-26). A bolt with no record (after a reload) is removed with no outcome.
-
-
-- **node**: L0-sclk-gl05
-
-### Sclk gl06 concept glossary term (L0-sclk-gl06)
-
-**Passive legendary**
-
-A legendary def with no ability block: no cooldown key, no `resolveActivation` claim and no HUD line (`xcx24`). The Sculk Crossbow is the first one. All other legendary framework rules (craft gate, retention, protection, Void return, magnetism) still apply.
-
-**Synonyms:** no-ability def.
-
-
-- **node**: L0-sclk-gl06
 

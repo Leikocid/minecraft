@@ -1,13 +1,13 @@
 ---
 title: Risks
 type: analysis
-generated_at: "2026-10-05T22:05:04.978Z"
+generated_at: "2026-10-08T20:08:23.267Z"
 source_channel: rollout
 node_id: rollout-risks
 aliases: ["rollout-risks","risks"]
 is_a: ["rollout","risks"]
 relates_to: ["L0-lgnd-cx02","L0-lgnd-cx03","L0-lgnd-cx04","L0-lgnd-cx05","L0-lgnd-cx06"]
-priority: 610
+priority: 620
 ---
 
 # Risks

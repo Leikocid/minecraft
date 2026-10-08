@@ -1,18 +1,116 @@
 ---
 title: Assumptions
 type: analysis
-generated_at: "2026-10-05T22:05:04.964Z"
+generated_at: "2026-10-08T18:47:14.763Z"
 source_channel: rollout
 node_id: rollout-assumptions
 aliases: ["rollout-assumptions","assumptions"]
 is_a: ["rollout","assumptions"]
-relates_to: ["L0-lgnd-as01","L0-lgnd-as02","L0-lgnd-as03","L0-lgnd-as04","L0-lgnd-as05","L0-lgnd-as06","L0-lgnd-as07","L0-lgnd-as08","L0-lgnd-as09","L0-lgnd-as10","L0-lgnd-as11","L0-lgnd-as12","L0-lgnd-as13","L0-lgnd-as14","L0-lgnd-as15","L0-lgnd-as16","L0-lgnd-as17","L0-lgnd-as18","L0-sclk-as01","L0-sclk-as02","L0-sclk-as03","L0-sclk-as04","L0-sclk-as05","L0-xasm23","L0-xasm24","L0-xasm25","L0-xasm26","L0-xasm27","L0-xasm28"]
-priority: 610
+relates_to: ["L0-katn-as01","L0-katn-as02","L0-katn-as03","L0-katn-as04","L0-lgnd-as01","L0-lgnd-as02","L0-lgnd-as03","L0-lgnd-as04","L0-lgnd-as05","L0-lgnd-as06","L0-lgnd-as07","L0-lgnd-as08","L0-lgnd-as09","L0-lgnd-as10","L0-lgnd-as11","L0-lgnd-as12","L0-lgnd-as13","L0-lgnd-as14","L0-lgnd-as15","L0-lgnd-as16","L0-lgnd-as17","L0-lgnd-as18","L0-magn-asbd","L0-magn-asfl","L0-magn-asit","L0-magn-aslh","L0-magn-asrg","L0-sauc-as01","L0-sauc-as02","L0-sauc-as03","L0-sauc-as04","L0-sauc-as05","L0-sauc-as06","L0-sclk-as01","L0-sclk-as03","L0-sclk-as04","L0-sclk-as05","L0-strm-asm1","L0-ufoc-as01","L0-ufoc-as02","L0-ufoc-as03","L0-ufoc-as04","L0-ufoc-as05","L0-xasm29","L0-xasm30","L0-xasm31","L0-xasm32"]
+priority: 620
 ---
 
 # Assumptions (CAN_ASSUME)
 
 > Автогенерация из Knowledge Vault. Ручное редактирование — установи `status: manual` в frontmatter.
+
+### Katn as01 concept assumption (L0-katn-as01)
+
+---
+title: "AS-katn-01 · The head lands where the player looked; the feet cell is derived from it"
+is_a: ["assumption"]
+part_of: ["L0-katn"]
+relates_to: ["L0-xasm18", "L0-xasm19", "L0-katn-p001", "L0-katn-r004"]
+---
+**Gap.** `L0-xasm19` starts the search at "the endpoint cell" as the feet cell. `L0-xasm18` says the result is never further than 20 from the head.
+- Taking an eye-level endpoint 20 blocks out as the **feet** cell raises the player by about 1.6 blocks.
+- That puts the head about 20.06+ from the start, which breaks the cap.
+- It also makes the player float a step above where they aimed.
+
+**Assumption (CAN_ASSUME).**
+- Floor hit (Up face): the feet cell is the cell above the hit block.
+- Any other case: the desired feet = endpoint − (0, 1.62, 0), so the head arrives at the aimed point.
+- Every candidate must satisfy |head after − head before| ≤ 20.
+
+**Impact if wrong.** If the client expects the feet at the aimed point, change one line in `plan.ts`. T06's bound then shifts by the eye height, and the T05 and T07 tests are unchanged. Local to `katn`.
+
+
+
+
+
+
+### Katn as02 concept assumption (L0-katn-as02)
+
+---
+title: "AS-katn-02 · Aim is the server view direction, also for a tap on a block"
+is_a: ["assumption"]
+part_of: ["L0-katn"]
+relates_to: ["L0-katn-p001", "L0-katn-ac09", "L0-webs"]
+---
+**Gap.** On the iPad without a crosshair, a tap can land anywhere on screen, and `playerInteractWithBlock` reports the tapped block. The spec says only "the point the player looks at".
+
+**Assumption (CAN_ASSUME).**
+- Both triggers trace along `getViewDirection()` from `getHeadLocation()`, the screen centre.
+- The tapped block is ignored as an aim point. It is only within vanilla reach (about 6 blocks), so it cannot express a 20-block jump, and mixing the two would give two aim models.
+
+**Impact if wrong.** If the operator wants "tap a block = go there", a block-tap branch uses `event.block` + `faceLocation` as the endpoint, still capped and safety-checked. It is limited to reach, a small local change, and checked on the iPad (`L0-katn-ac09` §5).
+
+
+
+
+
+
+### Katn as03 concept assumption (L0-katn-as03)
+
+---
+title: "AS-katn-03 · A landing cell must not be lava or fire; water is fine"
+is_a: ["assumption"]
+part_of: ["L0-katn"]
+relates_to: ["L0-katn-cx01", "L0-katn-ad01", "L0-katn-r004", "L0-adr-ktob"]
+---
+**Gap.** §5 says lava does not block the **trace**. §6 says the destination is a **safe** position. `L0-adr-ktob` §3 lets liquids count as "fits", which would land a player inside a lava pool they aimed across.
+
+**Assumption (CAN_ASSUME).**
+- Lava, flowing lava, fire and soul fire in the feet or head cell make the candidate unsafe. The search steps back past them.
+- Water is allowed: drowning is not immediate, and water breaks a fall.
+- Hazardous floors (magma, campfire, powder snow) are allowed: §6 forbids only walls and suffocation.
+
+**Impact if wrong.**
+- If the client wants "land in lava if you aimed there", drop the filter.
+- If the client wants hazard floors excluded too, extend the set.
+
+One constant in `plan.ts`; T08 is unaffected (it aims *past* the lava).
+
+
+
+
+
+
+### Katn as04 concept assumption (L0-katn-as04)
+
+---
+title: "AS-katn-04 · Fall look-ahead scales with speed; riding and other cases are not special"
+is_a: ["assumption"]
+part_of: ["L0-katn"]
+relates_to: ["L0-adr-ktfl", "L0-xasm20", "L0-katn-p002"]
+---
+**Gap.**
+- `L0-adr-ktfl` fixes a 2-block look-ahead and notes it may need to scale.
+- The spec says nothing about using the Katana while riding, sleeping or in a minecart.
+
+**Assumption (CAN_ASSUME).**
+1. The look-ahead is `max(2, ceil(|velocity.y|) + 1)` blocks. At ~3.9 blocks per tick that is 5, so the self-teleport can never be skipped over between two ticks.
+2. Using it while riding is allowed. The engine's teleport dismounts the player, and the vehicle stays.
+3. A self-teleport that lands within 0.3 of a ledge is accepted. The re-teleport uses the current exact location, so it cannot move the player.
+
+**Impact if wrong.**
+- If probe (1) shows the self-teleport snags or fails, the `slow_falling` fallback in `L0-katn-p002` §4 applies.
+- If riding must be blocked, add one guard (`player.getComponent("riding")`) in `p001` step 2.
+
+
+
+
+
 
 ### Lgnd as01 concept assumption (L0-lgnd-as01)
 
@@ -366,6 +464,230 @@ The refunded crossbow is a fresh, unenchanted, full-durability `minecraft:crossb
 
 
 
+### magn-asbd · A horse in iron horse armour and a mob holding iron are not pulled (L0-magn-asbd)
+
+# magn-asbd · A horse in iron horse armour and a mob holding iron are not pulled
+
+**Assumption.**
+- §4 names the helmet, chestplate, leggings and boots slots, and excludes iron weapons in a mob's hand.
+- `iron_horse_armor` is listed only as an *item*.
+- So a horse or donkey wearing it (body slot) is not a class 3 candidate.
+
+**Impact if wrong.**
+- Adding the body slot is one more tagging command (`hasitem={item=iron_horse_armor}`).
+- A pulled horse with a rider raises the question of what happens to the rider, which the spec does not address.
+
+
+
+
+
+
+### magn-asfl · Elements fly to their ring slot at ≤ 1.5 blocks per tick (L0-magn-asfl)
+
+# magn-asfl · Elements fly to their ring slot at ≤ 1.5 blocks per tick
+
+**Assumption.**
+- The spec sets 0.6 blocks per tick for **players** only. For elements it says just "fly to their places".
+- Ore can sit 60 blocks below the ring (centre − 20 → hover − 3), and the zone edge is ~50 blocks away horizontally.
+- At 1.5 blocks per tick, the worst path of ~80 blocks takes ~2.7 s, about 5 % of the 60 s magnet. The flight is still visible on iPad as a stream rising into the cloud.
+
+**Impact if wrong.**
+- If the speed is too slow, far elements arrive late and look sluggish.
+- If it is instantaneous, the "flying" visual is lost (the iPad DoD).
+- Only one constant changes.
+
+
+
+
+
+
+### magn-asit · `Block.getItemStack(1)` gives the right single item for every IRON_BLOCKS entry (L0-magn-asit)
+
+# magn-asit · `Block.getItemStack(1)` gives the right single item for every IRON_BLOCKS entry
+
+**Assumption.**
+- `getItemStack(1, false)` returns the plain item for each block:
+  - rail → rail;
+  - a hanging lantern → lantern;
+  - a water or lava cauldron → cauldron;
+  - a chipped anvil → chipped_anvil.
+- The door is special-cased to `iron_door`, and ore to `raw_iron`.
+- An explicit fallback map keyed by block id covers any block where the call returns undefined or a variant item.
+- A GameTest checks each IRON_BLOCKS id once.
+
+**Impact if wrong.**
+- A wrong item id gives the wrong drop, which breaks AC-10.
+- A data-bearing item, such as a filled cauldron item, gives a non-vanilla item.
+- Both are caught by the per-id test before merge.
+- The cauldron's liquid is lost by design: the item is an empty cauldron.
+
+
+
+
+
+
+### magn-aslh · Holders that contain a legendary are skipped, not pulled with it (L0-magn-aslh)
+
+# magn-aslh · Holders that contain a legendary are skipped, not pulled with it
+
+**Assumption.**
+- UFO §5 pulls a chest or hopper minecart "whole", and an armour stand with iron armour is pulled.
+- §4 and AC-13 say a legendary is "never pulled, wherever it lies".
+- Reading: a class 3 holder whose inventory, or whose hand or armour slots, holds a legendary is **not selected**.
+- The check uses the minecart's `minecraft:inventory` container and `hasitem` on `andrew:*` legendary ids for armour stands and mobs.
+
+**Impact if wrong.** If the operator wants the holder pulled with the legendary inside, `lgnd`'s watching of moved holders (the `lgnd` v4 delta) becomes load-bearing, and AC-13 changes to "never separated from its holder". This costs one extra rule plus a GameTest.
+
+
+
+
+
+
+### magn-asrg · A 3-block keep-away margin stops pickup; ring crowding is harmless (L0-magn-asrg)
+
+# magn-asrg · A 3-block keep-away margin stops pickup; ring crowding is harmless
+
+**Assumption.**
+- U11 measured pickup at about 2 blocks for a hovering player, so a 3-block margin around every player suffices.
+- Exempt drops grow the ring beyond 10 slots. At 30 slots the spacing on r 5 is still about 1 block, and held items do not merge, because each is teleported to its own point every tick.
+
+**Impact if wrong.**
+- **Pickup.** A held player would pick up ring items, so the "visible cloud" thins and the AC-8 counts drift. The fix is to raise the margin or the ring radius.
+- **Merging.** Held stacks would merge, changing the element count. Then a minimum slot spacing would be needed (at most 1 slot per 1.5 blocks, overflow onto a second ring at −4).
+
+
+
+
+
+
+### AS-sauc-1 · The hull band is `[y, y + 3]` above the entity position, and the model is built to fill it (L0-sauc-as01)
+
+# AS-sauc-1 · The hull band is `[y, y + 3]` above the entity position, and the model is built to fill it
+
+**Assumption.**
+- UFO §8 says "a cylinder of radius 6 and height 3 blocks **around its position**". It does not say whether the band is centred (y ± 1.5) or rests on the position.
+- Reading: the entity position is the underside of the disc. The hull is r 6 in `[y, y + 3]`. The geometry (disc + dome) is built to occupy that band, and the beam hangs from y.
+- The edges are closed: a charge column at exactly r = 6.0, or a segment ending exactly at y or y + 3, is a hit.
+
+**Impact if wrong.**
+- If the client meant a centred band, the hit band moves down by 1.5 blocks.
+- Only shots that graze the top or bottom edge change outcome; a vertical charge column through the disc hits under either reading.
+- The fix is a constant offset in the hull test and in `ac03`'s probe heights, with no model change.
+
+
+
+
+
+
+### AS-sauc-2 · Filled-in tunables: fall acceleration, path easing, departure height, sound volume (L0-sauc-as02)
+
+# AS-sauc-2 · Filled-in tunables: fall acceleration, path easing, departure height, sound volume
+
+**Assumption** (the spec leaves these open):
+- **Fall.** `vy` starts at 0 and gains `a = 0.025` blocks per tick².
+  - From the hover height (≈ 40 above the centre) the saucer touches ground at ≈ 57 ticks, just inside 3 s.
+  - From arrival or departure height (+50) the 60-tick cap fires first, at ≈ 45 blocks of drop. The blast then happens a few blocks above the ground, which §8 allows ("or after 3 seconds").
+  - Ground = the first non-air cell (solid **or liquid**) under the hull centre.
+- **Easing.** Arrival uses smoothstep. Departure uses ease-in (it accelerates away).
+- **Departure height.** Departure climbs back to `hoverY + 10`, mirroring the arrival. §2 states only "the opposite way beyond the horizon (90 blocks)".
+- **Sound volume.** `volume: 4`, about a 64-block range, for every UFO sound.
+
+**Impact if wrong.**
+- These are all constants in `src/ufo/saucer.ts`, so changing one is a one-line edit.
+- `ac01`, `ac03` and `ac05` assert the constants through exported values, not literals.
+- Only the iPad look and listen check (`ac06`) can reject them.
+- One residual risk: a reward dropped over lava burns, as vanilla items do. If the operator wants the reward to be loss-proof, the blast point must move to the nearest non-lava surface.
+
+
+
+
+
+
+### AS-sauc-3 · The shooter's name is resolved from `attack.ownerId` at the shot; `Attack` gains an optional `ownerName` (L0-sauc-as03)
+
+# AS-sauc-3 · The shooter's name is resolved from `attack.ownerId` at the shot; `Attack` gains an optional `ownerName`
+
+**Assumption.**
+- `Attack` (`src/orbital/flight.ts:26-38`) carries `ownerId` and the optional `ownerName` (`:37`), filled at `src/orbital/activation.ts:79`.
+- The charge is at most ~3 s old when it crosses the hull, since it spawns 60 above the target and falls 1 block per tick. The owner is therefore almost always online.
+- `sauc` resolves the name from `world.getAllPlayers()`, filtering out `undefined` (C-22).
+- To cover a disconnect in that window, the seam adds an **optional** `ownerName` to `Attack`, filled at launch from `player.name`. This is additive and unused by `pntr`/`ring`. The broadcast uses the live name, then `ownerName`, then the literal `"?"`.
+
+**Impact if wrong.**
+- If adding a field to `Attack` is refused, a shooter who logs out within ~3 s is broadcast as "?".
+- This is cosmetic. No AC exercises it beyond C-20′'s "the shooter is named".
+
+
+
+
+
+
+### AS-sauc-4 · The 100-block limit is horizontal; a saucer 90 out is loaded, persists for 95 s, and renders on the iPad (L0-sauc-as04)
+
+# AS-sauc-4 · The 100-block limit is horizontal; a saucer 90 out is loaded, persists for 95 s, and renders on the iPad
+
+**Assumption.**
+1. **The 100-block limit is horizontal.** UFO §2 says "not farther than 100 blocks from the centre". The 3D distance at spawn is √(90² + 50²) ≈ 103. U8 measured unloading against the *loaded area*, which is a horizontal chunk distance. The horizontal reading is therefore the intended one.
+2. **The spawn point is usable.** A chunk 90 blocks (≈ 6 chunks) from an online target player is loaded under BDS defaults, so `spawnEntity` and per-tick teleports there succeed. In GameTest, simulated players load no chunks, so the scenario needs a `tickingarea` covering the path (or a test-only shortened radius that is flagged as such).
+3. **No despawn.** A `minecraft:snowball`-runtime custom entity with no projectile component is not despawned or auto-removed within the 95 s event. The shipped charge only proves 20 s (`ATTACK_TIMEOUT_TICKS` = 400). Probe U8 / the U1 run held a probe for ~60 s.
+4. **It renders at range.** The iPad client draws an entity ~95 blocks away if its chunk is within the client's render distance (≥ 6 chunks) and `visible_bounds` is large (`ent1`).
+
+**Impact if wrong.**
+- (1) The path has to shrink to ~80 horizontal, an AC-2 deviation note.
+- (3) The saucer vanishes mid-event; `p001` treats that as an abort, and the event is lost.
+- (4) The DoD line "saucer visible on approach" fails at low render distance. The spawn radius stays at 90, so the fix is the operator's render-distance setting or a deviation.
+- Each item is checked by `ac01` (positions and validity over the full 95 s) or by `ac06` (iPad).
+
+
+
+
+
+
+### AS-sauc-5 · The hull keeps absorbing charges during the downed fall; the interceptor is removed only at the blast (L0-sauc-as05)
+
+# AS-sauc-5 · The hull keeps absorbing charges during the downed fall; the interceptor is removed only at the blast
+
+**Assumption.**
+- §8 says "any phase — arrival, magnet or departure". It is silent on the 3 s fall after a shoot-down.
+- `L0-adr-ufoi` already accepts that one RMB salvo can lose several charges to a hull.
+- Reading: while the saucer entity exists, including the fall, a crossing charge is absorbed (no ring or column effect) but does not re-trigger (`r004` latch).
+- The interceptor is unregistered in the blast tick.
+
+**Impact if wrong.**
+- If the client expects charges to pass through a falling wreck, a salvo fired right after the shoot-down loses its effect on the cells under the wreck.
+- The change is one condition: `downed` makes the interceptor return `false`. `ac03` has a sub-case pinned to this choice.
+
+
+
+
+
+
+### AS-sauc-6 · An RMB salvo is partly absorbed: columns inside the hull are intercepted, and the rest detonate at their per-ring power (L0-sauc-as06)
+
+# AS-sauc-6 · An RMB salvo is partly absorbed: columns inside the hull are intercepted, and the rest detonate at their per-ring power
+
+**Links:** `part_of: ["L0-sauc"]` · `is_a: ["assumption"]` · `relates_to: ["L0-sauc-r001", "L0-sauc-r004", "L0-sauc-ac03", "L0-adr-ufoi", "L0-ring"]`
+
+**Context.**
+- In shipped Orbital v1.4.4 (`src/orbital/ring-layout.ts`), RMB rings have radii 0.5 / 3.5 / 7 / 10.5 / 14 and powers 4 / 4 / 2 / 1 / 1.
+- A blast reaches 2 × power.
+- RMB refuses a target nearer than 7 blocks from the eye (`RING_MIN_RANGE`, Orbital §6).
+
+**Assumption.**
+- `r001` runs per charge. With the target under the saucer axis, the centre and ring-3.5 columns cross the r 6 hull and are intercepted.
+- Rings 7, 10.5 and 14 fall clear of the hull and detonate normally at powers 2 / 1 / 1. That is ordinary Cannon behaviour and not "blast damage" from the saucer, so UFO §8's "no damage" covers only the saucer's own blast (`r004`).
+- The first intercepted charge latches the shoot-down. The others in the same tick are absorbed silently (`r004` item 1).
+- The 7-block minimum only limits where the shooter stands. Hovering at centre + 40 and spawning charges at target + 60 already require the target to be under the hull, so the minimum range adds no new positional limit.
+
+**Impact if wrong.**
+- If the client expects the whole salvo to vanish once the saucer is hit, the interceptor has to absorb every charge of an attack once one of them hits. That means a per-`attackId` set in `p003` and one line in `r001`.
+- `ac03`'s RMB block assertions are scoped to this reading. Under the other reading they could go back to the full 13 × 13 snapshot.
+
+
+
+
+
+
 ### Sclk as01 concept assumption (L0-sclk-as01)
 
 **AS-sclk-01 · The bolt's gravity and drag can be tuned to match an arrow (CAN_ASSUME)**
@@ -375,15 +697,6 @@ The refunded crossbow is a fresh, unenchanted, full-durability `minecraft:crossb
 **Assumption.** With the snowball runtime, `minecraft:projectile.gravity` and `inertia` can be set so that a bolt fired at an arrow's spawn velocity lands within 1 block of where the arrow would land, at 30 blocks on a flat range. The starting values are the vanilla arrow's (gravity 0.05, inertia 0.99), corrected by probe Q9.
 
 **Impact if wrong.** The bolt drops faster or slower than an arrow. Gameplay still works (physical, not hitscan), but aiming feels different from a vanilla crossbow. That is a C-16 deviation noted in the README. No design change.
-
-
-
-
-
-
-### Sclk as02 concept assumption (L0-sclk-as02)
-
-
 
 
 
@@ -445,169 +758,248 @@ The refunded crossbow is a fresh, unenchanted, full-durability `minecraft:crossb
 
 
 
-### ASM-L0-23 · Sonic Boom damage = 10 (L0-xasm23)
+### ASM-strm-1 · Defaults filled in by strm (L0-strm-asm1)
 
 ---
-title: "ASM-L0-23 · The Sonic Boom (Normal) damage is 10 HP, one constant"
-aliases: ["L0-xasm23", "Sonic Boom damage = 10"]
+title: "ASM-strm-1 · Sample sizes, melee damage value and the live passive band"
 is_a: ["assumption"]
-part_of: ["L0"]
-relates_to: ["L0-sclk", "L0-adr-scdm", "L0-xq7"]
-see_also: ["sculkcrossbowspecv1ruen-part-1", "sculkcrossbowspecv1ruen-part-3"]
+part_of: ["L0-strm"]
+relates_to: ["L0-strm-acd", "L0-xasm30", "L0-strm-pprb"]
 ---
-# ASM-L0-23 · Sonic Boom damage = 10
+# ASM-strm-1 · Defaults filled in by strm
 
-**Gap.** §5 and T06 say "equal to vanilla Warden Sonic Boom on Normal difficulty", but give no number.
-
-**Assumption (CAN_ASSUME).** `SONIC_BOOM_DAMAGE = 10` HP (5 hearts): the Warden's ranged attack on Normal. It is exported as one constant that the GameTests read. It ignores difficulty (T07), armour and the shield (T08, C-28) — the shield clause holds only with a shield-piercing cause (`sonicBoom`), not through `decision-scythe-true-damage`, whose `entityAttack` lethal branch a raised shield cancels.
-
-**Verification.** The probe measures a real Warden's Sonic Boom on an unarmoured SimulatedPlayer at Normal on BDS 1.26.51. If the value differs, the constant takes the measured value.
-
-**Impact if wrong.** One number changes. The T06–T08 and T17 expectations follow the constant. No design change.
-
-
-
-
-
-
-### ASM-L0-24 · Entity-hit scope and patch placement (L0-xasm24)
-
----
-title: "ASM-L0-24 · What counts as a 'living entity' hit, and where the sculk patch goes"
-aliases: ["L0-xasm24", "Crossbow entity-hit scope and patch placement"]
-is_a: ["assumption"]
-part_of: ["L0"]
-relates_to: ["L0-sclk", "L0-adr-sctr", "L0-xq7"]
-see_also: ["sculkcrossbowspecv1ruen-part-1", "sculkcrossbowspecv1ruen-part-2"]
----
-# ASM-L0-24 · Entity-hit scope and patch placement
-
-**Gaps.** §5 says "a living entity" and "a sculk patch under the target". It does not say:
-- what happens on a hit on an entity without health;
-- what happens when the target is in the air (a jumping player, a flying mob, the UFO saucer).
-
-**Assumption (CAN_ASSUME).**
-- **Living** = the entity has `minecraft:health` and is not in Creative or Spectator.
-  - A living hit deals D (C-28) and places a patch.
-  - An entity hit on a non-living or immune entity (boat, minecart, the damage-immune saucer, a Creative player) deals no damage and places **no crater**. It still places a patch: the bolt "hit an entity".
-- **The patch** is centred on the target's feet column. It is placed on the first solid full-block surface at most **6 blocks** below the feet. If there is none (a target in the air over the Void, a high flier, the saucer), **no patch** is placed.
-- A patch never replaces liquids, containers or deny-list blocks (C-27).
-
-**Impact if wrong.** Only placement rules change, in `sculkCells`. If the operator wants damage to non-living entities, armour stands would break, which then touches the `lgnd` stand rules.
+1. **Seeded passive rate.**
+   - N = 10 000 rolls of the real `rollPassive(rng)` with a fixed-seed PRNG. The observed rate must be in [0.29, 0.31].
+   - Both branches are also forced with stub RNGs (`() => 0`, `() => 0.99`).
+   - **If wrong:** none; it is deterministic.
+2. **Live ±5 % band.**
+   - The live sample is **N ≥ 600** real melee hits. Each is spaced past the 10-tick hurt window, so the run takes ≈ 6 000 ticks, about 5 min.
+   - At p = 0.3, σ ≈ 1.9 %, so ±5 % ≈ 2.7σ and the false-red rate is ≈ 0.8 %. N = 300 would be ≈ 6 %, which is too flaky for a suite that is already flaky.
+   - The live test runs as its own scenario, outside the default blast-radius gate.
+   - **If wrong** (too slow): drop to N = 400 (≈ 2 % flake) and accept a re-run as a deviation.
+3. **Melee damage.** `minecraft:damage` = the probe-P6 value, expected **7** (Bedrock diamond sword). Note that the Scythe's 8 matched netherite. **If wrong:** one JSON value.
+4. **Strike stagger.** Three strikes over ≤ 6 ticks (0/3/6). The column is ~6 blocks high. **If wrong:** cosmetic.
+5. **Entity hit point** = the ray-entity distance along the trace. If the API gives no distance, use the entity's location + 1 (body centre). **If wrong:** visual offset only.
+6. **The probe uses diamond armour + Protection IV** as "armoured". **If wrong:** none; the mob is the control.
 
 
 
 
 
 
-### ASM-L0-25 · Crater contents (L0-xasm25)
+### AS-ufoc-1 · How the commands behave where the spec is silent (L0-ufoc-as01)
 
----
-title: "ASM-L0-25 · The crater drops nothing; liquids, deny-list blocks and unloaded cells are spared; containers spill"
-aliases: ["L0-xasm25", "Crossbow crater drops and exclusions"]
-is_a: ["assumption"]
-part_of: ["L0"]
-relates_to: ["L0-sclk", "L0-adr-sctr", "L0-xcx25", "L0-xasm6", "L0-xq7"]
-see_also: ["sculkcrossbowspecv1ruen-part-2"]
----
-# ASM-L0-25 · Crater contents
+# AS-ufoc-1 · How the commands behave where the spec is silent
 
-**Gap.** §6 says "destruction is controlled by the script", but says nothing about drops, liquids, containers or unbreakable blocks.
+**Links:** `part_of: ["L0-ufoc"]` · `is_a: ["assumption"]` · `relates_to: ["L0-ufoc-p004", "L0-ufoc-r006"]`
 
-**Assumption (CAN_ASSUME).**
-- Crater cells become air **without item drops**. A drop-free carve fits "not a TNT explosion" and avoids a resource farm.
-- **Liquids** are not removed. Water may flow into the crater.
-- **Deny-list blocks** stay. The list is `PENETRATOR_KEEP` (`src/orbital/penetrator-keep.ts`), 35 ids: bedrock, end portal, end portal frame, end gateway, barrier, `light_block` plus `light_block_0…15`, the three command blocks, structure block, structure void, jigsaw, allow, deny, border block, invisible bedrock, moving block, and both piston arm collision blocks.
-- **Obsidian, reinforced deepslate, ancient debris and the Nether portal are carved like stone** — they are deliberately absent from the list, being hard but Survival-breakable (`xasm6`, `pntr-r003`). Spec §6 is silent on them; `r010` already ruled that the list keeps its Orbital meaning, and the operator has accepted the Cannon as it stands (ORBC-IPAD-01-AA).
-- **Containers** removed by the carve **spill their contents**. This is an engine fact: `setType` spills containers even with `doTileDrops` false. Any legendary inside is first taken out by `protectLegendariesIn`.
-- **Structure blocks** of the shipped structures (Warden City, Bastion, …) get no special protection. A crater is an ordinary world edit, like a player's pickaxe.
-- In the Nether and the End the same rules apply. Sculk is placed in every dimension.
+**Spec (§9)** says only: `come` targets the invoker, or a random player; `stop` removes the saucer and drops what it holds; `enable`/`disable` is a stored flag. Everything below fills a gap.
+
+**Assumed:**
+1. **`come` from the Nether or End, or from the console:** the target is a random Overworld player. With no Overworld player, `come` fails with a message.
+2. **`come` while a UFO is up:** it is refused (at most one saucer).
+3. **`come` while the event is disabled:** it works, as an operator override for testing. The flag is unchanged.
+4. **After `stop`:** the next arrival is now + 15 min, the same as a departure.
+5. **`disable` mid-event:** it also stops the event.
+6. **`enable` when `next_ms` is overdue:** the arrival is pushed to now + 15 min.
+7. **Command replies:** plain English text, not localized. `CustomCommandResult.message` is a string, not rawtext.
+
+**Impact if wrong:**
+- Points 1–3 and 7: low; each is a small change in `commands.ts`.
+- Point 4: if `stop` should leave the old schedule, the next saucer could arrive sooner than 15 min.
+- Point 5: if `disable` should let a live event finish, the saucer stays up after the operator disabled the event.
+- Point 6: an overdue arrival would fire within 5 s of `enable`.
+
+
+
+
+
+
+### AS-ufoc-2 · The target can be in any game mode; the centre is the literal block under the feet (L0-ufoc-as02)
+
+# AS-ufoc-2 · The target can be in any game mode; the centre is the literal block under the feet
+
+**Links:** `part_of: ["L0-ufoc"]` · `is_a: ["assumption"]` · `relates_to: ["L0-ufoc-r002", "L0-xasm14"]`
+
+**Assumed:**
+- **Game mode.** Any online, live Overworld player can be the target, including Creative and Spectator players. The spec says only "a random online player in the Overworld". `magn` still never pulls Creative or Spectator players (§5).
+- **Centre.** The centre is `floor(y) − 1` under the target, with no downward raycast. A target who is flying, gliding or jumping gets a centre in the air.
+
+**Impact if wrong:**
+- If Spectators should be excluded, an event can happen over an observer. The fix is one filter in `overworldPlayers()`.
+- With an airborne centre, the zone (centre − 20 … hoverY) can miss the ground, and the event pulls little. An alternative is a block raycast down to the first solid block, capped at 64 blocks. Note that a block raycast passes carpets, signs and ladders. Switching to it is a change local to `r002`.
+
+
+
+
+
+
+### AS-ufoc-3 · \ (L0-ufoc-as03)
+
+# AS-ufoc-3 · "Exactly 15 minutes" allows the 5 s idle-check granularity
+
+**Links:** `part_of: ["L0-ufoc"]` · `is_a: ["assumption"]` · `relates_to: ["L0-ufoc-r001", "L0-ufoc-ac02", "L0-ufoc-ad02"]`
+
+**Assumed.**
+- AC-1's "exactly 15 minutes" is met when the arrival starts within the next idle check after `next_ms`. That is [15 min, 15 min + 100 ticks], or about 5 s at 20 TPS.
+- Phases count ticks (`ad01`), so under lag a 20 s arrival lasts more than 20 s of wall time. AC-2 is asserted in ticks: 400/1200/300.
 
 **Impact if wrong.**
-- If drops are wanted: one flag in the carve (`setType` → `/setblock … destroy`), which raises the per-tick cost.
-- If structures must be protected: a new protect-box rule that `strf` would own (a new L0 contradiction).
+- If the operator wants second-exact arrivals, the idle divider drops to 20 ticks. That costs nothing measurable.
+- If AC-2 is meant in wall seconds under lag, the phases would have to switch to ms deadlines, and the flight would jump. That reverses `ad01`.
 
 
 
 
 
 
-### ASM-L0-26 · Def #5 inherits the framework as built (L0-xasm26)
+### AS-ufoc-4 · A lost saucer aborts the event: it was never spawned, it unloaded, or a consumer threw (L0-ufoc-as04)
+
+# AS-ufoc-4 · A lost saucer aborts the event: it was never spawned, it unloaded, or a consumer threw
+
+**Links:** `part_of: ["L0-ufoc"]` · `is_a: ["assumption"]` · `relates_to: ["L0-ufoc-p002", "L0-sauc-p001", "L0-magn-prel"]`
+
+**Context.**
+- The saucer spawns 90 blocks from the centre (§2). If that chunk is not loaded, `spawnEntity` throws.
+- If every player leaves the area mid-event, the saucer's chunk can unload (U8, C-12′). §10 says the event continues when the *target* leaves, but it does not cover the saucer itself vanishing.
+
+**Assumed.** `ufoc` aborts the event in any of these cases:
+- `sauc` cannot spawn the saucer;
+- the saucer is invalid on any later tick, outside `downed`;
+- an `onPhase` consumer throws.
+
+The abort releases everything held (when in `magnet`), removes whatever remains, ends the session and sets `next_ms` to now + 15 min. A saucer that unloaded and later reloads is removed by the `entityLoad` sweep, because its event id no longer matches (`p003`).
+
+**Impact if wrong.**
+- If the event should survive an unload (for example by pausing the phase clock), `p002` needs a "suspended" state.
+- If `sauc` prefers to spawn nearer the centre when the 90-block point is unloaded, the abort becomes a fallback rather than the normal path.
+
+
+
+
+
+
+### AS-ufoc-5 · The 150-block notice range is horizontal and Overworld-only, sent once at arrival start (L0-ufoc-as05)
+
+# AS-ufoc-5 · The 150-block notice range is horizontal and Overworld-only, sent once at arrival start
+
+**Links:** `part_of: ["L0-ufoc"]` · `is_a: ["assumption"]` · `relates_to: ["L0-ufoc-r005", "L0-ufoc-ac07"]`
+
+**Spec (§7):** the localized "В небе НЛО!" goes to players within 150 blocks of the centre when the arrival starts.
+
+**Assumed:**
+- The distance is horizontal (x/z), so players in deep caves under the centre are told too.
+- Only Overworld players get it.
+- It is sent once. Players who walk into range later are not told.
+- `come` sends it too.
+
+**Impact if wrong:** low. A 3D distance or a later re-notice is a change local to `r005`. Only AC `ac07`'s expected recipient set changes.
+
+
+
+
+
+
+### ASM-L0-29 · Reading "10 HP before armour" (L0-xasm29)
 
 ---
-title: "ASM-L0-26 · The crossbow joins the framework as def #5 and inherits the 1.6.x rules as built, including magnetism and the crafter-target Void return"
-aliases: ["L0-xasm26", "Crossbow inherits the framework as built"]
+title: "ASM-L0-29 · 'Before armour' means armour, Protection and Resistance then reduce it"
+aliases: ["L0-xasm29", "Pre-armour damage reading"]
 is_a: ["assumption"]
 part_of: ["L0"]
-relates_to: ["L0-lgnd", "L0-sclk", "L0-magn", "L0-xcx11", "L0-xcx24", "L0-xcx21"]
-see_also: ["sculkcrossbowspecv1ruen-part-1", "sculkcrossbowspecv1ruen-part-4"]
-governs_files: ["src/legendary/registry.ts", "src/ufo/magnet-select.ts", "src/ufo/magnet-hold.ts", "src/legendary/recovery.ts"]
+relates_to: ["L0-strm", "L0-adr-sbdm", "L0-xcx27"]
+see_also: ["stormbladeelytratotemspecruen-part-1", "stormbladeelytratotemspecruen-part-2"]
 ---
-# ASM-L0-26 · Def #5 inherits the framework as built
+# ASM-L0-29 · Reading "10 HP before armour"
 
-**Assumption (CAN_ASSUME).** Crossbow §3 and §13 ("preserve all global legendary rules") are met by def #5 (`keyPrefix "sk"`, corrected at reduce from `sc`, which the Scythe holds: `L0-lgnd-cx15`, `L0-adr-sckp`; a craft token, a refund of echo shard ×2, deepslate ×2 and crossbow ×1) plus the no-ability change (`xcx24`), with these readings carried over from earlier weapons:
+**Assumption (CAN_ASSUME):** "10 HP (6 HP) of damage ДО учёта брони и прочих стандартных защит" means the *raw* damage is 10 (6). Armour, toughness, Protection enchantments and Resistance **then reduce** it, as they would a vanilla hit. It is **not** true damage like the Sculk Crossbow's (C-28). §07's "10 HP before armor" and §06's "+6 HP before armour" read the same way. The difficulty does not scale it: player-sourced damage is never scaled.
 
-| Rule | As built at 1.6.1 |
-|---|---|
-| Hazards: fire and lava prevented; cactus and TNT get a return | the C-16 reading of `L0-xcx21`/`adr-ktgr`. T20 is proven as "exactly one exists, held or owed" |
-| Orbital blast and rings | prevented by `protectLegendariesIn` |
-| Void return to "the last owner" | **`mark.holder`, falling back to `mark.owner`**. `decision-resolve-l0-xcx11` chose the last holder, and it is built as of 2026-10-05 (`state.ts:47-52,69-72`, `recovery.ts:273`, LGND-HOLD-01-AA): a stack from before holders still returns to its `owner` |
-| UFO Magnet | the crossbow **is pulled**: since 1.6.0 the selector takes any `isLegendaryWeaponStack` (`magnet-select.ts:8`). The spec does not list the magnet as a hazard, so this is not a breach |
-
-**Impact if wrong.** The holder field is built, so the crossbow inherits it with no `lgnd` work of its own; T20/Void tests name the last holder, not the crafter. If the crossbow must be exempt from the magnet, a per-def `magnetic: false` is needed (touches `magn`).
+**Impact if wrong:** if Andrey meant "ignores armour", the damage path switches to the crossbow's `hit.ts` true-damage pattern with cause `sonicBoom`. That is a contained change in `src/storm/damage.ts`, plus re-run tests against the armoured target.
 
 
 
 
 
 
-### ASM-L0-27 · Ammunition and the bolt's life (L0-xasm27)
+### ASM-L0-30 · Melee base and the passive trigger (L0-xasm30)
 
 ---
-title: "ASM-L0-27 · Ammunition: arrows only (plain, tipped, spectral) with arrow effects dropped; no fireworks; bolts are not picked up; lifetime 100 ticks"
-aliases: ["L0-xasm27", "Crossbow ammunition and bolt lifetime"]
+title: "ASM-L0-30 · Diamond-sword parity is measured, and the passive rides main-hand melee only"
+aliases: ["L0-xasm30", "Storm Blade melee base"]
 is_a: ["assumption"]
 part_of: ["L0"]
-relates_to: ["L0-sclk", "L0-adr-scbs", "L0-adr-scdm", "L0-xq7"]
-see_also: ["sculkcrossbowspecv1ruen-part-1", "sculkcrossbowspecv1ruen-part-2"]
+relates_to: ["L0-strm", "L0-scyt"]
+see_also: ["stormbladeelytratotemspecruen-part-1"]
 ---
-# ASM-L0-27 · Ammunition and the bolt's life
+# ASM-L0-30 · Melee base and the passive trigger
 
-**Gap.** §4 says "every fired arrow/bolt". A vanilla crossbow also loads **firework rockets**, and tipped arrows carry effects. The spec says nothing about pickup or how long a bolt lives.
+**Assumptions (CAN_ASSUME):**
+1. "Damage as a Diamond Sword" is checked **against a vanilla `minecraft:diamond_sword` on the same BDS build**, with the same target and armour. It is never compared to a hard-coded number; Bedrock and Java differ by 1. This follows the Scythe's precedent (`scythe_melee_matches_netherite`). Sharpness, Smite, Bane, Fire Aspect, Knockback and Looting behave as on a vanilla sword. Sweeping does not exist on Bedrock.
+2. A "successful hit" for the passive is an `entityHitEntity` by a player whose **main hand** holds a live (non-stale) Storm Blade, on an entity with a health component. Bedrock never melees with the off hand, so an off-hand blade has no passive. Item frames, armour stands without health, dropped items and XP orbs are not "living".
+3. The active ability is triggered by **Use** (RMB / long-press on the iPad), as on every other active legendary, through `hands.ts resolveActivation`.
 
-**Assumption (CAN_ASSUME).**
-- **Ammunition:** `minecraft:arrow` in all its variants (plain, tipped, spectral). **No fireworks.** A rocket's explosion would be area damage, which §5 and §9 forbid. If the base item is the vanilla crossbow (`adr-scbs` B), a loaded rocket is fired as one bolt and its explosion never happens.
-- **Tipped and spectral effects are not applied.** The Sonic Boom hit replaces the arrow's whole hit (§5, "instead").
-- **A bolt is never picked up.** It is removed on its outcome. Ammunition is spent as vanilla spends it: none in Creative, and the Infinity enchantment does not exist for crossbows.
-- **Lifetime:** 100 ticks (5 s), or leaving loaded chunks, or falling into the Void. Then the bolt is removed with no outcome (C-26 "expiry").
-
-**Impact if wrong.** If fireworks must work, the rocket path needs its own rule (a boom hit plus a crater?), and the operator must define it. If tipped effects must apply, the hit adds `addEffect` from the stored potion, which is a small change.
+**Impact if wrong:** (1) changes one item-JSON damage value. (2) If off-hand passive was expected, the spec would need a mechanic Bedrock lacks; document it. (3) A different trigger would need a framework hook, which is not allowed in this run, so it would mean a new L0 decision.
 
 
 
 
 
 
-### ASM-L0-28 · A sculk bolt is invisible to every legendary and magnet predicate (L0-xasm28)
+### ASM-L0-31 · What counts as a valid activation (L0-xasm31)
 
 ---
-title: "ASM-L0-28 · A sculk bolt is invisible to every legendary and magnet predicate"
-aliases: ["L0-xasm28", "Bolts are not legendaries"]
+title: "ASM-L0-31 · Valid release, invalid attempt, and the 10-block line"
+aliases: ["L0-xasm31", "Storm Blade activation validity"]
 is_a: ["assumption"]
 part_of: ["L0"]
-relates_to: ["L0-sclk", "L0-lgnd", "L0-magn", "L0-sclk-ent2", "L0-sclk-ad03", "L0-lgnd-r016", "L0-xasm26"]
-governs_files: ["src/sculk/", "src/legendary/registry.ts", "src/ufo/magnet-select.ts"]
+relates_to: ["L0-strm", "L0-katn", "L0-lgnd"]
+see_also: ["stormbladeelytratotemspecruen-part-1"]
 ---
-# ASM-L0-28 · A sculk bolt is invisible to every legendary and magnet predicate
+# ASM-L0-31 · What counts as a valid activation
 
-**Assumption (CAN_ASSUME).** `andrew:sculk_bolt` is a projectile entity (`sclk-ent2`), not an item stack, and it holds no item. So:
-- `isLegendaryStack` / `isLegendaryWeaponStack` / `isLegendaryItemEntity` never match it, and `protectLegendariesIn` never moves it out of a crater box. That is harmless, because a bolt has already resolved by the time its own crater is planned.
-- The UFO magnet (`magn`) selects legendary item entities and holders through `hasitem` (`lgnd-r016`). A bolt is neither, so a magnet in flight range never captures it.
-- A bolt that leaves loaded chunks or exceeds 100 ticks is removed with no outcome. It has no owed entry or recovery path in `lgnd`.
+**Assumptions (CAN_ASSUME):**
+1. **Valid release:** `resolveActivation` picked the blade, the player is alive, and the eye's chunk is loaded. A miss, a wall at 0.5 blocks and an empty 10 blocks are all valid: they spend the cooldown and draw the line to the stop point.
+2. **Invalid (no cooldown spent):** the blade is on cooldown or busy, the stack is stale (a duplicate), the player is dead or spectating, or the blade is not in either hand. The HUD shows the seconds; there is no message.
+3. **The line:**
+   - It starts at the eye and runs along the view direction for at most 10 blocks of **Euclidean** length. The block ray's budget is cell steps, so it is clamped by distance (memory: `maxDistance` = cell steps).
+   - It stops at the first block the Katana's `TRACE_FLAGS` treat as solid. Liquids and passable blocks (grass, flowers, carpet, signs, fire) do not stop it.
+   - The hit is the nearest living entity (not the wielder) whose ray intersection is closer than the block stop.
 
-**Why it is an L0 assumption.** Each child states only its own half: `sclk` says "bolts are not item stacks", and `lgnd`/`magn` select by stack type. Neither checks the other.
+**Impact if wrong:** if liquids should stop the line, flip one flag. If misses should not spend the cooldown, it is a one-line rule change, but §02 says plainly that they do.
 
-**Check (cheap, in the `sclk` pipeline task).** A GameTest fires a bolt across an active magnet zone and asserts that it resolves exactly once on its natural path. If the magnet turns out to move generic projectile entities, the bolt needs a magnet exclusion. That exclusion would be a `magn` change, filed as a new L0 contradiction, not patched in `sclk`.
+
+
+
+
+
+### ASM-L0-32 · The Storm Blade's def (L0-xasm32)
+
+---
+title: "ASM-L0-32 · Def #6 uses key prefix `sb`, a 600-tick cooldown, and needs no framework change"
+aliases: ["L0-xasm32", "Storm Blade def"]
+is_a: ["assumption"]
+part_of: ["L0"]
+relates_to: ["L0-strm", "L0-lgnd", "L0-adr-sckp"]
+see_also: ["stormbladeelytratotemspecruen-part-1"]
+governs_files: ["src/legendary/registry.ts"]
+---
+# ASM-L0-32 · The Storm Blade's def
+
+**Assumption (CAN_ASSUME):** def #6 is
+`{ itemId: "andrew:storm_blade", keyPrefix: "sb", abilityKey: "storm_blade", nameKey: "item.andrew:storm_blade", cooldownTicks: 600, craftTokenId: "andrew:storm_blade_crafted" }`.
+
+`sb` collides with none of the existing prefixes `ws`, `sc`, `oc`, `dk` and `sk` (`registry.ts`). Read with `L0-adr-sckp`, which forbids reusing a prefix.
+
+The recipe's refund on a blocked second craft gives the inputs back (2 lightning rods, 2 wind charges, 1 diamond sword), the same way the crossbow's does.
+
+Every other legendary rule is def-driven at 1.8.0:
+- the craft gate;
+- retention, recovery and the Void return to the last holder;
+- protection, the magnet, the HUD and hand priority.
+
+The passive melee lives in `src/storm/`, subscribed to `entityHitEntity`. It is **not** a framework hook.
+
+**Impact if wrong:** if any framework file has to change beyond `registry.ts` (adding the def) and `main.ts` (the subscription), `strm` must raise a new L0 contradiction before it builds, as the v7 invariant required.
 
 
 

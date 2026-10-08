@@ -1,13 +1,13 @@
 ---
 title: Project Summary
 type: analysis
-generated_at: "2026-10-05T17:12:56.153Z"
+generated_at: "2026-10-08T18:47:14.773Z"
 source_channel: rollout
 node_id: rollout-summary
 aliases: ["rollout-summary","summary"]
 is_a: ["rollout","summary"]
 relates_to: ["L0"]
-priority: 610
+priority: 620
 ---
 
 # Project Summary
@@ -19,81 +19,93 @@ priority: 610
 _node: L0_
 
 ---
-title: "Project Overview: «Andrew» Minecraft Bedrock add-on (v7: the Sculk Crossbow, after reduce)"
+title: "Project Overview: «Andrew» Minecraft Bedrock add-on (v8: the Storm Blade and two vanilla recipes)"
 aliases: ["L0", "Project Overview"]
 is_a: ["system-overview"]
 part_of: []
-relates_to: ["L0-lgnd", "L0-sclk", "L0-orbc", "L0-pntr", "L0-magn", "L0-katn", "L0-scyt", "L0-webs", "L0-adr-scbs", "L0-adr-scdm", "L0-adr-sctr", "L0-adr-sckp", "L0-adr-hldb", "L0-adr-scfc", "L0-adr-scpi", "L0-xcx22", "L0-xcx23", "L0-xcx24", "L0-xcx25", "L0-xasm26", "L0-xasm28", "L0-xq7", "L0-lgnd-cx15", "L0-lgnd-cx16", "L0-sclk-cx01", "L0-sclk-cx02"]
-requires: ["L0-lgnd"]
-see_also: ["sculkcrossbowspecv1ruen-part-1", "sculkcrossbowspecv1ruen-part-4", "constraints"]
-governs_files: ["src/legendary/", "src/websword/", "src/scythe/", "src/orbital/", "src/ufo/", "src/structures/", "src/katana/", "src/sculk/", "src/terrain/"]
-supersedes: ["L0@v6"]
+relates_to: ["L0", "L0-strm", "L0-lgnd", "L0-katn", "L0-sclk", "L0-magn", "L0-scyt", "L0-orbc", "L0-adr-sbdm", "L0-adr-sblt", "L0-adr-sbvr", "L0-adr-sbkb", "L0-adr-sbgt", "L0-strm-adtr", "L0-strm-cxkb", "L0-xcx26", "L0-xcx27", "L0-xq8"]
+see_also: ["stormbladeelytratotemspecruen-part-1", "stormbladeelytratotemspecruen-part-2", "constraints"]
+governs_files: ["src/legendary/", "src/websword/", "src/scythe/", "src/orbital/", "src/ufo/", "src/structures/", "src/katana/", "src/sculk/", "src/storm/", "src/terrain/", "packs/behavior/recipes/"]
+supersedes: ["L0@v7"]
 ---
-# Project Overview: «Andrew» Minecraft Bedrock add-on (v7, after reduce)
+# Project Overview: «Andrew» Minecraft Bedrock add-on (v8)
 
-**What it is.** A Minecraft **Bedrock** PvP add-on (one BP + one RP, namespace `andrew:`, `dist/andrew.mcaddon`), as built at **1.6.1** (`ed05050`). Stable Script API only: `@minecraft/server` 2.10.0 on BDS 1.26.51.1 (C-2). Played on an iPad; verified on BDS in Docker (production 19132, QA 19134, checks 19136). The iPad is the only proof of what renders.
+**What it is.** A Minecraft **Bedrock** PvP add-on: one BP and one RP, namespace `andrew:`, packaged as `dist/andrew.mcaddon`. As built it is **1.8.0** (`d2cc212`). Andrey accepted the Sculk Crossbow at that version on 2026-10-08 (`1280206`). It uses only the stable Script API (`@minecraft/server` 2.10.0 on BDS 1.26.51.1, C-2). The game is played on an iPad and verified on BDS in Docker (production 19132, QA 19134, checks 19136). Only the iPad proves what renders.
 
-| Family | Members | State (2026-10-05) |
+| Family | Members | State (2026-10-08) |
 |---|---|---|
-| Legendary weapons | Web Sword `ws`, Scythe `sc`, Orbital Cannon `oc`, Dragon Katana `dk`, **Sculk Crossbow `sk` (v7)** | First four shipped (Katana in 1.5.0). The crossbow is analysed, not built. |
-| World structures | Windmill, Warden City, Bastion, Airship | Shipped 1.2.0; scan-code reconcile still owed (`xcx12`). |
-| World events | UFO Magnet (`ufoc`, `sauc`, `magn`) | Shipped; 1.6.x tuning made legendary weapons magnetic. |
+| Legendary weapons | Web Sword `ws`, Scythe `sc`, Orbital Cannon `oc`, Dragon Katana `dk`, Sculk Crossbow `sk`, **Storm Blade `sb` (v8)** | The first five have shipped. The Storm Blade is analysed (`L0-strm`) but not built. |
+| Vanilla recipes | **Elytra, Totem of Undying (v8)** | Analysed in `L0-strm` (`L0-adr-sbvr`): plain shaped JSON with no script. |
+| World structures | Windmill, Warden City, Bastion, Airship | Shipped in 1.2.0. The scan-code reconcile is still owed (`xcx12`). |
+| World events | UFO Magnet (`ufoc`, `sauc`, `magn`) | Shipped. The magnet is def-driven. |
 
-## What the v7 run settled
-Two children ran: **`lgnd`** (the framework, re-read against 1.6.1) and **`sclk`** (the crossbow). They fit together with **exactly one framework change**, as the plan required:
+## What v8 adds: one component, `strm`
+The spec "Storm Blade + Elytra + Totem v1" (priority 620) is the only new raw. One child covers it, and it was analysed in full.
 
-- **`lgnd` gives:** the passive-def shape (`lgnd-ad15`: optional ability block, `hasAbility(def)`; no timer key, no `resolveActivation` claim, no HUD line; defs #1–#4 byte-identical), def #5 (`lgnd-ad16`), and the unchanged def-driven services — craft gate and token, mark, retention, recovery, Void, `protectLegendariesIn`, Creative/`/give` copies and the magnet. `lgnd` confirmed none of these needs per-weapon code (`lgnd-ac27`).
-- **`sclk` gives:** item/token/recipe/lang/RP data, the shot→bolt swap (one `andrew:sculk_bolt` per projectile, in-memory resolve-once map, `sclk-ad03`), the trail, fixed 10-HP true damage, the sculk patch, and the crater through a budgeted FIFO on the shared interval (`sclk-ad04`). Before queuing any carve it calls `protectLegendariesIn`. It then writes through a deny list moved out of `penetrator-keep.ts` into `src/terrain/keep.ts` and shared with the Orbital carve (`xcx25`).
-- `sclk` cites `lgnd` rather than restating it (p006, ac19, ac20), and `sclk-r009` forbids any further framework hook. **The plan's invariant holds.**
+1. **The Storm Blade (`andrew:storm_blade`)** is legendary **def #6**: active, `cooldownTicks: 600`, token `storm_blade_crafted` (`L0-strm-edef`).
+   - **Melee:** a diamond-sword-class melee (`minecraft:damage` = the P6 value, expected 7). No durability.
+   - **Recipe:** ` L / WSW / L ` → token.
+   - **Active (Use):** a ≤ 10-block trace. The first living entity, and only that one, takes 10 HP pre-armour. Three visual strikes show at the hit or stop point. Any valid release spends the cooldown; invalid attempts are free.
+   - **Passive (melee):** an independent 30 % roll for +6 HP pre-armour plus one strike. It never touches the cooldown.
+2. **Elytra** (6 feathers around a diamond chestplate) and **Totem** (8 gold around an emerald), as `elytra.json` and `totem_of_undying.json`. They are unlimited and unobserved by script (C-31, `L0-strm-ercp`).
 
+## How the components meet
 ```
- lgnd (def-driven, + passive def)                    sclk (src/sculk/)
- recipe ─► token ─► craft gate (sk_crafted) ─► marked andrew:sculk_crossbow
- full-charge release ─► projectile spawn ─► owner holds def #5? ─► 1 × andrew:sculk_bolt (same velocity, owner)
-                                                                    │ boom particles on the real path; 100-tick cap
-                       projectileHitEntity ◄────────────────────────┤ 10 HP true damage + patch, no crater
-                       projectileHitBlock  ◄────────────────────────┤ plan crater ─► protectLegendariesIn ─► FIFO ≤300/tick
- retention · recovery · Void (→ mark.owner) · magnet  — no crossbow code      src/terrain/keep.ts ◄── shared ──► orbc/pntr
+ lgnd (def-driven, unchanged)                       strm (src/storm/)
+ recipe ─► token ─► craft gate (sb_crafted) ─► marked andrew:storm_blade
+ Use ─► resolveActivation ─► trace ≤10 ──(katn: exported trace/hitPoint, range param; strm-adtr)
+                                   └─► first living hit ─► stormDamage(10) ─► 3 strikes (particles+sound; adr-sblt)
+                     cooldown 600 t on a valid release ◄┘
+ entityHitEntity (main hand) ─► roll 30 % (injectable RNG) ─► stormDamage(6) in the hurt window (adr-sbdm, xcx26) ─► 1 strike
+ stormDamage: native | window (L+D, or manual-armour fallback) | lethal — mirrors sclk/hit.ts, does not import it
+ retention · recovery · Void → last holder · protection · magnet · HUD — lgnd/magn, no blade code
+ packs/behavior/recipes/{elytra,totem_of_undying}.json ─► vanilla items
 ```
 
-## Cross-component decisions made at reduce
-- **`L0-adr-sckp`:** def #5's key prefix is **`sk`**, not the plan's `sc`, which is the Scythe's and would merge two weapons' live world state. Closes `lgnd-cx15`; the `sclk` artifacts, `xasm26` and the plan row were corrected in place.
-- **`L0-adr-hldb`:** the last-holder return (`adr-hold`) stands as **decided and unbuilt**. `LGND-HOLD` is its own task. Until it ships, every weapon's T20/Void tests go through a single `returnTarget(mark)` helper that returns `mark.owner`. Closes `lgnd-cx16`.
-- **`L0-adr-scfc`:** under base option A, a **full charge is the fire-rate gate**. Probe Q5 joins the `adr-scbs` gate list; if neither a native nor a scripted gate holds, the fallback is option B. Closes `sclk-cx02`.
-- **`L0-adr-scpi`:** T15 is read as "Piercing is stripped in the tick it enters the inventory and never has an effect" (C-16 deviation), unless probe Q2 shows the tables never offer it. Closes `sclk-cx01`.
+### Cross-component findings from the deep-dive
+- **`katn` is in the blast radius.** As read during reduce at v8, `src/katana/plan.ts` exports constants, types, `standsSafely` and `planTeleport`. The block-walk (`trace`, `cast`, `cellsAlong`, `hitPoint`) is module-private, and `trace` is fixed at 20 blocks. `L0-strm-adtr` exports a range-parameterised `trace`. That is a Katana-file edit, not a framework edit, so `xasm32` holds. It does pull the Katana scenarios into the gate (`L0-adr-sbgt`).
+- **`sclk` is a pattern, not a dependency.** The hurt-window modes (`native | window | lethal`) are mirrored in `src/storm/damage.ts`. The crossbow's true-damage write is never imported, because this weapon's damage respects armour (C-29, `L0-strm-rdmg`).
+- **`lgnd` and `magn` need no code.** They gain def #6 in their scenarios only. The framework invariant stands: one `registry.ts` entry plus `main.ts` subscriptions.
+- **The recipe book stays distinct.** The blade's outline ` L / WSW / L ` matches the **Web Sword's** (` W / WSW / W `, also with a diamond sword in the centre) more closely than the crossbow's (` E / DCD / E `). The keys differ (lightning rod and wind charge vs cobweb), so neither recipe shadows the other. Neither vanilla recipe overlaps a pack recipe.
 
-## The one large contingency
-If the probe fails Q1 or Q5, `adr-scbs` falls back to the **vanilla crossbow plus a mark** (option B). That is not a def. It rewrites legendary identity across `lgnd` and the magnet's `hasitem` tags, and moves T18 (durability) to `lgnd`. It needs its own L0 decision before any build task (`lgnd` component §Fallback, `adr-scbs`).
+## Decisions at L0 (v8)
+- `L0-adr-sbdm`: damage by difference-stacking in the hurt window, probe-gated (P1/P2).
+- `L0-adr-sblt`: visuals from particles and sound; no `lightning_bolt`.
+- `L0-adr-sbvr`: the vanilla recipes.
+- **`L0-adr-sbkb` (reduce):** the beam hit's native knockback is allowed; the strikes add none. This resolves `L0-strm-cxkb`.
+- **`L0-adr-sbgt` (reduce):** the per-step merge gate across `strm`/`katn`/`lgnd`/`magn`. `sclk` stays out.
 
-## Seams re-checked at reduce (observed while reading at version 7, 2026-10-05)
-- **Magnet:** def-driven (`isLegendaryWeaponStack`), so it includes def #5; `lgnd-r016`/`ac21` add the crossbow instance to the magnet's legendary scenarios.
-- **Katana ray vs sculk:** `src/katana/plan.ts:22` traces with `includePassableBlocks: false`. Sculk is a full solid block, so it stops the Katana like any wall.
-- **Crater vs structure `protect` boxes:** a grep of `src/structures/` found no protect box, only enchantment names. `xasm25` (structures are unprotected) matches what was read; the build task re-checks this.
-- **Orbital after the deny-list move:** this is a gate, not a finding. `sclk-ac22` runs the Orbital protection scenarios on the extraction commit.
+## Build order (Stage 10)
+1. The probe on checks (`L0-strm-pprb`, P1–P7).
+2. Vanilla recipes.
+3. Def #6, item, token, recipe, RP and lang.
+4. `stormDamage` with the in-window negative control.
+5. Active trace, visuals, cooldown and HUD.
+6. Passive.
 
-## Stage-7 order
-1. `sclk` probe on checks (Q1–Q10). 2. `LGND-PASSIVE` + def #5 (`sk`). 3. `sclk` item, token, recipe, RP. 4. Bolt pipeline and damage. 5. Crater and sculk with the deny-list extraction. `LGND-HOLD` runs independently. Reopen the crossbow `ipad` criteria (`sclk-ac23`–`ac27`) after each epic merge.
+Reopen the iPad criteria after each epic merge.
 
 ## Still open at L0
-`xcx22`/`xcx23` (probe Q6/Q7), `xq7` (the operator defaults sheet, non-blocking). Carried from earlier runs: `xcx3`, `xcx5`–`xcx8`, `xcx12`–`xcx14`, `lgnd-cx09`/`cx11`/`cx12`.
+- **v8:** `xcx26` (the passive is swallowed by the hurt window). P1/P2 decide the mode, and it closes only on the build's negative-control GameTest. `xcx27` with `xq8` (a shield vs the beam; default deviation is a full block).
+- **Carried:** `xcx22`/`xcx23` (settled, kept for the record), `xq7`, `xcx3`, `xcx5`–`xcx8`, `xcx12`–`xcx14`, `lgnd-cx09`/`cx11`/`cx12`.
 
 
 ## Statistics
 
-- **Total artifacts:** 1215
-- **concept-aggregate:** 86 (218 KB)
-- **concept-atomic:** 875 (806 KB)
-- **concept-special:** 71 (103 KB)
-- **raw:** 34 (135 KB)
-- **decision:** 108 (75 KB)
-- **other:** 41 (329 KB)
+- **Total artifacts:** 1263
+- **concept-aggregate:** 90 (229 KB)
+- **concept-atomic:** 901 (851 KB)
+- **concept-special:** 74 (110 KB)
+- **raw:** 36 (143 KB)
+- **decision:** 116 (77 KB)
+- **other:** 46 (362 KB)
 
 ### By level
 
 - L0: 14 artifacts
-- L1: 91 artifacts
-- L2: 908 artifacts
-- L3: 6 artifacts
+- L1: 102 artifacts
+- L2: 925 artifacts
+- L3: 11 artifacts
 
 
-_Analysis version: 7_
+_Analysis version: 8_
