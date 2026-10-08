@@ -110,7 +110,7 @@ Measured on BDS 1.26.51.1 (`src/gametest/storm-active.ts`):
 - one target: a second player 2 behind the first is untouched, also when the first is a 5-HP villager the hit kills;
 - harmless: with the blade, the pig, the villager and a player beside the line take no hurt and move 0.000. No fire,
   no block change, no new entity;
-- cooldown: 30 000 ms left after a hit, a miss and a wall at 0.50. On cooldown a press writes nothing, also 3 s
+- cooldown: 29 999–30 000 ms left after a hit, a miss and a wall at 0.50. On cooldown a press writes nothing, also 3 s
   before the deadline. Past the deadline it fires again;
 - refusals write nothing: Spectator, a stale copy, a blade in neither hand, a dead wielder. These four go through
   `activate()` called directly, not a press; with `keepInventory` the blade stays in the dead hand and is refused as
@@ -126,8 +126,8 @@ Measured on BDS 1.26.51.1 (`src/gametest/storm-active.ts`):
    - Plain bolt: the pig turns into a zombie pigman and the villager into a witch. The bystander player takes 5.00
      `lightning` and burns (`fireTick`). Fire appears on three cells of the oak floor.
    - Second bolt, with every `lightning`, `fire` and `fireTick` hurt cancelled in `beforeEvents.entityHurt` — the
-     only stable hook against a bolt's damage in 2.10.0. The 92 cancelled hurts left no damage, yet the pig and the
-     villager are still converted, both players still burn and a fire block is still placed.
+     only stable hook against a bolt's damage in 2.10.0 (75 and 92 hurts cancelled in two runs). The bolt's own damage
+     is gone, yet the pig and the villager are still converted, both players still burn and fire is still placed.
    - Stable 2.10.0 has no before-event for a mob's conversion or for a block a bolt sets on fire, so a vanilla bolt
      cannot be made harmless.
    - The id appears nowhere in this directory (unit test).
