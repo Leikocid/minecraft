@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { build } from 'esbuild';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -49,7 +49,7 @@ function bladeHit(over = {}) {
     cause: 'entityAttack',
     byPlayer: true,
     cancelled: false,
-    stormDealing: false,
+    scripted: false,
     mainHand: BLADE,
     living: () => true,
     stale: () => false,
@@ -78,7 +78,7 @@ test('an eligible hit draws exactly one number; a skipped one draws none', () =>
     [{ cause: 'projectile' }, 'cause'],
     [{ byPlayer: false }, 'not-player'],
     [{ cancelled: true }, 'cancelled'],
-    [{ stormDealing: true }, 'storm-damage'],
+    [{ scripted: true }, 'scripted'],
     [{ mainHand: 'minecraft:diamond_sword' }, 'not-blade'],
     [{ mainHand: undefined }, 'not-blade'],
     [{ mainHand: 'andrew:storm_blade_crafted' }, 'not-blade'],
@@ -111,16 +111,16 @@ test('the costly reads are asked only after the cheap checks pass', () => {
       ...over,
     });
   decidePassive(hit({ mainHand: 'minecraft:diamond_sword' }), () => 0);
-  decidePassive(hit({ stormDealing: true }), () => 0);
+  decidePassive(hit({ scripted: true }), () => 0);
   assert.equal(livingAsked + staleAsked, 0);
   decidePassive(hit({ living: () => false }), () => 0);
   assert.equal(staleAsked, 0);
 });
 
-test('the active\'s own damage never rolls the passive (src/storm/damage.ts in flight)', () => {
+test('the pack\'s own scripted damage never rolls the passive (the active\'s 10, a Scythe hit)', () => {
   let calls = 0;
-  const d = decidePassive(bladeHit({ stormDealing: true }), () => (calls++, 0));
-  assert.deepEqual(d, { kind: 'skip', why: 'storm-damage' });
+  const d = decidePassive(bladeHit({ scripted: true }), () => (calls++, 0));
+  assert.deepEqual(d, { kind: 'skip', why: 'scripted' });
   assert.equal(calls, 0);
 });
 
@@ -228,4 +228,35 @@ test('static: passive.ts deals no damage of its own and never touches the cooldo
   for (const banned of [/legendary\/cooldown/, /cooldownKey|busyKey|startCooldown|clearCooldown|setBusy/, /setDynamicProperty/]) {
     assert.doesNotMatch(code, banned, `passive.ts must not reach the cooldown: ${banned}`);
   }
+});
+
+/** Product sources, gametest excluded, with comment lines dropped. */
+function productCode(dir = join(projectRoot, 'src')) {
+  const out = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const path = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      if (entry.name !== 'gametest') out.push(...productCode(path));
+    } else if (entry.name.endsWith('.ts')) {
+      const code = readFileSync(path, 'utf-8')
+        .split('\n')
+        .filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l))
+        .join('\n');
+      out.push({ path: path.slice(projectRoot.length + 1), code });
+    }
+  }
+  return out;
+}
+
+test('static: every scripted entityAttack goes through applyScriptedDamage, so the passive can tell it from a swing', () => {
+  const direct = productCode().filter(
+    ({ path, code }) => path !== join('src', 'legendary', 'scripted-damage.ts') && /\.applyDamage\(/.test(code) && /EntityDamageCause\.entityAttack/.test(code)
+  );
+  assert.deepEqual(
+    direct.map((f) => f.path),
+    [],
+    'these files call applyDamage with cause entityAttack directly: the passive would roll on their hits'
+  );
+  const users = productCode().filter(({ code }) => /applyScriptedDamage\(/.test(code)).map((f) => f.path);
+  for (const want of [join('src', 'storm', 'damage.ts'), join('src', 'scythe', 'volley.ts')]) assert.ok(users.includes(want), `${want} marks its hits`);
 });

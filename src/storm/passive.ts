@@ -16,8 +16,9 @@ import {
   world,
 } from "@minecraft/server";
 import { STORM_BLADE } from "../legendary/registry";
+import { isScriptedDamage } from "../legendary/scripted-damage";
 import { isStale } from "../legendary/state";
-import { PASSIVE_DAMAGE, type RaiseReport, isStormDealing, raiseHit } from "./damage";
+import { PASSIVE_DAMAGE, type RaiseReport, raiseHit } from "./damage";
 import { type PassiveDecision, type PassiveHit, type Rng, STRIKE_FLASH, STRIKE_SOUND, STRIKE_SPARK, decidePassive, strikeColumn } from "./passive-rules";
 
 export { PASSIVE_CHANCE, type Rng } from "./passive-rules";
@@ -117,7 +118,7 @@ function onHurt(event: EntityHurtBeforeEvent): void {
       cause: source.cause,
       byPlayer: player !== undefined,
       cancelled: event.cancel,
-      stormDealing: isStormDealing(),
+      scripted: isScriptedDamage(),
       mainHand: stack?.typeId,
       living: () => living(target),
       stale: () => stack !== undefined && isStale(STORM_BLADE, stack),

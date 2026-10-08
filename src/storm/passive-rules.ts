@@ -25,8 +25,8 @@ export interface PassiveHit {
   cause: string;
   byPlayer: boolean;
   cancelled: boolean;
-  /** src/storm/damage.ts is inside its own applyDamage: the hit is the blade's ability damage, not a melee. */
-  stormDealing: boolean;
+  /** One of the pack's own applyDamage calls (src/legendary/scripted-damage.ts): the active's 10, a Scythe hit. */
+  scripted: boolean;
   /** The wielder's main-hand item id; the off hand never melees (L0-xasm30). */
   mainHand: string | undefined;
   /** Has health, is not an inanimate (an armour stand has health 6, probe-storm P5 F). */
@@ -35,7 +35,7 @@ export interface PassiveHit {
   stale: () => boolean;
 }
 
-export type PassiveSkip = "cause" | "not-player" | "cancelled" | "storm-damage" | "not-blade" | "not-living" | "stale";
+export type PassiveSkip = "cause" | "not-player" | "cancelled" | "scripted" | "not-blade" | "not-living" | "stale";
 
 export type PassiveDecision = { kind: "skip"; why: PassiveSkip } | { kind: "proc" | "miss"; roll: number };
 
@@ -43,7 +43,7 @@ function skipOf(hit: PassiveHit): PassiveSkip | undefined {
   if (hit.cause !== "entityAttack") return "cause";
   if (!hit.byPlayer) return "not-player";
   if (hit.cancelled) return "cancelled";
-  if (hit.stormDealing) return "storm-damage";
+  if (hit.scripted) return "scripted";
   if (hit.mainHand !== STORM_BLADE.itemId) return "not-blade";
   if (!hit.living()) return "not-living";
   if (hit.stale()) return "stale";

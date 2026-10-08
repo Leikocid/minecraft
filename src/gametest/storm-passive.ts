@@ -20,6 +20,7 @@ import { type SimulatedPlayer, type Test, registerAsync } from "@minecraft/serve
 import { isReady, startCooldown } from "../legendary/cooldown";
 import { STORM_BLADE, cooldownKey } from "../legendary/registry";
 import { bumpGen, makeMark, markItem } from "../legendary/state";
+import { launchVolley } from "../scythe/volley";
 import { ACTIVE_DAMAGE, PASSIVE_DAMAGE, afterArmour, defenceOf, registerStormDamage, stormDamage } from "../storm/damage";
 import { PASSIVE_CHANCE, type PassiveReport, drawStrike, observePassive, registerStormPassive, setStormRng, setStrikeVisual } from "../storm/passive";
 
@@ -95,9 +96,22 @@ world.afterEvents.entityHurt.subscribe((e) => {
   list.push({ tick: system.currentTick, damage: e.damage, cause: e.damageSource.cause, by });
 });
 
+/** Ticks of beforeEvents.entityHurt per watched entity: whether a hit reached the hurt pipeline at all. */
+const befores = new Map<string, number[]>();
+world.beforeEvents.entityHurt.subscribe((e) => {
+  try {
+    befores.get(e.hurtEntity.id)?.push(system.currentTick);
+  } catch {
+    // an entity removed in the same tick is not one the scenarios watch
+  }
+});
+
 function watch(e: Entity): void {
   hurts.set(e.id, []);
+  befores.set(e.id, []);
 }
+
+const reached = (e: Entity, from: number): boolean => (befores.get(e.id) ?? []).some((t) => t >= from) || hurtsSince(e, from).length > 0;
 
 function hurtsSince(e: Entity, from: number): Hurt[] {
   return (hurts.get(e.id) ?? []).filter((h) => h.tick >= from);
@@ -385,11 +399,11 @@ scenario("storm_passive_damage", 3000, async (test, players, fails) => {
   const standHp = hp(stand);
   const standOk = a.attackEntity(stand);
   await test.idle(2);
-  // The stand counts as hit if the engine raised a hurt on it or it broke; otherwise the row proves nothing.
-  const standHit = hurtsSince(stand, s0).length > 0 || !stand.isValid;
+  // The stand counts as hit if the hit reached its hurt events or broke it; otherwise the row proves nothing.
+  const standHit = reached(stand, s0) || !stand.isValid;
   if (standHit) check(fails, standTag, reports.length === sn, `a hit on an armour stand rolled ${reports.length - sn} time(s)`);
   log(
-    `${standTag} ROW armour-stand swing(${standOk}) hp=${r2(standHp)} hurts=${hurtsSince(stand, s0).length} broken=${String(!stand.isValid)} rolls=${reports.length - sn}` +
+    `${standTag} ROW armour-stand swing(${standOk}) hp=${r2(standHp)} before-events=${(befores.get(stand.id) ?? []).filter((t) => t >= s0).length} hurts=${hurtsSince(stand, s0).length} broken=${String(!stand.isValid)} rolls=${reports.length - sn}` +
       `${standHit ? "" : " NOT MEASURED: the hit did not land"}`
   );
   if (stand.isValid) stand.remove();
@@ -643,4 +657,77 @@ scenario("storm_passive_rate", 7000, async (test, players, fails, arena) => {
 
   for (const u of units) for (const g of u.golems) if (g.isValid) g.remove();
   for (const u of units) u.a.setDynamicProperty(CD_KEY, undefined);
+});
+
+// ------------------------------------------------------------------ the pack's own scripted hits never roll
+
+scenario("storm_passive_scripted", 2400, async (test, players, fails) => {
+  const a = wielder(test, players, "sp_scr_a", A_AT);
+  setStormRng(FORCE_PROC);
+
+  // A Scythe volley from a caster who switched to the blade: each hit is an entityAttack from the caster, read inside
+  // the Scythe's applyDamage. Unmarked, a proc on a target at 8 HP plans "lethal" and kills it on the first hit.
+  for (const [label, start] of [
+    ["40hp", 40],
+    ["8hp", 8],
+  ] as [string, number][]) {
+    const tag = `SCYTHE ${label}`;
+    const t = await playerTarget(test, players, `sp_scr_${label}`, false, T_AT);
+    await test.idle(CLEAR);
+    t.getComponent("minecraft:health")?.setCurrentValue(start);
+    a.lookAtEntity(t);
+    await test.idle(1);
+    const n = reports.length;
+    const struck = strikes.length;
+    const t0 = system.currentTick;
+    const after: number[] = [];
+    let ended = "";
+    const launched = launchVolley(a, t, {
+      onHit: (_n, hpAfter) => after.push(hpAfter),
+      onEnd: (reason) => (ended = reason),
+    });
+    for (let i = 0; i < 300 && ended === "" && launched; i++) await test.idle(1);
+    await test.idle(2);
+    const rolls = reports.slice(n).filter((r) => r.wielderId === a.id).length;
+    const drawn = strikes.length - struck;
+    const deaths = hurtsSince(t, t0).length;
+    const want = start === 40 ? [37, 34, 31] : [5, 2, 0];
+    check(fails, tag, launched && after.length === 3 && after.every((h, i) => close(h, want[i])), `hp after each hit [${after.map(r2).join(", ")}], expected [${want.join(", ")}] (end ${ended})`);
+    check(fails, tag, rolls === 0 && drawn === 0, `the passive rolled ${rolls} time(s) and drew ${drawn} strike(s) on the Scythe's hits`);
+    log(`${tag} ROW volley launched=${String(launched)} end=${ended} hp-after=[${after.map(r2).join(",")}] expect=[${want.join(",")}] passive-rolls=${rolls} strikes=${drawn} hurts=${deaths}`);
+    if (t.isValid) test.removeSimulatedPlayer(t);
+    await test.idle(CLEAR);
+  }
+
+  // Inanimate, by a scripted hit (a melee on an armour stand never lands): the stand does not roll, a cow does. The
+  // test's own applyDamage is not marked, so the passive reads both as the wielder's hits.
+  const tag = "INANIMATE scripted";
+  const stand = test.spawn("minecraft:armor_stand", { x: 3.5, y: 2, z: 2.5 });
+  const cow = test.spawnWithoutBehaviors("minecraft:cow", { x: 1.5, y: 2, z: 2.5 });
+  watch(stand);
+  watch(cow);
+  await test.idle(CLEAR);
+  const s0 = system.currentTick;
+  const probe = (e: Entity): { rolls: number; hurts: number; ret: string } => {
+    const n = reports.length;
+    let ret: string;
+    try {
+      ret = String(e.applyDamage(1, { cause: EntityDamageCause.entityAttack, damagingEntity: a }));
+    } catch (err) {
+      ret = `threw(${errText(err)})`;
+    }
+    return { rolls: reports.length - n, hurts: hurtsSince(e, s0).length, ret };
+  };
+  const ps = probe(stand);
+  const pc = probe(cow);
+  await test.idle(1);
+  const standHurt = reached(stand, s0);
+  check(fails, tag, pc.rolls === 1, `CONTROL a cow hit the same way rolled ${pc.rolls} time(s)`);
+  if (standHurt) check(fails, tag, ps.rolls === 0, `an armour stand rolled ${ps.rolls} time(s)`);
+  log(
+    `${tag} ROW stand apply1(${ps.ret}) before-events=${(befores.get(stand.id) ?? []).filter((t) => t >= s0).length} hurts=${hurtsSince(stand, s0).length} rolls=${ps.rolls}${standHurt ? "" : " NOT MEASURED: the hit reached no hurt event"} ` +
+      `CONTROL cow apply1(${pc.ret}) hurts=${hurtsSince(cow, 0).length} rolls=${pc.rolls}`
+  );
+  if (stand.isValid) stand.remove();
+  if (cow.isValid) cow.remove();
 });

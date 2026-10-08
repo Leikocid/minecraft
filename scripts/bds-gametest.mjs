@@ -484,6 +484,7 @@ const EXPECTED_TESTS = [
   'andrew:storm_passive_damage',
   'andrew:storm_passive_cooldown',
   'andrew:storm_passive_rate',
+  'andrew:storm_passive_scripted',
 ];
 
 /**

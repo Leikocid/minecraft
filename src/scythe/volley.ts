@@ -12,6 +12,7 @@ function label(entity: Entity): string {
 }
 import { clearBusy, setBusy, startCooldown } from "../legendary/cooldown";
 import { SCYTHE_OF_CALAMITY } from "../legendary/registry";
+import { applyScriptedDamage } from "../legendary/scripted-damage";
 import { registerScytheTargeting } from "./targeting";
 import {
   type EndReason,
@@ -119,7 +120,7 @@ function strike(volley: Volley, hp: number): void {
   if (outcome === "lethal") {
     // Overkill through the damage pipeline, so the death message, the owner's
     // kill credit and a totem all work; armour cannot soak hp + 100.
-    target.applyDamage(hp + 100, { cause: EntityDamageCause.entityAttack, damagingEntity });
+    applyScriptedDamage(target, hp + 100, { cause: EntityDamageCause.entityAttack, damagingEntity });
   } else {
     // Two steps, and both are needed. The damage event is what the player
     // sees and hears — the red flash, the hurt sound, a mob turning on its
@@ -128,7 +129,7 @@ function strike(volley: Volley, hp: number): void {
     // the total exactly TRUE_DAMAGE whatever armour or Protection absorbed,
     // and it also covers the ticks where the engine's invulnerability window
     // swallows the event outright.
-    target.applyDamage(TRUE_DAMAGE, { cause: EntityDamageCause.entityAttack, damagingEntity });
+    applyScriptedDamage(target, TRUE_DAMAGE, { cause: EntityDamageCause.entityAttack, damagingEntity });
     target.getComponent("minecraft:health")?.setCurrentValue(outcome);
   }
   volley.hits++;
