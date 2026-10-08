@@ -1,0 +1,83 @@
+setup difficulty=Peaceful naturalRegeneration=false
+setup near holds minecraft:diamond_sword (setItem true)
+FROW script-near 0 no-shield_0 0.00 2.00 10.00 10.00 true wear+0
+FACING script-near no-shield 0: nominal 0° measured 0.00° dist 2.00 [no-armour off=-(true)] sneak=false ret=true took 10.00 (+1 10.00) hurt=[entityAttack:10.00@+0] shieldWear+0 view=0.00,1.00
+FROW script-far 0 no-shield_0 0.00 8.00 10.00 10.00 true wear+0
+FACING script-far no-shield 0: nominal 0° measured 0.00° dist 8.00 [no-armour off=-(true)] sneak=false ret=true took 10.00 (+1 10.00) hurt=[entityAttack:10.00@+0] shieldWear+0 view=0.00,1.00
+FROW melee 0 no-shield_0 0.00 2.00 8.00 8.00 true wear+0
+FACING melee no-shield 0: nominal 0° measured 0.00° dist 2.00 [no-armour off=-(true)] sneak=false ret=true took 8.00 (+1 8.00) hurt=[entityAttack:8.00@+0] shieldWear+0 view=0.00,1.00
+FROW script-near 0 no-shield_180 180.00 2.00 10.00 10.00 true wear+0
+FACING script-near no-shield 180: nominal 180° measured 180.00° dist 2.00 [no-armour off=-(true)] sneak=false ret=true took 10.00 (+1 10.00) hurt=[entityAttack:10.00@+0] shieldWear+0 view=0.00,1.00
+FROW script-far 0 no-shield_180 180.00 8.00 10.00 10.00 true wear+0
+FACING script-far no-shield 180: nominal 180° measured 180.00° dist 8.00 [no-armour off=-(true)] sneak=false ret=true took 10.00 (+1 10.00) hurt=[entityAttack:10.00@+0] shieldWear+0 view=0.00,1.00
+FROW melee 0 no-shield_180 180.00 2.00 8.00 8.00 true wear+0
+FACING melee no-shield 180: nominal 180° measured 180.00° dist 2.00 [no-armour off=-(true)] sneak=false ret=true took 8.00 (+1 8.00) hurt=[entityAttack:8.00@+0] shieldWear+0 view=0.00,1.00
+FROW script-near 1 shield_0 0.00 2.00 0.00 0.00 false wear+11
+FACING script-near shield 0: nominal 0° measured 0.00° dist 2.00 [no-armour off=shield(true)] sneak=true ret=false took 0.00 (+1 0.00) hurt=[] shieldWear+11 view=0.00,1.00
+FROW script-far 1 shield_0 0.00 8.00 0.00 0.00 false wear+11
+FACING script-far shield 0: nominal 0° measured 0.00° dist 8.00 [no-armour off=shield(true)] sneak=true ret=false took 0.00 (+1 0.00) hurt=[] shieldWear+11 view=0.00,1.00
+FROW script-near 1 shield_30 30.00 2.00 0.00 0.00 false wear+11
+FACING script-near shield 30: nominal 30° measured 30.00° dist 2.00 [no-armour off=shield(true)] sneak=true ret=false took 0.00 (+1 0.00) hurt=[] shieldWear+11 view=0.00,1.00
+FROW script-far 1 shield_30 30.00 8.00 0.00 0.00 false wear+11
+FACING script-far shield 30: nominal 30° measured 30.00° dist 8.00 [no-armour off=shield(true)] sneak=true ret=false took 0.00 (+1 0.00) hurt=[] shieldWear+11 view=0.00,1.00
+FROW script-near 1 shield_60 60.00 2.00 0.00 0.00 false wear+11
+FACING script-near shield 60: nominal 60° measured 60.00° dist 2.00 [no-armour off=shield(true)] sneak=true ret=false took 0.00 (+1 0.00) hurt=[] shieldWear+11 view=0.00,1.00
+FROW script-far 1 shield_60 60.00 8.00 0.00 0.00 false wear+11
+FACING script-far shield 60: nominal 60° measured 60.00° dist 8.00 [no-armour off=shield(true)] sneak=true ret=false took 0.00 (+1 0.00) hurt=[] shieldWear+11 view=0.00,1.00
+FROW script-near 1 shield_75 75.00 2.00 0.00 0.00 false wear+11
+FACING script-near shield 75: nominal 75° measured 75.00° dist 2.00 [no-armour off=shield(true)] sneak=true ret=false took 0.00 (+1 0.00) hurt=[] shieldWear+11 view=0.00,1.00
+FROW script-far 1 shield_75 75.00 8.00 0.00 0.00 false wear+11
+FACING script-far shield 75: nominal 75° measured 75.00° dist 8.00 [no-armour off=shield(true)] sneak=true ret=false took 0.00 (+1 0.00) hurt=[] shieldWear+11 view=0.00,1.00
+FROW script-near 1 shield_85 85.00 2.00 0.00 0.00 false wear+11
+FACING script-near shield 85: nominal 85° measured 85.00° dist 2.00 [no-armour off=shield(true)] sneak=true ret=false took 0.00 (+1 0.00) hurt=[] shieldWear+11 view=0.00,1.00
+FROW script-far 1 shield_85 85.00 8.00 0.00 0.00 false wear+11
+FACING script-far shield 85: nominal 85° measured 85.00° dist 8.00 [no-armour off=shield(true)] sneak=true ret=false took 0.00 (+1 0.00) hurt=[] shieldWear+11 view=0.00,1.00
+FROW script-near 1 shield_90 90.00 2.00 10.00 10.00 true wear+0
+FACING script-near shield 90: nominal 90° measured 90.00° dist 2.00 [no-armour off=shield(true)] sneak=true ret=true took 10.00 (+1 10.00) hurt=[entityAttack:10.00@+0] shieldWear+0 view=0.00,1.00
+FROW script-far 1 shield_90 90.00 8.00 10.00 10.00 true wear+0
+FACING script-far shield 90: nominal 90° measured 90.00° dist 8.00 [no-armour off=shield(true)] sneak=true ret=true took 10.00 (+1 10.00) hurt=[entityAttack:10.00@+0] shieldWear+0 view=0.00,1.00
+FROW script-near 1 shield_95 95.00 2.00 10.00 10.00 true wear+0
+FACING script-near shield 95: nominal 95° measured 95.00° dist 2.00 [no-armour off=shield(true)] sneak=true ret=true took 10.00 (+1 10.00) hurt=[entityAttack:10.00@+0] shieldWear+0 view=0.00,1.00
+FROW script-far 1 shield_95 95.00 8.00 10.00 10.00 true wear+0
+FACING script-far shield 95: nominal 95° measured 95.00° dist 8.00 [no-armour off=shield(true)] sneak=true ret=true took 10.00 (+1 10.00) hurt=[entityAttack:10.00@+0] shieldWear+0 view=0.00,1.00
+FROW script-near 1 shield_105 105.00 2.00 10.00 10.00 true wear+0
+FACING script-near shield 105: nominal 105° measured 105.00° dist 2.00 [no-armour off=shield(true)] sneak=true ret=true took 10.00 (+1 10.00) hurt=[entityAttack:10.00@+0] shieldWear+0 view=0.00,1.00
+FROW script-far 1 shield_105 105.00 8.00 10.00 10.00 true wear+0
+FACING script-far shield 105: nominal 105° measured 105.00° dist 8.00 [no-armour off=shield(true)] sneak=true ret=true took 10.00 (+1 10.00) hurt=[entityAttack:10.00@+0] shieldWear+0 view=0.00,1.00
+FROW script-near 1 shield_120 120.00 2.00 10.00 10.00 true wear+0
+FACING script-near shield 120: nominal 120° measured 120.00° dist 2.00 [no-armour off=shield(true)] sneak=true ret=true took 10.00 (+1 10.00) hurt=[entityAttack:10.00@+0] shieldWear+0 view=0.00,1.00
+FROW script-far 1 shield_120 120.00 8.00 10.00 10.00 true wear+0
+FACING script-far shield 120: nominal 120° measured 120.00° dist 8.00 [no-armour off=shield(true)] sneak=true ret=true took 10.00 (+1 10.00) hurt=[entityAttack:10.00@+0] shieldWear+0 view=0.00,1.00
+FROW script-near 1 shield_150 150.00 2.00 10.00 10.00 true wear+0
+FACING script-near shield 150: nominal 150° measured 150.00° dist 2.00 [no-armour off=shield(true)] sneak=true ret=true took 10.00 (+1 10.00) hurt=[entityAttack:10.00@+0] shieldWear+0 view=0.00,1.00
+FROW script-far 1 shield_150 150.00 8.00 10.00 10.00 true wear+0
+FACING script-far shield 150: nominal 150° measured 150.00° dist 8.00 [no-armour off=shield(true)] sneak=true ret=true took 10.00 (+1 10.00) hurt=[entityAttack:10.00@+0] shieldWear+0 view=0.00,1.00
+FROW script-near 1 shield_180 180.00 2.00 10.00 10.00 true wear+0
+FACING script-near shield 180: nominal 180° measured 180.00° dist 2.00 [no-armour off=shield(true)] sneak=true ret=true took 10.00 (+1 10.00) hurt=[entityAttack:10.00@+0] shieldWear+0 view=0.00,1.00
+FROW script-far 1 shield_180 180.00 8.00 10.00 10.00 true wear+0
+FACING script-far shield 180: nominal 180° measured 180.00° dist 8.00 [no-armour off=shield(true)] sneak=true ret=true took 10.00 (+1 10.00) hurt=[entityAttack:10.00@+0] shieldWear+0 view=0.00,1.00
+FROW melee 1 shield_0 0.00 2.00 0.00 0.00 true wear+9
+FACING melee shield 0: nominal 0° measured 0.00° dist 2.00 [no-armour off=shield(true)] sneak=true ret=true took 0.00 (+1 0.00) hurt=[] shieldWear+9 view=0.00,1.00
+FROW melee 1 shield_60 60.00 2.00 0.00 0.00 true wear+9
+FACING melee shield 60: nominal 60° measured 60.00° dist 2.00 [no-armour off=shield(true)] sneak=true ret=true took 0.00 (+1 0.00) hurt=[] shieldWear+9 view=0.00,1.00
+FROW melee 1 shield_85 85.00 2.00 0.00 0.00 true wear+9
+FACING melee shield 85: nominal 85° measured 85.00° dist 2.00 [no-armour off=shield(true)] sneak=true ret=true took 0.00 (+1 0.00) hurt=[] shieldWear+9 view=0.00,1.00
+FROW melee 1 shield_95 95.00 2.00 8.00 8.00 true wear+0
+FACING melee shield 95: nominal 95° measured 95.00° dist 2.00 [no-armour off=shield(true)] sneak=true ret=true took 8.00 (+1 8.00) hurt=[entityAttack:8.00@+0] shieldWear+0 view=0.00,1.00
+FROW melee 1 shield_120 120.00 2.00 8.00 8.00 true wear+0
+FACING melee shield 120: nominal 120° measured 120.00° dist 2.00 [no-armour off=shield(true)] sneak=true ret=true took 8.00 (+1 8.00) hurt=[entityAttack:8.00@+0] shieldWear+0 view=0.00,1.00
+FROW melee 1 shield_180 180.00 2.00 8.00 8.00 true wear+0
+FACING melee shield 180: nominal 180° measured 180.00° dist 2.00 [no-armour off=shield(true)] sneak=true ret=true took 8.00 (+1 8.00) hurt=[entityAttack:8.00@+0] shieldWear+0 view=0.00,1.00
+FROW script-far 1 shield_above-front 0.00 8.49 0.00 0.00 false wear+11
+FACING script-far shield above-front: nominal 0° measured 0.00° dist 8.49 [no-armour off=shield(true)] sneak=true ret=false took 0.00 (+1 0.00) hurt=[] shieldWear+11 view=0.00,1.00
+FROW script-far 1 shield_above-behind 180.00 8.49 10.00 10.00 true wear+0
+FACING script-far shield above-behind: nominal 180° measured 180.00° dist 8.49 [no-armour off=shield(true)] sneak=true ret=true took 10.00 (+1 10.00) hurt=[entityAttack:10.00@+0] shieldWear+0 view=0.00,1.00
+FROW script-far 1 shield_overhead NaN 8.00 10.00 10.00 true wear+0
+FACING script-far shield overhead: nominal NaN° measured NaN° dist 8.00 [no-armour off=shield(true)] sneak=true ret=true took 10.00 (+1 10.00) hurt=[entityAttack:10.00@+0] shieldWear+0 view=0.00,1.00
+FROW nosource 1 shield_no_source NaN NaN 0.00 0.00 false wear+11
+FACING nosource shield no source: nominal NaN° measured NaN° dist NaN [no-armour off=shield(true)] sneak=true ret=false took 0.00 (+1 0.00) hurt=[] shieldWear+11 view=0.00,1.00
+FROW nosource 1 shield_no_source_facing_-z NaN NaN 0.00 0.00 false wear+11
+FACING nosource shield no source facing -z: nominal NaN° measured NaN° dist NaN [no-armour off=shield(true)] sneak=true ret=false took 0.00 (+1 0.00) hurt=[] shieldWear+11 view=0.00,-1.00
+FROW nosource 0 no-shield_no_source NaN NaN 10.00 10.00 true wear+0
+FACING nosource no-shield no source: nominal NaN° measured NaN° dist NaN [no-armour off=-(true)] sneak=false ret=true took 10.00 (+1 10.00) hurt=[entityAttack:10.00@+0] shieldWear+0 view=0.00,1.00
+RESULT facing entityAttack+source 10: near front took 0.00 (ret false), near back took 10.00 (ret true); far front 0.00, far back 10.00; blocked at [0.00, 30.00, 60.00, 75.00, 85.00, 0.00]°, passed at [90.00, 95.00, 105.00, 120.00, 150.00, 180.00, 180.00, NaN]°
