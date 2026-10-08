@@ -49,12 +49,13 @@ function readPngSize(path) {
   };
 }
 
-// Spec §02 asks for "ordinary hit = Diamond Sword damage", not a fixed
-// "spec" number — docs/feedback/probe-storm.md P2 (`RES bare R0 melee alone:
-// swing(true)=8.00`) measured the real vanilla minecraft:diamond_sword
-// against a bare SimulatedPlayer target on BDS 1.26.51.1: 8, not the 7
-// carried by Web Sword/Dragon Katana's item JSON from before that probe ran.
+// Spec §02 asks for "ordinary hit = Diamond Sword damage". The vanilla
+// minecraft:diamond_sword lands 8.00 on a bare SimulatedPlayer on BDS 1.26.51.1
+// (docs/feedback/probe-storm.md P2, `RES bare R0 melee alone`). A custom item's
+// minecraft:damage adds to the hand's base 1: storm_active_hands_and_melee
+// measured 9.00 for the value 8 and 8.00 for the Dragon Katana's 7 in one row.
 const MEASURED_DIAMOND_SWORD_DAMAGE = 8;
+const HAND_BASE_DAMAGE = 1;
 
 test('Storm Blade item JSON', async (t) => {
   await t.test('parses successfully', () => {
@@ -73,14 +74,14 @@ test('Storm Blade item JSON', async (t) => {
     assert.strictEqual(components['minecraft:hand_equipped'], true, 'hand_equipped must be true');
   });
 
-  await t.test('damage equals the probe-measured vanilla Diamond Sword value', () => {
+  await t.test('damage plus the hand base equals the measured vanilla Diamond Sword hit', () => {
     const damage = itemJson['minecraft:item'].components?.['minecraft:damage'];
     assert.ok(damage, 'minecraft:damage component must be present');
     const value = typeof damage === 'number' ? damage : damage.value;
     assert.strictEqual(
-      value,
+      value + HAND_BASE_DAMAGE,
       MEASURED_DIAMOND_SWORD_DAMAGE,
-      `damage must equal the probe-measured vanilla diamond_sword value (${MEASURED_DIAMOND_SWORD_DAMAGE})`
+      `minecraft:damage ${value} lands ${value + HAND_BASE_DAMAGE}; the vanilla diamond_sword lands ${MEASURED_DIAMOND_SWORD_DAMAGE}`
     );
   });
 
