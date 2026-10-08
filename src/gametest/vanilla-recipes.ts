@@ -103,7 +103,7 @@ function craftTwice(name: string, recipe: Recipe): void {
   register("andrew", `vanilla_recipe_${name}_unlimited`, (test: Test): void => {
     placeCrafter(test);
     const player = test.spawnSimulatedPlayer(STAND, `vr_${name}`, GameMode.Survival);
-    let stage: "first" | "second" | "third" = "first";
+    let craftsDone = 0;
     let arrivedBefore = Number.NEGATIVE_INFINITY;
 
     function craft(): void {
@@ -117,21 +117,15 @@ function craftTwice(name: string, recipe: Recipe): void {
     });
 
     test.succeedWhen(() => {
-      test.assert(arrivalsOf(player, recipe.resultId) > arrivedBefore, `no ${recipe.resultId} from the crafter has reached ${player.name} yet (stage=${stage})`);
+      test.assert(arrivalsOf(player, recipe.resultId) > arrivedBefore, `no ${recipe.resultId} from the crafter has reached ${player.name} yet (craftsDone=${craftsDone})`);
+      craftsDone += 1;
       const held = countOf(player, recipe.resultId);
-      test.assert(held === 1, `expected one ${recipe.resultId} after ${stage} craft, got ${held}`);
+      test.assert(held === craftsDone, `expected ${craftsDone} accumulated ${recipe.resultId} after ${craftsDone} crafts, got ${held}`);
 
-      if (stage === "first") {
-        stage = "second";
+      if (craftsDone < 3) {
         arrivedBefore = arrivalsOf(player, recipe.resultId);
         craft();
-        test.assert(false, "first craft succeeded; waiting for the second");
-      }
-      if (stage === "second") {
-        stage = "third";
-        arrivedBefore = arrivalsOf(player, recipe.resultId);
-        craft();
-        test.assert(false, "second craft succeeded; waiting for the third");
+        test.assert(false, `craft ${craftsDone} succeeded; waiting for the next`);
       }
 
       console.warn(`[gametest] vanilla recipe ${name}: three unlimited crafts, no flags, no messages`);
