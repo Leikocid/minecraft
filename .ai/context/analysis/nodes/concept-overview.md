@@ -63,7 +63,7 @@ The spec "Storm Blade + Elytra + Totem v1" (priority 620) is the only new raw. O
 - **The recipe book stays distinct.** The blade's outline ` L / WSW / L ` matches the **Web Sword's** (` W / WSW / W `, also with a diamond sword in the centre) more closely than the crossbow's (` E / DCD / E `). The keys differ (lightning rod and wind charge vs cobweb), so neither recipe shadows the other. Neither vanilla recipe overlaps a pack recipe.
 
 ## Decisions at L0 (v8)
-- `L0-adr-sbdm`: damage by difference-stacking in the hurt window, probe-gated (P1/P2).
+- `L0-adr-sbdm`: passive: before-event raise by f(6); active in window: write hp − f(10) (P1 failed, diagnose-CNTR-X26).
 - `L0-adr-sblt`: visuals from particles and sound; no `lightning_bolt`.
 - `L0-adr-sbvr`: the vanilla recipes.
 - **`L0-adr-sbkb` (reduce):** the beam hit's native knockback is allowed; the strikes add none. This resolves `L0-strm-cxkb`.
@@ -80,5 +80,5 @@ The spec "Storm Blade + Elytra + Totem v1" (priority 620) is the only new raw. O
 Reopen the iPad criteria after each epic merge.
 
 ## Still open at L0
-- **v8:** `xcx26` (the passive is swallowed by the hurt window). P1/P2 decide the mode, and it closes only on the build's negative-control GameTest. `xcx27` with `xq8` (a shield vs the beam; default deviation is a full block).
+- **v8:** `xcx26` (the passive is swallowed by the hurt window). P1/P2 decide the mode, and it closes only on the build's negative-control GameTest. `xcx27` resolved by measurement: the shield blocks the beam from the front only, as in vanilla; `xq8` default is option 2, with no deviation.
 - **Carried:** `xcx22`/`xcx23` (settled, kept for the record), `xq7`, `xcx3`, `xcx5`–`xcx8`, `xcx12`–`xcx14`, `lgnd-cx09`/`cx11`/`cx12`.

@@ -150,18 +150,18 @@ last_run:
     reviewed_at: '2026-10-08T18:45:49.812Z'
 last_rollout_hashes:
   project-knowledge/glossary.md: 2fbf7309ff43a44d
-  project-knowledge/business-rules.md: dbf82f90421b296f
+  project-knowledge/business-rules.md: a0a1635f25460448
   project-knowledge/boundaries.md: 52130c6cd83d1194
   project-knowledge/intent.md: 53f94fb8784b982a
   project-knowledge/domain-model.md: 19ac228f6d8f1e94
-  project-knowledge/architecture.md: 7aa582530c7f9b55
-  assumptions.md: e643468c5cf55c28
+  project-knowledge/architecture.md: dca6c66b22288205
+  assumptions.md: fc23ab08a5ff5074
   contradictions.md: 4c649bd5b7889554
-  client-questions.md: cfbe31360baf3edb
-  summary.md: 325ddce8e04659f3
-  scope.md: 619b8909eed8580f
+  client-questions.md: 68f707e6ba4e0de1
+  summary.md: 6548905344b92bad
+  scope.md: 11673c07613dc422
   risks.md: fb150cf52436d8dd
-  decisions.md: af17bce9b25d297d
+  decisions.md: 3fb84febd1d1aa7e
 runtime_vocabulary:
   concept-boundary:
     description: Seen at runtime
