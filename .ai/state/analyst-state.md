@@ -1,7 +1,7 @@
 ---
-current_analysis_version: 7
+current_analysis_version: 8
 current_versions_by_node:
-  L0: 7
+  L0: 8
   L0-lgnd: 7
   L0-pick: 2
   L0-infr: 2
@@ -21,20 +21,21 @@ current_versions_by_node:
   L0-magn: 5
   L0-katn: 6
   L0-sclk: 7
+  L0-strm: 8
 pending_revisions: []
 last_run:
-  started_at: '2026-10-05T16:54:57.806Z'
-  completed_at: '2026-10-05T17:12:56.098Z'
-  duration_seconds: 1078
-  total_artifacts_current: 183
-  total_size_kb: 1617
-  open_contradictions: 14
-  llm_calls: 4
+  started_at: '2026-10-08T18:35:41.410Z'
+  completed_at: '2026-10-08T18:45:49.744Z'
+  duration_seconds: 608
+  total_artifacts_current: 61
+  total_size_kb: 1688
+  open_contradictions: 4
+  llm_calls: 3
   llm_budget_used_pct: 2
-  input_hash: e3b15635b08b914c9add7bdb027c6e0968d12ebc0496e0c156f5676717beb267
-  run_priority: 610
+  input_hash: e5730f571282b0c6026c9c1766ea5f2a9b4420d9ee54140a343fc84532c3f3cb
+  run_priority: 620
   run_scope:
-    recorded_at: '2026-10-05T16:54:57.825Z'
+    recorded_at: '2026-10-08T18:35:41.431Z'
     rule: 'full: every node the decomposition plans name, from L0 down.'
     nodes:
       - L0
@@ -130,20 +131,37 @@ last_run:
       done: 3
     - stage: rollout
       entered_at: '2026-10-05T17:12:56.108Z'
+    - stage: collect-decisions
+      entered_at: '2026-10-08T18:34:57.651Z'
+    - stage: load-model
+      entered_at: '2026-10-08T18:34:57.675Z'
+    - stage: audit
+      entered_at: '2026-10-08T18:34:57.684Z'
+    - stage: delta 1/1
+      entered_at: '2026-10-08T18:34:57.690Z'
+    - stage: nodes
+      entered_at: '2026-10-08T18:35:41.445Z'
+      done: 2
+    - stage: rollout
+      entered_at: '2026-10-08T18:47:14.691Z'
+  digest_review:
+    analysis_version: 8
+    through: '2026-10-08T18:45:49.812Z'
+    reviewed_at: '2026-10-08T18:45:49.812Z'
 last_rollout_hashes:
-  project-knowledge/glossary.md: b4bcb65b22a3c356
-  project-knowledge/business-rules.md: d40cda1f41c579f7
+  project-knowledge/glossary.md: 2fbf7309ff43a44d
+  project-knowledge/business-rules.md: dbf82f90421b296f
   project-knowledge/boundaries.md: 52130c6cd83d1194
-  project-knowledge/intent.md: 9c53f0b1c2383c84
-  project-knowledge/domain-model.md: 7afbbbe454b6961a
-  project-knowledge/architecture.md: 7b429d92ef305625
-  assumptions.md: ce10084baf93b7b8
-  contradictions.md: 4c649bd5b7889554
-  client-questions.md: e0cb3bc914347a3a
-  summary.md: 25009253244fe525
-  scope.md: ecff048e7b3c9d46
-  risks.md: fb150cf52436d8dd
-  decisions.md: 20925298daf44096
+  project-knowledge/intent.md: 53f94fb8784b982a
+  project-knowledge/domain-model.md: 19ac228f6d8f1e94
+  project-knowledge/architecture.md: 7aa582530c7f9b55
+  assumptions.md: e643468c5cf55c28
+  contradictions.md: 7ecde576bc9e8c77
+  client-questions.md: cfbe31360baf3edb
+  summary.md: 325ddce8e04659f3
+  scope.md: 619b8909eed8580f
+  risks.md: 61f0cc0791b3ad9b
+  decisions.md: 2a1eb1bd08412bd7
 runtime_vocabulary:
   concept-boundary:
     description: Seen at runtime
@@ -237,6 +255,8 @@ slug_mappings:
   : L0-sclk
   ? 'Legendary framework, v7 pass. **(1) Reconcile with 1.6.1:** the Katana shipped (1.5.0). Legendaries are magnetic (`magnet-select.ts`, `magnet-hold.ts`): restate the old "never pulled" rule as an operator-tuned exception. **(2) No-ability def (`L0-xcx24`):** `LegendaryDef` gains an optional ability. Without it: no cooldown key, no `resolveActivation` claim and no HUD line (`hud.ts:37`). `cooldownTicks`/`abilityKey` become optional or are moved into an `ability` block, with no behaviour change for defs #1–#4. **(3) Crossbow delta:** def #5 (`keyPrefix: "sc"`), the craft token and refund (echo shard ×2, deepslate ×2, crossbow). Confirm that retention, recovery, Void and `protectLegendariesIn` need no per-weapon code. If `L0-adr-scbs` falls back to the vanilla crossbow, `isLegendaryStack` must become mark-aware; that is a larger change and must be stated as such. **(4) Holder (`xcx11`):** the decision says "the last holder" and the code returns to `mark.owner`. Either plan the holder field or restate T20 / the Void return against `mark.owner`, as v6 did for the Katana.'
   : L0-lgnd
+  ? '**The Storm Blade (`andrew:storm_blade`) and the Elytra/Totem recipes.**<br>**Probe first, on checks (19136).** It gates `L0-adr-sbdm` and `L0-adr-sblt`:<br>• P1/P2: inside the hurt window, does `applyDamage(L + D, entityAttack)` take D with armour applied to D, for players and mobs (`xcx26`)?<br>• A raised shield against the beam from behind (`xcx27`).<br>• Which particle ids exist for the spark/wind/flash on 1.26.51, and whether the thunder sound plays at the point.<br>• Diamond-sword melee on BDS, measured against vanilla (`xasm30`).<br>**Item:** def #6 (`sb`, 600 ticks, `xasm32`); a custom sword with diamond-sword damage, no durability, and the vanilla sword enchant slot; `allow_off_hand`; RU/EN lang; a Creative "Equipment" entry; an RP icon.<br>**Recipe:** lightning rod top and bottom, wind charge left and right, diamond sword in the centre → craft token; refund on a blocked craft. Covers simultaneous crafts, the recipe book and shift-craft through the existing gate.<br>**Active:** Use → `resolveActivation` → a trace ≤ 10 blocks Euclidean, reusing `src/katana/plan.ts` helpers (`xasm31`). The first living entity, never through walls, never a second one, takes 10 HP pre-armour through `src/storm/damage.ts` (`adr-sbdm`, C-29). Three visual strikes at the hit point, or at the stop point on a miss (`adr-sblt`, C-30). Cooldown on any valid release; invalid attempts are free. HUD «Клинок бури — Готово» / "Storm Blade — Ready" / seconds left.<br>**Passive:** `entityHitEntity` with the blade in the main hand → an independent 30 % roll with an injectable RNG (C-32) → +6 HP pre-armour through the same helper, plus one visual strike. It never reads or writes the cooldown.<br>**Vanilla recipes (`adr-sbvr`, C-31):** `elytra.json` and `totem_of_undying.json`, plain shaped recipes outputting the vanilla ids.<br>**GameTests (`bds`):**<br>• every §06 bullet: once-only craft across a restart, Creative copy free; melee = vanilla diamond sword; passive rate on N ≥ 1000 seeded and a ±5 % band on a live sample; exact +6 and 10 pre-armour against an armoured SimulatedPlayer, with an in-window negative control; ≤ 10 blocks, wall stop, second target untouched; 30 s cooldown, passive independent; no lightning entity and no fire; death, hazards and Void through the `lgnd` scenarios with def #6; Elytra and Totem crafted twice each through a Crafter.<br>• The magnet''s legendary scenarios include def #6.<br>**iPad (`ipad`):** the trace and strikes read as lightning; the icon; the HUD line; the Creative entry; both recipes in the recipe book; a real totem pop and an elytra glide.'
+  : L0-strm
 tags:
   - analysis
   - registry
@@ -251,7 +271,7 @@ Runtime state for the analyst pipeline (analyse runs, vocabulary, slug map, roll
 
 | Node | Version |
 |------|---------|
-| L0 | 7 |
+| L0 | 8 |
 | L0-airs | 2 |
 | L0-bast | 2 |
 | L0-infr | 2 |
@@ -267,6 +287,7 @@ Runtime state for the analyst pipeline (analyse runs, vocabulary, slug map, roll
 | L0-sclk | 7 |
 | L0-scyt | 2 |
 | L0-strf | 2 |
+| L0-strm | 8 |
 | L0-ufoc | 5 |
 | L0-webs | 2 |
 | L0-wind | 2 |
@@ -274,12 +295,12 @@ Runtime state for the analyst pipeline (analyse runs, vocabulary, slug map, roll
 
 ## Last Run
 
-- Started: 2026-10-05T16:54:57.806Z
-- Completed: 2026-10-05T17:12:56.098Z
-- Duration: 1078s
-- Current artifacts: 183 (1617 KB total)
-- LLM calls: 4 (2% budget)
-- Open contradictions: 14
+- Started: 2026-10-08T18:35:41.410Z
+- Completed: 2026-10-08T18:45:49.744Z
+- Duration: 608s
+- Current artifacts: 61 (1688 KB total)
+- LLM calls: 3 (2% budget)
+- Open contradictions: 4
 
 ## Changelog
 
