@@ -1,0 +1,31 @@
+{
+  "format_version": "1.21.0",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "andrew:elytra"
+    },
+    "tags": ["crafting_table"],
+    "pattern": [
+      "F F",
+      "FCF",
+      "F F"
+    ],
+    "key": {
+      "F": {
+        "item": "minecraft:feather"
+      },
+      "C": {
+        "item": "minecraft:diamond_chestplate"
+      }
+    },
+    "result": {
+      "item": "minecraft:elytra",
+      "count": 1
+    },
+    "unlock": [
+      {
+        "item": "minecraft:feather"
+      }
+    ]
+  }
+}

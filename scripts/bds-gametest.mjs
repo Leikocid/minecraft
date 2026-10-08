@@ -465,6 +465,10 @@ const EXPECTED_TESTS = [
   'andrew:sculk_enchant_piercing_hand_change',
   // SCLKUI-LOADED-01 — src/gametest/sculk-look.ts: the session shapes the crossbow's loaded look reads
   'andrew:sculk_look_loaded_sessions',
+  // STRM-VANILLA-01 — src/gametest/vanilla-recipes.ts
+  'andrew:vanilla_recipe_elytra_unlimited',
+  'andrew:vanilla_recipe_totem_unlimited',
+  'andrew:vanilla_recipe_negative_controls',
 ];
 
 /**

@@ -56,6 +56,7 @@ import "./probe-mobs";
 import "./probe-loot";
 import "./probe-give";
 import "./legendary-craftgate";
+import "./vanilla-recipes";
 import "./probe-retention";
 import "./legendary-fireproof";
 import "./legendary-offhand";
