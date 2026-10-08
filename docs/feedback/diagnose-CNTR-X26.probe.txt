@@ -1,0 +1,160 @@
+# run 3 — code_sha 3b1769d, BDS 1.26.51.1, private instance andrew-bds-x26 (dist/bds-x26), artifact .ai/verify/CNTR-X26-AA/2.json (exit 0)
+# format: label: detail total=<health lost> ev=[+tick:before|hit|hurt:damage/cause]; 'before' = beforeEvents.entityHurt read (->value written)
+X26 probe_x26_passive_bare difficulty=Peaceful regen=false pvp=true
+X26 SETUP x26_pas_bare_t hp=40.00 kit=bare
+X26 PAS bare wielder holds minecraft:diamond_sword sharpness=0
+X26 PAS bare ARMOUR totalArmor=0.00 totalToughness=0.00 protectionEPF=0
+X26 PAS bare melee alone: swing(true)=8.00 total=8.00 ev=[+0:before:8.00/entityAttack +0:hit:minecraft:player +0:hurt:8.00/entityAttack]
+X26 PAS bare reference apply6 alone: apply6(true)=6.00 total=6.00 ev=[+0:before:6.00/entityAttack +0:hurt:6.00/entityAttack]
+X26 PAS bare reference apply14 alone: apply14(true)=14.00 total=14.00 ev=[+0:before:14.00/entityAttack +0:hurt:14.00/entityAttack]
+X26 PAS bare FIT f(8)=8.00 melee=8.00 | f(6)=6.00 apply6=6.00 | f(14)=14.00 apply14=14.00
+X26 PAS bare NEGATIVE-CONTROL swing+apply6 same block: swing(true)=8.00 apply6(true)=0.00 total=8.00 ev=[+0:before:8.00/entityAttack +0:hit:minecraft:player +0:hurt:8.00/entityAttack]
+X26 PAS bare NEGATIVE-CONTROL apply6 in entityHitEntity: swing(true)=8.00 onHit@+0 apply6(true)=0.00 total=8.00 ev=[+0:before:8.00/entityAttack +0:hit:minecraft:player +0:hurt:8.00/entityAttack]
+X26 PAS bare stack swing+apply(8+6) same block: swing(true)=8.00 apply14(true)=6.00 total=14.00 ev=[+0:before:8.00/entityAttack +0:before:6.00/entityAttack +0:hit:minecraft:player +0:hurt:8.00/entityAttack +0:hurt:6.00/entityAttack]
+X26 PAS bare stack apply(8+6) in entityHitEntity: swing(true)=8.00 onHit@+0 apply14(true)=6.00 total=14.00 ev=[+0:before:8.00/entityAttack +0:hit:minecraft:player +0:before:6.00/entityAttack +0:hurt:8.00/entityAttack +0:hurt:6.00/entityAttack]
+X26 PAS bare stack apply(hurt.damage+6) in entityHurt: swing(true)=8.00 onHurt@+0 L=hurt.damage=8.00 apply14.00(true)=6.00 total=14.00 ev=[+0:before:8.00/entityAttack +0:hit:minecraft:player +0:hurt:8.00/entityAttack +0:before:6.00/entityAttack +0:hurt:6.00/entityAttack]
+X26 PAS bare beforeEvents.entityHurt raises the melee by 6: swing(true)=14.00 before:read=8.00 set=14.00 hand=minecraft:diamond_sword total=14.00 ev=[+0:before:8.00->14.00/entityAttack +0:hit:minecraft:player +0:hurt:14.00/entityAttack]
+X26 PAS bare swing then health write hp-6: swing(true)=8.00 write(true)=6.00 total=14.00 ev=[+0:before:8.00/entityAttack +0:hit:minecraft:player +0:hurt:8.00/entityAttack]
+X26 PAS bare C swing then health write hp-f(6): swing(true)=8.00 f(6)=6.00 write(true)=6.00 total=14.00 ev=[+0:before:8.00/entityAttack +0:hit:minecraft:player +0:hurt:8.00/entityAttack]
+X26 PAS bare beforeEvents.entityHurt raises the melee by f(6): swing(true)=14.00 before:read=8.00 set=14.00 hand=minecraft:diamond_sword total=14.00 ev=[+0:before:8.00->14.00/entityAttack +0:hit:minecraft:player +0:hurt:14.00/entityAttack]
+X26 PAS bare SUM melee=8.00 apply6=6.00 melee+apply6=14.00 apply14=14.00 | naive=8.00 naive-onHit=8.00 stack=14.00 stack-onHit=14.00 stack-hurtL=14.00 raised=14.00 write=14.00 manual-f6=14.00 raised-f6=14.00
+X26 PAS bare NOISE none
+X26 probe_x26_passive_diamond difficulty=Peaceful regen=false pvp=true
+X26 SETUP x26_pas_diamond_t hp=40.00 kit=minecraft:diamond_helmet+minecraft:diamond_chestplate+minecraft:diamond_leggings+minecraft:diamond_boots protection=0
+X26 PAS diamond wielder holds minecraft:diamond_sword sharpness=0
+X26 PAS diamond ARMOUR totalArmor=20.00 totalToughness=8.00 protectionEPF=0
+X26 PAS diamond melee alone: swing(true)=2.24 total=2.24 ev=[+0:before:2.24/entityAttack +0:hit:minecraft:player +0:hurt:2.24/entityAttack]
+X26 PAS diamond reference apply6 alone: apply6(true)=1.56 total=1.56 ev=[+0:before:1.56/entityAttack +0:hurt:1.56/entityAttack]
+X26 PAS diamond reference apply14 alone: apply14(true)=4.76 total=4.76 ev=[+0:before:4.76/entityAttack +0:hurt:4.76/entityAttack]
+X26 PAS diamond FIT f(8)=2.24 melee=2.24 | f(6)=1.56 apply6=1.56 | f(14)=4.76 apply14=4.76
+X26 PAS diamond NEGATIVE-CONTROL swing+apply6 same block: swing(true)=2.24 apply6(true)=0.00 total=2.24 ev=[+0:before:2.24/entityAttack +0:hit:minecraft:player +0:hurt:2.24/entityAttack]
+X26 PAS diamond NEGATIVE-CONTROL apply6 in entityHitEntity: swing(true)=2.24 onHit@+0 apply6(true)=0.00 total=2.24 ev=[+0:before:2.24/entityAttack +0:hit:minecraft:player +0:hurt:2.24/entityAttack]
+X26 PAS diamond stack swing+apply(8+6) same block: swing(true)=2.24 apply14(true)=2.52 total=4.76 ev=[+0:before:2.24/entityAttack +0:before:2.52/entityAttack +0:hit:minecraft:player +0:hurt:2.24/entityAttack +0:hurt:2.52/entityAttack]
+X26 PAS diamond stack apply(8+6) in entityHitEntity: swing(true)=2.24 onHit@+0 apply14(true)=2.52 total=4.76 ev=[+0:before:2.24/entityAttack +0:hit:minecraft:player +0:before:2.52/entityAttack +0:hurt:2.24/entityAttack +0:hurt:2.52/entityAttack]
+X26 PAS diamond stack apply(hurt.damage+6) in entityHurt: swing(true)=2.24 onHurt@+0 L=hurt.damage=2.24 apply8.24(true)=0.09 total=2.33 ev=[+0:before:2.24/entityAttack +0:hit:minecraft:player +0:hurt:2.24/entityAttack +0:before:0.09/entityAttack +0:hurt:0.09/entityAttack]
+X26 PAS diamond beforeEvents.entityHurt raises the melee by 6: swing(true)=8.24 before:read=2.24 set=8.24 hand=minecraft:diamond_sword total=8.24 ev=[+0:before:2.24->8.24/entityAttack +0:hit:minecraft:player +0:hurt:8.24/entityAttack]
+X26 PAS diamond swing then health write hp-6: swing(true)=2.24 write(true)=6.00 total=8.24 ev=[+0:before:2.24/entityAttack +0:hit:minecraft:player +0:hurt:2.24/entityAttack]
+X26 PAS diamond C swing then health write hp-f(6): swing(true)=2.24 f(6)=1.56 write(true)=1.56 total=3.80 ev=[+0:before:2.24/entityAttack +0:hit:minecraft:player +0:hurt:2.24/entityAttack]
+X26 PAS diamond beforeEvents.entityHurt raises the melee by f(6): swing(true)=3.80 before:read=2.24 set=3.80 hand=minecraft:diamond_sword total=3.80 ev=[+0:before:2.24->3.80/entityAttack +0:hit:minecraft:player +0:hurt:3.80/entityAttack]
+X26 PAS diamond SUM melee=2.24 apply6=1.56 melee+apply6=3.80 apply14=4.76 | naive=2.24 naive-onHit=2.24 stack=4.76 stack-onHit=4.76 stack-hurtL=2.33 raised=8.24 write=8.24 manual-f6=3.80 raised-f6=3.80
+X26 PAS diamond NOISE none
+X26 probe_x26_passive_netherite_p4 difficulty=Peaceful regen=false pvp=true
+X26 SETUP x26_pas_netherite_p4_t hp=40.00 kit=minecraft:netherite_helmet+minecraft:netherite_chestplate+minecraft:netherite_leggings+minecraft:netherite_boots protection=4
+X26 PAS netherite_p4 wielder holds minecraft:diamond_sword sharpness=0
+X26 PAS netherite_p4 ARMOUR totalArmor=20.00 totalToughness=12.00 protectionEPF=16
+X26 PAS netherite_p4 melee alone: swing(true)=0.76 total=0.76 ev=[+0:before:0.76/entityAttack +0:hit:minecraft:player +0:hurt:0.76/entityAttack]
+X26 PAS netherite_p4 reference apply6 alone: apply6(true)=0.54 total=0.54 ev=[+0:before:0.54/entityAttack +0:hurt:0.54/entityAttack]
+X26 PAS netherite_p4 reference apply14 alone: apply14(true)=1.57 total=1.57 ev=[+0:before:1.57/entityAttack +0:hurt:1.57/entityAttack]
+X26 PAS netherite_p4 FIT f(8)=0.76 melee=0.76 | f(6)=0.54 apply6=0.54 | f(14)=1.57 apply14=1.57
+X26 PAS netherite_p4 NEGATIVE-CONTROL swing+apply6 same block: swing(true)=0.76 apply6(true)=0.00 total=0.76 ev=[+0:before:0.76/entityAttack +0:hit:minecraft:player +0:hurt:0.76/entityAttack]
+X26 PAS netherite_p4 NEGATIVE-CONTROL apply6 in entityHitEntity: swing(true)=0.76 onHit@+0 apply6(true)=0.00 total=0.76 ev=[+0:before:0.76/entityAttack +0:hit:minecraft:player +0:hurt:0.76/entityAttack]
+X26 PAS netherite_p4 stack swing+apply(8+6) same block: swing(true)=0.76 apply14(true)=0.81 total=1.57 ev=[+0:before:0.76/entityAttack +0:before:0.81/entityAttack +0:hit:minecraft:player +0:hurt:0.76/entityAttack +0:hurt:0.81/entityAttack]
+X26 PAS netherite_p4 stack apply(8+6) in entityHitEntity: swing(true)=0.76 onHit@+0 apply14(true)=0.81 total=1.57 ev=[+0:before:0.76/entityAttack +0:hit:minecraft:player +0:before:0.81/entityAttack +0:hurt:0.76/entityAttack +0:hurt:0.81/entityAttack]
+X26 PAS netherite_p4 stack apply(hurt.damage+6) in entityHurt: swing(true)=0.76 onHurt@+0 L=hurt.damage=0.76 apply6.76(true)=0.00 total=0.76 ev=[+0:before:0.76/entityAttack +0:hit:minecraft:player +0:hurt:0.76/entityAttack]
+X26 PAS netherite_p4 beforeEvents.entityHurt raises the melee by 6: swing(true)=6.76 before:read=0.76 set=6.76 hand=minecraft:diamond_sword total=6.76 ev=[+0:before:0.76->6.76/entityAttack +0:hit:minecraft:player +0:hurt:6.76/entityAttack]
+X26 PAS netherite_p4 swing then health write hp-6: swing(true)=0.76 write(true)=6.00 total=6.76 ev=[+0:before:0.76/entityAttack +0:hit:minecraft:player +0:hurt:0.76/entityAttack]
+X26 PAS netherite_p4 C swing then health write hp-f(6): swing(true)=0.76 f(6)=0.54 write(true)=0.54 total=1.30 ev=[+0:before:0.76/entityAttack +0:hit:minecraft:player +0:hurt:0.76/entityAttack]
+X26 PAS netherite_p4 beforeEvents.entityHurt raises the melee by f(6): swing(true)=1.30 before:read=0.76 set=1.30 hand=minecraft:diamond_sword total=1.30 ev=[+0:before:0.76->1.30/entityAttack +0:hit:minecraft:player +0:hurt:1.30/entityAttack]
+X26 PAS netherite_p4 SUM melee=0.76 apply6=0.54 melee+apply6=1.30 apply14=1.57 | naive=0.76 naive-onHit=0.76 stack=1.57 stack-onHit=1.57 stack-hurtL=0.76 raised=6.76 write=6.76 manual-f6=1.30 raised-f6=1.30
+X26 PAS netherite_p4 NOISE none
+X26 probe_x26_sharp_bare difficulty=Peaceful regen=false pvp=true
+X26 SETUP x26_shp_bare_t hp=40.00 kit=bare
+X26 SHP bare wielder holds minecraft:diamond_sword sharpness=5
+X26 SHP bare melee alone: swing(true)=14.00 total=14.00 ev=[+0:before:14.00/entityAttack +0:hit:minecraft:player +0:hurt:14.00/entityAttack]
+X26 SHP bare reference apply6 alone: apply6(true)=6.00 total=6.00 ev=[+0:before:6.00/entityAttack +0:hurt:6.00/entityAttack]
+X26 SHP bare NEGATIVE-CONTROL swing+apply6 same block: swing(true)=14.00 apply6(true)=0.00 total=14.00 ev=[+0:before:14.00/entityAttack +0:hit:minecraft:player +0:hurt:14.00/entityAttack]
+X26 SHP bare stack swing+apply(8+6) same block (constant L): swing(true)=14.00 apply14(true)=0.00 total=14.00 ev=[+0:before:14.00/entityAttack +0:hit:minecraft:player +0:hurt:14.00/entityAttack]
+X26 SHP bare stack apply(hurt.damage+6) in entityHurt: swing(true)=14.00 onHurt@+0 L=hurt.damage=14.00 apply20.00(true)=6.00 total=20.00 ev=[+0:before:14.00/entityAttack +0:hit:minecraft:player +0:hurt:14.00/entityAttack +0:before:6.00/entityAttack +0:hurt:6.00/entityAttack]
+X26 SHP bare beforeEvents.entityHurt raises the melee by 6: swing(true)=20.00 before:read=14.00 set=20.00 hand=minecraft:diamond_sword total=20.00 ev=[+0:before:14.00->20.00/entityAttack +0:hit:minecraft:player +0:hurt:20.00/entityAttack]
+X26 SHP bare SUM melee=14.00 apply6=6.00 melee+apply6=20.00 | naive=14.00 stack-constL=14.00 stack-hurtL=20.00 raised=20.00
+X26 SHP bare NOISE none
+X26 probe_x26_sharp_diamond difficulty=Peaceful regen=false pvp=true
+X26 SETUP x26_shp_diamond_t hp=40.00 kit=minecraft:diamond_helmet+minecraft:diamond_chestplate+minecraft:diamond_leggings+minecraft:diamond_boots protection=0
+X26 SHP diamond wielder holds minecraft:diamond_sword sharpness=5
+X26 SHP diamond melee alone: swing(true)=4.76 total=4.76 ev=[+0:before:4.76/entityAttack +0:hit:minecraft:player +0:hurt:4.76/entityAttack]
+X26 SHP diamond reference apply6 alone: apply6(true)=1.56 total=1.56 ev=[+0:before:1.56/entityAttack +0:hurt:1.56/entityAttack]
+X26 SHP diamond NEGATIVE-CONTROL swing+apply6 same block: swing(true)=4.76 apply6(true)=0.00 total=4.76 ev=[+0:before:4.76/entityAttack +0:hit:minecraft:player +0:hurt:4.76/entityAttack]
+X26 SHP diamond stack swing+apply(8+6) same block (constant L): swing(true)=4.76 apply14(true)=0.00 total=4.76 ev=[+0:before:4.76/entityAttack +0:hit:minecraft:player +0:hurt:4.76/entityAttack]
+X26 SHP diamond stack apply(hurt.damage+6) in entityHurt: swing(true)=4.76 onHurt@+0 L=hurt.damage=4.76 apply10.76(true)=0.00 total=4.76 ev=[+0:before:4.76/entityAttack +0:hit:minecraft:player +0:hurt:4.76/entityAttack]
+X26 SHP diamond beforeEvents.entityHurt raises the melee by 6: swing(true)=10.76 before:read=4.76 set=10.76 hand=minecraft:diamond_sword total=10.76 ev=[+0:before:4.76->10.76/entityAttack +0:hit:minecraft:player +0:hurt:10.76/entityAttack]
+X26 SHP diamond SUM melee=4.76 apply6=1.56 melee+apply6=6.32 | naive=4.76 stack-constL=4.76 stack-hurtL=4.76 raised=10.76
+X26 SHP diamond NOISE none
+X26 probe_x26_active_bare difficulty=Peaceful regen=false pvp=true
+X26 SETUP x26_act_bare_t hp=40.00 kit=bare
+X26 ACT bare reference apply10 alone: apply10(true)=10.00 total=10.00 ev=[+0:before:10.00/entityAttack +0:hurt:10.00/entityAttack]
+X26 ACT bare reference apply18 alone: apply18(true)=18.00 total=18.00 ev=[+0:before:18.00/entityAttack +0:hurt:18.00/entityAttack]
+X26 ACT bare melee then apply10 k=1: swing(true)=8.00 gap=1 apply10(true)=2.00 total=10.00 ev=[+0:before:8.00/entityAttack +0:hit:minecraft:player +0:hurt:8.00/entityAttack +1:before:2.00/entityAttack +1:hurt:2.00/entityAttack]
+X26 ACT bare melee then apply10 k=2: swing(true)=8.00 gap=2 apply10(true)=2.00 total=10.00 ev=[+0:before:8.00/entityAttack +0:hit:minecraft:player +0:hurt:8.00/entityAttack +2:before:2.00/entityAttack +2:hurt:2.00/entityAttack]
+X26 ACT bare melee then apply10 k=3: swing(true)=8.00 gap=3 apply10(true)=2.00 total=10.00 ev=[+0:before:8.00/entityAttack +0:hit:minecraft:player +0:hurt:8.00/entityAttack +3:before:2.00/entityAttack +3:hurt:2.00/entityAttack]
+X26 ACT bare melee then apply10 k=4: swing(true)=8.00 gap=4 apply10(true)=2.00 total=10.00 ev=[+0:before:8.00/entityAttack +0:hit:minecraft:player +0:hurt:8.00/entityAttack +4:before:2.00/entityAttack +4:hurt:2.00/entityAttack]
+X26 ACT bare melee then apply10 k=5: swing(true)=8.00 gap=5 apply10(true)=2.00 total=10.00 ev=[+0:before:8.00/entityAttack +0:hit:minecraft:player +0:hurt:8.00/entityAttack +5:before:2.00/entityAttack +5:hurt:2.00/entityAttack]
+X26 ACT bare melee then apply10 k=6: swing(true)=8.00 gap=6 apply10(true)=2.00 total=10.00 ev=[+0:before:8.00/entityAttack +0:hit:minecraft:player +0:hurt:8.00/entityAttack +6:before:2.00/entityAttack +6:hurt:2.00/entityAttack]
+X26 ACT bare melee then apply10 k=7: swing(true)=8.00 gap=7 apply10(true)=2.00 total=10.00 ev=[+0:before:8.00/entityAttack +0:hit:minecraft:player +0:hurt:8.00/entityAttack +7:before:2.00/entityAttack +7:hurt:2.00/entityAttack]
+X26 ACT bare melee then apply10 k=8: swing(true)=8.00 gap=8 apply10(true)=2.00 total=10.00 ev=[+0:before:8.00/entityAttack +0:hit:minecraft:player +0:hurt:8.00/entityAttack +8:before:2.00/entityAttack +8:hurt:2.00/entityAttack]
+X26 ACT bare melee then apply10 k=9: swing(true)=8.00 gap=9 apply10(true)=2.00 total=10.00 ev=[+0:before:8.00/entityAttack +0:hit:minecraft:player +0:hurt:8.00/entityAttack +9:before:2.00/entityAttack +9:hurt:2.00/entityAttack]
+X26 ACT bare melee then apply10 k=10: swing(true)=8.00 gap=10 apply10(true)=10.00 total=18.00 ev=[+0:before:8.00/entityAttack +0:hit:minecraft:player +0:hurt:8.00/entityAttack +10:before:10.00/entityAttack +10:hurt:10.00/entityAttack]
+X26 ACT bare melee then apply10 k=11: swing(true)=8.00 gap=11 apply10(true)=10.00 total=18.00 ev=[+0:before:8.00/entityAttack +0:hit:minecraft:player +0:hurt:8.00/entityAttack +11:before:10.00/entityAttack +11:hurt:10.00/entityAttack]
+X26 ACT bare SWEEP apply10 after melee: k=1:2.00 k=2:2.00 k=3:2.00 k=4:2.00 k=5:2.00 k=6:2.00 k=7:2.00 k=8:2.00 k=9:2.00 k=10:10.00 k=11:10.00 (reference apply10 alone=10.00)
+X26 ACT bare melee then stack apply(8+10) k=1: swing(true)=8.00 gap=1 apply18(true)=10.00 total=18.00 ev=[+0:before:8.00/entityAttack +0:hit:minecraft:player +0:hurt:8.00/entityAttack +1:before:10.00/entityAttack +1:hurt:10.00/entityAttack]
+X26 ACT bare melee then stack apply(8+10) k=5: swing(true)=8.00 gap=5 apply18(true)=10.00 total=18.00 ev=[+0:before:8.00/entityAttack +0:hit:minecraft:player +0:hurt:8.00/entityAttack +5:before:10.00/entityAttack +5:hurt:10.00/entityAttack]
+X26 ACT bare melee then stack apply(8+10) k=9: swing(true)=8.00 gap=9 apply18(true)=10.00 total=18.00 ev=[+0:before:8.00/entityAttack +0:hit:minecraft:player +0:hurt:8.00/entityAttack +9:before:10.00/entityAttack +9:hurt:10.00/entityAttack]
+X26 ACT bare STACK apply(8+10) after melee: k=1:10.00 k=5:10.00 k=9:10.00 (reference apply10=10.00 apply18=18.00)
+X26 ACT bare raised melee (+6) then apply10 k=3: swing(true)=14.00 before:read=8.00 set=14.00 hand=minecraft:diamond_sword gap=3 apply10(true)=0.00 total=14.00 ev=[+0:before:8.00->14.00/entityAttack +0:hit:minecraft:player +0:hurt:14.00/entityAttack]
+X26 ACT bare raised melee (+6) then apply24 k=3: swing(true)=14.00 before:read=8.00 set=14.00 hand=minecraft:diamond_sword gap=3 apply24(true)=10.00 total=24.00 ev=[+0:before:8.00->14.00/entityAttack +0:hit:minecraft:player +0:hurt:14.00/entityAttack +3:before:10.00/entityAttack +3:hurt:10.00/entityAttack]
+X26 ACT bare FIT f(10)=10.00 apply10=10.00 | f(18)=18.00 apply18=18.00
+X26 ACT bare melee then C apply10 + write to hp-f(10) k=3: swing(true)=8.00 apply10(true)=2.00 write(true) active=10.00 total=18.00 ev=[+0:before:8.00/entityAttack +0:hit:minecraft:player +0:hurt:8.00/entityAttack +3:before:2.00/entityAttack +3:hurt:2.00/entityAttack]
+X26 ACT bare melee then before-event sets f(10) on apply(10+40) k=3: swing(true)=8.00 apply50(true)=10.00 before:read=42.00 set=10.00 hand=minecraft:diamond_sword total=18.00 ev=[+0:before:8.00/entityAttack +0:hit:minecraft:player +0:hurt:8.00/entityAttack +3:before:42.00->10.00/entityAttack +3:hurt:10.00/entityAttack]
+X26 ACT bare melee raised by f(6) then C apply10 + write to hp-f(10) k=3: swing(true)=14.00 apply10(true)=0.00 write(true) active=10.00 total=24.00 ev=[+0:before:8.00->14.00/entityAttack +0:hit:minecraft:player +0:hurt:14.00/entityAttack]
+X26 ACT bare melee raised by f(6) then before-event sets f(10) on apply(10+40) k=3: swing(true)=14.00 apply50(true)=0.00 before:read=36.00 set=10.00 hand=minecraft:diamond_sword total=14.00 ev=[+0:before:8.00->14.00/entityAttack +0:hit:minecraft:player +0:hurt:14.00/entityAttack +3:before:36.00->10.00/entityAttack]
+X26 ACT bare EXACT active in window k=3: melee/C=10.00 melee/set=10.00 melee raised by f(6)/C=10.00 melee raised by f(6)/set=0.00 (reference apply10 alone=10.00)
+X26 ACT bare NOISE none
+X26 probe_x26_active_diamond difficulty=Peaceful regen=false pvp=true
+X26 SETUP x26_act_diamond_t hp=40.00 kit=minecraft:diamond_helmet+minecraft:diamond_chestplate+minecraft:diamond_leggings+minecraft:diamond_boots protection=0
+X26 ACT diamond reference apply10 alone: apply10(true)=3.00 total=3.00 ev=[+0:before:3.00/entityAttack +0:hurt:3.00/entityAttack]
+X26 ACT diamond reference apply18 alone: apply18(true)=6.84 total=6.84 ev=[+0:before:6.84/entityAttack +0:hurt:6.84/entityAttack]
+X26 ACT diamond melee then apply10 k=1: swing(true)=2.24 gap=1 apply10(true)=0.76 total=3.00 ev=[+0:before:2.24/entityAttack +0:hit:minecraft:player +0:hurt:2.24/entityAttack +1:before:0.76/entityAttack +1:hurt:0.76/entityAttack]
+X26 ACT diamond melee then apply10 k=2: swing(true)=2.24 gap=2 apply10(true)=0.76 total=3.00 ev=[+0:before:2.24/entityAttack +0:hit:minecraft:player +0:hurt:2.24/entityAttack +2:before:0.76/entityAttack +2:hurt:0.76/entityAttack]
+X26 ACT diamond melee then apply10 k=3: swing(true)=2.24 gap=3 apply10(true)=0.76 total=3.00 ev=[+0:before:2.24/entityAttack +0:hit:minecraft:player +0:hurt:2.24/entityAttack +3:before:0.76/entityAttack +3:hurt:0.76/entityAttack]
+X26 ACT diamond melee then apply10 k=4: swing(true)=2.24 gap=4 apply10(true)=0.76 total=3.00 ev=[+0:before:2.24/entityAttack +0:hit:minecraft:player +0:hurt:2.24/entityAttack +4:before:0.76/entityAttack +4:hurt:0.76/entityAttack]
+X26 ACT diamond melee then apply10 k=5: swing(true)=2.24 gap=5 apply10(true)=0.76 total=3.00 ev=[+0:before:2.24/entityAttack +0:hit:minecraft:player +0:hurt:2.24/entityAttack +5:before:0.76/entityAttack +5:hurt:0.76/entityAttack]
+X26 ACT diamond melee then apply10 k=6: swing(true)=2.24 gap=6 apply10(true)=0.76 total=3.00 ev=[+0:before:2.24/entityAttack +0:hit:minecraft:player +0:hurt:2.24/entityAttack +6:before:0.76/entityAttack +6:hurt:0.76/entityAttack]
+X26 ACT diamond melee then apply10 k=7: swing(true)=2.24 gap=7 apply10(true)=0.76 total=3.00 ev=[+0:before:2.24/entityAttack +0:hit:minecraft:player +0:hurt:2.24/entityAttack +7:before:0.76/entityAttack +7:hurt:0.76/entityAttack]
+X26 ACT diamond melee then apply10 k=8: swing(true)=2.24 gap=8 apply10(true)=0.76 total=3.00 ev=[+0:before:2.24/entityAttack +0:hit:minecraft:player +0:hurt:2.24/entityAttack +8:before:0.76/entityAttack +8:hurt:0.76/entityAttack]
+X26 ACT diamond melee then apply10 k=9: swing(true)=2.24 gap=9 apply10(true)=0.76 total=3.00 ev=[+0:before:2.24/entityAttack +0:hit:minecraft:player +0:hurt:2.24/entityAttack +9:before:0.76/entityAttack +9:hurt:0.76/entityAttack]
+X26 ACT diamond melee then apply10 k=10: swing(true)=2.24 gap=10 apply10(true)=3.00 total=5.24 ev=[+0:before:2.24/entityAttack +0:hit:minecraft:player +0:hurt:2.24/entityAttack +10:before:3.00/entityAttack +10:hurt:3.00/entityAttack]
+X26 ACT diamond melee then apply10 k=11: swing(true)=2.24 gap=11 apply10(true)=3.00 total=5.24 ev=[+0:before:2.24/entityAttack +0:hit:minecraft:player +0:hurt:2.24/entityAttack +11:before:3.00/entityAttack +11:hurt:3.00/entityAttack]
+X26 ACT diamond SWEEP apply10 after melee: k=1:0.76 k=2:0.76 k=3:0.76 k=4:0.76 k=5:0.76 k=6:0.76 k=7:0.76 k=8:0.76 k=9:0.76 k=10:3.00 k=11:3.00 (reference apply10 alone=3.00)
+X26 ACT diamond melee then stack apply(8+10) k=1: swing(true)=2.24 gap=1 apply18(true)=4.60 total=6.84 ev=[+0:before:2.24/entityAttack +0:hit:minecraft:player +0:hurt:2.24/entityAttack +1:before:4.60/entityAttack +1:hurt:4.60/entityAttack]
+X26 ACT diamond melee then stack apply(8+10) k=5: swing(true)=2.24 gap=5 apply18(true)=4.60 total=6.84 ev=[+0:before:2.24/entityAttack +0:hit:minecraft:player +0:hurt:2.24/entityAttack +5:before:4.60/entityAttack +5:hurt:4.60/entityAttack]
+X26 ACT diamond melee then stack apply(8+10) k=9: swing(true)=2.24 gap=9 apply18(true)=4.60 total=6.84 ev=[+0:before:2.24/entityAttack +0:hit:minecraft:player +0:hurt:2.24/entityAttack +9:before:4.60/entityAttack +9:hurt:4.60/entityAttack]
+X26 ACT diamond STACK apply(8+10) after melee: k=1:4.60 k=5:4.60 k=9:4.60 (reference apply10=3.00 apply18=6.84)
+X26 ACT diamond raised melee (+6) then apply10 k=3: swing(true)=8.24 before:read=2.24 set=8.24 hand=minecraft:diamond_sword gap=3 apply10(true)=0.00 total=8.24 ev=[+0:before:2.24->8.24/entityAttack +0:hit:minecraft:player +0:hurt:8.24/entityAttack]
+X26 ACT diamond raised melee (+6) then apply24 k=3: swing(true)=8.24 before:read=2.24 set=8.24 hand=minecraft:diamond_sword gap=3 apply24(true)=2.32 total=10.56 ev=[+0:before:2.24->8.24/entityAttack +0:hit:minecraft:player +0:hurt:8.24/entityAttack +3:before:2.32/entityAttack +3:hurt:2.32/entityAttack]
+X26 ACT diamond FIT f(10)=3.00 apply10=3.00 | f(18)=6.84 apply18=6.84
+X26 ACT diamond melee then C apply10 + write to hp-f(10) k=3: swing(true)=2.24 apply10(true)=0.76 write(true) active=3.00 total=5.24 ev=[+0:before:2.24/entityAttack +0:hit:minecraft:player +0:hurt:2.24/entityAttack +3:before:0.76/entityAttack +3:hurt:0.76/entityAttack]
+X26 ACT diamond melee then before-event sets f(10) on apply(10+40) k=3: swing(true)=2.24 apply50(true)=3.00 before:read=32.76 set=3.00 hand=minecraft:diamond_sword total=5.24 ev=[+0:before:2.24/entityAttack +0:hit:minecraft:player +0:hurt:2.24/entityAttack +3:before:32.76->3.00/entityAttack +3:hurt:3.00/entityAttack]
+X26 ACT diamond melee raised by f(6) then C apply10 + write to hp-f(10) k=3: swing(true)=3.80 apply10(true)=0.00 write(true) active=3.00 total=6.80 ev=[+0:before:2.24->3.80/entityAttack +0:hit:minecraft:player +0:hurt:3.80/entityAttack]
+X26 ACT diamond melee raised by f(6) then before-event sets f(10) on apply(10+40) k=3: swing(true)=3.80 apply50(true)=0.00 before:read=31.20 set=3.00 hand=minecraft:diamond_sword total=3.80 ev=[+0:before:2.24->3.80/entityAttack +0:hit:minecraft:player +0:hurt:3.80/entityAttack +3:before:31.20->3.00/entityAttack]
+X26 ACT diamond EXACT active in window k=3: melee/C=3.00 melee/set=3.00 melee raised by f(6)/C=3.00 melee raised by f(6)/set=0.00 (reference apply10 alone=3.00)
+X26 ACT diamond NOISE none
+X26 probe_x26_mob difficulty=Peaceful regen=false pvp=true
+X26 SETUP minecraft:iron_golem hp=100.00 max=100.00
+X26 MOB iron_golem melee alone: swing(true)=8.00 total=8.00 ev=[+0:before:8.00/entityAttack +0:hit:minecraft:player +0:hurt:8.00/entityAttack]
+X26 MOB iron_golem reference apply6 alone: apply6(true)=6.00 total=6.00 ev=[+0:before:6.00/entityAttack +0:hurt:6.00/entityAttack]
+X26 MOB iron_golem NEGATIVE-CONTROL swing+apply6 same block: swing(true)=8.00 apply6(true)=0.00 total=8.00 ev=[+0:before:8.00/entityAttack +0:hit:minecraft:player +0:hurt:8.00/entityAttack]
+X26 MOB iron_golem NEGATIVE-CONTROL apply6 in entityHitEntity: swing(true)=8.00 onHit@+0 apply6(true)=0.00 total=8.00 ev=[+0:before:8.00/entityAttack +0:hit:minecraft:player +0:hurt:8.00/entityAttack]
+X26 MOB iron_golem stack swing+apply(8+6) same block: swing(true)=8.00 apply14(true)=6.00 total=14.00 ev=[+0:before:8.00/entityAttack +0:before:6.00/entityAttack +0:hit:minecraft:player +0:hurt:8.00/entityAttack +0:hurt:6.00/entityAttack]
+X26 MOB iron_golem stack apply(8+6) in entityHitEntity: swing(true)=8.00 onHit@+0 apply14(true)=6.00 total=14.00 ev=[+0:before:8.00/entityAttack +0:hit:minecraft:player +0:before:6.00/entityAttack +0:hurt:8.00/entityAttack +0:hurt:6.00/entityAttack]
+X26 MOB iron_golem beforeEvents.entityHurt raises the melee by 6: swing(true)=14.00 before:read=8.00 set=14.00 hand=minecraft:diamond_sword total=14.00 ev=[+0:before:8.00->14.00/entityAttack +0:hit:minecraft:player +0:hurt:14.00/entityAttack]
+X26 MOB iron_golem melee then apply10 k=3: apply10=2.00 total=10.00 ev=[+0:before:8.00/entityAttack +0:hit:minecraft:player +0:hurt:8.00/entityAttack +3:before:2.00/entityAttack +3:hurt:2.00/entityAttack]
+X26 MOB iron_golem melee then stack apply(8+10) k=3: apply18=10.00 total=18.00 ev=[+0:before:8.00/entityAttack +0:hit:minecraft:player +0:hurt:8.00/entityAttack +3:before:10.00/entityAttack +3:hurt:10.00/entityAttack]
+X26 MOB iron_golem SUM melee=8.00 apply6=6.00 | naive=8.00 naive-onHit=8.00 stack=14.00 stack-onHit=14.00 raised=14.00 | active k=3 apply10=2.00 stack=10.00
+X26 MOB iron_golem NOISE none
+X26 probe_x26_absorption difficulty=Peaceful regen=false pvp=true
+X26 SETUP x26_abs_t hp=40.00 kit=bare
+X26 ABS bare absorption16 none: untouched health-lost=0.00 probe16(true) absorption-left=16.00 total=0.00 ev=[+14:before:16.00/entityAttack +14:hurt:16.00/entityAttack]
+X26 ABS bare absorption16 melee alone: swing(true)=0.00 health-lost=0.00 probe16(true) absorption-left=8.00 total=8.00 ev=[+2:before:8.00/entityAttack +2:hit:minecraft:player +2:hurt:8.00/entityAttack +14:before:16.00/entityAttack +14:hurt:16.00/entityAttack]
+X26 ABS bare absorption16 beforeEvents raise +6: swing(true)=0.00 before:read=8.00 set=14.00 hand=minecraft:diamond_sword health-lost=0.00 probe16(true) absorption-left=2.00 total=14.00 ev=[+2:before:8.00->14.00/entityAttack +2:hit:minecraft:player +2:hurt:14.00/entityAttack +16:before:16.00/entityAttack +16:hurt:16.00/entityAttack]
+X26 ABS bare absorption16 stack apply(8+6): swing(true)=0.00 apply14(true)=0.00 health-lost=0.00 probe16(true) absorption-left=2.00 total=14.00 ev=[+2:before:8.00/entityAttack +2:before:6.00/entityAttack +2:hit:minecraft:player +2:hurt:8.00/entityAttack +2:hurt:6.00/entityAttack +14:before:16.00/entityAttack +14:hurt:16.00/entityAttack]
+X26 ABS bare absorption16 write hp-6: swing(true)=0.00 write(true)=6.00 health-lost=6.00 probe16(true) absorption-left=8.00 total=14.00 ev=[+2:before:8.00/entityAttack +2:hit:minecraft:player +2:hurt:8.00/entityAttack +14:before:16.00/entityAttack +14:hurt:16.00/entityAttack]
+X26 ABS bare NOISE none
