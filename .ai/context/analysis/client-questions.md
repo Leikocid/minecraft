@@ -1,7 +1,7 @@
 ---
 title: Client Questions
 type: analysis
-generated_at: "2026-10-08T18:47:14.770Z"
+generated_at: "2026-10-08T20:34:41.353Z"
 source_channel: rollout
 node_id: rollout-client-questions
 aliases: ["rollout-client-questions","client-questions"]
@@ -31,13 +31,13 @@ see_also: ["stormbladeelytratotemspecruen-part-1"]
 # Q-L0-8 · Should a shield stop the beam?
 
 **To Andrey:** a player holding a raised shield is hit by the Storm Blade's 10-block line. Should they:
-1. block it completely, from any direction (this is easiest on Bedrock and is the default we will build);
-2. block it only when facing the wielder, as with a sword hit;
+1. block it completely, from any direction (needs extra code: drop the source, or check facing in script);
+2. block it only when facing the wielder, as with a sword hit (native on Bedrock; what §02 "прочих стандартных защит" reads as; the default we build);
 3. never block it? Armour still reduces it.
 
 The same question applies to the passive +6 HP. Their shield is usually down when they are being meleed, so it rarely matters there.
 
-**Non-blocking.** `strm` builds option 1 and records it as a deviation until the answer arrives.
+**Non-blocking.** `strm` builds option 2 (native); no deviation.
 
 **Source node:** L0-xq8
 

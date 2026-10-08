@@ -33,10 +33,10 @@ governs_files: ["src/sculk/hit.ts"]
 - §05: "active and passive damage are processed separately".
 - §06: "the passive hit deals only +6 HP before armour".
 
-**The platform does:** the bonus is triggered by the melee hit (`entityHitEntity`), so it is applied in the same tick that the hit opened a 10-tick hurt window. In that window, `applyDamage(6)` is weaker than the ~7–8 HP melee and takes **0**. It still returns true (CNTR-X22, `src/sculk/hit.ts:25`). A naive build passes a "did it fire" test and deals nothing.
+**The platform does:** the bonus is triggered by the melee hit (`entityHitEntity`), so it is applied in the same tick that the hit opened a 10-tick hurt window. In that window, `applyDamage(6)` is below the 8.00-HP diamond-sword melee once both pass armour (the window compares post-armour amounts) and takes **0.00**: bare 8.00, diamond 2.24, netherite+P4 0.76. It still returns true (CNTR-X22, `src/sculk/hit.ts:25`). A naive build passes a "did it fire" test and deals nothing.
 
-The same applies to the **active** 10 HP when the target was meleed in the last 10 ticks. It then takes only 10 − L, about 2–3 HP.
+The same applies to the **active** 10 HP when the target was meleed in the last 10 ticks. It then takes only f(10) − f(L): 2.00 bare, 0.76 in diamond armour (native 3.00), at every gap of 1–9 ticks.
 
 **Severity: high.** The passive is half of the weapon. The failure is silent.
 
-**Resolution path:** `L0-adr-sbdm` (difference-stacking, probe-gated; manual-armour fallback). `strm` must prove it on BDS with an in-test negative control. Until then this stays open.
+**Resolution path:** `L0-adr-sbdm` as amended by diagnose-CNTR-X26 (passive: before-event raise by f(6); active in window: C). `strm` must prove it on BDS with an in-test negative control. Until then this stays open.
