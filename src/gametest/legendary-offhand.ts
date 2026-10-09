@@ -29,6 +29,7 @@ import {
   ORBITAL_CANNON,
   SCULK_CROSSBOW,
   SCYTHE_OF_CALAMITY,
+  STORM_BLADE,
   WEB_SWORD,
 } from "../legendary/registry";
 import * as state from "../legendary/state";
@@ -331,6 +332,49 @@ registerAsync("andrew", "legendary_offhand_passive_yields", async (test: Test): 
 
   log(`passive RESULT ${failures.length === 0 ? "ok" : failures.join("; ")}`);
   test.assert(failures.length === 0, failures.join("; "));
+  test.succeed();
+})
+  .structureName(STRUCTURE)
+  .maxTicks(100)
+  .tag("andrew");
+
+const STORM_BLADE_READY_HUD =
+  '{"rawtext":[{"translate":"andrew.storm_blade.hud_ready","with":{"rawtext":[{"translate":"item.andrew:storm_blade.name"}]}}]}';
+
+// AC#3 (STRM-ITEM-01-AA): the real andrew:storm_blade item, held alone, shows
+// the HUD ready — and the general hand-priority rule (decision-legendary-hand-
+// priority) still hands it the Use when the main hand is on cooldown.
+registerAsync("andrew", "legendary_storm_blade_hud_and_priority", async (test: Test): Promise<void> => {
+  const player = test.spawnSimulatedPlayer(STAND, "oh_storm_blade", GameMode.Survival);
+  await test.idle(4);
+
+  const equippable = equippableOf(player);
+  clearCooldown(player, STORM_BLADE.abilityKey);
+  clearCooldown(player, SCYTHE_OF_CALAMITY.abilityKey);
+
+  equippable.setEquipment(EquipmentSlot.Mainhand, new ItemStack(STORM_BLADE.itemId, 1));
+  equippable.setEquipment(EquipmentSlot.Offhand, undefined);
+  const alone = resolveActivation(player);
+  const aloneHud = hudMessage(player);
+  log(`storm blade alone: use=${alone?.slot ?? "none"}/${alone?.def.itemId ?? "none"} hud=${JSON.stringify(aloneHud)}`);
+  test.assert(
+    alone?.slot === EquipmentSlot.Mainhand && alone.def === STORM_BLADE,
+    `expected Mainhand/${STORM_BLADE.itemId}, got ${alone?.slot ?? "none"}/${alone?.def.itemId ?? "none"}`
+  );
+  test.assert(JSON.stringify(aloneHud) === STORM_BLADE_READY_HUD, `HUD mismatch: ${JSON.stringify(aloneHud)}`);
+
+  // Off-hand priority: a cooling main hand yields the Use to a ready Storm Blade off hand.
+  equippable.setEquipment(EquipmentSlot.Mainhand, new ItemStack(SCYTHE_OF_CALAMITY.itemId, 1));
+  const put = offer(player, STORM_BLADE.itemId);
+  test.assert(put.returned && put.readBack === STORM_BLADE.itemId, `the off hand refused the Storm Blade: ${JSON.stringify(put)}`);
+  startCooldown(player, SCYTHE_OF_CALAMITY.abilityKey);
+  const mainCooling = resolveActivation(player);
+  clearCooldown(player, SCYTHE_OF_CALAMITY.abilityKey);
+  log(`main hand cooling: use=${mainCooling?.slot ?? "none"}/${mainCooling?.def.itemId ?? "none"}`);
+  test.assert(
+    mainCooling?.slot === EquipmentSlot.Offhand && mainCooling.def === STORM_BLADE,
+    `main hand on cooldown: expected Offhand/${STORM_BLADE.itemId}, got ${mainCooling?.slot ?? "none"}/${mainCooling?.def.itemId ?? "none"}`
+  );
   test.succeed();
 })
   .structureName(STRUCTURE)

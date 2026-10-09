@@ -142,12 +142,36 @@ export const SCULK_CROSSBOW: PassiveLegendaryDef = {
   command: "andrew:crossbow",
 };
 
+/**
+ * The sixth def (L0-strm-edef), and the first active def after the Sculk
+ * Crossbow's passive one: it owns an ability, a cooldown and its own em-dash
+ * HUD keys again, like Orbital Cannon and Dragon Katana.
+ */
+export const STORM_BLADE: ActiveLegendaryDef = {
+  itemId: "andrew:storm_blade",
+  keyPrefix: "sb",
+  abilityKey: "storm_blade",
+  nameKey: "item.andrew:storm_blade",
+  cooldownTicks: 600,
+  craftGate: true,
+  craftTokenId: "andrew:storm_blade_crafted",
+  refund: [
+    ["minecraft:lightning_rod", 2],
+    ["minecraft:wind_charge", 2],
+    ["minecraft:diamond_sword", 1],
+  ],
+  textPrefix: "andrew.storm_blade",
+  command: "andrew:storm",
+  hudKeys: { ready: "andrew.storm_blade.hud_ready", cooldown: "andrew.storm_blade.hud_cooldown" },
+};
+
 export const LEGENDARIES: ReadonlyArray<LegendaryDef> = [
   WEB_SWORD,
   SCYTHE_OF_CALAMITY,
   ORBITAL_CANNON,
   DRAGON_KATANA,
   SCULK_CROSSBOW,
+  STORM_BLADE,
 ];
 
 export function defFor(itemId: string): LegendaryDef | undefined {

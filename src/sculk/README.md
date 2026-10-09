@@ -247,12 +247,14 @@ v.draw = (v.loaded > 0) ? 1 : (((q.main_hand_item_use_duration > 0) && (q.main_h
   ? math.clamp(1 - q.main_hand_item_use_duration / q.main_hand_item_max_duration, 0, 1) : 0)
 ```
 
-`main_hand_item_use_duration` is the engine's own count of the use session's remaining ticks: 24 at +1 … 1 at +24, and 0
-from +25, the tick of `complete@+25`, which is when `charge_on_draw` loads the item (`max_draw_duration` 1.25 s). So the
-pull grows 0.04 → 0.96 over the draw and, on the tick the charge completes, goes to the loaded state (below), or
-home if the session did not load. It has no timer of its own: the
-animation is an expression per bone with no keyframes, no length and no `anim_time`. `main_hand_item_max_duration` is
-25 throughout.
+`main_hand_item_use_duration` is the engine's own count of the use session's remaining ticks, and
+`main_hand_item_max_duration` is the session's full length. Both follow `use_duration`, not `max_draw_duration`. On the
+current item (`use_duration` 2.5 s) the session reads 49 at +1 … 1 at +49 and 0 from +50, the tick of `complete@+50`,
+and `main_hand_item_max_duration` is 50 throughout, with or without Quick Charge (look probe on a private instance,
+2026-10-09, `product` / `product_qc1` / `product_qc3`, 3 of 3). `charge_on_draw` loads the item at +25
+(`max_draw_duration` 1.25 s), in the middle of the session. So the pull grows 0.02 → 0.98 over the session and reads
+0.50 on the tick the crossbow loads; when the session ends it goes to the loaded state (below), or home. It has no
+timer of its own: the animation is an expression per bone with no keyframes, no length and no `anim_time`.
 
 **The model** (`models/entity/sculk_crossbow.geo.json`) is drawn here, not taken from Mojang. Every face samples one
 pixel of the item's own icon, so the colours are the icon's: stock `§3` teal, limbs and butt dark sculk, string `§b`
@@ -273,8 +275,8 @@ There are no rotations, so the draw does not depend on the engine's rotation sig
 
 **Proof.**
 - `tests/sculk-crossbow-attachable.test.mjs`:
-  - evaluates the attachable's own Molang on the measured sessions: no enchantment, Quick Charge I and III, a
-    firing press, and a bow in the main hand;
+  - evaluates the attachable's own Molang on the sessions measured at `use_duration` 1.25 s: no enchantment, Quick
+    Charge I and III, a firing press, and a bow in the main hand;
   - pins the query set and that the animations have no timer;
   - checks the bracket rule: the client binds `&&` tighter than `==`;
   - checks the colours against the icon's pixels, the symmetry, and that the string stays one piece at every draw.
@@ -294,22 +296,20 @@ There are no rotations, so the draw does not depend on the engine's rotation sig
 2. **"Loaded" is read from the session's shape, not asked.** For this id no query tells loaded from rest:
    `item_is_charged` reads 0, and `get_animation_frame` reads 0 where the vanilla crossbow reads 4 (Q3). The loaded
    state below and its own deviations follow from that.
-3. **A firing press shows one tick of draw.** That press opens a session too (`start@+0 … release@+1`, Q3), so the
-   string drops from the latch to 1/25 of the way for one tick, then home.
+3. **A firing press shows one tick of draw.** That press opens a session too (`start@+0(ud=50) bolt@+0 release@+1`,
+   look probe), so the string drops from the latch to 1/50 of the way for one tick, then home.
 4. **In the off hand the crossbow follows the main hand's use.** The queries are the main hand's. A bow drawn there
    moves it by 12/72000 (Q3 bow row), i.e. not at all. Other items in use there are not measured.
-5. **Quick Charge shortens the session, but the charge is no longer missed.** `use_duration` is 2.5 s (50 ticks,
-   SCLK-QC-RESTORE-01); Quick Charge still takes 5 ticks a level off that session (QC I → 45, QC III → 35), and
-   `main_hand_item_max_duration` stays at 25 — the 25-tick charge gate (`max_draw_duration`) is unchanged. All three
-   copies now fire on the first press after the charge (`product`/`product_qc1`/`product_qc3`, 3 of 3, private
-   instance `andrew-bds-qcfix`, probe report addendum). Before the fix, a QC copy's session ended at +20 / +10,
-   short of the 25-tick gate, and never fired (SCLK-PRESS-01's regression, fixed by SCLK-QC-RESTORE-01).
-   **Not re-measured for this deviation:** what fraction of `v.draw` a QC I/III session starts at under the new
-   50-tick session. The old figures (0.24 / 0.64) were computed from the pre-fix session lengths (20 / 10 ticks)
-   against the same `main_hand_item_max_duration` = 25 and no longer apply — at a 45/35-tick session the same
-   formula clamps to 0 until `main_hand_item_use_duration` drops below 25, which would need a fresh probe reading
-   of `main_hand_item_use_duration` on `product_qc1`/`product_qc3` to confirm, not computed from memory.
-6. **This attachable draws no enchantment glint.** Whether the engine adds one over an attachable is not measured:
+5. **Quick Charge starts the pull part-way.** Quick Charge takes 5 ticks a level off the session (QC I 45, QC III 35)
+   and leaves `main_hand_item_max_duration` at 50, so on its first tick a QC I draw reads 0.12 and a QC III draw 0.32,
+   and each ends with its session at +45 / +35. The load still lands at +25, where the pull reads 0.60 / 0.80 (look
+   probe, `product_qc1` / `product_qc3`: `main_hand_item_use_duration` 44 / 34 at +1, 20 / 10 at +25). Both copies
+   load and fire on the next press (`sculk_look_loaded_sessions`, `quick_charge_1` / `quick_charge_3`).
+6. **The pull is half-way when the crossbow loads.** The session is twice the draw: `use_duration` 2.5 s against
+   `max_draw_duration` 1.25 s, the margin Quick Charge III needs to reach the load (`tests/sculk-crossbow-item.test.mjs`).
+   The pull follows the session, so it reads 0.50 at the load and reaches the latch 1.25 s after the crossbow is
+   loaded.
+7. **This attachable draws no enchantment glint.** Whether the engine adds one over an attachable is not measured:
    an iPad check.
 
 ## The loaded state — a bolt on the stock until the shot (SCLKUI-LOADED-01)
@@ -318,13 +318,16 @@ It is the third state of the same attachable, after rest and the draw: the same 
 the same render controller. The attachable keeps two readings of `main_hand_item_use_duration` from frame to frame:
 `v.ud_first`, the session's first value, and `v.ud_last`, the last frame's. When the value returns to 0:
 - the crossbow is shown **loaded** if the session ran out from full length: its last value was ≤ 1 and its first
-  ≥ `main_hand_item_max_duration` − 1. That is `complete@+25`, the tick `charge_on_draw` loads;
-- a release leaves a larger last value (`release@+k`, ud = 25 − k), and a Quick Charge session starts short (20 / 10),
+  ≥ `main_hand_item_max_duration` − 1. On the current item that is a press held to `complete@+50`, or let go at +49;
+- a release leaves a larger last value (`release@+k`, ud = 50 − k), and a Quick Charge session starts short (45 / 35),
   so neither shows a load.
 
+`charge_on_draw` loads at +25, so the look and the engine part ways in between: a release from +25 to +48 and every
+Quick Charge draw load the crossbow and show it empty (deviations 1 and 4 below).
+
 Any value above 0 takes the state off. The press that fires a loaded crossbow opens its session in the tick of the
-shot (`start@+0` with `bolt@+0`), so the bolt leaves the stock in that tick. A press held on after the shot draws
-again and ends loaded, as the engine reloads (an arrow spent, the next tap fires).
+shot (`start@+0` with `bolt@+0`), so the bolt leaves the stock in that tick. A press held on after the shot to the
+session's end draws again and ends loaded, as the engine reloads (an arrow spent, the next tap fires).
 
 While loaded, `v.draw` is 1: the string sits on the latch and the limbs stay bent. The `bolt` bone is shown by
 `part_visibility` on `v.loaded`. It has no timer: the variables only hold engine readings, and none is computed from
@@ -339,31 +342,38 @@ crossbow fires, an echo shard:
 There is no wood, flint or white feather of the vanilla arrow.
 
 **Proof.**
-- `sculk_look_loaded_sessions` (`src/gametest/sculk-look.ts`) drives the product crossbow on BDS through 12 kinds of
+- `sculk_look_loaded_sessions` (`src/gametest/sculk-look.ts`) drives the product crossbow on BDS through 15 kinds of
   session and pins each one's shape and the engine's answer: an arrow spent at the load, and a shot on the next tap.
-  The sessions are a full draw, releases at +1/+12/+23/+24, a held firing press, a hotbar switch, no arrows in
-  Survival and in Creative, Creative with arrows, and Quick Charge I/III.
-- `tests/sculk-crossbow-attachable.test.mjs` runs the same shapes through the attachable's own Molang at 1 and 3
-  frames a tick. Every session ends in the engine's state except the two below, which are pinned as such.
+  The sessions are a full draw, releases at +1/+12/+23/+24 before the load and +25/+37/+49 after it, a held firing
+  press, a hotbar switch, no arrows in Survival and in Creative, Creative with arrows, and Quick Charge I/III.
+  Its expected answers are computed from the item's `use_duration` and `max_draw_duration`, not stored: the session is
+  `use_duration` less 5 ticks a Quick Charge level, and the load lands at `max_draw_duration`. With `use_duration`
+  1.25 s the same rule gives, row for row, the 12 sessions measured on BDS at that value.
+- `tests/sculk-crossbow-attachable.test.mjs` runs the shapes of a 25-tick session (`use_duration` 1.25 s) through the
+  attachable's own Molang at 1 and 3 frames a tick. It does not carry the 50-tick sessions above. What the look shows
+  for those, in the deviations below, is the same Molang evaluated on the measured sessions with
+  `main_hand_item_max_duration` 50.
 
 ### Deviations (C-16)
 
-1. **A release one tick short of the charge looks loaded.** `release@+24` (ud = 1) reads like a full draw's last
-   tick, and the engine leaves the crossbow empty. The next press fires nothing and takes the look off.
-2. **A draw with no arrows in Survival looks loaded.** The custom shooter runs the whole session (`start` ud 25,
-   `complete@+25`) and loads nothing: no arrow spent, and the next tap fires nothing. The attachable has no query for
+1. **A release after the load and before the session's last tick looks empty.** The crossbow loads at +25 and the
+   session runs on to +50. A release at +25 … +48 leaves ud 25 … 2, which the latch does not read as a full draw. The
+   engine has spent the arrow and the next press fires (`release_at_25`, `release_at_37`). Only a press held to the end,
+   or let go at +49, shows the bolt.
+2. **A draw with no arrows in Survival looks loaded.** The custom shooter runs the whole session (`start` ud 50,
+   `complete@+50`) and loads nothing: no arrow spent, and the next tap fires nothing. The attachable has no query for
    ammunition. The cause is in the item, not the look: the vanilla crossbow does not draw without arrows. A fix has
    to refuse such a draw and still let a loaded crossbow with no arrows left fire, so it is out of this task.
 3. **Whether the look survives the crossbow leaving the hand is not measured.** The engine keeps the load across a
    hotbar switch (measured). The latch lives in the attachable's variables, and BDS cannot show what the client keeps
    when the crossbow is put away and taken back, after a death, a rejoin, or on another player's screen. If the client
    rebuilds the attachable, a loaded crossbow comes back looking empty until its shot.
-4. **Whether a Quick Charge copy looks loaded is not re-checked.** The item-level defect this depended on (deviation
-   5 of the draw: a QC copy never reached the charge) is fixed by SCLK-QC-RESTORE-01 — `quick_charge_*` fires on the
-   first tap again. The attachable's own loaded-state read for `quick_charge_*` under the new 45/35-tick session has
-   not been re-run on `sculk_look_loaded_sessions`; treat it as open until that probe is repeated.
+4. **A Quick Charge copy never looks loaded.** Its session starts at 45 / 35, below `main_hand_item_max_duration` − 1
+   = 49, so even `complete@+45` / `complete@+35` fails the full-length test. The engine loads it at +25, and the next
+   press fires (`quick_charge_1`, `quick_charge_3`).
 5. **In the off hand the crossbow follows the main hand's sessions** (deviation 4 of the draw). A vanilla crossbow
-   drawn in the main hand runs the same 25-tick session, so an off-hand Sculk Crossbow then looks loaded.
+   drawn in the main hand runs a 25-tick session that is its own full length (`main_hand_item_max_duration` 25, Q3), so
+   an off-hand Sculk Crossbow then looks loaded.
 6. **Below 20 frames a second the last tick can be missed.** The latch has to see the session's last value, 1. A
    client that skips it sees a real load as empty.
 7. **The hotbar icon does not show the load** (deviation 1 of the draw).
@@ -372,10 +382,12 @@ There is no wood, flint or white feather of the vanilla arrow.
 
 First and third person, Survival, arrows in the inventory:
 1. The crossbow is a 3-D crossbow in the hand, pointing forward, not the flat icon.
-2. While the press is held, the string slides back into a V and the limbs bend, for 1.25 s.
-3. On the charge the string stays on the latch, and a bolt with an aqua shard head lies on the stock.
+2. While the press is held, the string slides back into a V and the limbs bend, for 2.5 s. The crossbow is already
+   loaded half-way, at 1.25 s (deviation 6 of the draw).
+3. Held for the whole 2.5 s, the string stays on the latch, and a bolt with an aqua shard head lies on the stock.
 4. The loaded look holds for as long as you wait, until the press.
 5. The press fires, and the bolt is gone from the stock at once.
 6. Let go before the 1.25 s are up: the string goes home and no bolt appears.
-7. Loaded, switch the hotbar away and back: does the bolt come back (deviation 3)? Then fire to check it was loaded.
-8. The hotbar icon does not change.
+7. Let go between 1.25 s and 2.5 s: the string goes home and no bolt appears, yet the next press fires (deviation 1).
+8. Loaded, switch the hotbar away and back: does the bolt come back (deviation 3)? Then fire to check it was loaded.
+9. The hotbar icon does not change.

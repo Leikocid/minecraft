@@ -189,6 +189,10 @@ const EXPECTED_TESTS = [
   'andrew:legendary_give_then_craft_sculk_crossbow',
   'andrew:legendary_sculk_crossbow_other_flags_untouched',
   'andrew:sculk_crossbow_no_durability',
+  // STRM-ITEM-01-AA — src/gametest/legendary-craftgate.ts
+  'andrew:legendary_give_then_craft_storm_blade',
+  'andrew:legendary_storm_blade_other_flags_untouched',
+  'andrew:storm_blade_no_durability',
   // LGND-OFFHAND-01 — src/gametest/legendary-offhand.ts
   'andrew:legendary_offhand_admitted',
   'andrew:legendary_offhand_resolves',
@@ -196,6 +200,8 @@ const EXPECTED_TESTS = [
   'andrew:legendary_offhand_token_refused',
   // LGND-PASSIVE-01 (R-lgnd-018, L0-lgnd-ac26) — src/gametest/legendary-offhand.ts
   'andrew:legendary_offhand_passive_yields',
+  // STRM-ITEM-01-AA — src/gametest/legendary-offhand.ts
+  'andrew:legendary_storm_blade_hud_and_priority',
   // LGND-UFO-01 — src/gametest/legendary-ufo.ts
   'andrew:legendary_ufo_fall_death_keeps',
   'andrew:legendary_ufo_holder_chest_minecart',
@@ -465,6 +471,38 @@ const EXPECTED_TESTS = [
   'andrew:sculk_enchant_piercing_hand_change',
   // SCLKUI-LOADED-01 — src/gametest/sculk-look.ts: the session shapes the crossbow's loaded look reads
   'andrew:sculk_look_loaded_sessions',
+  // STRM-VANILLA-01 — src/gametest/vanilla-recipes.ts
+  'andrew:vanilla_recipe_elytra_unlimited',
+  'andrew:vanilla_recipe_totem_unlimited',
+  'andrew:vanilla_recipe_negative_controls',
+  // STRM-DMG-01 — src/gametest/storm-damage.ts (L0-strm-rdmg, L0-adr-sbdm R and C, L0-xcx26)
+  'andrew:storm_damage_passive',
+  'andrew:storm_damage_active',
+  'andrew:storm_damage_shield',
+  'andrew:storm_damage_lethal',
+ // STRM-ACTIVE-01 — src/gametest/storm-active.ts (L0-strm-pact, L0-strm-rcd, L0-strm-rvis, L0-adr-sblt)
+  'andrew:storm_active_range',
+  'andrew:storm_active_wall',
+  'andrew:storm_active_first_only',
+  'andrew:storm_active_harmless',
+  'andrew:storm_active_cooldown',
+  'andrew:storm_active_hands_and_melee',
+  'andrew:storm_active_one_interval',
+  // STRM-PASSIVE-01 — src/gametest/storm-passive.ts (L0-strm-ppas; probe-storm P6 sample)
+  'andrew:storm_passive_damage',
+  'andrew:storm_passive_cooldown',
+  'andrew:storm_passive_rate',
+  'andrew:storm_passive_scripted',
+  // STRM-LGND-01 — the Storm Blade under the legendary rules (L0-strm-acr items 6–7):
+  // src/gametest/legendary-fireproof.ts, src/gametest/legendary-recovery.ts
+  'andrew:legendary_storm_blade_in_a_chest_stays_there',
+  'andrew:legendary_storm_blade_death_kill',
+  'andrew:legendary_storm_blade_death_lava',
+  'andrew:legendary_storm_blade_death_offhand',
+  'andrew:legendary_storm_blade_void_thrown',
+  'andrew:legendary_storm_blade_hold_void_after_transfer',
+  'andrew:legendary_storm_blade_hold_void_holder_offline',
+  'andrew:legendary_storm_blade_hold_void_holder_dead_redeemed',
 ];
 
 /**

@@ -1,0 +1,313 @@
+# Raw "[probe] STRM" lines of the cited run (docs/feedback/probe-storm.md, out: <label>), prefix stripped.
+# run.sh, all twelve scenarios, private instance dist/bds-strm, 2026-10-08 21:14–21:20 UTC, tree 9a55fb5 + the uncommitted probe files; exit 0.
+# The P1 table that run.sh derives from the PARTICLE lines and the logs follows the lines.
+probe_strm_particles START difficulty=Peaceful regen=false pvp=true
+PARTICLE role=spark id=minecraft:electric_spark_particle spawn3=ok ms=0 cmd=success=1
+PARTICLE role=spark id=minecraft:critical_hit_emitter spawn3=ok ms=0 cmd=success=1
+PARTICLE role=spark id=minecraft:magic_critical_hit_emitter spawn3=ok ms=0 cmd=success=1
+PARTICLE role=spark id=minecraft:sparkler_emitter spawn3=ok ms=0 cmd=success=1
+PARTICLE role=spark id=minecraft:wax_particle spawn3=ok ms=1 cmd=success=1
+PARTICLE role=spark-javaname id=minecraft:electric_spark spawn3=ok ms=0 cmd=success=1
+PARTICLE role=spark-guess id=minecraft:spark spawn3=ok ms=0 cmd=success=1
+PARTICLE role=flash id=minecraft:huge_explosion_lab_misc_emitter spawn3=ok ms=0 cmd=success=1
+PARTICLE role=flash id=minecraft:knockback_roar_particle spawn3=ok ms=0 cmd=success=1
+PARTICLE role=flash id=minecraft:totem_particle spawn3=ok ms=0 cmd=success=1
+PARTICLE role=flash id=minecraft:explosion_particle spawn3=ok ms=0 cmd=success=1
+PARTICLE role=flash id=minecraft:camera_shoot_explosion spawn3=ok ms=0 cmd=success=1
+PARTICLE role=flash id=minecraft:white_smoke_particle spawn3=ok ms=0 cmd=success=1
+PARTICLE role=flash-javaname id=minecraft:flash spawn3=ok ms=0 cmd=success=1
+PARTICLE role=flash-guess id=minecraft:lightning spawn3=ok ms=0 cmd=success=1
+PARTICLE role=gust id=minecraft:wind_explosion_emitter spawn3=ok ms=1 cmd=success=1
+PARTICLE role=gust id=minecraft:breeze_wind_explosion_emitter spawn3=ok ms=0 cmd=success=1
+PARTICLE role=gust id=minecraft:wind_charged_emitter spawn3=ok ms=1 cmd=success=1
+PARTICLE role=gust id=minecraft:wind_charged_ambient spawn3=ok ms=0 cmd=success=1
+PARTICLE role=gust id=minecraft:breeze_ground_particle spawn3=ok ms=0 cmd=success=1
+PARTICLE role=gust-javaname id=minecraft:gust spawn3=ok ms=0 cmd=success=1
+PARTICLE role=gust-javaname id=minecraft:gust_emitter_large spawn3=ok ms=0 cmd=success=1
+PARTICLE role=ipad-seen id=minecraft:sonic_explosion spawn3=ok ms=0 cmd=success=1
+PARTICLE role=ipad-seen id=minecraft:huge_explosion_emitter spawn3=ok ms=0 cmd=success=1
+PARTICLE role=ipad-seen id=minecraft:large_explosion spawn3=ok ms=0 cmd=success=1
+PARTICLE role=ipad-seen id=minecraft:campfire_tall_smoke_particle spawn3=ok ms=0 cmd=success=1
+PARTICLE role=ipad-seen id=andrew:katana_petal spawn3=ok ms=0 cmd=success=1
+PARTICLE role=made-up id=andrew:no_such_particle spawn3=ok ms=0 cmd=success=1
+PARTICLE role=made-up id=minecraft:no_such_particle spawn3=ok ms=1 cmd=success=1
+PARTICLE CONTROL unloaded-point spawn=threw(LocationInUnloadedChunkError: Trying to access location (100003.0, -57.0, 6.0) which is not in a chunk currently loaded and ticking.)
+probe_strm_particles RESULT done
+probe_strm_resistance_bare START difficulty=Peaceful regen=false pvp=true
+SETUP strm_res_bare_t hp=40.00 kit=bare
+RES bare ARMOUR totalArmor=0.00 totalToughness=0.00 epf=0
+RES bare R0 melee alone: swing(true)=8.00 total=8.00 ev=[+0:before:8.00/entityAttack +0:hurt:8.00/entityAttack]
+RES bare R0 reference apply6 alone: apply6(true)=6.00 total=6.00 ev=[+0:before:6.00/entityAttack +0:hurt:6.00/entityAttack]
+RES bare R0 raise +f(6): swing(true)=14.00 before:read=8.00 set=14.00 total=14.00 ev=[+0:before:8.00->14.00/entityAttack +0:hurt:14.00/entityAttack]
+RES bare R0 raise +f(6)*k: swing(true)=14.00 before:read=8.00 set=14.00 total=14.00 ev=[+0:before:8.00->14.00/entityAttack +0:hurt:14.00/entityAttack]
+RES bare R1 melee alone: swing(true)=6.40 total=6.40 ev=[+0:before:6.40/entityAttack +0:hurt:6.40/entityAttack]
+RES bare R1 reference apply6 alone: apply6(true)=4.80 total=4.80 ev=[+0:before:4.80/entityAttack +0:hurt:4.80/entityAttack]
+RES bare R1 raise +f(6): swing(true)=12.40 before:read=6.40 set=12.40 total=12.40 ev=[+0:before:6.40->12.40/entityAttack +0:hurt:12.40/entityAttack]
+RES bare R1 raise +f(6)*k: swing(true)=11.20 before:read=6.40 set=11.20 total=11.20 ev=[+0:before:6.40->11.20/entityAttack +0:hurt:11.20/entityAttack]
+RES bare R2 melee alone: swing(true)=4.80 total=4.80 ev=[+0:before:4.80/entityAttack +0:hurt:4.80/entityAttack]
+RES bare R2 reference apply6 alone: apply6(true)=3.60 total=3.60 ev=[+0:before:3.60/entityAttack +0:hurt:3.60/entityAttack]
+RES bare R2 raise +f(6): swing(true)=10.80 before:read=4.80 set=10.80 total=10.80 ev=[+0:before:4.80->10.80/entityAttack +0:hurt:10.80/entityAttack]
+RES bare R2 raise +f(6)*k: swing(true)=8.40 before:read=4.80 set=8.40 total=8.40 ev=[+0:before:4.80->8.40/entityAttack +0:hurt:8.40/entityAttack]
+RES bare R3 melee alone: swing(true)=3.20 total=3.20 ev=[+0:before:3.20/entityAttack +0:hurt:3.20/entityAttack]
+RES bare R3 reference apply6 alone: apply6(true)=2.40 total=2.40 ev=[+0:before:2.40/entityAttack +0:hurt:2.40/entityAttack]
+RES bare R3 raise +f(6): swing(true)=9.20 before:read=3.20 set=9.20 total=9.20 ev=[+0:before:3.20->9.20/entityAttack +0:hurt:9.20/entityAttack]
+RES bare R3 raise +f(6)*k: swing(true)=5.60 before:read=3.20 set=5.60 total=5.60 ev=[+0:before:3.20->5.60/entityAttack +0:hurt:5.60/entityAttack]
+RES bare R4 melee alone: swing(true)=1.60 total=1.60 ev=[+0:before:1.60/entityAttack +0:hurt:1.60/entityAttack]
+RES bare R4 reference apply6 alone: apply6(true)=1.20 total=1.20 ev=[+0:before:1.20/entityAttack +0:hurt:1.20/entityAttack]
+RES bare R4 raise +f(6): swing(true)=7.60 before:read=1.60 set=7.60 total=7.60 ev=[+0:before:1.60->7.60/entityAttack +0:hurt:7.60/entityAttack]
+RES bare R4 raise +f(6)*k: swing(true)=2.80 before:read=1.60 set=2.80 total=2.80 ev=[+0:before:1.60->2.80/entityAttack +0:hurt:2.80/entityAttack]
+RES bare ROW R0 k=1.00 melee=8.00 read=8.00 f(8)k=8.00 f(8k)=8.00 apply6=6.00 f(6)k=6.00 native-sum=14.00 expect-armour-then-R=14.00 expect-R-then-armour=14.00 raised-f6=14.00 raised-f6k=14.00
+RES bare ROW R1 k=0.80 melee=6.40 read=6.40 f(8)k=6.40 f(8k)=6.40 apply6=4.80 f(6)k=4.80 native-sum=11.20 expect-armour-then-R=11.20 expect-R-then-armour=11.20 raised-f6=12.40 raised-f6k=11.20
+RES bare ROW R2 k=0.60 melee=4.80 read=4.80 f(8)k=4.80 f(8k)=4.80 apply6=3.60 f(6)k=3.60 native-sum=8.40 expect-armour-then-R=8.40 expect-R-then-armour=8.40 raised-f6=10.80 raised-f6k=8.40
+RES bare ROW R3 k=0.40 melee=3.20 read=3.20 f(8)k=3.20 f(8k)=3.20 apply6=2.40 f(6)k=2.40 native-sum=5.60 expect-armour-then-R=5.60 expect-R-then-armour=5.60 raised-f6=9.20 raised-f6k=5.60
+RES bare ROW R4 k=0.20 melee=1.60 read=1.60 f(8)k=1.60 f(8k)=1.60 apply6=1.20 f(6)k=1.20 native-sum=2.80 expect-armour-then-R=2.80 expect-R-then-armour=2.80 raised-f6=7.60 raised-f6k=2.80
+RES bare NOISE none
+probe_strm_resistance_bare RESULT done
+probe_strm_resistance_diamond START difficulty=Peaceful regen=false pvp=true
+SETUP strm_res_diamond_t hp=40.00 kit=minecraft:diamond_helmet+minecraft:diamond_chestplate+minecraft:diamond_leggings+minecraft:diamond_boots protection=0
+RES diamond ARMOUR totalArmor=20.00 totalToughness=8.00 epf=0
+RES diamond R0 melee alone: swing(true)=2.24 total=2.24 ev=[+0:before:2.24/entityAttack +0:hurt:2.24/entityAttack]
+RES diamond R0 reference apply6 alone: apply6(true)=1.56 total=1.56 ev=[+0:before:1.56/entityAttack +0:hurt:1.56/entityAttack]
+RES diamond R0 raise +f(6): swing(true)=3.80 before:read=2.24 set=3.80 total=3.80 ev=[+0:before:2.24->3.80/entityAttack +0:hurt:3.80/entityAttack]
+RES diamond R0 raise +f(6)*k: swing(true)=3.80 before:read=2.24 set=3.80 total=3.80 ev=[+0:before:2.24->3.80/entityAttack +0:hurt:3.80/entityAttack]
+RES diamond R1 melee alone: swing(true)=1.79 total=1.79 ev=[+0:before:1.79/entityAttack +0:hurt:1.79/entityAttack]
+RES diamond R1 reference apply6 alone: apply6(true)=1.25 total=1.25 ev=[+0:before:1.25/entityAttack +0:hurt:1.25/entityAttack]
+RES diamond R1 raise +f(6): swing(true)=3.35 before:read=1.79 set=3.35 total=3.35 ev=[+0:before:1.79->3.35/entityAttack +0:hurt:3.35/entityAttack]
+RES diamond R1 raise +f(6)*k: swing(true)=3.04 before:read=1.79 set=3.04 total=3.04 ev=[+0:before:1.79->3.04/entityAttack +0:hurt:3.04/entityAttack]
+RES diamond R2 melee alone: swing(true)=1.34 total=1.34 ev=[+0:before:1.34/entityAttack +0:hurt:1.34/entityAttack]
+RES diamond R2 reference apply6 alone: apply6(true)=0.94 total=0.94 ev=[+0:before:0.94/entityAttack +0:hurt:0.94/entityAttack]
+RES diamond R2 raise +f(6): swing(true)=2.90 before:read=1.34 set=2.90 total=2.90 ev=[+0:before:1.34->2.90/entityAttack +0:hurt:2.90/entityAttack]
+RES diamond R2 raise +f(6)*k: swing(true)=2.28 before:read=1.34 set=2.28 total=2.28 ev=[+0:before:1.34->2.28/entityAttack +0:hurt:2.28/entityAttack]
+RES diamond R3 melee alone: swing(true)=0.90 total=0.90 ev=[+0:before:0.90/entityAttack +0:hurt:0.90/entityAttack]
+RES diamond R3 reference apply6 alone: apply6(true)=0.62 total=0.62 ev=[+0:before:0.62/entityAttack +0:hurt:0.62/entityAttack]
+RES diamond R3 raise +f(6): swing(true)=2.46 before:read=0.90 set=2.46 total=2.46 ev=[+0:before:0.90->2.46/entityAttack +0:hurt:2.46/entityAttack]
+RES diamond R3 raise +f(6)*k: swing(true)=1.52 before:read=0.90 set=1.52 total=1.52 ev=[+0:before:0.90->1.52/entityAttack +0:hurt:1.52/entityAttack]
+RES diamond R4 melee alone: swing(true)=0.45 total=0.45 ev=[+0:before:0.45/entityAttack +0:hurt:0.45/entityAttack]
+RES diamond R4 reference apply6 alone: apply6(true)=0.31 total=0.31 ev=[+0:before:0.31/entityAttack +0:hurt:0.31/entityAttack]
+RES diamond R4 raise +f(6): swing(true)=2.01 before:read=0.45 set=2.01 total=2.01 ev=[+0:before:0.45->2.01/entityAttack +0:hurt:2.01/entityAttack]
+RES diamond R4 raise +f(6)*k: swing(true)=0.76 before:read=0.45 set=0.76 total=0.76 ev=[+0:before:0.45->0.76/entityAttack +0:hurt:0.76/entityAttack]
+RES diamond ROW R0 k=1.00 melee=2.24 read=2.24 f(8)k=2.24 f(8k)=2.24 apply6=1.56 f(6)k=1.56 native-sum=3.80 expect-armour-then-R=3.80 expect-R-then-armour=3.80 raised-f6=3.80 raised-f6k=3.80
+RES diamond ROW R1 k=0.80 melee=1.79 read=1.79 f(8)k=1.79 f(8k)=1.69 apply6=1.25 f(6)k=1.25 native-sum=3.04 expect-armour-then-R=3.04 expect-R-then-armour=2.88 raised-f6=3.35 raised-f6k=3.04
+RES diamond ROW R2 k=0.60 melee=1.34 read=1.34 f(8)k=1.34 f(8k)=1.19 apply6=0.94 f(6)k=0.94 native-sum=2.28 expect-armour-then-R=2.28 expect-R-then-armour=2.04 raised-f6=2.90 raised-f6k=2.28
+RES diamond ROW R3 k=0.40 melee=0.90 read=0.90 f(8)k=0.90 f(8k)=0.74 apply6=0.62 f(6)k=0.62 native-sum=1.52 expect-armour-then-R=1.52 expect-R-then-armour=1.28 raised-f6=2.46 raised-f6k=1.52
+RES diamond ROW R4 k=0.20 melee=0.45 read=0.45 f(8)k=0.45 f(8k)=0.35 apply6=0.31 f(6)k=0.31 native-sum=0.76 expect-armour-then-R=0.76 expect-R-then-armour=0.60 raised-f6=2.01 raised-f6k=0.76
+RES diamond NOISE none
+probe_strm_resistance_diamond RESULT done
+probe_strm_mob START difficulty=Peaceful regen=false pvp=true
+MOB husk bare SETUP hp=20.00 max=20.00 replaceitem=[] hasitem=[0,0,0,0] equippable=absent
+MOB husk bare melee alone: swing(true)=7.87 total=7.87 ev=[+0:before:7.87/entityAttack +0:hurt:7.87/entityAttack]
+MOB husk bare reference apply6 alone: apply6(true)=5.90 total=5.90 ev=[+0:before:5.90/entityAttack +0:hurt:5.90/entityAttack]
+MOB husk bare raise +f(6) from equippable: swing(true)=13.87 before:read=7.87 set=13.87 total=13.87 ev=[+0:before:7.87->13.87/entityAttack +0:hurt:13.87/entityAttack]
+MOB husk bare raise +f(6) from the known kit: swing(true)=13.87 before:read=7.87 set=13.87 total=13.87 ev=[+0:before:7.87->13.87/entityAttack +0:hurt:13.87/entityAttack]
+MOB husk bare ROW melee=7.87 read=7.87 f_known(8)=8.00 apply6=5.90 f_known(6)=6.00 native-sum=13.78 expect-known=14.00 f_equippable(6)=6.00 raised-equippable=13.87 raised-known=13.87
+MOB husk bare NOISE none
+MOB husk diamond SETUP hp=20.00 max=20.00 replaceitem=[1,1,1,1] hasitem=[1,1,1,1] equippable=absent
+MOB husk diamond melee alone: swing(true)=2.24 total=2.24 ev=[+0:before:2.24/entityAttack +0:hurt:2.24/entityAttack]
+MOB husk diamond reference apply6 alone: apply6(true)=1.56 total=1.56 ev=[+0:before:1.56/entityAttack +0:hurt:1.56/entityAttack]
+MOB husk diamond raise +f(6) from equippable: swing(true)=8.24 before:read=2.24 set=8.24 total=8.24 ev=[+0:before:2.24->8.24/entityAttack +0:hurt:8.24/entityAttack]
+MOB husk diamond raise +f(6) from the known kit: swing(true)=3.80 before:read=2.24 set=3.80 total=3.80 ev=[+0:before:2.24->3.80/entityAttack +0:hurt:3.80/entityAttack]
+MOB husk diamond ROW melee=2.24 read=2.24 f_known(8)=2.24 apply6=1.56 f_known(6)=1.56 native-sum=3.80 expect-known=3.80 f_equippable(6)=6.00 raised-equippable=8.24 raised-known=3.80
+MOB husk diamond NOISE none
+probe_strm_mob RESULT done
+probe_strm_crit_bare START difficulty=Peaceful regen=false pvp=true
+SETUP strm_crit_bare_t hp=40.00 kit=bare
+CRIT bare sweep k=2: jump(true) k=2 ground=false falling=false vy=0.333 swing(true)=8.00 total=8.00 ev=[+2:before:8.00/entityAttack +2:hurt:8.00/entityAttack]
+CRIT bare sweep k=3: jump(true) k=3 ground=false falling=false vy=0.248 swing(true)=8.00 total=8.00 ev=[+3:before:8.00/entityAttack +3:hurt:8.00/entityAttack]
+CRIT bare sweep k=4: jump(true) k=4 ground=false falling=false vy=0.165 swing(true)=8.00 total=8.00 ev=[+4:before:8.00/entityAttack +4:hurt:8.00/entityAttack]
+CRIT bare sweep k=5: jump(true) k=5 ground=false falling=false vy=0.083 swing(true)=8.00 total=8.00 ev=[+5:before:8.00/entityAttack +5:hurt:8.00/entityAttack]
+CRIT bare sweep k=6: jump(true) k=6 ground=false falling=false vy=0.003 swing(true)=8.00 total=8.00 ev=[+6:before:8.00/entityAttack +6:hurt:8.00/entityAttack]
+CRIT bare sweep k=7: jump(true) k=7 ground=false falling=true vy=-0.075 swing(true)=12.00 total=12.00 ev=[+7:before:12.00/entityAttack +7:hurt:12.00/entityAttack]
+CRIT bare sweep k=8: jump(true) k=8 ground=false falling=true vy=-0.152 swing(true)=12.00 total=12.00 ev=[+8:before:12.00/entityAttack +8:hurt:12.00/entityAttack]
+CRIT bare sweep k=9: jump(true) k=9 ground=false falling=true vy=-0.228 swing(true)=12.00 total=12.00 ev=[+9:before:12.00/entityAttack +9:hurt:12.00/entityAttack]
+CRIT bare sweep k=10: jump(true) k=10 ground=false falling=true vy=-0.302 swing(true)=12.00 total=12.00 ev=[+10:before:12.00/entityAttack +10:hurt:12.00/entityAttack]
+CRIT bare SWEEP k=2:8.00 k=3:8.00 k=4:8.00 k=5:8.00 k=6:8.00 k=7:12.00 k=8:12.00 k=9:12.00 k=10:12.00 plain f(8)=8.00 critK=7
+CRIT bare crit alone: jump(true) k=7 ground=false falling=true vy=-0.075 swing(true)=12.00 total=12.00 ev=[+7:before:12.00/entityAttack +7:hurt:12.00/entityAttack]
+CRIT bare crit alone again: jump(true) k=7 ground=false falling=true vy=-0.075 swing(true)=12.00 total=12.00 ev=[+7:before:12.00/entityAttack +7:hurt:12.00/entityAttack]
+CRIT bare reference apply6 alone: apply6(true)=6.00 total=6.00 ev=[+0:before:6.00/entityAttack +0:hurt:6.00/entityAttack]
+CRIT bare crit raised +f(6): jump(true) k=7 ground=false falling=true vy=-0.075 swing(true)=18.00 before:read=12.00 set=18.00 total=18.00 ev=[+7:before:12.00->18.00/entityAttack +7:hurt:18.00/entityAttack]
+CRIT bare crit raised +f(6) again: jump(true) k=7 ground=false falling=true vy=-0.075 swing(true)=18.00 before:read=12.00 set=18.00 total=18.00 ev=[+7:before:12.00->18.00/entityAttack +7:hurt:18.00/entityAttack]
+CRIT bare ROW critK=7 crit=12.00/12.00 read=12.00 f(12)=12.00 apply6=6.00 f(6)=6.00 native-sum=18.00 expect=18.00 raised=18.00/18.00
+CRIT bare NOISE none
+probe_strm_crit_bare RESULT done
+probe_strm_crit_diamond START difficulty=Peaceful regen=false pvp=true
+SETUP strm_crit_diamond_t hp=40.00 kit=minecraft:diamond_helmet+minecraft:diamond_chestplate+minecraft:diamond_leggings+minecraft:diamond_boots protection=0
+CRIT diamond sweep k=2: jump(true) k=2 ground=false falling=false vy=0.333 swing(true)=2.24 total=2.24 ev=[+2:before:2.24/entityAttack +2:hurt:2.24/entityAttack]
+CRIT diamond sweep k=3: jump(true) k=3 ground=false falling=false vy=0.248 swing(true)=2.24 total=2.24 ev=[+3:before:2.24/entityAttack +3:hurt:2.24/entityAttack]
+CRIT diamond sweep k=4: jump(true) k=4 ground=false falling=false vy=0.165 swing(true)=2.24 total=2.24 ev=[+4:before:2.24/entityAttack +4:hurt:2.24/entityAttack]
+CRIT diamond sweep k=5: jump(true) k=5 ground=false falling=false vy=0.083 swing(true)=2.24 total=2.24 ev=[+5:before:2.24/entityAttack +5:hurt:2.24/entityAttack]
+CRIT diamond sweep k=6: jump(true) k=6 ground=false falling=false vy=0.003 swing(true)=2.24 total=2.24 ev=[+6:before:2.24/entityAttack +6:hurt:2.24/entityAttack]
+CRIT diamond sweep k=7: jump(true) k=7 ground=false falling=true vy=-0.075 swing(true)=3.84 total=3.84 ev=[+7:before:3.84/entityAttack +7:hurt:3.84/entityAttack]
+CRIT diamond sweep k=8: jump(true) k=8 ground=false falling=true vy=-0.152 swing(true)=3.84 total=3.84 ev=[+8:before:3.84/entityAttack +8:hurt:3.84/entityAttack]
+CRIT diamond sweep k=9: jump(true) k=9 ground=false falling=true vy=-0.228 swing(true)=3.84 total=3.84 ev=[+9:before:3.84/entityAttack +9:hurt:3.84/entityAttack]
+CRIT diamond sweep k=10: jump(true) k=10 ground=false falling=true vy=-0.302 swing(true)=3.84 total=3.84 ev=[+10:before:3.84/entityAttack +10:hurt:3.84/entityAttack]
+CRIT diamond SWEEP k=2:2.24 k=3:2.24 k=4:2.24 k=5:2.24 k=6:2.24 k=7:3.84 k=8:3.84 k=9:3.84 k=10:3.84 plain f(8)=2.24 critK=7
+CRIT diamond crit alone: jump(true) k=7 ground=false falling=true vy=-0.075 swing(true)=3.84 total=3.84 ev=[+7:before:3.84/entityAttack +7:hurt:3.84/entityAttack]
+CRIT diamond crit alone again: jump(true) k=7 ground=false falling=true vy=-0.075 swing(true)=3.84 total=3.84 ev=[+7:before:3.84/entityAttack +7:hurt:3.84/entityAttack]
+CRIT diamond reference apply6 alone: apply6(true)=1.56 total=1.56 ev=[+0:before:1.56/entityAttack +0:hurt:1.56/entityAttack]
+CRIT diamond crit raised +f(6): jump(true) k=7 ground=false falling=true vy=-0.075 swing(true)=5.40 before:read=3.84 set=5.40 total=5.40 ev=[+7:before:3.84->5.40/entityAttack +7:hurt:5.40/entityAttack]
+CRIT diamond crit raised +f(6) again: jump(true) k=7 ground=false falling=true vy=-0.075 swing(true)=5.40 before:read=3.84 set=5.40 total=5.40 ev=[+7:before:3.84->5.40/entityAttack +7:hurt:5.40/entityAttack]
+CRIT diamond ROW critK=7 crit=3.84/3.84 read=3.84 f(12)=3.84 apply6=1.56 f(6)=1.56 native-sum=5.40 expect=5.40 raised=5.40/5.40
+CRIT diamond NOISE none
+probe_strm_crit_diamond RESULT done
+probe_strm_absorption START difficulty=Peaceful regen=false pvp=true
+SETUP strm_abs_bare_t hp=40.00 kit=bare
+ABS bare absorption I control no hit: untouched health-lost=0.00 probe-sonic20(true) absorption-left=4.00 total=16.00 ev=[+14:before:20.00/sonicBoom +14:hurt:20.00/sonicBoom]
+ABS bare absorption I melee alone: swing(true)=4.00 health-lost=4.00 probe-sonic20(true) absorption-left=0.00 total=24.00 ev=[+2:before:8.00/entityAttack +2:hurt:8.00/entityAttack +14:before:20.00/sonicBoom +14:hurt:20.00/sonicBoom]
+ABS bare absorption I raise +f(6): swing(true)=10.00 before:read=8.00 set=14.00 health-lost=10.00 probe-sonic20(true) absorption-left=0.00 total=30.00 ev=[+2:before:8.00->14.00/entityAttack +2:hurt:14.00/entityAttack +16:before:20.00/sonicBoom +16:hurt:20.00/sonicBoom]
+ABS bare ROW f(8)+f(6)=14.00 expect raise: health-lost=10.00 absorption-left=0.00 | control no hit: health-lost=0.00 absorption-left=4.00 | melee alone: health-lost=4.00 absorption-left=0.00 | raise +f(6): health-lost=10.00 absorption-left=0.00
+ABS bare NOISE none
+SETUP strm_abs_diamond_t hp=40.00 kit=minecraft:diamond_helmet+minecraft:diamond_chestplate+minecraft:diamond_leggings+minecraft:diamond_boots protection=0
+ABS diamond absorption I control no hit: untouched health-lost=0.00 probe-sonic20(true) absorption-left=4.00 total=16.00 ev=[+14:before:20.00/sonicBoom +14:hurt:20.00/sonicBoom]
+ABS diamond absorption I melee alone: swing(true)=0.00 health-lost=0.00 probe-sonic20(true) absorption-left=1.76 total=18.24 ev=[+2:before:2.24/entityAttack +2:hurt:2.24/entityAttack +14:before:20.00/sonicBoom +14:hurt:20.00/sonicBoom]
+ABS diamond absorption I raise +f(6): swing(true)=0.00 before:read=2.24 set=3.80 health-lost=0.00 probe-sonic20(true) absorption-left=0.20 total=19.80 ev=[+2:before:2.24->3.80/entityAttack +2:hurt:3.80/entityAttack +16:before:20.00/sonicBoom +16:hurt:20.00/sonicBoom]
+ABS diamond ROW f(8)+f(6)=3.80 expect raise: health-lost=0.00 absorption-left=0.20 | control no hit: health-lost=0.00 absorption-left=4.00 | melee alone: health-lost=0.00 absorption-left=1.76 | raise +f(6): health-lost=0.00 absorption-left=0.20
+ABS diamond NOISE none
+SETUP strm_abs_netherite_p4_t hp=40.00 kit=minecraft:netherite_helmet+minecraft:netherite_chestplate+minecraft:netherite_leggings+minecraft:netherite_boots protection=4
+ABS netherite_p4 absorption I control no hit: untouched health-lost=0.00 probe-sonic20(true) absorption-left=4.00 total=16.00 ev=[+14:before:20.00/sonicBoom +14:hurt:20.00/sonicBoom]
+ABS netherite_p4 absorption I melee alone: swing(true)=0.00 health-lost=0.00 probe-sonic20(true) absorption-left=3.24 total=16.76 ev=[+2:before:0.76/entityAttack +2:hurt:0.76/entityAttack +14:before:20.00/sonicBoom +14:hurt:20.00/sonicBoom]
+ABS netherite_p4 absorption I raise +f(6): swing(true)=0.00 before:read=0.76 set=1.30 health-lost=0.00 probe-sonic20(true) absorption-left=2.70 total=17.30 ev=[+2:before:0.76->1.30/entityAttack +2:hurt:1.30/entityAttack +16:before:20.00/sonicBoom +16:hurt:20.00/sonicBoom]
+ABS netherite_p4 ROW f(8)+f(6)=1.30 expect raise: health-lost=0.00 absorption-left=2.70 | control no hit: health-lost=0.00 absorption-left=4.00 | melee alone: health-lost=0.00 absorption-left=3.24 | raise +f(6): health-lost=0.00 absorption-left=2.70
+ABS netherite_p4 NOISE none
+probe_strm_absorption RESULT done
+probe_strm_totem START difficulty=Peaceful regen=false pvp=true
+TOTEM ROW control melee 8 into hp 10, totem: put=true hp0=10.00 offhand minecraft:totem_of_undying -> minecraft:totem_of_undying swing(true) hp-same-tick=2.00 hp-after=2.00 died=no credited-to-wielder=n/a effects=[] ev=[+0:before:8.00/entityAttack +0:hurt:8.00/entityAttack]
+TOTEM ROW control melee 8 into hp 5 (lethal without a raise), totem: put=true hp0=5.00 offhand minecraft:totem_of_undying -> empty swing(true) hp-same-tick=1.00 hp-after=2.00 died=no credited-to-wielder=n/a effects=[minecraft:regeneration:1,minecraft:fire_resistance:0,minecraft:absorption:1] ev=[+0:before:8.00/entityAttack +0:hurt:8.00/entityAttack]
+TOTEM ROW raise +6 makes the melee lethal, totem (1): put=true hp0=10.00 offhand minecraft:totem_of_undying -> empty swing(true) before:read=8.00 set=14.00 hp-same-tick=0.00 hp-after=0.00 died=yes cause=entityAttack by=minecraft:player#-8589934576 +0 credited-to-wielder=true effects=[minecraft:regeneration:1,minecraft:fire_resistance:0,minecraft:absorption:1] ev=[+0:before:8.00->14.00/entityAttack +0:hurt:14.00/entityAttack +0:die:entityAttack/minecraft:player#-8589934576]
+TOTEM ROW raise +6 makes the melee lethal, totem (2): put=true hp0=10.00 offhand minecraft:totem_of_undying -> empty swing(true) before:read=8.00 set=14.00 hp-same-tick=0.00 hp-after=0.00 died=yes cause=entityAttack by=minecraft:player#-8589934576 +0 credited-to-wielder=true effects=[minecraft:regeneration:1,minecraft:fire_resistance:0,minecraft:absorption:1] ev=[+0:before:8.00->14.00/entityAttack +0:hurt:14.00/entityAttack +0:die:entityAttack/minecraft:player#-8589934576]
+TOTEM ROW raise +6 makes the melee lethal, totem (3): put=true hp0=10.00 offhand minecraft:totem_of_undying -> empty swing(true) before:read=8.00 set=14.00 hp-same-tick=0.00 hp-after=0.00 died=yes cause=entityAttack by=minecraft:player#-8589934576 +0 credited-to-wielder=true effects=[minecraft:regeneration:1,minecraft:fire_resistance:0,minecraft:absorption:1] ev=[+0:before:8.00->14.00/entityAttack +0:hurt:14.00/entityAttack +0:die:entityAttack/minecraft:player#-8589934576]
+TOTEM ROW raise +6 on a melee already lethal (hp 5), totem: put=true hp0=5.00 offhand minecraft:totem_of_undying -> empty swing(true) before:read=8.00 set=14.00 hp-same-tick=0.00 hp-after=0.00 died=yes cause=entityAttack by=minecraft:player#-8589934576 +0 credited-to-wielder=true effects=[minecraft:regeneration:1,minecraft:fire_resistance:0,minecraft:absorption:1] ev=[+0:before:8.00->14.00/entityAttack +0:hurt:14.00/entityAttack +0:die:entityAttack/minecraft:player#-8589934576]
+TOTEM ROW raise to exactly hp (10 into hp 10), totem: put=true hp0=10.00 offhand minecraft:totem_of_undying -> empty swing(true) before:read=8.00 set=10.00 hp-same-tick=0.00 hp-after=0.00 died=yes cause=entityAttack by=minecraft:player#-8589934576 +0 credited-to-wielder=true effects=[minecraft:regeneration:1,minecraft:fire_resistance:0,minecraft:absorption:1] ev=[+0:before:8.00->10.00/entityAttack +0:hurt:10.00/entityAttack +0:die:entityAttack/minecraft:player#-8589934576]
+TOTEM ROW raise +6 makes the melee lethal, no totem: put=- hp0=10.00 offhand empty -> empty swing(true) before:read=8.00 set=14.00 hp-same-tick=0.00 hp-after=0.00 died=yes cause=entityAttack by=minecraft:player#-8589934576 +0 credited-to-wielder=true effects=[] ev=[+0:before:8.00->14.00/entityAttack +0:hurt:14.00/entityAttack +0:die:entityAttack/minecraft:player#-8589934576]
+TOTEM ROW reference applyDamage(30, entityAttack, wielder), totem: put=true hp0=10.00 offhand minecraft:totem_of_undying -> empty apply30(true) hp-after=2.00 died=no credited-to-wielder=n/a effects=[minecraft:regeneration:1,minecraft:fire_resistance:0,minecraft:absorption:1] ev=[+0:before:30.00/entityAttack +0:hurt:30.00/entityAttack]
+TOTEM ROW reference applyDamage(30, entityAttack, wielder), no totem: put=- hp0=10.00 offhand empty -> empty apply30(true) hp-after=0.00 died=yes cause=entityAttack by=minecraft:player#-8589934576 +0 credited-to-wielder=true effects=[] ev=[+0:before:30.00/entityAttack +0:hurt:30.00/entityAttack +0:die:entityAttack/minecraft:player#-8589934576]
+TOTEM ROW health write 0, totem: put=true hp0=10.00 offhand minecraft:totem_of_undying -> empty write0(true) hp-after=0.00 died=yes cause=override by=none +1 credited-to-wielder=false effects=[] ev=[+1:die:override/none]
+TOTEM ROW health write 0, no totem: put=- hp0=10.00 offhand empty -> empty write0(true) hp-after=0.00 died=yes cause=override by=none +1 credited-to-wielder=false effects=[] ev=[+1:die:override/none]
+TOTEM ROW way out: melee unraised + applyDamage(100) same tick, totem: put=true hp0=10.00 offhand minecraft:totem_of_undying -> empty swing(true) hp-same-tick=2.00 apply100(true) hp-after=2.00 died=no credited-to-wielder=n/a effects=[minecraft:regeneration:1,minecraft:fire_resistance:0,minecraft:absorption:1] ev=[+0:before:8.00/entityAttack +0:before:92.00/entityAttack +0:hurt:8.00/entityAttack +0:hurt:92.00/entityAttack]
+TOTEM ROW way out: melee unraised + applyDamage(100) next tick, totem: put=true hp0=10.00 offhand minecraft:totem_of_undying -> empty swing(true) hp-same-tick=2.00 +1 apply100(true) hp-after=2.00 died=no credited-to-wielder=n/a effects=[minecraft:regeneration:1,minecraft:fire_resistance:0,minecraft:absorption:1] ev=[+0:before:8.00/entityAttack +0:hurt:8.00/entityAttack +1:before:92.00/entityAttack +1:hurt:92.00/entityAttack]
+TOTEM ROW way out: melee unraised + applyDamage(100) next tick, no totem: put=- hp0=10.00 offhand empty -> empty swing(true) hp-same-tick=2.00 +1 apply100(true) hp-after=0.00 died=yes cause=entityAttack by=minecraft:player#-8589934576 +1 credited-to-wielder=true effects=[] ev=[+0:before:8.00/entityAttack +0:hurt:8.00/entityAttack +1:before:92.00/entityAttack +1:hurt:92.00/entityAttack +1:die:entityAttack/minecraft:player#-8589934576]
+probe_strm_totem RESULT done
+probe_strm_credit START difficulty=Peaceful regen=false pvp=true
+CREDIT doMobLoot=true
+CREDIT ROW control melee 8 into hp 10: swing(true) alive=true died=no credited-to-wielder=n/a wielder-xp=0->0 orbs=0 drops=0 ev=[+0:before:8.00/entityAttack +0:hurt:8.00/entityAttack]
+CREDIT ROW raise +6 makes the melee lethal: swing(true) before:read=8.00 set=14.00 alive=false died=yes cause=entityAttack by=minecraft:player#-8589934559 credited-to-wielder=true wielder-xp=0->1 orbs=1 drops=2 ev=[+0:before:8.00->14.00/entityAttack +0:hurt:14.00/entityAttack +0:die:entityAttack/minecraft:player#-8589934559]
+CREDIT ROW positive control: melee 8 into hp 5: swing(true) alive=false died=yes cause=entityAttack by=minecraft:player#-8589934559 credited-to-wielder=true wielder-xp=1->1 orbs=1 drops=1 ev=[+0:before:8.00/entityAttack +0:hurt:8.00/entityAttack +0:die:entityAttack/minecraft:player#-8589934559]
+CREDIT ROW negative control: sourceless applyDamage(30): apply30(true) alive=false died=yes cause=entityAttack by=none credited-to-wielder=false wielder-xp=1->1 orbs=0 drops=2 ev=[+0:before:30.00/entityAttack +0:hurt:30.00/entityAttack +0:die:entityAttack/none]
+CREDIT ROW health write 0: write0(true) alive=false died=yes cause=override by=none credited-to-wielder=false wielder-xp=1->1 orbs=0 drops=2 ev=[+1:die:override/none]
+probe_strm_credit RESULT done
+probe_strm_knockback START difficulty=Peaceful regen=false pvp=true
+SETUP strm_kb_t hp=40.00 kit=bare
+KB player ROW none rep=1: - lost=0.00 v0=(0.00,0.00,0.00) v1=(0.00,0.00,0.00) d1=0.00 d10=0.00 away=0.00 side=0.00 maxUp=0.00
+KB player ROW none rep=2: - lost=0.00 v0=(0.00,0.00,0.00) v1=(0.00,0.00,0.00) d1=0.00 d10=0.00 away=0.00 side=0.00 maxUp=0.00
+KB player ROW melee rep=1: swing(true) lost=8.00 v0=(0.00,0.00,0.00) v1=(0.40,0.40,0.00) d1=0.40 d10=1.79 away=1.79 side=0.00 maxUp=1.15
+KB player ROW melee rep=2: swing(true) lost=8.00 v0=(0.00,0.00,0.00) v1=(0.40,0.40,0.00) d1=0.40 d10=1.79 away=1.79 side=0.00 maxUp=1.15
+KB player ROW raise rep=1: swing(true) before:read=8.00 set=14.00 lost=14.00 v0=(0.00,0.00,0.00) v1=(0.40,0.40,0.00) d1=0.40 d10=1.79 away=1.79 side=0.00 maxUp=1.15
+KB player ROW raise rep=2: swing(true) before:read=8.00 set=14.00 lost=14.00 v0=(0.00,0.00,0.00) v1=(0.40,0.40,0.00) d1=0.40 d10=1.79 away=1.79 side=0.00 maxUp=1.15
+KB player ROW apply4 rep=1: ret=true lost=4.00 v0=(0.00,0.00,0.00) v1=(0.40,0.40,0.00) d1=0.40 d10=1.79 away=1.79 side=0.00 maxUp=1.15
+KB player ROW apply4 rep=2: ret=true lost=4.00 v0=(0.00,0.00,0.00) v1=(0.40,0.40,0.00) d1=0.40 d10=1.79 away=1.79 side=0.00 maxUp=1.15
+KB player ROW apply10 rep=1: ret=true lost=10.00 v0=(0.00,0.00,0.00) v1=(0.40,0.40,0.00) d1=0.40 d10=1.79 away=1.79 side=0.00 maxUp=1.15
+KB player ROW apply10 rep=2: ret=true lost=10.00 v0=(0.00,0.00,0.00) v1=(0.40,0.40,0.00) d1=0.40 d10=1.79 away=1.79 side=0.00 maxUp=1.15
+KB player ROW apply4-nosource rep=1: ret=true lost=4.00 v0=(0.00,0.00,0.00) v1=(0.00,0.00,0.00) d1=0.00 d10=0.00 away=0.00 side=0.00 maxUp=0.00
+KB player ROW apply4-nosource rep=2: ret=true lost=4.00 v0=(0.00,0.00,0.00) v1=(0.00,0.00,0.00) d1=0.00 d10=0.00 away=0.00 side=0.00 maxUp=0.00
+KB player ROW sonic4 rep=1: ret=true lost=4.00 v0=(0.00,0.00,0.00) v1=(0.40,0.40,0.00) d1=0.40 d10=1.79 away=1.79 side=0.00 maxUp=1.15
+KB player ROW sonic4 rep=2: ret=true lost=4.00 v0=(0.00,0.00,0.00) v1=(0.40,0.40,0.00) d1=0.40 d10=1.79 away=1.79 side=0.00 maxUp=1.15
+KB player ROW magic4 rep=1: ret=true lost=4.00 v0=(0.00,0.00,0.00) v1=(0.40,0.40,0.00) d1=0.40 d10=1.79 away=1.79 side=0.00 maxUp=1.15
+KB player ROW magic4 rep=2: ret=true lost=4.00 v0=(0.00,0.00,0.00) v1=(0.40,0.40,0.00) d1=0.40 d10=1.79 away=1.79 side=0.00 maxUp=1.15
+KB player NOISE none
+KB villager SETUP hp=20.00 max=20.00
+KB villager ROW none rep=1: - lost=0.00 v0=(0.00,0.00,0.00) v1=(0.00,0.00,0.00) d1=0.00 d10=0.00 away=0.00 side=0.00 maxUp=0.00
+KB villager ROW none rep=2: - lost=0.00 v0=(0.00,0.00,0.00) v1=(0.00,0.00,0.00) d1=0.00 d10=0.00 away=0.00 side=0.00 maxUp=0.00
+KB villager ROW melee rep=1: swing(true) lost=8.00 v0=(0.00,0.00,0.00) v1=(0.40,0.40,0.00) d1=0.40 d10=1.79 away=1.79 side=0.00 maxUp=1.15
+KB villager ROW melee rep=2: swing(true) lost=8.00 v0=(0.00,0.00,0.00) v1=(0.40,0.40,0.00) d1=0.40 d10=1.79 away=1.79 side=0.00 maxUp=1.15
+KB villager ROW raise rep=1: swing(true) before:read=8.00 set=14.00 lost=14.00 v0=(0.00,0.00,0.00) v1=(0.40,0.40,0.00) d1=0.40 d10=1.79 away=1.79 side=0.00 maxUp=1.15
+KB villager ROW raise rep=2: swing(true) before:read=8.00 set=14.00 lost=14.00 v0=(0.00,0.00,0.00) v1=(0.40,0.40,0.00) d1=0.40 d10=1.79 away=1.79 side=0.00 maxUp=1.15
+KB villager ROW apply4 rep=1: ret=true lost=4.00 v0=(0.00,0.00,0.00) v1=(0.40,0.40,0.00) d1=0.40 d10=1.79 away=1.79 side=0.00 maxUp=1.15
+KB villager ROW apply4 rep=2: ret=true lost=4.00 v0=(0.00,0.00,0.00) v1=(0.40,0.40,0.00) d1=0.40 d10=1.79 away=1.79 side=0.00 maxUp=1.15
+KB villager ROW apply10 rep=1: ret=true lost=10.00 v0=(0.00,0.00,0.00) v1=(0.40,0.40,0.00) d1=0.40 d10=1.79 away=1.79 side=0.00 maxUp=1.15
+KB villager ROW apply10 rep=2: ret=true lost=10.00 v0=(0.00,0.00,0.00) v1=(0.40,0.40,0.00) d1=0.40 d10=1.79 away=1.79 side=0.00 maxUp=1.15
+KB villager ROW apply4-nosource rep=1: ret=true lost=4.00 v0=(0.00,0.00,0.00) v1=(0.00,0.00,0.00) d1=0.00 d10=0.00 away=0.00 side=0.00 maxUp=0.00
+KB villager ROW apply4-nosource rep=2: ret=true lost=4.00 v0=(0.00,0.00,0.00) v1=(0.00,0.00,0.00) d1=0.00 d10=0.00 away=0.00 side=0.00 maxUp=0.00
+KB villager ROW sonic4 rep=1: ret=true lost=4.00 v0=(0.00,0.00,0.00) v1=(0.40,0.40,0.00) d1=0.40 d10=1.79 away=1.79 side=0.00 maxUp=1.15
+KB villager ROW sonic4 rep=2: ret=true lost=4.00 v0=(0.00,0.00,0.00) v1=(0.40,0.40,0.00) d1=0.40 d10=1.79 away=1.79 side=0.00 maxUp=1.15
+KB villager ROW magic4 rep=1: ret=true lost=4.00 v0=(0.00,0.00,0.00) v1=(0.40,0.40,0.00) d1=0.40 d10=1.79 away=1.79 side=0.00 maxUp=1.15
+KB villager ROW magic4 rep=2: ret=true lost=4.00 v0=(0.00,0.00,0.00) v1=(0.40,0.40,0.00) d1=0.40 d10=1.79 away=1.79 side=0.00 maxUp=1.15
+KB villager NOISE none
+probe_strm_knockback RESULT done
+probe_strm_trace START difficulty=Peaceful regen=false pvp=true
+TRACE A1 wall@x6: block=stone@rel(6.00,2.00,3.00)/West d=5.50(steps=11) entities(maxD=stop)=[front@2.45] entities(maxD=10)=[front@2.45] entities(maxD=10,ignoreBlockCollision)=[front@2.45 behind@7.45] entities(maxD=stop,ignoreBlockCollision)=[front@2.45]
+TRACE A1b wall@x6 front cow removed: entities(maxD=stop)=[] entities(maxD=10)=[]
+TRACE A2 two in a row, no wall: block=none(steps=11) entities(maxD=10)=[first@2.45 second@5.45]
+TRACE A3 centre 9.40 out: entities(maxD=10)=[in9.4@8.85]
+TRACE A3 centre 10.60 out: entities(maxD=10)=[] entities(maxD=11)=[out10.6@10.05]
+TRACE B diagonal xz wall: block(maxD=10)=none(steps=10) block(budget)=stone@rel(6.00,2.00,6.00)/West d=7.78(steps=15) entities(maxD=stop)=[front@3.22] entities(maxD=10)=[front@3.22 behind@9.22] entities(maxD=10,ignoreBlockCollision)=[front@3.22 behind@9.22] entities(maxD=stop,ignoreBlockCollision)=[front@3.22]
+TRACE B2 diagonal, wall removed: block(budget)=none(steps=15) entities(maxD=10)=[front@3.22 behind@9.22]
+TRACE C diagonal xyz cube: block(maxD=10)=none(steps=10) block(budget)=stone@rel(4.00,6.00,4.00)/Down d=6.41(steps=19)
+TRACE D stone (reads stone): block=stone@rel(3.00,2.00,3.00)/West d=2.50(steps=11) pick(maxD=stop,ignoreBlockCollision)=[] entity(default)=[] entity(TRACE_FLAGS)=[] entity(ignoreBlockCollision)=[target@4.45]
+TRACE D glass (reads glass): block=glass@rel(3.00,2.00,3.00)/West d=2.50(steps=11) pick(maxD=stop,ignoreBlockCollision)=[] entity(default)=[] entity(TRACE_FLAGS)=[] entity(ignoreBlockCollision)=[target@4.45]
+TRACE D glass_pane (reads glass_pane): block=glass_pane@rel(3.00,2.00,3.00)/West d=2.94(steps=11) pick(maxD=stop,ignoreBlockCollision)=[] entity(default)=[] entity(TRACE_FLAGS)=[] entity(ignoreBlockCollision)=[target@4.45]
+TRACE D iron_bars (reads iron_bars): block=iron_bars@rel(3.00,2.00,3.00)/West d=2.94(steps=11) pick(maxD=stop,ignoreBlockCollision)=[] entity(default)=[] entity(TRACE_FLAGS)=[] entity(ignoreBlockCollision)=[target@4.45]
+TRACE D oak_fence (reads oak_fence): block=oak_fence@rel(3.00,2.00,3.00)/West d=2.88(steps=11) pick(maxD=stop,ignoreBlockCollision)=[] entity(default)=[] entity(TRACE_FLAGS)=[] entity(ignoreBlockCollision)=[target@4.45]
+TRACE D oak_leaves (reads oak_leaves): block=oak_leaves@rel(3.00,2.00,3.00)/West d=2.50(steps=11) pick(maxD=stop,ignoreBlockCollision)=[] entity(default)=[] entity(TRACE_FLAGS)=[] entity(ignoreBlockCollision)=[target@4.45]
+TRACE D iron_chain (reads iron_chain): block=iron_chain@rel(3.00,2.00,3.00)/West d=2.91(steps=11) pick(maxD=stop,ignoreBlockCollision)=[] entity(default)=[] entity(TRACE_FLAGS)=[] entity(ignoreBlockCollision)=[target@4.45]
+TRACE D barrier (reads barrier): block=barrier@rel(3.00,2.00,3.00)/West d=2.50(steps=11) pick(maxD=stop,ignoreBlockCollision)=[] entity(default)=[] entity(TRACE_FLAGS)=[] entity(ignoreBlockCollision)=[target@4.45]
+TRACE D scaffolding (reads scaffolding): block=none(steps=11) pick(maxD=stop,ignoreBlockCollision)=[target@4.45] entity(default)=[target@4.45] entity(TRACE_FLAGS)=[target@4.45] entity(ignoreBlockCollision)=[target@4.45]
+TRACE D powder_snow (reads powder_snow): block=none(steps=11) pick(maxD=stop,ignoreBlockCollision)=[target@4.45] entity(default)=[] entity(TRACE_FLAGS)=[] entity(ignoreBlockCollision)=[target@4.45]
+TRACE D web (reads web): block=none(steps=11) pick(maxD=stop,ignoreBlockCollision)=[target@4.45] entity(default)=[] entity(TRACE_FLAGS)=[] entity(ignoreBlockCollision)=[target@4.45]
+TRACE D short_grass (reads short_grass): block=none(steps=11) pick(maxD=stop,ignoreBlockCollision)=[target@4.45] entity(default)=[] entity(TRACE_FLAGS)=[] entity(ignoreBlockCollision)=[target@4.45]
+TRACE D poppy (reads poppy): block=none(steps=11) pick(maxD=stop,ignoreBlockCollision)=[target@4.45] entity(default)=[] entity(TRACE_FLAGS)=[] entity(ignoreBlockCollision)=[target@4.45]
+TRACE D torch (reads torch): block=none(steps=11) pick(maxD=stop,ignoreBlockCollision)=[target@4.45] entity(default)=[] entity(TRACE_FLAGS)=[] entity(ignoreBlockCollision)=[target@4.45]
+TRACE D standing_sign (reads standing_sign): block=none(steps=11) pick(maxD=stop,ignoreBlockCollision)=[target@4.45] entity(default)=[] entity(TRACE_FLAGS)=[] entity(ignoreBlockCollision)=[target@4.45]
+TRACE D white_carpet (reads white_carpet): block=none(steps=11) pick(maxD=stop,ignoreBlockCollision)=[target@4.45] entity(default)=[target@4.45] entity(TRACE_FLAGS)=[target@4.45] entity(ignoreBlockCollision)=[target@4.45]
+TRACE D snow_layer (reads snow_layer): block=none(steps=11) pick(maxD=stop,ignoreBlockCollision)=[target@4.45] entity(default)=[target@4.45] entity(TRACE_FLAGS)=[target@4.45] entity(ignoreBlockCollision)=[target@4.45]
+TRACE D light_block_15 (reads light_block_15): block=none(steps=11) pick(maxD=stop,ignoreBlockCollision)=[target@4.45] entity(default)=[target@4.45] entity(TRACE_FLAGS)=[target@4.45] entity(ignoreBlockCollision)=[target@4.45]
+TRACE D water (reads water): block=none(steps=11) pick(maxD=stop,ignoreBlockCollision)=[target@4.45] entity(default)=[target@4.45] entity(TRACE_FLAGS)=[target@4.45] entity(ignoreBlockCollision)=[target@4.45]
+TRACE D air (reads air): block=none(steps=11) pick(maxD=stop,ignoreBlockCollision)=[target@4.45] entity(default)=[target@4.45] entity(TRACE_FLAGS)=[target@4.45] entity(ignoreBlockCollision)=[target@4.45]
+TRACE E wielder head=(1.50,3.52,3.50) view=(0.88,-0.48,0.00) entities(maxD=10)=[strm_trace_w@0.00 target@2.78]
+TRACE F reference cow families=cow+mob
+TRACE F armor_stand: entities(+0)=[armor_stand@2.65 target@4.45] entities(+1)=[armor_stand@2.65 target@4.45] health=6.00/6.00 families=inanimate+mob+armor_stand
+TRACE F minecart: entities(+0)=[minecart@2.41 target@4.45] entities(+1)=[minecart@2.41 target@4.45] health=absent families=inanimate+minecart
+TRACE F boat: entities(+0)=[target@4.45] entities(+1)=[target@4.45] health=absent families=inanimate+boat
+TRACE F item: entities(+0)=[target@4.45] entities(+1)=[item@2.79 target@4.45] health=absent families=absent
+TRACE F xp_orb: entities(+0)=[target@4.45] entities(+1)=[target@4.45] health=absent families=inanimate
+TRACE F arrow: entities(+0)=[target@4.45] entities(+1)=[target@4.45] health=absent families=projectile+arrow
+TRACE F snowball: entities(+0)=[target@4.45] entities(+1)=[target@4.45] health=absent families=projectile+snowball
+probe_strm_trace RESULT done
+probe_strm_random START difficulty=Peaceful regen=false pvp=true
+RANDOM UNIFORM rolls=1000000 p(<0.3)=0.29991 chi2(9df)=8.33 bins=[99942,100283,99688,100046,99584,100223,100588,100045,99806,99795] ms=1000
+RANDOM TRIALS p=0.3 N=3700 trials=1000 mean=0.2995 sd=0.0076 theory-sd=0.0075 min=0.2765 max=0.3262 accepted[0.275,0.325]=998
+RANDOM TRIALS p=0.25 N=3700 trials=1000 mean=0.2499 sd=0.0069 theory-sd=0.0071 min=0.2292 max=0.2730 accepted[0.275,0.325]=0
+RANDOM TRIALS p=0.35 N=3700 trials=1000 mean=0.3499 sd=0.0080 theory-sd=0.0078 min=0.3238 max=0.3757 accepted[0.275,0.325]=1
+RANDOM RATE one attacker, ten cows in turn: attackers=1 swings=200 accepted=20 landed=20 ticks=200 first-ok=0,10,20,30,40,50 gaps=[10]
+RANDOM RATE five attackers, a cow each: attackers=5 swings=1000 accepted=100 landed=90 ticks=200 first-ok=0,0,0,0,0,10 gaps=[0,10]
+probe_strm_random RESULT done
+
+# run.sh P1 table: content-log = lines naming the id as a whole word outside the probe's own lines; server-binary = literal in bedrock_server-1.26.51.1
+role            id                                         spawn3  /particle  content-log  server-binary  vanilla-rp  andrew-rp  declared
+spark           minecraft:electric_spark_particle          ok      success=1  0            0              1           0          yes
+spark           minecraft:critical_hit_emitter             ok      success=1  0            0              1           0          yes
+spark           minecraft:magic_critical_hit_emitter       ok      success=1  0            0              1           0          yes
+spark           minecraft:sparkler_emitter                 ok      success=1  0            0              1           0          yes
+spark           minecraft:wax_particle                     ok      success=1  0            0              1           0          yes
+spark-javaname  minecraft:electric_spark                   ok      success=1  0            0              0           0          no
+spark-guess     minecraft:spark                            ok      success=1  0            0              0           0          no
+flash           minecraft:huge_explosion_lab_misc_emitter  ok      success=1  0            1              1           0          yes
+flash           minecraft:knockback_roar_particle          ok      success=1  0            0              1           0          yes
+flash           minecraft:totem_particle                   ok      success=1  0            0              1           0          yes
+flash           minecraft:explosion_particle               ok      success=1  0            0              1           0          yes
+flash           minecraft:camera_shoot_explosion           ok      success=1  0            0              1           0          yes
+flash           minecraft:white_smoke_particle             ok      success=1  0            0              1           0          yes
+flash-javaname  minecraft:flash                            ok      success=1  0            0              0           0          no
+flash-guess     minecraft:lightning                        ok      success=1  0            0              0           0          no
+gust            minecraft:wind_explosion_emitter           ok      success=1  0            0              1           0          yes
+gust            minecraft:breeze_wind_explosion_emitter    ok      success=1  0            0              1           0          yes
+gust            minecraft:wind_charged_emitter             ok      success=1  0            1              1           0          yes
+gust            minecraft:wind_charged_ambient             ok      success=1  0            1              1           0          yes
+gust            minecraft:breeze_ground_particle           ok      success=1  0            0              1           0          yes
+gust-javaname   minecraft:gust                             ok      success=1  0            0              0           0          no
+gust-javaname   minecraft:gust_emitter_large               ok      success=1  0            0              0           0          no
+ipad-seen       minecraft:sonic_explosion                  ok      success=1  0            0              1           0          yes
+ipad-seen       minecraft:huge_explosion_emitter           ok      success=1  0            0              1           0          yes
+ipad-seen       minecraft:large_explosion                  ok      success=1  0            0              1           0          yes
+ipad-seen       minecraft:campfire_tall_smoke_particle     ok      success=1  0            0              1           0          yes
+ipad-seen       andrew:katana_petal                        ok      success=1  0            0              0           1          yes
+made-up         andrew:no_such_particle                    ok      success=1  0            0              0           0          no
+made-up         minecraft:no_such_particle                 ok      success=1  0            0              0           0          no

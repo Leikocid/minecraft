@@ -19,6 +19,9 @@
     },
     "andrew_sculk_crossbow": {
       "textures": "textures/items/andrew_sculk_crossbow"
+    },
+    "andrew_storm_blade": {
+      "textures": "textures/items/andrew_storm_blade"
     }
   }
 }

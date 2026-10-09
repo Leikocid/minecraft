@@ -23,6 +23,7 @@ import { registerOrbitalCannon } from "./orbital";
 import { registerInterceptor } from "./orbital/flight";
 import { registerScytheVolley } from "./scythe/volley";
 import { registerSculkCrossbow } from "./sculk";
+import { registerStormActive } from "./storm/active";
 import { registerStructureCommands } from "./structures/commands";
 import { DISCOVER_INTERVAL_TICKS, EnabledTypes, enabledLine } from "./structures/config";
 import type { PlayerPos } from "./structures/discovery";
@@ -33,6 +34,7 @@ import { SPAWN_EVENT, SPAWN_STATE_EVENT, SpawnSearch, engineSpawnHost } from "./
 import { DynamicPropertyStore } from "./structures/store";
 import { registerUfo } from "./ufo";
 import { registerTrap } from "./websword/trap";
+import { registerStormPassive } from "./storm/passive";
 
 registerAutoSmelt();
 registerCraftGate();
@@ -40,10 +42,13 @@ registerRetention();
 registerRecovery();
 registerLegendaryHud();
 registerTrap();
+registerStormPassive();
 registerScytheVolley();
 registerOrbitalCannon();
 registerDragonKatana();
 registerSculkCrossbow();
+// Must come after every other legendary's input: see registerStormActive().
+registerStormActive();
 // Must run at script load: custom commands can only be registered during the
 // engine's startup phase, which is over by the time the world exists.
 registerLegendaryCommands();
