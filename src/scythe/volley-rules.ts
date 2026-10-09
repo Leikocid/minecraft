@@ -75,6 +75,27 @@ export function trueDamageOutcome(hp: number, damage: number = TRUE_DAMAGE): num
   return left > 0 ? left : "lethal";
 }
 
+/** How one hit is delivered. */
+export type StrikePlan =
+  | { readonly kind: "lethal" }
+  | { readonly kind: "write"; readonly goal: number }
+  | { readonly kind: "damage-then-write"; readonly goal: number };
+
+/**
+ * The operator's decision of 2026-09-24 delivers a survivable hit as one direct
+ * write and a lethal one through applyDamage. The damage call in front of the
+ * write buys the red flash, the hurt sound and a mob turning on its attacker;
+ * it is dropped while the target absorbs, because there the pipeline takes the
+ * damage off the shield of hearts and the write then takes it off health again.
+ */
+export function strikePlan(hp: number, absorbing: boolean, damage: number = TRUE_DAMAGE): StrikePlan {
+  const outcome = trueDamageOutcome(hp, damage);
+  if (outcome === "lethal") {
+    return { kind: "lethal" };
+  }
+  return absorbing ? { kind: "write", goal: outcome } : { kind: "damage-then-write", goal: outcome };
+}
+
 /** Tick, counted from launch, on which projectile `index` leaves the owner. */
 export function launchTick(index: number): number {
   return index * LAUNCH_INTERVAL_TICKS;

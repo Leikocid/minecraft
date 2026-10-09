@@ -29,7 +29,7 @@ import {
   system,
   world,
 } from "@minecraft/server";
-import { type SimulatedPlayer, Test, register } from "@minecraft/server-gametest";
+import { LookDuration, type SimulatedPlayer, Test, register } from "@minecraft/server-gametest";
 import * as cooldown from "../legendary/cooldown";
 import { registerCraftGate } from "../legendary/craftgate";
 import { hideFromTargeting } from "../legendary/hidden";
@@ -1937,4 +1937,44 @@ register("andrew", "scythe_lethal_hit_kills", (test: Test): void => {
   .maxTicks(400)
   .tag("andrew");
 
-console.warn("[gametest] registered 27 test(s) under tag 'andrew'");
+register("andrew", "scythe_lethal_through_shield", (test: Test): void => {
+  const watch = newWatch();
+  const { owner, target } = scytheDuel(test, "andrew_scy_owner_shield", "andrew_scy_shielded", watch);
+  test.runAfterDelay(2, () => {
+    world.gameRules.naturalRegeneration = false;
+    const equippable = target.getComponent("minecraft:equippable");
+    test.assert(equippable !== undefined, "the target has no equippable component");
+    equippable?.setEquipment(EquipmentSlot.Offhand, new ItemStack("minecraft:shield"));
+    // A shield guards only what its holder faces, and only while raised: sneaking
+    // is what raises it, and lookAtLocation takes structure-relative coordinates.
+    target.lookAtLocation({ x: DUEL_OWNER.x, y: DUEL_OWNER.y + 1.5, z: DUEL_OWNER.z }, LookDuration.Continuous);
+    target.isSneaking = true;
+    target.addEffect("slow_falling", 1200, { showParticles: false });
+  });
+  // 4 -> 1 by direct write, then the lethal blow the shield used to swallow whole.
+  watch.onLaunch = () => {
+    target.getComponent("minecraft:health")?.setCurrentValue(4);
+  };
+
+  test.succeedWhen(() => {
+    assertLaunched(test, watch);
+    test.assert(watch.endReason !== undefined, "the volley is still in flight");
+    world.gameRules.naturalRegeneration = true;
+    const killer = scytheKills.get(target.id);
+    console.warn(
+      `[gametest] scythe shield: end=${watch.endReason} hits=${watch.hits} hp after each: ${watch.hpAfter.join(", ")} ` +
+        `killer=${killer ?? "none"} owner=${owner.id} sneaking=${String(target.isValid ? target.isSneaking : false)}`
+    );
+    test.assert(
+      watch.endReason === "target_invalid",
+      `a raised shield kept the target alive: the volley ended with ${watch.endReason}`
+    );
+    test.assert(killer === owner.id, `the kill was credited to ${killer ?? "nobody"}, not the owner`);
+    assertNothingInFlight(test);
+  });
+})
+  .structureName(STRUCTURE)
+  .maxTicks(400)
+  .tag("andrew");
+
+console.warn("[gametest] registered 28 test(s) under tag 'andrew'");

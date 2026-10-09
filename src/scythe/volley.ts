@@ -25,6 +25,7 @@ import {
   launchTick,
   outOfRadius,
   stepTowards,
+  strikePlan,
   trueDamageOutcome,
 } from "./volley-rules";
 
@@ -112,25 +113,37 @@ function launchOrigin(volley: Volley): Vector3 {
   return { x: volley.launchPoint.x, y: volley.launchPoint.y + 1.2, z: volley.launchPoint.z };
 }
 
+/** Stable 2.10.0 cannot read the shield of hearts; the effect is the only sign of it. */
+function absorbing(entity: Entity): boolean {
+  try {
+    return entity.getEffect("absorption") !== undefined;
+  } catch {
+    return false;
+  }
+}
+
 /** Applies one hit: exactly 3 HP past armour, then the launch [src: decision-scythe-true-damage, decision-scythe-launch]. */
 function strike(volley: Volley, hp: number): void {
   const target = volley.target;
-  const outcome = trueDamageOutcome(hp);
   const damagingEntity = volley.owner.isValid ? volley.owner : undefined;
-  if (outcome === "lethal") {
+  const plan = strikePlan(hp, absorbing(target));
+  if (plan.kind === "lethal") {
     // Overkill through the damage pipeline, so the death message, the owner's
-    // kill credit and a totem all work; armour cannot soak hp + 100.
-    applyScriptedDamage(target, hp + 100, { cause: EntityDamageCause.entityAttack, damagingEntity });
+    // kill credit and a totem all work; armour cannot soak hp + 100. The cause
+    // is sonicBoom: a shield raised toward the wielder cancels a scripted
+    // entityAttack outright, and the target then cannot be finished at all.
+    applyScriptedDamage(target, hp + 100, { cause: EntityDamageCause.sonicBoom, damagingEntity });
   } else {
-    // Two steps, and both are needed. The damage event is what the player
-    // sees and hears — the red flash, the hurt sound, a mob turning on its
-    // attacker; a bare setCurrentValue() has none of that and reads in game
-    // as "the projectiles do nothing". The write that follows is what makes
-    // the total exactly TRUE_DAMAGE whatever armour or Protection absorbed,
-    // and it also covers the ticks where the engine's invulnerability window
-    // swallows the event outright.
-    applyScriptedDamage(target, TRUE_DAMAGE, { cause: EntityDamageCause.entityAttack, damagingEntity });
-    target.getComponent("minecraft:health")?.setCurrentValue(outcome);
+    if (plan.kind === "damage-then-write") {
+      // What the player sees and hears — the red flash, the hurt sound, a mob
+      // turning on its attacker. A bare write has none of it and reads in game
+      // as "the projectiles do nothing".
+      applyScriptedDamage(target, TRUE_DAMAGE, { cause: EntityDamageCause.entityAttack, damagingEntity });
+    }
+    // The write is what makes the total exactly TRUE_DAMAGE whatever armour or
+    // Protection absorbed, and it also covers the ticks where the engine's
+    // invulnerability window swallows the damage event outright.
+    target.getComponent("minecraft:health")?.setCurrentValue(plan.goal);
   }
   volley.hits++;
   if (target.isValid) {
