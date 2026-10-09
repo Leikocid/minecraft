@@ -480,6 +480,14 @@ const EXPECTED_TESTS = [
   'andrew:storm_damage_active',
   'andrew:storm_damage_shield',
   'andrew:storm_damage_lethal',
+  // STRM-ACTIVE-01 — src/gametest/storm-active.ts (L0-strm-pact, L0-strm-rcd, L0-strm-rvis, L0-adr-sblt)
+  'andrew:storm_active_range',
+  'andrew:storm_active_wall',
+  'andrew:storm_active_first_only',
+  'andrew:storm_active_harmless',
+  'andrew:storm_active_cooldown',
+  'andrew:storm_active_hands_and_melee',
+  'andrew:storm_active_one_interval',
 ];
 
 /**
