@@ -155,3 +155,43 @@ Measured on BDS 1.26.51.1 (`src/gametest/storm-active.ts`):
 `minecraft:damage` 7, not 8. A custom item's damage value adds to the hand's base 1. In one row of
 `storm_active_hands_and_melee`, the value 8 landed 9.00 against the vanilla diamond sword's 8.00, and the Katana's 7
 landed 8.00. §02 asks for the Diamond Sword's hit.
+
+## `passive.ts` — 30 % per landed hit, +6 before armour, one strike (`L0-strm-ppas`, spec §02)
+
+`registerStormPassive()` subscribes `beforeEvents.entityHurt`. A hit rolls once when it is an `entityAttack` by a
+player whose **main hand** holds a live `andrew:storm_blade`, on a target with health that is not `inanimate`. The
+decision is `passive-rules.ts` (`decidePassive`, no engine import, `tests/storm-passive.test.mjs`): a skip draws nothing
+from the source, an eligible hit draws exactly one number, `roll < 0.30` procs, nothing is kept between hits.
+`setStormRng(fn)` replaces `Math.random`.
+
+- **Proc:** `raiseHit(event, 6)`, then one strike via `system.run`; plans `kills-alone` and `none` draw none.
+- **Miss:** the hit is left alone. The blade's `minecraft:damage` is 7: a custom item hits for its value + 1, so it
+  hits like the diamond sword (8.00 bare, 2.24 in diamond; at 8 it hit 9.00 / 2.61).
+- **No timer:** nothing here reads or writes the `sb` cooldown or busy keys.
+- **Never on a scripted hit:** the before-event runs inside `applyDamage`, where the pack's own `entityAttack` from a
+  player reads like that player's swing. Every such call goes through `src/legendary/scripted-damage.ts`
+  (`applyScriptedDamage`), and the passive skips while `isScriptedDamage()`. Unmarked, the active's 10 became 16, and a
+  Scythe volley from a caster holding the blade killed a target at 8 HP on its first hit through a lethal-plan
+  overkill.
+
+`observePassive(fn)` hands every roll to its observers; `setStrikeVisual(fn)` replaces the strike.
+
+Scenarios `src/gametest/storm-passive.ts`: `storm_passive_damage` (sword reference, forced proc and miss, the naive
+`applyDamage(6)` control, the active with the blade in hand, off hand, stale copy, harmless strikes),
+`storm_passive_cooldown` (deadline the same number, a ready blade stays ready), `storm_passive_rate` (probe-storm P6:
+N = 3 700 landed hits from 12 wielders, half on cooldown, share in [27.5 %; 32.5 %], every roll one landed hit, every
+miss the sword's hit and every proc the sword's hit + f(6)), `storm_passive_scripted` (Scythe volleys, inanimate).
+
+The rate scenario also logs the uniformity of the passive's own draws beside a tight loop (`RATE ROW draws`). Three
+samples gave 0.2838, 0.2822 and 0.2973 (pooled 0.2877, z = −2.8); the third logged the callback draws uniform (χ² 7.37
+over ten bins, 9 df) and the loop at 0.2991. A share that falls out low again is read from those rows first.
+
+### Deviations (C-16), passive
+
+4. **The strike is the passive's own column**: `minecraft:electric_spark_particle` every 0.5 block for 8 blocks over a
+   `minecraft:huge_explosion_lab_misc_emitter` flash, with `ambient.weather.lightning.impact` (probe-storm P1 ids;
+   Bedrock has no "flash" particle). `visuals.ts` belongs to the active (STRM-ACTIVE-01); one call where both are
+   wired, `setStrikeVisual(<its strike>)`, gives both the same look.
+5. **The `inanimate` filter is unproven on BDS.** An armour stand takes neither a melee nor a scripted `entityAttack`
+   into the hurt events at all (0 before-events, 0 hurts): nothing reached the filter. It stays for an inanimate that
+   does (probe-storm P5: "health" alone does not exclude the stand).

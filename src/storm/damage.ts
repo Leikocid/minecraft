@@ -17,6 +17,7 @@ import {
   system,
   world,
 } from "@minecraft/server";
+import { applyScriptedDamage } from "../legendary/scripted-damage";
 import {
   type Defence,
   NO_DEFENCE,
@@ -264,7 +265,8 @@ export function stormDamage(target: Entity, damage: number, wielder: Entity | un
     const path = planStrike(hp, dPrime, known, absorbs);
     Object.assign(report, { defence, dPrime, hpBefore: hp, inWindow: known, path });
     const options = attackOptions(wielder);
-    const applied = target.applyDamage(path === "lethal" ? hp + OVERKILL : damage, options);
+    // Marked: inside this call the passive's handler would read the active's hit as the wielder's melee.
+    const applied = applyScriptedDamage(target, path === "lethal" ? hp + OVERKILL : damage, options);
     report.applied = applied;
     let after = hpOf(health);
     if (path === "window" && after !== undefined) {
@@ -295,7 +297,7 @@ function finishLethal(target: Entity, wielder: Entity | undefined, damage: numbe
       return;
     }
     report.hpBefore = hp;
-    report.applied = target.applyDamage(hp + OVERKILL, attackOptions(wielder));
+    report.applied = applyScriptedDamage(target, hp + OVERKILL, attackOptions(wielder));
     report.hpAfter = hpOf(health);
   } catch (err) {
     log(`lethal passive on ${report.targetType} ${report.targetId} refused: ${errText(err)}`);

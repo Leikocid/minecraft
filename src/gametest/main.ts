@@ -59,6 +59,7 @@ import "./legendary-craftgate";
 import "./vanilla-recipes";
 import "./storm-damage";
 import "./storm-active";
+import "./storm-passive";
 import "./probe-retention";
 import "./legendary-fireproof";
 import "./legendary-offhand";

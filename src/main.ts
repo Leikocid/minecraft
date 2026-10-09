@@ -34,6 +34,7 @@ import { SPAWN_EVENT, SPAWN_STATE_EVENT, SpawnSearch, engineSpawnHost } from "./
 import { DynamicPropertyStore } from "./structures/store";
 import { registerUfo } from "./ufo";
 import { registerTrap } from "./websword/trap";
+import { registerStormPassive } from "./storm/passive";
 
 registerAutoSmelt();
 registerCraftGate();
@@ -41,6 +42,7 @@ registerRetention();
 registerRecovery();
 registerLegendaryHud();
 registerTrap();
+registerStormPassive();
 registerScytheVolley();
 registerOrbitalCannon();
 registerDragonKatana();
