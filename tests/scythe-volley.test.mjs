@@ -43,6 +43,7 @@ const {
   outOfRadius,
   cooldownVerdict,
   trueDamageOutcome,
+  strikePlan,
   launchTick,
   PROJECTILE_COUNT,
   PROJECTILE_SPEED,
@@ -122,6 +123,24 @@ test('cooldown decision table (spec §5, acceptance tests 8–9)', () => {
   for (const [label, hits, reason, expected] of table) {
     assert.equal(cooldownVerdict(hits, reason), expected, label);
   }
+});
+
+test('a survivable hit runs the damage pipeline, then writes the goal', () => {
+  assert.deepEqual(strikePlan(20, false), { kind: 'damage-then-write', goal: 17 });
+  assert.deepEqual(strikePlan(3.5, false), { kind: 'damage-then-write', goal: 0.5 });
+});
+
+test('a target with absorption is written only, never damaged first', () => {
+  // The pipeline takes the hit off the shield of hearts and the write then
+  // takes it off health: charging both is the defect this pins.
+  assert.deepEqual(strikePlan(20, true), { kind: 'write', goal: 17 });
+  assert.deepEqual(strikePlan(3.5, true), { kind: 'write', goal: 0.5 });
+});
+
+test('a lethal hit goes through applyDamage whether or not the target absorbs', () => {
+  assert.deepEqual(strikePlan(3, false), { kind: 'lethal' });
+  assert.deepEqual(strikePlan(3, true), { kind: 'lethal' });
+  assert.deepEqual(strikePlan(1, true), { kind: 'lethal' });
 });
 
 test('true damage: 3 HP by direct write, lethal at or below 3', () => {
