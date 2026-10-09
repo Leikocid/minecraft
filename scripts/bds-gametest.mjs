@@ -34,6 +34,7 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { buildMcstructure } from './lib/mcstructure.mjs';
+import { BROAD_TESTS } from './lib/suite-broad.mjs';
 import { TAG_BYTE, readNbt, writeNbt } from './lib/nbt.mjs';
 import {
   addonPath,
@@ -153,6 +154,7 @@ const EXPECTED_TESTS = [
   'andrew:scythe_out_of_radius_after_hit_cooldown',
   'andrew:scythe_cleanup_on_target_death',
   'andrew:scythe_lethal_hit_kills',
+  'andrew:scythe_lethal_through_shield',
   // stage4-probe strf-p006 questions 1, 2, 7, 10 — src/gametest/probe-place.ts
   'andrew:probe_place_block_entities',
   'andrew:probe_place_rotation',
@@ -505,6 +507,12 @@ const EXPECTED_TESTS = [
   'andrew:legendary_storm_blade_hold_void_holder_dead_redeemed',
 ];
 
+// A renamed scenario would otherwise drop out of the release gate silently.
+const notInSuite = BROAD_TESTS.filter((name) => !EXPECTED_TESTS.includes(name));
+if (notInSuite.length > 0) {
+  throw new Error(`BROAD_TESTS names scenarios missing from EXPECTED_TESTS: ${notInSuite.join(' ')}`);
+}
+
 /**
  * A test that ends in a server restart: once it reports, BDS is stopped (the
  * world is saved on stop) and started again on the same world, and the test
@@ -530,10 +538,11 @@ const env = {
 function parseArgs(argv) {
   // The zombie-villager cure alone waits up to 5.5 minutes of game time, and the
   // whole suite runs 32–48 minutes under Rosetta, past a 30-minute deadline.
-  const opts = { build: true, timeoutSec: 5400, keepUp: false, only: [] };
+  const opts = { build: true, timeoutSec: 5400, keepUp: false, only: [], all: false };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === '--no-build') opts.build = false;
+    else if (arg === '--all') opts.all = true;
     else if (arg === '--keep-up') opts.keepUp = true;
     else if (arg === '--only') opts.only.push(argv[++i]);
     else if (arg === '--timeout') opts.timeoutSec = Number(argv[++i]);
@@ -866,7 +875,7 @@ function main() {
   refuseProduction('a GameTest run');
   const opts = parseArgs(process.argv.slice(2));
   // A partial run is for iteration; only the full list proves the suite.
-  const selected = opts.only.length > 0 ? opts.only : EXPECTED_TESTS;
+  const selected = opts.only.length > 0 ? opts.only : opts.all ? EXPECTED_TESTS : BROAD_TESTS;
 
   assertComposePinsVersion();
   assertDockerRunning();
@@ -965,7 +974,13 @@ function main() {
   }
 
   log('');
-  if (selected !== EXPECTED_TESTS) log(`PARTIAL RUN (--only): ${selected.length} of ${EXPECTED_TESTS.length} tests — not a suite verdict`);
+  if (opts.only.length > 0) {
+    log(`PARTIAL RUN (--only): ${selected.length} of ${EXPECTED_TESTS.length} scenarios — neither a release nor a deep verdict`);
+  } else if (opts.all) {
+    log(`DEEP RUN: all ${EXPECTED_TESTS.length} scenarios`);
+  } else {
+    log(`BROAD RUN: ${selected.length} release scenarios of ${EXPECTED_TESTS.length} — the deep ones run with --all`);
+  }
   if (problems.length > 0) {
     log('FAIL — the simulated-player scenarios did not pass on BDS:');
     for (const p of problems) log(`  ✗ ${p}`);
