@@ -23,6 +23,7 @@ import { bumpGen, makeMark, markItem } from "../legendary/state";
 import { launchVolley } from "../scythe/volley";
 import { ACTIVE_DAMAGE, PASSIVE_DAMAGE, afterArmour, defenceOf, registerStormDamage, stormDamage } from "../storm/damage";
 import { PASSIVE_CHANCE, type PassiveReport, drawStrike, observePassive, registerStormPassive, setStormRng, setStrikeVisual } from "../storm/passive";
+import { visualStats } from "../storm/visuals";
 
 registerStormDamage();
 registerStormPassive();
@@ -304,6 +305,7 @@ scenario("storm_passive_damage", 3000, async (test, players, fails) => {
       setStormRng(FORCE_PROC);
       t0 = await fresh();
       const struck = strikes.length;
+      const soundsBefore = visualStats().sounds;
       const proc = swing(a, t);
       await test.idle(2);
       const procHurts = hurtsSince(t, t0);
@@ -317,6 +319,11 @@ scenario("storm_passive_damage", 3000, async (test, players, fails) => {
         `${tag} ROW blade-forced-proc#${i} swing(${proc.ok})=${r2(proc.delta)} expect=${r2(want)} read=${r2(proc.rolls[0]?.raise?.read)} bonus=${r2(proc.rolls[0]?.raise?.bonus)} ` +
           `plan=${proc.rolls[0]?.raise?.plan ?? "-"} hurts=[${procHurts.map((h) => r2(h.damage)).join(",")}] strikes=${drawn.length}@+${drawn.map((s) => s.tick - t0).join(",")}`
       );
+      // The strike is rendered by the shared visuals interval (L0-strm-rvis), which steps after this continuation.
+      await test.idle(4);
+      const sounds = visualStats().sounds - soundsBefore;
+      check(fails, tag, sounds === 1, `forced proc #${i}: the shared visuals interval played ${sounds} impact sound(s), expected the one strike's`);
+      log(`${tag} ROW blade-forced-proc#${i} visuals-sounds=${sounds}`);
     }
 
     // NEGATIVE CONTROL: the build the task warns about — a separate applyDamage(6) in the hit's tick — passes "did it

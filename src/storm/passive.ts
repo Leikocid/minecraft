@@ -19,7 +19,8 @@ import { STORM_BLADE } from "../legendary/registry";
 import { isScriptedDamage } from "../legendary/scripted-damage";
 import { isStale } from "../legendary/state";
 import { PASSIVE_DAMAGE, type RaiseReport, raiseHit } from "./damage";
-import { type PassiveDecision, type PassiveHit, type Rng, STRIKE_FLASH, STRIKE_SOUND, STRIKE_SPARK, decidePassive, strikeColumn } from "./passive-rules";
+import { type PassiveDecision, type PassiveHit, type Rng, decidePassive } from "./passive-rules";
+import { playStrikes } from "./visuals";
 
 export { PASSIVE_CHANCE, type Rng } from "./passive-rules";
 
@@ -55,7 +56,7 @@ export function setStormRng(next?: Rng): void {
   rng = next ?? Math.random;
 }
 
-/** The strike every proc draws; no argument restores the passive's own column. */
+/** The strike every proc draws; no argument restores drawStrike. */
 export function setStrikeVisual(next?: StrikeVisual): void {
   strikeVisual = next ?? drawStrike;
 }
@@ -68,16 +69,12 @@ export function observePassive(observer: PassiveObserver): () => void {
   };
 }
 
-/** A spark column with a flash at its foot and the thunder-impact sound. Points in unloaded chunks are skipped. */
+/** §02: one strike per proc, on the visuals interval's next step. */
+const PASSIVE_STRIKE_DELAYS: readonly number[] = [0];
+
+/** The active's own strike (visuals.ts): a spark column down onto the target's feet, the flash there, the impact sound. */
 export function drawStrike(dimension: Dimension, at: Vector3): void {
-  try {
-    if (!dimension.isChunkLoaded(at)) return;
-    dimension.spawnParticle(STRIKE_FLASH, at);
-    for (const point of strikeColumn(at)) dimension.spawnParticle(STRIKE_SPARK, point);
-    dimension.playSound(STRIKE_SOUND, at);
-  } catch {
-    // Cosmetic only: a refusal costs the strike's look, never the bonus.
-  }
+  playStrikes(dimension, at, at, PASSIVE_STRIKE_DELAYS);
 }
 
 function living(entity: Entity): boolean {
