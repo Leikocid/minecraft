@@ -12,7 +12,6 @@ import { fileURLToPath } from 'node:url';
 const projectRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const RULES_TS = join(projectRoot, 'src', 'storm', 'passive-rules.ts');
 const PASSIVE_TS = join(projectRoot, 'src', 'storm', 'passive.ts');
-const VANILLA_PARTICLES = join(projectRoot, 'packs', 'gametest', 'storm-probe', 'vanilla-particles-v1.26.50.4.txt');
 
 const bundle = await build({
   entryPoints: [RULES_TS],
@@ -24,7 +23,7 @@ const bundle = await build({
 });
 const bundleText = bundle.outputFiles[0].text;
 const rules = await import('data:text/javascript;base64,' + Buffer.from(bundleText, 'utf-8').toString('base64'));
-const { PASSIVE_CHANCE, decidePassive, strikeColumn, STRIKE_SPARK, STRIKE_FLASH, STRIKE_HEIGHT, STRIKE_STEP } = rules;
+const { PASSIVE_CHANCE, decidePassive } = rules;
 
 const BLADE = 'andrew:storm_blade';
 /** P6: N ≥ 3 656 for every error under 0.1 %, taken as 3 700; accepted share in [27.5 %; 32.5 %]. */
@@ -200,19 +199,16 @@ test('NEGATIVE CONTROL: the independence check catches a pity roll that keeps st
   assert.ok(Math.abs(c.afterProc - c.afterMiss) > 0.01, `pity: after a proc ${c.afterProc}, after a miss ${c.afterMiss}`);
 });
 
-test('the strike: one column of sparks from the feet up, with declared particle ids', () => {
-  const declared = new Set(
-    readFileSync(VANILLA_PARTICLES, 'utf-8')
-      .split('\n')
-      .map((l) => l.trim())
-      .filter((l) => l !== '' && !l.startsWith('#'))
-  );
-  assert.ok(declared.has(STRIKE_SPARK), STRIKE_SPARK);
-  assert.ok(declared.has(STRIKE_FLASH), STRIKE_FLASH);
-  const col = strikeColumn({ x: 1.5, y: 64, z: -2.5 });
-  assert.equal(col.length, STRIKE_HEIGHT / STRIKE_STEP + 1);
-  assert.deepEqual(col[0], { x: 1.5, y: 64, z: -2.5 });
-  assert.deepEqual(col.at(-1), { x: 1.5, y: 64 + STRIKE_HEIGHT, z: -2.5 });
+// The strike's ids, column and single interval are visuals.ts's, held by tests/storm-active.test.mjs.
+test('the strike: one per proc, the active\'s own from visuals.ts, flashing at the target\'s feet (L0-strm-rvis)', () => {
+  const code = readFileSync(PASSIVE_TS, 'utf-8')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/\/\/.*$/gm, '');
+  assert.match(code, /import \{ playStrikes \} from "\.\/visuals"/);
+  assert.match(code, /PASSIVE_STRIKE_DELAYS: readonly number\[\] = \[0\]/, 'one strike per proc');
+  assert.match(code, /playStrikes\(dimension, at, at, PASSIVE_STRIKE_DELAYS\)/, 'the column and the flash both at the feet');
+  assert.match(code, /let strikeVisual: StrikeVisual = drawStrike;/, 'the release pack draws through visuals.ts by default');
+  assert.doesNotMatch(code, /\bspawnParticle\s*\(|\bplaySound\s*\(|\brunInterval\s*\(/, 'passive.ts draws or schedules on its own');
 });
 
 test('static: passive.ts deals no damage of its own and never touches the cooldown', () => {

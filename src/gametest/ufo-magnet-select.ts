@@ -19,7 +19,7 @@ import {
   world,
 } from "@minecraft/server";
 import { type Test, registerAsync } from "@minecraft/server-gametest";
-import { DRAGON_KATANA, ORBITAL_CANNON, SCYTHE_OF_CALAMITY, WEB_SWORD, genLedgerKey, isLegendaryStack } from "../legendary/registry";
+import { DRAGON_KATANA, ORBITAL_CANNON, SCYTHE_OF_CALAMITY, STORM_BLADE, WEB_SWORD, genLedgerKey, isLegendaryStack } from "../legendary/registry";
 import * as state from "../legendary/state";
 import { FIRST_MAX_MS, FIRST_MIN_MS, PAUSE_MS, type UfoEnv, type UfoPlayer } from "../ufo/env";
 import { IRON_TAG, type Magnet, type Saucer, UfoCore, hoverHeight } from "../ufo/event";
@@ -690,9 +690,11 @@ registerAsync("andrew", "ufo_magnet_legendaries", async (test: Test): Promise<vo
     test.assert(world.getDynamicProperty(genLedgerKey(SCYTHE_OF_CALAMITY, mark.id)) === gen, "the Scythe's ledger moved");
 
     // The holders: a chest minecart with a Web Sword, an iron-wearing stand
-    // holding the Cannon, a bare stand holding the Katana, the same cart and
-    // stand without a weapon and a plain minecart are taken; a bare stand
-    // holding a stick is not.
+    // holding the Cannon, a bare stand holding the Katana, a bare stand holding
+    // the Storm Blade in its off hand, the same cart and stand without a weapon
+    // and a plain minecart are taken; a bare stand holding a stick is not.
+    // The Storm Blade (def #6, L0-strm-acr item 7) also lies on the ground,
+    // marked, and sits in the chest: one element of each class it can be.
     for (const e of sel.elements) if (e.entity.isValid && e.cls === STACK) e.entity.remove();
     removeAll(iron);
     if (scythe.isValid) scythe.remove();
@@ -701,28 +703,49 @@ registerAsync("andrew", "ufo_magnet_legendaries", async (test: Test): Promise<vo
     const loaded = p.dim.spawnEntity("minecraft:chest_minecart", middle(at(p, 6, 6)));
     const stand = p.dim.spawnEntity("minecraft:armor_stand", middle(at(p, -6, 6)));
     const katanaStand = p.dim.spawnEntity("minecraft:armor_stand", middle(at(p, 0, 8)));
+    const stormStand = p.dim.spawnEntity("minecraft:armor_stand", middle(at(p, -8, 0)));
     const bareStand = p.dim.spawnEntity("minecraft:armor_stand", middle(at(p, 0, -8)));
     const ironCart = p.dim.spawnEntity("minecraft:chest_minecart", middle(at(p, 6, -6)));
     const ironStand = p.dim.spawnEntity("minecraft:armor_stand", middle(at(p, -6, -6)));
     const plain = p.dim.spawnEntity("minecraft:minecart", middle(at(p, 8, -8)));
-    extras.push(loaded, stand, katanaStand, bareStand, ironCart, ironStand, plain);
+    const stormMark = state.makeMark("admin", owner);
+    const stormGround = p.dim.spawnItem(state.markItem(STORM_BLADE, new ItemStack(STORM_BLADE.itemId, 1), stormMark), middle(at(p, 2, 2)));
+    extras.push(loaded, stand, katanaStand, stormStand, bareStand, ironCart, ironStand, plain, stormGround);
     await test.idle(2);
     loaded.getComponent("minecraft:inventory")?.container?.setItem(0, new ItemStack(WEB_SWORD.itemId, 1));
     loaded.getComponent("minecraft:inventory")?.container?.setItem(1, new ItemStack("minecraft:iron_ingot", 2));
     ironCart.getComponent("minecraft:inventory")?.container?.setItem(1, new ItemStack("minecraft:iron_ingot", 2));
+    box.setItem(0, new ItemStack(STORM_BLADE.itemId, 1));
     dress(stand, { head: "iron_helmet", mainhand: ORBITAL_CANNON.itemId });
     dress(katanaStand, { mainhand: DRAGON_KATANA.itemId });
+    dress(stormStand, { offhand: STORM_BLADE.itemId });
     dress(bareStand, { mainhand: "minecraft:stick" });
     dress(ironStand, { head: "iron_helmet", mainhand: "minecraft:stick" });
     await test.idle(2);
+    const stormGen = world.getDynamicProperty(genLedgerKey(STORM_BLADE, stormMark.id));
     const second = magnetOn(p.dim, p.centre, p.hoverY, host);
-    const want = [loaded, stand, katanaStand, ironCart, ironStand, plain].map((e) => e.id).sort().join(" ");
-    const got = second.elements.map((e) => e.entity.id).sort().join(" ");
-    log(`legendary holders RESULT [${describe(second)}]; chosen ${got}; expected ${want}; left: bare stand ${bareStand.id}`);
-    test.assert(got === want, `chosen [${describe(second)}] (${got}), expected both carts, the plain minecart and the three dressed stands (${want})`);
+    // A chest stack is materialised as a new item entity, so it is judged by its stack, not by an id known up front.
+    const kept = second.elements.filter((e) => !second.spawned.has(e.entity.id));
+    const made = second.elements.filter((e) => second.spawned.has(e.entity.id));
+    const want = [loaded, stand, katanaStand, stormStand, ironCart, ironStand, plain, stormGround].map((e) => e.id).sort().join(" ");
+    const got = kept.map((e) => e.entity.id).sort().join(" ");
+    const classes = second.elements.map((e) => e.cls).join("");
+    log(
+      `legendary holders RESULT [${describe(second)}]; classes ${classes}; chosen ${got}; expected ${want}; ` +
+        `from containers [${made.map((e) => stackOf(e.entity)?.typeId ?? "gone").join(" ")}]; chest slot 0 ${box.getItem(0)?.typeId ?? "empty"}; ` +
+        `storm stand tagged ${stormStand.hasTag(IRON_TAG)}; left: bare stand ${bareStand.id}`
+    );
+    test.assert(got === want, `chosen [${describe(second)}] (${got}), expected both carts, the plain minecart, the four dressed stands and the ground Storm Blade (${want})`);
+    test.assert(classes === "123333333", `classes ${classes}, expected 1 ground, 1 container stack, 7 holders: 123333333`);
+    test.assert(made.length === 1 && stackOf(made[0].entity)?.typeId === STORM_BLADE.itemId, `the container stack taken is [${made.map((e) => stackOf(e.entity)?.typeId).join(" ")}], not the Storm Blade`);
+    test.assert(box.getItem(0) === undefined && box.getItem(2)?.typeId === "minecraft:dirt", "the chest kept its Storm Blade, or lost its dirt");
+    test.assert(second.elements[0].entity.id === stormGround.id, `the ground element is ${second.elements[0].from}, not the Storm Blade`);
+    const groundStack = stackOf(stormGround);
+    test.assert(groundStack !== undefined && state.getMark(STORM_BLADE, groundStack)?.id === stormMark.id, "the ground Storm Blade's stack changed");
+    test.assert(world.getDynamicProperty(genLedgerKey(STORM_BLADE, stormMark.id)) === stormGen, "the ground Storm Blade's ledger moved");
     test.assert(second.failures.length === 0, `class 3 failures: ${second.failures.join(" | ")}`);
     test.assert(!bareStand.hasTag(IRON_TAG), "a stand holding a stick carries the held tag");
-    test.assert(katanaStand.hasTag(IRON_TAG) && stand.hasTag(IRON_TAG), "a chosen weapon holder lacks the held tag");
+    test.assert(katanaStand.hasTag(IRON_TAG) && stand.hasTag(IRON_TAG) && stormStand.hasTag(IRON_TAG), "a chosen weapon holder lacks the held tag");
   } finally {
     for (const e of extras) if (e.isValid) e.removeTag(IRON_TAG);
     removeAll(extras);

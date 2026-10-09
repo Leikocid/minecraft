@@ -164,7 +164,8 @@ decision is `passive-rules.ts` (`decidePassive`, no engine import, `tests/storm-
 from the source, an eligible hit draws exactly one number, `roll < 0.30` procs, nothing is kept between hits.
 `setStormRng(fn)` replaces `Math.random`.
 
-- **Proc:** `raiseHit(event, 6)`, then one strike via `system.run`; plans `kills-alone` and `none` draw none.
+- **Proc:** `raiseHit(event, 6)`, then one strike via `system.run`, queued on `visuals.ts` (`drawStrike`); plans
+  `kills-alone` and `none` draw none.
 - **Miss:** the hit is left alone. The blade's `minecraft:damage` is 7: a custom item hits for its value + 1, so it
   hits like the diamond sword (8.00 bare, 2.24 in diamond; at 8 it hit 9.00 / 2.61).
 - **No timer:** nothing here reads or writes the `sb` cooldown or busy keys.
@@ -188,10 +189,11 @@ over ten bins, 9 df) and the loop at 0.2991. A share that falls out low again is
 
 ### Deviations (C-16), passive
 
-4. **The strike is the passive's own column**: `minecraft:electric_spark_particle` every 0.5 block for 8 blocks over a
-   `minecraft:huge_explosion_lab_misc_emitter` flash, with `ambient.weather.lightning.impact` (probe-storm P1 ids;
-   Bedrock has no "flash" particle). `visuals.ts` belongs to the active (STRM-ACTIVE-01); one call where both are
-   wired, `setStrikeVisual(<its strike>)`, gives both the same look.
+4. **The strike is the active's, drawn with particles** (deviation 1 of the active): `drawStrike` is
+   `playStrikes(dimension, feet, feet, [0])`, one zigzag spark column from 6 blocks above the target's feet with the
+   flash at the feet (a melee has no line, so no entry point) and `ambient.weather.lightning.impact`. The shared
+   interval draws it on its next step; `passive.ts` draws nothing itself (`storm_passive_damage` counts one impact
+   sound per forced proc from that interval).
 5. **The `inanimate` filter is unproven on BDS.** An armour stand takes neither a melee nor a scripted `entityAttack`
    into the hurt events at all (0 before-events, 0 hurts): nothing reached the filter. It stays for an inanimate that
    does (probe-storm P5: "health" alone does not exclude the stand).
