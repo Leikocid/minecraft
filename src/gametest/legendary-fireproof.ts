@@ -10,9 +10,9 @@
 // path, is held by legendary_returns_from_void (main.ts) and
 // legendary_{katana,sculk_crossbow}_void_* (legendary-recovery.ts).
 
-import { BlockVolume, type Container, type Dimension, type Entity, GameMode, ItemStack, type Player, type Vector3, system } from "@minecraft/server";
+import { BlockVolume, type Container, type Dimension, type Entity, GameMode, ItemStack, type Player, type Vector3, system, world } from "@minecraft/server";
 import { type Test, registerAsync } from "@minecraft/server-gametest";
-import { LEGENDARIES, type LegendaryDef } from "../legendary/registry";
+import { LEGENDARIES, type LegendaryDef, STORM_BLADE } from "../legendary/registry";
 import { isLegendaryItemEntity } from "../legendary/recovery";
 import { type Mark } from "../legendary/rules";
 import { findAllMarked, getMark, isItemOf, ledgerGen, makeMark, markItem, readOwed, readPending } from "../legendary/state";
@@ -416,51 +416,87 @@ registerAsync("andrew", "legendary_pickup_sighting_not_consumed", async (test: T
   .maxTicks(400)
   .tag("andrew");
 
+/** After a kill: past retention's next-tick sweep, before the respawn is asked for. */
+const DEATH_SWEEP_TICKS = 10;
+
 /**
  * Putting a legendary into a chest is a departure from the player's slot too,
  * and must not be read as a loss: the chest keeps the instance, the owner is
- * handed nothing. The guard on the departure ledger above.
+ * handed nothing. The guard on the departure ledger above. Then the owner dies
+ * and respawns: an instance in a chest at the death stays there (spec §02), and
+ * retention owes the owner nothing for it.
  */
-registerAsync("andrew", "legendary_in_a_chest_stays_there", async (test: Test): Promise<void> => {
-  const dim = test.getDimension();
-  const def = LEGENDARIES[0];
-  const chestCell: Vector3 = { x: 3, y: 2, z: 1 };
-  const owner = test.spawnSimulatedPlayer(STAND, "andrew_chest_keeper", GameMode.Survival);
-  await test.idle(4);
-  test.setBlockType("minecraft:chest", chestCell);
-  await test.idle(4);
+function chestStays(name: string, def: LegendaryDef, keeper: string): void {
+  registerAsync("andrew", name, async (test: Test): Promise<void> => {
+    const dim = test.getDimension();
+    const chestCell: Vector3 = { x: 3, y: 2, z: 1 };
+    const owner = test.spawnSimulatedPlayer(STAND, keeper, GameMode.Survival);
+    await test.idle(4);
+    test.setBlockType("minecraft:chest", chestCell);
+    await test.idle(4);
 
-  const container = containerOf(owner);
-  const slot = owner.selectedSlotIndex;
-  const mark = makeMark("admin", owner);
-  container.setItem(slot, markItem(def, new ItemStack(def.itemId, 1), mark));
-  await test.idle(4);
+    const container = containerOf(owner);
+    const slot = owner.selectedSlotIndex;
+    const mark = makeMark("admin", owner);
+    container.setItem(slot, markItem(def, new ItemStack(def.itemId, 1), mark));
+    await test.idle(4);
 
-  const chest = dim.getBlock(test.worldLocation(chestCell))?.getComponent("minecraft:inventory")?.container;
-  test.assert(chest !== undefined, "the chest has no inventory container");
-  const stack = container.getItem(slot);
-  test.assert(stack !== undefined, "the marked stack never reached the owner's slot");
-  // Into the chest first, out of the inventory second: the instance is never nowhere.
-  (chest as Container).setItem(0, stack);
-  container.setItem(slot, undefined);
+    const chest = dim.getBlock(test.worldLocation(chestCell))?.getComponent("minecraft:inventory")?.container;
+    test.assert(chest !== undefined, "the chest has no inventory container");
+    const stack = container.getItem(slot);
+    test.assert(stack !== undefined, "the marked stack never reached the owner's slot");
+    // Into the chest first, out of the inventory second: the instance is never nowhere.
+    (chest as Container).setItem(0, stack);
+    container.setItem(slot, undefined);
 
-  // Past the departure grace and a full recovery check.
-  await test.idle(RECOVERY_WAIT_TICKS + 40);
-  const inChest = findAllMarked(def, chest as Container).filter((x) => x.mark.id === mark.id);
-  const held = findAllMarked(def, containerOf(owner)).filter((x) => x.mark.id === mark.id);
-  const pending = readPending(def, owner).length;
-  log(
-    `chest RESULT instance ${mark.id}: in the chest ${inChest.length} (gen ${inChest[0]?.mark.gen ?? "-"}), ` +
-      `owner holds ${held.length} (gen ${held[0]?.mark.gen ?? "-"}), owed ${pending}`
-  );
-  test.assert(inChest.length === 1, `the chest holds ${inChest.length} copies of the instance, expected 1`);
-  test.assert(inChest[0].mark.gen === mark.gen, `the stored copy went stale: gen ${inChest[0].mark.gen}, was ${mark.gen} — a stored legendary was recalled`);
-  test.assert(held.length === 0 && pending === 0, `the owner was handed ${held.length} copies and is owed ${pending} for an instance that is in a chest`);
-  test.succeed();
-})
-  .structureName(STRUCTURE)
-  .maxTicks(400)
-  .tag("andrew");
+    const read = (when: string): { inChest: number; gen: number | undefined; held: number; pending: number; owed: boolean; ledger: number } => {
+      const inChest = findAllMarked(def, chest as Container).filter((x) => x.mark.id === mark.id);
+      const held = findAllMarked(def, containerOf(owner)).filter((x) => x.mark.id === mark.id);
+      const row = {
+        inChest: inChest.length,
+        gen: inChest[0]?.mark.gen,
+        held: held.length,
+        pending: readPending(def, owner).length,
+        owed: JSON.stringify(readOwed(def)).includes(mark.id),
+        ledger: ledgerGen(def, mark.id),
+      };
+      log(
+        `${name} RESULT ${when}: ${def.itemId} instance ${mark.id}: in the chest ${row.inChest} (gen ${row.gen ?? "-"}), ` +
+          `owner holds ${row.held}, pending ${row.pending}, owed ${row.owed}, ledger ${row.ledger}`
+      );
+      test.assert(row.inChest === 1, `${when}: the chest holds ${row.inChest} copies of the instance, expected 1`);
+      test.assert(row.gen === mark.gen && row.ledger === mark.gen, `${when}: the stored copy is gen ${row.gen}, ledger ${row.ledger}, was ${mark.gen} — a stored legendary was recalled`);
+      test.assert(row.held === 0 && row.pending === 0 && !row.owed, `${when}: the owner was handed ${row.held} copies, pending ${row.pending}, owed ${row.owed} for an instance that is in a chest`);
+      return row;
+    };
+
+    // Past the departure grace and a full recovery check.
+    await test.idle(RECOVERY_WAIT_TICKS + 40);
+    read("stored");
+
+    let died = false;
+    const dieSub = world.afterEvents.entityDie.subscribe((event) => {
+      if (event.deadEntity?.id === owner.id) died = true;
+    });
+    try {
+      owner.kill();
+      await test.idle(DEATH_SWEEP_TICKS);
+    } finally {
+      world.afterEvents.entityDie.unsubscribe(dieSub);
+    }
+    test.assert(died, `${owner.name} did not die, so the half below proves nothing`);
+    owner.respawn();
+    await test.idle(RECOVERY_WAIT_TICKS + 40);
+    read("after the owner's death and respawn");
+    test.succeed();
+  })
+    .structureName(STRUCTURE)
+    .maxTicks(600)
+    .tag("andrew");
+}
+
+chestStays("legendary_in_a_chest_stays_there", LEGENDARIES[0], "andrew_chest_keeper");
+chestStays("legendary_storm_blade_in_a_chest_stays_there", STORM_BLADE, "andrew_sb_chest_keeper");
 
 // ---------------------------------------------------------------- the Orbital LMB column
 

@@ -493,6 +493,16 @@ const EXPECTED_TESTS = [
   'andrew:storm_passive_cooldown',
   'andrew:storm_passive_rate',
   'andrew:storm_passive_scripted',
+  // STRM-LGND-01 — the Storm Blade under the legendary rules (L0-strm-acr items 6–7):
+  // src/gametest/legendary-fireproof.ts, src/gametest/legendary-recovery.ts
+  'andrew:legendary_storm_blade_in_a_chest_stays_there',
+  'andrew:legendary_storm_blade_death_kill',
+  'andrew:legendary_storm_blade_death_lava',
+  'andrew:legendary_storm_blade_death_offhand',
+  'andrew:legendary_storm_blade_void_thrown',
+  'andrew:legendary_storm_blade_hold_void_after_transfer',
+  'andrew:legendary_storm_blade_hold_void_holder_offline',
+  'andrew:legendary_storm_blade_hold_void_holder_dead_redeemed',
 ];
 
 /**

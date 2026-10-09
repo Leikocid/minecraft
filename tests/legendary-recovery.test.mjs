@@ -1415,3 +1415,47 @@ test('look: a loss return and a redeemed debt are the same item, at the next gen
     assert.deepStrictEqual(lookOf(copyOf(owner, id)), lookOf(stack));
   });
 });
+
+// ------------------------------------------------ the Storm Blade, def #6, on the join path (L0-strm-acr item 6)
+//
+// A SimulatedPlayer cannot reconnect with the same id, so the GameTest twin
+// (legendary_storm_blade_hold_void_holder_offline / _dead_redeemed) proves the
+// debt and its payment on respawn; the join itself (initialSpawn: true) is here.
+
+test('Storm Blade: an offline last holder\'s loss is owed to them under the sb keys and paid on join', async (t) => {
+  const { STORM_BLADE } = lg;
+  const gensOfBlade = (player, id) =>
+    player.container.slots.filter((s) => s !== undefined && lg.getMark(STORM_BLADE, s)?.id === id).map((s) => lg.getMark(STORM_BLADE, s).gen);
+  const a = makePlayer('sb-crafter');
+  const b = makePlayer('sb-holder');
+  online(a, b);
+  const blade = lg.markItem(STORM_BLADE, new mc.ItemStack(STORM_BLADE.itemId, 1), lg.makeMark('craft', a));
+  const { id } = lg.getMark(STORM_BLADE, blade);
+
+  await t.test('the hand-over stamps B as holder; B goes offline and the blade is lost unseen', () => {
+    arrive(b, 0, blade);
+    assert.strictEqual(lg.getMark(STORM_BLADE, b.container.getItem(0)).holder, b.id);
+    b.container.setItem(0, undefined);
+    online(a);
+    loseUnseen(blade.clone());
+    const owed = lg.readOwed(STORM_BLADE);
+    assert.deepStrictEqual(Object.keys(owed), [b.id]);
+    assert.deepStrictEqual(owed[b.id].map((e) => [e.mark.id, e.mark.gen, e.mark.holder, e.mark.owner]), [[id, 1, b.id, a.id]]);
+    assert.ok(typeof mc.worldProps.get('andrew:sb_owed') === 'string', 'the debt is not stored under the Storm Blade\'s own key');
+    assert.deepStrictEqual(lg.readOwed(WEB_SWORD)[b.id], undefined, 'the debt leaked into another def\'s ledger');
+  });
+
+  await t.test('the crafter\'s spawn pays nothing; B\'s join pays the blade once at gen 1', () => {
+    fire('playerSpawn', { player: a, initialSpawn: false });
+    flush();
+    assert.deepStrictEqual(gensOfBlade(a, id), []);
+    online(a, b);
+    fire('playerSpawn', { player: b, initialSpawn: true });
+    flush();
+    assert.deepStrictEqual(gensOfBlade(b, id), [1]);
+    assert.deepStrictEqual(lg.readOwed(STORM_BLADE), {});
+    fire('playerSpawn', { player: b, initialSpawn: false });
+    flush();
+    assert.deepStrictEqual(gensOfBlade(b, id), [1], 'a second spawn paid the debt again');
+  });
+});
