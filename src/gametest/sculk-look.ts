@@ -1,27 +1,39 @@
 // SCLKUI-LOADED-01: the engine facts the crossbow's loaded look stands on. No query tells "loaded"
 // for this id (docs/feedback/probe-crossbow-look.md, Q3), so the attachable reads the shape of the
 // use session. Each kind of session a player can make is pinned here with its shape and the engine's
-// answer (an arrow spent at the load, a shot on the next tap); the SESSIONS and BLIND tables of
-// tests/sculk-crossbow-attachable.test.mjs run the same shapes through the attachable's Molang.
+// answer (an arrow spent at the load, a shot on the next tap), computed from the item's own
+// use_duration and max_draw_duration. tests/sculk-crossbow-attachable.test.mjs runs 25-tick shapes
+// through the attachable's Molang, not these (src/sculk/README.md, the loaded state).
 
 import { EnchantmentType, type Entity, GameMode, ItemStack, system, world } from "@minecraft/server";
 import { type SimulatedPlayer, type Test, registerAsync } from "@minecraft/server-gametest";
 import { SCULK_CROSSBOW } from "../legendary/registry";
 import { BOLT_ID } from "../sculk";
+import sculkCrossbowItem from "../../packs/behavior/items/sculk_crossbow.json";
 
 const STRUCTURE = "andrew:platform";
 const ARROW = "minecraft:arrow";
 const SLOT = 0;
 const OTHER_SLOT = 1;
 const AMMO_SLOT = 9;
+const TICKS_PER_SECOND = 20;
+const COMPONENTS = sculkCrossbowItem["minecraft:item"].components;
+/** The use session of a copy without Quick Charge. */
+const SESSION = Math.round(COMPONENTS["minecraft:use_modifiers"].use_duration * TICKS_PER_SECOND);
+/** charge_on_draw loads a held press at max_draw_duration, and Quick Charge does not move it (CNTR-SCLK-CX02). */
+const LOAD_AT = Math.round(COMPONENTS["minecraft:shooter"].max_draw_duration * TICKS_PER_SECOND);
+/** Quick Charge takes this many ticks a level off the session (docs/feedback/probe-crossbow-look.md, addendum). */
+const QUICK_CHARGE_TICKS = 5;
 /** Longer than any session: an unended session at this point is reported, not waited for. */
-const HOLD_TICKS = 34;
+const HOLD_TICKS = SESSION + 10;
+/** A tap, mid-draw, the two ticks short of the load, the load, mid-way to the session's end and its last tick. */
+const RELEASES = [...new Set([1, Math.floor(LOAD_AT / 2), LOAD_AT - 2, LOAD_AT - 1, LOAD_AT, Math.floor((LOAD_AT + SESSION) / 2), SESSION - 1])].filter((k) => k >= 1 && k < SESSION);
 
 const log = (msg: string): void => console.warn(`[gametest] sculk-look ${msg}`);
 
 interface Session {
   t0: number;
-  /** "start@+0(ud=25)", "complete@+25(ud=0)", "bolt@+0", … stamped from t0. */
+  /** "start@+0(ud=50)", "complete@+50(ud=0)", "bolt@+0", … stamped from t0. */
   events: string[];
   startUd?: number;
   /** The use duration left when the session ended, and how: complete, release or stop. */
@@ -131,24 +143,38 @@ interface Fact {
   loaded: boolean;
 }
 
-// Measured on BDS 1.26.51.1. The look reads every row but two as the engine does;
-// release_at_24 and no_arrows_survival have a loaded draw's shape and leave the crossbow empty
-// (src/sculk/README.md, the loaded state, deviations 1–2).
-const EXPECTED: Readonly<Record<string, Fact>> = {
-  full_draw: { startUd: 25, end: "complete@+25(ud=0)", ammoSpent: 1, shots: 0, loaded: true },
-  release_at_1: { startUd: 25, end: "release@+1(ud=24)", ammoSpent: 0, shots: 0, loaded: false },
-  release_at_12: { startUd: 25, end: "release@+12(ud=13)", ammoSpent: 0, shots: 0, loaded: false },
-  release_at_23: { startUd: 25, end: "release@+23(ud=2)", ammoSpent: 0, shots: 0, loaded: false },
-  release_at_24: { startUd: 25, end: "release@+24(ud=1)", ammoSpent: 0, shots: 0, loaded: false },
-  fire_then_hold: { startUd: 25, end: "complete@+25(ud=0)", ammoSpent: 1, shots: 1, loaded: true },
-  full_draw_then_hotbar_away_and_back: { startUd: 25, end: "complete@+25(ud=0)", ammoSpent: 1, shots: 0, loaded: true },
-  no_arrows_survival: { startUd: 25, end: "complete@+25(ud=0)", ammoSpent: 0, shots: 0, loaded: false },
-  // The open Quick Charge defect (src/sculk/README.md, the draw's deviation 5): the session ends before the 25-tick gate.
-  quick_charge_1: { startUd: 20, end: "complete@+20(ud=0)", ammoSpent: 0, shots: 0, loaded: false },
-  quick_charge_3: { startUd: 10, end: "complete@+10(ud=0)", ammoSpent: 0, shots: 0, loaded: false },
-  no_arrows_creative: { startUd: 25, end: "complete@+25(ud=0)", ammoSpent: 0, shots: 0, loaded: true },
-  creative_with_arrows: { startUd: 25, end: "complete@+25(ud=0)", ammoSpent: 0, shots: 0, loaded: true },
+/** One kind of session, as the scenario plays it. */
+interface Draw {
+  /** Ticks the press is held; a shorter session completes on its own. */
+  held: number;
+  quickCharge?: number;
+  noArrows?: boolean;
+  creative?: boolean;
+  /** The press finds the crossbow loaded, so it fires before it draws. */
+  firesFirst?: boolean;
+}
+
+const DRAWS: Readonly<Record<string, Draw>> = {
+  full_draw: { held: HOLD_TICKS },
+  ...Object.fromEntries(RELEASES.map((k) => [`release_at_${k}`, { held: k }])),
+  fire_then_hold: { held: HOLD_TICKS, firesFirst: true },
+  full_draw_then_hotbar_away_and_back: { held: HOLD_TICKS },
+  no_arrows_survival: { held: HOLD_TICKS, noArrows: true },
+  quick_charge_1: { held: HOLD_TICKS, quickCharge: 1 },
+  quick_charge_3: { held: HOLD_TICKS, quickCharge: 3 },
+  no_arrows_creative: { held: HOLD_TICKS, noArrows: true, creative: true },
+  creative_with_arrows: { held: HOLD_TICKS, creative: true },
 };
+
+/** The engine's answer for a draw, from the item's own use_duration and max_draw_duration. */
+function expected(d: Draw): Fact {
+  const session = SESSION - QUICK_CHARGE_TICKS * (d.quickCharge ?? 0);
+  const end = d.held >= session ? `complete@+${session}(ud=0)` : `release@+${d.held}(ud=${session - d.held})`;
+  // A release on the load tick keeps the load. With no arrows, Creative loads and spends none, and
+  // Survival runs the whole session and loads nothing.
+  const loaded = Math.min(d.held, session) >= LOAD_AT && (d.noArrows !== true || d.creative === true);
+  return { startUd: session, end, ammoSpent: loaded && d.creative !== true ? 1 : 0, shots: d.firesFirst ? 1 : 0, loaded };
+}
 
 const show = (f: Fact): string => `start ud=${f.startUd} end=${f.end} ammo spent=${f.ammoSpent} shots=${f.shots} next tap ${f.loaded ? "SHOT" : "nothing"}`;
 
@@ -178,7 +204,7 @@ registerAsync("andrew", "sculk_look_loaded_sessions", async (test: Test): Promis
     let s = ev.open();
     await record("full_draw", s, await hold(test, p, s));
 
-    for (const k of [1, 12, 23, 24]) {
+    for (const k of RELEASES) {
       s = ev.open();
       await record(`release_at_${k}`, s, await hold(test, p, s, k));
     }
@@ -216,14 +242,14 @@ registerAsync("andrew", "sculk_look_loaded_sessions", async (test: Test): Promis
     s = ev.open();
     await record("creative_with_arrows", s, await hold(test, p, s));
 
-    const changed = Object.keys(EXPECTED).filter((name) => {
+    const changed = Object.keys(DRAWS).filter((name) => {
       const f = seen.get(name);
-      return f === undefined || show(f) !== show(EXPECTED[name]);
+      return f === undefined || show(f) !== show(expected(DRAWS[name]));
     });
-    log(`loaded_sessions RESULT ${seen.size} sessions, ${changed.length} differ from the table: ${[...seen].map(([name, f]) => `${name}=${f.loaded ? "L" : "-"}`).join(" ")}`);
+    log(`loaded_sessions RESULT session=${SESSION} load=+${LOAD_AT} ${seen.size} sessions, ${changed.length} differ from the item: ${[...seen].map(([name, f]) => `${name}=${f.loaded ? "L" : "-"}`).join(" ")}`);
     for (const name of changed) {
       const f = seen.get(name);
-      test.assert(false, `${name}: engine gave ${f === undefined ? "nothing" : show(f)}, the look is built on ${show(EXPECTED[name])}`);
+      test.assert(false, `${name}: engine gave ${f === undefined ? "nothing" : show(f)}, the item's use_duration and max_draw_duration give ${show(expected(DRAWS[name]))}`);
     }
   } finally {
     ev.close();
