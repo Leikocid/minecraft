@@ -63,12 +63,26 @@ export function log(msg) {
   process.stdout.write(`${msg}\n`);
 }
 
+// spawnSync cuts stdout at maxBuffer and says so only through res.error: output
+// past the limit comes back short with no sign of loss, and a reader waiting for
+// the last line of a log waits forever. Node's default is 1 MiB; a full suite log
+// crosses it.
+export const COMPOSE_MAX_BUFFER = 128 * 1024 * 1024;
+
 export function compose(args, opts = {}) {
-  return spawnSync('docker', ['compose', '-f', composeFile, ...args], {
+  const res = spawnSync('docker', ['compose', '-f', composeFile, ...args], {
     cwd: composeDir,
     encoding: 'utf-8',
+    maxBuffer: COMPOSE_MAX_BUFFER,
     ...opts,
   });
+  if (res.error?.code === 'ENOBUFS') {
+    throw new Error(
+      `docker compose ${args.join(' ')} wrote more than ${COMPOSE_MAX_BUFFER} bytes and its ` +
+        'output was cut off. Raise COMPOSE_MAX_BUFFER in scripts/bds-lib.mjs.'
+    );
+  }
+  return res;
 }
 
 export function assertDockerRunning() {
