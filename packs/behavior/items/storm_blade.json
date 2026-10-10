@@ -21,6 +21,9 @@
       "minecraft:fire_resistant": {
         "value": true
       },
+      "minecraft:glint": {
+        "value": true
+      },
       "minecraft:enchantable": {
         "slot": "sword",
         "value": 10
