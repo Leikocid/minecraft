@@ -63,8 +63,12 @@ services:
       # peaceful; QA must not be.
       DIFFICULTY: "easy"
       ALLOW_CHEATS: "true"
-      # LAN-only dev server: the iPad joins without Xbox Live auth.
-      ONLINE_MODE: "false"
+      # QA is the rehearsal for exposing production: Xbox Live auth on, and only
+      # the named account admitted. Production stays LAN-only until the iPad is
+      # shown to get in here. The xuid is given so the image needs no lookup.
+      ONLINE_MODE: "true"
+      ALLOW_LIST: "true"
+      ALLOW_LIST_USERS: "klubok6282:2535436849482822"
       # Without console output the script's console.warn never reaches
       # `docker logs`, and the check has nothing to assert on.
       CONTENT_LOG_FILE_ENABLED: "true"
