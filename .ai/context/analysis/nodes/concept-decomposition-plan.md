@@ -2,75 +2,81 @@
 type: "concept-decomposition-plan"
 node_id: "L0"
 source_channel: "rollout"
-analysis_version: 8
-level: 0
-title: "L0 Decomposition Plan (v8)"
+analysis_version: 9
+title: "L0 Decomposition Plan (v9)"
 aliases: ["L0"]
 is_a: ["decomposition-plan"]
 part_of: ["L0"]
 relates_to: ["L0"]
-priority: 620
-size_chars: 6983
-tags: ["v8", "storm-blade", "supersedes:L0-plan@v7"]
+priority: 630
+size_chars: 7794
+tags: ["v9", "above-water-trident", "supersedes:L0-plan@v8"]
+level: 0
 ---
 ---
-title: "L0 Decomposition Plan (v8)"
+title: "L0 Decomposition Plan (v9)"
 aliases: ["L0-plan", "Decomposition Plan"]
 is_a: ["plan"]
 part_of: ["L0"]
-relates_to: ["L0", "L0-strm", "L0-lgnd", "L0-adr-sbdm", "L0-adr-sblt", "L0-adr-sbvr", "L0-xcx26", "L0-xcx27", "L0-xq8", "L0-xasm29", "L0-xasm30", "L0-xasm31", "L0-xasm32"]
-see_also: ["stormbladeelytratotemspecruen-part-1", "stormbladeelytratotemspecruen-part-2"]
-supersedes: ["L0-plan@v7"]
+relates_to: ["L0", "L0-trdt", "L0-lgnd", "L0-strm", "L0-katn", "L0-adr-twlt", "L0-adr-twth", "L0-adr-twrp", "L0-xcx28", "L0-xcx29", "L0-xcx30", "L0-xq9", "L0-xq10", "L0-xasm33", "L0-xasm34", "L0-xasm35", "L0-xasm36", "L0-xasm37"]
+see_also: ["abovewatertridentspecv1ruen-part-1", "abovewatertridentspecv1ruen-part-2"]
+supersedes: ["L0-plan@v8"]
 ---
-# L0 Decomposition Plan (v8)
+# L0 Decomposition Plan (v9)
 
 ## Survey
-- **Volume.** The KV has 36 raw fragments, about 143 KB, and 543 indexed artifacts. The v8 delta is **one new spec**, "Storm Blade + Elytra + Totem v1", in 2 fragments of about 8.6 K characters. Part 2 repeats §03, so it is about 7 K unique: 7 sections and 9 acceptance bullets. No other raw changed. The code is at 1.8.0. Since v7 the crossbow has shipped and been accepted, and `LGND-HOLD-01` (Void return to the last holder) has shipped.
-- **Diversity.** Low. There is one weapon and two data-only recipes. The weapon touches four areas:
-  1. item and framework (def #6, recipe, gate, HUD, hands, rules);
-  2. the active trace and its hit;
-  3. the passive melee proc;
-  4. visuals.
+- **Volume.** 38 raw fragments (about 150 KB) and 566 indexed artifacts. The v9 delta is **one new spec**, "Above Water Trident v1" (priority 630). It is 2 fragments, about 7.2 K characters; the EN half mirrors the RU half, so about 3.6 K is unique. It has 4 sections and 12 acceptance bullets. No other raw changed. The code is at 1.9.2, and the Storm Blade has shipped and been accepted.
+- **Diversity.** Medium for a single weapon. The spec has five mechanic areas:
+  1. item, recipe and def (buckets, refund);
+  2. hit damage (+2, strike);
+  3. movement (dash, fall cancel, swim);
+  4. throw/return with custody;
+  5. the enchantment ban.
 
-  Area 1 is the `lgnd` contract with **no new capability**: the blade is an active def like #1–#4. The recipes are two JSON files.
-- **Coherence.** High. Its outward seams:
-  - `lgnd`: a def only;
-  - `katn`: ray helpers, reused;
-  - `sclk`: the hurt-window technique, mirrored but not shared, because true damage ≠ armour damage;
-  - the magnet: def-driven, no change.
-- **Dependencies.** Two short independent paths, Use → trace → hit and melee → roll → bonus. They meet only in the damage helper. That is too thin for a pipeline split.
+  Areas 2 and 3 reuse proven project pieces (`strm` damage and visuals, the `katn` fall pattern). **Area 4 is new.** It is the first legendary that leaves every inventory, and it touches `lgnd` (`xcx30`).
+- **Coherence.** High. It is one item, one module (`src/trident/`), and one acceptance list. Its outward seams:
+  - `lgnd`: the def, plus the delivery entry point for custody;
+  - `strm`: shared damage helper and visual;
+  - `katn`: fall pattern, as fallback;
+  - `sclk`: projectile engine facts;
+  - `magn`: def-driven, and a returning trident must not be pulled.
+- **Dependencies.** Three paths share one entry point (`itemReleaseUse`) and one helper (the bonus): throw → hit → return → re-insert, dash → land, and melee → bonus. That is too intertwined for a pipeline split and too small for several nodes.
+- **Blocking contradictions?** None block the node. `xcx28` and `xcx29` have shippable defaults (`xq9`, `xq10`). `xcx30` is the node's first deliverable.
 
 ## Decomposition strategy: coherent-coverage
-This follows the one-node-per-weapon precedent (`webs`, `scyt`, `katn`, `sclk`). One new child, `strm`, covers the blade **and** the two vanilla recipes. The recipes are too small for a node, they share the spec and acceptance doc, and `L0-adr-sbvr` already settles them.
+This follows the one-node-per-weapon precedent (`webs`, `scyt`, `katn`, `sclk`, `strm`). One new child, **`trdt`**, covers the whole spec.
 
-**`lgnd` is not re-run.**
-- Def #6 is an active def. The shape, gate, token and refund, retention, recovery, last-holder Void return, `protectLegendariesIn`, HUD and `resolveActivation` take it with no code change (`xasm32`).
-- `strm` adds the def to `registry.ts` and cites `lgnd-*` rules by id.
-- `katn`, `sclk` and `magn` are not re-run either.
+**`lgnd` is not re-run unless `xcx30` escalates.** `trdt` names the exact `lgnd` touch points. If they go beyond one delivery entry point and the custody state, the reduce step schedules `lgnd` at v10. `strm`, `katn`, `sclk` and `magn` are not re-run; their scenarios join the gate.
 
 | id_suffix | label | prompt | model_hint |
 |-----------|-------|--------|------------|
-| strm | **The Storm Blade (`andrew:storm_blade`) and the Elytra/Totem recipes.**<br>**Probe first, on checks (19136).** It gates `L0-adr-sbdm` and `L0-adr-sblt`:<br>• P1/P2 answered (diagnose-CNTR-X26); the probe still owes: Resistance in f, an armoured mob, a crit, and the lethal path through the raise.<br>• Shield: answered (CNTR-X27). The build GameTest asserts front blocked and back 10 pre-armour.<br>• Which particle ids exist for the spark/wind/flash on 1.26.51, and whether the thunder sound plays at the point.<br>• Diamond-sword melee on BDS, measured against vanilla (`xasm30`).<br>**Item:** def #6 (`sb`, 600 ticks, `xasm32`); a custom sword with diamond-sword damage, no durability, and the vanilla sword enchant slot; `allow_off_hand`; RU/EN lang; a Creative "Equipment" entry; an RP icon.<br>**Recipe:** lightning rod top and bottom, wind charge left and right, diamond sword in the centre → craft token; refund on a blocked craft. Covers simultaneous crafts, the recipe book and shift-craft through the existing gate.<br>**Active:** Use → `resolveActivation` → a trace ≤ 10 blocks Euclidean, reusing `src/katana/plan.ts` helpers (`xasm31`). The first living entity, never through walls, never a second one, takes 10 HP pre-armour through `src/storm/damage.ts` (`adr-sbdm`, C-29). Three visual strikes at the hit point, or at the stop point on a miss (`adr-sblt`, C-30). Cooldown on any valid release; invalid attempts are free. HUD «Клинок бури — Готово» / "Storm Blade — Ready" / seconds left.<br>**Passive:** `entityHitEntity` with the blade in the main hand → an independent 30 % roll with an injectable RNG (C-32) → +6 HP pre-armour through the same helper, plus one visual strike. It never reads or writes the cooldown.<br>**Vanilla recipes (`adr-sbvr`, C-31):** `elytra.json` and `totem_of_undying.json`, plain shaped recipes outputting the vanilla ids.<br>**GameTests (`bds`):**<br>• every §06 bullet: once-only craft across a restart, Creative copy free; melee = vanilla diamond sword; passive rate on N ≥ 1000 seeded and a ±5 % band on a live sample; exact +6 and 10 pre-armour against an armoured SimulatedPlayer, with an in-window negative control; ≤ 10 blocks, wall stop, second target untouched; 30 s cooldown, passive independent; no lightning entity and no fire; death, hazards and Void through the `lgnd` scenarios with def #6; Elytra and Totem crafted twice each through a Crafter.<br>• The magnet's legendary scenarios include def #6.<br>**iPad (`ipad`):** the trace and strikes read as lightning; the icon; the HUD line; the Creative entry; both recipes in the recipe book; a real totem pop and an elytra glide. | component-deep-dive | |
+| trdt | **The Above-Water Trident (`andrew:above_water_trident`), def #7.**<br>**First deliverable: settle `xcx30`.** Design the custody ledger (`L0-adr-twth` §2/§5) and list every `lgnd` touch point: delivery to the last holder, death and offline handling, the stale entity on `entityLoad`, and the magnet ignoring the return entity.<br>**Probe, on checks (19136):**<br>• the engine bucket return for a token recipe, including a full inventory (`xasm33`);<br>• vanilla trident melee and thrown damage, and Impaling on a custom item (`xasm34`);<br>• `itemReleaseUse` and the charge on iPad touch, and `isSneaking` at release;<br>• vanilla Riptide III launch distance, and its `applyKnockback` calibration (`xasm37`);<br>• the fall cancel via the hurt before-event (with the katana teleport as fallback);<br>• vanilla swim speed with a sprint-swim baseline;<br>• vanilla throw speed and gravity;<br>• the return at 0.5 b/tick through blocks;<br>• a stale projectile on restart.<br>**Item:** custom trident: charge, no throwable, no durability, trident enchant slot, `allow_off_hand`; RU/EN lang; a Creative "Equipment" entry; RP icon and in-flight model (trident geometry).<br>**Recipe:** ` G / BTB / G ` → token. Exact bucket return and refund (C-34).<br>**Damage:** vanilla trident base for melee and thrown hits; +2 pre-armour through the shared `native / window / lethal` helper (extracted from or imported from `src/storm/damage.ts`); one strike visual per hit (`adr-twlt`); idempotent per hit event.<br>**Movement:** a sneak-release dash, with no cooldown, anywhere; a one-shot fall grant (`xasm36`); a held-only swim boost (C-36).<br>**Throw:** the ledger, then remove from hand, then spawn and launch; hit → damage → return; miss/block → visible 10 b/s return; re-insert exactly once; fallbacks (offline, death, dimension, unloaded, 30 s cap).<br>**Enchant:** scrub Loyalty and Riptide (C-37, `xasm35`).<br>**GameTests (`bds`)** for every acceptance bullet:<br>• recipe plus 2 buckets, full inventory;<br>• second craft blocked across a restart; Creative copy free;<br>• melee and thrown = vanilla + 2 against armour, with an in-window negative control; exactly one strike and no `lightning_bolt` entity;<br>• a dash on a dry platform with no rain, in the Nether and the End;<br>• no damage on the next landing, then normal damage on the one after;<br>• swim speed with and without the trident, in either hand;<br>• return speed 10 b/s ± 5 % from a block hit; re-throw refused mid-return; no duplicate at any tick;<br>• thrower dies, logs off or switches dimension mid-flight; Void, chest, fire, lava, explosion (through the `lgnd` scenarios with def #7);<br>• Loyalty and Riptide stripped, Unbreaking kept.<br>The magnet's legendary scenarios include def #7.<br>**iPad (`ipad`):** dash feel, swim feel, the visible flight and return, the strike reads as lightning, icon, Creative entry, recipe in the recipe book, the sneak gesture. | component-deep-dive | |
 
 ## Reduce plan
-- **Cite, do not restate.** `strm` cites `lgnd-*` rules for the gate, retention, protection, Void, Creative copies and hand priority. It also cites `katn` for ray semantics. **The only framework edit allowed is adding def #6** to `registry.ts`, plus subscriptions in `main.ts`. Any other framework hook is a new L0 contradiction (`xasm32`).
-- **`strm` owns `L0-adr-sbdm` and `L0-adr-sblt`** and their probe outcomes. A failed probe supersedes its ADR before the build tasks. `xcx26` closes only on a BDS proof with a negative control. `xcx27` closes either on Andrey's answer to `xq8` or on a documented deviation (default: full block).
-- **AC routing:**
-  - Craft-once, death, hazards and Void are `lgnd` rules, with Storm Blade call sites in `strm`.
-  - Damage, trace, passive, cooldown, visuals and both vanilla recipes go to `strm`.
-  - Split every AC into `bds` and `ipad` channels.
-- **Roll-up.** The `strm` overview goes into the L0 diagram. De-duplicate new constraints against C-1 … C-32. At reduce, re-check these seams:
-  - The Katana's ray helpers are imported, not copied.
-  - `src/storm/damage.ts` does not import the crossbow's true-damage write.
-  - The blade's recipe outline (` L / WSW / L `) equals the crossbow's (` E / DCD / E `) but its keys differ, so both recipes stay distinct in the recipe book.
-  - Neither vanilla recipe collides with a pack recipe.
-- **Stage-10 order:**
-  1. The `strm` probe on checks.
-  2. Vanilla recipes. They are independent and can ship first.
-  3. Def #6, item, token, recipe, RP and lang.
-  4. The damage helper with the hurt-window proof.
-  5. The active trace, visuals, cooldown and HUD.
-  6. The passive.
+- **Cite, do not restate.** `trdt` cites `lgnd-*` rules for the gate, the token and refund, retention, protection, the Void, pending delivery and Creative copies. It cites `strm` for the hurt-window modes and `katn` for the fall facts.
+- **`xcx30` decides the framework widening.** Reduce accepts `trdt`'s list of `lgnd` touch points as a deliberate, recorded widening of `xasm32`. That needs an ADR at reduce, `L0-adr-twlg`, if it is accepted. If the list goes beyond a delivery entry point and the custody exclusion, reduce emits a v10 `lgnd` re-run instead.
+- **`trdt` owns** `L0-adr-twth` and `L0-adr-twrp`, and the probe outcomes behind them. A failed probe supersedes its ADR before the build tasks. `L0-adr-twlt` and `xcx29` follow `xq10`, and `xcx28` follows `xq9`. Both default to a documented limitation.
+- **AC routing.**
+  - To `lgnd` rules, with trident call sites in `trdt`: craft-once, Creative, death, Void, offline, chest and hazards.
+  - To `trdt`: buckets, damage, strike, dash, landing, swim, throw/return and the enchant ban.
+  - Every AC is split into the `bds` and `ipad` channels.
+- **Roll-up.**
+  - The `trdt` overview goes into the L0 diagram.
+  - New constraints are de-duplicated against C-1 … C-37.
+  - Seams re-checked at reduce:
+    - the bonus helper and the strike visual are shared, not copied;
+    - `src/katana/fall.ts` is untouched, or touched only as a pure refactor;
+    - the recipe ` G / BTB / G ` stays distinct from the Web Sword and the Storm Blade;
+    - no code path leaves a held copy and an in-flight copy at the same time (C-33).
+- **Stage-11 order:**
+  1. The `trdt` probe on checks.
+  2. The custody ledger and the `lgnd` seam.
+  3. Def #7, item, token, recipe with buckets, RP and lang.
+  4. Melee damage +2 and strike (shared helper).
+  5. Throw, hit, return and re-insert.
+  6. Dash and fall grant.
+  7. Swim boost.
+  8. Enchant scrub.
 
-  Gate each merge by blast radius plus the legendary scenarios. Reopen the `ipad` criteria after each epic merge.
+  Gate each merge by blast radius plus the `lgnd`/`strm`/`magn` scenarios. Reopen the `ipad` criteria after each epic merge.
 - **Not in this run:** `xcx12` (the structure reconcile) and the Orbital v1.4.4 reconcile. Both are still queued separately.

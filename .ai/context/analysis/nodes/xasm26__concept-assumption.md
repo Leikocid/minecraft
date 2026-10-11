@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-xasm26"
 source_channel: "rollout"
-analysis_version: 7
+analysis_version: 9
 level: 1
 title: "ASM-L0-26 · Def #5 inherits the framework as built"
 aliases: ["L0-xasm26"]

@@ -1,12 +1,12 @@
 ---
 title: Boundaries
 type: project-knowledge
-generated_at: "2026-09-29T20:40:11.959Z"
+generated_at: "2026-10-11T18:52:04.051Z"
 source_channel: rollout
 node_id: rollout-boundaries
 aliases: ["rollout-boundaries","boundaries","project-knowledge/boundaries"]
 is_a: ["rollout","boundaries"]
-priority: 540
+priority: 630
 ---
 
 # Boundaries

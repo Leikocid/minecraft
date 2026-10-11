@@ -2,7 +2,7 @@
 type: "concept-contradiction"
 node_id: "L0-xcx23"
 source_channel: "rollout"
-analysis_version: 7
+analysis_version: 9
 level: 1
 title: "CX-L0-23 · The shield vs a physical hit"
 aliases: ["L0-xcx23"]

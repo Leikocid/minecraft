@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-adr-sbkb"
 source_channel: "rollout"
-analysis_version: 8
+analysis_version: 9
 title: "ADR-L0-sbkb · The beam's knockback comes from the hit, not from the strikes"
 aliases: ["L0-adr-sbkb"]
 is_a: ["architecture-decision"]

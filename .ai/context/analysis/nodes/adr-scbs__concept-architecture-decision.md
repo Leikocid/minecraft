@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-adr-scbs"
 source_channel: "rollout"
-analysis_version: 7
+analysis_version: 9
 level: 1
 title: "ADR-L0-scbs · The crossbow's base item (status: proposed, probe-gated)"
 aliases: ["L0-adr-scbs"]

@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-adr-sbvr"
 source_channel: "rollout"
-analysis_version: 8
+analysis_version: 9
 level: 1
 title: "ADR-L0-sbvr · Vanilla item recipes (status: accepted)"
 aliases: ["L0-adr-sbvr"]

@@ -1,13 +1,13 @@
 ---
 title: Architecture
 type: project-knowledge
-generated_at: "2026-10-08T20:34:41.334Z"
+generated_at: "2026-10-11T18:49:56.587Z"
 source_channel: rollout
 node_id: rollout-architecture
 aliases: ["rollout-architecture","architecture","project-knowledge/architecture"]
 is_a: ["rollout","architecture"]
-relates_to: ["L0-adr-sbdm","L0-adr-sblt","L0-adr-sbvr","L0-katn","L0-lgnd","L0-magn","L0-sauc","L0-sclk","L0-strm","L0-ufoc"]
-priority: 620
+relates_to: ["L0-adr-hldb","L0-adr-sbdm","L0-adr-sblt","L0-adr-sbvr","L0-adr-scbs","L0-adr-scdm","L0-adr-scfc","L0-adr-sckp","L0-adr-scpi","L0-adr-sctr","L0-adr-trlg","L0-trdt"]
+priority: 630
 ---
 
 # Architecture
@@ -16,442 +16,79 @@ priority: 620
 
 ## Components
 
-### Dragon Katana (`andrew:dragon_katana`) (L0-katn)
+### L0-trdt · The Above-Water Trident (`andrew:above_water_trident`), def #7 (L0-trdt)
 
----
-is_a: ["component"]
-part_of: ["L0"]
-relates_to: ["L0-lgnd", "L0-lgnd-p001", "L0-lgnd-p002", "L0-lgnd-p003", "L0-lgnd-p004", "L0-lgnd-p005", "L0-lgnd-p008", "L0-webs", "L0-scyt", "L0-magn", "L0-adr-ktob", "L0-adr-ktfl", "L0-xasm18", "L0-xasm19", "L0-xasm20", "L0-xasm21", "L0-xasm22", "L0-xcx21"]
-see_also: ["dragonkatanaspecv1ruen-part-1", "dragonkatanaspecv1ruen-part-2", "dragonkatanaspecv1ruen-part-3"]
-governs_files: ["src/katana/", "packs/behavior/items/dragon_katana.json", "packs/behavior/recipes/dragon_katana*.json", "packs/resource/texts/*.lang"]
----
-# Dragon Katana (`andrew:dragon_katana`)
+# L0-trdt · The Above-Water Trident (`andrew:above_water_trident`), def #7
 
-**Responsibility.** This component owns what is unique to the fourth legendary weapon:
-- the item and recipe identity (`L0-katn-ent1`, `L0-katn-r001`);
-- the teleport ability body: trace → safe cell → teleport → cooldown (`L0-katn-p001`, rules `r002`–`r005`);
-- the one-shot fall flag (`L0-katn-p002`, `L0-katn-ent2`, `r006`);
-- the cherry-petal trail (`L0-katn-r007`);
-- the Katana HUD strings (`L0-katn-r008`);
-- the GameTests for T04–T15 and the Katana call sites of T01–T03 and T16–T18.
-
-It is the Katana's counterpart to `L0-webs` (trap body) and `L0-sprj`/`L0-scyt` (volley body). All four plug into `L0-lgnd`.
-
-**Not owned here (cite `lgnd`, do not restate).**
-- One Survival craft per world, the persistent flag, refund, Creative and `/give` copies, first-craft broadcast: `L0-lgnd-p001`.
-- Death retention, and a contained item left alone: `L0-lgnd-p002`.
-- Void, offline and owed return: `L0-lgnd-p003`.
-- Orbital blast and ring protection: `L0-lgnd-p008`.
-- Hand priority (main hand first, then a ready off hand): `L0-lgnd-p004`, through the shipped `resolveActivation` (`src/legendary/hands.ts:35`).
-- The cooldown clock (`startCooldown`, epoch ms, `src/legendary/cooldown.ts:47`) and the shared HUD pass: `L0-lgnd-p005`.
-- The T17 reading under C-16: `L0-xcx21`, `L0-xasm22`.
-
-**What `katn` adds to the framework.** Def #4 in `LEGENDARIES` with `hudKeys` set: the def field already exists and the Orbital Cannon uses it. Nothing else. If a probe shows a framework hook is needed, that is an L0 contradiction, not a local patch (plan §"lgnd answers first").
-
-**Inputs.**
-- `world.afterEvents.itemUse`, plus `playerInteractWithBlock` for the same press, de-duplicated as in `src/websword/trap.ts`.
-- The server-side `player.getHeadLocation()` and `getViewDirection()`.
-- Block state along the segment.
-
-**Outputs.**
-- One `player.teleport(B, { keepVelocity: false, rotation kept })` in the same dimension.
-- `startCooldown(player, "dragon_katana")`.
-- An in-memory fall flag.
-- A bounded burst of pink petal particles A→B.
-- No block edits, no damage and no entities.
-
-**Core flow** (`L0-katn-p001`): resolve → trace (`L0-adr-ktob`, refined by `L0-katn-ad01`) → endpoint (`L0-xasm18`, `L0-katn-as01`) → safe-cell search (`L0-xasm19`, `L0-katn-r004`) → teleport → cooldown → fall flag → trail. Any refusal leaves no state: no teleport, no cooldown, no message.
-
-**Constraints honoured.**
-- C-24: server-authoritative, ≤ 20, unreadable = solid, no block edits.
-- C-25: the fall flag is one-shot, bounded and not persisted.
-- C-5e: a one-shot trail; the watcher costs nothing while no flag is set.
-- C-21: epoch-ms clocks.
-- C-16: closest stable behaviour, deviations documented.
-
-**Open items.**
-- `L0-katn-cx01`: resolved at reduce v6 by amending `L0-adr-ktob` §3 (fits ≠ safe).
-- `L0-katn-as01` … `as04`: endpoint geometry, aim source on iPad, hazards, the fall look-ahead.
-
-**Probe first** (before any build task): (1) a self-teleport mid-fall resets fall distance (`L0-adr-ktfl`); (2) the ray flags: liquids skipped, cobweb/grass/carpet passable, slabs and fences hit; (3) `getBlockFromRay` behaviour at an unloaded chunk; (4) `minecraft:cherry_leaves_particle` via `spawnParticle` renders on iPad.
-
-**Channels.** `bds`: T01–T18 as GameTests (`L0-katn-ac01` … `ac08`). `ipad`: trail, HUD, icon, Creative placement, aim feel (`L0-katn-ac09`).
-
-
-
-
-
-
-
-### Legendary weapon framework (`src/legendary/`), v7: as built at 1.6.1, plus the passive def and the Sculk Crossbow delta (L0-lgnd)
-
-# Legendary weapon framework (`src/legendary/`), v7: as built at 1.6.1, plus the passive def and the Sculk Crossbow delta
-
-Related: L0-sclk, L0-katn, L0-magn, L0-orbc, L0-webs, L0-scyt, L0-xcx11, L0-xcx24, L0-adr-scbs, L0-adr-hold, L0-xasm26, L0-lgnd-ad15, L0-lgnd-ad16, L0-lgnd-ad17, L0-lgnd-cx15, L0-lgnd-cx16, L0-lgnd-r016, L0-lgnd-r018.
-
-**Responsibility.** Every general legendary rule is implemented once, for every def in `LEGENDARIES`: the token craft gate and first-craft broadcast, marks and generation, death retention, loss return and the owed list, `protectLegendariesIn`, hand priority (`resolveActivation`), cooldown and busy, the HUD, `hidden_until`, and the type predicates `isLegendaryStack` / `isLegendaryWeaponStack`.
-
-## As built at 1.6.1 (read from code 2026-10-05)
-- **Four defs** (`registry.ts`): Web Sword `ws`, Scythe `sc`, Orbital Cannon `oc`, Dragon Katana `dk` (shipped 1.5.0, `KATA-LGND-01-AA`). The Katana needed no framework code (`ad14` held).
-- **Every def has an ability.** `abilityKey` and `cooldownTicks` are required fields (`registry.ts:12-15`). The HUD draws a line for every held def (`hud.ts:37-56`), and `resolveActivation` lets any held, ready def claim a Use (`hands.ts:35-42`).
-- **Legendary weapons are magnetic** (operator tuning, 1.6.0, `de0fc68`). The magnet uses `isLegendaryWeaponStack` (weapons, never tokens): ground, container slots, late drops, a player holding one (`magnet-hold.ts:117-136`), and a mob or armour stand holding one (`magnet-select.ts:179`, `:320`). The UFO AC 13 "never pulled" rule is retired. See `r016` and `ac21`.
-- **Armour stand in the Void** is closed in code (`decision-resolve-l0-lgnd-cx14`: stand watcher plus two return guards, `recovery.ts:326`, `:433`).
-- **Return target is still `mark.owner`.** `lost()` targets `w.mark.owner` (`recovery.ts:490`), and the protect hand-back and owed entry use it too (`:877-879`). `decision-resolve-l0-xcx11` (2026-09-29) chose the last holder and named `LGND-GEN-01-AA`. That task is archived, but the mark has no holder field (`state.ts`). See `cx16`.
-
-## v7 delta
-| # | Change | Artifacts |
-|---|---|---|
-| 1 | Passive def: a def may have no ability. Then it has no timer key, no Use claim and no HUD line. Defs #1–#4 keep byte-identical keys and behaviour | `ad15`, `ent1`, `r018`, `ac26` (closes `L0-xcx24`) |
-| 2 | Def #5 `SCULK_CROSSBOW`: `andrew:sculk_crossbow`, token `andrew:sculk_crossbow_crafted`, refund 2 echo shard + 2 deepslate + 1 crossbow, command `andrew:crossbow`, passive | `ad16`, `as18`, `ac25` |
-| 3 | **Key prefix: not `sc`.** `sc` is the Scythe's; reuse would share the craft flag, marks, pending and owed. Proposed `sk` | `cx15`, `as18` |
-| 4 | No per-weapon code in retention, recovery, the Void paths, `protectLegendariesIn`, commands or the magnet: each iterates `LEGENDARIES` or calls `defForStack`/`defForToken` | `ad16`, `ac27` |
-| 5 | Return target for T19/T20/Void: `mark.owner` until the holder task ships, as for the Katana. Tests call one `returnTarget(mark)` helper so the holder task changes one function | `ad17`, `ac27`, `cx16` |
-| 6 | Magnet: the crossbow is pulled like the other four. Not a spec breach (the crossbow spec does not list the magnet as a hazard) | `r016`, `ac21` |
-
-**Fallback, stated as larger.** If the `sclk` probe rejects a custom shooter and `L0-adr-scbs` falls back to the vanilla `minecraft:crossbow` (option B), identity can no longer be by type. `isLegendaryStack`, `isLegendaryWeaponStack`, `defForStack`, `heldLegendaries`, the magnet's `hasitem` holder tags (which cannot read dynamic properties), the craft gate (the recipe *input* is the same type), retention and the GameTests all become mark-aware. That is a framework rewrite of identity, not a def. It needs its own L0 decision and is **not** planned by this pass (`ad16` §Fallback).
-
-## Published contracts
-- `LEGENDARIES`, `defForStack`, `defForToken`, `defForAbility` (active defs only), `isLegendaryStack`, `isLegendaryWeaponStack`, **`hasAbility(def)`** (new).
-- `isReady`, `startCooldown`, `setBusy`, `clearBusy`, `isBusy`.
-- `heldLegendaries(player)` (still returns passive defs; retention-neutral), `resolveActivation(player)` (active defs only).
-- `protectLegendariesIn(dim, box, {avoid, reason}) → {moved, handedBack}`; `sclk`'s crater calls it before carving (`L0-xcx25`).
-- `isLegendaryItemEntity`, `isHiddenFromTargeting`, `hideFromTargeting`.
-
-## Does NOT own
-The crossbow item JSON, token, recipe, lang, bolt pipeline, damage, crater, durability (custom base) and Piercing exclusion (`sclk`). The magnet's selection (`magn`).
-
-## Next tasks
-1. **LGND-PASSIVE** (before `sclk` item): `ad15` type split, `hasAbility`, HUD/resolver skips, registry test. Gate: the existing legendary GameTests and `npm test` pass with no assertion edits (`ac26`).
-2. **Def #5** lands with the `sclk` item task: the entry, the uniqueness and key asserts, the crossbow instances of the framework GameTests (`ac25`, `ac27`).
-3. **LGND-HOLD** (separate, unblocked by the decision): the holder field per `ad11`; `ac18` plus the holder clauses of `ac08`, `ac09`, `ac24`, `ac27`.
-
-
-
-
-
-
-
-### L0-magn · UFO magnet effect (L0-magn)
-
-# L0-magn · UFO magnet effect
-
-**Status.** Not implemented. This is step 4 of the Stage 6 order, after `lgnd` v4, `ufoc` and `sauc`. It can be built against a stub `ufoc` that implements `L0-adr-ufpc`. Probes U1–U11 are on branch `probe/ufo-magnet` (`src/gametest/probe-ufo.ts`, BDS 1.26.51.1).
+**Links.**
+- is_a: component.
+- relates_to: L0-lgnd, L0-strm, L0-katn, L0-magn, L0-sclk, L0-adr-twth, L0-adr-twlt, L0-adr-twrp, L0-xcx28, L0-xcx29, L0-xcx30, L0-xcx31.
 
 ## Responsibility
-For 60 s, everything made of iron in the magnet zone is pulled under the hovering saucer and held there. When the magnet goes off, everything is released at once. The work splits into:
-- classifying iron;
-- one zone scan;
-- selecting at most 10 non-player elements;
-- turning blocks and container stacks into items;
-- moving players and elements each tick;
-- releasing them.
+A one-per-world passive legendary (`PassiveLegendaryDef`, prefix `tr`, token `andrew:above_water_trident_crafted`, command `andrew:trident`, `xasm33`). It works like a vanilla trident, plus:
+- every landed hit (melee or thrown) adds +2 HP before armour and shows one lightning visual;
+- a sneak-release dash, Riptide-III-like, anywhere and with no cooldown, followed by a one-shot fall cancel;
+- a swim boost to land-sprint speed while it is held;
+- a scripted throw whose return is visible (10 b/s after a miss, a block hit or an entity hit) and that can never duplicate or lose the copy.
 
-## Inputs (the phase contract, `L0-adr-ufpc`)
-- `onPhase("magnet", {centre, hoverY, saucerPos, eventId})` starts the magnet: scan, select, extract.
-- `magnetStep(tick)` is called by the `ufoc` interval after `saucerStep` in the same tick. `saucerPosition()` is read only inside it, so it is already this tick's position.
-- `onPhase("release")` triggers the simultaneous release. A shoot-down (`sauc`), `/andrew:ufo stop` and an abort go through `requestMagnetOff(reason)`, which latches: the release runs at the start of the next interval tick (`L0-magn-prel`).
-- `lgnd`: `isLegendaryStack(stack)` is the "never pulled" predicate (`L0-lgnd-ad13`). Until `lgnd` v4 ships, the interim is `defForStack || defForToken` (`L0-magn-rleg`). Holder watching and death retention stay with `lgnd` (`lgnd-r*`); they are not restated here.
+## Code ownership
+- **`src/trident/`** (new): input, throw, custody, return, movement, scrub and damage glue.
+- **`packs/behavior/items/above_water_trident.json`:** use-duration charge, no `throwable`, no durability, `minecraft:enchantable` slot `trident`, `allow_off_hand`, `minecraft:damage` = measured vanilla melee − 1.
+- **`packs/behavior/entities/`:** two snowball-runtime entities.
+  - `andrew:thrown_above_water_trident`: projectile, vanilla speed and gravity, no `remove_on_hit`.
+  - `andrew:returning_above_water_trident`: no physics, no collision, teleport-steered.
+- **`packs/behavior/recipes/`:** ` G / BTB / G ` → token.
+- **`packs/resource/`:** icon (item icon house style), trident geometry for both entities, and RU/EN lang.
 
-## Outputs / world effects
-- Iron item entities, extracted stacks, mobs, minecarts and block items move through teleports to ring slots (r 5, 3 blocks below the saucer).
-- Players are pulled through `applyKnockback` to a point 6 blocks below the saucer.
-- Selected blocks become air, plus exactly one item each. Dependants resting on them pop as in vanilla (`L0-adr-ufnd`).
-- On release, everything falls with vanilla physics and vanilla fall damage.
-
-## Zone
-- A cylinder of r 50 around the centre, from centre − 20 up to `hoverY`.
-- Only loaded chunks count (C-12′).
-
-## Artifacts
-- **Processes:** `L0-magn-pscn` (magnet-on scan and selection), `-pext` (extraction and block → item), `-phld` (per-tick hold), `-prel` (release).
-- **Entities:** `-eirn` (iron classification lists), `-eelm` (magnet element).
-- **Rules:** `-rlim` (limit and priority), `-rexm` (12-block drop exemption), `-rply` (player pull), `-rcnt` (containers), `-rblk` (blocks/door/ore), `-rrng` (ring away from players), `-rrel` (release and fall), `-rleg` (legendary exclusion), `-rdup` (no-dup ordering).
-- **ADRs:** `-adhp` (settles `L0-xcx18`), `-adar` (armour through tag selectors), `-adsc` (scan over loaded chunks), `-adex` (drop exemption through `entitySpawn`).
-- **Contradiction:** `-cxdp` (AC-10 "nothing else drops" vs vanilla pops of dependants; resolved by `L0-adr-ufnd`).
-- **Assumptions:** `-aslh` (legendary holders skipped), `-asfl` (flight speed), `-asrg` (ring margin), `-asit` (block → item), `-asbd` (horse armour, hand iron).
-- **Glossary:** `-gelm`, `-gzon`, `-gring`, `-gexm`, `-gcls`, `-gtag`, `-glat`.
-- **ACs:**
-  - `bds` channel: UFO 4–14 → `-a04` … `-a14`, plus `-atps` (cost measured).
-  - `ipad` channel: `-aipd`, one manual criterion for the smooth lift, the visible cloud and the visible fall. It is never closed by a GameTest and is reopened after every epic merge (`L0-xcx19`).
-
-## Boundaries
-- No saucer and no beam rendering (`sauc`).
-- No schedule (`ufoc`).
-- No change to `orbc`.
-- All code lives in `src/ufo/magnet*.ts`, driven by the single UFO interval through `magnetStep` (`L0-adr-ufom`, C-5d). It creates no timers of its own. The one event subscription it holds is the drop exemption's `entitySpawn` listener, during the magnet only.
-
-
-
-
-
-
-
-### L0-sauc · Saucer and beam (the UFO actor and the shoot-down) (L0-sauc)
-
-# L0-sauc · Saucer and beam (the UFO actor and the shoot-down)
-
-**Links:** `part_of: ["L0"]` · `is_a: ["component"]` · `relates_to: ["L0-ufoc", "L0-magn", "L0-orbc", "L0-ring", "L0-adr-ufoi", "L0-adr-ufom", "L0-adr-ufht", "L0-xcx15", "L0-xcx16"]`
-
-**State (2026-10-02):** not implemented. There is no `src/ufo/` directory. The only prior art is the probe branch (`probe/ufo-magnet`, worktree `.work/9678e221`). It has the entities `andrew:ufo_probe` and `andrew:ufo_beam_probe`, which use the same component set as the shipped `andrew:orbital_charge`: `runtime_identifier minecraft:snowball`, a 0×0 collision box, no gravity or collision, not pushable, and `damage_sensor all → no`.
-
-## Responsibility
-The visible, physical half of the UFO Magnet event (UFO §2 table, §7, §8):
-- **Look:** a BP + RP entity `andrew:ufo_saucer`. It has a metal disc about 12 blocks across, a glass dome and emissive rim lights, and it spins slowly. A translucent green **beam** cone runs from the underside to the ground and shows only during the magnet phase (`ad01`).
-- **Body:** no push, no collision, and immune to all damage (`r003`). It is moved only by script.
-- **Path:** it comes in from 90 blocks out at `min(hoverY + 10, ceiling − 4)` and reaches the hover point in 20 s. It leaves 90 blocks the opposite way in 15 s, then it is removed. It stays ≤ 100 blocks horizontally from the centre (U8, `r002`, `p001`, `L0-adr-ufht`).
-- **Sound:** magnet-on, a hum every 2 s, and magnet-off (`r006`).
-- **Shoot-down:** an interceptor on the shipped Orbital charge flight (`L0-adr-ufoi`), tested against a hull cylinder r 6 × h 3 in any phase. The steps (`p002`):
-  1. the charge is absorbed;
-  2. `ufoc.requestMagnetOff("shot")`;
-  3. a 3 s smoking fall;
-  4. a harmless blast (visual and sound only);
-  5. 8 diamonds + 1 totem of undying;
-  6. a localized broadcast naming the charge owner.
-
-## Orbital baseline (v1.4.4)
-- These figures come from `src/orbital/` (v1.4.4), not from the v3 nodes (`L0-xcx16`):
-  - spawn = target + 60, capped at `heightRange.max − 1`;
-  - fall speed 1 block per tick;
-  - aim ≤ 25 blocks;
-  - RMB refuses a target nearer than 7 blocks (`RING_MIN_RANGE`).
-- RMB rings have radii 0.5 / 3.5 / 7 / 10.5 / 14 and powers 4 / 4 / 2 / 1 / 1.
-- The interceptor is per charge. Against the r 6 hull, an RMB salvo aimed under the axis loses its centre and ring-3.5 columns, and the outer rings detonate normally (`as06`). The shooter's 7-block minimum shapes the `ac03` setup only.
+## lgnd touch points (settles `xcx30`, detail in `L0-trdt-adcl`)
+1. **Registry entry:** `TRIDENT` in `registry.ts` and `LEGENDARIES`. This is the sanctioned def entry.
+2. **The only new framework export:** `deliverToLastHolder(def, mark, how)` in `recovery.ts`. It is the existing private `lost()`, exported unchanged.
+3. **Everything else needs no code change, only a GameTest:**
+   - the departure watch (a throw release is not a DropItem swing);
+   - `watch()` ignores entity types other than `minecraft:item`;
+   - death retention (the slot is empty while the copy is in custody);
+   - the magnet (it scans `minecraft:item` entities and holders found by `hasitem`; the custody entities have no inventory).
+4. **Outside custody, separate:** the craftgate refund needs a bucket exchange (`L0-trdt-adrf`, `L0-trdt-cx01`).
 
 ## Inputs
-- From `ufoc`: `onPhase(phase, {centre, hoverY, saucerPos, eventId})` for arrival, magnet, release, departure and pause, plus `requestMagnetOff(reason)`. `sauc` uses no interval of its own. `ufoc`'s shared interval calls `saucerStep(tick)` once per active tick (C-5d).
-- From `orbc` (`src/orbital/flight.ts:117`): `registerInterceptor((attack, charge, from, to, tick) => boolean)`.
+- `itemStartUse` and `itemReleaseUse` with the charge, plus `isSneaking` at release.
+- `beforeEvents.entityHurt`: the melee raise, the thrown raise and the fall cancel.
+- `projectileHitEntity` and `projectileHitBlock` for the custody projectile.
+- `entityLoad` and `entityRemove` for both custody types.
+- `playerSpawn` and `playerLeave`.
+- `playerInventoryItemChange`: the enchantment scrub.
+- One shared `runInterval` for the swim boost, the steered return, caps and grant expiry.
 
 ## Outputs
-- `saucerPosition()`, which `magn` reads every tick for its hold targets.
-- `reportShotDown({eventId, ownerId, ownerName})` to `ufoc`, which starts the 15 min pause from the shot (UFO §2, §8).
-- Item entities for the reward, and the `andrew.ufo.shot_down` broadcast.
+- Damage through the shared helper (`L0-trdt-addm`).
+- One `playStrikes` visual per hit.
+- `applyKnockback` impulses.
+- The custody record (a world dynamic property).
+- Re-inserted stacks, `lgnd` deliveries, and lang messages.
 
-## Owns
-- `packs/behavior/entities/ufo_saucer.json`, `packs/resource/entity/ufo_saucer.entity.json`, the geometry, texture, animation and render controller.
-- `src/ufo/saucer.ts` (path, beam and sound) and `src/ufo/shootdown.ts`.
-- The interceptor change in `src/orbital/flight.ts`. `Outcome` includes `"intercepted"` (`src/orbital/flight.ts:40`).
-- The lang key `andrew.ufo.shot_down`, in RU and EN.
+## Children
+- **Decisions:** adcl (custody and lgnd), addm (damage sharing), adrf (refund).
+- **Entity:** ecus (custody record).
+- **Processes:**
+  - pthr: throw and return;
+  - pfbk: custody fallbacks;
+  - pmov: release, dash, fall and swim;
+  - cons: the probe plan.
+- **Rules:**
+  - r001: one place, inserted once;
+  - r002: +2 and strike per hit;
+  - r003: enchantment scrub.
+- **Acceptance criteria:** a01–a05 (`bds`), a06 (`ipad`).
+- **Glossary terms:** g001–g003.
+- **Assumptions:** as01.
+- **Contradictions:** cx01, cx02.
 
-## Does NOT own
-- The schedule, target, centre, `hoverY`, phase timing, commands, the arrival message and restart cleanup (`ufoc`, `L0-adr-ufom`). Cleanup finds the saucer by its `andrew_ufo` family or tag.
-- What gets pulled and released (`magn`).
-- Charge spawn, fall, targeting and effects (`orbc`/`pntr`/`ring`).
-
-## Artifacts
-- Processes: `p001` flight, `p002` shoot-down, `p003` interceptor seam.
-- Rules: `r001` hull, `r002` path, `r003` immunity, `r004` harmless blast + reward, `r005` beam, `r006` sound.
-- Entities: `ent1` saucer entity, `ent2` saucer runtime state.
-- ADRs: `ad01` beam as a bone, `ad02` teleport-driven motion, `ad03` scripted blast.
-- Assumptions: `as01`–`as06`. Contradiction: `cx01` (resolved by `L0-adr-ufht`).
-- ACs: `ac01`–`ac06`. Glossary: `gl01`–`gl05`.
-
-## NFRs (component-local)
-- The saucer step is one teleport, one property write when the beam toggles, and the sounds. It sits inside the `L0-xasm16` budget (≤ 2 ms mean per active tick, together with `magn`).
-- With no saucer registered, the interceptor adds one empty-set check per charge step.
-- **Gate:** the task merges only after the full Orbital GameTest suite (flight, penetrator, ring) is green and unchanged on the task branch (`L0-adr-ufoi`, `ac04`), plus the whole suite (full-suite rule).
-
-## Sequencing
-This comes after `ufoc` with its stub saucer. Order:
-1. the `orbc` seam with its own regression gate;
-2. the entity and path;
-3. the shoot-down.
-
-`magn` can then integrate against `saucerPosition()`.
-
-
-
-
-
-
-
-### Sculk Crossbow (`andrew:sculk_crossbow`): component v1 (L0-sclk)
-
-# Sculk Crossbow (`andrew:sculk_crossbow`): component v1
-
-**Links:** `part_of: ["L0"]` · `is_a: ["component"]` · `relates_to: ["L0-lgnd", "L0-orbc", "L0-pntr", "L0-magn", "L0-scyt", "L0-katn", "L0-adr-scbs", "L0-adr-scdm", "L0-adr-sctr", "L0-xcx22", "L0-xcx23", "L0-xcx24", "L0-xcx25", "L0-xasm23", "L0-xasm24", "L0-xasm25", "L0-xasm26", "L0-xasm27", "L0-xq7"]`
-
-Source: `docs/Sculk_Crossbow_Spec_v1_RU_EN.docx` (raw `sculkcrossbowspecv1ruen-part-1..4`, priority 610). Legendary def #5. It is the first legendary with **no active ability, no cooldown and no HUD line** (`L0-xcx24`).
-
-## Responsibility
-A passive ranged legendary. Every projectile its holder fires is replaced at spawn by one `andrew:sculk_bolt`. The bolt flies physically, with a Warden-style Sonic Boom trail, and resolves exactly once (C-26):
-- **entity hit:** fixed `SONIC_BOOM_DAMAGE` = 10 HP, absorption first, through armour, the shield and the invulnerability window (C-28), plus a sculk patch under the target, with no crater;
-- **block hit:** an irregular crater ≤ 5×5×3 plus a ring of plain sculk ≤ 5×5, with no entity damage (C-27);
-- **expiry:** after 100 ticks, on leaving loaded chunks, or in the Void, nothing happens.
-
-## What `sclk` owns, and what it does not
-| Owned here | Delegated (cited, not restated) |
-|---|---|
-| the item def JSON, icon, RP texture, RU/EN item and tooltip lang | craft gate, first-craft broadcast, token swap and refund → `lgnd` (R-lgnd-001: one implementation) |
-| the recipe JSON (echo shard / deepslate / crossbow → token) | death retention, hazard protection, Void return, Creative/`/give` copies → `lgnd` (T19, T20; `xasm26`) |
-| the bolt entity (BP + RP), the shot→bolt swap, the flight, the trail | the no-ability def shape → `lgnd` v7 (`xcx24`) |
-| hit resolution, damage, patch, crater, carve queue | `protectLegendariesIn` → `lgnd` (`recovery.ts`) |
-| enforcing that Piercing is stripped | magnetism → `magn` (def-driven, `xasm26`) |
-| moving the deny list from `penetrator-keep.ts` to `src/terrain/keep.ts` (`xcx25`) | the Orbital carve itself → `orbc`/`pntr` (unchanged) |
-| the probe and the outcomes of the three ADRs | |
-
-## Inputs
-- `world.afterEvents.entitySpawn` (or `projectileShoot`, per the probe) for arrow-type projectiles whose owner holds `andrew:sculk_crossbow`.
-- `projectileHitEntity` and `projectileHitBlock`, filtered to `andrew:sculk_bolt`.
-- The shared interval (one `runInterval`, never `runJob`) for trail emission, lifetime and the carve queue.
-- `playerInventoryItemChange` and held-item changes, used to strip Piercing.
-
-## Outputs
-- Health changes on the struck entity only, via `applyDamage` + `setCurrentValue`, with kill credit to the owner.
-- Block edits: air for the crater and `minecraft:sculk` for the patch. These are ordinary world changes, synced and saved.
-- `minecraft:sonic_explosion` particles (or an RP look-alike, `L0-sclk-ad02`) along each bolt's path.
-- `[andrew] sculk:` log lines, which GameTests and the probe read as witnesses.
-
-## Stage-7 order (from the plan)
-1. Probe on checks (19136): `L0-sclk-p001`. It gates `adr-scbs`/`adr-scdm`. A failed gate supersedes the ADR before any build task.
-2. `lgnd` v7 (no-ability def, def #5).
-3. Item, token, recipe, RP.
-4. Bolt pipeline and damage.
-5. Crater and sculk, together with the deny-list extraction (Orbital scenarios as its gate).
-
-## Child artifacts
-- **Processes:** p001 probe · p002 shot→bolt · p003 flight/trail/expiry · p004 entity hit · p005 block hit/carve · p006 craft wiring.
-- **Rules:** r001–r010.
-- **Entities:** ent1 item · ent2 bolt entity · ent3 bolt record · ent4 carve plan.
-- **ACs:** ac01–ac20 = T01–T20 (T01–T03, T19 and T20 as crossbow call sites of `lgnd`), ac21 probe, ac22 Orbital regression, ac23–ac27 iPad.
-- **Decisions:** ad01–ad04 · **Assumptions:** as01–as05 · **Contradictions:** cx01–cx02 · **Glossary:** gl01–gl06 · **Constraints:** cons.
-
-## Seams the reduce re-checks
-- Orbital protection stays green after the deny-list move.
-- The magnet's GameTests include def #5.
-- A Katana ray stops on sculk (a full solid block).
-- Crater vs a structure `protect` box: check, do not assume (`xasm25` says structures get no protection).
-
-
-
-
-
-
-
-### strm · Storm Blade + two vanilla recipes (L0-strm)
-
----
-title: "strm · Storm Blade (`andrew:storm_blade`) + Elytra/Totem recipes"
-is_a: ["component"]
-part_of: ["L0"]
-relates_to: ["L0-lgnd", "L0-katn", "L0-sclk", "L0-scyt", "L0-magn", "L0-adr-sbdm", "L0-adr-sblt", "L0-adr-sbvr", "L0-xcx26", "L0-xcx27", "L0-xq8", "L0-xasm29", "L0-xasm30", "L0-xasm31", "L0-xasm32"]
-see_also: ["stormbladeelytratotemspecruen-part-1", "stormbladeelytratotemspecruen-part-2"]
-governs_files: ["src/storm/", "src/legendary/registry.ts", "src/main.ts", "src/katana/plan.ts", "packs/behavior/items/storm_blade*.json", "packs/behavior/recipes/storm_blade.json", "packs/behavior/recipes/elytra.json", "packs/behavior/recipes/totem_of_undying.json"]
----
-# strm · Storm Blade + two vanilla recipes
-
-**Source:** "Storm Blade + Elytra + Totem of Undying v1" (§01–§07). Code base 1.8.0.
-
-## Responsibility
-1. **Legendary def #6**, the Storm Blade. It is a diamond-sword-class melee weapon with:
-   - an **active** Use ability: a straight trace of ≤ 10 blocks that deals 10 HP pre-armour to the first living entity, with three visual strikes;
-   - a **passive** melee proc: 30 % for +6 HP pre-armour and one visual strike.
-2. **Two unlimited vanilla recipes**: 6 feathers + diamond chestplate → `minecraft:elytra`, and 8 gold ingots + emerald → `minecraft:totem_of_undying` (`L0-adr-sbvr`, C-31).
-
-## What strm owns vs cites
-| Area | Owner | Note |
-|---|---|---|
-| Craft-once gate, token swap, refund, broadcast, Creative/`/give` copies | `lgnd` (cited) | def-driven; strm only adds def #6 |
-| Retention on death, chest stays, hazards, Void → last holder (incl. offline) | `lgnd` (cited) | `lgnd` scenarios gain def #6 |
-| Hand priority (`resolveActivation`), HUD line, cooldown storage | `lgnd` (cited) | HUD text via lang keys |
-| Magnet pick-up | `magn` (cited) | legendary scenarios include def #6 |
-| Ray stepping, `TRACE_FLAGS` | `katn` | **imported** from `src/katana/plan.ts` (`L0-strm-adtr`) |
-| Hurt-window technique | `sclk` | **mirrored**, not shared: armour damage ≠ true damage |
-| Damage helper `src/storm/damage.ts` | strm | `L0-adr-sbdm`, C-29 |
-| Trace, visuals, cooldown spend, passive roll | strm | `L0-adr-sblt`, C-30, C-32 |
-| `elytra.json`, `totem_of_undying.json` | strm | no script and no gate |
-
-## Inputs
-- `itemUse` → `resolveActivation(player)` → `{ def: storm_blade, slot }`.
-- `entityHitEntity` (+ the same tick's `entityHurt` for L) with the blade in the main hand.
-- Dimension block/entity rays; an injectable `Rng` (`() => number`).
-
-## Outputs
-- `applyDamage` on exactly one target per event, with cause `entityAttack` and the wielder as `damagingEntity`.
-- Particles and sound only: no entity is spawned, and there is no `lightning_bolt`.
-- The cooldown is written through the def's cooldown key, on the active path only.
-
-## Sub-artifacts
-- Processes: `L0-strm-pact` (active), `L0-strm-ppas` (passive), `L0-strm-pprb` (probe).
-- Rules: `L0-strm-rdmg` (damage), `L0-strm-rcd` (validity/cooldown), `L0-strm-rvis` (visuals).
-- Entities: `L0-strm-edef` (def + item), `L0-strm-ercp` (the three recipes).
-- ACs: `L0-strm-acr` (craft/legendary), `L0-strm-acd` (damage), `L0-strm-act` (trace/cooldown), `L0-strm-acv` (visuals/vanilla), `L0-strm-aci` (iPad).
-- Decision `L0-strm-adtr`, assumption `L0-strm-asm1`, contradiction `L0-strm-cxkb`.
-
-## Framework boundary (xasm32)
-The only framework edits allowed are the def #6 entry in `registry.ts` and the subscriptions in `main.ts`. Exporting the Katana's private `trace` is a `katn` edit, not a framework edit (`L0-strm-adtr`). Any other change to `src/legendary/*` means a new L0 contradiction before the build.
-
-## Build order (from the L0 plan)
-1. Probe.
-2. Vanilla recipes.
-3. Def, item, token, recipe, RP and lang.
-4. Damage helper with the hurt-window proof.
-5. Active trace, visuals, cooldown and HUD.
-6. Passive.
-
-
-
-
-
-
-
-### L0-ufoc · UFO event core (schedule, phases, commands, restart) (L0-ufoc)
-
-# L0-ufoc · UFO event core (schedule, phases, commands, restart)
-
-**Links:** `part_of: ["L0"]` · `is_a: ["component"]` · `relates_to: ["L0-sauc", "L0-magn", "L0-adr-ufom", "L0-adr-ufpc", "L0-adr-ufht", "L0-xasm13", "L0-xasm14", "L0-xasm17", "L0-xcx17", "L0-xcx20"]`
-
-**Shipped: UFOC-CORE-01-AA (aef4d54, merge 4f479af), `src/ufo/`.** It implements `L0-adr-ufom`, `L0-adr-ufpc` and `L0-adr-ufht` as given and does not re-derive them.
-
-## Responsibility
-`ufoc` is the event's only clock and only state machine (UFO §2, §9, §10, §12):
-- **Schedule** (`r001`, `p001`). The next arrival is stored as epoch ms in `andrew:ufo_next_ms` (C-21). The first arrival comes a random 10–20 min after the first join (`L0-xasm14`). After every departure, shoot-down, `stop` or restart, the next one is set 15 min out. When an arrival falls due, the event waits for an Overworld player.
-- **Enable flag** `andrew:ufo_enabled` (default on, `r006`).
-- **Target and centre** (`r002`). The target is a random valid Overworld player. The centre is the block under their feet when the arrival starts, and it is frozen from then on.
-- **Hover height** (`r003`): `hoverY = min(centre.y + 40, ceiling − 15)`, where `ceiling = overworld.heightRange.max` (`L0-adr-ufht`).
-- **Phase machine** (`p002`, `r004`): arrival 400 ticks → magnet 1200 → release (instant) → departure 300 → pause; or `downed` after a shot. Every phase change is published as `onPhase(...)` to `sauc` and `magn`. Requests to switch the magnet off are latched (`adr-ufpc`).
-- **One shared interval** (C-5d, `ad02`). It ticks every game tick but does only a clock check once per 100 ticks while no event is live. With a saucer, the order within a tick is latch → phase → `saucerStep` → `magnetStep`.
-- **Restart cleanup** (C-23, `p003`, `L0-xasm17`). The sweep runs at `worldLoad` and again on `entityLoad`, keyed by event id. An event that was in flight is rescheduled for now + 15 min, detected through the in-flight marker (`ad03`, `cx01`).
-- **Operator command** `/andrew:ufo come|stop|enable|disable` (`p004`).
-- **Messages** (`r005`). The localized arrival notice `andrew.ufo.arrival` (RU/EN) goes to Overworld players within 150 blocks of the centre.
-- **Environment seam** (`L0-xasm13`, `ad01`): `now()`, a phase-duration table and an online-Overworld-players provider, so GameTest can drive the logic.
-
-## Inputs
-- `world.afterEvents.playerSpawn` (initialSpawn) records the first join.
-- `worldLoad` and `entityLoad` trigger cleanup.
-- The custom command registry, at startup.
-- From `sauc`: `reportShotDown({eventId, ownerId, ownerName})` and `requestMagnetOff("shot")`.
-- From the command: `requestMagnetOff("stop")`.
-
-## Outputs
-- `onPhase(phase, {centre, hoverY, saucerPos, eventId})`, sent to `sauc` and `magn`.
-- `saucerStep(tick)` and `magnetStep(tick)`, called from the one interval.
-- Writes to the world dynamic properties `andrew:ufo_next_ms` and `andrew:ufo_enabled`.
-- The arrival notice, and the command replies.
-
-## Owns
-- `src/ufo/index.ts` (`registerUfo()`, called from `src/main.ts`), `src/ufo/schedule.ts`, `src/ufo/phases.ts`, `src/ufo/env.ts` (the seam), `src/ufo/cleanup.ts` and `src/ufo/commands.ts`.
-- The lang key `andrew.ufo.arrival` in `en_US.lang` and `ru_RU.lang`.
-- GameTest scenarios for UFO ACs 1, 2 (timing), 3, 17 and 18, plus `bds-check` restart scenarios on the checks instance (19136).
-- A stub saucer, so that `ufoc` can merge before `sauc` (Stage 6 step 2).
-
-## Does NOT own
-- The saucer entity, its path, beam, sound and shoot-down detection (`sauc`). `sauc` picks the bearing θ and spawns or removes the entity on `onPhase`.
-- Iron selection, the hold and the release physics (`magn`).
-- `orbc`'s interceptor seam.
-
-## Artifacts
-- **Entities:** `ent1` durable schedule state, `ent2` live event session.
-- **Processes:** `p001` schedule and arrival trigger, `p002` per-tick phase machine, `p003` restart cleanup, `p004` operator command.
-- **Rules:** `r001` timing, `r002` target and centre, `r003` hover height, `r004` single event / Overworld only / ordering, `r005` notice and localization, `r006` enable flag and command effects on the schedule.
-- **ADRs:** `ad01` env seam, with tick-driven phases on an epoch schedule; `ad02` one period-1 interval with an idle divider; `ad03` the in-flight marker inside `next_ms`; `ad04` the command via `customCommandRegistry` at GameDirectors.
-- **Assumptions:** `as01`–`as05`. **Contradiction:** `cx01`.
-- **ACs:** `ac01`–`ac08`. **Glossary:** `g001`–`g006`.
-
-## NFRs
-- Idle cost: one counter increment per tick, plus one property read every 100 ticks.
-- Active cost: the phase step is O(1). The total with `sauc` and `magn` stays within `L0-xasm16`.
-- No `runJob` and no second interval (C-5d).
-- **Gate:** the full suite is green on the task branch before the merge.
+## Merge gate
+`trdt` scenarios, plus:
+- the `lgnd` scenarios with def #7;
+- the magnet legendary scenarios;
+- the `strm` scenarios, because the helper is shared;
+- the katana fall scenarios, if the fall fallback is used.
 
 
 
@@ -460,6 +97,34 @@ The only framework edits allowed are the def #6 entry in `registry.ts` and the s
 
 
 ## Architecture Decisions
+
+### ADR-L0-hldb · Holder: decided, unbuilt, one seam (status: accepted, resolves `L0-lgnd-cx16`) (L0-adr-hldb)
+
+---
+title: "ADR-L0-hldb · The last-holder return is decided and unbuilt; tests target `mark.owner` through one helper until `LGND-HOLD` ships"
+aliases: ["L0-adr-hldb", "Holder build-out"]
+is_a: ["architecture-decision"]
+part_of: ["L0"]
+relates_to: ["L0-lgnd", "L0-sclk", "L0-katn", "L0-adr-hold", "L0-xcx11", "L0-lgnd-cx16", "L0-lgnd-ad11", "L0-lgnd-ad17", "L0-lgnd-ac18", "L0-lgnd-ac27", "L0-sclk-ac20", "L0-xasm26"]
+requires: ["L0-adr-hold"]
+governs_files: ["src/legendary/state.ts", "src/legendary/recovery.ts"]
+---
+# ADR-L0-hldb · Holder: decided, unbuilt, one seam (status: accepted, resolves `L0-lgnd-cx16`)
+
+**Context.** `decision-resolve-l0-xcx11` (2026-09-29) chose "return to the last holder" and named `LGND-GEN-01-AA`. That task shipped the mark generation only. As read in this run (`lgnd`, 2026-10-05): the mark has no holder field (`state.ts`), and `lost()` and the protect hand-back target `mark.owner` (`recovery.ts:490`, `:877-879`). `L0-adr-hold` still says "proposed", and `lgnd-ac18` said "pending confirmation". The crossbow spec §3 is the fifth spec asking for the last holder. `sclk-ac20` was written against `mark.owner` (`xasm26`).
+
+**Decision.**
+1. `L0-adr-hold` is **accepted**: the operator decision is final, and there is no client question left. `lgnd-ac18` was corrected in place to drop "pending confirmation".
+2. The holder field is **its own task, `LGND-HOLD`**, per `lgnd-ad11`. It is independent of and not blocking the crossbow epics.
+3. Until it ships, every weapon's T20/Void test (the crossbow's `sclk-ac20` included) resolves the expected recipient through a single `returnTarget(mark)` test helper that returns `mark.owner` (`lgnd-ad17`). `LGND-HOLD` changes that helper and the holder clauses of `lgnd-ac08`/`ac09`/`ac24`/`ac27`, and no per-weapon test.
+
+**Consequence.** The crossbow ships with the same documented deviation as the Katana: Void and loss go to the crafter or `/give` target. That remains true only until `LGND-HOLD` lands.
+
+
+
+
+
+
 
 ### ADR-L0-sbdm · Storm Blade damage (status: proposed, probe-gated) (L0-adr-sbdm)
 
@@ -581,6 +246,253 @@ Spec §03–§05 asks for two **unlimited** recipes that output real `minecraft:
 - GameTest: real-recipe crafting is possible through a Crafter (memory). Craft each recipe twice. The output type id is exactly the vanilla id, it has no dynamic properties, and the input slots are empty afterwards.
 - Collision check: neither pattern collides with any existing pack recipe. The Storm Blade's ` L / WSW / L ` shape shares its outline with the crossbow's but uses different keys, which is safe.
 - iPad: both recipes appear in the recipe book once a feather or a gold ingot is held.
+
+
+
+
+
+
+
+### ADR-L0-scbs · The crossbow's base item (status: proposed, probe-gated) (L0-adr-scbs)
+
+---
+title: "ADR-L0-scbs · The Sculk Crossbow's base item: a custom shooter, not a marked vanilla crossbow"
+aliases: ["L0-adr-scbs", "Sculk Crossbow base item"]
+is_a: ["architecture-decision"]
+part_of: ["L0"]
+relates_to: ["L0-sclk", "L0-lgnd", "L0-xcx24", "L0-xasm27"]
+see_also: ["sculkcrossbowspecv1ruen-part-1", "sculkcrossbowspecv1ruen-part-2"]
+---
+# ADR-L0-scbs · The crossbow's base item (status: proposed, probe-gated)
+
+**Context.** Spec §1 says "base: Vanilla Crossbow". It requires infinite durability, a Creative/search/`/give` entry, Quick Charge and Multishot working (T14, T16), and Piercing impossible (T15). The framework identifies legendaries **by type id** (`isLegendaryStack`, `registry.ts:127`). Every shipped legendary is a custom `andrew:` item: the Web Sword and Katana clone a sword, and the Cannon looks like a fishing rod.
+
+**Options.**
+- **A: a custom `andrew:sculk_crossbow`** with `minecraft:shooter` (arrow ammunition), `minecraft:enchantable` (slot `crossbow`), no `minecraft:durability`, and a crossbow icon.
+  - Pros: framework identity is unchanged, as are Creative/`/give` (T03) and infinite durability by omission.
+  - Measured: with `charge_on_draw` it loads at `max_draw_duration` and fires on the next press, like a crossbow — not like a bow. Quick Charge has **no** native effect; Multishot was not measured. Quick Charge is therefore emulated: set the native draw to the QC III floor (0.5 s) and gate on the length of the loading draw, 25 − 5·level ticks. Multishot, if it is not native, is two extra bolts at ±10°.
+- **B: the vanilla `minecraft:crossbow`** with the legendary mark in item dynamic properties.
+  - Pros: real loading; Quick Charge and Multishot are native.
+  - Cons: `isLegendaryStack` has to become mark-aware throughout the framework, the magnet and the GameTests. There is no Creative entry (§10). Durability must be refilled after every shot (T18). The unmarked vanilla crossbow is the recipe input and looks identical.
+
+**Decision (proposed).** **A.** It keeps C-7 (one identity mechanism) and needs only the no-ability framework delta (`L0-xcx24`).
+
+**Gate.** It is accepted only after the `sclk` probe records:
+1. that the custom shooter fires arrows in Survival and consumes ammunition;
+2. whether the enchanting table and the anvil offer Quick Charge, Multishot and Piercing for slot `crossbow`;
+3. whether Multishot and Quick Charge change the custom shooter's behaviour natively.
+4. ~~(added at reduce) the minimum release time (probe Q5)~~ — **satisfied natively on BDS**: `charge_on_draw` + `max_draw_duration` admit no early shot at all, so §9's limiter needs no script.
+
+If (1) or (4) fails, B is adopted. Under B, T18 (durability kept at 0) moves from `sclk` to `lgnd`, together with mark-aware identity. The reduce then re-opens `lgnd` for mark-based identity. Under C-16, emulated Quick Charge is a documented deviation from the vanilla feel.
+
+**Rejected: C, a custom item that shoots nothing** (the script spawns bolts on `itemUse`). It loses the crossbow's charge, the ammunition use and vanilla enchantment handling altogether, and §9 makes the standard reload the weapon's only limiter.
+
+
+
+
+
+
+
+### ADR-L0-scdm · How a bolt hits (status: proposed, probe-gated) (L0-adr-scdm)
+
+---
+title: "ADR-L0-scdm · Bolt substitution and true damage for the Sculk Crossbow"
+aliases: ["L0-adr-scdm", "Sculk bolt and damage pipeline"]
+is_a: ["architecture-decision"]
+part_of: ["L0"]
+relates_to: ["L0-sclk", "L0-xcx22", "L0-xcx23", "L0-xasm23", "L0-xasm27"]
+see_also: ["sculkcrossbowspecv1ruen-part-2", "sculkcrossbowspecv1ruen-part-3", "sculkcrossbowspecv1ruen-part-4"]
+governs_files: ["src/scythe/volley.ts", "src/scythe/volley-rules.ts"]
+---
+# ADR-L0-scdm · How a bolt hits (status: proposed, probe-gated)
+
+**Context.** §5, §9 and §14 put the most weight on this: vanilla arrow damage must be **replaced**, never stacked. Stable 2.10.0 has `world.beforeEvents.entityHurt`, and it does fire for arrow damage (`projectile:6.00:minecraft:arrow`), but its `cancel` was not tested, so no before-event is relied on to cancel projectile damage. `projectileHitEntity` is an after-event: by the time it fires, the arrow has already dealt armour-reduced, shield-blocked damage.
+
+**Decision (proposed).**
+1. **Substitution at spawn.** When an arrow-type projectile spawns whose owner holds a marked crossbow (main or off hand), the script removes it in the same tick. It spawns one `andrew:sculk_bolt` in its place with the same location, velocity and owner (`minecraft:projectile` `shoot`). One spawn gives one bolt, so each Multishot projectile has its own record (C-26).
+   - The bolt is a **snowball-runtime** entity with zero damage. Engine facts: an entity without `runtime_identifier` pushes mobs; snowball-runtime entities persist and reload through `entityLoad`, and the reload removes them (C-23).
+   - Gravity and drag match the arrow (tuned constants, probe-measured), so the bolt still falls like a bolt (§9: physical, not hitscan).
+2. **Hit.** `projectileHitEntity` and `projectileHitBlock` are filtered to `andrew:sculk_bolt`. The bolt's record is resolved exactly once, then the bolt is removed.
+3. **Damage.** `SONIC_BOOM_DAMAGE` (`xasm23`) goes through the shipped Scythe true-damage pattern (`volley.ts:114`, `decision-scythe-true-damage`): `applyDamage(D, {cause: sonicBoom, damagingEntity: owner})` for the flash, the sound and kill credit, then `health.setCurrentValue(hp − D)` **only inside a known window**. If D ≥ hp, it is an overkill `applyDamage` with the same cause. Cause `projectile` throws when `damagingEntity` is set; `entityAttack` is cancelled by a raised shield, so the holder survives the lethal hit. `sonicBoom` passes armour, Protection and the shield, credits the owner and still lets a totem save (measured, diagnose-CNTR-X22 / -X23).
+4. **Visual.** While a bolt lives, the shared interval emits `minecraft:sonic_explosion` (or a look-alike RP particle if the iPad shows it badly) at the bolt's real position and the previous one (C-5f).
+
+**Gate.** The probe confirms:
+- that the spawn event carries the owner and velocity of a crossbow/shooter arrow in time to swap it with no damage;
+- ~~what a snowball-runtime bolt does against a raised shield (`xcx23`)~~ — answered: no deflection, `projectileHitEntity` fires on the shield holder (5/5);
+- that three bolts in one tick each take the full D (T17).
+
+**Rejected.**
+- **Keep the vanilla arrow and top up the difference after the hit.** The arrow's damage depends on armour, Power and the shield. A lethal arrow cannot be undone. There is also no reliable way to tell "arrow damage" from other damage in the same tick (violates C-26 and §14 "no stacking").
+- **A hitscan ray from the shooter.** Forbidden by §9.
+- **Arrow runtime with damage 0.** The arrow runtime keeps knockback, sticks in targets and can be picked up. A raised shield deflects it, and the deflected arrow still raises `projectileHitEntity` and then a second `projectileHitBlock` where it lands — two events for one shot. The rejection stands, for that reason.
+
+
+
+
+
+
+
+### ADR-L0-scfc · Full-charge gate (status: accepted, probe-gated; resolves `L0-sclk-cx02`) (L0-adr-scfc)
+
+---
+title: "ADR-L0-scfc · Full charge is the crossbow's fire-rate gate; a failed gate falls back to option B and re-opens `lgnd` identity"
+aliases: ["L0-adr-scfc", "Crossbow full-charge gate"]
+is_a: ["architecture-decision"]
+part_of: ["L0"]
+relates_to: ["L0-sclk", "L0-lgnd", "L0-adr-scbs", "L0-sclk-cx02", "L0-sclk-r006", "L0-sclk-as05", "L0-sclk-p001", "L0-sclk-ac18", "L0-xasm27", "L0-xq7"]
+requires: ["L0-adr-scbs"]
+governs_files: ["src/sculk/", "packs/behavior/items/sculk_crossbow.json"]
+---
+# ADR-L0-scfc · Full-charge gate (status: accepted, probe-gated; resolves `L0-sclk-cx02`)
+
+**Context.** Spec §9 makes the standard crossbow reload (with Quick Charge) the weapon's only limiter: there is no cooldown. Option A of `adr-scbs` is a custom `minecraft:shooter`, which, with `charge_on_draw`, cannot fire before `max_draw_duration` (measured). Damage is fixed (C-28) and every block hit carves a full crater, so a tap-release would multiply both the DPS and the terrain edits.
+
+**Decision.**
+- Under option A, no early projectile exists: the native gate admits none. A load shorter than the Quick-Charge-adjusted time — possible only if the native draw is set below 25 ticks to emulate Quick Charge — is caught when its arrow spawns on the **next** press; that arrow is removed, and the arrow spent at load stays spent.
+- Probe **Q5** is answered: `charge_on_draw` / `max_draw_duration` blocks an early release natively. The scripted check stays as a guard, but it measures the **length of the loading draw**, not the arrow's speed — every fired arrow is full speed.
+- If neither the native nor the scripted gate holds reliably on BDS **and** the iPad, `adr-scbs` falls to **option B**.
+
+**Why this is cross-component.** Option B is not a `sclk`-local change. It makes legendary identity mark-based across `lgnd` (`isLegendaryStack`, `defForStack`, the craft gate, retention) and `magn` (`hasitem` holder tags cannot read a mark). It also moves **T18** (durability) from `sclk` to `lgnd`, which has to keep a vanilla crossbow repaired. A Q1 or Q5 failure therefore needs a new L0 decision before any build task. This ADR does not pre-approve that rewrite.
+
+**T18 routing (plan invariant).** Option A: T18 is in `sclk` (`sclk-ac18`: the item JSON has no `minecraft:durability`). Option B: T18 is in `lgnd`.
+
+
+
+
+
+
+
+### ADR-L0-sckp · The Sculk Crossbow's key prefix is `sk` (status: accepted, resolves `L0-lgnd-cx15`) (L0-adr-sckp)
+
+---
+title: "ADR-L0-sckp · The Sculk Crossbow's key prefix is `sk`"
+aliases: ["L0-adr-sckp", "Crossbow key prefix"]
+is_a: ["architecture-decision"]
+part_of: ["L0"]
+relates_to: ["L0-lgnd", "L0-sclk", "L0-lgnd-cx15", "L0-xasm26", "L0-lgnd-as18", "L0-lgnd-ad16", "L0-sclk-p006", "L0-sclk-ent1", "L0-sclk-ac01", "L0-sclk-ac02", "L0-sclk-ac03"]
+requires: ["L0-lgnd"]
+governs_files: ["src/legendary/registry.ts"]
+---
+# ADR-L0-sckp · The Sculk Crossbow's key prefix is `sk` (status: accepted, resolves `L0-lgnd-cx15`)
+
+**Context.** The v7 plan row for `lgnd` and `L0-xasm26` gave def #5 `keyPrefix "sc"`. `sclk` built on that (p006, ent1, ac01–ac03). `lgnd` read `registry.ts` and found `sc` is the **Scythe's** prefix. It has been live since v3, and worlds already hold `andrew:sc_crafted`, `sc_owed`, `sc_pending` and `sc_gen:*`. Sharing it would merge the two weapons' craft flags and ledgers, and the registry uniqueness test (`lgnd-ac23`) would stop the build.
+
+**Decision.** Def #5 uses **`keyPrefix: "sk"`**. No `andrew:sk_` key exists anywhere. Like every prefix, it is frozen once a world ships (`lgnd-r006`).
+
+**Reconciled in place at reduce.** All of these were written in this run, so they were corrected rather than filed against: `sclk-p006`, `sclk-ent1`, `sclk-ac01`–`ac03` (flag `sk`), `L0-xasm26`, and the `lgnd` row of the v7 decomposition plan (now annotated). The `lgnd` side (`as18`, component delta #3) already said `sk`.
+
+**Consequence.** The token id, item id and command `andrew:crossbow` are unaffected. A test asserting the craft flag reads `andrew:sk_crafted`.
+
+
+
+
+
+
+
+### ADR-L0-scpi · Piercing on the Sculk Crossbow (status: accepted, probe-gated; resolves `L0-sclk-cx01`) (L0-adr-scpi)
+
+---
+title: "ADR-L0-scpi · T15 reads as \"Piercing is stripped on entry and never acts\" (C-16 deviation)"
+aliases: ["L0-adr-scpi", "Crossbow Piercing reading"]
+is_a: ["architecture-decision"]
+part_of: ["L0"]
+relates_to: ["L0-sclk", "L0-sclk-cx01", "L0-sclk-ad01", "L0-sclk-r005", "L0-sclk-ac15", "L0-adr-scbs", "L0-sclk-p001"]
+see_also: ["constraints"]
+governs_files: ["src/sculk/"]
+---
+# ADR-L0-scpi · Piercing on the Sculk Crossbow (status: accepted, probe-gated; resolves `L0-sclk-cx01`)
+
+**Context.** T15: "Piercing cannot be applied or used." `minecraft:enchantable.slot = "crossbow"` is needed for Quick Charge and Multishot (T14, T16), and it admits Piercing. Stable 2.10.0 has no hook to refuse an anvil or enchanting-table result (C-16). The v7 plan already allowed "strip it on sight if the slot cannot exclude it".
+
+**Decision.**
+- T15 passes when the following hold. (a) Every sculk-crossbow stack that gains Piercing loses it in the same tick the inventory-change event reports it (`sclk-r005`). (b) No bolt behaves differently with Piercing, because each bolt resolves once (`sclk-r001`).
+- The README C-16 list states the cost: Piercing from a table roll or an anvil book is removed with no refund. `enchant_with_levels 30` gives Piercing in 65 % of rolls and Piercing alone in 19 % (levels 1–30: 70 % / 42 %), and such a roll leaves the crossbow bare.
+- Probe **Q2** is answered: the engine does admit Piercing for the custom item, so the deviation is kept and T15 is tested as "removed at once".
+
+**Scope.** This applies only to `sclk`. No `lgnd` hook is involved: the strip is crossbow code on `playerInventoryItemChange`, so the plan's single framework change still holds.
+
+
+
+
+
+
+
+### ADR-L0-sctr · Crater and sculk (status: proposed) (L0-adr-sctr)
+
+---
+title: "ADR-L0-sctr · Crater and sculk: a scripted, bounded, protected carve with a shared deny list"
+aliases: ["L0-adr-sctr", "Sculk crater carve"]
+is_a: ["architecture-decision"]
+part_of: ["L0"]
+relates_to: ["L0-sclk", "L0-orbc", "L0-lgnd", "L0-xcx25", "L0-xasm24", "L0-xasm25"]
+see_also: ["sculkcrossbowspecv1ruen-part-2", "sculkcrossbowspecv1ruen-part-4"]
+governs_files: ["src/orbital/penetrator-keep.ts", "src/legendary/recovery.ts"]
+---
+# ADR-L0-sctr · Crater and sculk (status: proposed)
+
+**Context.** §6, §7, §11 and §14 ask for an irregular crater of up to about 5×5×(2–3) with no explosion damage, then permanent plain sculk around it. The edits are event-driven, synced and saved. With Multishot and Quick Charge, one player can cause about 3 carves every ~0.6 s.
+
+**Decision (proposed).**
+1. **Shape.** A pure, node-tested `craterCells(impact, face, seed)`. It returns cells inside a 5×5 footprint and down to 3 deep: an ellipsoid with radius jitter, seeded per bolt so a GameTest can replay it. The centre column is always at least 2 deep. The **patch** is `sculkCells(…)`: the top exposed solid full-block faces within ≤ 5×5, with a ragged edge.
+2. **Order in the hit tick:**
+   1. clip the box to loaded chunks and the height range (C-12);
+   2. `protectLegendariesIn(dimension, box)` (`recovery.ts:679`);
+   3. set each crater cell to air if it is not on the deny list and not a liquid;
+   4. turn each patch cell into `minecraft:sculk`.
+
+   There are no item drops (`xasm25`) and no entity damage. Each bolt does at most 75 + 25 `setType` calls. A per-tick budget (for example 300 calls) queues overflow to the next tick of the shared interval, keeping the order per bolt.
+3. **The deny list is shared.** `penetrator-keep.ts` (the Orbital LMB Survival-unbreakable list, `L0-xasm6`) moves to a neutral module, for example `src/terrain/keep.ts`. Both weapons import it, with no change in behaviour for the Orbital (C-7, `xcx25`).
+
+**Rejected.**
+- **`dimension.createExplosion`.** It always damages entities, breaks blocks by blast resistance rather than to the bounds asked for, and drops items (§6, T12).
+- **Spreading the carve over a `runJob`.** The engine fact: starting `runJob` stalls the next tick by 15–30 ms. The interval budget achieves the same thing without that.
+- **A per-weapon copy of the deny list.** It would drift (C-7).
+
+
+
+
+
+
+
+### ADR-L0-trlg · The trident widens `lgnd` by two generic hooks (L0-adr-trlg)
+
+---
+title: "ADR-L0-trlg · The trident widens lgnd by two generic hooks: an exported delivery and a refund exchange"
+aliases: ["L0-adr-trlg", "Trident lgnd widening"]
+is_a: ["architecture-decision"]
+part_of: ["L0"]
+relates_to: ["L0-trdt", "L0-lgnd", "L0-magn", "L0-xcx30", "L0-xasm32", "L0-xasm33", "L0-trdt-adcl", "L0-trdt-adrf", "L0-trdt-cx01", "L0-adr-twth"]
+requires: ["L0-lgnd"]
+see_also: ["L0-trdt-ecus", "L0-trdt-pfbk", "L0-trdt-cons"]
+governs_files: ["src/legendary/recovery.ts", "src/legendary/craftgate.ts", "src/legendary/registry.ts"]
+---
+# ADR-L0-trlg · The trident widens `lgnd` by two generic hooks
+
+**Status:** accepted at the v9 reduce. It settles `L0-xcx30` and `L0-trdt-cx01`.
+
+**Context.**
+- `xasm32` (v7/v8) says a new legendary adds one `registry.ts` entry plus its `main.ts` subscriptions. Any other framework hook needs an L0 decision.
+- `xcx30` allowed the trident at most "a delivery export plus a scan exclusion". More than that would mean re-running `lgnd` at v10.
+- `L0-trdt-adcl` lists the touch points T1–T7. Only T2 changes framework code: `recovery.ts`'s private `lost()` is exported as `deliverToLastHolder`, with its body unchanged. **No scan exclusion is needed**, because `watch()`, retention and the magnet already skip entities that are not `minecraft:item` and have no inventory.
+- Outside custody, `L0-trdt-adrf` needs the craftgate to *take* the 2 empty buckets the engine returns before it refunds 2 water buckets (C-34, C-7). As read during reduce at v9, `craftgate.ts` `refund()` (lines 185–196) only adds stacks (`returnToPlayer` → `addItem`), and `recovery.ts:506` holds `lost()` as a private function.
+
+**Decision.**
+1. **Accept T2.** Export `lost` as `deliverToLastHolder`. Its signature stays the existing `({def, mark}, how)`; `adcl`'s `(def, mark, how)` is notation, not a new shape. This is within `xcx30`'s allowance, so **`lgnd` is not re-run.**
+2. **Accept an optional `refundExchange` field on the def base type**, handled inside `craftgate.refund`.
+   - It is generic: `[fromItem, toItem, count][]`. It removes up to `count` of `fromItem` from the inventory and off hand, then adds that many of `toItem`.
+   - It is unset, and therefore inert, for defs 1–6.
+   - **It is conditional on probe P1.** If the engine returns no bucket, the field is not added, `def.refund` lists the water buckets, and `xasm32` is widened by T2 only.
+3. **`xasm32` is restated:** a new def adds a registry entry, its subscriptions, and at most the generic hooks accepted by an L0 ADR. Today those are `deliverToLastHolder` and `refundExchange`. A third hook needs a new L0 contradiction.
+4. **Proof obligation.** Any change to `recovery.ts` or `craftgate.ts` puts the full `lgnd` scenario set (with def #7) and the magnet's legendary scenarios into the merge gate. The T3–T6 "no code" seams each need the named GameTest from `adcl`; they are not assumed.
+
+**Rejected alternatives.**
+- **Re-running `lgnd` at v10.** Both hooks are small and generic, and the existing `lgnd` scenarios cover them. A re-run adds no knowledge.
+- **A trident-local refund hook.** It would duplicate the craftgate's token detection and settle order, and risk a double refund (`adrf`).
+- **A "custody" place inside `lgnd`.** It needs new scan hooks in recovery, retention and magnet (`adcl`, rejected).
+
+**Consequences.**
+- `L0-xcx30` and `L0-trdt-cx01` are resolved.
+- The `lgnd` README must document both exports as framework API.
 
 
 

@@ -2,7 +2,7 @@
 type: "concept-contradiction"
 node_id: "L0-xcx25"
 source_channel: "rollout"
-analysis_version: 7
+analysis_version: 9
 level: 1
 title: "CX-L0-25 · Two weapons carving terrain"
 aliases: ["L0-xcx25"]

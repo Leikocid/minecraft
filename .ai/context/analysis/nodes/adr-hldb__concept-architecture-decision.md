@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-adr-hldb"
 source_channel: "rollout"
-analysis_version: 7
+analysis_version: 9
 level: 1
 title: "ADR-L0-hldb · Holder: decided, unbuilt, one seam (status: accepted, resolves `L0-lgnd-cx16`)"
 aliases: ["L0-adr-hldb"]

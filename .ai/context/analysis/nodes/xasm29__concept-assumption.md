@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-xasm29"
 source_channel: "rollout"
-analysis_version: 8
+analysis_version: 9
 level: 1
 title: "ASM-L0-29 · Reading \"10 HP before armour\""
 aliases: ["L0-xasm29"]

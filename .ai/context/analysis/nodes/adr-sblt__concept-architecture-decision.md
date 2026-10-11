@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-adr-sblt"
 source_channel: "rollout"
-analysis_version: 8
+analysis_version: 9
 level: 1
 title: "ADR-L0-sblt · Storm Blade visuals (status: proposed, probe-gated)"
 aliases: ["L0-adr-sblt"]

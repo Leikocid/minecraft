@@ -1,13 +1,13 @@
 ---
 title: Decisions
 type: analysis
-generated_at: "2026-10-08T20:34:41.388Z"
+generated_at: "2026-10-11T18:52:04.078Z"
 source_channel: rollout
 node_id: rollout-decisions
 aliases: ["rollout-decisions","decisions"]
 is_a: ["rollout","decisions"]
-relates_to: ["decision-completion-flow-quick","decision-merge-policy-autopilot","decision-namespace-addona-andrew-asm-002-q-002","decision-q-006-web-sword-provenance-yes-metka-ekzemplyara","decision-q-007-enchantable-without-durability-podtverzhde","decision-q-008-blocked-craft-refund-a-obnaruzhit-i-vernut","decision-q-009-cooldown-persistence-sohranyat-mezhdu-vyho","decision-q-010-main-hand-off-hand-priority-otlozheno","decision-q-011-cube-geometry-27-kletok-tsentr-sosednyaya-","decision-q-012-two-player-dod-gametest-s-dvumya-simulated","decision-q-013-protected-blocks-zakrytyy-spisok-posture-s","decision-q-014-budget-after-destruction-pravo-ostaetsya-p","decision-q-015-gate-game-modes-survival-i-adventure","decision-q-016-sword-unlootable-podtverzhdeno-kak-zaduman","decision-q-017-zero-cells-proval-s-lokalizovannym-soobsch","decision-resolve-l0","decision-resolve-l0-keep-ctr006","decision-resolve-l0-once","decision-resolve-l0-qatg-ctr1","decision-resolve-l0-trap-ct07","decision-resolve-l0-trap-ct08","decision-legendary-hand-priority-realizuem-seychas-osnovn","decision-legendary-ready-hud-gotovo-pokazyvaetsya-postoya","decision-legendary-rules-obschie-dlya-vseh-legendarnyh-vk","decision-resolve-cool-ctr3","decision-resolve-l0-sprj-cx02","decision-resolve-l0-xcx3","decision-ad-wrdn-01-l0-wrdn-ad01-podtverzhdeno-vanilnaya-","decision-adr-bast-02-l0-bast-ad02-podtverzhdeno-vanilnye-","decision-adr-l0-adr-strc-accepted-generatsiya-skriptom-pr","decision-adr-l0-adr-strs-accepted-s-ogovorkoy-q5-zond-str","decision-adr-l0-adr-tmpl-accepted-zond-strf-p006-q1-q2-q3","decision-adr-l0-wind-ad01-accepted-s-ogovorkoy-o-razmere-","decision-adr-strf-01-l0-strf-d001-accepted-determinirovan","decision-adr-strf-02-l0-strf-d002-accepted-spavnery-vanil","decision-l0-airs-cx01-zagruzka-chankov-koltsa-privyazanno","decision-l0-xcx6-edinstvennyy-istochnik-pravdy-po-generat","decision-l0-xcx7-kanal-dokazatelstva-u-kazhdogo-kriteriya","decision-l0-xq2-plotnost-struktur-shansy-na-chank-rovno-k","decision-l0-xq3-vozvrat-poteryannogo-oruzhiya-kraftivshem","decision-l0-xq4-melnitsa-u-spavna-bez-suhoy-zemli-mira-be","decision-dirizhabl-udlinyaetsya-protiv-razmera-v-speke-ra","decision-gorod-hranitelya-rastet-vchetvero-po-ploschadi-i","decision-legendarnoe-vozvraschaetsya-poslednemu-derzhavsh","decision-resolve-cool-ctr1","decision-resolve-cool-ctr2","decision-resolve-cool-ctr4","decision-resolve-l0-airs-cx01","decision-resolve-l0-lgnd-cx01","decision-resolve-l0-lgnd-cx07","decision-resolve-l0-lgnd-cx08","decision-resolve-l0-lgnd-cx09","decision-resolve-l0-lgnd-cx10","decision-resolve-l0-orbc-cx02","decision-resolve-l0-scyt-cx03","decision-resolve-l0-scyt-cx04","decision-resolve-l0-scyt-cx05","decision-resolve-l0-strf-cx01","decision-resolve-l0-strf-cx02","decision-resolve-l0-wind-cx01","decision-resolve-l0-wind-cx02","decision-resolve-l0-xcx10","decision-resolve-l0-xcx11","decision-resolve-l0-xcx12","decision-resolve-l0-xcx13","decision-resolve-l0-xcx14","decision-resolve-l0-xcx5","decision-resolve-l0-xcx6","decision-resolve-l0-xcx7","decision-resolve-l0-xcx8","decision-dvizhok-bedrock-chetyre-svoystva-naydennye-otgru","decision-luchi-i-tsel-facelocation-stoppery-i-zhidkosti-z","decision-pushka-predmet-i-zaryad-pravki-po-zameram-otgruz","decision-aim-range-25-and-spawn-height-60-the-shooter-get","decision-resolve-l0-lgnd-cx13","decision-resolve-l0-magn-cxdp","decision-resolve-l0-sauc-cx01","decision-katana-landing-above-lava-unsafe","decision-resolve-l0-lgnd-cx14","decision-resolve-l0-ufoc-cx01","decision-resolve-l0-xcx15","decision-resolve-l0-xcx16","decision-resolve-l0-xcx17","decision-resolve-l0-xcx18","decision-resolve-l0-xcx19","decision-resolve-l0-xcx20","decision-resolve-l0-xcx21","decision-katana-ray-budget-and-column-length-measured-not","decision-resolve-l0-katn-cx01","decision-resolve-l0-lgnd-cx15","decision-resolve-l0-lgnd-cx16","decision-resolve-l0-sclk-cx01","decision-resolve-l0-sclk-cx02","decision-resolve-l0-xcx22","decision-resolve-l0-xcx23","decision-resolve-l0-xcx24","decision-resolve-l0-xcx25","decision-resolve-l0-strm-cxkb","decision-resolve-l0-xcx26","decision-resolve-l0-xcx27"]
-priority: 620
+relates_to: ["decision-completion-flow-quick","decision-merge-policy-autopilot","decision-namespace-addona-andrew-asm-002-q-002","decision-q-006-web-sword-provenance-yes-metka-ekzemplyara","decision-q-007-enchantable-without-durability-podtverzhde","decision-q-008-blocked-craft-refund-a-obnaruzhit-i-vernut","decision-q-009-cooldown-persistence-sohranyat-mezhdu-vyho","decision-q-010-main-hand-off-hand-priority-otlozheno","decision-q-011-cube-geometry-27-kletok-tsentr-sosednyaya-","decision-q-012-two-player-dod-gametest-s-dvumya-simulated","decision-q-013-protected-blocks-zakrytyy-spisok-posture-s","decision-q-014-budget-after-destruction-pravo-ostaetsya-p","decision-q-015-gate-game-modes-survival-i-adventure","decision-q-016-sword-unlootable-podtverzhdeno-kak-zaduman","decision-q-017-zero-cells-proval-s-lokalizovannym-soobsch","decision-resolve-l0","decision-resolve-l0-keep-ctr006","decision-resolve-l0-once","decision-resolve-l0-qatg-ctr1","decision-resolve-l0-trap-ct07","decision-resolve-l0-trap-ct08","decision-legendary-hand-priority-realizuem-seychas-osnovn","decision-legendary-ready-hud-gotovo-pokazyvaetsya-postoya","decision-legendary-rules-obschie-dlya-vseh-legendarnyh-vk","decision-resolve-cool-ctr3","decision-resolve-l0-sprj-cx02","decision-resolve-l0-xcx3","decision-ad-wrdn-01-l0-wrdn-ad01-podtverzhdeno-vanilnaya-","decision-adr-bast-02-l0-bast-ad02-podtverzhdeno-vanilnye-","decision-adr-l0-adr-strc-accepted-generatsiya-skriptom-pr","decision-adr-l0-adr-strs-accepted-s-ogovorkoy-q5-zond-str","decision-adr-l0-adr-tmpl-accepted-zond-strf-p006-q1-q2-q3","decision-adr-l0-wind-ad01-accepted-s-ogovorkoy-o-razmere-","decision-adr-strf-01-l0-strf-d001-accepted-determinirovan","decision-adr-strf-02-l0-strf-d002-accepted-spavnery-vanil","decision-l0-airs-cx01-zagruzka-chankov-koltsa-privyazanno","decision-l0-xcx6-edinstvennyy-istochnik-pravdy-po-generat","decision-l0-xcx7-kanal-dokazatelstva-u-kazhdogo-kriteriya","decision-l0-xq2-plotnost-struktur-shansy-na-chank-rovno-k","decision-l0-xq3-vozvrat-poteryannogo-oruzhiya-kraftivshem","decision-l0-xq4-melnitsa-u-spavna-bez-suhoy-zemli-mira-be","decision-dirizhabl-udlinyaetsya-protiv-razmera-v-speke-ra","decision-gorod-hranitelya-rastet-vchetvero-po-ploschadi-i","decision-legendarnoe-vozvraschaetsya-poslednemu-derzhavsh","decision-resolve-cool-ctr1","decision-resolve-cool-ctr2","decision-resolve-cool-ctr4","decision-resolve-l0-airs-cx01","decision-resolve-l0-lgnd-cx01","decision-resolve-l0-lgnd-cx07","decision-resolve-l0-lgnd-cx08","decision-resolve-l0-lgnd-cx09","decision-resolve-l0-lgnd-cx10","decision-resolve-l0-orbc-cx02","decision-resolve-l0-scyt-cx03","decision-resolve-l0-scyt-cx04","decision-resolve-l0-scyt-cx05","decision-resolve-l0-strf-cx01","decision-resolve-l0-strf-cx02","decision-resolve-l0-wind-cx01","decision-resolve-l0-wind-cx02","decision-resolve-l0-xcx10","decision-resolve-l0-xcx11","decision-resolve-l0-xcx12","decision-resolve-l0-xcx13","decision-resolve-l0-xcx14","decision-dvizhok-bedrock-chetyre-svoystva-naydennye-otgru","decision-luchi-i-tsel-facelocation-stoppery-i-zhidkosti-z","decision-pushka-predmet-i-zaryad-pravki-po-zameram-otgruz","decision-aim-range-25-and-spawn-height-60-the-shooter-get","decision-resolve-l0-lgnd-cx13","decision-resolve-l0-magn-cxdp","decision-resolve-l0-sauc-cx01","decision-katana-landing-above-lava-unsafe","decision-resolve-l0-lgnd-cx14","decision-resolve-l0-ufoc-cx01","decision-resolve-l0-xcx15","decision-resolve-l0-xcx16","decision-resolve-l0-xcx17","decision-resolve-l0-xcx18","decision-resolve-l0-xcx19","decision-resolve-l0-xcx20","decision-resolve-l0-xcx21","decision-katana-ray-budget-and-column-length-measured-not","decision-resolve-l0-katn-cx01","decision-resolve-l0-lgnd-cx15","decision-resolve-l0-lgnd-cx16","decision-resolve-l0-sclk-cx01","decision-resolve-l0-sclk-cx02","decision-resolve-l0-xcx22","decision-resolve-l0-xcx23","decision-resolve-l0-xcx24","decision-resolve-l0-xcx25","decision-resolve-l0-strm-cxkb","decision-resolve-l0-xcx26","decision-resolve-l0-xcx27","decision-resolve-l0-trdt-cx01","decision-resolve-l0-trdt-cx02","decision-resolve-l0-xcx30","decision-resolve-l0-xcx31"]
+priority: 630
 ---
 
 # Decisions
@@ -779,50 +779,6 @@ _Decided: 2026-09-29_
 
 
 
-## Resolved L0-xcx5: `ai-kit refine resolve L0-xcx5 "<текст>… (decision-resolve-l0-xcx5)
-
-_Decided: 2026-09-29_
-
-
-`ai-kit refine resolve L0-xcx5 "<текст>" --outcome changed --evidence "c5a1c27, 1fb0851, af024e4 (1.2.0); .ai/verify/CNTR-XCX5-AA/2.json, 2.red.json, 3.json"`  > Замеры на fea2287 (2026-09-29), скрипт docs/feedback/diagnose-CNTR-XCX5-AA.measure.sh. > > Спека Four Structures (sha1 cfce59d…) — единственный такой источник за всю историю git; в KV — 11 фрагментов, priority 530. Ранних черновиков нет ни в git, ни в KV, ни в inbox. > > Видимая шапка «Windmill + Airship • v1» и две колонки §1 устарели. Сам файл в метаданных называет себя «Windmill, Airship, Mini Warden City, Mini Bastion — RU/EN v2».
-
-
-
-
-
-## Resolved L0-xcx6: > L0-xcx6 was re-measured on 2026-09-29… (decision-resolve-l0-xcx6)
-
-_Decided: 2026-09-29_
-
-
-> L0-xcx6 was re-measured on 2026-09-29 against the live KV. Every point is confirmed, and the defect is wider than the claim says: > - the chunk-load-event wording is also at `bast__:21` and `bast-p001:18`; > - the own init marker has spread to `bast-p002:20,24` and `bast-ent1/2/3`; > - `wrdn-ent1`/`ent2` keep their own instance record and a `filled` flag, against `strf-r008` §4; > - "xcx4 is open" also appears at `wrdn__:61,68`. > > Zero `strf-*`/`loot-*` ids in wrdn (30 nodes) and bast (31 nodes), against 76 and 52 lines in wind and airs. > > Cause: the analyze --incremental announced by de
-
-
-
-
-
-## Resolved L0-xcx7: > L0-xcx7 закрыт (исход 3, подчистка зн… (decision-resolve-l0-xcx7)
-
-_Decided: 2026-09-29_
-
-
-> L0-xcx7 закрыт (исход 3, подчистка знания). Перемерено 2026-09-29 скриптом `docs/feedback/diagnose-CNTR-XCX7-AA.sh` (артефакт `.ai/verify/CNTR-XCX7-AA/2.json`, 29 PASS). > - KV: `wind-ac` 17 узлов — 14 `verify:bds`, 4 `verify:ipad`. `airs-ac` 8, `wrdn-ac` 10, `bast-ac` 9 — 0 тегов канала. > - Инвариант выполнен в карточках, как велит `decision-l0-xcx7-kanal-dokazatelstva-u-kazhdogo-kriteriya` (2026-09-26). 14 задач структур — 122 критерия, тип есть у всех. Все 16 визуальных — `type:manual`, 11 из них приняты оператором (`accepted`). > - Тег канала в KV не читает ни ai-kit 3.7.5 (0 файлов), н
-
-
-
-
-
-## Resolved L0-xcx8: Закрыто решением decision-vvod-orbitaln… (decision-resolve-l0-xcx8)
-
-_Decided: 2026-09-29_
-
-
-Закрыто решением decision-vvod-orbitalnoy-pushki: удар ловится через playerSwingStart, применение через itemUse, цель — блок события с лучом (maxDistance 10) как запасным. Посылки опровергнуты измерением: сервер дальность не режет (22/22 на всех дистанциях), playerSwingStart стабилен и приходит при ударе в пустоту, луч находит блок при 9.5 и не находит при 10.5. Маркер спекой не запрещён, а объявлен ненужным; частица добавляется только если подсветка на iPad не достанет. Остаток — наблюдение раскладки управления на устройстве — идёт критерием приёмки демо Пушки.
-
-
-
-
-
 ## Движок Bedrock: четыре свойства, найденные отгрузкой Пушки (ring-ent1, ring-as03, ring-as02, pntr-ad01) (decision-dvizhok-bedrock-chetyre-svoystva-naydennye-otgru)
 
 _Decided: 2026-09-30_
@@ -1166,6 +1122,50 @@ _Decided: 2026-10-08_
 
 
 Опровергнуто замером. applyDamage(10, entityAttack, damagingEntity: носитель) гасится поднятым щитом ТОЛЬКО когда источник в пределах <90° от взгляда держателя: спереди 0 HP, ret false, износ щита D+1; с 90° и дальше удар проходит и броня применяется обычным порядком (3.00 по алмазу, 1.08 по алмазу с Protection IV). Так же на 2 и 8 блоках и при ударе сверху. Контроль алмазным мечом ломается на той же границе 90°. «Независимо от направления» верно только для вызова БЕЗ damagingEntity — а именно такой вызов прописан в strm-pprb:31 (метод P3). То есть это ванильный щит и есть стандартная защита: §02 «до учёта брони и прочих стандартных защит», прочитанное буквально, его и подразумевает (xq8, вариант 2). Отклонения нет, записи по C-16 не нужно. Варианты (a) и (c) — лишний код и лишнее отклонение; вариант (b) избыточен: ручная броня плюс sonicBoom даёт те же 1.08/0.56, что и родной entityAttack сзади.
+
+
+
+
+
+## Resolved L0-trdt-cx01: Закрыто на свёртке v9 решением L0-adr-t… (decision-resolve-l0-trdt-cx01)
+
+_Decided: 2026-10-11_
+
+
+Закрыто на свёртке v9 решением L0-adr-trlg §2-3: общее необязательное поле refundExchange в описании легендарки принято как намеренное расширение xasm32.
+
+
+
+
+
+## Resolved L0-trdt-cx02: Закрыто на свёртке v9: оба решения L0 и… (decision-resolve-l0-trdt-cx02)
+
+_Decided: 2026-10-11_
+
+
+Закрыто на свёртке v9: оба решения L0 исправлены на месте. Порядок броска теперь запись в журнал -> очистка руки -> запуск; про общий помощник урона записано, что raiseHit для брошенного попадания не годится.
+
+
+
+
+
+## Resolved L0-xcx30: Закрыто на свёртке v9 решением L0-adr-t… (decision-resolve-l0-xcx30)
+
+_Decided: 2026-10-11_
+
+
+Закрыто на свёртке v9 решением L0-adr-trlg: список точек касания T1-T7 требует экспорта доставки последнему держателю и НУЛЯ исключений из сканов, что укладывается в заявленный допуск xasm32. Пересборка узла lgnd на v10 не нужна.
+
+
+
+
+
+## Resolved L0-xcx31: Сбой инструмента, а не пробел анализа: … (decision-resolve-l0-xcx31)
+
+_Decided: 2026-10-11_
+
+
+Сбой инструмента, а не пробел анализа: узел L0-trdt потерялся из-за отсутствующего промпта window в ai-kit 3.22.1. Причина — неэкранированная вертикальная черта внутри ячейки таблицы плана (native|window|lethal): строка разъехалась с 4 колонок на 6, и слово window встало на место имени промпта. Черты убраны, узел переведён в component-deep-dive, прогон доведён через --continue.
 
 
 

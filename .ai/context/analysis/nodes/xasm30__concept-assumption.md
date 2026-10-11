@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-xasm30"
 source_channel: "rollout"
-analysis_version: 8
+analysis_version: 9
 level: 1
 title: "ASM-L0-30 · Melee base and the passive trigger"
 aliases: ["L0-xasm30"]
