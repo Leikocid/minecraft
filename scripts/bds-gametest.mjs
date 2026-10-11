@@ -524,6 +524,11 @@ const EXPECTED_TESTS = [
   'andrew:probe_trident_return',
   'andrew:probe_trident_restart_seed',
   'andrew:probe_trident_restart_check',
+  // TRDT-MOVE-01 — src/gametest/trident-movement.ts (L0-trdt-a003)
+  'andrew:trident_dash_distance',
+  'andrew:trident_dash_dimensions',
+  'andrew:trident_dash_fall_once',
+  'andrew:trident_swim_boost',
 ];
 
 // A renamed scenario would otherwise drop out of the release gate silently.

@@ -35,6 +35,7 @@ import { DynamicPropertyStore } from "./structures/store";
 import { registerUfo } from "./ufo";
 import { registerTrap } from "./websword/trap";
 import { registerStormPassive } from "./storm/passive";
+import { registerTridentMovement } from "./trident/movement";
 
 registerAutoSmelt();
 registerCraftGate();
@@ -47,6 +48,7 @@ registerScytheVolley();
 registerOrbitalCannon();
 registerDragonKatana();
 registerSculkCrossbow();
+registerTridentMovement();
 // Must come after every other legendary's input: see registerStormActive().
 registerStormActive();
 // Must run at script load: custom commands can only be registered during the
