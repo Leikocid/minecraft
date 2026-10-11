@@ -77,7 +77,7 @@ AI Kit provides a structured workflow for understanding, planning, and executing
 ### Core pipeline
 1. **`/analyze`** — Analyze project requirements from Knowledge Vault. Produces structured analysis in `.ai/context/analysis/`.
 2. **`/refine`** — Refine analysis iteratively: answer questions, record decisions, detect contradictions.
-3. **`/plan`** — Decompose into tasks with acceptance criteria and dependencies. Also reviews todo-list.
+3. **`/plan`** — Decompose into tasks with acceptance criteria and dependencies. Also reviews open issues.
 4. **`/execute`** — Execute tasks in isolated worktrees (or Docker containers for parallel work).
 5. **`/verify`** — Verify completed tasks/waves against acceptance criteria.
 
@@ -89,9 +89,9 @@ Once a full analysis exists, do **NOT** re-run `ai-kit analyze` from scratch whe
 - `ai-kit analyze --incremental` — re-analyses only the affected subtrees (untouched ones are skipped and carried forward; affected ones auto-promote and rollout completes). Run `--audit` first to preview the affected set, then `--incremental` to apply.
 - `ai-kit analyze --continue` — resume an interrupted/crashed run from where it stopped (does not restart from scratch).
 
-Decisions are picked up automatically from the chronicle (intake `change`/`cr`/`decision` + session-digest `## Decisions`), windowed to after the last analysis. Full `analyze` / `--clean` is only for a first build or a deliberate ground-up rebuild.
+Decisions are picked up automatically from the chronicle (intake `change`/`cr`/`decision` + session-digest `## Decisions` + commits with a `Type: records-decision` trailer), windowed to after the last analysis. Full `analyze` / `--clean` is only for a first build or a deliberate ground-up rebuild.
 
-Execution mode is chosen automatically: quick (1-3 trivial files, non-critical) vs planned (features/refactoring/auth/DB/API). Feedback commands (`/todo`) and utility commands (`/demo-prep`, `/gc`, `/security-audit`…): ask `aikit_help({ topic: "slash-commands" })`.
+Execution mode is chosen automatically: quick (1-3 trivial files, non-critical) vs planned (features/refactoring/auth/DB/API). Issue filing (`/todo`) and utility commands (`/demo-prep`, `/gc`, `/security-audit`…): ask `aikit_help({ topic: "slash-commands" })`.
 <!-- ai-kit:end:workflow -->
 
 <!-- ai-kit:start:who-cuts-tasks -->
@@ -385,7 +385,7 @@ A comment survives only if removing it loses information that exists nowhere els
 - Change build or deploy configuration
 
 ### Never:
-- Commit code directly to the project's root branch (the one the root checkout sits on) — go through a task/epic branch first. Two exceptions: documentation, which goes straight in, and a quickfix — a file or three committed with a `quickfix:` prefix
+- Commit code directly to the project's root branch (the one the root checkout sits on) — go through a task/epic branch first. Three exceptions: documentation, which goes straight in; a quickfix — a file or three committed with a `quickfix:` prefix; and stabilization round records — `stabilization/<pipeline>/rounds/<N>/` files and the decision registry, committed by `/stabilize` as observation, not code
 - Modify .env files or secrets
 - Delete tests without replacement
 - Update major dependency versions without approval
