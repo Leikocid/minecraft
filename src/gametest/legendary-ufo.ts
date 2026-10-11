@@ -225,7 +225,7 @@ const AWAY_BLOCKS = 40;
 /** Inside the 3 s recovery deadline the loss scenarios hold. */
 const RETURN_DEADLINE_TICKS = 100;
 
-interface Holder {
+export interface Holder {
   /** Puts the marked stack into the holder; returns how. */
   load(test: Test, owner: SimulatedPlayer, holder: Entity, stack: ItemStack): Promise<string>;
   /** Whether the holder still has the legendary, and how that was read. */
@@ -233,7 +233,7 @@ interface Holder {
 }
 
 /** A minecart's container, read slot by slot through isLegendaryStack (as15 §1). */
-const MINECART: Holder = {
+export const MINECART: Holder = {
   async load(_test, _owner, holder, stack) {
     const container = holder.getComponent("minecraft:inventory")?.container;
     if (container === undefined) throw new Error(`${holder.typeId} has no readable container`);
@@ -301,7 +301,7 @@ const ARMOR_STAND: Holder = {
   },
 };
 
-function holderScenario(name: string, ownerName: string, holderType: string, holder: Holder, def: LegendaryDef): void {
+export function holderScenario(name: string, ownerName: string, holderType: string, holder: Holder, def: LegendaryDef): void {
   registerAsync("andrew", name, async (test: Test): Promise<void> => {
     const owner = test.spawnSimulatedPlayer(OWNER_STAND, ownerName, GameMode.Survival);
     const entity = test.spawn(holderType, HOLDER_AT);

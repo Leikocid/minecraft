@@ -524,6 +524,15 @@ function lost(w: { def: LegendaryDef; mark: Mark }, how: string): void {
   grant(w.def, online.player, online.container, mark, RECOVERED_KEY);
 }
 
+/**
+ * The loss path for an instance that is in no slot and on no ground: the
+ * trident's custody fallbacks (L0-trdt-adcl §4). `mark` carries the look to
+ * hand back; a stale one is logged and delivers nothing.
+ */
+export function deliverToLastHolder(def: LegendaryDef, mark: Mark, how: string): void {
+  lost({ def, mark }, how);
+}
+
 /** Hands `player` every instance owed to them, each once. */
 function redeemOwed(def: LegendaryDef, player: Player): void {
   if (!player.isValid) {

@@ -34,7 +34,7 @@ const log = (msg: string): void => console.warn(`[gametest] magnet ${msg}`);
 const fmt = (v: Vector3): string => `${v.x.toFixed(1)},${v.y.toFixed(1)},${v.z.toFixed(1)}`;
 const short = (id: string): string => id.replace("minecraft:", "").replace("andrew:", "a:");
 
-const host: MagnetHost = {
+export const host: MagnetHost = {
   itemStack: (typeId, amount) => new ItemStack(typeId, amount),
   volume: (from, to) => new BlockVolume(from, to),
   now: () => Date.now(),
@@ -60,7 +60,7 @@ const PAD_HALF = 14;
 const PAD_DEPTH = 24;
 const LOAD_MARGIN = 6;
 
-interface Pad {
+export interface Pad {
   dim: Dimension;
   cx: number;
   cz: number;
@@ -72,7 +72,7 @@ interface Pad {
   unload: () => void;
 }
 
-async function pad(test: Test, name: string, k: number): Promise<Pad> {
+export async function pad(test: Test, name: string, k: number): Promise<Pad> {
   const dim = test.getDimension();
   const origin = test.worldBlockLocation({ x: 0, y: 0, z: 0 });
   const cx = origin.x + SITE_DX + SITE_STEP * k;
@@ -87,14 +87,14 @@ async function pad(test: Test, name: string, k: number): Promise<Pad> {
   return { dim, cx, cz, top, centre, hoverY, zone: zoneOf(centre, hoverY, dim.heightRange), unload };
 }
 
-const at = (p: Pad, dx: number, dz: number, dy = 1): Vector3 => ({ x: p.cx + dx, y: p.top + dy, z: p.cz + dz });
-const middle = (b: Vector3): Vector3 => ({ x: b.x + 0.5, y: b.y + 0.5, z: b.z + 0.5 });
+export const at = (p: Pad, dx: number, dz: number, dy = 1): Vector3 => ({ x: p.cx + dx, y: p.top + dy, z: p.cz + dz });
+export const middle = (b: Vector3): Vector3 => ({ x: b.x + 0.5, y: b.y + 0.5, z: b.z + 0.5 });
 
 function blockAt(p: Pad, b: Vector3): string {
   return p.dim.getBlock(b)?.typeId ?? "unloaded";
 }
 
-function setBlock(p: Pad, b: Vector3, typeId: string): void {
+export function setBlock(p: Pad, b: Vector3, typeId: string): void {
   const block = p.dim.getBlock(b);
   if (block === undefined) throw new Error(`${fmt(b)} is not loaded`);
   block.setType(typeId);
@@ -106,13 +106,13 @@ function placeDoor(p: Pad, b: Vector3): void {
   p.dim.getBlock({ ...b, y: b.y + 1 })?.setPermutation(BlockPermutation.resolve("minecraft:iron_door", { upper_block_bit: true }));
 }
 
-function containerAt(p: Pad, b: Vector3): Container {
+export function containerAt(p: Pad, b: Vector3): Container {
   const c = p.dim.getBlock(b)?.getComponent("minecraft:inventory")?.container;
   if (c === undefined) throw new Error(`${blockAt(p, b)} at ${fmt(b)} has no inventory`);
   return c;
 }
 
-function stackOf(e: Entity): ItemStack | undefined {
+export function stackOf(e: Entity): ItemStack | undefined {
   return e.isValid ? e.getComponent("minecraft:item")?.itemStack : undefined;
 }
 
@@ -120,26 +120,26 @@ function itemsIn(p: Pad): Entity[] {
   return p.dim.getEntities({ type: "minecraft:item", location: zoneMiddle(p.zone), maxDistance: reach(p.zone) }).filter((e) => e !== undefined && e.isValid && inZone(p.zone, e.location));
 }
 
-function describe(sel: MagnetSelection): string {
+export function describe(sel: MagnetSelection): string {
   return sel.elements.map((e) => `${e.cls}:${short(e.from)}@${e.distance.toFixed(1)}`).join(" ");
 }
 
 /** The zone holds no iron before seeding: the pass picks nothing and changes nothing. */
-function assertClean(test: Test, p: Pad): void {
+export function assertClean(test: Test, p: Pad): void {
   const sel = magnetOn(p.dim, p.centre, p.hoverY, host);
   test.assert(sel.elements.length === 0 && sel.failures.length === 0, `the zone was not clean before seeding: ${describe(sel)} ${sel.failures.join(" | ")}`);
 }
 
-function removeAll(entities: Iterable<Entity | undefined>): void {
+export function removeAll(entities: Iterable<Entity | undefined>): void {
   for (const e of entities) if (e?.isValid) e.remove();
 }
 
-function clearItems(p: Pad): void {
+export function clearItems(p: Pad): void {
   removeAll(itemsIn(p));
 }
 
 /** Kept still for the few ticks between seeding and the scan. */
-function spawnStill(p: Pad, typeId: string, b: Vector3): Entity {
+export function spawnStill(p: Pad, typeId: string, b: Vector3): Entity {
   const e = p.dim.spawnEntity(typeId, { x: b.x + 0.5, y: b.y, z: b.z + 0.5 });
   e.addEffect("slowness", 600, { amplifier: 255, showParticles: false });
   e.addEffect("fire_resistance", 600, { amplifier: 0, showParticles: false });
@@ -594,7 +594,7 @@ registerAsync("andrew", "ufo_magnet_deep_ore", async (test: Test): Promise<void>
 // ------------------------------------------------ AC-6: golems, minecarts and iron-wearing mobs; bare and sword zombies stay
 
 /** Zombies roll random gear; every slot is set by hand. */
-function dress(e: Entity, gear: Partial<Record<"head" | "chest" | "legs" | "feet" | "mainhand" | "offhand", string>>): void {
+export function dress(e: Entity, gear: Partial<Record<"head" | "chest" | "legs" | "feet" | "mainhand" | "offhand", string>>): void {
   const slots = { head: "slot.armor.head", chest: "slot.armor.chest", legs: "slot.armor.legs", feet: "slot.armor.feet", mainhand: "slot.weapon.mainhand", offhand: "slot.weapon.offhand" };
   for (const [name, slot] of Object.entries(slots)) {
     const item = gear[name as keyof typeof slots] ?? "air";

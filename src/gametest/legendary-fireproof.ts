@@ -20,7 +20,7 @@ import { PENETRATOR_EFFECT, type PenetratorReport, observePenetratorReports } fr
 import { loadBox } from "./structures-place";
 
 const STRUCTURE = "andrew:platform";
-// Clear of every grid cell (x=1,3 × z=1,3,5) and CONTROL_CELL (5,3): a fifth
+// Clear of every grid cell (x=1,3 × z=0,2,4,6) and CONTROL_CELL (5,3): a fifth
 // legendary at (1,5) sat one block from the old (2,5), and the owner picked it
 // up by proximity before the hazard landed — "alive" turned into "DESTROYED"
 // with no hazard involved (measured, SCLK-ITEM-01-AA). legendary_pickup_sighting_not_consumed
@@ -46,13 +46,14 @@ const FLOOR_TYPE = "minecraft:stone";
 
 // One cell per legendary, two apart on the platform floor (stone at
 // test-relative y=1), generated from the registry. Columns x=1,3 and rows
-// z=1,3,5 hold six legendaries; a seventh runs off the platform, where its item
-// has no floor and falls out of every hazard's reach, and assertOnPlatform()
-// fails the scenario. The vanilla control has the x=5 column to itself.
+// z=0,2,4,6 hold eight legendaries; a ninth runs off the platform, where its
+// item has no floor and falls out of every hazard's reach, and
+// assertOnPlatform() fails the scenario. The vanilla control has the x=5
+// column to itself.
 const GRID_COLUMNS = 2;
 const CELLS: Cell[] = LEGENDARIES.map((def, i) => ({
   def,
-  cell: { x: 1 + 2 * (i % GRID_COLUMNS), y: 2, z: 1 + 2 * Math.floor(i / GRID_COLUMNS) },
+  cell: { x: 1 + 2 * (i % GRID_COLUMNS), y: 2, z: 2 * Math.floor(i / GRID_COLUMNS) },
 }));
 const CONTROL_CELL: Vector3 = { x: 5, y: 2, z: 3 };
 
@@ -426,7 +427,7 @@ const DEATH_SWEEP_TICKS = 10;
  * and respawns: an instance in a chest at the death stays there (spec §02), and
  * retention owes the owner nothing for it.
  */
-function chestStays(name: string, def: LegendaryDef, keeper: string): void {
+export function chestStays(name: string, def: LegendaryDef, keeper: string): void {
   registerAsync("andrew", name, async (test: Test): Promise<void> => {
     const dim = test.getDimension();
     const chestCell: Vector3 = { x: 3, y: 2, z: 1 };

@@ -68,6 +68,7 @@ const {
   ORBITAL_CANNON,
   SCULK_CROSSBOW,
   STORM_BLADE,
+  TRIDENT,
   hasAbility,
   heldLegendaries,
   genLedgerKey,
@@ -107,7 +108,7 @@ test('registry', async (t) => {
     assert.strictEqual(defForAbility('nope'), undefined);
   });
 
-  await t.test('the six shipped defs, in order, all but the Sculk Crossbow active (L0-lgnd-ac26)', () => {
+  await t.test('the seven shipped defs, in order, all but the Sculk Crossbow and the Trident active (L0-lgnd-ac26)', () => {
     assert.deepStrictEqual(
       LEGENDARIES.map((def) => def.itemId),
       [
@@ -117,8 +118,10 @@ test('registry', async (t) => {
         'andrew:dragon_katana',
         'andrew:sculk_crossbow',
         'andrew:storm_blade',
+        'andrew:above_water_trident',
       ]
     );
+    assert.deepStrictEqual(LEGENDARIES.filter((def) => !hasAbility(def)), [SCULK_CROSSBOW, TRIDENT]);
     for (const def of [WEB_SWORD, SCYTHE_OF_CALAMITY, ORBITAL_CANNON, DRAGON_KATANA, STORM_BLADE]) {
       assert.strictEqual(hasAbility(def), true, `${def.itemId} lost its ability`);
       assert.strictEqual(defForAbility(def.abilityKey), def);
@@ -140,7 +143,7 @@ test('registry', async (t) => {
     ]);
   });
 
-  await t.test('item ids, prefixes, tokens, commands and text prefixes are unique across all six defs', () => {
+  await t.test('item ids, prefixes, tokens, commands and text prefixes are unique across all seven defs', () => {
     for (const field of ['itemId', 'keyPrefix', 'command', 'craftTokenId', 'textPrefix']) {
       const values = LEGENDARIES.map((def) => def[field]);
       assert.strictEqual(new Set(values).size, values.length, `duplicate ${field}`);
@@ -232,6 +235,55 @@ test('registry', async (t) => {
     assert.strictEqual(isLegendaryStack({ typeId: 'andrew:storm_blade_crafted' }), true);
     assert.strictEqual(isLegendaryStack({ typeId: 'minecraft:diamond_sword' }), false);
   });
+
+  await t.test('the Above-Water Trident is def #7: tr prefix, no ability, command andrew:trident (L0-trdt, L0-xasm33)', () => {
+    assert.strictEqual(LEGENDARIES[6], TRIDENT);
+    assert.strictEqual(TRIDENT.itemId, 'andrew:above_water_trident');
+    assert.strictEqual(TRIDENT.keyPrefix, 'tr');
+    assert.strictEqual(TRIDENT.nameKey, 'item.andrew:above_water_trident');
+    assert.strictEqual(TRIDENT.craftGate, true);
+    assert.strictEqual(TRIDENT.craftTokenId, 'andrew:above_water_trident_crafted');
+    assert.strictEqual(TRIDENT.textPrefix, 'andrew.trident');
+    assert.strictEqual(TRIDENT.command, 'andrew:trident');
+    assert.strictEqual(hasAbility(TRIDENT), false, 'throw and dash belong to src/trident/, not to resolveActivation');
+    assert.strictEqual(TRIDENT.abilityKey, undefined);
+    assert.strictEqual(TRIDENT.cooldownTicks, undefined);
+    assert.strictEqual(TRIDENT.hudKeys, undefined);
+    assert.strictEqual(defFor('andrew:above_water_trident'), TRIDENT);
+    assert.strictEqual(defFor('minecraft:trident'), undefined, 'the vanilla trident is an ingredient, not a legendary');
+  });
+
+  await t.test('its prefix is none of the six taken before it', () => {
+    const taken = ['ws', 'sc', 'oc', 'dk', 'sk', 'sb'];
+    assert.deepStrictEqual(
+      LEGENDARIES.filter((def) => def !== TRIDENT).map((def) => def.keyPrefix),
+      taken
+    );
+    assert.ok(!taken.includes(TRIDENT.keyPrefix));
+  });
+
+  await t.test('a blocked Trident craft hands back 2 apples, 1 trident and 2 WATER buckets; a kept one gets 2 empty buckets — never both kinds', () => {
+    assert.deepStrictEqual(TRIDENT.refund, [
+      ['minecraft:golden_apple', 2],
+      ['minecraft:trident', 1],
+      ['minecraft:water_bucket', 2],
+    ]);
+    assert.deepStrictEqual(TRIDENT.craftReturn, [['minecraft:bucket', 2]]);
+    const refundIds = new Set(TRIDENT.refund.map(([id]) => id));
+    for (const [id] of TRIDENT.craftReturn) assert.ok(!refundIds.has(id), `${id} is in both lists`);
+  });
+
+  await t.test('only the Trident returns containers: defs #1–#6 have no craftReturn', () => {
+    for (const def of LEGENDARIES.filter((d) => d !== TRIDENT)) {
+      assert.strictEqual(def.craftReturn, undefined, `${def.itemId} got a craftReturn`);
+    }
+  });
+
+  await t.test('isLegendaryStack is true for the Trident item and its token, false for the vanilla trident', () => {
+    assert.strictEqual(isLegendaryStack({ typeId: 'andrew:above_water_trident' }), true);
+    assert.strictEqual(isLegendaryStack({ typeId: 'andrew:above_water_trident_crafted' }), true);
+    assert.strictEqual(isLegendaryStack({ typeId: 'minecraft:trident' }), false);
+  });
 });
 
 test('keys from keyPrefix', async (t) => {
@@ -301,6 +353,27 @@ test('keys from keyPrefix', async (t) => {
       holder: 'andrew:sb_holder',
       holderName: 'andrew:sb_holder_name',
     });
+  });
+
+  await t.test('Above-Water Trident keys live under andrew:tr_*, and collide with no other def\'s', () => {
+    assert.deepStrictEqual(keysFor(TRIDENT), {
+      origin: 'andrew:tr_origin',
+      owner: 'andrew:tr_owner',
+      id: 'andrew:tr_id',
+      ownerName: 'andrew:tr_owner_name',
+      crafted: 'andrew:tr_crafted',
+      craftedBy: 'andrew:tr_crafted_by',
+      pending: 'andrew:tr_pending',
+      gen: 'andrew:tr_gen',
+      owed: 'andrew:tr_owed',
+      holder: 'andrew:tr_holder',
+      holderName: 'andrew:tr_holder_name',
+    });
+    assert.strictEqual(genLedgerKey(TRIDENT, 'i-1'), 'andrew:tr_gen:i-1');
+    const others = new Set(LEGENDARIES.filter((def) => def !== TRIDENT).flatMap((def) => Object.values(keysFor(def))));
+    for (const key of Object.values(keysFor(TRIDENT))) {
+      assert.ok(!others.has(key), `${key} collides with another def's key`);
+    }
   });
 
   await t.test('another prefix gets its own namespace', () => {
@@ -476,6 +549,37 @@ test('lang: shared legendary keys, and the same key set in en_US and ru_RU', () 
     for (const key of Object.values(def.hudKeys ?? {})) {
       assert.ok(en.has(key), `missing HUD key ${key}`);
     }
+  }
+});
+
+function langEntries(file) {
+  const entries = new Map();
+  for (const line of readFileSync(join(projectRoot, 'packs', 'resource', 'texts', file), 'utf-8').split(/\r?\n/)) {
+    if (!line.includes('=') || line.startsWith('#')) continue;
+    entries.set(line.slice(0, line.indexOf('=')), line.slice(line.indexOf('=') + 1));
+  }
+  return entries;
+}
+
+test('lang: the Trident\'s name and its five messages, in both languages (L0-trdt, C-8)', () => {
+  const en = langEntries('en_US.lang');
+  const ru = langEntries('ru_RU.lang');
+  const keys = [
+    `${TRIDENT.nameKey}.name`,
+    ...['first_craft', 'craft_blocked', 'returned', 'admin_given', 'reset'].map((suffix) => `${TRIDENT.textPrefix}.${suffix}`),
+  ];
+  assert.deepStrictEqual([...en.keys()].sort(), [...ru.keys()].sort(), 'en_US and ru_RU carry different key sets');
+  for (const key of keys) {
+    assert.ok(en.get(key)?.trim(), `en_US ${key} is empty`);
+    assert.ok(ru.get(key)?.trim(), `ru_RU ${key} is empty`);
+    assert.notStrictEqual(ru.get(key), en.get(key), `ru_RU ${key} is the English text`);
+    assert.match(ru.get(key), /[А-Яа-яЁё]/, `ru_RU ${key} has no Cyrillic`);
+  }
+  assert.strictEqual(en.get(`${TRIDENT.nameKey}.name`), 'Above-Water Trident');
+  assert.strictEqual(ru.get(`${TRIDENT.nameKey}.name`), 'Надводный трезубец');
+  for (const lang of [en, ru]) {
+    assert.strictEqual((lang.get(`${TRIDENT.textPrefix}.first_craft`).match(/%s/g) ?? []).length, 2, 'first_craft names the crafter and the weapon');
+    assert.strictEqual((lang.get(`${TRIDENT.textPrefix}.admin_given`).match(/%s/g) ?? []).length, 1, 'admin_given names the player');
   }
 });
 

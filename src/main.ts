@@ -15,6 +15,7 @@ import { registerAutoSmelt } from "./autosmelt";
 import { registerDragonKatana } from "./katana";
 import { registerLegendaryCommands } from "./legendary/commands";
 import { registerCraftGate } from "./legendary/craftgate";
+import { registerEnchantScrub } from "./legendary/enchant";
 import { registerHideCommand } from "./legendary/hidden";
 import { registerLegendaryHud } from "./legendary/hud";
 import { protectLegendariesIn, registerRecovery } from "./legendary/recovery";
@@ -32,21 +33,28 @@ import { makeFireproof } from "./structures/place";
 import { StrfRuntime, engineStrf } from "./structures/runtime";
 import { SPAWN_EVENT, SPAWN_STATE_EVENT, SpawnSearch, engineSpawnHost } from "./structures/spawn-search";
 import { DynamicPropertyStore } from "./structures/store";
+import { registerTridentThrow } from "./trident/throw";
 import { registerUfo } from "./ufo";
 import { registerTrap } from "./websword/trap";
 import { registerStormPassive } from "./storm/passive";
+import { registerTridentDamage } from "./trident/damage";
+import { registerTridentMovement } from "./trident/movement";
 
 registerAutoSmelt();
 registerCraftGate();
 registerRetention();
 registerRecovery();
+registerEnchantScrub();
 registerLegendaryHud();
 registerTrap();
 registerStormPassive();
+registerTridentDamage();
 registerScytheVolley();
 registerOrbitalCannon();
+registerTridentThrow();
 registerDragonKatana();
 registerSculkCrossbow();
+registerTridentMovement();
 // Must come after every other legendary's input: see registerStormActive().
 registerStormActive();
 // Must run at script load: custom commands can only be registered during the

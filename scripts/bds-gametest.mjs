@@ -195,6 +195,25 @@ const EXPECTED_TESTS = [
   'andrew:legendary_give_then_craft_storm_blade',
   'andrew:legendary_storm_blade_other_flags_untouched',
   'andrew:storm_blade_no_durability',
+  // TRDT-ITEM-01-AA — src/gametest/legendary-craftgate.ts
+  'andrew:legendary_give_then_craft_trident',
+  'andrew:legendary_trident_other_flags_untouched',
+  'andrew:trident_craft_two_empty_buckets',
+  'andrew:trident_craft_full_inventory',
+  'andrew:trident_blocked_restart_seed',
+  'andrew:trident_blocked_restart_check',
+  'andrew:trident_creative_and_commands_spend_nothing',
+  // TRDT-THROW-01 — src/gametest/trident-throw.ts (L0-trdt-a004, R-trdt-001)
+  'andrew:trident_throw_wall_return',
+  'andrew:trident_throw_zombie_return',
+  'andrew:trident_throw_thrower_dies',
+  'andrew:trident_throw_thrower_leaves',
+  'andrew:trident_throw_dimension_change',
+  'andrew:trident_throw_chunk_unload',
+  'andrew:trident_throw_restart_seed',
+  'andrew:trident_throw_restart_check',
+  'andrew:trident_throw_return_cap',
+  'andrew:trident_throw_sneak_no_throw',
   // LGND-OFFHAND-01 — src/gametest/legendary-offhand.ts
   'andrew:legendary_offhand_admitted',
   'andrew:legendary_offhand_resolves',
@@ -505,6 +524,43 @@ const EXPECTED_TESTS = [
   'andrew:legendary_storm_blade_hold_void_after_transfer',
   'andrew:legendary_storm_blade_hold_void_holder_offline',
   'andrew:legendary_storm_blade_hold_void_holder_dead_redeemed',
+  // TRDT-PROBE-01 — src/gametest/trident-probe.ts (L0-trdt-cons P1–P10)
+  'andrew:probe_trident_buckets',
+  'andrew:probe_trident_melee',
+  'andrew:probe_trident_throw',
+  'andrew:probe_trident_release',
+  'andrew:probe_trident_riptide',
+  'andrew:probe_trident_fall_cancel',
+  'andrew:probe_trident_swim',
+  'andrew:probe_trident_return',
+  'andrew:probe_trident_restart_seed',
+  'andrew:probe_trident_restart_check',
+// TRDT-DMG-01 — src/gametest/trident-damage.ts (L0-trdt-r002, L0-trdt-a002, L0-adr-twlt)
+  'andrew:trident_damage_melee',
+  'andrew:trident_damage_thrown',
+  'andrew:trident_damage_lethal',
+  // TRDT-LGND-01 — the Above-Water Trident under the legendary rules (L0-trdt-a005, L0-trdt-adcl T1–T7):
+  // src/gametest/trident-legendary.ts
+  'andrew:legendary_trident_death_kill',
+  'andrew:legendary_trident_death_lava',
+  'andrew:legendary_trident_death_offhand',
+  'andrew:legendary_trident_in_a_chest_stays_there',
+  'andrew:legendary_trident_void_thrown',
+  'andrew:legendary_trident_hold_void_after_transfer',
+  'andrew:legendary_trident_hold_void_holder_offline',
+  'andrew:legendary_trident_hold_void_holder_dead_redeemed',
+  'andrew:legendary_trident_holder_chest_minecart',
+  'andrew:trident_enchant_scrub',
+  'andrew:trident_enchant_scrub_death_restore',
+  'andrew:trident_throw_departure_not_a_loss',
+  'andrew:trident_custody_fallback',
+  'andrew:trident_chest_destroyed',
+  'andrew:trident_magnet_legendary',
+  // TRDT-MOVE-01 — src/gametest/trident-movement.ts (L0-trdt-a003)
+  'andrew:trident_dash_distance',
+  'andrew:trident_dash_dimensions',
+  'andrew:trident_dash_fall_once',
+  'andrew:trident_swim_boost',
 ];
 
 // A renamed scenario would otherwise drop out of the release gate silently.
@@ -522,6 +578,9 @@ const RESTART_AFTER = new Map([
   ['andrew:orbital_flight_restart_fire', 'andrew:orbital_flight_restart_check'],
   ['andrew:pntr_legendary_two_columns', 'andrew:pntr_legendary_restart_check'],
   ['andrew:ufo_restart_seed', 'andrew:ufo_restart_check'],
+  ['andrew:probe_trident_restart_seed', 'andrew:probe_trident_restart_check'],
+  ['andrew:trident_blocked_restart_seed', 'andrew:trident_blocked_restart_check'],
+  ['andrew:trident_throw_restart_seed', 'andrew:trident_throw_restart_check'],
 ]);
 
 // FLAT is not cosmetic: see the LEVEL_TYPE comment in docker/bds/compose.yaml.

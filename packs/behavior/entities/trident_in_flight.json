@@ -1,0 +1,52 @@
+{
+  "format_version": "1.26.0",
+  "minecraft:entity": {
+    "description": {
+      "identifier": "andrew:trident_in_flight",
+      "runtime_identifier": "minecraft:snowball",
+      "is_summonable": true,
+      "is_spawnable": false,
+      "spawn_category": "misc"
+    },
+    "components": {
+      "minecraft:type_family": {
+        "family": ["andrew_trident_in_flight", "inanimate"]
+      },
+      "minecraft:collision_box": {
+        "width": 0.25,
+        "height": 0.35
+      },
+      "minecraft:physics": {},
+      "minecraft:projectile": {
+        "on_hit": {
+          "impact_damage": {
+            "damage": 0,
+            "knockback": false
+          },
+          "stick_in_ground": {}
+        },
+        "power": 0,
+        "gravity": 0.10,
+        "inertia": 0.99,
+        "liquid_inertia": 0.99,
+        "uncertainty_base": 0,
+        "anchor": 1,
+        "offset": [0, 0, 0]
+      },
+      "minecraft:pushable": {
+        "is_pushable": false,
+        "is_pushable_by_piston": false
+      },
+      "minecraft:knockback_resistance": {
+        "value": 1.0
+      },
+      "minecraft:fire_immune": {},
+      "minecraft:damage_sensor": {
+        "triggers": {
+          "cause": "all",
+          "deals_damage": "no"
+        }
+      }
+    }
+  }
+}

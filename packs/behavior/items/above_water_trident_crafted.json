@@ -1,0 +1,19 @@
+{
+  "format_version": "1.21.0",
+  "minecraft:item": {
+    "description": {
+      "identifier": "andrew:above_water_trident_crafted",
+      "menu_category": {
+        "category": "none"
+      }
+    },
+    "components": {
+      "minecraft:display_name": {
+        "value": "item.andrew:above_water_trident.name"
+      },
+      "minecraft:icon": "andrew_above_water_trident",
+      "minecraft:max_stack_size": 1,
+      "minecraft:hand_equipped": true
+    }
+  }
+}

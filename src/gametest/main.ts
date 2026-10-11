@@ -32,6 +32,7 @@ import {
 import { LookDuration, type SimulatedPlayer, Test, register } from "@minecraft/server-gametest";
 import * as cooldown from "../legendary/cooldown";
 import { registerCraftGate } from "../legendary/craftgate";
+import { registerEnchantScrub } from "../legendary/enchant";
 import { hideFromTargeting } from "../legendary/hidden";
 import { registerLegendaryHud } from "../legendary/hud";
 import { registerRecovery } from "../legendary/recovery";
@@ -102,6 +103,11 @@ import "./sculk-carve";
 import "./sculk-hit";
 import "./sculk-enchant";
 import "./sculk-look";
+import "./trident-throw";
+import "./trident-probe";
+import "./trident-damage";
+import "./trident-legendary";
+import "./trident-movement";
 import { parkPenetrator } from "./penetrator";
 import { parkRing } from "./ring";
 import { registerOrbitalCannon } from "../orbital";
@@ -154,6 +160,9 @@ registerRetention();
 // Same binding problem: the release pack sees the item entity vanish but cannot
 // find a SimulatedPlayer owner to hand it back to.
 registerRecovery();
+
+// Same binding problem: src/gametest/trident-legendary.ts drives this copy's Loyalty and Riptide scrub.
+registerEnchantScrub();
 
 // Engine witness for AC#4 of LG-KEEP-02: which event reports a dropped item.
 world.afterEvents.entitySpawn.subscribe((event) => {

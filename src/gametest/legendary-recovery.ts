@@ -42,10 +42,10 @@ const STAND_A: Vector3 = { x: 2, y: 2, z: 5 };
 const STAND_B: Vector3 = { x: 4, y: 2, z: 5 };
 
 /** Four 40-tick recovery checks: a loss return, if one is coming, has landed. */
-const WAIT_TICKS = 160;
+export const WAIT_TICKS = 160;
 
 /** How long a Void return may take to reach the player it goes to. */
-const VOID_RETURN_TICKS = 200;
+export const VOID_RETURN_TICKS = 200;
 
 /** The raw key prefix of `def`'s persisted keys, read past src/legendary. */
 const keyOf = (def: LegendaryDef): string => `andrew:${def.keyPrefix}_`;
@@ -328,7 +328,7 @@ registerAsync("andrew", "legendary_cx09_owed_redeemed_on_respawn", async (test: 
 // runs the online, holder-offline and holder-dead cases as the Web Sword does
 // (L0-strm-acr item 6).
 
-const PICKUP_TICKS = 100;
+export const PICKUP_TICKS = 100;
 
 const hlog = (msg: string): void => console.warn(`[gametest] hold ${msg}`);
 
@@ -447,7 +447,7 @@ async function settleReturn(test: Test, to: Player, id: string, def: LegendaryDe
   await test.idle(40);
 }
 
-function transferThenVoid(tag: string, crafterOffline: boolean, def: LegendaryDef = WEB_SWORD) {
+export function transferThenVoid(tag: string, crafterOffline: boolean, def: LegendaryDef = WEB_SWORD) {
   return async (test: Test): Promise<void> => {
     const { crafter, receiver, id } = await crafterAndReceiver(test, tag, def);
     const [crafterId, crafterName, receiverId] = [crafter.id, crafter.name, receiver.id];
@@ -494,7 +494,7 @@ registerAsync("andrew", "legendary_storm_blade_hold_void_after_transfer", transf
 
 // The holder leaves the server with the instance on the ground; it falls into
 // the Void while they are away. The debt is theirs, not the crafter's.
-function holderOffline(tag: string, def: LegendaryDef = WEB_SWORD) {
+export function holderOffline(tag: string, def: LegendaryDef = WEB_SWORD) {
   return async (test: Test): Promise<void> => {
     const { crafter, receiver, id } = await crafterAndReceiver(test, tag, def);
     const [crafterId, receiverId] = [crafter.id, receiver.id];
@@ -527,7 +527,7 @@ registerAsync("andrew", "legendary_storm_blade_hold_void_holder_offline", holder
 
 // The holder is dead when the instance falls: it is owed to them, and paid on
 // their next spawn — the same playerSpawn handler that pays on joining.
-function holderDeadRedeemed(tag: string, def: LegendaryDef = WEB_SWORD) {
+export function holderDeadRedeemed(tag: string, def: LegendaryDef = WEB_SWORD) {
   return async (test: Test): Promise<void> => {
     const { crafter, receiver, id } = await crafterAndReceiver(test, tag, def);
     const [crafterId, receiverId] = [crafter.id, receiver.id];
@@ -1017,7 +1017,7 @@ function recoveryVerdicts(lines: string[], ids: string[]): string[] {
 type Hand = "main" | "off";
 
 /** What a returned copy must carry again besides its mark (L0-sclk-ac19). */
-interface Dress {
+export interface Dress {
   enchants?: ReadonlyArray<readonly [string, number]>;
   nameTag?: string;
   lore?: string[];
@@ -1163,7 +1163,7 @@ const LAVA_HEALTH = 4;
 const DEATH_DEADLINE_TICKS = 300;
 
 /** `afterJump` is the Katana's own; every def dies by `cause` with the stack in `hand`. */
-function deathRetention(
+export function deathRetention(
   def: LegendaryDef,
   name: string,
   cause: "kill" | "lava",
@@ -1329,7 +1329,7 @@ async function judgeVoidReturn(
   test.assert(losses.length === 1, `expected exactly one loss return, got ${losses.length}: ${losses.join(" | ") || "none"}`);
 }
 
-function voidThrown(def: LegendaryDef, name: string, who: string, dress: Dress = {}): void {
+export function voidThrown(def: LegendaryDef, name: string, who: string, dress: Dress = {}): void {
   registerAsync("andrew", name, async (test: Test): Promise<void> => {
     const dim = test.getDimension();
     const { player, mark } = await armedHolder(test, STAND_A, who, def, "main", dress);

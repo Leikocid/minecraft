@@ -18,6 +18,13 @@ interface LegendaryBase {
   craftTokenId: string;
   /** What a blocked craft hands back (Q-008). */
   refund: ReadonlyArray<readonly [string, number]>;
+  /**
+   * Containers the recipe consumes that the engine does not hand back: an
+   * add-on recipe returns no empty bucket, while vanilla cake does
+   * (docs/feedback/probe-trident.md §1, L0-trdt-adrf). The gate gives them with
+   * every craft it does not refund; absent means nothing to give.
+   */
+  craftReturn?: ReadonlyArray<readonly [string, number]>;
   /** Prefix of the weapon's own lang keys: first_craft, craft_blocked, returned, admin_given, reset. */
   textPrefix: string;
   /** Operator command: `<command> give [player]` / `<command> reset`. */
@@ -165,6 +172,28 @@ export const STORM_BLADE: ActiveLegendaryDef = {
   hudKeys: { ready: "andrew.storm_blade.hud_ready", cooldown: "andrew.storm_blade.hud_cooldown" },
 };
 
+/**
+ * The seventh def (L0-trdt, L0-xasm33), passive like the Sculk Crossbow: its
+ * throw and dash belong to src/trident/, not to resolveActivation. A blocked
+ * craft gives the 2 water buckets back; a craft that is not refunded gets the 2
+ * empty ones the engine keeps — never both kinds (C-34).
+ */
+export const TRIDENT: PassiveLegendaryDef = {
+  itemId: "andrew:above_water_trident",
+  keyPrefix: "tr",
+  nameKey: "item.andrew:above_water_trident",
+  craftGate: true,
+  craftTokenId: "andrew:above_water_trident_crafted",
+  refund: [
+    ["minecraft:golden_apple", 2],
+    ["minecraft:trident", 1],
+    ["minecraft:water_bucket", 2],
+  ],
+  craftReturn: [["minecraft:bucket", 2]],
+  textPrefix: "andrew.trident",
+  command: "andrew:trident",
+};
+
 export const LEGENDARIES: ReadonlyArray<LegendaryDef> = [
   WEB_SWORD,
   SCYTHE_OF_CALAMITY,
@@ -172,6 +201,7 @@ export const LEGENDARIES: ReadonlyArray<LegendaryDef> = [
   DRAGON_KATANA,
   SCULK_CROSSBOW,
   STORM_BLADE,
+  TRIDENT,
 ];
 
 export function defFor(itemId: string): LegendaryDef | undefined {
