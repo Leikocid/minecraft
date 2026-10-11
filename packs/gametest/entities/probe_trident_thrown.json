@@ -1,0 +1,43 @@
+{
+  "format_version": "1.26.0",
+  "minecraft:entity": {
+    "description": {
+      "identifier": "andrew:probe_trident_thrown",
+      "runtime_identifier": "minecraft:snowball",
+      "is_summonable": true,
+      "is_spawnable": false
+    },
+    "components": {
+      "minecraft:type_family": {
+        "family": ["andrew_probe_trident", "inanimate"]
+      },
+      "minecraft:collision_box": {
+        "width": 0.25,
+        "height": 0.35
+      },
+      "minecraft:physics": {},
+      "minecraft:projectile": {
+        "on_hit": {
+          "impact_damage": {
+            "damage": 8,
+            "knockback": true
+          },
+          "stick_in_ground": {}
+        },
+        "power": 0,
+        "gravity": 0.10,
+        "inertia": 0.99,
+        "liquid_inertia": 0.99,
+        "uncertainty_base": 0,
+        "anchor": 1,
+        "offset": [0, 0, 0]
+      },
+      "minecraft:damage_sensor": {
+        "triggers": {
+          "cause": "all",
+          "deals_damage": "no"
+        }
+      }
+    }
+  }
+}
