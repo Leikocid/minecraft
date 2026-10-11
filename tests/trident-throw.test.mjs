@@ -161,6 +161,15 @@ test('the production throw goes through runThrow, with the port steps in that or
   assert.doesNotMatch(before.slice(before.indexOf('function throwFrom')), /setItem|setOffhand|spawnEntity/, 'nothing touches the hand or the world before the record');
 });
 
+test('the custody caps run on the tick clock, never on the time-of-day counter', () => {
+  // world.getAbsoluteTime() stops with doDaylightCycle false: a cap measured on it never fires (measured on
+  // BDS 1.26.51.1, trident_throw_return_cap red, .ai/verify/TRDT-THROW-01-AA/6.red.json).
+  const src = readFileSync(THROW_TS, 'utf-8');
+  assert.doesNotMatch(src, /getAbsoluteTime/);
+  assert.match(src, /returnSince: system\.currentTick/);
+  assert.match(src, /const now = system\.currentTick;\n  for \(const record of/);
+});
+
 test('release: charge = 72000 − useDuration; under 10 ticks nothing, sneaking dashes, standing throws', () => {
   assert.equal(USE_DURATION_TICKS, 72000);
   assert.equal(chargeOf(71980), 20);

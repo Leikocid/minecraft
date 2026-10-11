@@ -85,7 +85,11 @@ export interface CustodyRecord {
   entityId?: string;
   dimension: string;
   last: Vec;
-  /** world.getAbsoluteTime() at the throw and at the turn: unlike system.currentTick it survives a restart. */
+  /**
+   * system.currentTick at the throw and at the turn. Not world.getAbsoluteTime(): that is the time-of-day
+   * counter and stops with doDaylightCycle false. A record that outlives its runtime has no clone and is
+   * delivered before a cap reads these (custodyAction).
+   */
   since: number;
   returnSince?: number;
 }

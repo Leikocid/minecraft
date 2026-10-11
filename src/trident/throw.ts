@@ -81,7 +81,7 @@ const motion = new Map<string, Motion>();
 const isMine = (throwId: string | undefined): throwId is string => throwId !== undefined && throwId.startsWith(`${scope}-`);
 
 function newThrowId(): string {
-  return `${scope}-${world.getAbsoluteTime()}-${++seq}${Math.random().toString(36).slice(2, 6)}`;
+  return `${scope}-${Date.now().toString(36)}-${++seq}${Math.random().toString(36).slice(2, 6)}`;
 }
 
 interface Hand {
@@ -135,7 +135,7 @@ function throwFrom(player: Player): void {
   const container = player.getComponent("minecraft:inventory")?.container;
   if (container === undefined) return;
   const clone = from.stack.clone();
-  const now = world.getAbsoluteTime();
+  const now = system.currentTick;
   const record: CustodyRecord = {
     throwId: newThrowId(),
     owner: player.id,
@@ -189,7 +189,7 @@ function turn(record: CustodyRecord, dimension: Dimension, at: Vector3, how: str
     return;
   }
   const projectileId = record.entityId;
-  update({ ...record, state: "returning", entityId: body.id, dimension: dimension.id, last: { ...at }, returnSince: world.getAbsoluteTime() });
+  update({ ...record, state: "returning", entityId: body.id, dimension: dimension.id, last: { ...at }, returnSince: system.currentTick });
   removeEntity(projectileId);
   motion.delete(record.throwId);
   log(`${record.throwId}: ${how} at ${fmt(at)}; returning as ${body.id}`);
@@ -375,7 +375,7 @@ function tickRecord(record: CustodyRecord, now: number): void {
 
 function step(): void {
   if (held) return;
-  const now = world.getAbsoluteTime();
+  const now = system.currentTick;
   for (const record of [...liveRecords()]) {
     try {
       tickRecord(record, now);
