@@ -72,6 +72,8 @@
 
 ## 1. Возврат вёдер (xasm33, L0-trdt-adrf, P1)
 
+**Дата и команда.** 2026-10-11, прогон 19:34–19:38 UTC; `env ANDREW_BDS_DIR=../dist/bds-trdt node scripts/bds-gametest.mjs --only andrew:probe_trident_buckets` (или полная команда из шапки).
+
 **Число.** Пробный рецепт ` G / BTB / G ` → токен на Крафтере:
 
 | Случай | Сделано | Пустых вёдер у игрока / на земле / в сетке | Наполненных вёдер |
@@ -98,6 +100,8 @@
 измеряет».
 
 ## 2. Урон ванильного трезубца и Impaling (xasm34, P2)
+
+**Дата и команда.** 2026-10-11, прогон 19:34–19:38 UTC; `env ANDREW_BDS_DIR=../dist/bds-trdt node scripts/bds-gametest.mjs --only andrew:probe_trident_melee --only andrew:probe_trident_throw` (или полная команда из шапки).
 
 **Число.** Survival SimulatedPlayer бьёт `attackEntity` по SimulatedPlayer-целям на 40 HP. Урон считан before- и
 after-событием `entityHurt`, они совпали:
@@ -143,6 +147,8 @@ after-событием `entityHurt`, они совпали:
 
 ## 3. Жест: itemReleaseUse и isSneaking (P3)
 
+**Дата и команда.** 2026-10-11, прогон 19:34–19:38 UTC; `env ANDREW_BDS_DIR=../dist/bds-trdt node scripts/bds-gametest.mjs --only andrew:probe_trident_release` (или полная команда из шапки).
+
 **Число.** Пробный предмет (`use_modifiers` 3600 с), SimulatedPlayer: `useItemInSlot`, N тиков, `stopUsingItem`:
 
 | Случай | События | `useDuration` при отпускании | `isSneaking` в обработчике |
@@ -172,6 +178,8 @@ after-событием `entityHurt`, они совпали:
 `itemCompleteUse`.
 
 ## 4. Рывок: Тягун III и калибровка applyKnockback (xasm37, P4)
+
+**Дата и команда.** 2026-10-11, прогон 19:34–19:38 UTC; `env ANDREW_BDS_DIR=../dist/bds-trdt node scripts/bds-gametest.mjs --only andrew:probe_trident_riptide` (или полная команда из шапки).
 
 **Число.** Ванильный трезубец с Тягуном III, заряд 20 тиков, игрок стоит на ровной каменной площадке (у игроков
 Сопротивление V, чтобы приземления не мешали следующим запускам).
@@ -220,6 +228,8 @@ after-событием `entityHurt`, они совпали:
 
 ## 5. Отмена урона от приземления (xasm36, P5)
 
+**Дата и команда.** 2026-10-11, прогон 19:34–19:38 UTC; `env ANDREW_BDS_DIR=../dist/bds-trdt node scripts/bds-gametest.mjs --only andrew:probe_trident_fall_cancel` (или полная команда из шапки).
+
 **Число.** Три игрока на 40 HP, телепорт на 20 блоков над полом и подброс `applyKnockback({0,0}, 0.6)`. Пик у всех
 +22.37.
 
@@ -235,6 +245,8 @@ after-событием `entityHurt`, они совпали:
 **Как.** Сценарий `probe_trident_fall_cancel`.
 
 ## 6. Скорость под водой (P6)
+
+**Дата и команда.** 2026-10-11, прогон 19:34–19:38 UTC; `env ANDREW_BDS_DIR=../dist/bds-trdt node scripts/bds-gametest.mjs --only andrew:probe_trident_swim` (или полная команда из шапки).
 
 **Число.** `moveRelative(0, 1)` вдоль канала глубиной 2 и длиной 60. Скорость установившаяся, по тикам 20…100.
 
@@ -263,6 +275,8 @@ after-событием `entityHurt`, они совпали:
 
 ## 7. Бросок ванильного трезубца (P7)
 
+**Дата и команда.** 2026-10-11, прогон 19:34–19:38 UTC; `env ANDREW_BDS_DIR=../dist/bds-trdt node scripts/bds-gametest.mjs --only andrew:probe_trident_throw` (или полная команда из шапки).
+
 **Число.** Сценарий `probe_trident_throw`. Компонент `minecraft:projectile` брошенного `thrown_trident`, как его читает
 скрипт:
 - `gravity=0.1000`, `airInertia=0.9900`, `liquidInertia=0.9900`;
@@ -290,6 +304,8 @@ after-событием `entityHurt`, они совпали:
 
 ## 8. Возврат сквозь блоки на 0.5 блока/тик (P8)
 
+**Дата и команда.** 2026-10-11, прогон 19:34–19:38 UTC; `env ANDREW_BDS_DIR=../dist/bds-trdt node scripts/bds-gametest.mjs --only andrew:probe_trident_return` (или полная команда из шапки).
+
 **Число.** Путь 20 блоков (x −7 → 13) сквозь стену из камня 3 блока толщиной, шаг 0.5 за тик.
 
 | Тело | Как ведётся | Прибыло | Тиков внутри камня | Отставание |
@@ -309,6 +325,8 @@ after-событием `entityHurt`, они совпали:
 **Как.** Сценарий `probe_trident_return`.
 
 ## 9. Висящий снаряд после перезапуска (P9)
+
+**Дата и команда.** 2026-10-11, прогон 19:34–19:38 UTC; `env ANDREW_BDS_DIR=../dist/bds-trdt node scripts/bds-gametest.mjs --only andrew:probe_trident_restart_seed --only andrew:probe_trident_restart_check` (или полная команда из шапки).
 
 **Число.** Перед остановкой сервера seed оставляет 4 тела в загруженной ticking area `andrew_gt_trdt_rs`:
 - R — тело возврата, висит в воздухе;
@@ -342,6 +360,8 @@ after-событием `entityHurt`, они совпали:
 `scripts/bds-gametest.mjs`.
 
 ## P10. Источник урона снаряда, запущенного скриптом (L0-trdt-cons P10, addm §3)
+
+**Дата и команда.** 2026-10-11, прогон 19:34–19:38 UTC; `env ANDREW_BDS_DIR=../dist/bds-trdt node scripts/bds-gametest.mjs --only andrew:probe_trident_throw` (или полная команда из шапки).
 
 **Число.** Свой снаряд с `impact_damage` 8 и `owner` = бросивший, `shoot()` со скоростью ванильного броска, цель без
 брони в 6 блоках. Два выстрела на рантайм:
