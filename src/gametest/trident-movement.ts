@@ -415,7 +415,7 @@ registerAsync("andrew", "trident_dash_fall_once", async (test: Test): Promise<vo
     const second = falls.of(p.id);
     const sinceDash = (landed ?? system.currentTick) - dashTick;
     log(
-      `RESULT fall again from ${f2(height)}: fall hurts [${second.map(f2).join(" ")}], expected ${f2(height - 3)} (height minus 3) and equal to the cancelled ${f2(cancelled[0])}; ` +
+      `RESULT fall again from ${f2(height)}: fall hurts [${second.map(f2).join(" ")}], expected ${f2(height - 3)} (height minus 3) ±1 and within 1 of the cancelled ${f2(cancelled[0])}; ` +
         `landed ${sinceDash} ticks after the dash (grant would live ${GRANT_TICKS}); cancelled now [${movementStats(p.id).cancelled.map(f2).join(" ")}]`
     );
     test.assert(landed !== undefined, "the second fall never landed");
