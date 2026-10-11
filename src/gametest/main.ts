@@ -103,6 +103,7 @@ import "./sculk-carve";
 import "./sculk-hit";
 import "./sculk-enchant";
 import "./sculk-look";
+import "./trident-throw";
 import "./trident-probe";
 import "./trident-damage";
 import "./trident-legendary";
