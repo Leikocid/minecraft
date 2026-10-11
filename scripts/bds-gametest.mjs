@@ -203,6 +203,17 @@ const EXPECTED_TESTS = [
   'andrew:trident_blocked_restart_seed',
   'andrew:trident_blocked_restart_check',
   'andrew:trident_creative_and_commands_spend_nothing',
+  // TRDT-THROW-01 — src/gametest/trident-throw.ts (L0-trdt-a004, R-trdt-001)
+  'andrew:trident_throw_wall_return',
+  'andrew:trident_throw_zombie_return',
+  'andrew:trident_throw_thrower_dies',
+  'andrew:trident_throw_thrower_leaves',
+  'andrew:trident_throw_dimension_change',
+  'andrew:trident_throw_chunk_unload',
+  'andrew:trident_throw_restart_seed',
+  'andrew:trident_throw_restart_check',
+  'andrew:trident_throw_return_cap',
+  'andrew:trident_throw_sneak_no_throw',
   // LGND-OFFHAND-01 — src/gametest/legendary-offhand.ts
   'andrew:legendary_offhand_admitted',
   'andrew:legendary_offhand_resolves',
@@ -543,6 +554,7 @@ const RESTART_AFTER = new Map([
   ['andrew:ufo_restart_seed', 'andrew:ufo_restart_check'],
   ['andrew:probe_trident_restart_seed', 'andrew:probe_trident_restart_check'],
   ['andrew:trident_blocked_restart_seed', 'andrew:trident_blocked_restart_check'],
+  ['andrew:trident_throw_restart_seed', 'andrew:trident_throw_restart_check'],
 ]);
 
 // FLAT is not cosmetic: see the LEVEL_TYPE comment in docker/bds/compose.yaml.

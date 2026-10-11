@@ -35,11 +35,13 @@ import { DynamicPropertyStore } from "./structures/store";
 import { registerUfo } from "./ufo";
 import { registerTrap } from "./websword/trap";
 import { registerStormPassive } from "./storm/passive";
+import { registerTridentThrow } from "./trident/throw";
 
 registerAutoSmelt();
 registerCraftGate();
 registerRetention();
 registerRecovery();
+registerTridentThrow();
 registerLegendaryHud();
 registerTrap();
 registerStormPassive();

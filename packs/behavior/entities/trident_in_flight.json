@@ -13,12 +13,25 @@
         "family": ["andrew_trident_in_flight", "inanimate"]
       },
       "minecraft:collision_box": {
-        "width": 0,
-        "height": 0
+        "width": 0.25,
+        "height": 0.35
       },
-      "minecraft:physics": {
-        "has_gravity": false,
-        "has_collision": false
+      "minecraft:physics": {},
+      "minecraft:projectile": {
+        "on_hit": {
+          "impact_damage": {
+            "damage": 0,
+            "knockback": false
+          },
+          "stick_in_ground": {}
+        },
+        "power": 0,
+        "gravity": 0.10,
+        "inertia": 0.99,
+        "liquid_inertia": 0.99,
+        "uncertainty_base": 0,
+        "anchor": 1,
+        "offset": [0, 0, 0]
       },
       "minecraft:pushable": {
         "is_pushable": false,
