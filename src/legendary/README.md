@@ -1,15 +1,44 @@
 # legendary
 
-Everything shared by the six legendary weapons — the Web Sword, the Scythe of
-Calamity, the Orbital Cannon, the Dragon Katana, the Sculk Crossbow and the Storm
-Blade. `LEGENDARIES` in `registry.ts` is the list; the Miner's Pickaxe is **not**
-on it and keeps vanilla behaviour in every way. A weapon joins by adding its def:
-the Katana, the Crossbow and the Storm Blade bring no recovery, retention or
-protection code of their own (`L0-adr-ktgr`, `L0-lgnd-ac27`, `L0-strm-acr`).
+Everything shared by the seven legendary weapons — the Web Sword, the Scythe of
+Calamity, the Orbital Cannon, the Dragon Katana, the Sculk Crossbow, the Storm
+Blade and the Above-Water Trident. `LEGENDARIES` in `registry.ts` is the list;
+the Miner's Pickaxe is **not** on it and keeps vanilla behaviour in every way. A
+weapon joins by adding its def: the Katana, the Crossbow and the Storm Blade
+bring no recovery, retention or protection code of their own (`L0-adr-ktgr`,
+`L0-lgnd-ac27`, `L0-strm-acr`).
+
+## One survival craft per world
+
+The recipe outputs a craft token, never the weapon. `craftgate.ts` swaps every
+token that reaches an inventory or the off hand: the first Survival or Adventure
+token claims the world's flag and becomes a weapon marked `craft`; every later
+one is refunded with `def.refund`; a Creative or Spectator token becomes a plain
+copy. A plain weapon stack — a `/give`, a Creative copy, an admin copy — is never
+gated.
+
+A def whose recipe consumes a container lists it in **`craftReturn`**. An add-on
+recipe hands no container back, while vanilla cake does
+(`docs/feedback/probe-trident.md` §1), so the gate gives it with every craft it
+keeps — the claim and the Creative unwrap — and never with a refund, which hands
+the full ingredient back instead. The Trident is the only def with one: 2 empty
+buckets with a kept craft, 2 water buckets with a refund, never both kinds
+(`L0-trdt-adrf`, C-34). It is the probe's branch of `L0-adr-trlg` §2: with no
+engine return there is nothing to exchange, so `refundExchange` is not added.
+
+Refund and return stacks are split by the item's max stack size before they are
+added: `new ItemStack(id, n)` clamps `n` to it without a word, so one stack of
+2 water buckets is 1 bucket. What does not fit drops at the player's feet.
+Scenarios: `websword_first_claim`, `websword_second_refund`,
+`legendary_give_then_craft_*`, `legendary_*_other_flags_untouched`,
+`trident_craft_two_empty_buckets`, `trident_craft_full_inventory`,
+`trident_blocked_restart_seed` / `_check` (across a restart),
+`trident_creative_and_commands_spend_nothing`; units in
+`tests/legendary-craftgate.test.mjs`.
 
 ## A legendary cannot be destroyed
 
-Orbital §5, Katana T17, Crossbow T20 and Storm Blade §02, extended to all six by
+Orbital §5, Katana T17, Crossbow T20 and Storm Blade §02, extended to all of them by
 `decision-legendary-rules-obschie-dlya-vseh-legendarnyh`. The engine offers an
 immunity component for fire only, so the rule is kept two ways: **immunity**
 where a component exists, and **return** everywhere else — the instance dies, the
@@ -20,7 +49,7 @@ Every path below is held by a scenario. A path with no scenario is a path that
 will reopen silently. The `legendary-fireproof.ts` scenarios run every def in
 `LEGENDARIES`, one cell each on a two-column grid. Before anything is written,
 each scenario reads the block under every cell from the engine, and it must be
-the platform's stone floor. Six defs fit the 7×7 platform; a seventh lands past
+the platform's stone floor. Eight defs fit the 7×7 platform; a ninth lands past
 its edge and fails that read. `legendary_katana_*`, `legendary_sculk_crossbow_*`
 and `legendary_storm_blade_*` are the Katana's, the Crossbow's and the Storm
 Blade's own instances of the rest (`L0-lgnd-ac24`, `ac27`, `L0-strm-acr`).

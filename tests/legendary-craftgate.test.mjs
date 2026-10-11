@@ -40,11 +40,25 @@ const engine = {
   ticks: 0,
 };
 
+// Max stack sizes the gate's items have on 1.26.51; every andrew:* item is 1.
+const MAX_STACK = new Map([
+  ['minecraft:water_bucket', 1],
+  ['minecraft:trident', 1],
+  ['minecraft:diamond_sword', 1],
+  ['minecraft:bucket', 16],
+]);
+const maxOf = (typeId) => (typeId.startsWith('andrew:') ? 1 : MAX_STACK.get(typeId) ?? 64);
+
 export class ItemStack {
   constructor(typeId, amount = 1) {
+    if (amount < 1 || amount > 255) throw new Error('amount must be 1-255');
     this.typeId = typeId;
+    // Kept above the max stack size, as 1.26.51 keeps it; the container cuts it.
     this.amount = amount;
     this.props = new Map();
+  }
+  get maxAmount() {
+    return maxOf(this.typeId);
   }
   getDynamicProperty(key) {
     return this.props.get(key);
@@ -72,11 +86,12 @@ class Container {
   setItem(slot, stack) {
     const before = this.slots[slot];
     this.slots[slot] = stack?.clone();
+    // A stack over the max size is stored at the max; the rest is gone, with no leftover.
+    if (this.slots[slot] !== undefined) this.slots[slot].amount = Math.min(this.slots[slot].amount, this.slots[slot].maxAmount);
     engine.events.push({ player: this.owner, slot, beforeItemStack: before, itemStack: stack?.clone(), inventoryType: 'Inventory' });
   }
   addItem(stack) {
-    // Every andrew:* item, token or weapon, has max_stack_size 1.
-    const max = stack.typeId.startsWith('andrew:') ? 1 : 64;
+    const max = stack.maxAmount;
     let slot = this.slots.findIndex(
       (s) => s !== undefined && s.typeId === stack.typeId && s.props.size === 0 && stack.props.size === 0 && s.amount + stack.amount <= max
     );
@@ -218,7 +233,7 @@ const bundle = await build({
 const gate = await import(
   'data:text/javascript;base64,' + Buffer.from(bundle.outputFiles[0].text, 'utf-8').toString('base64')
 );
-const { __engine: engine, ItemStack, LEGENDARIES, WEB_SWORD, SCYTHE_OF_CALAMITY, keysFor, tokenDecision } = gate;
+const { __engine: engine, ItemStack, LEGENDARIES, WEB_SWORD, SCYTHE_OF_CALAMITY, TRIDENT, keysFor, tokenDecision } = gate;
 
 const warn = console.warn;
 console.warn = () => {};
@@ -522,6 +537,136 @@ test('the gate reads the off hand as well as the inventory', async (t) => {
     assert.equal(offOrigin(player, WEB_SWORD), 'none', 'the /give copy in the off hand was marked or taken');
     assert.deepEqual(origins(player, WEB_SWORD), ['craft']);
     assert.equal(refunded(player, WEB_SWORD), 0);
+  });
+});
+
+// ------------------------------------------------------------------ the Trident's buckets (L0-trdt-adrf, C-34)
+
+// An add-on recipe hands no container back (docs/feedback/probe-trident.md §1):
+// the 2 water buckets are gone when the token appears. The gate gives the 2
+// empty buckets with a craft it keeps, and the 2 water buckets with one it
+// refunds — never both kinds.
+test('the Trident craft hands back exactly 2 buckets, of one kind', async (t) => {
+  const BUCKET = 'minecraft:bucket';
+  const WATER = 'minecraft:water_bucket';
+  const dropped = (player, typeId) => player.dropped.filter((s) => s.typeId === typeId).reduce((n, s) => n + s.amount, 0);
+  const total = (player, typeId) => count(player, typeId) + dropped(player, typeId);
+  /** Every slot taken by a stack nothing returned can merge into. */
+  const fill = (player, free = 0) => {
+    for (let slot = free; slot < player.container.size; slot++) player.container.slots[slot] = new ItemStack('minecraft:dirt', 64);
+  };
+
+  await t.test('first Survival craft: a marked Trident and 2 empty buckets, no water bucket', () => {
+    engine.reset();
+    const player = engine.player('diver');
+    craft(player, TRIDENT);
+    settle();
+
+    assert.equal(crafted(TRIDENT), true);
+    assert.deepEqual(origins(player, TRIDENT), ['craft']);
+    assert.equal(count(player, TRIDENT.craftTokenId), 0);
+    assert.equal(count(player, BUCKET), 2, 'expected the 2 empty buckets the recipe consumed');
+    assert.equal(count(player, WATER), 0, 'a kept craft also got water buckets');
+    assert.equal(count(player, 'minecraft:golden_apple') + count(player, 'minecraft:trident'), 0);
+    assert.deepEqual(player.dropped, []);
+    assert.equal(engine.broadcasts().length, 1);
+  });
+
+  await t.test('full inventory: the Trident takes the token\'s slot and the 2 buckets land at the feet', () => {
+    engine.reset();
+    const player = engine.player('packed');
+    fill(player, 1);
+    craft(player, TRIDENT);
+    settle();
+
+    assert.deepEqual(origins(player, TRIDENT), ['craft']);
+    assert.equal(count(player, TRIDENT.craftTokenId), 0, 'the token survived the gate');
+    assert.equal(count(player, BUCKET), 0);
+    assert.equal(dropped(player, BUCKET), 2, 'the buckets with no room must be dropped, not lost');
+    assert.equal(total(player, BUCKET) + total(player, WATER), 2);
+  });
+
+  await t.test('blocked craft: 2 golden apples, 1 trident and 2 water buckets as two stacks, no empty bucket', () => {
+    engine.reset();
+    craft(engine.player('first'), TRIDENT);
+    settle();
+    const player = engine.player('second');
+    craft(player, TRIDENT);
+    settle();
+
+    assert.deepEqual(origins(player, TRIDENT), []);
+    assert.equal(count(player, TRIDENT.craftTokenId), 0);
+    assert.equal(count(player, 'minecraft:golden_apple'), 2);
+    assert.equal(count(player, 'minecraft:trident'), 1);
+    assert.equal(count(player, WATER), 2, 'one ItemStack of 2 water buckets is stored as 1');
+    assert.equal(stacks(player).filter((s) => s.typeId === WATER).length, 2);
+    assert.equal(total(player, BUCKET), 0, 'a refund also handed out empty buckets');
+    assert.deepEqual(player.messages, [{ translate: 'andrew.trident.craft_blocked' }]);
+    assert.equal(engine.prop(keysFor(TRIDENT).craftedBy), 'first');
+  });
+
+  await t.test('blocked craft into a full inventory: everything that does not fit lands at the feet, nothing is lost', () => {
+    engine.reset();
+    craft(engine.player('first'), TRIDENT);
+    settle();
+    const player = engine.player('packed');
+    fill(player, 1);
+    craft(player, TRIDENT);
+    settle();
+
+    assert.equal(total(player, 'minecraft:golden_apple'), 2);
+    assert.equal(total(player, 'minecraft:trident'), 1);
+    assert.equal(total(player, WATER), 2);
+    assert.equal(total(player, BUCKET), 0);
+    assert.equal(count(player, TRIDENT.craftTokenId), 0);
+  });
+
+  await t.test('two tokens at once: one claim with 2 empty buckets, one refund with 2 water buckets', () => {
+    engine.reset();
+    const player = engine.player('bulk');
+    craft(player, TRIDENT);
+    craft(player, TRIDENT);
+    settle();
+
+    assert.deepEqual(origins(player, TRIDENT), ['craft']);
+    assert.equal(count(player, BUCKET), 2);
+    assert.equal(count(player, WATER), 2);
+    assert.equal(count(player, 'minecraft:trident'), 1);
+  });
+
+  for (const gameMode of ['Creative', 'Spectator']) {
+    await t.test(`${gameMode}: an ordinary copy and its 2 empty buckets, the world craft untouched`, () => {
+      engine.reset();
+      const player = engine.player('builder', gameMode);
+      craft(player, TRIDENT);
+      settle();
+
+      assert.equal(crafted(TRIDENT), false);
+      assert.deepEqual(origins(player, TRIDENT), ['none']);
+      assert.equal(count(player, BUCKET), 2);
+      assert.equal(count(player, WATER), 0);
+      assert.deepEqual(engine.broadcasts(), []);
+    });
+  }
+
+  await t.test('a /give copy wakes no bucket return and spends nothing', () => {
+    engine.reset();
+    const player = engine.player('giver');
+    giveWeapon(player, TRIDENT);
+    settle();
+    assert.equal(crafted(TRIDENT), false);
+    assert.deepEqual(origins(player, TRIDENT), ['none']);
+    assert.equal(total(player, BUCKET) + total(player, WATER), 0);
+  });
+
+  await t.test('defs without craftReturn get no bucket from a claim', () => {
+    engine.reset();
+    const player = engine.player('smith');
+    craft(player, WEB_SWORD);
+    settle();
+    assert.deepEqual(origins(player, WEB_SWORD), ['craft']);
+    assert.equal(total(player, BUCKET) + total(player, WATER), 0);
+    assert.deepEqual(stacks(player).map((s) => s.typeId), [WEB_SWORD.itemId]);
   });
 });
 
