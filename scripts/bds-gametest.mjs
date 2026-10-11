@@ -505,6 +505,17 @@ const EXPECTED_TESTS = [
   'andrew:legendary_storm_blade_hold_void_after_transfer',
   'andrew:legendary_storm_blade_hold_void_holder_offline',
   'andrew:legendary_storm_blade_hold_void_holder_dead_redeemed',
+  // TRDT-PROBE-01 — src/gametest/trident-probe.ts (L0-trdt-cons P1–P10)
+  'andrew:probe_trident_buckets',
+  'andrew:probe_trident_melee',
+  'andrew:probe_trident_throw',
+  'andrew:probe_trident_release',
+  'andrew:probe_trident_riptide',
+  'andrew:probe_trident_fall_cancel',
+  'andrew:probe_trident_swim',
+  'andrew:probe_trident_return',
+  'andrew:probe_trident_restart_seed',
+  'andrew:probe_trident_restart_check',
 ];
 
 // A renamed scenario would otherwise drop out of the release gate silently.
@@ -522,6 +533,7 @@ const RESTART_AFTER = new Map([
   ['andrew:orbital_flight_restart_fire', 'andrew:orbital_flight_restart_check'],
   ['andrew:pntr_legendary_two_columns', 'andrew:pntr_legendary_restart_check'],
   ['andrew:ufo_restart_seed', 'andrew:ufo_restart_check'],
+  ['andrew:probe_trident_restart_seed', 'andrew:probe_trident_restart_check'],
 ]);
 
 // FLAT is not cosmetic: see the LEVEL_TYPE comment in docker/bds/compose.yaml.

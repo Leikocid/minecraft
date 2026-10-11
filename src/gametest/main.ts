@@ -102,6 +102,7 @@ import "./sculk-carve";
 import "./sculk-hit";
 import "./sculk-enchant";
 import "./sculk-look";
+import "./trident-probe";
 import { parkPenetrator } from "./penetrator";
 import { parkRing } from "./ring";
 import { registerOrbitalCannon } from "../orbital";
