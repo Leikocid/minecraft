@@ -1,9 +1,9 @@
-// Minimal PNG writer: 8-bit RGB or RGBA, no interlace, one IDAT.
+// Minimal PNG writer and reader: 8-bit RGB or RGBA, no interlace.
 //
 // Written by hand rather than pulled in as a dependency — the project asks before
 // adding any, and a PNG of this shape is a header, a deflate and three CRCs.
 
-import { deflateSync } from 'node:zlib';
+import { deflateSync, inflateSync } from 'node:zlib';
 
 const CRC_TABLE = (() => {
   const t = new Int32Array(256);
@@ -67,4 +67,61 @@ export function encodePng({ width, height, rgb }) {
 export function encodePngRgba({ width, height, rgba }) {
   if (rgba.length !== width * height * 4) throw new Error(`rgba is ${rgba.length} bytes, expected ${width * height * 4}`);
   return encode({ width, height, colourType: 6, bytesPerPixel: 4, pixels: rgba });
+}
+
+function paeth(a, b, c) {
+  const p = a + b - c;
+  const pa = Math.abs(p - a);
+  const pb = Math.abs(p - b);
+  const pc = Math.abs(p - c);
+  return pa <= pb && pa <= pc ? a : pb <= pc ? b : c;
+}
+
+/**
+ * Reads what encodePng / encodePngRgba write, plus the four scanline filters other
+ * tools use. 8-bit RGB (2) or RGBA (6), non-interlaced; anything else throws.
+ * @param {Buffer} buf a complete PNG file.
+ * @returns {{ width: number, height: number, rgba: Uint8Array }} RGB input comes back with alpha 255.
+ */
+export function decodePng(buf) {
+  if (buf.readUInt32BE(0) !== 0x89504e47) throw new Error('not a PNG');
+  let pos = 8;
+  let ihdr;
+  const idat = [];
+  while (pos < buf.length) {
+    const len = buf.readUInt32BE(pos);
+    const type = buf.toString('ascii', pos + 4, pos + 8);
+    if (type === 'IHDR') ihdr = buf.subarray(pos + 8, pos + 8 + len);
+    if (type === 'IDAT') idat.push(buf.subarray(pos + 8, pos + 8 + len));
+    pos += 12 + len;
+  }
+  const width = ihdr.readUInt32BE(0);
+  const height = ihdr.readUInt32BE(4);
+  const [depth, colourType, , , interlace] = ihdr.subarray(8);
+  if (depth !== 8 || (colourType !== 2 && colourType !== 6) || interlace !== 0) {
+    throw new Error(`unsupported PNG: depth ${depth}, colour type ${colourType}, interlace ${interlace}`);
+  }
+  const bpp = colourType === 6 ? 4 : 3;
+  const stride = width * bpp;
+  const raw = inflateSync(Buffer.concat(idat));
+  const px = new Uint8Array(stride * height);
+  for (let y = 0; y < height; y++) {
+    const filter = raw[y * (stride + 1)];
+    for (let i = 0; i < stride; i++) {
+      const x = raw[y * (stride + 1) + 1 + i];
+      const a = i >= bpp ? px[y * stride + i - bpp] : 0;
+      const b = y > 0 ? px[(y - 1) * stride + i] : 0;
+      const c = i >= bpp && y > 0 ? px[(y - 1) * stride + i - bpp] : 0;
+      const predictor = [0, a, b, (a + b) >> 1, paeth(a, b, c)][filter];
+      if (predictor === undefined) throw new Error(`unknown scanline filter ${filter} on row ${y}`);
+      px[y * stride + i] = (x + predictor) & 0xff;
+    }
+  }
+  if (bpp === 4) return { width, height, rgba: px };
+  const rgba = new Uint8Array(width * height * 4);
+  for (let p = 0; p < width * height; p++) {
+    rgba.set(px.subarray(p * 3, p * 3 + 3), p * 4);
+    rgba[p * 4 + 3] = 255;
+  }
+  return { width, height, rgba };
 }

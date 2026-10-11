@@ -22,6 +22,9 @@
     },
     "andrew_storm_blade": {
       "textures": "textures/items/andrew_storm_blade"
+    },
+    "andrew_above_water_trident": {
+      "textures": "textures/items/andrew_above_water_trident"
     }
   }
 }

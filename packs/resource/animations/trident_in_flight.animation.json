@@ -1,0 +1,12 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.andrew.trident_in_flight.fly": {
+      "loop": true,
+      "bones": {
+        "body": { "rotation": ["-q.target_x_rotation", "-q.target_y_rotation", 0] },
+        "spin": { "rotation": [0, 0, "q.life_time * 720"] }
+      }
+    }
+  }
+}
