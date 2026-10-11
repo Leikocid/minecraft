@@ -524,6 +524,10 @@ const EXPECTED_TESTS = [
   'andrew:probe_trident_return',
   'andrew:probe_trident_restart_seed',
   'andrew:probe_trident_restart_check',
+  // TRDT-DMG-01 — src/gametest/trident-damage.ts (L0-trdt-r002, L0-trdt-a002, L0-adr-twlt)
+  'andrew:trident_damage_melee',
+  'andrew:trident_damage_thrown',
+  'andrew:trident_damage_lethal',
 ];
 
 // A renamed scenario would otherwise drop out of the release gate silently.
