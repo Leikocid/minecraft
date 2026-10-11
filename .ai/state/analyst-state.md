@@ -1,7 +1,7 @@
 ---
-current_analysis_version: 8
+current_analysis_version: 9
 current_versions_by_node:
-  L0: 8
+  L0: 9
   L0-lgnd: 7
   L0-pick: 2
   L0-infr: 2
@@ -22,25 +22,29 @@ current_versions_by_node:
   L0-katn: 6
   L0-sclk: 7
   L0-strm: 8
-pending_revisions: []
+  L0-trdt: 9
+pending_revisions:
+  - L0
 last_run:
-  started_at: '2026-10-08T18:35:41.410Z'
-  completed_at: '2026-10-08T18:45:49.744Z'
-  duration_seconds: 608
-  total_artifacts_current: 61
-  total_size_kb: 1688
-  open_contradictions: 4
-  llm_calls: 3
-  llm_budget_used_pct: 2
-  input_hash: e5730f571282b0c6026c9c1766ea5f2a9b4420d9ee54140a343fc84532c3f3cb
-  run_priority: 620
+  started_at: '2026-10-11T18:40:34.444Z'
+  completed_at: '2026-10-11T18:49:04.322Z'
+  duration_seconds: 510
+  total_artifacts_current: 54
+  total_size_kb: 763
+  open_contradictions: 2
+  llm_calls: 2
+  llm_budget_used_pct: 1
+  input_hash: c82d8072f963e2ab41918378911777e6bb90f3e38b9d1a078eca939fdf2716bc
+  run_priority: 630
   run_scope:
-    recorded_at: '2026-10-08T18:35:41.431Z'
-    rule: 'full: every node the decomposition plans name, from L0 down.'
+    recorded_at: '2026-10-11T18:40:34.460Z'
+    rule: 'partial: the queue (pending_revisions ∪ in-flight) plus the ancestors needed to reach it; every other node carrying a version is skipped as done and carried forward. Children named by a plan at runtime that have no version join the run as they are discovered.'
     nodes:
       - L0
+      - L0-trdt
     reasons:
       L0: root — every run enters the tree here
+      L0-trdt: left in flight by the previous run
   stages:
     - stage: nodes
       entered_at: '2026-09-24T19:23:43.218Z'
@@ -144,24 +148,37 @@ last_run:
       done: 2
     - stage: rollout
       entered_at: '2026-10-08T18:47:14.691Z'
+    - stage: collect-decisions
+      entered_at: '2026-10-11T18:30:11.547Z'
+    - stage: load-model
+      entered_at: '2026-10-11T18:30:11.584Z'
+    - stage: audit
+      entered_at: '2026-10-11T18:30:11.590Z'
+    - stage: delta 1/1
+      entered_at: '2026-10-11T18:30:11.596Z'
+    - stage: nodes
+      entered_at: '2026-10-11T18:31:21.739Z'
+      done: 2
+    - stage: rollout
+      entered_at: '2026-10-11T18:49:56.551Z'
   digest_review:
-    analysis_version: 8
-    through: '2026-10-08T18:45:49.812Z'
-    reviewed_at: '2026-10-08T18:45:49.812Z'
+    analysis_version: 9
+    through: '2026-10-11T18:49:56.538Z'
+    reviewed_at: '2026-10-11T18:49:56.538Z'
 last_rollout_hashes:
-  project-knowledge/glossary.md: 2fbf7309ff43a44d
-  project-knowledge/business-rules.md: a0a1635f25460448
+  project-knowledge/glossary.md: c3b9ad0071630020
+  project-knowledge/business-rules.md: 8c5b1c54289c5fcf
   project-knowledge/boundaries.md: 52130c6cd83d1194
-  project-knowledge/intent.md: 53f94fb8784b982a
-  project-knowledge/domain-model.md: 19ac228f6d8f1e94
-  project-knowledge/architecture.md: dca6c66b22288205
-  assumptions.md: fc23ab08a5ff5074
-  contradictions.md: 4c649bd5b7889554
-  client-questions.md: 68f707e6ba4e0de1
-  summary.md: 6548905344b92bad
-  scope.md: 11673c07613dc422
-  risks.md: fb150cf52436d8dd
-  decisions.md: 3fb84febd1d1aa7e
+  project-knowledge/intent.md: 7829911732e648a7
+  project-knowledge/domain-model.md: 40f76707e67e6a11
+  project-knowledge/architecture.md: 0da4c729ec1ab8d3
+  assumptions.md: 4edf569609a22162
+  contradictions.md: 9c3f7aa694752f2e
+  client-questions.md: b42cd921027e3fb1
+  summary.md: 14279e0591312191
+  scope.md: d894e1cd4fb8f48a
+  risks.md: 26ddb8f86c582971
+  decisions.md: 920706728deaf0f2
 runtime_vocabulary:
   concept-boundary:
     description: Seen at runtime
@@ -257,6 +274,8 @@ slug_mappings:
   : L0-lgnd
   ? '**The Storm Blade (`andrew:storm_blade`) and the Elytra/Totem recipes.**<br>**Probe first, on checks (19136).** It gates `L0-adr-sbdm` and `L0-adr-sblt`:<br>• P1/P2: inside the hurt window, does `applyDamage(L + D, entityAttack)` take D with armour applied to D, for players and mobs (`xcx26`)?<br>• A raised shield against the beam from behind (`xcx27`).<br>• Which particle ids exist for the spark/wind/flash on 1.26.51, and whether the thunder sound plays at the point.<br>• Diamond-sword melee on BDS, measured against vanilla (`xasm30`).<br>**Item:** def #6 (`sb`, 600 ticks, `xasm32`); a custom sword with diamond-sword damage, no durability, and the vanilla sword enchant slot; `allow_off_hand`; RU/EN lang; a Creative "Equipment" entry; an RP icon.<br>**Recipe:** lightning rod top and bottom, wind charge left and right, diamond sword in the centre → craft token; refund on a blocked craft. Covers simultaneous crafts, the recipe book and shift-craft through the existing gate.<br>**Active:** Use → `resolveActivation` → a trace ≤ 10 blocks Euclidean, reusing `src/katana/plan.ts` helpers (`xasm31`). The first living entity, never through walls, never a second one, takes 10 HP pre-armour through `src/storm/damage.ts` (`adr-sbdm`, C-29). Three visual strikes at the hit point, or at the stop point on a miss (`adr-sblt`, C-30). Cooldown on any valid release; invalid attempts are free. HUD «Клинок бури — Готово» / "Storm Blade — Ready" / seconds left.<br>**Passive:** `entityHitEntity` with the blade in the main hand → an independent 30 % roll with an injectable RNG (C-32) → +6 HP pre-armour through the same helper, plus one visual strike. It never reads or writes the cooldown.<br>**Vanilla recipes (`adr-sbvr`, C-31):** `elytra.json` and `totem_of_undying.json`, plain shaped recipes outputting the vanilla ids.<br>**GameTests (`bds`):**<br>• every §06 bullet: once-only craft across a restart, Creative copy free; melee = vanilla diamond sword; passive rate on N ≥ 1000 seeded and a ±5 % band on a live sample; exact +6 and 10 pre-armour against an armoured SimulatedPlayer, with an in-window negative control; ≤ 10 blocks, wall stop, second target untouched; 30 s cooldown, passive independent; no lightning entity and no fire; death, hazards and Void through the `lgnd` scenarios with def #6; Elytra and Totem crafted twice each through a Crafter.<br>• The magnet''s legendary scenarios include def #6.<br>**iPad (`ipad`):** the trace and strikes read as lightning; the icon; the HUD line; the Creative entry; both recipes in the recipe book; a real totem pop and an elytra glide.'
   : L0-strm
+  ? '**The Above-Water Trident (`andrew:above_water_trident`), def #7.**<br>**First deliverable: settle `xcx30`.** Design the custody ledger (`L0-adr-twth` §2/§5) and list every `lgnd` touch point: delivery to the last holder, death and offline handling, the stale entity on `entityLoad`, and the magnet ignoring the return entity.<br>**Probe, on checks (19136):**<br>• the engine bucket return for a token recipe, including a full inventory (`xasm33`);<br>• vanilla trident melee and thrown damage, and Impaling on a custom item (`xasm34`);<br>• `itemReleaseUse` and the charge on iPad touch, and `isSneaking` at release;<br>• vanilla Riptide III launch distance, and its `applyKnockback` calibration (`xasm37`);<br>• the fall cancel via the hurt before-event (with the katana teleport as fallback);<br>• vanilla swim speed with a sprint-swim baseline;<br>• vanilla throw speed and gravity;<br>• the return at 0.5 b/tick through blocks;<br>• a stale projectile on restart.<br>**Item:** custom trident: charge, no throwable, no durability, trident enchant slot, `allow_off_hand`; RU/EN lang; a Creative "Equipment" entry; RP icon and in-flight model (trident geometry).<br>**Recipe:** ` G / BTB / G ` → token. Exact bucket return and refund (C-34).<br>**Damage:** vanilla trident base for melee and thrown hits; +2 pre-armour through the shared `native / window / lethal` helper (extracted from or imported from `src/storm/damage.ts`); one strike visual per hit (`adr-twlt`); idempotent per hit event.<br>**Movement:** a sneak-release dash, with no cooldown, anywhere; a one-shot fall grant (`xasm36`); a held-only swim boost (C-36).<br>**Throw:** the ledger, then remove from hand, then spawn and launch; hit → damage → return; miss/block → visible 10 b/s return; re-insert exactly once; fallbacks (offline, death, dimension, unloaded, 30 s cap).<br>**Enchant:** scrub Loyalty and Riptide (C-37, `xasm35`).<br>**GameTests (`bds`)** for every acceptance bullet:<br>• recipe plus 2 buckets, full inventory;<br>• second craft blocked across a restart; Creative copy free;<br>• melee and thrown = vanilla + 2 against armour, with an in-window negative control; exactly one strike and no `lightning_bolt` entity;<br>• a dash on a dry platform with no rain, in the Nether and the End;<br>• no damage on the next landing, then normal damage on the one after;<br>• swim speed with and without the trident, in either hand;<br>• return speed 10 b/s ± 5 % from a block hit; re-throw refused mid-return; no duplicate at any tick;<br>• thrower dies, logs off or switches dimension mid-flight; Void, chest, fire, lava, explosion (through the `lgnd` scenarios with def #7);<br>• Loyalty and Riptide stripped, Unbreaking kept.<br>The magnet''s legendary scenarios include def #7.<br>**iPad (`ipad`):** dash feel, swim feel, the visible flight and return, the strike reads as lightning, icon, Creative entry, recipe in the recipe book, the sneak gesture.'
+  : L0-trdt
 tags:
   - analysis
   - registry
@@ -271,7 +290,7 @@ Runtime state for the analyst pipeline (analyse runs, vocabulary, slug map, roll
 
 | Node | Version |
 |------|---------|
-| L0 | 8 |
+| L0 | 9 |
 | L0-airs | 2 |
 | L0-bast | 2 |
 | L0-infr | 2 |
@@ -288,6 +307,7 @@ Runtime state for the analyst pipeline (analyse runs, vocabulary, slug map, roll
 | L0-scyt | 2 |
 | L0-strf | 2 |
 | L0-strm | 8 |
+| L0-trdt | 9 |
 | L0-ufoc | 5 |
 | L0-webs | 2 |
 | L0-wind | 2 |
@@ -295,12 +315,16 @@ Runtime state for the analyst pipeline (analyse runs, vocabulary, slug map, roll
 
 ## Last Run
 
-- Started: 2026-10-08T18:35:41.410Z
-- Completed: 2026-10-08T18:45:49.744Z
-- Duration: 608s
-- Current artifacts: 61 (1688 KB total)
-- LLM calls: 3 (2% budget)
-- Open contradictions: 4
+- Started: 2026-10-11T18:40:34.444Z
+- Completed: 2026-10-11T18:49:04.322Z
+- Duration: 510s
+- Current artifacts: 54 (763 KB total)
+- LLM calls: 2 (1% budget)
+- Open contradictions: 2
+
+## Pending Revisions
+
+- L0
 
 ## Changelog
 
