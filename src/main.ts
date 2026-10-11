@@ -32,21 +32,21 @@ import { makeFireproof } from "./structures/place";
 import { StrfRuntime, engineStrf } from "./structures/runtime";
 import { SPAWN_EVENT, SPAWN_STATE_EVENT, SpawnSearch, engineSpawnHost } from "./structures/spawn-search";
 import { DynamicPropertyStore } from "./structures/store";
+import { registerTridentThrow } from "./trident/throw";
 import { registerUfo } from "./ufo";
 import { registerTrap } from "./websword/trap";
 import { registerStormPassive } from "./storm/passive";
-import { registerTridentThrow } from "./trident/throw";
 
 registerAutoSmelt();
 registerCraftGate();
 registerRetention();
 registerRecovery();
-registerTridentThrow();
 registerLegendaryHud();
 registerTrap();
 registerStormPassive();
 registerScytheVolley();
 registerOrbitalCannon();
+registerTridentThrow();
 registerDragonKatana();
 registerSculkCrossbow();
 // Must come after every other legendary's input: see registerStormActive().
