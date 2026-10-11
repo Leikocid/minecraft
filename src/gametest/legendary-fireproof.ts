@@ -427,7 +427,7 @@ const DEATH_SWEEP_TICKS = 10;
  * and respawns: an instance in a chest at the death stays there (spec §02), and
  * retention owes the owner nothing for it.
  */
-function chestStays(name: string, def: LegendaryDef, keeper: string): void {
+export function chestStays(name: string, def: LegendaryDef, keeper: string): void {
   registerAsync("andrew", name, async (test: Test): Promise<void> => {
     const dim = test.getDimension();
     const chestCell: Vector3 = { x: 3, y: 2, z: 1 };

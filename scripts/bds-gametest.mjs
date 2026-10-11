@@ -524,10 +524,27 @@ const EXPECTED_TESTS = [
   'andrew:probe_trident_return',
   'andrew:probe_trident_restart_seed',
   'andrew:probe_trident_restart_check',
-  // TRDT-DMG-01 — src/gametest/trident-damage.ts (L0-trdt-r002, L0-trdt-a002, L0-adr-twlt)
+ // TRDT-DMG-01 — src/gametest/trident-damage.ts (L0-trdt-r002, L0-trdt-a002, L0-adr-twlt)
   'andrew:trident_damage_melee',
   'andrew:trident_damage_thrown',
   'andrew:trident_damage_lethal',
+  // TRDT-LGND-01 — the Above-Water Trident under the legendary rules (L0-trdt-a005, L0-trdt-adcl T1–T7):
+  // src/gametest/trident-legendary.ts
+  'andrew:legendary_trident_death_kill',
+  'andrew:legendary_trident_death_lava',
+  'andrew:legendary_trident_death_offhand',
+  'andrew:legendary_trident_in_a_chest_stays_there',
+  'andrew:legendary_trident_void_thrown',
+  'andrew:legendary_trident_hold_void_after_transfer',
+  'andrew:legendary_trident_hold_void_holder_offline',
+  'andrew:legendary_trident_hold_void_holder_dead_redeemed',
+  'andrew:legendary_trident_holder_chest_minecart',
+  'andrew:trident_enchant_scrub',
+  'andrew:trident_enchant_scrub_death_restore',
+  'andrew:trident_throw_departure_not_a_loss',
+  'andrew:trident_custody_fallback',
+  'andrew:trident_chest_destroyed',
+  'andrew:trident_magnet_legendary',
 ];
 
 // A renamed scenario would otherwise drop out of the release gate silently.
