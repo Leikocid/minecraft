@@ -195,6 +195,14 @@ const EXPECTED_TESTS = [
   'andrew:legendary_give_then_craft_storm_blade',
   'andrew:legendary_storm_blade_other_flags_untouched',
   'andrew:storm_blade_no_durability',
+  // TRDT-ITEM-01-AA — src/gametest/legendary-craftgate.ts
+  'andrew:legendary_give_then_craft_trident',
+  'andrew:legendary_trident_other_flags_untouched',
+  'andrew:trident_craft_two_empty_buckets',
+  'andrew:trident_craft_full_inventory',
+  'andrew:trident_blocked_restart_seed',
+  'andrew:trident_blocked_restart_check',
+  'andrew:trident_creative_and_commands_spend_nothing',
   // LGND-OFFHAND-01 — src/gametest/legendary-offhand.ts
   'andrew:legendary_offhand_admitted',
   'andrew:legendary_offhand_resolves',
@@ -534,6 +542,7 @@ const RESTART_AFTER = new Map([
   ['andrew:pntr_legendary_two_columns', 'andrew:pntr_legendary_restart_check'],
   ['andrew:ufo_restart_seed', 'andrew:ufo_restart_check'],
   ['andrew:probe_trident_restart_seed', 'andrew:probe_trident_restart_check'],
+  ['andrew:trident_blocked_restart_seed', 'andrew:trident_blocked_restart_check'],
 ]);
 
 // FLAT is not cosmetic: see the LEVEL_TYPE comment in docker/bds/compose.yaml.

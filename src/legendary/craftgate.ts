@@ -126,14 +126,34 @@ function settle(def: LegendaryDef | undefined, player: Player, container: Contai
   switch (tokenDecision(isCrafted(def), player.getGameMode())) {
     case "claim":
       claim(def, player, put);
+      giveCraftReturn(def, player, container);
       break;
     case "refund":
       refund(def, player, container, put);
       break;
     case "unwrap":
       put(new ItemStack(def.itemId, 1));
+      giveCraftReturn(def, player, container);
       break;
   }
+}
+
+/**
+ * The recipe's containers, for a craft that keeps its result. A refund hands
+ * the full ingredients back instead, so it never gets these as well (C-34).
+ */
+function giveCraftReturn(def: LegendaryDef, player: Player, container: Container): void {
+  if (def.craftReturn === undefined) {
+    return;
+  }
+  for (const [itemId, count] of def.craftReturn) {
+    for (const stack of stacksOf(itemId, count)) {
+      returnToPlayer(player, container, stack);
+    }
+  }
+  console.warn(
+    `[andrew] ${def.itemId} craft by ${player.name} — returned ${def.craftReturn.map(([id, n]) => `${n} ${id}`).join(", ")}`
+  );
 }
 
 /**
@@ -185,10 +205,27 @@ function announce(def: LegendaryDef, player: Player): void {
 function refund(def: LegendaryDef, player: Player, container: Container, put: Put): void {
   put(undefined);
   for (const [itemId, count] of def.refund) {
-    returnToPlayer(player, container, new ItemStack(itemId, count));
+    for (const stack of stacksOf(itemId, count)) {
+      returnToPlayer(player, container, stack);
+    }
   }
   player.sendMessage({ translate: `${def.textPrefix}.craft_blocked` });
   console.warn(`[andrew] ${def.itemId} craft blocked for ${player.name} — ingredients returned`);
+}
+
+/**
+ * `count` of `itemId` as stacks no larger than the item's max stack size. The
+ * constructor keeps an amount above it, and the container then stores the max
+ * and drops the rest without a leftover: one stack of 2 water buckets arrives
+ * as 1 bucket.
+ */
+function stacksOf(itemId: string, count: number): ItemStack[] {
+  const max = new ItemStack(itemId).maxAmount;
+  const stacks: ItemStack[] = [];
+  for (let left = count; left > 0; left -= max) {
+    stacks.push(new ItemStack(itemId, Math.min(left, max)));
+  }
+  return stacks;
 }
 
 /** Into the inventory, or at the player's feet when there is no room for it. */

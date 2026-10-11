@@ -9,7 +9,17 @@
 
 import { BlockPermutation, type Container, Difficulty, type Entity, GameMode, ItemStack, type Player, type Vector3, world } from "@minecraft/server";
 import { type SimulatedPlayer, type Test, register, registerAsync } from "@minecraft/server-gametest";
-import { DRAGON_KATANA, type LegendaryDef, ORBITAL_CANNON, SCULK_CROSSBOW, SCYTHE_OF_CALAMITY, STORM_BLADE, WEB_SWORD } from "../legendary/registry";
+import {
+  DRAGON_KATANA,
+  type LegendaryDef,
+  ORBITAL_CANNON,
+  SCULK_CROSSBOW,
+  SCYTHE_OF_CALAMITY,
+  STORM_BLADE,
+  TRIDENT,
+  WEB_SWORD,
+  keysFor,
+} from "../legendary/registry";
 import * as state from "../legendary/state";
 
 /** Must match the structure written by scripts/bds-gametest.mjs. */
@@ -64,6 +74,14 @@ const GRIDS = new Map<LegendaryDef, ReadonlyArray<string | undefined>>([
       undefined, "minecraft:lightning_rod", undefined,
       "minecraft:wind_charge", "minecraft:diamond_sword", "minecraft:wind_charge",
       undefined, "minecraft:lightning_rod", undefined,
+    ],
+  ],
+  [
+    TRIDENT,
+    [
+      undefined, "minecraft:golden_apple", undefined,
+      "minecraft:water_bucket", "minecraft:trident", "minecraft:water_bucket",
+      undefined, "minecraft:golden_apple", undefined,
     ],
   ],
 ]);
@@ -222,6 +240,7 @@ giveThenCraft("scythe", SCYTHE_OF_CALAMITY);
 giveThenCraft("dragon_katana", DRAGON_KATANA);
 giveThenCraft("sculk_crossbow", SCULK_CROSSBOW);
 giveThenCraft("storm_blade", STORM_BLADE);
+giveThenCraft("trident", TRIDENT);
 
 // The Sculk Crossbow is def #5, with its own `sk` key namespace (CNTR-LGND-
 // CX15-AA). Crafting it must not touch the other four defs' world-level craft
@@ -286,6 +305,304 @@ register("andrew", "legendary_storm_blade_other_flags_untouched", (test: Test): 
     }
     console.warn("[gametest] storm blade craft left the other five legendaries' flags untouched");
   });
+})
+  .structureName(STRUCTURE)
+  .maxTicks(400)
+  .tag("andrew");
+
+// The Above-Water Trident is def #7. Crafting it must not touch the other six
+// defs' world-level craft flags (AC#5).
+register("andrew", "legendary_trident_other_flags_untouched", (test: Test): void => {
+  const others = [WEB_SWORD, SCYTHE_OF_CALAMITY, ORBITAL_CANNON, DRAGON_KATANA, SCULK_CROSSBOW, STORM_BLADE];
+  for (const def of [...others, TRIDENT]) {
+    state.resetCrafted(def);
+  }
+  placeCrafter(test);
+  const player = test.spawnSimulatedPlayer(STAND, "cg_tr_flags", GameMode.Survival);
+  let arrivedBefore: number | undefined;
+
+  test.runAfterDelay(4, () => {
+    arrivedBefore = arrivalsOf(TRIDENT, player);
+    craftWithCrafter(test, TRIDENT);
+  });
+
+  test.succeedWhen(() => {
+    test.assert(arrivedBefore !== undefined, "the crafter has not been run yet");
+    test.assert(
+      arrivalsOf(TRIDENT, player) > (arrivedBefore ?? 0),
+      `no ${TRIDENT.craftTokenId} from the crafter has reached ${player.name} yet`
+    );
+    test.assert(state.isCrafted(TRIDENT), "the Trident craft did not claim its own flag");
+    for (const def of others) {
+      test.assert(!state.isCrafted(def), `${def.itemId}'s craft flag changed after crafting the Trident`);
+    }
+    console.warn("[gametest] trident craft left the other six legendaries' flags untouched");
+  });
+})
+  .structureName(STRUCTURE)
+  .maxTicks(400)
+  .tag("andrew");
+
+// ---------------------------------------------------------------- the Trident's buckets (L0-trdt-a001)
+//
+// An add-on recipe hands no container back: the 2 water buckets are gone when
+// the token appears (docs/feedback/probe-trident.md §1). The gate gives the 2
+// empty buckets with a craft it keeps and the 2 water buckets with one it
+// refunds, never both kinds (C-34). Every count below is the inventory plus the
+// item entities around the stand, so a bucket dropped at the feet counts and a
+// duplicate cannot hide on the ground.
+
+const BUCKET = "minecraft:bucket";
+const WATER_BUCKET = "minecraft:water_bucket";
+/** Covers the stand, the crafter's ejection and a drop at the feet. */
+const GROUND_RADIUS = 8;
+/** The crafter's output reaches a player within a few ticks; this is the ceiling. */
+const ARRIVAL_TICKS = 100;
+
+function countIn(container: Container, typeId: string): number {
+  let n = 0;
+  for (let slot = 0; slot < container.size; slot++) {
+    const stack = container.getItem(slot);
+    if (stack?.typeId === typeId) n += stack.amount;
+  }
+  return n;
+}
+
+function groundStacks(test: Test): ItemStack[] {
+  return test
+    .getDimension()
+    .getEntities({ type: "minecraft:item", location: test.worldLocation(STAND), maxDistance: GROUND_RADIUS })
+    .flatMap((e) => {
+      const stack = e.isValid ? e.getComponent("minecraft:item")?.itemStack : undefined;
+      return stack === undefined ? [] : [stack];
+    });
+}
+
+function onGround(test: Test, typeId: string): number {
+  return groundStacks(test)
+    .filter((stack) => stack.typeId === typeId)
+    .reduce((n, stack) => n + stack.amount, 0);
+}
+
+interface Tally {
+  inv: number;
+  ground: number;
+}
+
+function tally(test: Test, player: Player, typeId: string): Tally {
+  return { inv: countIn(inventoryOf(player), typeId), ground: onGround(test, typeId) };
+}
+
+const sum = (t: Tally): number => t.inv + t.ground;
+const show = (name: string, t: Tally): string => `${name} ${t.inv}+${t.ground}`;
+
+async function waitFor(test: Test, ticks: number, done: () => boolean, why: string): Promise<void> {
+  for (let tick = 0; tick < ticks; tick++) {
+    if (done()) return;
+    await test.idle(1);
+  }
+  test.assert(done(), why);
+}
+
+/** Runs the crafter once and waits for its token to reach `player`, then past the gate. */
+async function craftAndSettle(test: Test, player: Player): Promise<void> {
+  const before = arrivalsOf(TRIDENT, player);
+  craftWithCrafter(test, TRIDENT);
+  await waitFor(test, ARRIVAL_TICKS, () => arrivalsOf(TRIDENT, player) > before, `no ${TRIDENT.craftTokenId} reached ${player.name}`);
+  await test.idle(SETTLE_TICKS);
+}
+
+registerAsync("andrew", "trident_craft_two_empty_buckets", async (test: Test): Promise<void> => {
+  state.resetCrafted(TRIDENT);
+  placeCrafter(test);
+  const player = test.spawnSimulatedPlayer(STAND, "tr_craft", GameMode.Survival);
+  await test.idle(4);
+  await craftAndSettle(test, player);
+
+  const held = holdings(TRIDENT, player);
+  const empty = tally(test, player, BUCKET);
+  const water = tally(test, player, WATER_BUCKET);
+  const tokens = held.tokens + onGround(test, TRIDENT.craftTokenId);
+  console.warn(
+    `[gametest] trident craft RESULT flag=${state.isCrafted(TRIDENT)} by=${String(world.getDynamicProperty(keysFor(TRIDENT).craftedBy))} ` +
+      `${describe(held)} ${show("empty", empty)} ${show("water", water)} tokens=${tokens}`
+  );
+  test.assert(state.isCrafted(TRIDENT), "the craft did not claim the world's craft");
+  test.assert(world.getDynamicProperty(keysFor(TRIDENT).craftedBy) === player.name, "the flag does not name the crafter");
+  test.assert(held.crafted === 1 && held.plain === 0 && held.other === 0, `expected one Trident marked "craft": ${describe(held)}`);
+  test.assert(tokens === 0, `${tokens} craft token(s) left`);
+  test.assert(sum(empty) === 2, `expected exactly 2 empty buckets back, got ${show("empty", empty)}`);
+  test.assert(sum(water) === 0, `a kept craft also got water buckets: ${show("water", water)}`);
+  test.assert(held.refund === 0, `ingredients were handed back for a kept craft: ${describe(held)}`);
+  test.succeed();
+})
+  .structureName(STRUCTURE)
+  .maxTicks(400)
+  .tag("andrew");
+
+registerAsync("andrew", "trident_craft_full_inventory", async (test: Test): Promise<void> => {
+  state.resetCrafted(TRIDENT);
+  placeCrafter(test);
+  const player = test.spawnSimulatedPlayer(STAND, "tr_full", GameMode.Survival);
+  await test.idle(4);
+  const container = inventoryOf(player);
+  for (let slot = 0; slot < container.size; slot++) container.setItem(slot, new ItemStack("minecraft:dirt", 64));
+  await test.idle(2);
+
+  // Every slot full: the ejected token stays on the ground, and the gate never sees it.
+  craftWithCrafter(test, TRIDENT);
+  await waitFor(test, ARRIVAL_TICKS, () => onGround(test, TRIDENT.craftTokenId) === 1, "the crafter's token never reached the ground");
+  await test.idle(SETTLE_TICKS);
+  const waiting = { held: holdings(TRIDENT, player), token: onGround(test, TRIDENT.craftTokenId), empty: tally(test, player, BUCKET), water: tally(test, player, WATER_BUCKET) };
+  console.warn(
+    `[gametest] trident full inventory RESULT before room: flag=${state.isCrafted(TRIDENT)} token on the ground ${waiting.token} ` +
+      `${describe(waiting.held)} ${show("empty", waiting.empty)} ${show("water", waiting.water)}`
+  );
+  test.assert(waiting.token === 1, `the token is not lying on the ground: ${waiting.token}`);
+  test.assert(!state.isCrafted(TRIDENT), "a token nobody picked up claimed the craft");
+  test.assert(waiting.held.crafted + waiting.held.plain + waiting.held.tokens === 0, `something reached the full inventory: ${describe(waiting.held)}`);
+  test.assert(sum(waiting.empty) + sum(waiting.water) === 0, "buckets appeared before the craft was settled");
+
+  // Room for exactly the token: the Trident takes that slot, so the 2 buckets have nowhere to go but the feet.
+  const token = test
+    .getDimension()
+    .getEntities({ type: "minecraft:item", location: test.worldLocation(STAND), maxDistance: GROUND_RADIUS })
+    .find((e) => e.getComponent("minecraft:item")?.itemStack.typeId === TRIDENT.craftTokenId);
+  test.assert(token !== undefined, "the token entity is gone");
+  container.setItem(container.size - 1, undefined);
+  const before = arrivalsOf(TRIDENT, player);
+  player.teleport((token as Entity).location);
+  await waitFor(test, ARRIVAL_TICKS, () => arrivalsOf(TRIDENT, player) > before, "the token was never picked up into the freed slot");
+  await test.idle(SETTLE_TICKS);
+
+  const held = holdings(TRIDENT, player);
+  const empty = tally(test, player, BUCKET);
+  const water = tally(test, player, WATER_BUCKET);
+  const tokens = held.tokens + onGround(test, TRIDENT.craftTokenId);
+  console.warn(
+    `[gametest] trident full inventory RESULT after room: flag=${state.isCrafted(TRIDENT)} ${describe(held)} ` +
+      `${show("empty", empty)} ${show("water", water)} tokens=${tokens} dirt=${countIn(container, "minecraft:dirt")}`
+  );
+  test.assert(state.isCrafted(TRIDENT), "the picked-up token did not claim the craft");
+  test.assert(held.crafted === 1, `the Trident is lost: ${describe(held)}`);
+  test.assert(tokens === 0, `${tokens} craft token(s) left`);
+  test.assert(sum(empty) === 2, `buckets in the inventory plus on the ground: ${show("empty", empty)}, expected 2`);
+  test.assert(empty.ground === 2, `the full inventory took a bucket: ${show("empty", empty)}`);
+  test.assert(sum(water) === 0, `water buckets appeared: ${show("water", water)}`);
+  test.succeed();
+})
+  .structureName(STRUCTURE)
+  .maxTicks(600)
+  .tag("andrew");
+
+// The pair runs across a server restart (RESTART_AFTER in scripts/bds-gametest.mjs):
+// the seed spends the craft, the check crafts again on the reloaded world.
+const RESTART_CRAFTER = "tr_seed";
+
+registerAsync("andrew", "trident_blocked_restart_seed", async (test: Test): Promise<void> => {
+  state.resetCrafted(TRIDENT);
+  placeCrafter(test);
+  const player = test.spawnSimulatedPlayer(STAND, RESTART_CRAFTER, GameMode.Survival);
+  await test.idle(4);
+  await craftAndSettle(test, player);
+
+  const held = holdings(TRIDENT, player);
+  console.warn(`[gametest] trident restart seed RESULT flag=${state.isCrafted(TRIDENT)} ${describe(held)} — the server restarts next`);
+  test.assert(state.isCrafted(TRIDENT), "the seed craft did not claim the world's craft");
+  test.assert(held.crafted === 1, `the seed craft gave no marked Trident: ${describe(held)}`);
+  test.succeed();
+})
+  .structureName(STRUCTURE)
+  .maxTicks(400)
+  .tag("andrew");
+
+registerAsync("andrew", "trident_blocked_restart_check", async (test: Test): Promise<void> => {
+  const by = world.getDynamicProperty(keysFor(TRIDENT).craftedBy);
+  console.warn(`[gametest] trident restart check: after the restart flag=${state.isCrafted(TRIDENT)} by=${String(by)}`);
+  test.assert(state.isCrafted(TRIDENT), "the craft flag did not survive the restart");
+  test.assert(by === RESTART_CRAFTER, `the flag names ${String(by)}, not the seed's crafter`);
+
+  placeCrafter(test);
+  const player = test.spawnSimulatedPlayer(STAND, "tr_again", GameMode.Survival);
+  await test.idle(4);
+  await craftAndSettle(test, player);
+
+  const held = holdings(TRIDENT, player);
+  const apples = tally(test, player, "minecraft:golden_apple");
+  const tridents = tally(test, player, "minecraft:trident");
+  const empty = tally(test, player, BUCKET);
+  const water = tally(test, player, WATER_BUCKET);
+  const tokens = held.tokens + onGround(test, TRIDENT.craftTokenId);
+  console.warn(
+    `[gametest] trident restart check RESULT flag=${state.isCrafted(TRIDENT)} ${describe(held)} ` +
+      `${show("apples", apples)} ${show("tridents", tridents)} ${show("water", water)} ${show("empty", empty)} tokens=${tokens}`
+  );
+  test.assert(held.crafted + held.plain + held.other === 0, `a blocked craft yielded a Trident: ${describe(held)}`);
+  test.assert(tokens === 0, `${tokens} craft token(s) left`);
+  test.assert(apples.inv === 2 && apples.ground === 0, `golden apples back: ${show("apples", apples)}, expected 2+0`);
+  test.assert(tridents.inv === 1 && tridents.ground === 0, `vanilla tridents back: ${show("tridents", tridents)}, expected 1+0`);
+  test.assert(water.inv === 2 && water.ground === 0, `water buckets back: ${show("water", water)}, expected 2+0`);
+  test.assert(sum(empty) === 0, `empty buckets as well as water ones: ${show("empty", empty)}`);
+  test.assert(world.getDynamicProperty(keysFor(TRIDENT).craftedBy) === RESTART_CRAFTER, "the blocked craft re-claimed the flag");
+  test.succeed();
+})
+  .structureName(STRUCTURE)
+  .maxTicks(400)
+  .tag("andrew");
+
+// A Creative copy, a /give and an admin copy are plain or admin-marked weapon
+// stacks, and the gate acts on tokens only; a Creative player's token is
+// unwrapped. None of them may touch the flag. /andrew:trident is the release
+// pack's command, and only its reset can be driven from here: its give cannot
+// resolve a SimulatedPlayer (C-2), so the admin copy is stamped the way give
+// stamps it.
+registerAsync("andrew", "trident_creative_and_commands_spend_nothing", async (test: Test): Promise<void> => {
+  state.resetCrafted(TRIDENT);
+  const dim = test.getDimension();
+  const builder = test.spawnSimulatedPlayer(STAND, "tr_builder", GameMode.Creative);
+  const tester = test.spawnSimulatedPlayer({ x: 1, y: 2, z: 1 }, "tr_tester", GameMode.Survival);
+  await test.idle(4);
+
+  for (const player of [builder, tester]) {
+    const given = dim.runCommand(`give "${player.name}" ${TRIDENT.itemId} 1`).successCount;
+    test.assert(given === 1, `/give to ${player.name} reported successCount ${given}`);
+  }
+  inventoryOf(tester).addItem(state.markItem(TRIDENT, new ItemStack(TRIDENT.itemId, 1), state.makeMark("admin", tester)));
+  inventoryOf(builder).addItem(new ItemStack(TRIDENT.craftTokenId, 1));
+  await test.idle(SETTLE_TICKS);
+
+  // The Creative copy carried into Survival is still an ordinary copy.
+  builder.setGameMode(GameMode.Survival);
+  await test.idle(SETTLE_TICKS);
+
+  const b = holdings(TRIDENT, builder);
+  const t = holdings(TRIDENT, tester);
+  const empty = tally(test, builder, BUCKET);
+  console.warn(
+    `[gametest] trident creative RESULT flag=${state.isCrafted(TRIDENT)} builder ${describe(b)} ${show("empty", empty)} tester ${describe(t)}`
+  );
+  test.assert(!state.isCrafted(TRIDENT), "a Creative copy, a /give or an admin copy spent the world's craft");
+  test.assert(b.plain === 2 && b.crafted === 0 && b.tokens === 0, `builder: ${describe(b)}, expected the /give copy and the unwrapped token, both plain`);
+  test.assert(sum(empty) === 2, `the unwrapped Creative craft got ${show("empty", empty)} empty buckets, expected 2`);
+  test.assert(t.plain === 1 && t.other === 1 && t.crafted === 0 && t.refund === 0, `tester: ${describe(t)}, expected one /give copy and one admin copy, untouched`);
+
+  // def #7's operator command is registered: an unknown command throws. Its
+  // reset lands in the release pack's own world properties — dynamic properties
+  // are per pack — so this pack's flag cannot witness it.
+  const reset = dim.runCommand(`${TRIDENT.command} reset`).successCount;
+  console.warn(`[gametest] trident creative RESULT /${TRIDENT.command} reset successCount=${reset}`);
+  test.assert(reset === 1, `/${TRIDENT.command} reset reported successCount ${reset}`);
+
+  // What the engine does with one ItemStack above the max stack size, the
+  // reason the gate splits its refund into stacks.
+  const over = new ItemStack(WATER_BUCKET, 2);
+  const before = countIn(inventoryOf(tester), WATER_BUCKET);
+  const leftover = inventoryOf(tester).addItem(over);
+  console.warn(
+    `[gametest] trident creative RESULT ItemStack(${WATER_BUCKET}, 2): amount=${over.amount} maxAmount=${over.maxAmount}; ` +
+      `addItem stored ${countIn(inventoryOf(tester), WATER_BUCKET) - before}, leftover ${leftover?.amount ?? "none"}`
+  );
+  test.succeed();
 })
   .structureName(STRUCTURE)
   .maxTicks(400)
