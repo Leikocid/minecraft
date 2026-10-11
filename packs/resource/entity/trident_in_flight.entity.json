@@ -1,0 +1,24 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "andrew:trident_in_flight",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/entity/andrew_trident_in_flight"
+      },
+      "geometry": {
+        "default": "geometry.andrew.trident_in_flight"
+      },
+      "animations": {
+        "fly": "animation.andrew.trident_in_flight.fly"
+      },
+      "scripts": {
+        "animate": ["fly"]
+      },
+      "render_controllers": ["controller.render.andrew.trident_in_flight"]
+    }
+  }
+}
