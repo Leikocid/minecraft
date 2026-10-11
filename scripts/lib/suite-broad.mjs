@@ -26,4 +26,7 @@ export const BROAD_TESTS = [
   'andrew:vanilla_recipe_elytra_unlimited',
   'andrew:vanilla_recipe_totem_unlimited',
   'andrew:strf_cmd_place', // structures reach the world at all
+  'andrew:trident_craft_two_empty_buckets', // the refund an addon recipe cannot do by data
+  'andrew:trident_dash_distance',
+  'andrew:trident_throw_wall_return', // throw, block, visible return — the first legendary that leaves the inventory
 ];

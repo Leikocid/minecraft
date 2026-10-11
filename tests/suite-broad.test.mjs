@@ -54,6 +54,9 @@ test('every shipped system is represented', () => {
     'storm blade, passive': /storm_passive_/,
     'vanilla recipes': /vanilla_recipe_/,
     structures: /strf_/,
+    'trident, craft': /trident_craft_/,
+    'trident, movement': /trident_dash_|trident_swim_/,
+    'trident, throw': /trident_throw_/,
   };
   const uncovered = Object.entries(systems)
     .filter(([, re]) => !BROAD_TESTS.some((name) => re.test(name)))
