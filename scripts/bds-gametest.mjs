@@ -580,6 +580,13 @@ const EXPECTED_TESTS = [
   'andrew:pear_bind_negatives',
   'andrew:pear_bind_hook_in_mob',
   'andrew:pear_bind_overwrite_two_rods',
+  // PEAR-TP-01 — src/gametest/pear-teleport.ts (spec v3 §7, L0-xasm42, L0-pear-pr03, L0-adr-prta): the trip to the plate
+  'andrew:pear_tp_near_clears',
+  'andrew:pear_tp_far_unloaded',
+  'andrew:pear_tp_unsafe_keeps',
+  'andrew:pear_tp_outcomes_no_leak',
+  'andrew:pear_tp_pool_reserve',
+  'andrew:pear_tp_cross_dimension',
   // ENCH-PROBE-01 — src/gametest/ench-probe.ts (spec v3 §4, L0-ench-prob): docs/feedback/probe-enchanting.md
   'andrew:probe_ench_surface',
   'andrew:probe_ench_result_signals',

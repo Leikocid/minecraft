@@ -4,6 +4,7 @@
 // never widened and nothing is prepared: a ring with no valid spot ends with
 // no structure. Pure apart from the RingLoader, so node tests drive it.
 
+import type { AreaBudget, AreaLease } from "../pearl/area-pool";
 import type { BlockView } from "./site";
 import type { SiteVerdict } from "./discovery";
 import type { RollDef } from "./config";
@@ -179,13 +180,16 @@ const ADD_RETRIES = 30;
  * Temporary ticking areas from a small named pool (L0-airs-cx01). The engine
  * caps ticking areas at 10 per world, shared with every other user; a refused
  * add is retried, then reported as never loaded. `prefix` keeps two script
- * contexts from removing each other's areas.
+ * contexts from removing each other's areas. With `budget`, every add first
+ * takes a structure slot from the world budget (L0-adr-prta), which never hands
+ * out the Pearl Rod's reserved one; a slot it refuses is retried like a refused add.
  */
 export function engineRingLoader(
   dim: { runCommand(cmd: string): { successCount: number }; isChunkLoaded(l: { x: number; y: number; z: number }): boolean; getBlock(l: { x: number; y: number; z: number }): unknown; heightRange: { min: number } },
   sys: RingSystem,
   prefix: string,
-  pool: number
+  pool: number,
+  budget?: AreaBudget
 ): RingLoader {
   const wait = (ticks: number): Promise<void> => new Promise((resolve) => sys.runTimeout(resolve, Math.max(1, ticks)));
   const run = (cmd: string): number => {
@@ -205,12 +209,17 @@ export function engineRingLoader(
       // An area added in the tick another was removed can stay unloaded for good (measured on BDS 1.26.51.1).
       await wait(1);
       let slot = -1;
+      let lease: AreaLease | undefined;
       for (let tries = 0; tries < ADD_RETRIES && slot < 0; tries++) {
         const free = [...Array(pool).keys()].find((i) => !used.has(i));
-        if (free !== undefined) {
+        lease = free === undefined ? undefined : budget?.tryAcquire("structure");
+        if (free !== undefined && (budget === undefined || lease !== undefined)) {
           used.add(free);
           if (run(`tickingarea add ${min[0]} 0 ${min[1]} ${max[0]} 0 ${max[1]} ${name(free)}`) > 0) slot = free;
-          else used.delete(free);
+          else {
+            used.delete(free);
+            lease?.release();
+          }
         }
         if (slot < 0) await wait(10);
       }
@@ -218,6 +227,7 @@ export function engineRingLoader(
       const remove = (): void => {
         run(`tickingarea remove ${name(slot)}`);
         used.delete(slot);
+        lease?.release();
       };
       const chunks: Array<{ x: number; y: number; z: number }> = [];
       for (let x = Math.floor(min[0] / CHUNK); x <= Math.floor(max[0] / CHUNK); x++)
