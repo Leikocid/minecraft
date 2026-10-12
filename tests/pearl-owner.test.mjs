@@ -81,10 +81,13 @@ test('every death voids a binding made before it, however many deaths pass', () 
   assert.equal(R.honourOf({ ...BOUND, epoch }, { id: BOUND.owner, epoch }), 'honoured', 'a binding made in the current life');
 });
 
-test('a trip goes on only while its traveller is in the life it started in', () => {
-  assert.equal(R.tripSurvives(4, 4), true);
-  assert.equal(R.tripSurvives(4, R.nextLifeEpoch(4)), false);
-  assert.equal(R.tripSurvives(0, 1), false);
+test('a trip goes on only while its traveller is alive and in the life it started in', () => {
+  assert.equal(R.tripSurvives(4, { health: 20, epoch: 4 }), true);
+  assert.equal(R.tripSurvives(4, { health: 0.5, epoch: 4 }), true, 'half a heart is alive');
+  assert.equal(R.tripSurvives(4, { health: 20, epoch: R.nextLifeEpoch(4) }), false, 'died and respawned since the use');
+  // BDS 1.26.51.1: a death reads hp 0 in the tick's interval before its entityDie, so the epoch is still the old one.
+  assert.equal(R.tripSurvives(4, { health: 0, epoch: 4 }), false, 'dead, entityDie not delivered yet');
+  assert.equal(R.tripSurvives(0, { health: 0, epoch: 1 }), false);
 });
 
 // ------------------------------------------------------------------ owner.ts and bind.ts on a stand-in engine
@@ -281,14 +284,17 @@ test('a stranger holding the rod is foreign; their own hit overwrites the binder
   assert.equal(O.honourFor(a, b.items[4]), 'foreign');
 });
 
-test('life-end listeners hear the dead player and the new epoch; a failing one does not stop the rest', () => {
-  const heard = [];
-  O.onLifeEnd(() => { throw new Error('boom'); });
-  O.onLifeEnd((p, epoch) => heard.push([p.name, epoch]));
-  const p = fakePlayer('listened');
-  p.dp.set('andrew:life_epoch', 6);
-  const errors0 = O.ownerStats.listenerErrors;
+test('stillInLife: alive in the same epoch; not once health reads 0, the epoch moved, or the player is gone', () => {
+  const p = fakePlayer('traveller');
+  let hp = 20;
+  p.getComponent = (id) => (id === 'minecraft:health' ? { currentValue: hp } : undefined);
+  assert.equal(O.stillInLife(p, 0), true);
+  hp = 0;
+  assert.equal(O.stillInLife(p, 0), false, 'the death tick, before entityDie');
+  hp = 20;
   die(p);
-  assert.deepEqual(heard, [['listened', 7]]);
-  assert.equal(O.ownerStats.listenerErrors - errors0, 1);
+  assert.equal(O.stillInLife(p, 0), false, 'respawned in a new life');
+  assert.equal(O.stillInLife(p, 1), true);
+  p.isValid = false;
+  assert.equal(O.stillInLife(p, 1), false, 'logged out');
 });

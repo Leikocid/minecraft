@@ -1,24 +1,14 @@
 // The binding belongs to a living player (spec v3 §7; C-45, L0-pear-ent2): a player's death bumps their life epoch,
-// which voids every binding they made wherever the rod is, and ends any trip they have in progress. The decisions are in
-// owner-rules.ts; this module is the engine half — deaths in, the epoch and the trip aborts out.
+// which voids every binding they made wherever the rod is. The decisions are in owner-rules.ts; this module is the
+// engine half — deaths in, the epoch out, and the checks the use gate and a trip in progress read.
 
 import { type Entity, type ItemStack, Player, world } from "@minecraft/server";
 import { bindingOf, lifeEpochOf } from "./bind";
 import { type Binding, LIFE_EPOCH_KEY } from "./bind-rules";
-import { type Holder, type Honour, honourOf, nextLifeEpoch } from "./owner-rules";
+import { type Holder, type Honour, honourOf, nextLifeEpoch, tripSurvives } from "./owner-rules";
 
 /** Counters a GameTest reads to tell what the module did. */
-export const ownerStats = { deaths: 0, listenerErrors: 0 };
-
-/** Called with the dead player and their new epoch, in the entityDie that bumped it. */
-export type LifeEndListener = (player: Player, epoch: number) => void;
-
-const listeners: LifeEndListener[] = [];
-
-/** A trip in progress subscribes here to be aborted by its traveller's death (`xasm42`: aborted, binding void, no message). */
-export function onLifeEnd(listener: LifeEndListener): void {
-  listeners.push(listener);
-}
+export const ownerStats = { deaths: 0 };
 
 export function holderOf(player: Player): Holder {
   return { id: player.id, epoch: lifeEpochOf(player) };
@@ -34,19 +24,15 @@ export function honouredBindingOf(player: Player, stack: ItemStack | undefined):
   return honourOf(binding, holderOf(player)) === "honoured" ? binding : undefined;
 }
 
+/** Whether a trip `player` started in life `startEpoch` may go on this tick; false once they are dead or gone. */
+export function stillInLife(player: Player, startEpoch: number): boolean {
+  if (!player.isValid) return false;
+  return tripSurvives(startEpoch, { health: player.getComponent("minecraft:health")?.currentValue ?? 0, epoch: lifeEpochOf(player) });
+}
+
 function endLife(player: Player): void {
-  const epoch = nextLifeEpoch(player.getDynamicProperty(LIFE_EPOCH_KEY));
-  player.setDynamicProperty(LIFE_EPOCH_KEY, epoch);
+  player.setDynamicProperty(LIFE_EPOCH_KEY, nextLifeEpoch(player.getDynamicProperty(LIFE_EPOCH_KEY)));
   ownerStats.deaths++;
-  for (const listener of listeners) {
-    try {
-      listener(player, epoch);
-    } catch (err) {
-      ownerStats.listenerErrors++;
-      const why = err instanceof Error ? err.message : String(err);
-      console.warn(`[andrew] pearl rod: a life-end listener failed for ${player.name}: ${why}`);
-    }
-  }
 }
 
 export function registerPearlOwner(): void {
