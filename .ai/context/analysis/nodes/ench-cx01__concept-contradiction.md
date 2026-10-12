@@ -10,9 +10,13 @@ part_of: ["L0-ench"]
 relates_to: ["L0-ench"]
 priority: 640
 size_chars: 2173
-tags: ["v10", "enchanting", "status:resolved", "resolved-by:L0-adr-enrl+L0-xq11@reduce-v10", "assumption-gap", "target:L0-adr-enrl", "affects:L0-xq11"]
+tags: ["v10","enchanting","status:resolved","resolved-by:L0-adr-enrl+L0-xq11@reduce-v10","assumption-gap","target:L0-adr-enrl","affects:L0-xq11","resolved"]
 level: 2
+closed_at: 2026-10-12
+closed_reason: resolved_by_decision
+closed_by_ref: decision-resolve-l0-ench-cx01
 ---
+
 # CX-ench-01 · xq11 promises "anvils untouched", but the option (a) signature cannot tell an anvil from a table
 
 **is_a:** contradiction · **part_of:** L0-ench · **target:** L0-adr-enrl (option a) · **relates_to:** L0-xq11, L0-xcx32, L0-ench-prob, L0-ench-ac06
