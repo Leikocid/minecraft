@@ -1,16 +1,19 @@
 // PEAR-OWNER-01 on BDS 1.26.51.1 (spec v3 §7; C-45, L0-pear-ru01, L0-pear-ac04): a binding belongs to its binder's
-// life. The binder's death voids every rod they bound — dropped, in a chest, in a stranger's hand — with no search; a
-// stranger holding a bound rod casts as usual and their own hit binds the rod to them. The "[pear-owner] … RESULT"
+// life. The binder's death voids every rod they bound — dropped, in a chest, in a stranger's hand — with no search, and
+// ends a trip under way; a stranger holding a bound rod casts as usual, and their own hit binds the rod to them. The
+// trips are the release teleport.ts, armed in this pack by src/gametest/pear-teleport.ts. The "[pear-owner] … RESULT"
 // lines are quoted in src/pearl/README.md.
 
 import {
   BlockVolume,
   type Container,
+  type Dimension,
   type Entity,
   type EntitySpawnAfterEvent,
   GameMode,
   type ItemStack,
   type Player,
+  ScreenDisplay,
   type Vector3,
   system,
   world,
@@ -22,6 +25,7 @@ import { makePearlRod } from "../pearl/item";
 import { MARK_KEY } from "../pearl/item-rules";
 import { honourFor, ownerStats, registerPearlOwner } from "../pearl/owner";
 import { honourOf } from "../pearl/owner-rules";
+import { heldAreaNames, lastOutcome, pendingTrips, teleportStats } from "../pearl/teleport";
 
 // The release pack arms the same module and cannot read a SimulatedPlayer's death (C-2); this copy is the one the
 // scenarios drive, through the same entityDie a human's death goes through.
@@ -57,10 +61,15 @@ const BIND_WAIT_TICKS = 60;
 const PICKUP_TICKS = 100;
 const DEATH_WAIT_TICKS = 20;
 const RESPAWN_TICKS = 20;
+/** A near plate arrives within a few ticks; the preload timeout is 200 (PRELOAD_TIMEOUT_TICKS). */
+const TRIP_WAIT_TICKS = 260;
 
 const log = (msg: string): void => console.warn(`[pear-owner] ${msg}`);
 const short = (id: string): string => id.replace("minecraft:", "");
 const v3 = (v: Vector3): string => `${v.x},${v.y},${v.z}`;
+const dist = (a: Vector3, b: Vector3): number => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
+/** `at` stands in the block cell `cell`. */
+const inCell = (at: Vector3, cell: Vector3): boolean => Math.floor(at.x) === cell.x && Math.floor(at.y) === cell.y && Math.floor(at.z) === cell.z;
 
 function inventoryOf(player: Player): Container {
   const container = player.getComponent("minecraft:inventory")?.container;
@@ -308,6 +317,79 @@ function removeHooksOf(test: Test, p: Player): void {
   }
 }
 
+async function home(test: Test, p: SimulatedPlayer, at: Vector3): Promise<void> {
+  p.teleport(test.worldLocation({ x: at.x + 0.5, y: at.y, z: at.z + 0.5 }), { dimension: test.getDimension() });
+  await test.idle(3);
+}
+
+interface Use {
+  kind: "trip" | "cast" | "none";
+  /** The tick the gate took the use, or the tick its hook was seen. */
+  tick: number;
+  hook: Entity | undefined;
+  /** Where the hook was when it was seen; the hook itself may be gone by the time anyone reads it. */
+  hookAt: Vector3 | undefined;
+}
+
+/**
+ * One use of the selected rod, retried past the uses a SimulatedPlayer drops, until the use gate takes it as a trip or
+ * a new hook shows a cast. The gate counts in beforeEvents.itemUse, so a trip is seen in the tick of the use.
+ */
+async function useRod(test: Test, p: SimulatedPlayer, w: Witness): Promise<Use> {
+  for (let tries = 0; tries < USE_TRIES; tries++) {
+    const uses = teleportStats.uses;
+    const hooks = w.count(p);
+    p.useItemInSlot(p.selectedSlotIndex);
+    for (let t = 0; t <= USE_EVIDENCE_TICKS; t++) {
+      if (teleportStats.uses > uses) return { kind: "trip", tick: system.currentTick, hook: undefined, hookAt: undefined };
+      const hook = w.last(p);
+      if (w.count(p) > hooks) return { kind: "cast", tick: system.currentTick, hook, hookAt: hook?.isValid === true ? { ...hook.location } : undefined };
+      if (t < USE_EVIDENCE_TICKS) await test.idle(1);
+    }
+  }
+  return { kind: "none", tick: system.currentTick, hook: undefined, hookAt: undefined };
+}
+
+/** The outcome that ends `p`'s trip, decided at `since` or later; "already travelling" ends no trip. */
+async function tripOutcome(test: Test, p: Player, since: number, maxTicks: number): Promise<{ outcome: string; tick: number; detail: string } | undefined> {
+  for (let t = 0; t <= maxTicks; t++) {
+    const o = lastOutcome.get(p.id);
+    if (o !== undefined && o.tick >= since && o.outcome !== "travelling") return o;
+    await test.idle(1);
+  }
+  return undefined;
+}
+
+interface Seen {
+  kind: Use["kind"];
+  outcome: string;
+  ticks: number;
+  moved: number;
+  at: Vector3;
+  hook: Entity | undefined;
+  hookAt: Vector3 | undefined;
+}
+
+/** A use and what came of it: a cast and its hook, or a trip and its outcome, and how far the user moved. */
+async function useAndSee(test: Test, p: SimulatedPlayer, w: Witness): Promise<Seen> {
+  const from = { ...p.location };
+  const use = await useRod(test, p, w);
+  const o = use.kind === "trip" ? await tripOutcome(test, p, use.tick, TRIP_WAIT_TICKS) : undefined;
+  const at = { ...p.location };
+  return { kind: use.kind, outcome: o?.outcome ?? "-", ticks: o === undefined ? -1 : o.tick - use.tick, moved: dist(from, at), at, hook: use.hook, hookAt: use.hookAt };
+}
+
+const seenText = (test: Test, u: Seen): string =>
+  u.kind === "trip"
+    ? `trip ${u.outcome} after ${u.ticks} ticks, moved ${u.moved.toFixed(2)} to rel${rel(test, u.at)}`
+    : `${u.kind}${u.hookAt === undefined ? "" : ` (hook at rel${rel(test, u.hookAt)})`}, moved ${u.moved.toFixed(2)}`;
+
+/** A trip that arrived on the plate cell `plate`. */
+const arrivedOn = (u: Seen, plate: Vector3): boolean => u.kind === "trip" && u.outcome === "arrived" && inCell(u.at, plate);
+
+/** A plain cast: a hook, no trip, the user where they stood. */
+const plainCast = (u: Seen): boolean => u.kind === "cast" && u.moved < 0.01;
+
 // ------------------------------------------------------------- the binder's death voids every binding (AC1, AC4)
 
 registerAsync("andrew", "pear_owner_death_voids", async (test: Test): Promise<void> => {
@@ -343,6 +425,13 @@ registerAsync("andrew", "pear_owner_death_voids", async (test: Test): Promise<vo
     );
     test.assert(alive.strangerSelf === "foreign", `B is not a stranger to A's binding before the death: ${alive.strangerSelf}`);
 
+    // Control: the gate honours A's binding in this life — a fourth rod, bound alike, takes A to the plate.
+    const r0 = await bindFresh(test, a, 3, AIM, w);
+    const ctl = await useAndSee(test, a, w);
+    log(`death control RESULT A's use of rod0 in life ${epoch0}: ${seenText(test, ctl)} binding after=${bindingText(test, bindingOf(rodOf(a, r0.rodId)))}`);
+    test.assert(arrivedOn(ctl, r0.binding.pos), `control: A's own binding did not take A to the plate (${seenText(test, ctl)}) — nothing below would mean anything`);
+    await home(test, a, CAST_FROM);
+
     // The death. Nothing touches the rods: the drop spills on its own, the chest and B's hand are left alone.
     const deaths0 = ownerStats.deaths;
     const died = await killAndWait(test, a, w);
@@ -374,11 +463,11 @@ registerAsync("andrew", "pear_owner_death_voids", async (test: Test): Promise<vo
       "the death rewrote a rod: the void comes from the epoch alone, no rod is searched or touched"
     );
 
-    // A stranger picked the rod up after the death: a plain cast.
+    // A stranger holds the rod after the death: a plain cast.
     await arm(test, b, slotOf(b, r3.rodId) as number, { x: 6.5, y: 2, z: 2.5 });
-    const hookB = await tryCast(test, b, w);
-    log(`death stranger_cast RESULT B on rod3: hook=${hookB === undefined ? "none" : `rel${rel(test, hookB.location)}`} binding=${bindingText(test, bindingOf(rodOf(b, r3.rodId)))}`);
-    test.assert(hookB !== undefined, "B's use of A's rod after A's death did not cast");
+    const useB = await useAndSee(test, b, w);
+    log(`death stranger_cast RESULT B on rod3: ${seenText(test, useB)} binding=${bindingText(test, bindingOf(rodOf(b, r3.rodId)))}`);
+    test.assert(plainCast(useB), `B's use of A's rod after A's death was not a plain cast: ${seenText(test, useB)}`);
     removeHooksOf(test, b);
     await test.idle(2);
 
@@ -404,21 +493,21 @@ registerAsync("andrew", "pear_owner_death_voids", async (test: Test): Promise<vo
     const lore = [r1.rodId, r2.rodId].map((id) => rodOf(a, id)?.getLore().join("|"));
     fill(test, FIELD_MIN, FIELD_MAX, "minecraft:air");
     await arm(test, a, slot1, AIM);
-    const hook1 = await tryCast(test, a, w);
+    const use1 = await useAndSee(test, a, w);
     const after1 = bindingOf(rodOf(a, r1.rodId));
-    if (hook1?.isValid === true) hook1.remove();
+    removeHooksOf(test, a);
     await test.idle(2);
     await arm(test, a, 1, AIM);
-    const hook2 = await tryCast(test, a, w);
-    if (hook2?.isValid === true) hook2.remove();
+    const use2 = await useAndSee(test, a, w);
+    removeHooksOf(test, a);
     await test.idle(2);
     log(
       `death returned RESULT epoch=${lifeEpochOf(a)} A on rod1(picked up)=${back.rod1} [${lore[0]}] rod2(from chest)=${back.rod2} [${lore[1]}]; ` +
-        `rod1 use: hook=${hook1 === undefined ? "none" : "cast"} binding=${bindingText(test, after1)}; rod2 use: hook=${hook2 === undefined ? "none" : "cast"}`
+        `rod1 use: ${seenText(test, use1)} binding=${bindingText(test, after1)}; rod2 use: ${seenText(test, use2)}`
     );
     test.assert(back.rod1 === "unbound" && back.rod2 === "unbound", `a rod back in A's hands after the death still carries its dead record: ${JSON.stringify(back)}`);
     test.assert(lore.every((l) => l === "Pearl Rod|unbound"), `the lore of a rod back in A's hands does not read unbound: ${lore.join(" ; ")}`);
-    test.assert(hook1 !== undefined && hook2 !== undefined, "A's use of a rod bound in the past life did not cast");
+    test.assert(plainCast(use1) && plainCast(use2), `A's use of a rod bound in the past life was not a plain cast: ${seenText(test, use1)} ; ${seenText(test, use2)}`);
 
     // The new binding: A's own hit in the new life binds rod 1 afresh, and that one is honoured.
     fill(test, FIELD_MIN, FIELD_MAX, STONE_PLATE);
@@ -427,9 +516,11 @@ registerAsync("andrew", "pear_owner_death_voids", async (test: Test): Promise<vo
     await cast(test, a, w);
     const fresh = await awaitBinding(test, a, r1.rodId, r1.binding);
     const freshHonour = honourFor(a, rodOf(a, r1.rodId));
-    log(`death rebound RESULT rod1 new binding=${bindingText(test, fresh)} A=${freshHonour}`);
+    const tripNew = await useAndSee(test, a, w);
+    log(`death rebound RESULT rod1 new binding=${bindingText(test, fresh)} A=${freshHonour}; A's next use: ${seenText(test, tripNew)}`);
     test.assert(fresh !== undefined && fresh.epoch === lifeEpochOf(a) && fresh.epoch === epoch0 + 1, `the new binding is not in the new life: ${bindingText(test, fresh)}`);
     test.assert(freshHonour === "honoured", `A's own binding in the new life is not honoured: ${freshHonour}`);
+    test.assert(fresh !== undefined && arrivedOn(tripNew, fresh.pos), `A's own binding in the new life did not take A to the plate: ${seenText(test, tripNew)}`);
   } finally {
     w.close();
     removeHooksOf(test, a);
@@ -463,21 +554,19 @@ registerAsync("andrew", "pear_owner_stranger", async (test: Test): Promise<void>
     log(`stranger held RESULT A bound ${bindingText(test, r.binding)}; in B's hand: ${honourText(b, rodOf(b, r.rodId))}, A would be ${held.a}`);
     test.assert(held.b === "foreign" && held.a === "honoured", `after the hand-over: ${JSON.stringify(held)}`);
 
-    // B uses it: a plain cast onto a bare floor, and A's binding stays as it was.
-    const startB = b.location;
+    // B uses it: a plain cast onto a bare floor — no trip to A's plate — and A's binding stays as it was.
     await arm(test, b, slotB, AIM_B);
-    const hookB = await tryCast(test, b, w);
+    const uses0 = teleportStats.uses;
+    const useB = await useAndSee(test, b, w);
     await test.idle(10);
     const afterCast = bindingOf(rodOf(b, r.rodId));
-    const movedB = Math.hypot(b.location.x - startB.x, b.location.z - startB.z);
     log(
-      `stranger cast RESULT B's use: hook=${hookB === undefined ? "none" : `rel${rel(test, hookB.location)} valid=${hookB.isValid}`} B moved ${movedB.toFixed(2)} ` +
+      `stranger cast RESULT B's use: ${seenText(test, useB)} gate trips+${teleportStats.uses - uses0} hook_valid=${useB.hook?.isValid === true} ` +
         `binding=${bindingText(test, afterCast)} (A's: ${sameBinding(afterCast, r.binding)})`
     );
-    test.assert(hookB !== undefined, "B's use of A's bound rod did not cast");
+    test.assert(plainCast(useB) && teleportStats.uses === uses0, `B's use of A's bound rod was not a plain cast: ${seenText(test, useB)}`);
     test.assert(sameBinding(afterCast, r.binding), `B's cast changed A's binding: ${bindingText(test, afterCast)}`);
-    test.assert(movedB < 1, `B moved ${movedB.toFixed(2)} blocks on a use of A's binding`);
-    if (hookB?.isValid === true) hookB.remove();
+    removeHooksOf(test, b);
     await test.idle(4);
 
     // B's own hook lands in a plate: the binding is B's now, in B's life; A is the stranger.
@@ -491,6 +580,9 @@ registerAsync("andrew", "pear_owner_stranger", async (test: Test): Promise<void>
     test.assert(mine !== undefined && mine.owner === b.id && mine.epoch === lifeEpochOf(b), `B's hit did not bind the rod to B: ${bindingText(test, mine)}`);
     test.assert(mine?.type === "minecraft:heavy_weighted_pressure_plate", `B's binding names ${mine?.type}, not B's plate`);
     test.assert(flipped.b === "honoured" && flipped.a === "foreign", `after B's binding: ${JSON.stringify(flipped)}`);
+    const tripB = await useAndSee(test, b, w);
+    log(`stranger trip RESULT B's next use: ${seenText(test, tripB)}`);
+    test.assert(mine !== undefined && arrivedOn(tripB, mine.pos), `B's own binding did not take B to B's plate: ${seenText(test, tripB)}`);
 
     // Control (L0-pear-ac04): A's own rod, alive, through a chest and a ground drop, is still A's.
     const own = await bindFresh(test, a, 1, AIM_A, w);
@@ -506,8 +598,13 @@ registerAsync("andrew", "pear_owner_stranger", async (test: Test): Promise<void>
     if (ground === undefined) return;
     await pickUp(test, a, ground, own.rodId);
     const roundTrip = honourFor(a, rodOf(a, own.rodId));
-    log(`stranger control RESULT A's own rod after chest + ground drop: ${honourText(a, rodOf(a, own.rodId))} binding=${bindingText(test, bindingOf(rodOf(a, own.rodId)))}`);
+    const ownText = honourText(a, rodOf(a, own.rodId));
+    a.selectedSlotIndex = slotOf(a, own.rodId) as number;
+    await test.idle(1);
+    const tripA = await useAndSee(test, a, w);
+    log(`stranger control RESULT A's own rod after chest + ground drop: ${ownText} binding=${bindingText(test, own.binding)}; A's use: ${seenText(test, tripA)}`);
     test.assert(roundTrip === "honoured", `A's own rod lost its binding on a chest and a drop: ${roundTrip}`);
+    test.assert(arrivedOn(tripA, own.binding.pos), `A's own rod after a chest and a drop did not take A to the plate: ${seenText(test, tripA)}`);
   } finally {
     w.close();
     removeHooksOf(test, a);
@@ -522,3 +619,151 @@ registerAsync("andrew", "pear_owner_stranger", async (test: Test): Promise<void>
   .maxTicks(2400)
   .tag("andrew");
 
+
+// ------------------------------------------------------------- a death while the trip is under way ends it (AC5)
+
+/** The Pearl Rod lines of the actionbar, from a spy on the native setActionBar every module sends through. */
+class Bars {
+  private readonly lines: Array<{ key: string; tick: number }> = [];
+  private readonly original = ScreenDisplay.prototype.setActionBar;
+
+  constructor() {
+    const lines = this.lines;
+    const original = this.original;
+    ScreenDisplay.prototype.setActionBar = function (this: ScreenDisplay, ...args: Parameters<ScreenDisplay["setActionBar"]>): void {
+      const m = args[0];
+      const key = typeof m === "object" && m !== null && !Array.isArray(m) && typeof m.translate === "string" ? m.translate : "";
+      if (key.startsWith("andrew.pearl_rod.")) lines.push({ key: key.slice("andrew.pearl_rod.".length), tick: system.currentTick });
+      original.apply(this, args);
+    };
+  }
+
+  since(tick: number): string[] {
+    return this.lines.filter((l) => l.tick >= tick).map((l) => l.key);
+  }
+
+  close(): void {
+    ScreenDisplay.prototype.setActionBar = this.original;
+  }
+}
+
+function nineLoaded(dim: Dimension, at: Vector3): boolean {
+  for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) if (!dim.isChunkLoaded({ x: at.x + dx, y: at.y, z: at.z + dz })) return false;
+  return dim.getBlock(at) !== undefined;
+}
+
+interface DeathCase {
+  label: string;
+  keepInventory: boolean;
+  /**
+   * `taken`: in the tick the gate took the use, before the trip's first step. `ready`: in the first tick the trip holds
+   * its area with the plate loaded — the tick's interval would move the player; a death reads health 0 at once, but
+   * its entityDie arrives after that interval (BDS 1.26.51.1, a GameTest continuation runs before the interval).
+   */
+  when: "taken" | "ready";
+}
+
+const DEATH_CASES: readonly DeathCase[] = [
+  { label: "taken", keepInventory: false, when: "taken" },
+  { label: "ready", keepInventory: false, when: "ready" },
+  { label: "ready_keep", keepInventory: true, when: "ready" },
+];
+
+registerAsync("andrew", "pear_owner_death_mid_trip", async (test: Test): Promise<void> => {
+  const a = await survivor(test, CAST_FROM, "po_traveller");
+  setSpawnHere(test, a, CAST_FROM);
+  const w = new Witness();
+  const bars = new Bars();
+  const keep = world.gameRules.keepInventory;
+  const dim = test.getDimension();
+  const failures: string[] = [];
+  try {
+    fill(test, FIELD_MIN, FIELD_MAX, STONE_PLATE);
+    await test.idle(2);
+
+    // Control: the same trip with nobody dying arrives on the plate.
+    const c = await bindFresh(test, a, 0, AIM, w);
+    const ctl = await useAndSee(test, a, w);
+    log(`mid_trip control RESULT ${seenText(test, ctl)} bars=[${bars.since(0).join(",")}]`);
+    test.assert(arrivedOn(ctl, c.binding.pos), `control: the trip did not arrive (${seenText(test, ctl)}) — a death could not interrupt anything`);
+    await home(test, a, CAST_FROM);
+    inventoryOf(a).setItem(0, undefined);
+
+    for (const k of DEATH_CASES) {
+      world.gameRules.keepInventory = k.keepInventory;
+      const r = await bindFresh(test, a, 0, AIM, w);
+      removeHooksOf(test, a);
+      await test.idle(2);
+      const from = { ...a.location };
+      const epoch0 = lifeEpochOf(a);
+      const arrived0 = teleportStats.outcomes.arrived ?? 0;
+      const use = await useRod(test, a, w);
+      if (use.kind !== "trip") {
+        failures.push(`${k.label}: the gate did not take A's use as a trip (${use.kind})`);
+        continue;
+      }
+      const ended = (): string | undefined => {
+        const o = lastOutcome.get(a.id);
+        return o !== undefined && o.tick >= use.tick ? o.outcome : undefined;
+      };
+      for (let t = 0; k.when === "ready" && t < 5 && heldAreaNames().length === 0 && ended() === undefined; t++) await test.idle(1);
+      const holding = pendingTrips() === 1 && heldAreaNames().length === 1 && ended() === undefined;
+      const state = `pending=${pendingTrips()} areas=[${heldAreaNames().join(",")}] plate_loaded=${nineLoaded(dim, r.binding.pos)} ended=${ended() ?? "no"}`;
+      const killAt = system.currentTick;
+      a.kill();
+      const hp = a.getComponent("minecraft:health")?.currentValue;
+      const o = await tripOutcome(test, a, use.tick, 40);
+      const at = { ...a.location };
+      await test.idle(DEATH_WAIT_TICKS);
+      const kept = k.keepInventory ? bindingOf(rodOf(a, r.rodId)) : undefined;
+      const line =
+        `mid_trip ${k.label} RESULT keepInventory=${k.keepInventory} kill at use+${killAt - use.tick} (${state}) hp_after_kill=${hp}; ` +
+        `outcome=${o?.outcome ?? "none"} at use+${o === undefined ? "-" : o.tick - use.tick}${o?.detail ? ` (${o.detail})` : ""} moved ${dist(from, at).toFixed(2)} ` +
+        `bars=[${bars.since(use.tick).join(",")}] arrivals+${(teleportStats.outcomes.arrived ?? 0) - arrived0} after: trips=${pendingTrips()} areas=[${heldAreaNames().join(",")}] ` +
+        `epoch ${epoch0}->${lifeEpochOf(a)}${k.keepInventory ? ` rod in the dead hand: ${bindingText(test, kept)}` : ""}`;
+      log(line);
+      const problems: string[] = [];
+      if (k.when === "ready" && !holding) problems.push("setup: the trip was not holding its area when A died");
+      if (k.when === "taken" && killAt !== use.tick) problems.push(`setup: the kill came ${killAt - use.tick} tick(s) after the use`);
+      if (o?.outcome !== "died") problems.push(`outcome ${o?.outcome ?? "none"}`);
+      if (dist(from, at) >= 0.01) problems.push(`moved ${dist(from, at).toFixed(2)}`);
+      if (bars.since(use.tick).length > 0) problems.push(`told [${bars.since(use.tick).join(",")}]`);
+      if ((teleportStats.outcomes.arrived ?? 0) !== arrived0) problems.push("an arrival was counted");
+      if (pendingTrips() !== 0 || heldAreaNames().length !== 0) problems.push("a trip or an area outlived the death");
+      if (lifeEpochOf(a) !== epoch0 + 1) problems.push(`epoch ${epoch0}->${lifeEpochOf(a)}`);
+      if (problems.length > 0) failures.push(`${k.label}: ${problems.join("; ")}`);
+
+      // Back in a new life: the rod (picked up, or kept through the death) reads unbound and casts.
+      await respawnAt(test, a, CAST_FROM);
+      if (slotOf(a, r.rodId) === undefined) {
+        const drop = await droppedRod(test, test.worldLocation(CAST_FROM), r.rodId);
+        if (drop !== undefined) await pickUp(test, a, drop, r.rodId);
+      }
+      const slot = slotOf(a, r.rodId);
+      if (slot === undefined) {
+        failures.push(`${k.label}: the rod is neither in A's inventory nor on the ground after the death`);
+        continue;
+      }
+      await arm(test, a, slot, { x: 0.5, y: 2, z: 0.5 });
+      const lore = rodOf(a, r.rodId)?.getLore().join("|");
+      const again = await useAndSee(test, a, w);
+      log(`mid_trip ${k.label} back RESULT epoch=${lifeEpochOf(a)} rod lore=[${lore}] use: ${seenText(test, again)}`);
+      if (lore !== "Pearl Rod|unbound" || !plainCast(again)) failures.push(`${k.label}: back in a new life the rod reads [${lore}] and its use is ${seenText(test, again)}`);
+      removeHooksOf(test, a);
+      inventoryOf(a).setItem(slot, undefined);
+      await home(test, a, CAST_FROM);
+    }
+  } finally {
+    world.gameRules.keepInventory = keep;
+    bars.close();
+    w.close();
+    removeHooksOf(test, a);
+    fill(test, FIELD_MIN, FIELD_MAX, "minecraft:air");
+  }
+  log(`mid_trip RESULT ${failures.length === 0 ? "every death ended its trip" : failures.join(" | ")}`);
+  test.assert(failures.length === 0, failures.join(" | "));
+  test.succeed();
+})
+  .structureName(STRUCTURE)
+  .maxTicks(3000)
+  .tag("andrew");

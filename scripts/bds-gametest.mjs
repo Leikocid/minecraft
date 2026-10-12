@@ -564,6 +564,7 @@ const EXPECTED_TESTS = [
   // PEAR-OWNER-01 — src/gametest/pear-owner.ts (spec v3 §7, C-45, L0-pear-ac04): the binding belongs to the binder's life
   'andrew:pear_owner_death_voids',
   'andrew:pear_owner_stranger',
+  'andrew:pear_owner_death_mid_trip',
   // PEAR-PROBE-01 — src/gametest/pear-probe.ts (L0-pear-ac07): docs/feedback/probe-pearl.md
   'andrew:probe_pearl_hook_plates',
   'andrew:probe_pearl_hook_owner',
