@@ -58,6 +58,7 @@ import "./probe-loot";
 import "./probe-give";
 import "./legendary-craftgate";
 import "./vanilla-recipes";
+import "./recipes-vanilla";
 import "./storm-damage";
 import "./storm-active";
 import "./storm-passive";

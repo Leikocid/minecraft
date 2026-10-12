@@ -569,6 +569,12 @@ const EXPECTED_TESTS = [
   'andrew:probe_ench_table_pool',
   // ENCH-DATA-01 — src/gametest/ench-data.ts (L0-ench-ac06): the live engine against src/enchanting/eligibility.ts
   'andrew:ench_data_parity',
+  // RCPE-VNLA-01 — src/gametest/recipes-vanilla.ts (spec v3 §2-3, R-uwbw-004, ADR-uwbw-rc, xasm43)
+  'andrew:vanilla_recipe_mace_new_and_old',
+  'andrew:vanilla_recipe_rocket_new_and_old',
+  'andrew:vanilla_recipe_mace_rocket_negative_controls',
+  'andrew:vanilla_recipe_fixed_position_probe',
+  'andrew:vanilla_recipe_rocket_boosts_elytra',
 ];
 
 // A renamed scenario would otherwise drop out of the release gate silently.
