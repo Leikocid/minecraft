@@ -551,6 +551,10 @@ const EXPECTED_TESTS = [
   'andrew:probe_ubow_shield',
   'andrew:probe_ubow_buckets',
   'andrew:probe_ubow_rocket',
+  // UBOW-FIRE-01 — src/gametest/ubow-fire.ts (L0-uwbw-r002, L0-uwbw-esfr, L0-xasm38)
+  'andrew:ubow_fire_normal_hit',
+  'andrew:ubow_fire_water',
+  'andrew:ubow_fire_super',
 // TRDT-DMG-01 — src/gametest/trident-damage.ts (L0-trdt-r002, L0-trdt-a002, L0-adr-twlt)
   'andrew:trident_damage_melee',
   'andrew:trident_damage_thrown',
