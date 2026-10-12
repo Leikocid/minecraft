@@ -9,6 +9,7 @@ import { bindingOf, lifeEpochOf, plateGeneration } from "./bind";
 import { BINDING_KEYS, type Binding, type Vec3, dimensionName } from "./bind-rules";
 import { isPearlRodStack } from "./item";
 import { MARK_KEY, ROD_ID, unboundLore } from "./item-rules";
+import { stillInLife } from "./owner";
 import {
   ARRIVAL_SOUND,
   type CellRead,
@@ -190,7 +191,7 @@ function end(trip: Trip, outcome: Outcome, detail = ""): void {
 /** The tick after the use: the dimension, a slot from the world budget, and the preload area. */
 function start(trip: Trip): void {
   if (!trip.player.isValid) return end(trip, "offline");
-  if (trip.died || lifeEpochOf(trip.player) !== trip.epoch) return end(trip, "died");
+  if (trip.died || !stillInLife(trip.player, trip.epoch)) return end(trip, "died");
   teleportStats.starts++;
   const { binding } = trip;
   let dest: Dimension | undefined;
@@ -258,7 +259,8 @@ function arrive(trip: Trip, dest: Dimension): void {
 
 function check(trip: Trip): void {
   const online = trip.player.isValid;
-  const alive = online && !trip.died && lifeEpochOf(trip.player) === trip.epoch;
+  // A death reads health 0 at once, but its entityDie — trip.died and the epoch bump — arrives after this interval.
+  const alive = online && !trip.died && stillInLife(trip.player, trip.epoch);
   const dest = trip.dest;
   if (dest === undefined) return end(trip, "failed", "loading without a destination");
   const verdict = waitVerdict({ online, alive, loaded: alive && isLoaded(dest, trip.binding.pos), tick: system.currentTick, deadline: trip.deadline });

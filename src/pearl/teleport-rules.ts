@@ -3,6 +3,7 @@
 // Values in, values out: no engine call, so tests/pearl-teleport.test.mjs bundles this file with esbuild.
 
 import { type Binding, type Vec3, isPlateType } from "./bind-rules";
+import { isHonoured } from "./owner-rules";
 
 /** The preload gives up after 10 s (xasm42). The probe measured 2–31 ticks (Q5). */
 export const PRELOAD_TIMEOUT_TICKS = 200;
@@ -26,7 +27,7 @@ export interface User {
  * after a death, casts like a vanilla rod; their own hit then overwrites the record.
  */
 export function useVerdict(binding: Binding | undefined, user: User, pending: boolean): UseVerdict {
-  if (binding === undefined || binding.owner !== user.id || binding.epoch !== user.epoch) return "vanilla";
+  if (!isHonoured(binding, user)) return "vanilla";
   return pending ? "travelling" : "travel";
 }
 
@@ -80,7 +81,7 @@ export function dimensionVerdict(from: string, to: string, known: boolean, cross
 export interface WaitState {
   /** The player entity is still valid (online). */
   online: boolean;
-  /** No death since the use: no entityDie, and the life epoch has not moved. */
+  /** No death since the use: health above 0, no entityDie, and the life epoch has not moved (`owner.ts` stillInLife). */
   alive: boolean;
   /** Every preload cell reads loaded and the plate cell answers getBlock. */
   loaded: boolean;

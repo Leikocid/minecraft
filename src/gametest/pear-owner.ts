@@ -293,15 +293,18 @@ function stashInChest(test: Test, p: Player, rodId: string): void {
   inv.setItem(slot, undefined);
 }
 
-/** Moves the rod `rodId` from the chest into `p`'s `slot`. */
-function takeFromChest(test: Test, p: Player, rodId: string, slot: number): void {
+/** Moves the rod `rodId` from the chest into `p`'s first free slot; returns that slot. */
+function takeFromChest(test: Test, p: Player, rodId: string): number {
   const chest = chestOf(test);
+  const inv = inventoryOf(p);
   for (let i = 0; i < chest.size; i++) {
     const s = chest.getItem(i);
     if (rodIdOf(s) !== rodId) continue;
-    inventoryOf(p).setItem(slot, s);
+    const slot = Array.from({ length: inv.size }, (_, n) => n).find((n) => inv.getItem(n) === undefined);
+    if (slot === undefined) throw new Error(`${p.name} has no free slot`);
+    inv.setItem(slot, s);
     chest.setItem(i, undefined);
-    return;
+    return slot;
   }
   throw new Error(`rod ${rodId} is not in the chest`);
 }
@@ -430,6 +433,7 @@ registerAsync("andrew", "pear_owner_death_voids", async (test: Test): Promise<vo
     const ctl = await useAndSee(test, a, w);
     log(`death control RESULT A's use of rod0 in life ${epoch0}: ${seenText(test, ctl)} binding after=${bindingText(test, bindingOf(rodOf(a, r0.rodId)))}`);
     test.assert(arrivedOn(ctl, r0.binding.pos), `control: A's own binding did not take A to the plate (${seenText(test, ctl)}) — nothing below would mean anything`);
+    inventoryOf(a).setItem(slotOf(a, r0.rodId) as number, undefined);
     await home(test, a, CAST_FROM);
 
     // The death. Nothing touches the rods: the drop spills on its own, the chest and B's hand are left alone.
@@ -487,7 +491,7 @@ registerAsync("andrew", "pear_owner_death_voids", async (test: Test): Promise<vo
     await respawnAt(test, a, CAST_FROM);
     test.assert(dropped?.isValid === true, `rod 1 left the ground before A came back for it (spilled at ${spilledAt})`);
     const slot1 = await pickUp(test, a, dropped as Entity, r1.rodId);
-    takeFromChest(test, a, r2.rodId, 1);
+    const slot2 = takeFromChest(test, a, r2.rodId);
     await test.idle(2);
     const back = { rod1: honourFor(a, rodOf(a, r1.rodId)), rod2: honourFor(a, rodOf(a, r2.rodId)) };
     const lore = [r1.rodId, r2.rodId].map((id) => rodOf(a, id)?.getLore().join("|"));
@@ -497,7 +501,7 @@ registerAsync("andrew", "pear_owner_death_voids", async (test: Test): Promise<vo
     const after1 = bindingOf(rodOf(a, r1.rodId));
     removeHooksOf(test, a);
     await test.idle(2);
-    await arm(test, a, 1, AIM);
+    await arm(test, a, slot2, AIM);
     const use2 = await useAndSee(test, a, w);
     removeHooksOf(test, a);
     await test.idle(2);
@@ -588,9 +592,8 @@ registerAsync("andrew", "pear_owner_stranger", async (test: Test): Promise<void>
     const own = await bindFresh(test, a, 1, AIM_A, w);
     stashInChest(test, a, own.rodId);
     await test.idle(2);
-    takeFromChest(test, a, own.rodId, 2);
+    a.selectedSlotIndex = takeFromChest(test, a, own.rodId);
     await test.idle(2);
-    a.selectedSlotIndex = 2;
     await test.idle(1);
     test.assert(a.dropSelectedItem(), "A: dropSelectedItem refused");
     const ground = await droppedRod(test, a.location, own.rodId);
