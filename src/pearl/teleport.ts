@@ -187,10 +187,24 @@ function end(trip: Trip, outcome: Outcome, detail = ""): void {
   );
 }
 
+/**
+ * No death since the use. In the tick of a death the interval already reads health 0 while entityDie, and the epoch bump
+ * it carries, arrive only after it; a missing health component counts as alive.
+ */
+function isAlive(trip: Trip): boolean {
+  return deathOf(trip) === undefined;
+}
+
+function deathOf(trip: Trip): string | undefined {
+  if (trip.died) return "entityDie";
+  if (lifeEpochOf(trip.player) !== trip.epoch) return "life epoch moved";
+  return (trip.player.getComponent("minecraft:health")?.currentValue ?? 1) > 0 ? undefined : "health 0";
+}
+
 /** The tick after the use: the dimension, a slot from the world budget, and the preload area. */
 function start(trip: Trip): void {
   if (!trip.player.isValid) return end(trip, "offline");
-  if (trip.died || lifeEpochOf(trip.player) !== trip.epoch) return end(trip, "died");
+  if (!isAlive(trip)) return end(trip, "died", deathOf(trip));
   teleportStats.starts++;
   const { binding } = trip;
   let dest: Dimension | undefined;
@@ -258,13 +272,14 @@ function arrive(trip: Trip, dest: Dimension): void {
 
 function check(trip: Trip): void {
   const online = trip.player.isValid;
-  const alive = online && !trip.died && lifeEpochOf(trip.player) === trip.epoch;
+  const alive = online && isAlive(trip);
   const dest = trip.dest;
   if (dest === undefined) return end(trip, "failed", "loading without a destination");
   const verdict = waitVerdict({ online, alive, loaded: alive && isLoaded(dest, trip.binding.pos), tick: system.currentTick, deadline: trip.deadline });
   if (verdict === "wait") return;
   if (verdict === "validate") return arrive(trip, dest);
-  end(trip, verdict, verdict === "not-loaded" ? `not loaded after ${PRELOAD_TIMEOUT_TICKS} ticks` : "");
+  const detail = verdict === "not-loaded" ? `not loaded after ${PRELOAD_TIMEOUT_TICKS} ticks` : verdict === "died" ? deathOf(trip) : "";
+  end(trip, verdict, detail);
 }
 
 function guarded(trip: Trip, step: (t: Trip) => void): void {
@@ -303,7 +318,12 @@ export interface TeleportOptions {
   areaPrefix?: string;
 }
 
+let armed = false;
+
+/** Arms the module once per script pack; a second call changes nothing, so two trips can never start for one use. */
 export function registerPearlTeleport(options: TeleportOptions = {}): void {
+  if (armed) return;
+  armed = true;
   areas = options.areas ?? worldAreas;
   areaPrefix = options.areaPrefix ?? areaPrefix;
 
@@ -356,7 +376,7 @@ export function registerPearlTeleport(options: TeleportOptions = {}): void {
       const trip = id === undefined ? undefined : trips.get(id);
       if (trip === undefined) return;
       trip.died = true;
-      if (trip.phase === "loading") guarded(trip, (t) => end(t, "died"));
+      if (trip.phase === "loading") guarded(trip, (t) => end(t, "died", "entityDie"));
     },
     { entityTypes: ["minecraft:player"] }
   );

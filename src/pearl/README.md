@@ -210,8 +210,9 @@ in the same inventory or anyone else's — is not touched: the record lives on t
 
 Spec v3 §7, bound state. The decisions live in `teleport-rules.ts` and the world area budget in `area-pool.ts`. Neither has
 an engine import. `tests/pearl-teleport.test.mjs` runs both under node, and runs `teleport.ts` against a stand-in engine.
-`registerPearlTeleport()` runs at script load. `src/main.ts` arms one copy with `worldAreas`, and the GameTest pack
-(`src/gametest/pear-teleport.ts`) arms its own with a budget of 9 and the prefix `andrew_gt_pearl_`.
+`registerPearlTeleport()` runs at script load, and a second call in the same pack does nothing. `src/main.ts` arms one
+copy with `worldAreas`, and the GameTest pack (`src/gametest/pear-teleport.ts`) arms its own with a budget of 9 and the
+prefix `andrew_gt_pearl_`.
 
 **The use.** `world.beforeEvents.itemUse` of a Pearl Rod:
 - the rod carries a binding, its owner is the user and its epoch is the user's current `andrew:life_epoch` → the use is
@@ -225,8 +226,11 @@ an engine import. `tests/pearl-teleport.test.mjs` runs both under node, and runs
    `tickingarea add x-1 0 z-1 x+1 0 z+1 andrew_pearl_<n>` runs in the destination dimension. Those are the columns of the
    plate and its 8 neighbours, which is every column the spot search reads.
 2. **Wait** (the one shared interval, every tick). The trip waits until the 9 cells read `isChunkLoaded` and the plate
-   cell answers `getBlock`, for at most **200 ticks** (`xasm42`). If the player died (`entityDie`, or a changed epoch) or
-   left the game, the trip ends without a word.
+   cell answers `getBlock`, for at most **200 ticks** (`xasm42`). If the player died or left the game, the trip ends
+   without a word. A death is read three ways: health 0, `entityDie`, or a changed epoch. Health matters because in the
+   tick of a death the interval already reads 0 while `entityDie`, and the epoch bump it carries, arrive only after it
+   (PEAR-OWNER-01's probe). Without it, a destination that loads in that very tick would carry a dead player and clear
+   the binding.
 3. **Check, in order.**
    - The rod, found by its id anywhere in the inventory, must still carry this very binding.
    - The plate cell must hold the same typeId and the world generation must be the same (`L0-pear-ru03`). The
@@ -308,7 +312,8 @@ the engine refuses, then removing them. **Every check of every scenario read 9 o
   - *Stranger*: a second player holding the owner's bound rod casts it: one hook, no bound use, the record unchanged.
   - *Riding*: `addRider` puts the player in a minecart. The trip ejects them and arrives; afterwards they ride nothing,
     and the cart stays.
-  - *Died*: `kill()` during a wait gives `died` 3 ticks after the use, with no actionbar line.
+  - *Died*: `kill()` during a wait gives `died (health 0)` in the kill tick itself, before `entityDie` arrives, with no
+    actionbar line.
 - **`pear_tp_pool_reserve`** (budget of 9 for the GameTest world).
   - *Control, no budget*: an unbudgeted ring loader asked for 12 areas loads 9, which fills the world. A trip is then
     refused by the engine (`busy`). That starvation is what the budget prevents.
