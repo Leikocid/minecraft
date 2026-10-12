@@ -278,11 +278,11 @@ rod's slot. Without a budget (all GameTest structure scenarios) the loaders beha
 
 ### Measured on BDS 1.26.51.1 (private copy of the checks instance, 2026-10-13)
 
-The scenarios bind through a real cast (`pear_tp_near_clears`) or by writing the record onto a fresh rod exactly as
-`bind.ts` writes it (all others). After every outcome each scenario checks four things: the budget holds nothing, no trip
-is pending, no name is held, and the engine still accepts as many areas as at the scenario's start (9 in a GameTest
-world). It counts the last by adding areas until the engine refuses, then removing them. **Every check of every scenario
-read 9 of 9.**
+Tick counts are ranges over the development runs and the gate run. The scenarios bind through a real cast
+(`pear_tp_near_clears`) or by writing the record onto a fresh rod exactly as `bind.ts` writes it (all others). After every
+outcome each scenario checks four things: the budget holds nothing, no trip is pending, no name is held, and the engine
+still accepts as many areas as at the scenario's start (9 in a GameTest world). It counts the last by adding areas until
+the engine refuses, then removing them. **Every check of every scenario read 9 of 9**: 22 checks in the gate run.
 
 - **`pear_tp_near_clears`.** A cast onto a field of stone plates binds rel 3,2,3, and every other plate is cleared. The
   bound use throws no hook. The player moves 3 blocks onto the plate, `arrived` after 1 tick, read-back offset 0.000.
@@ -303,8 +303,8 @@ read 9 of 9.**
   - *Travelling*: a second use during that wait is refused once as `travelling` and adds no area.
   - *Busy (engine)*: 9 raw areas fill the world, so the engine refuses `andrew_gt_pearl_0`: `busy` after 0 ticks, kept.
   - *Dimension refused*: a binding to `andrew:nowhere` gives `dimension-refused`, kept.
-  - *Rod left*: the slot is emptied right after a use bound to the Nether, giving `rod-left` after 4 ticks. The record is
-    still on the removed rod.
+  - *Rod left*: the slot is emptied right after a use bound to the Nether, giving `rod-left` once the Nether loads, after
+    4–13 ticks. The record is still on the removed rod.
   - *Stranger*: a second player holding the owner's bound rod casts it: one hook, no bound use, the record unchanged.
   - *Riding*: `addRider` puts the player in a minecart. The trip ejects them and arrives; afterwards they ride nothing,
     and the cart stays.
@@ -314,13 +314,13 @@ read 9 of 9.**
     refused by the engine (`busy`). That starvation is what the budget prevents.
   - *Budgeted*: a ring search (6 asks) and a find search (5 asks) share the budget and hold **8** (ring 3, find 5). The
     other 3 asks wait, with 6 refusals counted, and the engine has exactly 1 area left. A trip to a pad 200 000 blocks
-    out runs on that slot: 1 rod slot seen, never fewer than 8 structure slots, `arrived` after 3 ticks.
+    out runs on that slot: 1 rod slot seen, never fewer than 8 structure slots, `arrived` after 2–3 ticks.
   - *A second trip*: with the reserve held by a trip that cannot load, a second player's trip is `busy`, refused by the
     budget ("8 structure + 1 pearl of 9"), with the binding kept. Once that trip times out at 200 ticks, the second
     player's next use arrives.
   - After the searches release, all 11 asks have completed and the budget holds 0.
 - **`pear_tp_cross_dimension`.** Pads in the Nether (20 000, y 70), the End (20 000, y 70) and the overworld (120 000).
-  overworld → Nether arrived after 9 ticks, Nether → End after 8, End → overworld after 2. Offset 0.000 each time, and
+  overworld → Nether arrived after 9 ticks, Nether → End after 7–8, End → overworld after 2–3. Offset 0.000 each time, and
   20 ticks later the player was on the ground on stone in the destination dimension.
 - **Regression** (same copy, same day): `pear_bind_*` (4), `pear_item_*` (4), `strf_cmd_find`, `strf_cmd_find_refuses`,
   `windmill_spawn_once`, `windmill_spawn_holds_discovery` and `airship_linked_*` (4) are all green.
