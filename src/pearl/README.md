@@ -325,7 +325,7 @@ the engine refuses, then removing them. **Every check of every scenario read 9 o
     player's next use arrives.
   - After the searches release, all 11 asks have completed and the budget holds 0.
 - **`pear_tp_cross_dimension`.** Pads in the Nether (20 000, y 70), the End (20 000, y 70) and the overworld (120 000).
-  overworld → Nether arrived after 9 ticks, Nether → End after 7–8, End → overworld after 2–3. Offset 0.000 each time, and
+  overworld → Nether arrived after 9–11 ticks, Nether → End after 7–8, End → overworld after 2–3. Offset 0.000 each time, and
   20 ticks later the player was on the ground on stone in the destination dimension.
 - **Regression** (same copy, same day): `pear_bind_*` (4), `pear_item_*` (4), `strf_cmd_find`, `strf_cmd_find_refuses`,
   `windmill_spawn_once`, `windmill_spawn_holds_discovery` and `airship_linked_*` (4) are all green.
