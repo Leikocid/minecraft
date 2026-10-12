@@ -120,3 +120,4 @@ andrew.structure.state.done=done
 andrew.ufo.arrival=A UFO is in the sky!
 andrew.ufo.shot_down=%s shot down the UFO!
 entity.andrew:ufo_saucer.name=UFO
+item.andrew:pearl_rod_token.name=Pearl Rod
