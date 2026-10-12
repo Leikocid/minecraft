@@ -535,6 +535,14 @@ const EXPECTED_TESTS = [
   'andrew:probe_trident_return',
   'andrew:probe_trident_restart_seed',
   'andrew:probe_trident_restart_check',
+  // UBOW-PROBE-01 — src/gametest/ubow-probe.ts (L0-uwbw-pprb rows 1–8): docs/feedback/probe-ubow.md
+  'andrew:probe_ubow_bow',
+  'andrew:probe_ubow_media',
+  'andrew:probe_ubow_fire',
+  'andrew:probe_ubow_rewrite',
+  'andrew:probe_ubow_shield',
+  'andrew:probe_ubow_buckets',
+  'andrew:probe_ubow_rocket',
 // TRDT-DMG-01 — src/gametest/trident-damage.ts (L0-trdt-r002, L0-trdt-a002, L0-adr-twlt)
   'andrew:trident_damage_melee',
   'andrew:trident_damage_thrown',
