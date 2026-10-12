@@ -33,6 +33,7 @@ import { DRAGON_KATANA, STORM_BLADE, cooldownKey, genLedgerKey } from "../legend
 import { bumpGen, makeMark, markItem } from "../legendary/state";
 import { type StormActivation, activate, observeReleases } from "../storm/active";
 import { ACTIVE_DAMAGE } from "../storm/damage";
+import { setStormRng } from "../storm/passive";
 import { ACTIVE_RANGE } from "../storm/trace";
 import { ACTIVE_STRIKE_DELAYS, visualStats } from "../storm/visuals";
 
@@ -971,9 +972,13 @@ scenario("storm_active_hands_and_melee", 1400, async ({ test, arena, players, fa
       const ok = a.attackEntity(t);
       return { ok, d: before - hp(t) };
     };
+    // The blade's passive (src/storm/passive.ts) rolls 30 % on every landed melee hit with no cooldown of its own;
+    // pin it to a miss so this check reads the blade's bare melee, not an occasional +6 HP proc.
+    setStormRng(() => 1);
     const b = swing(blade, tb);
     const sw = swing(sword, ts);
     const k = swing(katana, tk);
+    setStormRng();
     await test.idle(4);
     const cdAfter = blade.getDynamicProperty(SB_CD);
     if (!b.ok || !(b.d > 0) || Math.abs(b.d - sw.d) > TOL) fails.push(`${tag}: the blade's melee took ${f2(b.d)} (swing ${b.ok}), the diamond sword's ${f2(sw.d)} (swing ${sw.ok})`);
