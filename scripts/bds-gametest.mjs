@@ -575,6 +575,11 @@ const EXPECTED_TESTS = [
   'andrew:pear_item_grid_shifted',
   'andrew:pear_item_hundred_casts',
   'andrew:pear_item_fishes_unbound',
+  // PEAR-BIND-01 — src/gametest/pear-bind.ts (spec v3 §7, L0-xasm41, L0-pear-pr02): the hook binds the rod to a plate
+  'andrew:pear_bind_every_plate',
+  'andrew:pear_bind_negatives',
+  'andrew:pear_bind_hook_in_mob',
+  'andrew:pear_bind_overwrite_two_rods',
   // ENCH-PROBE-01 — src/gametest/ench-probe.ts (spec v3 §4, L0-ench-prob): docs/feedback/probe-enchanting.md
   'andrew:probe_ench_surface',
   'andrew:probe_ench_result_signals',

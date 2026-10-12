@@ -103,3 +103,98 @@ undefined for it), and the swap ignores legendary tokens.
   fishing rod.
 - **The 2×2 grid** must not offer the recipe.
 - **An enchanted rod** used as the ingredient yields an unenchanted Pearl Rod.
+
+## `bind.ts`: the hook enters a plate (`L0-pear-pr02`, `L0-xasm41`, `L0-pear-ent1`)
+
+Spec v3 §7, unbound state. The decisions live in `bind-rules.ts`, which has no engine import; `tests/pearl-bind.test.mjs`
+runs it under node, and runs `bind.ts` against a stand-in engine. `registerPearlBind()` runs at script load; `src/main.ts`
+arms one copy and the GameTest pack (`src/gametest/pear-bind.ts`) arms its own.
+
+**Whose hook.** `entitySpawn` of a `minecraft:fishing_hook` whose `projectile.owner` is a player holding a Pearl Rod in the
+selected slot. The owner is readable at spawn +0 on every hook (probe Q3), so the 3-block `itemUse` correlation of
+`L0-pear-pr02` is not written. The hook is tracked as `{hook, player, rodId}` in memory only; a restart drops it and the
+cast stays a plain one.
+
+**The hit.** One shared interval checks every tracked hook each tick and returns at once when there is none. A hook hits
+a plate when all of these hold:
+- the cell `floor(x), floor(y + 0.001), floor(z)` is a `minecraft:*pressure_plate`. A resting hook sits at exactly the
+  support's top (probe Q2), so `floor(y)` is the plate cell; the 0.001 keeps a y a hair below that integer from naming
+  the support;
+- the hook is at most 0.25 above that cell's floor, or on the ground, or slower than 0.05 blocks a tick;
+- the hook has not hit an entity (`projectileHitEntity` for that hook sets a flag for good);
+- the same cell passed the two checks above on **two consecutive ticks**. A hook stuck in a mob can read low and slow in
+  the very tick it hits, before its `projectileHitEntity` arrives; the second check sees the flag. A hook that skims
+  the lowest quarter of a plate cell and lands next door never gets a second check there.
+
+**The binding.** The rod is looked up by its id in the binder's inventory, the selected slot first; a rod that has left
+the inventory binds nothing and the hook is left to vanilla. Onto that rod, in one `setItem`:
+- the six properties of `L0-pear-ent1`: `andrew:pr_dim` (`Dimension.id`), `andrew:pr_pos` (the **plate's** cell as a
+  Vector3), `andrew:pr_type`, `andrew:pr_owner` (`Player.id`), `andrew:pr_epoch`, `andrew:pr_gen`. A record missing any
+  of them, or with a non-integer cell, reads as unbound (`readBinding`);
+- the lore `Pearl Rod` / `bound: <overworld|nether|the_end> x y z`. The binder's name is never shown (`xasm42`);
+- durability damage 0.
+
+Then `hook.remove()` and the actionbar line `andrew.pearl_rod.bound` («Удочка привязана к плите» / "Rod bound to plate").
+A removed hook leaves no cast behind; the next use casts afresh (probe Q4).
+
+**One binding per rod.** Any hit from a rod overwrites all six properties of that rod, whoever casts it. Another rod —
+in the same inventory or anyone else's — is not touched: the record lives on the item, found by its id.
+
+**What it reads but does not own.**
+- The life epoch: player dynamic property `andrew:life_epoch`, missing = 0. PEAR-OWNER-01 bumps it on death.
+- The plate generation: world dynamic property `andrew:pg:<overworld|nether|the_end>:<x>:<y>:<z>`, missing = 0
+  (`L0-pear-ent2`). PEAR-GEN-01 owns the bumps and the watch set of bound cells; until then every cell reads 0.
+- Honouring a binding on use is PEAR-TP-01. Until it lands, a bound rod still casts on use, and its next hit overwrites.
+
+### Measured on BDS 1.26.51.1 (private copy of the checks instance, 2026-10-13)
+
+- **`pear_bind_every_plate`.** The 17 plate types come from `BlockTypes.getAll()` at run time, `poplar_pressure_plate`
+  included. Each type fills the 7×6 field in front of the caster, and a fresh Pearl Rod casts into it. **17 of 17 bind**,
+  every one the same way:
+  - path (`+tick:relative y`, `p` = inside a plate cell) `1:2.43p 2:2.00p`; at rest from +2;
+  - the rod write (`playerInventoryItemChange`) and the hook's `entityRemove` both land at **+3**, the same tick. The
+    scenario sees the rod bound and the hook gone together at +4, because a GameTest continuation runs before the
+    interval. No sample ever saw the rod bound with its hook still out;
+  - record: the plate cell rel 3,2,3, the plate's type, `overworld`, the caster's id, epoch 0, generation 0. The block at
+    the recorded cell is the plate; `projectileHitBlock` names the support, `stone` at rel 3,1,3, the cell below;
+  - no hook of the caster left in the world 1 and 20 ticks later; damage 0; lore `Pearl Rod|bound: overworld 3 -58 6`.
+
+  Control: the bare floor. The hook rests at +2 in the air cell rel 3,2,3 and the rod stays unbound.
+- **`pear_bind_negatives`.**
+  - *Next to plates.* The hook rests on the bare floor at rel 3,2,3, then stone plates are set into all 8 cells around it.
+    30 checks beside plates, no binding. Positive control in the same place: a plate set into the hook's own cell binds
+    within 2 ticks.
+  - *Over plates.* A long cast on a bare floor laid out to z=16 rests at rel 3,2,6. Plates are then laid on z 1..5 and the
+    same cast is thrown again. It passes through plate cells at dy 0.91 (rel 3,2,3, 1.20 blocks/tick) and dy 0.44
+    (rel 3,2,5, 1.11 blocks/tick), both judged in flight, rests at +3 in the air cell rel 3,2,6, and binds nothing over 30
+    checks. Positive control: a plate set into its cell binds within 2 ticks.
+- **`pear_bind_hook_in_mob`.** A mob spawned without behaviours stands on a field of stone plates and the rod is cast at
+  it.
+  - *Pig.* Hit at +2. `projectileHitEntity` fires on **every tick** the hook stays stuck (53 events). The hit knocks the
+    pig back about 2.5 blocks, still on plates. The hook rides at dy 0.72 (0.8 of a pig's height) with |v| 0.13, never
+    on the ground: it would not bind on height and speed alone (0 of 54 samples).
+  - *Baby turtle* (`minecraft:entity_born`). Hit at +2, 53 events; the hook rides at dy 0.17 once the turtle settles. On
+    height alone it **would** bind (44 of 54 samples); the hit flag keeps it unbound. This is the case the flag is for:
+    any mob under about 0.31 blocks tall.
+  - Control: the same plates with no mob bind a fresh cast.
+- **`pear_bind_overwrite_two_rods`.** Two players cast in the same tick onto two plate types: each rod records its own
+  plate and its own binder (acacia at rel 1,2,3 for A, heavy weighted at rel 5,2,3 for B). A's second rod, in slot 1,
+  binds to cherry; the first rod's record is unchanged. The first rod cast again at a nearer aim is overwritten: mangrove
+  at rel 1,2,2, lore updated. A's second rod and B's rod are unchanged.
+
+### Limitations
+
+- **The hook presses the plate while it lies there.** A resting hook presses wooden and both weighted plates (probe Q2)
+  for the tick before the binding removes it, so a plate wired to a mechanism gets a short pulse. How long the plate
+  stays down after that is not measured.
+- **No binding on a rod outside the inventory.** A rod dropped or put in a chest between the cast and the hit binds
+  nothing. Switching the hand away from the rod kills the hook one tick later anyway (probe Q7).
+- **A hook that ever touched an entity never binds**, even if the mob is gone and the hook falls onto a plate. Reeling in
+  and casting again binds normally.
+
+### For the iPad sheet (`PEAR-IPAD-01-AA`)
+
+- **The cast pose.** The hook is removed by script on binding; the rod should snap back to its normal pose. Only the
+  device shows it.
+- **The actionbar line** «Удочка привязана к плите» / "Rod bound to plate" follows the client language. The lore line
+  `bound: overworld x y z` is a literal string and does not.
