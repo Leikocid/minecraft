@@ -25,6 +25,7 @@ export const BROAD_TESTS = [
   'andrew:storm_passive_damage',
   'andrew:vanilla_recipe_elytra_unlimited',
   'andrew:vanilla_recipe_totem_unlimited',
+  'andrew:vanilla_recipe_rocket_boosts_elytra', // craft + the recipe's whole point: it must actually boost an Elytra
   'andrew:strf_cmd_place', // structures reach the world at all
   'andrew:trident_craft_two_empty_buckets', // the refund an addon recipe cannot do by data
   'andrew:trident_dash_distance',
