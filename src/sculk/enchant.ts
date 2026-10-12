@@ -3,9 +3,10 @@
 // in the tick it reaches a player's inventory, or when the player changes the hotbar slot. Deviation: README.md (C-16).
 
 import { EntityComponentTypes, EquipmentSlot, type ItemStack, type Player, system, world } from "@minecraft/server";
+import { PIERCING } from "../legendary/enchant-rules";
 import { SCULK_CROSSBOW } from "../legendary/registry";
 
-export const PIERCING = "piercing";
+export { PIERCING };
 
 /** `inventory`: playerInventoryItemChange named the slot; `hand`: the hotbar selection changed. */
 export type StripTrigger = "inventory" | "hand";
