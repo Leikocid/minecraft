@@ -9,6 +9,7 @@
 // never forced preparation — §4.7 allows that to the spawn Windmill alone.
 
 import type { BlockTypes, BlockVolume, Dimension } from "@minecraft/server";
+import type { AreaBudget, AreaLease } from "../pearl/area-pool";
 import type { RollDef, StructureId } from "./config";
 import { type PrepPlan, type PrepWorld, BAND_MAX, applyPrep, enginePrepWorld, planPrep, precheck } from "./prepare";
 import { type NetherColumn, type SiteProfile, type SurfaceSample, PROFILES, dryLand, flat, netherFloor } from "./profiles";
@@ -721,8 +722,11 @@ export function engineSpawnHost(
   api: { BlockVolume: typeof BlockVolume; BlockTypes: typeof BlockTypes },
   spawn: () => { x: number; z: number },
   announce?: (s: SpawnState) => void,
-  /** A second search running beside the spawn one needs its own names, or each removes the other's areas. */
-  areas: { prefix?: string; pool?: number } = {}
+  /**
+   * A second search running beside the spawn one needs its own names, or each removes the other's areas. With
+   * `budget`, every add first takes a structure slot from the world budget (L0-adr-prta).
+   */
+  areas: { prefix?: string; pool?: number; budget?: AreaBudget } = {}
 ): SpawnHost {
   const pool = areas.pool ?? AREA_POOL;
   const areaName = (i: number): string => `${areas.prefix ?? AREA_PREFIX}${i}`;
@@ -746,11 +750,15 @@ export function engineSpawnHost(
     announce,
     async load(min, max) {
       let slot = -1;
+      let lease: AreaLease | undefined;
       for (let tries = 0; tries < ADD_RETRIES && slot < 0; tries++) {
         for (let i = 0; i < pool; i++) {
           if (used.has(i)) continue;
+          lease = areas.budget?.tryAcquire("structure");
+          if (areas.budget !== undefined && lease === undefined) break;
           // The engine caps ticking areas at 10 per world; others may hold some.
           if (run(`tickingarea add ${min[0]} 0 ${min[1]} ${max[0]} 0 ${max[1]} ${areaName(i)}`) > 0) slot = i;
+          else lease?.release();
           break;
         }
         if (slot < 0) await wait(10);
@@ -760,6 +768,7 @@ export function engineSpawnHost(
       const remove = (): void => {
         run(`tickingarea remove ${areaName(slot)}`);
         used.delete(slot);
+        lease?.release();
       };
       const chunks: Array<{ x: number; y: number; z: number }> = [];
       for (let x = Math.floor(min[0] / CHUNK); x <= Math.floor(max[0] / CHUNK); x++) {

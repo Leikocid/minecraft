@@ -13,6 +13,7 @@ import type {
   StructureRotation,
   World,
 } from "@minecraft/server";
+import type { AreaBudget } from "../pearl/area-pool";
 import { LINKED_STATUS, LinkedAirships } from "./bodies/airship";
 import { type TypeBody, BODIES, naturalDefs, spotsOf, withLinks } from "./bodies";
 import { EnabledTypes, ROLL_DEFS, type RollDef, type StructureId } from "./config";
@@ -285,6 +286,8 @@ export interface StrfEngineApi {
   /** With it, ring searches load their chunks through temporary ticking areas named `${ringAreaPrefix}_<n>`. */
   system?: RingSystem;
   ringAreaPrefix?: string;
+  /** The world area budget the ring loaders take their slots from (L0-adr-prta); without it they only meet the engine cap. */
+  areaBudget?: AreaBudget;
 }
 
 /** Named areas the ring loader may hold; RING_PARALLEL of them are in use at once. */
@@ -330,7 +333,7 @@ export function engineStrf(api: StrfEngineApi): StrfEngine {
       if (api.system === undefined) return undefined;
       let l = loaders.get(d);
       if (l === undefined) {
-        l = engineRingLoader(dimension(d), api.system, `${api.ringAreaPrefix ?? "andrew_ring"}_${d}`, RING_AREA_POOL);
+        l = engineRingLoader(dimension(d), api.system, `${api.ringAreaPrefix ?? "andrew_ring"}_${d}`, RING_AREA_POOL, api.areaBudget);
         loaders.set(d, l);
       }
       return l;
