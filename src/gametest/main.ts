@@ -108,6 +108,7 @@ import "./trident-throw";
 import "./trident-probe";
 import "./trident-damage";
 import "./trident-legendary";
+import "./ubow-legendary";
 import "./trident-movement";
 import "./ench-probe";
 import "./ench-data";
