@@ -191,3 +191,308 @@ test('the overkill still kills through the strongest defence the formula knows',
   assert.ok(afterArmour(OVERKILL, worst) > 60, `f(${OVERKILL}) = ${afterArmour(OVERKILL, worst)}`);
   assert.ok(afterArmour(OVERKILL, DIAMOND) > 800);
 });
+
+// ---------------------------------------------------------------- the helpers in damage.ts, on a stubbed engine
+// The before-event's contract as BDS gave it: health already reads hp − read inside the handler (STRM-DMG-01 run), and
+// a write to event.damage is the hit. The stub records applyDamage calls and the system.run queue.
+
+const ENGINE_STUB = `
+export const EntityComponentTypes = { Health: 'minecraft:health', Equippable: 'minecraft:equippable' };
+export const ItemComponentTypes = { Enchantable: 'minecraft:enchantable' };
+export const EntityDamageCause = { entityAttack: 'entityAttack', projectile: 'projectile', fall: 'fall', magic: 'magic' };
+export const EquipmentSlot = { Head: 'Head', Chest: 'Chest', Legs: 'Legs', Feet: 'Feet', Mainhand: 'Mainhand' };
+export const GameMode = { Survival: 'Survival', Creative: 'Creative', Spectator: 'Spectator' };
+export class Player {}
+const queue = [];
+export const system = { currentTick: 1000, run(fn) { queue.push(fn); return queue.length; } };
+export const world = { afterEvents: { entityHurt: { subscribe() {} } } };
+export const engine = { queue, drain() { while (queue.length > 0) queue.shift()(); } };
+`;
+
+const engineStub = {
+  name: 'engine-stub',
+  setup(b) {
+    b.onResolve({ filter: /^@minecraft\/server$/ }, () => ({ path: 'mc', namespace: 'engine-stub' }));
+    b.onLoad({ filter: /.*/, namespace: 'engine-stub' }, () => ({ contents: ENGINE_STUB, loader: 'js' }));
+  },
+};
+
+const helperBundle = await build({
+  stdin: {
+    contents: "export * from './src/storm/damage.ts'; export { engine } from '@minecraft/server';",
+    resolveDir: projectRoot,
+    loader: 'ts',
+  },
+  bundle: true,
+  format: 'esm',
+  platform: 'neutral',
+  write: false,
+  plugins: [engineStub],
+});
+const helpers = await import('data:text/javascript;base64,' + Buffer.from(helperBundle.outputFiles[0].text, 'utf-8').toString('base64'));
+const { engine } = helpers;
+
+let entityCount = 0;
+/** A living target as the helpers read it: health, equippable armour + Protection per slot, effects, applyDamage. */
+function makeTarget({ hp, defence = BARE, absorbing = false, typeId = 'minecraft:cow' }) {
+  const perSlot = defence.protection / 4;
+  const piece = { getComponent: () => ({ getEnchantment: (id) => (id === 'protection' && perSlot > 0 ? { level: perSlot } : undefined) }) };
+  const health = { currentValue: hp, setCurrentValue(v) { this.currentValue = v; return true; } };
+  const equippable = { totalArmor: defence.armor, totalToughness: defence.toughness, getEquipment: () => piece };
+  const effects = new Map();
+  if (defence.resistance > 0) effects.set('resistance', { amplifier: defence.resistance - 1 });
+  if (absorbing) effects.set('absorption', { amplifier: 0 });
+  const target = {
+    id: `-${++entityCount}`,
+    typeId,
+    isValid: true,
+    health,
+    applied: [],
+    getComponent: (type) => (type === 'minecraft:health' ? health : type === 'minecraft:equippable' ? equippable : undefined),
+    getEffect: (id) => effects.get(id),
+    applyDamage(amount, options) {
+      target.applied.push({ amount, options });
+      return true;
+    },
+  };
+  return target;
+}
+
+const shooter = { id: '-900', typeId: 'minecraft:player', isValid: true };
+
+/** A hurt before-event of `read` on a target at `hp`: health already reads hp − read. `by: null` = no source. */
+function hurt(target, read, { cause = 'projectile', by = shooter, cancel = false } = {}) {
+  target.health.currentValue -= read;
+  return { hurtEntity: target, damageSource: { cause, damagingEntity: by ?? undefined }, damage: read, cancel };
+}
+
+const quiet = (fn) => {
+  const warn = console.warn;
+  console.warn = () => {};
+  try {
+    return fn();
+  } finally {
+    console.warn = warn;
+  }
+};
+const reports = [];
+helpers.observeStorm((r) => reports.push(r));
+
+// ---------------------------------------------------------------- raiseHit, pinned (AC2): additive, entityAttack only
+
+test('raiseHit: the melee grows by f(6) in place — 14.00 / 3.80 / 1.30 (X26), the signature as it was', () => {
+  assert.equal(typeof helpers.raiseHit, 'function');
+  assert.equal(helpers.raiseHit.length, 1, 'raiseHit(event, damage = PASSIVE_DAMAGE)');
+  for (const [defence, expected] of [[BARE, 14.0], [DIAMOND, 3.8], [NETHERITE_P4, 1.3]]) {
+    const cow = makeTarget({ hp: 40, defence });
+    const event = hurt(cow, afterArmour(8, defence), { cause: 'entityAttack' });
+    const r = quiet(() => helpers.raiseHit(event));
+    assert.equal(r.type, 'raise');
+    assert.equal(r.plan, 'raise');
+    near(event.damage, expected, `raised melee on A${defence.armor} P${defence.protection}`);
+    assert.equal(r.set, event.damage);
+    near(r.bonus, afterArmour(PASSIVE_DAMAGE, defence), 'bonus = f(6)');
+    assert.equal(engine.queue.length, 0);
+  }
+});
+
+test('raiseHit: a projectile, a cancelled hit and a sourceless hit are left alone', () => {
+  for (const [opts, what] of [[{ cause: 'projectile' }, 'projectile'], [{ cause: 'entityAttack', cancel: true }, 'cancelled'], [{ cause: 'entityAttack', by: null }, 'no source']]) {
+    const cow = makeTarget({ hp: 40 });
+    const event = hurt(cow, 9, opts);
+    const r = quiet(() => helpers.raiseHit(event, 14));
+    assert.equal(r.plan, 'none', what);
+    assert.equal(event.damage, 9, what);
+    assert.equal(r.set, undefined, what);
+  }
+});
+
+test('raiseHit: a lethal raise leaves the hit and follows through; a melee that kills alone gets nothing', () => {
+  const cow = makeTarget({ hp: 10 });
+  const event = hurt(cow, 8, { cause: 'entityAttack' });
+  const r = quiet(() => helpers.raiseHit(event));
+  assert.equal(r.plan, 'lethal');
+  assert.equal(event.damage, 8, 'the hit is not rewritten');
+  assert.equal(engine.queue.length, 1);
+  quiet(() => engine.drain());
+  assert.deepEqual(cow.applied, [{ amount: 2 + helpers.OVERKILL, options: { cause: 'entityAttack', damagingEntity: shooter } }]);
+  const lone = makeTarget({ hp: 6 });
+  const alone = hurt(lone, 8, { cause: 'entityAttack' });
+  assert.equal(quiet(() => helpers.raiseHit(alone)).plan, 'kills-alone');
+  assert.equal(alone.damage, 8);
+  assert.equal(engine.queue.length, 0);
+});
+
+// ---------------------------------------------------------------- setHit (AC1): replace, not add, on the causes given
+
+test('setHit: the hit becomes f(14) after armour — 14.00 / 4.76 / 1.57, whatever the arrow read', () => {
+  assert.equal(typeof helpers.setHit, 'function', 'setHit is exported from src/storm/damage.ts');
+  // f(14) on diamond and netherite + P4 is what applyDamage(14) took on BDS (X26 txt:28, txt:47).
+  for (const [defence, expected] of [[BARE, 14.0], [DIAMOND, 4.76], [NETHERITE_P4, 1.57]]) {
+    for (const read of [afterArmour(3, defence), afterArmour(9, defence), afterArmour(25, defence)]) {
+      const target = makeTarget({ hp: 40, defence });
+      const event = hurt(target, read);
+      const r = quiet(() => helpers.setHit(event, 14, { causes: ['projectile'] }));
+      assert.equal(r.type, 'set');
+      assert.equal(r.plan, 'set', `read ${read}`);
+      near(event.damage, expected, `set on A${defence.armor} P${defence.protection} over a read of ${read.toFixed(2)}`);
+      near(event.damage, afterArmour(14, defence), 'event.damage = afterArmour(preArmour)');
+      assert.equal(r.set, event.damage);
+      assert.equal(r.read, read);
+      assert.equal(r.goal, event.damage);
+      assert.deepEqual(r.defence, defence);
+      assert.equal(engine.queue.length, 0);
+    }
+  }
+});
+
+test('negative control: the additive raise of the same arrow is vanilla + 14, not 14 (CX-uwbw-01)', () => {
+  const target = makeTarget({ hp: 40 });
+  const event = hurt(target, 9, { cause: 'entityAttack' });
+  quiet(() => helpers.raiseHit(event, 14));
+  assert.equal(event.damage, 23);
+  const armed = makeTarget({ hp: 40 });
+  const set = hurt(armed, 9);
+  quiet(() => helpers.setHit(set, 14, { causes: ['projectile'] }));
+  assert.equal(set.damage, 14);
+});
+
+test('setHit: Resistance counts — f(14)·(1 − 0.2·R)', () => {
+  for (let level = 1; level <= 4; level++) {
+    const target = makeTarget({ hp: 40, defence: withResistance(BARE, level) });
+    const event = hurt(target, 5);
+    quiet(() => helpers.setHit(event, 14, { causes: ['projectile'] }));
+    near(event.damage, 14 * (1 - 0.2 * level), `R${level}`);
+  }
+});
+
+test('setHit: only the causes it is given; anything else keeps its damage', () => {
+  const cases = [
+    [['projectile'], 'entityAttack', 'none'],
+    [['projectile'], 'fall', 'none'],
+    [['entityAttack'], 'projectile', 'none'],
+    [[], 'projectile', 'none'],
+    [['entityAttack', 'projectile'], 'projectile', 'set'],
+    [['entityAttack', 'projectile'], 'entityAttack', 'set'],
+  ];
+  for (const [causes, cause, plan] of cases) {
+    const target = makeTarget({ hp: 40 });
+    const event = hurt(target, 9, { cause });
+    const r = quiet(() => helpers.setHit(event, 14, { causes }));
+    assert.equal(r.plan, plan, `${cause} with causes [${causes}]`);
+    assert.equal(event.damage, plan === 'none' ? 9 : 14, `${cause} with causes [${causes}]`);
+  }
+});
+
+test('setHit: a cancelled hit and a target with no health are never set', () => {
+  const target = makeTarget({ hp: 40 });
+  const cancelled = hurt(target, 9, { cancel: true });
+  assert.equal(quiet(() => helpers.setHit(cancelled, 14, { causes: ['projectile'] })).plan, 'none');
+  assert.equal(cancelled.damage, 9);
+  const stand = makeTarget({ hp: 40, typeId: 'minecraft:armor_stand' });
+  stand.getComponent = () => undefined;
+  const lifeless = hurt(stand, 9);
+  assert.equal(quiet(() => helpers.setHit(lifeless, 14, { causes: ['projectile'] })).plan, 'none');
+  assert.equal(lifeless.damage, 9);
+});
+
+test('setHit: lethal is judged on the health before the hit (hp left + read), not on the health left', () => {
+  // hp 20, an arrow of 9: the event reads 11 left, yet 14 instead of 9 leaves 6.
+  const target = makeTarget({ hp: 20 });
+  const event = hurt(target, 9);
+  const r = quiet(() => helpers.setHit(event, 14, { causes: ['projectile'] }));
+  assert.equal(r.plan, 'set');
+  assert.equal(event.damage, 14);
+  assert.equal(engine.queue.length, 0);
+});
+
+test('setHit: a lethal 14 writes 0 and follows through with an overkill entityAttack from the shooter', () => {
+  const target = makeTarget({ hp: 10 });
+  const event = hurt(target, 3);
+  const r = quiet(() => helpers.setHit(event, 14, { causes: ['projectile'] }));
+  assert.equal(r.plan, 'lethal');
+  assert.equal(event.damage, 0, 'a lethal rewrite eats the totem (probe-storm P3): the hit deals nothing');
+  assert.equal(r.set, 0);
+  assert.equal(target.applied.length, 0, 'a before-event applies no damage');
+  assert.equal(engine.queue.length, 1);
+  target.health.currentValue = 10;
+  reports.length = 0;
+  quiet(() => engine.drain());
+  assert.deepEqual(target.applied, [{ amount: 10 + helpers.OVERKILL, options: { cause: 'entityAttack', damagingEntity: shooter } }]);
+  const strike = reports.find((x) => x.type === 'strike');
+  assert.equal(strike?.from, 'set');
+  assert.equal(strike?.path, 'lethal');
+  // Exactly at the health before the hit is lethal too.
+  const edge = makeTarget({ hp: 14 });
+  const atEdge = hurt(edge, 4);
+  assert.equal(quiet(() => helpers.setHit(atEdge, 14, { causes: ['projectile'] })).plan, 'lethal');
+  assert.equal(atEdge.damage, 0);
+  quiet(() => engine.drain());
+});
+
+test('setHit: a hit that kills alone and a 14 that kills too — the engine keeps its own hit', () => {
+  const target = makeTarget({ hp: 8 });
+  const event = hurt(target, 9);
+  const r = quiet(() => helpers.setHit(event, 14, { causes: ['projectile'] }));
+  assert.equal(r.plan, 'kills-alone');
+  assert.equal(event.damage, 9);
+  assert.equal(r.set, undefined);
+  assert.equal(engine.queue.length, 0);
+});
+
+test('setHit: a vanilla hit that would kill alone is lowered when f(14) does not kill', () => {
+  // Diamond, hp 4, an arrow of 25 raw: f(25) kills, f(14) = 4.76 kills, f(14) on hp 5 does not.
+  const target = makeTarget({ hp: 5, defence: DIAMOND });
+  const event = hurt(target, afterArmour(25, DIAMOND));
+  const r = quiet(() => helpers.setHit(event, 14, { causes: ['projectile'] }));
+  assert.equal(r.plan, 'set');
+  near(event.damage, 4.76, 'lowered to f(14)');
+});
+
+test('setHit: under absorption the health check means nothing — the set is taken, as with the raise', () => {
+  const target = makeTarget({ hp: 4, absorbing: true });
+  const event = hurt(target, 3);
+  const r = quiet(() => helpers.setHit(event, 14, { causes: ['projectile'] }));
+  assert.equal(r.plan, 'set');
+  assert.equal(event.damage, 14);
+  assert.equal(engine.queue.length, 0);
+});
+
+test('setHit: a hit with no damaging entity is still set; its lethal overkill carries no source', () => {
+  const target = makeTarget({ hp: 40 });
+  const event = hurt(target, 9, { by: null });
+  assert.equal(quiet(() => helpers.setHit(event, 14, { causes: ['projectile'] })).plan, 'set');
+  assert.equal(event.damage, 14);
+  const low = makeTarget({ hp: 5 });
+  const lethal = hurt(low, 2, { by: null });
+  assert.equal(quiet(() => helpers.setHit(lethal, 14, { causes: ['projectile'] })).plan, 'lethal');
+  low.health.currentValue = 5;
+  quiet(() => engine.drain());
+  assert.deepEqual(low.applied, [{ amount: 5 + helpers.OVERKILL, options: { cause: 'entityAttack' } }]);
+});
+
+test('setHit reports to the Storm observers like the raise does', () => {
+  reports.length = 0;
+  const target = makeTarget({ hp: 40, defence: DIAMOND });
+  const event = hurt(target, 2.6);
+  const r = quiet(() => helpers.setHit(event, 14, { causes: ['projectile'] }));
+  assert.deepEqual(reports, [r]);
+  assert.equal(r.damage, 14);
+  assert.equal(r.wielderId, shooter.id);
+  assert.equal(r.targetId, target.id);
+});
+
+test('planSet: replace, lethal on the health before the hit, kills-alone only when both kill', () => {
+  const { planSet } = rules;
+  assert.equal(typeof planSet, 'function', 'planSet is exported from src/storm/damage-rules.ts');
+  assert.deepEqual(planSet(9, 31, 14, false), { kind: 'set', damage: 14 });
+  assert.deepEqual(planSet(20, 20, 14, false), { kind: 'set', damage: 14 });
+  assert.deepEqual(planSet(9, 11, 14, false), { kind: 'set', damage: 14 });
+  assert.deepEqual(planSet(9, 5, 14, false), { kind: 'lethal' });
+  assert.deepEqual(planSet(4, 10, 14, false), { kind: 'lethal' });
+  assert.deepEqual(planSet(9, 0, 14, false), { kind: 'kills-alone' });
+  assert.deepEqual(planSet(9, -1, 14, false), { kind: 'kills-alone' });
+  assert.deepEqual(planSet(9, -1, 4.76, false), { kind: 'set', damage: 4.76 });
+  assert.deepEqual(planSet(9, 0, 14, true), { kind: 'set', damage: 14 });
+  assert.deepEqual(planSet(3, 1, 14, true), { kind: 'set', damage: 14 });
+});
