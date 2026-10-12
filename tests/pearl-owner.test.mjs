@@ -90,6 +90,15 @@ test('a trip goes on only while its traveller is alive and in the life it starte
   assert.equal(R.tripSurvives(0, { health: 0, epoch: 1 }), false);
 });
 
+test('a record is dead only once its binder is known to be in a later life', () => {
+  assert.equal(R.isDeadRecord(BOUND, 3), true, 'the binder died since');
+  assert.equal(R.isDeadRecord(BOUND, 9), true);
+  assert.equal(R.isDeadRecord(BOUND, 2), false, 'the binder in the same life');
+  assert.equal(R.isDeadRecord(BOUND, 1), false, 'an epoch below the record is not proof of a death');
+  assert.equal(R.isDeadRecord(BOUND, undefined), false, 'the binder is offline: unknown, keep it');
+  assert.equal(R.isDeadRecord(undefined, 5), false, 'nothing to erase');
+});
+
 // ------------------------------------------------------------------ owner.ts and bind.ts on a stand-in engine
 
 const stubPlugin = {
@@ -99,7 +108,7 @@ const stubPlugin = {
     b.onLoad({ filter: /.*/, namespace: 'mc-stub' }, () => ({
       loader: 'js',
       contents: `
-        const H = (globalThis.__owner = { intervals: [], worldDp: new Map(), die: [] });
+        const H = (globalThis.__owner = { intervals: [], worldDp: new Map(), die: [], invChange: [], spawn: [], players: new Map() });
         export class Player {}
         export class ItemStack {
           constructor(typeId, amount = 1) {
@@ -122,10 +131,12 @@ const stubPlugin = {
           getAbsoluteTime: () => 99,
           getAllPlayers: () => [],
           getDynamicProperty: (k) => H.worldDp.get(k),
+          getEntity: (id) => H.players.get(id),
           afterEvents: {
-            playerInventoryItemChange: { subscribe(cb) { return cb; } },
+            playerInventoryItemChange: { subscribe(cb) { H.invChange.push(cb); return cb; } },
+            playerSpawn: { subscribe(cb) { H.spawn.push(cb); return cb; } },
             itemUse: { subscribe(cb) { return cb; } },
-            entitySpawn: { subscribe(cb) { H.spawn = cb; return cb; } },
+            entitySpawn: { subscribe(cb) { H.entitySpawn = cb; return cb; } },
             projectileHitEntity: { subscribe(cb) { H.hitEntity = cb; return cb; } },
             entityDie: { subscribe(cb) { H.die.push(cb); return cb; } },
           },
@@ -162,6 +173,9 @@ O.registerPearlBind();
 O.registerPearlOwner();
 const [tick] = H.intervals[0];
 const die = (deadEntity) => { for (const cb of H.die) cb({ deadEntity, damageSource: { cause: 'entityAttack' } }); };
+/** The engine's inventory-change event for the stack now in `slot` of `player`'s inventory. */
+const arrived = (player, slot) => { for (const cb of H.invChange) cb({ player, slot, inventoryType: 'Inventory', itemStack: player.items[slot]?.clone() }); };
+const spawned = (player, initialSpawn = false) => { for (const cb of H.spawn) cb({ player, initialSpawn }); };
 
 const blocks = new Map();
 const overworld = { id: 'minecraft:overworld', getBlock: (c) => ({ typeId: blocks.get(`${c.x},${c.y},${c.z}`) ?? 'minecraft:air' }) };
@@ -172,7 +186,7 @@ function fakePlayer(name) {
   const dp = new Map();
   const touched = { inventory: 0 };
   const container = { size: 36, getItem: (i) => items[i]?.clone(), setItem: (i, s) => { items[i] = s?.clone(); } };
-  return Object.assign(new O.Player(), {
+  const p = Object.assign(new O.Player(), {
     name, id: `id-${name}`, typeId: 'minecraft:player', isValid: true, selectedSlotIndex: 0, items, dp, touched,
     getComponent: (id) => {
       if (id === 'minecraft:inventory') touched.inventory++;
@@ -182,6 +196,8 @@ function fakePlayer(name) {
     setDynamicProperty: (k, v) => { dp.set(k, v); },
     onScreenDisplay: { setActionBar() {} },
   });
+  H.players.set(p.id, p);
+  return p;
 }
 
 let hookIds = 0;
@@ -194,7 +210,7 @@ function bindInto(owner, cell) {
     getComponent: (id) => (id === 'minecraft:projectile' ? { owner } : undefined),
     remove() { this.isValid = false; },
   };
-  H.spawn({ entity: h });
+  H.entitySpawn({ entity: h });
   tick();
   tick();
   assert.equal(h.isValid, false, `${owner.name}'s hook did not bind`);
@@ -297,4 +313,74 @@ test('stillInLife: alive in the same epoch; not once health reads 0, the epoch m
   assert.equal(O.stillInLife(p, 1), true);
   p.isValid = false;
   assert.equal(O.stillInLife(p, 1), false, 'logged out');
+});
+
+const RECORD_KEYS = ['andrew:pr_dim', 'andrew:pr_pos', 'andrew:pr_type', 'andrew:pr_owner', 'andrew:pr_epoch', 'andrew:pr_gen'];
+const recordKeysOn = (stack) => RECORD_KEYS.filter((k) => stack.getDynamicProperty(k) !== undefined);
+
+test('a dead record is erased when the rod reaches an inventory: the binder\'s own, or a stranger\'s while the binder is online', () => {
+  blocks.clear();
+  const a = fakePlayer('dead_binder');
+  const b = fakePlayer('finder');
+  a.items[0] = O.makePearlRod();
+  a.items[1] = O.makePearlRod();
+  bindInto(a, { x: 1, y: 2, z: 1 });
+  a.selectedSlotIndex = 1;
+  bindInto(a, { x: 2, y: 2, z: 2 });
+  const live0 = O.ownerStats.cleared;
+  arrived(a, 0);
+  assert.equal(O.ownerStats.cleared, live0, 'a record in its binder\'s life is kept');
+  b.items[3] = a.items[1];
+  a.items[1] = undefined;
+  die(a);
+  // The binder picks one rod up again; the stranger holds the other.
+  arrived(a, 0);
+  assert.deepEqual(recordKeysOn(a.items[0]), []);
+  assert.deepEqual(a.items[0].getLore(), ['Pearl Rod', 'unbound']);
+  assert.equal(O.honourFor(a, a.items[0]), 'unbound');
+  assert.equal(a.items[0].getDynamicProperty('andrew:pearl_rod') !== undefined, true, 'still a Pearl Rod');
+  arrived(b, 3);
+  assert.deepEqual(recordKeysOn(b.items[3]), [], 'the stranger\'s copy, binder online and dead since');
+  assert.equal(O.ownerStats.cleared - live0, 2);
+});
+
+test('a dead record is kept while the binder is offline, and a live foreign one is never touched', () => {
+  blocks.clear();
+  const a = fakePlayer('away');
+  const b = fakePlayer('keeper');
+  a.items[0] = O.makePearlRod();
+  bindInto(a, { x: 3, y: 2, z: 3 });
+  b.items[0] = a.items[0];
+  a.items[0] = undefined;
+  const cleared0 = O.ownerStats.cleared;
+  arrived(b, 0);
+  assert.equal(O.honourFor(b, b.items[0]), 'foreign');
+  assert.deepEqual(recordKeysOn(b.items[0]), RECORD_KEYS, 'the binder is alive: their binding stays theirs');
+  die(a);
+  H.players.delete(a.id);
+  arrived(b, 0);
+  assert.deepEqual(recordKeysOn(b.items[0]), RECORD_KEYS, 'the binder is offline: nobody can tell, the record stays');
+  assert.equal(O.ownerStats.cleared, cleared0);
+});
+
+test('a spawn sweeps the player\'s own inventory: rods kept through a death lose their dead records, live ones stay', () => {
+  blocks.clear();
+  const a = fakePlayer('keeps_inventory');
+  const c = fakePlayer('other_binder');
+  a.items[0] = O.makePearlRod();
+  a.items[5] = O.makePearlRod();
+  bindInto(a, { x: 4, y: 2, z: 4 });
+  a.selectedSlotIndex = 5;
+  bindInto(a, { x: 5, y: 2, z: 5 });
+  c.items[0] = O.makePearlRod();
+  bindInto(c, { x: 6, y: 2, z: 6 });
+  a.items[9] = c.items[0];
+  c.items[0] = undefined;
+  die(a);
+  spawned(a);
+  assert.deepEqual([0, 5].map((i) => recordKeysOn(a.items[i]).length), [0, 0]);
+  assert.deepEqual([0, 5].map((i) => a.items[i].getLore()[1]), ['unbound', 'unbound']);
+  assert.equal(O.bindingOf(a.items[9]).owner, 'id-other_binder', 'a live binding of somebody else stays');
+  spawned(a, true);
+  assert.equal(O.bindingOf(a.items[9]).owner, 'id-other_binder');
 });

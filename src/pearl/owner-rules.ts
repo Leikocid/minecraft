@@ -31,6 +31,15 @@ export function isHonoured(binding: Binding | undefined, holder: Holder): boolea
   return honourOf(binding, holder) === "honoured";
 }
 
+/**
+ * A record that can never be honoured again: its binder has died since binding (an epoch only grows), so erasing it
+ * loses nothing and puts the "unbound" lore back. `binderEpochNow` is undefined while the binder is offline — unknown,
+ * so the record stays.
+ */
+export function isDeadRecord(binding: Binding | undefined, binderEpochNow: number | undefined): boolean {
+  return binding !== undefined && binderEpochNow !== undefined && binderEpochNow > binding.epoch;
+}
+
 /** The epoch a death writes: one past the stored one, read the way a binding reads it (bind.ts `lifeEpochOf`). */
 export function nextLifeEpoch(stored: unknown): number {
   return counterOf(stored) + 1;

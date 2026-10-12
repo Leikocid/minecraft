@@ -38,6 +38,8 @@ const AIM: Vector3 = { x: 3.5, y: 2, z: 5.5 };
 const CHEST_AT: Vector3 = { x: 6, y: 2, z: 0 };
 /** Far from the death spot, so A's spilled rod cannot roll into B's pick-up range. */
 const BYSTANDER_AT: Vector3 = { x: 6, y: 2, z: 6 };
+/** Where A's spilled rod is put to wait for A: on the platform, off every cast path. */
+const DROP_REST: Vector3 = { x: 0.5, y: 2, z: 0.5 };
 
 const LANE_A: Vector3 = { x: 1, y: 2, z: 0 };
 const LANE_B: Vector3 = { x: 5, y: 2, z: 0 };
@@ -345,6 +347,9 @@ registerAsync("andrew", "pear_owner_death_voids", async (test: Test): Promise<vo
     const deaths0 = ownerStats.deaths;
     const died = await killAndWait(test, a, w);
     const dropped = await droppedRod(test, test.worldLocation(CAST_FROM), r1.rodId);
+    // The death spills it with a random push, off the platform edge in some runs; where it lies is not under test.
+    const spilledAt = dropped === undefined ? "none" : `rel${rel(test, dropped.location)}`;
+    dropped?.teleport(test.worldLocation(DROP_REST));
     const droppedStack = dropped?.getComponent("minecraft:item")?.itemStack;
     const holderA = { id: a.id, epoch: lifeEpochOf(a) };
     const dead = {
@@ -355,7 +360,7 @@ registerAsync("andrew", "pear_owner_death_voids", async (test: Test): Promise<vo
     };
     const records = [bindingOf(droppedStack), bindingOf(chestRod(test, r2.rodId)), bindingOf(rodOf(b, r3.rodId))];
     log(
-      `death dead RESULT died=${died.died} cause=${died.cause} epoch ${died.before}->${died.after} module_deaths+${ownerStats.deaths - deaths0} ` +
+      `death dead RESULT died=${died.died} cause=${died.cause} epoch ${died.before}->${died.after} module_deaths+${ownerStats.deaths - deaths0} rod1 spilled at ${spilledAt} ` +
         `A on rod1(dropped)=${dead.dropped} rod2(chest)=${dead.chest} rod3(B's hand)=${dead.stranger}; B on rod3=${dead.strangerSelf}; ` +
         `records kept=[${records.map((r) => bindingText(test, r)).join(" | ")}]`
     );
@@ -370,23 +375,33 @@ registerAsync("andrew", "pear_owner_death_voids", async (test: Test): Promise<vo
     );
 
     // A stranger picked the rod up after the death: a plain cast.
-    await arm(test, b, slotOf(b, r3.rodId) as number, { x: 0.5, y: 2, z: 1.5 });
+    await arm(test, b, slotOf(b, r3.rodId) as number, { x: 6.5, y: 2, z: 2.5 });
     const hookB = await tryCast(test, b, w);
     log(`death stranger_cast RESULT B on rod3: hook=${hookB === undefined ? "none" : `rel${rel(test, hookB.location)}`} binding=${bindingText(test, bindingOf(rodOf(b, r3.rodId)))}`);
     test.assert(hookB !== undefined, "B's use of A's rod after A's death did not cast");
     removeHooksOf(test, b);
+    await test.idle(2);
+
+    // The rod passes through B's inventory again with its binder online and dead since: the record is erased.
+    const cleared0 = ownerStats.cleared;
+    await handOver(test, b, b, r3.rodId);
+    const rod3 = rodOf(b, r3.rodId);
+    const bRods = [r1.rodId, r2.rodId, r3.rodId].filter((id) => slotOf(b, id) !== undefined).length;
+    log(
+      `death stranger_repick RESULT B re-picked rod3: binding=${bindingText(test, bindingOf(rod3))} lore=[${rod3?.getLore().join("|")}] cleared+${ownerStats.cleared - cleared0} ` +
+        `B carries rods [${[r1, r2, r3].map((r, i) => (slotOf(b, r.rodId) === undefined ? "" : `rod${i + 1}`)).join("")}] (${bRods}) at rel${rel(test, b.location)}; ` +
+        `rod1 on the ground: ${dropped?.isValid === true ? `rel${rel(test, dropped.location)}` : "gone"}`
+    );
+    test.assert(bindingOf(rod3) === undefined && rod3?.getLore()[1] === "unbound", `B's copy kept A's dead record: ${bindingText(test, bindingOf(rod3))}`);
 
     // A respawns and gets rod 1 back from the ground and rod 2 from the chest: both need a new binding.
-    // A respawns on the death spot and may pick rod 1 up by walking onto it; otherwise it is put at A's feet.
     await respawnAt(test, a, CAST_FROM);
-    let slot1 = slotOf(a, r1.rodId);
-    if (slot1 === undefined) {
-      test.assert(dropped?.isValid === true, "rod 1 is neither on the ground nor in A's inventory");
-      slot1 = await pickUp(test, a, dropped as Entity, r1.rodId);
-    }
+    test.assert(dropped?.isValid === true, `rod 1 left the ground before A came back for it (spilled at ${spilledAt})`);
+    const slot1 = await pickUp(test, a, dropped as Entity, r1.rodId);
     takeFromChest(test, a, r2.rodId, 1);
     await test.idle(2);
     const back = { rod1: honourFor(a, rodOf(a, r1.rodId)), rod2: honourFor(a, rodOf(a, r2.rodId)) };
+    const lore = [r1.rodId, r2.rodId].map((id) => rodOf(a, id)?.getLore().join("|"));
     fill(test, FIELD_MIN, FIELD_MAX, "minecraft:air");
     await arm(test, a, slot1, AIM);
     const hook1 = await tryCast(test, a, w);
@@ -398,10 +413,11 @@ registerAsync("andrew", "pear_owner_death_voids", async (test: Test): Promise<vo
     if (hook2?.isValid === true) hook2.remove();
     await test.idle(2);
     log(
-      `death returned RESULT epoch=${lifeEpochOf(a)} A on rod1(picked up)=${back.rod1} rod2(from chest)=${back.rod2}; ` +
+      `death returned RESULT epoch=${lifeEpochOf(a)} A on rod1(picked up)=${back.rod1} [${lore[0]}] rod2(from chest)=${back.rod2} [${lore[1]}]; ` +
         `rod1 use: hook=${hook1 === undefined ? "none" : "cast"} binding=${bindingText(test, after1)}; rod2 use: hook=${hook2 === undefined ? "none" : "cast"}`
     );
-    test.assert(back.rod1 === "past-life" && back.rod2 === "past-life", `a rod back in A's hands after the death is still honoured: ${JSON.stringify(back)}`);
+    test.assert(back.rod1 === "unbound" && back.rod2 === "unbound", `a rod back in A's hands after the death still carries its dead record: ${JSON.stringify(back)}`);
+    test.assert(lore.every((l) => l === "Pearl Rod|unbound"), `the lore of a rod back in A's hands does not read unbound: ${lore.join(" ; ")}`);
     test.assert(hook1 !== undefined && hook2 !== undefined, "A's use of a rod bound in the past life did not cast");
 
     // The new binding: A's own hit in the new life binds rod 1 afresh, and that one is honoured.
