@@ -173,12 +173,12 @@ last_rollout_hashes:
   project-knowledge/domain-model.md: 40f76707e67e6a11
   project-knowledge/architecture.md: 0da4c729ec1ab8d3
   assumptions.md: 4edf569609a22162
-  contradictions.md: 9c3f7aa694752f2e
+  contradictions.md: 046bc083c999792e
   client-questions.md: b42cd921027e3fb1
   summary.md: 14279e0591312191
   scope.md: d894e1cd4fb8f48a
-  risks.md: 26ddb8f86c582971
-  decisions.md: 920706728deaf0f2
+  risks.md: 3d57d6e55e31f021
+  decisions.md: 3d8b017fc5cecbf7
 runtime_vocabulary:
   concept-boundary:
     description: Seen at runtime

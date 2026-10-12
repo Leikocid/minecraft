@@ -10,9 +10,13 @@ part_of: ["L0"]
 relates_to: ["L0"]
 priority: 630
 size_chars: 1895
-tags: ["v9", "above-water-trident", "status:open", "spec-internal"]
+tags: ["v9","above-water-trident","status:open","spec-internal","resolved"]
 level: 1
+closed_at: 2026-10-12
+closed_reason: resolved_by_decision
+closed_by_ref: decision-resolve-l0-xcx28
 ---
+
 ---
 title: "CX-L0-28 · Throw and dash share one input with no separate button"
 aliases: ["L0-xcx28", "Trident throw vs dash"]

@@ -1,5 +1,19 @@
 # Above-Water Trident
 
+## Input — one gesture, two abilities (`CX-L0-28`, `L0-adr-twrp`, decision trident-input)
+
+§02 gives the dash "no separate active button" and puts the throw on the same release, and names no second
+input. A vanilla trident has exactly one Use gesture, which is why vanilla makes Riptide and Loyalty exclusive.
+What ships: **a release while sneaking dashes, a plain release throws.**
+
+- Sneaking is the only modifier stable 2.10.0 reads server-side, and the shield already uses it (`isSneaking`).
+- **Measured wrinkle (probe P3, `docs/feedback/probe-trident.md`):** `isSneaking` is read live at the release.
+  A crouch dropped in the same tick scores a throw, and there is no before-event for the release to latch it
+  earlier. This is a reported limitation, not a bug to chase in code.
+- Rejected: dash when airborne or in water (a swimmer could never throw, and the choice is implicit); charge
+  length as the switch (not readable on touch).
+- Holds until question `xq9` is answered. `docs/demo/trident-ipad.md` asks it first, with the wrinkle named.
+
 ## `damage.ts` — +2 HP and one strike per landed hit (`L0-trdt-r002`, `L0-adr-twlt`, `L0-trdt-addm`, `CX-L0-29`)
 
 Spec §02 item 1: the base damage of a melee or thrown hit is the vanilla trident's. Every successful hit on a living

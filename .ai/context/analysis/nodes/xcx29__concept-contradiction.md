@@ -10,9 +10,13 @@ part_of: ["L0"]
 relates_to: ["L0"]
 priority: 630
 size_chars: 1933
-tags: ["v9", "above-water-trident", "status:open", "constraint-conflict"]
+tags: ["v9","above-water-trident","status:open","constraint-conflict","resolved"]
 level: 1
+closed_at: 2026-10-12
+closed_reason: resolved_by_decision
+closed_by_ref: decision-resolve-l0-xcx29
 ---
+
 ---
 title: "CX-L0-29 · 'Summon exactly one lightning strike' vs C-30 and the exact +2 HP"
 aliases: ["L0-xcx29", "Trident lightning"]
