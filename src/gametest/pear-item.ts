@@ -345,6 +345,7 @@ registerAsync("andrew", "pear_item_hundred_casts", async (test: Test): Promise<v
   }, 1);
   const repairs0 = itemStats.repairsAfterUse;
   const inEvent0 = itemStats.repairsInEvent;
+  const hand0 = itemStats.repairsOnHandCheck;
   const laneA: Lane = { p: a, casts: 0, reels: 0, calls: 0, dropped: 0 };
   const laneB: Lane = { p: b, casts: 0, reels: 0, calls: 0, dropped: 0 };
   const endOfCycleA: number[] = [];
@@ -376,7 +377,8 @@ registerAsync("andrew", "pear_item_hundred_casts", async (test: Test): Promise<v
   log(
     `casts RESULT pearl: casts=${laneA.casts} reels=${laneA.reels} hooks=${hooks.count(a)} uses=${laneA.calls} dropped=${laneA.dropped} ` +
       `end_of_cycle_nonzero=${nonZero}/${endOfCycleA.length} worn_ticks=${wornTicksA} worst=${worstA} ` +
-      `repairs_in_event=${itemStats.repairsInEvent - inEvent0} repairs_after_use=${itemStats.repairsAfterUse - repairs0} rod: ${rodText(rodA)}`
+      `repairs_in_event=${itemStats.repairsInEvent - inEvent0} repairs_after_use=${itemStats.repairsAfterUse - repairs0} ` +
+      `repairs_on_hand_check=${itemStats.repairsOnHandCheck - hand0} rod: ${rodText(rodA)}`
   );
   log(
     `casts RESULT plain (control): casts=${laneB.casts} reels=${laneB.reels} hooks=${hooks.count(b)} uses=${laneB.calls} dropped=${laneB.dropped} ` +

@@ -61,17 +61,20 @@ undefined for it), and the swap ignores legendary tokens.
   - The plain rod (control): 100 hooks and 100 reels, damage 0 → 200.
   - Event order in one tick: the reel's damage is already readable in the tick of the reel, before the after-event
     (`+11:damage 0->2 +11:hook_removed +11:use(d=2)`). So a script that samples every tick sees the Pearl Rod at damage 2
-    for exactly 1 tick per reel (`worn_ticks=100`, worst 2).
-  - Hand check: damage 50 written onto the held Pearl Rod returns to 0 within the 20-tick period (+12 and +18 in two
-    runs). A plain rod at 50 stays at 50.
+    for at most 1 tick per reel, never 2 ticks: `worn_ticks` = `repairs_in_event` = 100, 100 and 75 of 100 reels over
+    three runs, worst 2. In the 75 run the other 25 reels were already at 0 when the sampler ran.
+  - Hand check: damage 50 written onto the held Pearl Rod returns to 0 within the 20-tick period (+12, +18 and +20 over
+    three runs). A plain rod at 50 stays at 50.
   - SimulatedPlayer drops uses that come too close together (498 calls for 200 effective uses, one accepted about every
     11 ticks). So the scenario drives each cast and reel by its evidence: a new hook, or the hook gone.
 - **`pear_item_fishes_unbound`.** A one-block-deep pool runs past the platform edge. A hook that lands against a wall
   reads as stuck in a block: a reel costs 2 and nothing bites. Each player casts until a catch, reeling when the bobber is
   pulled under (drop > 0.30 or vy < −0.25).
-  - The Pearl Rod caught `salmon×1` on its 2nd cast (loot spawned at the hook, picked up 11 ticks after the reel). It ended
-    at damage 0, lore `Pearl Rod|unbound`, dynamic properties `[andrew:pearl_rod]` only.
-  - The plain rod (control) caught `cod×1`, damage 1.
+  - The Pearl Rod caught on its 2nd cast in both runs, `salmon×1` and then `bow×1` (treasure). The loot spawned at the hook
+    and was picked up 11 ticks after the reel. The rod ended at damage 0, lore `Pearl Rod|unbound`, dynamic properties
+    `[andrew:pearl_rod]` only.
+  - The plain rod (control) caught `cod×1` both times. A catch costs it 1 durability; a short cast onto the rim and reeled
+    from there costs 2.
 
 ### Limitations (C-16)
 
