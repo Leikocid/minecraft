@@ -113,6 +113,7 @@ import "./ench-probe";
 import "./ench-data";
 import "./ubow-probe";
 import "./ubow-fire";
+import "./ubow-flight";
 import { parkPenetrator } from "./penetrator";
 import { parkRing } from "./ring";
 import { registerOrbitalCannon } from "../orbital";
