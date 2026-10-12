@@ -4,10 +4,9 @@
 // Crossbow's Piercing strip (src/sculk/enchant.ts), driven by a table. Deviation: README.md (C-16).
 
 import { EntityComponentTypes, EquipmentSlot, type ItemStack, type Player, system, world } from "@minecraft/server";
-import { TRIDENT } from "./registry";
+import { FORBIDDEN_ENCHANTMENTS } from "./enchant-rules";
 
-/** Weapon item id → the enchantments it never keeps. Every other enchantment the item admits stays. */
-export const FORBIDDEN_ENCHANTMENTS: ReadonlyMap<string, readonly string[]> = new Map([[TRIDENT.itemId, ["loyalty", "riptide"]]]);
+export { FORBIDDEN_ENCHANTMENTS };
 
 /** `inventory`: playerInventoryItemChange named the slot; `hand`: the hotbar selection changed. */
 export type ScrubTrigger = "inventory" | "hand";

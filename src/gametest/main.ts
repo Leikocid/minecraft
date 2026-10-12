@@ -108,6 +108,8 @@ import "./trident-probe";
 import "./trident-damage";
 import "./trident-legendary";
 import "./trident-movement";
+import "./ench-probe";
+import "./ench-data";
 import { parkPenetrator } from "./penetrator";
 import { parkRing } from "./ring";
 import { registerOrbitalCannon } from "../orbital";

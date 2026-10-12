@@ -161,8 +161,12 @@ off hand — with custody entities in the zone that are never taken (below).
 `enchant.ts` takes an enchantment off a weapon whose own behaviour already does
 what it does: `FORBIDDEN_ENCHANTMENTS` lists Loyalty and Riptide for the
 Above-Water Trident (R-trdt-003); every other enchantment the item admits stays —
-Unbreaking, Impaling, Channeling, Mending. It is the Sculk Crossbow's Piercing
-strip (`src/sculk/enchant.ts`) driven by a table, with the same two triggers: the
+Unbreaking, Impaling, Channeling, Mending. The list, and the Sculk Crossbow's
+`PIERCING`, live in the engine-free `enchant-rules.ts`; its `forbiddenFor()` is
+what the enchanting roller (`src/enchanting/roll-rules.ts`) reads, so a table
+never offers what a strip takes off (L0-ench-r003). The scrub is the Sculk
+Crossbow's Piercing strip (`src/sculk/enchant.ts`) driven by a table, with the
+same two triggers: the
 `playerInventoryItemChange` that names the slot, in its own tick, and a hotbar
 change for the selected slot and the off hand, which no inventory event names. A
 scrub writes the slot back only when it took something off, so it cannot feed
