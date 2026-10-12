@@ -569,6 +569,14 @@ const EXPECTED_TESTS = [
   'andrew:probe_ench_table_pool',
   // ENCH-DATA-01 — src/gametest/ench-data.ts (L0-ench-ac06): the live engine against src/enchanting/eligibility.ts
   'andrew:ench_data_parity',
+  // UBOW-PROBE-01 — src/gametest/ubow-probe.ts (L0-uwbw-pprb rows 1–8): docs/feedback/probe-ubow.md
+  'andrew:probe_ubow_bow',
+  'andrew:probe_ubow_media',
+  'andrew:probe_ubow_fire',
+  'andrew:probe_ubow_rewrite',
+  'andrew:probe_ubow_shield',
+  'andrew:probe_ubow_buckets',
+  'andrew:probe_ubow_rocket',
 ];
 
 // A renamed scenario would otherwise drop out of the release gate silently.
