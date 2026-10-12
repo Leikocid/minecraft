@@ -438,6 +438,19 @@ function tally(test: Test, player: Player, typeId: string): Tally {
 }
 
 const sum = (t: Tally): number => t.inv + t.ground;
+
+/**
+ * Removes the item entities a bucket scenario counts from the ground around
+ * the stand. A full inventory drops its 2 buckets at the feet, and they can
+ * outlive `gametest clearall` and be counted by the next scenario. Weapons are
+ * left alone: removing one is a loss that recovery would answer.
+ */
+function clearCounted(test: Test, def: LegendaryDef): void {
+  const counted = new Set([BUCKET, WATER_BUCKET, def.craftTokenId, ...def.refund.map(([id]) => id)]);
+  for (const e of test.getDimension().getEntities({ type: "minecraft:item", location: test.worldLocation(STAND), maxDistance: GROUND_RADIUS })) {
+    if (e.isValid && counted.has(e.getComponent("minecraft:item")?.itemStack.typeId ?? "")) e.remove();
+  }
+}
 const show = (name: string, t: Tally): string => `${name} ${t.inv}+${t.ground}`;
 
 async function waitFor(test: Test, ticks: number, done: () => boolean, why: string): Promise<void> {
@@ -467,6 +480,7 @@ function bucketScenarios(name: string, tag: string, def: LegendaryDef): void {
 
   registerAsync("andrew", `${name}_craft_two_empty_buckets`, async (test: Test): Promise<void> => {
     state.resetCrafted(def);
+    clearCounted(test, def);
     placeCrafter(test);
     const player = test.spawnSimulatedPlayer(STAND, `${tag}_craft`, GameMode.Survival);
     await test.idle(4);
@@ -495,6 +509,7 @@ function bucketScenarios(name: string, tag: string, def: LegendaryDef): void {
 
   registerAsync("andrew", `${name}_craft_full_inventory`, async (test: Test): Promise<void> => {
     state.resetCrafted(def);
+    clearCounted(test, def);
     placeCrafter(test);
     const player = test.spawnSimulatedPlayer(STAND, `${tag}_full`, GameMode.Survival);
     await test.idle(4);
@@ -542,6 +557,7 @@ function bucketScenarios(name: string, tag: string, def: LegendaryDef): void {
     test.assert(sum(empty) === 2, `buckets in the inventory plus on the ground: ${show("empty", empty)}, expected 2`);
     test.assert(empty.ground === 2, `the full inventory took a bucket: ${show("empty", empty)}`);
     test.assert(sum(water) === 0, `water buckets appeared: ${show("water", water)}`);
+    clearCounted(test, def);
     test.succeed();
   })
     .structureName(STRUCTURE)
@@ -554,6 +570,7 @@ function bucketScenarios(name: string, tag: string, def: LegendaryDef): void {
 
   registerAsync("andrew", `${name}_blocked_restart_seed`, async (test: Test): Promise<void> => {
     state.resetCrafted(def);
+    clearCounted(test, def);
     placeCrafter(test);
     const player = test.spawnSimulatedPlayer(STAND, restartCrafter, GameMode.Survival);
     await test.idle(4);
@@ -575,6 +592,7 @@ function bucketScenarios(name: string, tag: string, def: LegendaryDef): void {
     test.assert(state.isCrafted(def), "the craft flag did not survive the restart");
     test.assert(by === restartCrafter, `the flag names ${String(by)}, not the seed's crafter`);
 
+    clearCounted(test, def);
     placeCrafter(test);
     const player = test.spawnSimulatedPlayer(STAND, `${tag}_again`, GameMode.Survival);
     await test.idle(4);
@@ -609,6 +627,7 @@ function bucketScenarios(name: string, tag: string, def: LegendaryDef): void {
   // stamped the way give stamps it.
   registerAsync("andrew", `${name}_creative_and_commands_spend_nothing`, async (test: Test): Promise<void> => {
     state.resetCrafted(def);
+    clearCounted(test, def);
     const dim = test.getDimension();
     const builder = test.spawnSimulatedPlayer(STAND, `${tag}_builder`, GameMode.Creative);
     const tester = test.spawnSimulatedPlayer({ x: 1, y: 2, z: 1 }, `${tag}_tester`, GameMode.Survival);
