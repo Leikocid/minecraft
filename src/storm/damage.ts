@@ -24,6 +24,7 @@ import {
   NO_DEFENCE,
   OVERKILL,
   PASSIVE_DAMAGE,
+  PROJECTILE_PROTECTION_EPF,
   type RaisePlan,
   type SetPlan,
   type StrikePath,
@@ -197,8 +198,11 @@ function absorbing(entity: Entity): boolean {
   }
 }
 
-/** Mobs have no equippable in 2.10.0, so their worn and natural armour read as none (README, deviation 1). */
-export function defenceOf(entity: Entity): Defence {
+/**
+ * Mobs have no equippable in 2.10.0, so their worn and natural armour read as none (README, deviation 1). With `cause`
+ * projectile, Projectile Protection counts too; every other cause reads Protection alone.
+ */
+export function defenceOf(entity: Entity, cause?: EntityDamageCause): Defence {
   let armor = 0;
   let toughness = 0;
   let protection = 0;
@@ -209,7 +213,11 @@ export function defenceOf(entity: Entity): Defence {
       armor = eq.totalArmor;
       toughness = eq.totalToughness;
       for (const slot of ARMOUR_SLOTS) {
-        protection += eq.getEquipment(slot)?.getComponent(ItemComponentTypes.Enchantable)?.getEnchantment("protection")?.level ?? 0;
+        const enchantable = eq.getEquipment(slot)?.getComponent(ItemComponentTypes.Enchantable);
+        protection += enchantable?.getEnchantment("protection")?.level ?? 0;
+        if (cause === EntityDamageCause.projectile) {
+          protection += PROJECTILE_PROTECTION_EPF * (enchantable?.getEnchantment("projectile_protection")?.level ?? 0);
+        }
       }
     }
   } catch {
@@ -366,7 +374,7 @@ function rewriteHit(
     const health = healthOf(target, false);
     report.hpLeft = health === undefined ? undefined : hpOf(health);
     if (event.cancel || !admits(event.damageSource.cause, wielder) || report.hpLeft === undefined) return false;
-    report.defence = defenceOf(target);
+    report.defence = defenceOf(target, event.damageSource.cause);
     const after = afterArmour(report.damage, report.defence);
     const decided = plan(after, report.hpLeft, absorbing(target));
     if (decided.kind === "raise" || decided.kind === "set") {

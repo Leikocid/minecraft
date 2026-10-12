@@ -599,6 +599,14 @@ const EXPECTED_TESTS = [
   'andrew:ubow_magnet_not_swallowed',
   'andrew:ubow_restart_seed',
   'andrew:ubow_restart_check',
+  // UBOW-ABIL-01 — the armed charge (spec v3 §1, L0-xcx33, R-uwbw-001, R-uwbw-003): src/gametest/ubow-ability.ts
+  'andrew:ubow_ability_arm',
+  'andrew:ubow_ability_miss',
+  'andrew:ubow_ability_exact',
+  'andrew:ubow_ability_mob',
+  'andrew:ubow_ability_hud',
+  'andrew:ubow_ability_restart_seed',
+  'andrew:ubow_ability_restart_check',
   // TRDT-MOVE-01 — src/gametest/trident-movement.ts (L0-trdt-a003)
   'andrew:trident_dash_distance',
   'andrew:trident_dash_dimensions',
@@ -639,6 +647,7 @@ const RESTART_AFTER = new Map([
   ['andrew:trident_blocked_restart_seed', 'andrew:trident_blocked_restart_check'],
   ['andrew:ubow_blocked_restart_seed', 'andrew:ubow_blocked_restart_check'],
   ['andrew:ubow_restart_seed', 'andrew:ubow_restart_check'],
+  ['andrew:ubow_ability_restart_seed', 'andrew:ubow_ability_restart_check'],
   ['andrew:trident_throw_restart_seed', 'andrew:trident_throw_restart_check'],
 ]);
 

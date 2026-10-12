@@ -38,6 +38,11 @@ damaging entity is required. `raiseHit` is unchanged: `entityAttack` with a sour
   the raise (a lethal rewrite eats the totem and still kills);
 - `kills-alone` — the engine's hit and f(D) both kill: the hit is left alone, its own cause and credit stand.
 
+Its defence read takes the hit's cause: `defenceOf(target, cause)` adds 2 EPF per Projectile Protection level when the
+cause is `projectile` (probe-ubow row 5: diamond with Projectile Protection IV read the vanilla arrow at f(6) × 0.2,
+the EPF cap). `raiseHit` reads `entityAttack`, and `stormDamage` and the trident call `defenceOf(target)`: Protection
+alone, as before.
+
 **Active — `stormDamage(target, 10, wielder)`** (`planStrike`):
 - `native` — no known window: `applyDamage(10, entityAttack, wielder)` alone is exact and lethal natively;
 - `window` — `applyDamage(10)`, then the health write to `hp_before − f(10)` when the window swallowed part of it:
@@ -73,10 +78,8 @@ a window write to 0 loses the credit.
 4. **A lethal `setHit` dies of `entityAttack`, not `projectile`.** `applyDamage` with cause `projectile` and a damaging
    entity throws, so the overkill that keeps the totem and the credit is an `entityAttack` from the shooter: the death
    message and any cause check read a melee. A hit that kills by itself (`kills-alone`) keeps its own cause.
-5. **`setHit`'s health-left reading is measured on melee only.** "Health already reads `hp − read`" comes from
-   `entityAttack` hits (STRM-DMG-01); for `projectile` it is assumed until the `uwbw` probe's row 5 reads it on BDS. If
-   the engine does not subtract first there, an f(D) that kills by less than the arrow's own read is judged `set`, and
-   that lethal rewrite then kills through a held totem.
+5. **`setHit`'s health-left reading** is measured for both causes: "health already reads `hp − read`" holds for
+   `entityAttack` (STRM-DMG-01) and for `projectile` (probe-ubow row 5: 34.00 at 40 HP under a 6.00 arrow).
 
 ## `active.ts` — the Use (`L0-strm-pact`, `L0-strm-rcd`, `L0-xasm31`)
 

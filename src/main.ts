@@ -39,6 +39,7 @@ import { registerTrap } from "./websword/trap";
 import { registerStormPassive } from "./storm/passive";
 import { registerTridentDamage } from "./trident/damage";
 import { registerTridentMovement } from "./trident/movement";
+import { registerUbowAbility } from "./ubow/ability";
 import { registerUnderwaterBowFire } from "./ubow/fire";
 import { registerUbowFlight } from "./ubow/flight";
 
@@ -57,6 +58,8 @@ registerTridentThrow();
 registerDragonKatana();
 registerSculkCrossbow();
 registerTridentMovement();
+// Before the fires: an armed hit lights Super Fire before the ordinary 2 s fire is weighed for the same arrow.
+registerUbowAbility();
 registerUnderwaterBowFire();
 registerUbowFlight();
 // Must come after every other legendary's input: see registerStormActive().
