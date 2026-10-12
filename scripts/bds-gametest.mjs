@@ -561,6 +561,12 @@ const EXPECTED_TESTS = [
   'andrew:trident_dash_dimensions',
   'andrew:trident_dash_fall_once',
   'andrew:trident_swim_boost',
+  // ENCH-PROBE-01 — src/gametest/ench-probe.ts (spec v3 §4, L0-ench-prob): docs/feedback/probe-enchanting.md
+  'andrew:probe_ench_surface',
+  'andrew:probe_ench_result_signals',
+  'andrew:probe_ench_simplayer_table',
+  'andrew:probe_ench_separators',
+  'andrew:probe_ench_table_pool',
 ];
 
 // A renamed scenario would otherwise drop out of the release gate silently.
