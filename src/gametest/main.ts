@@ -113,6 +113,8 @@ import "./trident-movement";
 import "./ench-probe";
 import "./ench-data";
 import "./ubow-probe";
+// Before ubow-fire: the product registers the charge before the fires, and so does this pack.
+import "./ubow-ability";
 import "./ubow-fire";
 import "./ubow-flight";
 import { parkPenetrator } from "./penetrator";

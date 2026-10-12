@@ -15,6 +15,12 @@ export const HURT_WINDOW_TICKS = 10;
 /** Raw damage added to hp on the lethal path: through 20 armour, Protection IV ×4 and Resistance IV it still deals > 60. */
 export const OVERKILL = 1000;
 
+/**
+ * EPF per level of Projectile Protection against a projectile hit; Protection gives 1. probe-ubow row 5: diamond with
+ * Projectile Protection IV ×4 read 0.312 = f(6) × 0.2, the EPF cap, which Protection IV ×4 (16) does not reach.
+ */
+export const PROJECTILE_PROTECTION_EPF = 2;
+
 const MAX_ARMOUR_POINTS = 20;
 const MAX_PROTECTION_EPF = 20;
 const RESISTANCE_PER_LEVEL = 0.2;
@@ -27,7 +33,7 @@ export interface Defence {
   armor: number;
   /** `equippable.totalToughness`. */
   toughness: number;
-  /** Sum of the Protection levels on the four armour slots (EPF). */
+  /** EPF on the four armour slots: the Protection levels, plus PROJECTILE_PROTECTION_EPF per Projectile Protection level against a projectile. */
   protection: number;
   /** Resistance level, `amplifier + 1`; 0 without the effect. */
   resistance: number;
