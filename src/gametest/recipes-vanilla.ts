@@ -3,10 +3,10 @@
 // written as plain `minecraft:recipe_shaped` data with no script and no token.
 // Proven here, on the live engine: both new recipes coexist with their vanilla
 // look-alikes, a fixed-position probe measures whether Bedrock trims the blank
-// border of a full 3x3 pattern (xasm43), and the rocket's un-settable "Flight
-// Duration" (C-16: the stable API cannot write firework NBT) is inferred by
-// comparing its elytra-boost timing against vanilla references built with an
-// explicit gunpowder count.
+// border of a full 3x3 pattern (xasm43), and the recipe's own rocket is timed on
+// an Elytra against vanilla flight 1 and 3. That raw result carries no firework
+// data; src/rocket-flight.ts turns it into flight 1 in a player's inventory
+// (src/gametest/recipes-rocket.ts).
 
 import {
   BlockPermutation,
@@ -116,8 +116,12 @@ async function craft(test: Test, grid: Grid, label: string): Promise<void> {
 const MACE_NEW: Grid = [undefined, undefined, undefined, undefined, { item: "minecraft:iron_block" }, undefined, undefined, { item: "minecraft:breeze_rod" }, undefined];
 const MACE_OLD: Grid = [undefined, undefined, undefined, undefined, { item: "minecraft:heavy_core" }, undefined, undefined, { item: "minecraft:breeze_rod" }, undefined];
 const ROCKET_NEW: Grid = [undefined, undefined, undefined, undefined, { item: "minecraft:paper" }, undefined, undefined, { item: "minecraft:string" }, undefined];
-/** Shapeless: paper anywhere + N gunpowder anywhere; duration = gunpowder count. */
-const rocketOld = (gunpowder: number): Grid => [{ item: "minecraft:paper" }, { item: "minecraft:gunpowder", amount: gunpowder }, undefined, undefined, undefined, undefined, undefined, undefined, undefined];
+/** Shapeless: paper + N gunpowder, one per slot — a single slot holding N gunpowder spends one and crafts flight 1. */
+const rocketOld = (gunpowder: number): Grid => [
+  { item: "minecraft:paper" },
+  ...Array.from({ length: gunpowder }, () => ({ item: "minecraft:gunpowder" })),
+  ...Array<undefined>(8 - gunpowder).fill(undefined),
+];
 const MACE_NEGATIVE: Grid = [undefined, undefined, undefined, undefined, { item: "minecraft:iron_ingot" }, undefined, undefined, { item: "minecraft:breeze_rod" }, undefined];
 const ROCKET_NEGATIVE: Grid = [undefined, undefined, undefined, undefined, { item: "minecraft:paper" }, undefined, undefined, { item: "minecraft:stick" }, undefined];
 
@@ -372,19 +376,9 @@ registerAsync("andrew", "vanilla_recipe_rocket_boosts_elytra", async (test: Test
 
   test.assert(oursDelta > BOOST_THRESHOLD, `the new recipe's rocket produced no measurable Elytra boost (peak delta ${f2(oursDelta)})`);
 
-  // Measured, not assumed (C-16/xasm39): a duration-1 and a duration-3 reference, crafted from the
-  // unchanged vanilla recipe, gave statistically indistinguishable boost deltas and launched-entity
-  // lifetimes here (see the vy traces above) — a single elytra-boost use is the same regardless of the
-  // rocket's declared Flight Duration. So Flight Duration cannot be confirmed as specifically "1" by any
-  // signal this script can read or observe; that is reported as the limitation, not assumed away.
-  const durationDistinguishable = ref3.lifetimeTicks > ref1.lifetimeTicks + 5;
-  log(
-    `LIMITATION Flight Duration is not independently verifiable: the stable API has no fireworks item ` +
-      `component (xasm39), and references built with 1 vs 3 gunpowder did ${durationDistinguishable ? "" : "NOT "}` +
-      `differ in boost delta or launched-entity lifetime here (ref1=${ref1.lifetimeTicks}t, ref3=${ref3.lifetimeTicks}t) — ` +
-      "reported per C-16, not claimed as confirmed Flight Duration 1."
-  );
-  log("RESULT the new recipe's rocket measurably boosts a gliding Elytra (peak delta " + f2(oursDelta) + "), same as any vanilla rocket; Flight Duration itself is a reported limitation, not a verified number");
+  // Flight 1 lives 22–32 ticks on an Elytra and flight 3 41–51 (docs/feedback/rocket-duration.md): one sample each separates them.
+  test.assert(ref3.lifetimeTicks > ref1.lifetimeTicks + 5, `control: the flight-3 reference (${ref3.lifetimeTicks}t) does not outlast flight 1 (${ref1.lifetimeTicks}t)`);
+  log(`RESULT the new recipe's raw rocket boosts a gliding Elytra (peak delta ${f2(oursDelta)}) for ${ours.lifetimeTicks}t; vanilla flight 1 ${ref1.lifetimeTicks}t, flight 3 ${ref3.lifetimeTicks}t`);
   test.succeed();
 })
   .structureName(STRUCTURE)

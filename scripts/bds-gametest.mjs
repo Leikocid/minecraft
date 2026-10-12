@@ -626,6 +626,9 @@ const EXPECTED_TESTS = [
   'andrew:vanilla_recipe_mace_rocket_negative_controls',
   'andrew:vanilla_recipe_fixed_position_probe',
   'andrew:vanilla_recipe_rocket_boosts_elytra',
+  // RCPE-ROCKET-02 — src/gametest/recipes-rocket.ts (spec v3 §3, ADR-uwbw-rc, C-16): docs/feedback/rocket-duration.md
+  'andrew:rocket_duration_paths',
+  'andrew:rocket_duration_swap',
 ];
 
 // A renamed scenario would otherwise drop out of the release gate silently.
