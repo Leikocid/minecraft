@@ -63,6 +63,7 @@ export const ENGINE_ACCEPTS: Accepts = new Map<string, Readonly<Record<string, n
   ["andrew:sculk_crossbow", { mending: 1, multishot: 1, piercing: 4, quick_charge: 3, unbreaking: 3, vanishing: 1 }],
   ["andrew:scythe_of_calamity", { bane_of_arthropods: 5, fire_aspect: 2, knockback: 2, looting: 3, mending: 1, sharpness: 5, smite: 5, unbreaking: 3, vanishing: 1 }],
   ["andrew:storm_blade", { bane_of_arthropods: 5, fire_aspect: 2, knockback: 2, looting: 3, mending: 1, sharpness: 5, smite: 5, unbreaking: 3, vanishing: 1 }],
+  ["andrew:underwater_bow", { flame: 1, infinity: 1, mending: 1, power: 5, punch: 2, unbreaking: 3, vanishing: 1 }],
   ["andrew:web_sword", { bane_of_arthropods: 5, fire_aspect: 2, knockback: 2, looting: 3, mending: 1, sharpness: 5, smite: 5, unbreaking: 3, vanishing: 1 }],
   ["minecraft:bow", { flame: 1, infinity: 1, mending: 1, power: 5, punch: 2, unbreaking: 3, vanishing: 1 }],
   ["minecraft:carrot_on_a_stick", { mending: 1, unbreaking: 3, vanishing: 1 }],
@@ -169,7 +170,7 @@ export const ENGINE_CONFLICTS: readonly (readonly [string, string])[] = [
 ];
 
 /** Add-on items the roller has a row for whose item type does not exist yet: nothing to measure until they ship. */
-export const NOT_SHIPPED: readonly string[] = ["andrew:underwater_bow"];
+export const NOT_SHIPPED: readonly string[] = [];
 
 /**
  * Vanilla items whose bare stack accepts an enchantment but that have no row above: books stay vanilla (L0-ench, not in

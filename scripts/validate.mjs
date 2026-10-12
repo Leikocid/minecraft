@@ -280,7 +280,7 @@ function checkAttachables({ behaviorDir, resourceDir, parsed, errors, beforeItem
 }
 
 /** Attachables drawn before their item exists. */
-export const ATTACHABLE_BEFORE_ITEM = new Set(['andrew:underwater_bow']);
+export const ATTACHABLE_BEFORE_ITEM = new Set();
 
 /**
  * Validate the behavior pack and resource pack directories.

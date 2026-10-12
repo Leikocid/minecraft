@@ -41,8 +41,9 @@ export interface ActiveLegendaryDef extends LegendaryBase {
    * (L0-adr-oded §1); absent keeps `andrew.legendary.ready|cooldown`.
    * A def field rather than "own key if it exists": `translate` resolves on the
    * client, so the script cannot tell whether a key exists (C-16).
+   * `armed` takes the name alone, like `ready`; the shared HUD has no armed state.
    */
-  hudKeys?: { ready: string; cooldown: string };
+  hudKeys?: { ready: string; cooldown: string; armed?: string };
 }
 
 /**
@@ -194,6 +195,35 @@ export const TRIDENT: PassiveLegendaryDef = {
   command: "andrew:trident",
 };
 
+/**
+ * The eighth def (L0-uwbw-eitm, L0-xasm38). Its recipe holds 2 water buckets,
+ * so it follows the Trident's rule (C-34): 2 empty ones with a kept craft, the
+ * 2 water ones with a refund, never both kinds.
+ */
+export const UNDERWATER_BOW: ActiveLegendaryDef = {
+  itemId: "andrew:underwater_bow",
+  keyPrefix: "ub",
+  abilityKey: "underwater_bow",
+  nameKey: "item.andrew:underwater_bow",
+  cooldownTicks: 600,
+  craftGate: true,
+  craftTokenId: "andrew:underwater_bow_crafted",
+  refund: [
+    ["minecraft:lightning_rod", 1],
+    ["minecraft:bow", 1],
+    ["minecraft:sand", 1],
+    ["minecraft:water_bucket", 2],
+  ],
+  craftReturn: [["minecraft:bucket", 2]],
+  textPrefix: "andrew.underwater_bow",
+  command: "andrew:ubow",
+  hudKeys: {
+    ready: "andrew.underwater_bow.hud_ready",
+    armed: "andrew.underwater_bow.hud_armed",
+    cooldown: "andrew.underwater_bow.hud_cooldown",
+  },
+};
+
 export const LEGENDARIES: ReadonlyArray<LegendaryDef> = [
   WEB_SWORD,
   SCYTHE_OF_CALAMITY,
@@ -202,6 +232,7 @@ export const LEGENDARIES: ReadonlyArray<LegendaryDef> = [
   SCULK_CROSSBOW,
   STORM_BLADE,
   TRIDENT,
+  UNDERWATER_BOW,
 ];
 
 export function defFor(itemId: string): LegendaryDef | undefined {

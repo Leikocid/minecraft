@@ -1250,10 +1250,12 @@ async function waitFor(test: Test, ticks: number, done: () => boolean): Promise<
   return done();
 }
 
+// The shipped recipe transposed: the GameTest pack loads beside it, and of two identical grids the engine
+// crafts one (tests/recipe-collisions.test.mjs).
 const BOW_GRID: ReadonlyArray<string | undefined> = [
-  undefined, "minecraft:lightning_rod", undefined,
-  WATER_BUCKET, BOW, WATER_BUCKET,
-  undefined, "minecraft:sand", undefined,
+  undefined, WATER_BUCKET, undefined,
+  "minecraft:lightning_rod", BOW, "minecraft:sand",
+  undefined, WATER_BUCKET, undefined,
 ];
 
 /** The bow def's shape for the probe only: the probe token, the probe shooter as the weapon, the trident's craftReturn. */

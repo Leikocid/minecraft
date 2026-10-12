@@ -22,7 +22,7 @@
   | `items/probe_trident_charge.json` | `use_modifiers` 3600 с, `use_animation: spear`, `enchantable` slot `spear`, `damage` 8, `allow_off_hand` |
   | `items/probe_trident_plain.json` | только `use_modifiers` |
   | `items/probe_trident_token.json` | токен-результат рецепта |
-  | `recipes/probe_trident_buckets.json` | ` G / BTB / G ` → токен (золотое яблоко, ведро воды, трезубец) |
+  | `recipes/probe_trident_buckets.json` | ` B / GTG / B ` → токен (золотое яблоко, ведро воды, трезубец); замеры §1 сняты на ` G / BTB / G ` (там же) |
   | `recipes/probe_trident_buckets_milk.json` | то же с вёдрами молока — контроль |
   | `entities/probe_trident_thrown.json` | snowball runtime; projectile gravity 0.10, inertia 0.99, liquid_inertia 0.99, `impact_damage` 8, `stick_in_ground` |
   | `entities/probe_trident_thrown_tr.json`, `_ar.json` | то же на рантаймах `minecraft:thrown_trident` и `minecraft:arrow` (только P10) |
@@ -76,7 +76,10 @@
 
 **Дата и команда.** 2026-10-11, прогон 19:34–19:38 UTC; `env ANDREW_BDS_DIR=../dist/bds-trdt node scripts/bds-gametest.mjs --only andrew:probe_trident_buckets` (или полная команда из шапки).
 
-**Число.** Пробный рецепт ` G / BTB / G ` → токен на Крафтере:
+**Число.** Пробный рецепт ` G / BTB / G ` → токен на Крафтере. С TRDT-ITEM-01 эту сетку несёт рецепт
+`andrew:above_water_trident` пакета поведения, и Крафтер на ней выдавал уже его токен, а не пробный: сценарий падал на
+контроле (замечено в UBOW-ITEM-01). Пробный рецепт и его молочный контроль теперь транспонированы: ` B / GTG / B ` и
+` M / GTG / M `, ингредиенты те же. Повтор прав `tests/recipe-collisions.test.mjs`.
 
 | Случай | Сделано | Пустых вёдер у игрока / на земле / в сетке | Наполненных вёдер |
 |---|---|---|---|

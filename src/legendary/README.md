@@ -1,12 +1,12 @@
 # legendary
 
-Everything shared by the seven legendary weapons — the Web Sword, the Scythe of
+Everything shared by the eight legendary weapons — the Web Sword, the Scythe of
 Calamity, the Orbital Cannon, the Dragon Katana, the Sculk Crossbow, the Storm
-Blade and the Above-Water Trident. `LEGENDARIES` in `registry.ts` is the list;
-the Miner's Pickaxe is **not** on it and keeps vanilla behaviour in every way. A
-weapon joins by adding its def: the Katana, the Crossbow and the Storm Blade
-bring no recovery, retention or protection code of their own (`L0-adr-ktgr`,
-`L0-lgnd-ac27`, `L0-strm-acr`).
+Blade, the Above-Water Trident and the Underwater Bow. `LEGENDARIES` in
+`registry.ts` is the list; the Miner's Pickaxe is **not** on it and keeps
+vanilla behaviour in every way. A weapon joins by adding its def: the Katana,
+the Crossbow and the Storm Blade bring no recovery, retention or protection code
+of their own (`L0-adr-ktgr`, `L0-lgnd-ac27`, `L0-strm-acr`).
 
 ## One survival craft per world
 
@@ -21,19 +21,22 @@ A def whose recipe consumes a container lists it in **`craftReturn`**. An add-on
 recipe hands no container back, while vanilla cake does
 (`docs/feedback/probe-trident.md` §1), so the gate gives it with every craft it
 keeps — the claim and the Creative unwrap — and never with a refund, which hands
-the full ingredient back instead. The Trident is the only def with one: 2 empty
-buckets with a kept craft, 2 water buckets with a refund, never both kinds
-(`L0-trdt-adrf`, C-34). It is the probe's branch of `L0-adr-trlg` §2: with no
-engine return there is nothing to exchange, so `refundExchange` is not added.
+the full ingredient back instead. The Trident and the Underwater Bow are the
+defs with one, and the same one: 2 empty buckets with a kept craft, 2 water
+buckets with a refund, never both kinds (`L0-trdt-adrf`, C-34;
+`docs/feedback/probe-ubow.md` §7 measured the bow's recipe). It is the probe's
+branch of `L0-adr-trlg` §2: with no engine return there is nothing to exchange,
+so `refundExchange` is not added.
 
 Refund and return stacks are split by the item's max stack size before they are
 added: `new ItemStack(id, n)` clamps `n` to it without a word, so one stack of
 2 water buckets is 1 bucket. What does not fit drops at the player's feet.
 Scenarios: `websword_first_claim`, `websword_second_refund`,
 `legendary_give_then_craft_*`, `legendary_*_other_flags_untouched`,
-`trident_craft_two_empty_buckets`, `trident_craft_full_inventory`,
-`trident_blocked_restart_seed` / `_check` (across a restart),
-`trident_creative_and_commands_spend_nothing`; units in
+and, from one generator per bucket def (`trident_*`, `ubow_*`),
+`_craft_two_empty_buckets`, `_craft_full_inventory`,
+`_blocked_restart_seed` / `_check` (across a restart) and
+`_creative_and_commands_spend_nothing`; units in
 `tests/legendary-craftgate.test.mjs`.
 
 ## A legendary cannot be destroyed
