@@ -208,6 +208,12 @@ function bindInto(owner, cell) {
   assert.equal(h.isValid, false, `${owner.name}'s hook did not bind`);
 }
 
+test('arming twice subscribes once: one death, one bump', () => {
+  const subs = H.die.length;
+  O.registerPearlOwner();
+  assert.equal(H.die.length, subs);
+});
+
 test('a player death bumps that player\'s epoch by one, every time, and nobody else\'s', () => {
   const a = fakePlayer('dies');
   const b = fakePlayer('bystander');

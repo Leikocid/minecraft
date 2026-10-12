@@ -72,7 +72,12 @@ function guarded(what: string, step: () => void): void {
   }
 }
 
+let armed = false;
+
+/** Arms the module once per pack: a second subscription would bump the epoch twice for one death. */
 export function registerPearlOwner(): void {
+  if (armed) return;
+  armed = true;
   world.afterEvents.entityDie.subscribe((event) => {
     // Typed non-nullable, but a pack without the gametest binding gets undefined for a SimulatedPlayer, and an
     // after-event can carry a removed entity.
