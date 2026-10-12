@@ -17,9 +17,11 @@ level: 2
 
 **is_a:** process · **part_of:** L0-ench · **relates_to:** L0-xcx32, L0-xq11, L0-adr-enrl, L0-xasm39, L0-ench-ac01, L0-ench-cx01
 
-**Where.** On checks BDS (19136), in a private instance named after the full task id (see the three-BDS rule), as a distinct criterion set from the parallel `uwbw` probe. Scenarios go in `src/gametest/enchanting-probe.ts`. The probe builds nothing that ships.
+**Where.** On checks BDS (19136), in a private instance named after the full task id (see the three-BDS rule), as a distinct criterion set from the parallel `uwbw` probe. Scenarios went in `src/gametest/ench-probe.ts` and the verdict in `docs/feedback/probe-enchanting.md`, not the paths this plan named — the task card placed them, and the card is what the agent reads. The probe builds nothing that ships.
 
 ## Q1 · What can a script see?
+
+**Done, with a wider net than this plan asked for** (`docs/feedback/probe-enchanting.md` §1): the probe subscribed to **all 75** `world.beforeEvents` and `world.afterEvents` signals enumerated at runtime, so "no event fires" means none of the 75, not none of the expected ones. `blockContainerOpened` / `Closed` do exist in 2.10.0 and do arrive for a chest and a crafting table; for an enchanting table and an anvil they cannot be checked on BDS, because a SimulatedPlayer opens neither (Q2). The headers of `src/legendary/enchant.ts` and `src/sculk/enchant.ts` are correct in what they claim.
 Record each signal as one of: present / absent / present-but-ambiguous.
 1. **Before-events.** Enumerate `world.beforeEvents` in 2.10.0. Confirm there is no enchant, anvil or container-UI before-event. This is a static check of the typings in `node_modules/@minecraft/server`.
 2. **`playerInventoryItemChange`.** Log `beforeItemStack` / `itemStack` enchantments when an enchanted stack arrives. Cover three paths that a script can drive: `/enchant` in place, a script `addEnchantment`, and a loot-style spawned stack that is picked up.
@@ -27,6 +29,8 @@ Record each signal as one of: present / absent / present-but-ambiguous.
 4. **`enchantable`.** For every vanilla enchantable item, record `getComponent('minecraft:enchantable')`, its `slots`, and `canAddEnchantment` for every `EnchantmentTypes` entry. This is the parity source for `L0-ench-ac06`.
 
 ## Q2 · Can a SimulatedPlayer use the table?
+
+**A witness is required, and was missing from this plan.** `interactWithBlock` returns `true` on an enchanting table even though nothing opens, so "no change in 40 ticks" proves nothing on its own. The probe puts a chest beside the table and touches it with the same player: the chest opens, the table does not. Each block also needs its own fresh player — a chest already open blocks the next open (`docs/feedback/probe-enchanting.md` §3.2).
 The prior record says no: a SimulatedPlayer has no anvil or table screen (`src/gametest/sculk-enchant.ts:1-2`). The probe confirms it with a two-part scenario:
 - `interactWithBlock` on an `enchanting_table`;
 - an assertion that no enchantment and no level change occur within 40 ticks;

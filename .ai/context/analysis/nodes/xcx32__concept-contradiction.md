@@ -31,7 +31,7 @@ governs_files: ["src/legendary/enchant.ts", "src/sculk/enchant.ts"]
 - Stable 2.10.0 has **no before-event for an anvil or an enchanting table**. This is recorded in `src/legendary/enchant.ts:1-3`, and the Sculk Crossbow's Piercing strip and the trident's Loyalty/Riptide strip both work around it after the fact.
 - No component or JSON exposes the table's offer algorithm or its preview UI to an add-on.
 
-The most a script can see is the **result**, through `playerInventoryItemChange`: a stack that gained enchantments, plus the player's XP level drop. It cannot change what the table *shows*.
+The most a script can see is the **result**, through `playerInventoryItemChange` — and less of it than this node first said. Measured (`docs/feedback/probe-enchanting.md` §2): the stack does **not** gain enchantments in place. It leaves the inventory when it goes into the table's slot and comes back as a fresh arrival, two separate events, possibly many ticks apart. The level drop raises **no event at all**: it is visible only by polling `player.level`. Lapis spent inside the table's own slot is invisible. The script cannot change what the table *shows*.
 
 **The spec anticipates this.** It says not to claim full implementation if the vanilla table cannot be intercepted, and that a custom block, UI or exchange is allowed only after approval. So this is a recorded feasibility conflict, not a defect in the spec. It still blocks the build, because any hook we can build is itself an alternative.
 

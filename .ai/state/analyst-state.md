@@ -176,18 +176,18 @@ last_run:
     through: '2026-10-12T18:21:49.754Z'
     reviewed_at: '2026-10-12T18:21:49.754Z'
 last_rollout_hashes:
-  project-knowledge/glossary.md: 5b836568c0e2e79d
+  project-knowledge/glossary.md: 5f13d71afcccfd20
   project-knowledge/business-rules.md: 39c89bbe453049b5
   project-knowledge/boundaries.md: 52130c6cd83d1194
   project-knowledge/intent.md: cd488f0730d03d85
   project-knowledge/domain-model.md: 4e771cf2a28c43ac
   project-knowledge/architecture.md: ee277ea2b5ddf492
   assumptions.md: 6ca6504d554ce68f
-  contradictions.md: a6caf113aa6318a5
+  contradictions.md: 998e47b173e10060
   client-questions.md: 41a72a9fee2fa518
   summary.md: 45232d38801d0456
   scope.md: 7c245f5b93875b9a
-  risks.md: c02169a6d3d5f4d7
+  risks.md: a14057446435d45e
   decisions.md: 3d8b017fc5cecbf7
 runtime_vocabulary:
   concept-boundary:
