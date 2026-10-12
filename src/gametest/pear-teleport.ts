@@ -673,11 +673,12 @@ registerAsync("andrew", "pear_tp_outcomes_no_leak", async (test: Test): Promise<
       const t0 = await boundUse(test, p, 0);
       await test.idle(3);
       const waiting = pendingTrips();
+      const killTick = system.currentTick;
       p.kill();
       const o = await outcomeOf(test, p, t0, 40);
-      const line = `row6 died RESULT pending_before_kill=${waiting} outcome=${o.outcome} after ${o.tick - t0} ticks bars=[${bars.since(t0).join(",")}]`;
+      const line = `row6 died RESULT pending_before_kill=${waiting} outcome=${o.outcome} (${o.detail}) ${o.tick - killTick} ticks after the kill bars=[${bars.since(t0).join(",")}]`;
       log(line);
-      test.assert(waiting === 1 && o.outcome === "died" && o.tick - t0 < 20, line);
+      test.assert(waiting === 1 && o.outcome === "died" && o.tick - killTick <= 1, line);
       test.assert(bars.since(t0).length === 0, `row6: a message was sent: ${line}`);
       assertClean(test, "row6 died", baseline);
       p.respawn();

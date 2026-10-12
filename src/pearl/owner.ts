@@ -1,14 +1,14 @@
 // The binding belongs to a living player (spec v3 §7; C-45, L0-pear-ent2): a player's death bumps their life epoch,
 // which voids every binding they made wherever the rod is, with no search. A dead record is erased later, when the rod
 // turns up in a player's inventory with its binder online. The decisions are in owner-rules.ts; this module is the
-// engine half — deaths in, the epoch out, and the checks the use gate and a trip in progress read.
+// engine half — deaths in, the epoch out. The use gate and a trip in progress read the epoch (teleport.ts).
 
 import { type Container, type Entity, type ItemStack, Player, world } from "@minecraft/server";
 import { bindingOf, lifeEpochOf } from "./bind";
 import { BINDING_KEYS, type Binding, LIFE_EPOCH_KEY } from "./bind-rules";
 import { isPearlRodStack } from "./item";
 import { MARK_KEY, unboundLore } from "./item-rules";
-import { type Holder, type Honour, honourOf, isDeadRecord, nextLifeEpoch, tripSurvives } from "./owner-rules";
+import { type Holder, type Honour, honourOf, isDeadRecord, nextLifeEpoch } from "./owner-rules";
 
 /** Counters a GameTest reads to tell what the module did. */
 export const ownerStats = { deaths: 0, cleared: 0, errors: 0 };
@@ -25,12 +25,6 @@ export function honourFor(player: Player, stack: ItemStack | undefined): Honour 
 export function honouredBindingOf(player: Player, stack: ItemStack | undefined): Binding | undefined {
   const binding = bindingOf(stack);
   return honourOf(binding, holderOf(player)) === "honoured" ? binding : undefined;
-}
-
-/** Whether a trip `player` started in life `startEpoch` may go on this tick; false once they are dead or gone. */
-export function stillInLife(player: Player, startEpoch: number): boolean {
-  if (!player.isValid) return false;
-  return tripSurvives(startEpoch, { health: player.getComponent("minecraft:health")?.currentValue ?? 0, epoch: lifeEpochOf(player) });
 }
 
 function endLife(player: Player): void {

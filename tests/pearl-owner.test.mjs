@@ -1,6 +1,7 @@
 // The binding belongs to a living player (spec v3 §7; C-45, L0-pear-ru01, L0-pear-ent2), off the engine: the honour
 // table and the life epoch, and src/pearl/owner.ts with src/pearl/bind.ts against a stand-in @minecraft/server — a
-// death bumps the epoch once and touches no item, a stranger's hit overwrites the binder, a trip listener hears the death.
+// death bumps the epoch once and touches no item, a stranger's hit overwrites the binder, and a dead record is erased
+// when the rod turns up with its binder online.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -79,15 +80,6 @@ test('every death voids a binding made before it, however many deaths pass', () 
     assert.equal(R.honourOf(made, { id: BOUND.owner, epoch }), 'past-life', `after ${deaths} death(s)`);
   }
   assert.equal(R.honourOf({ ...BOUND, epoch }, { id: BOUND.owner, epoch }), 'honoured', 'a binding made in the current life');
-});
-
-test('a trip goes on only while its traveller is alive and in the life it started in', () => {
-  assert.equal(R.tripSurvives(4, { health: 20, epoch: 4 }), true);
-  assert.equal(R.tripSurvives(4, { health: 0.5, epoch: 4 }), true, 'half a heart is alive');
-  assert.equal(R.tripSurvives(4, { health: 20, epoch: R.nextLifeEpoch(4) }), false, 'died and respawned since the use');
-  // BDS 1.26.51.1: a death reads hp 0 in the tick's interval before its entityDie, so the epoch is still the old one.
-  assert.equal(R.tripSurvives(4, { health: 0, epoch: 4 }), false, 'dead, entityDie not delivered yet');
-  assert.equal(R.tripSurvives(0, { health: 0, epoch: 1 }), false);
 });
 
 test('a record is dead only once its binder is known to be in a later life', () => {
@@ -298,21 +290,6 @@ test('a stranger holding the rod is foreign; their own hit overwrites the binder
   assert.deepEqual([rec.owner, rec.epoch, rec.pos], ['id-second', 2, { x: 5, y: 2, z: 5 }]);
   assert.equal(O.honourFor(b, b.items[4]), 'honoured');
   assert.equal(O.honourFor(a, b.items[4]), 'foreign');
-});
-
-test('stillInLife: alive in the same epoch; not once health reads 0, the epoch moved, or the player is gone', () => {
-  const p = fakePlayer('traveller');
-  let hp = 20;
-  p.getComponent = (id) => (id === 'minecraft:health' ? { currentValue: hp } : undefined);
-  assert.equal(O.stillInLife(p, 0), true);
-  hp = 0;
-  assert.equal(O.stillInLife(p, 0), false, 'the death tick, before entityDie');
-  hp = 20;
-  die(p);
-  assert.equal(O.stillInLife(p, 0), false, 'respawned in a new life');
-  assert.equal(O.stillInLife(p, 1), true);
-  p.isValid = false;
-  assert.equal(O.stillInLife(p, 1), false, 'logged out');
 });
 
 const RECORD_KEYS = ['andrew:pr_dim', 'andrew:pr_pos', 'andrew:pr_type', 'andrew:pr_owner', 'andrew:pr_epoch', 'andrew:pr_gen'];

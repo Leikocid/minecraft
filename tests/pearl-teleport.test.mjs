@@ -439,12 +439,11 @@ function fakePlayer(name, opts = {}) {
   const items = new Array(36).fill(undefined);
   const container = { size: 36, getItem: (i) => items[i]?.clone(), setItem: (i, s) => { items[i] = s?.clone(); } };
   const p = Object.assign(new E.Player(), {
-    name, id: `id-${name}`, isValid: true, selectedSlotIndex: 0, items, bars: [], epoch: opts.epoch ?? 0, health: 20,
+    name, id: `id-${name}`, isValid: true, selectedSlotIndex: 0, items, bars: [], epoch: opts.epoch ?? 0,
     dimension: opts.dim ?? overworld, location: opts.at ?? { x: 0.5, y: 64, z: 0.5 }, riding: undefined, teleports: [], stuck: false,
     getComponent(id) {
       if (id === 'minecraft:inventory') return { container };
       if (id === 'minecraft:riding') return this.riding === undefined ? undefined : { entityRidingOn: this.riding };
-      if (id === 'minecraft:health') return { currentValue: this.health };
       return undefined;
     },
     getDynamicProperty(k) { return k === 'andrew:life_epoch' ? this.epoch : undefined; },
@@ -698,9 +697,8 @@ test('row 5 on the engine: a second use while travelling is cancelled with "alre
   clean('travelling');
 });
 
-test('row 6 on the engine: death while the trip waits aborts it silently, by entityDie, a moved epoch, or health 0 alone', () => {
-  // `health`: the death as the trip's interval sees it on BDS — health 0, its entityDie and epoch bump not delivered yet.
-  for (const how of ['entityDie', 'epoch', 'health']) {
+test('row 6 on the engine: death while the trip waits aborts it silently, by entityDie or by a moved epoch', () => {
+  for (const how of ['entityDie', 'epoch']) {
     const p = fakePlayer(`dies_${how}`);
     const np = { x: 6000 + how.length, y: 70, z: 0 };
     pad(nether, np);
@@ -710,15 +708,14 @@ test('row 6 on the engine: death while the trip waits aborts it silently, by ent
     tick(3);
     assert.equal(E.pendingTrips(), 1);
     if (how === 'entityDie') H.die({ deadEntity: p });
-    else if (how === 'epoch') p.epoch++;
-    else p.health = 0;
+    else p.epoch++;
     const o = until(p, t0);
     assert.equal(o.outcome, 'died', how);
+    assert.equal(o.detail, how === 'entityDie' ? 'entityDie' : 'life epoch moved', how);
     assert.equal(p.teleports.length, 0, `${how}: not moved`);
     assert.deepEqual(p.bars, [], `${how}: no message`);
     clean(how);
-    if (how !== 'epoch') p.epoch++;
-    p.health = 20;
+    if (how === 'entityDie') p.epoch++;
     assert.equal(use(p), false, `${how}: after the death the old binding casts (void by epoch)`);
   }
   const quick = fakePlayer('dies_before_start');
@@ -730,6 +727,38 @@ test('row 6 on the engine: death while the trip waits aborts it silently, by ent
   clean('died before start');
   H.die({ deadEntity: undefined });
   H.die({ deadEntity: { get id() { throw new Error('removed'); } } });
+});
+
+test('row 6 on the engine: health 0 in the tick the destination loads, before entityDie and the epoch move, aborts too', () => {
+  // The measured tick order (PEAR-OWNER-01 probe): the interval sees hp 0 in the death tick; entityDie comes after it.
+  const p = fakePlayer('dies_hp');
+  let hp = 20;
+  const base = p.getComponent.bind(p);
+  p.getComponent = (id) => (id === 'minecraft:health' ? { currentValue: hp } : base(id));
+  const plate = { x: 2100, y: 64, z: 0 };
+  pad(overworld, plate);
+  p.items[0] = boundRod(p, overworld, plate);
+  const t0 = H.tick;
+  use(p);
+  tick(2);
+  assert.equal(E.pendingTrips(), 1, 'still loading');
+  hp = 0;
+  tick(1);
+  const o = E.lastOutcome.get(p.id);
+  assert.equal(o?.outcome, 'died', `a dead player was handled as ${o?.outcome}`);
+  assert.equal(o.detail, 'health 0');
+  assert.ok(o.tick > t0);
+  assert.equal(p.teleports.length, 0, 'not moved');
+  assert.ok(E.bindingOf(p.items[0]) !== undefined, 'the rod is left to the epoch');
+  assert.deepEqual(p.bars, []);
+  clean('hp 0');
+});
+
+test('registering twice arms the module once', () => {
+  const uses = H.use;
+  E.registerPearlTeleport({ areas: budget, areaPrefix: 'andrew_pearl_' });
+  assert.equal(H.use, uses, 'no second beforeEvents.itemUse subscription');
+  assert.equal(H.intervals.length, 1, 'no second interval');
 });
 
 test('row 7 on the engine: a stranger and the owner after a death cast; the binding is left as it is', () => {

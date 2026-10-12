@@ -81,7 +81,7 @@ export function dimensionVerdict(from: string, to: string, known: boolean, cross
 export interface WaitState {
   /** The player entity is still valid (online). */
   online: boolean;
-  /** No death since the use: health above 0, no entityDie, and the life epoch has not moved (`owner.ts` stillInLife). */
+  /** No death since the use: no entityDie, the life epoch has not moved, and health reads above 0. */
   alive: boolean;
   /** Every preload cell reads loaded and the plate cell answers getBlock. */
   loaded: boolean;

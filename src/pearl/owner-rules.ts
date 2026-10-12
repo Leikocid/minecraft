@@ -44,19 +44,3 @@ export function isDeadRecord(binding: Binding | undefined, binderEpochNow: numbe
 export function nextLifeEpoch(stored: unknown): number {
   return counterOf(stored) + 1;
 }
-
-/** What a trip in progress reads of its traveller each tick. */
-export interface Vitals {
-  /** `minecraft:health` currentValue now. */
-  health: number;
-  /** The life epoch now. */
-  epoch: number;
-}
-
-/**
- * A trip started in life `startEpoch` goes on only while its traveller is still in that life. A death reads health 0
- * at once, but its entityDie — and with it the epoch bump — arrives after the tick's intervals, so health is checked too.
- */
-export function tripSurvives(startEpoch: number, now: Vitals): boolean {
-  return now.health > 0 && now.epoch === startEpoch;
-}
