@@ -282,7 +282,8 @@ rod's slot. Without a budget (all GameTest structure scenarios) the loaders beha
 
 ### Measured on BDS 1.26.51.1 (private copy of the checks instance, 2026-10-13)
 
-Tick counts are ranges over the development runs and the gate run. The scenarios bind through a real cast
+Preload ticks vary from run to run. The ranges below come from the earlier runs of 2026-10-13; the gate run is not bound
+to them, and its own numbers are in its `[pear-tp] … RESULT` lines. The scenarios bind through a real cast
 (`pear_tp_near_clears`) or by writing the record onto a fresh rod exactly as `bind.ts` writes it (all others). After every
 outcome each scenario checks four things: the budget holds nothing, no trip is pending, no name is held, and the engine
 still accepts as many areas as at the scenario's start (9 in a GameTest world). It counts the last by adding areas until
@@ -325,7 +326,7 @@ the engine refuses, then removing them. **Every check of every scenario read 9 o
     player's next use arrives.
   - After the searches release, all 11 asks have completed and the budget holds 0.
 - **`pear_tp_cross_dimension`.** Pads in the Nether (20 000, y 70), the End (20 000, y 70) and the overworld (120 000).
-  overworld → Nether arrived after 9–11 ticks, Nether → End after 7–8, End → overworld after 2–3. Offset 0.000 each time, and
+  overworld → Nether arrived after 9–11 ticks, Nether → End after 5–8, End → overworld after 2–3. Offset 0.000 each time, and
   20 ticks later the player was on the ground on stone in the destination dimension.
 - **Regression** (same copy, same day): `pear_bind_*` (4), `pear_item_*` (4), `strf_cmd_find`, `strf_cmd_find_refuses`,
   `windmill_spawn_once`, `windmill_spawn_holds_discovery` and `airship_linked_*` (4) are all green.
