@@ -570,6 +570,11 @@ const EXPECTED_TESTS = [
   'andrew:probe_pearl_area_budget',
   'andrew:probe_pearl_dimension_trip',
   'andrew:probe_pearl_recipe_grid',
+  // PEAR-ITEM-01 — src/gametest/pear-item.ts (spec v3 §6, L0-pear-ac01): the craft, the grid, durability, fishing
+  'andrew:pear_item_craft_unlimited',
+  'andrew:pear_item_grid_shifted',
+  'andrew:pear_item_hundred_casts',
+  'andrew:pear_item_fishes_unbound',
   // ENCH-PROBE-01 — src/gametest/ench-probe.ts (spec v3 §4, L0-ench-prob): docs/feedback/probe-enchanting.md
   'andrew:probe_ench_surface',
   'andrew:probe_ench_result_signals',
