@@ -31,3 +31,7 @@ docker/bds-ci/data/
 
 # ai-kit — local author mapping, per clone
 .mailmap
+
+# A private BDS copy belongs in dist/. Should one land here anyway, its server
+# files — Mojang's vanilla packs among them — must not reach this public repo.
+docker/*/data/

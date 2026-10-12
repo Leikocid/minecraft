@@ -10,9 +10,13 @@ part_of: ["L0-uwbw"]
 relates_to: ["L0-uwbw"]
 priority: 640
 size_chars: 1830
-tags: ["v10", "underwater-bow", "status:resolved", "resolved-by:L0-adr-ubfl@reduce-v10", "code-vs-adr", "damage"]
+tags: ["v10","underwater-bow","status:resolved","resolved-by:L0-adr-ubfl@reduce-v10","code-vs-adr","damage","resolved"]
 level: 2
+closed_at: 2026-10-12
+closed_reason: resolved_by_decision
+closed_by_ref: decision-resolve-l0-uwbw-cx01
 ---
+
 # CX-uwbw-01 · ADR-ubfl's "exactly 14 through `raiseHit`" vs what `raiseHit` does
 
 **Links.** relates_to: L0-adr-ubfl, L0-strm, L0-uwbw-r003, L0-uwbw-adex, L0-xasm38.

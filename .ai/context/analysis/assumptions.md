@@ -1,7 +1,7 @@
 ---
 title: Assumptions
 type: analysis
-generated_at: "2026-10-12T18:21:49.815Z"
+generated_at: "2026-10-12T22:34:59.438Z"
 source_channel: rollout
 node_id: rollout-assumptions
 aliases: ["rollout-assumptions","assumptions"]
@@ -748,7 +748,7 @@ see_also: ["underwaterbowfinalspecv3ruen-part-3", "underwaterbowfinalspecv3ruen-
 - The probe confirms it: a shifted layout and the 2×2 grid must produce nothing. If Bedrock trims, the limitation is reported and the 1×2 pattern ships.
 - **Seam for reduce:** the spec draws the v10 Mace and Rocket recipes at fixed cells too (centre and bottom-centre), so the same rule is offered to `uwbw`.
 
-**Gap 2: durability.** "Бесконечная прочность" (infinite durability) on a vanilla rod, which has 64 durability and no stable "Unbreakable" flag.
+**Gap 2: durability.** "Бесконечная прочность" (infinite durability) on a vanilla rod, which has **384** durability on Bedrock 1.26.51 — not the 64 this node first claimed (measured, `docs/feedback/probe-pearl.md` row 7) — and no stable "Unbreakable" flag. Writing `durability.damage = 0` back does hold: reads at +0/+1/+5/+40 all return 0, and a cast with the hook already out is not killed by the write.
 
 **Assumption 2.**
 - `durability.damage` is written back to 0 after every reel and release of a marked rod, and on the shared interval's hand check.
