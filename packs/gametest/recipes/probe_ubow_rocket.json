@@ -7,6 +7,7 @@
     "tags": ["crafting_table"],
     "pattern": [
       "P",
+      "S",
       "S"
     ],
     "key": {

@@ -1327,7 +1327,9 @@ registerAsync("andrew", "probe_ubow_buckets", async (test: Test): Promise<void> 
 // ------------------------------------------------ R8: what the paper + string rocket is, and whether it boosts an Elytra
 
 const ROCKET_GRIDS: ReadonlyArray<readonly [string, ReadonlyArray<string | undefined>]> = [
-  ["paper/string (add-on recipe)", [undefined, undefined, undefined, undefined, "minecraft:paper", undefined, undefined, "minecraft:string", undefined]],
+  // Not the spec's paper-over-string shape: that one is the product recipe (RCPE-VNLA), whose position probe a
+  // second, position-free paper/string recipe in this pack would answer for it. The result block is the same.
+  ["paper/string/string (add-on recipe)", [undefined, "minecraft:paper", undefined, undefined, "minecraft:string", undefined, undefined, "minecraft:string", undefined]],
   ["paper+gunpowder (vanilla, flight 1)", ["minecraft:paper", "minecraft:gunpowder", undefined, undefined, undefined, undefined, undefined, undefined, undefined]],
   ["paper+2 gunpowder (vanilla, flight 2)", ["minecraft:paper", "minecraft:gunpowder", "minecraft:gunpowder", undefined, undefined, undefined, undefined, undefined, undefined]],
   ["paper+3 gunpowder (vanilla, flight 3)", ["minecraft:paper", "minecraft:gunpowder", "minecraft:gunpowder", "minecraft:gunpowder", undefined, undefined, undefined, undefined, undefined]],
