@@ -496,7 +496,7 @@ test('AC5: roll.ts and every module it imports never reach @minecraft/server; th
 });
 
 test('AC6: no event subscription, no item write, and nothing in the game imports the roller', () => {
-  assert.deepEqual(enchantingFiles.sort(), ['src/enchanting/roll-rules.ts', 'src/enchanting/roll.ts']);
+  assert.deepEqual(enchantingFiles.sort(), ['src/enchanting/eligibility.ts', 'src/enchanting/roll-rules.ts', 'src/enchanting/roll.ts']);
   for (const file of enchantingFiles) {
     assert.doesNotMatch(
       code(file),
@@ -505,8 +505,9 @@ test('AC6: no event subscription, no item write, and nothing in the game imports
     );
   }
   const walk = (dir) => readdirSync(dir).flatMap((f) => (statSync(join(dir, f)).isDirectory() ? walk(join(dir, f)) : [join(dir, f)]));
+  // src/gametest is the dev-only GameTest pack, never in andrew.mcaddon; its parity scenario reads the tables.
   const importers = walk(join(projectRoot, 'src'))
-    .filter((f) => f.endsWith('.ts') && !f.includes(`${join('src', 'enchanting')}`))
+    .filter((f) => f.endsWith('.ts') && !f.includes(`${join('src', 'enchanting')}`) && !f.includes(`${join('src', 'gametest')}`))
     .filter((f) => /from\s+["'][^"']*enchanting\//.test(readFileSync(f, 'utf-8')))
     .map((f) => relative(projectRoot, f));
   assert.deepEqual(importers, [], 'roll.ts is imported only by tests until xq11 approves an adapter');
