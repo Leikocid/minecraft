@@ -551,6 +551,11 @@ const EXPECTED_TESTS = [
   'andrew:probe_ubow_shield',
   'andrew:probe_ubow_buckets',
   'andrew:probe_ubow_rocket',
+  // UBOW-FLIGHT-01 — src/gametest/ubow-flight.ts (L0-uwbw-a003, C-42)
+  'andrew:ubow_flight_water',
+  'andrew:ubow_flight_lava',
+  'andrew:ubow_flight_damage',
+  'andrew:ubow_infinity_no_pickup',
 // TRDT-DMG-01 — src/gametest/trident-damage.ts (L0-trdt-r002, L0-trdt-a002, L0-adr-twlt)
   'andrew:trident_damage_melee',
   'andrew:trident_damage_thrown',
