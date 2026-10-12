@@ -99,7 +99,7 @@ function assertState(def, stack, state) {
 }
 
 test('isLegendaryStack (L0-lgnd-ac21 Predicate)', async (t) => {
-  await t.test('the registry names exactly the seven weapons and their seven craft tokens', () => {
+  await t.test('the registry names exactly the eight weapons and their eight craft tokens', () => {
     const ids = LEGENDARIES.flatMap((def) => [def.itemId, def.craftTokenId]).sort();
     assert.deepEqual(ids, [
       'andrew:above_water_trident',
@@ -114,6 +114,8 @@ test('isLegendaryStack (L0-lgnd-ac21 Predicate)', async (t) => {
       'andrew:scythe_of_calamity_crafted',
       'andrew:storm_blade',
       'andrew:storm_blade_crafted',
+      'andrew:underwater_bow',
+      'andrew:underwater_bow_crafted',
       'andrew:web_sword',
       'andrew:web_sword_crafted',
     ]);

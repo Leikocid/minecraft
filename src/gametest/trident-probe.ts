@@ -271,10 +271,12 @@ const CRAFTER = { x: 3, y: 2, z: 4 };
 const POWER = { x: 2, y: 2, z: 4 };
 const STAND = { x: 3, y: 2, z: 5 };
 
+// The shipped recipe transposed: the GameTest pack loads beside it, and of two identical grids the engine
+// crafts one (tests/recipe-collisions.test.mjs).
 const TOKEN_GRID: Array<string | undefined> = [
-  undefined, "minecraft:golden_apple", undefined,
-  "minecraft:water_bucket", TRIDENT, "minecraft:water_bucket",
-  undefined, "minecraft:golden_apple", undefined,
+  undefined, "minecraft:water_bucket", undefined,
+  "minecraft:golden_apple", TRIDENT, "minecraft:golden_apple",
+  undefined, "minecraft:water_bucket", undefined,
 ];
 const MILK_GRID: Array<string | undefined> = TOKEN_GRID.map((id) => (id === "minecraft:water_bucket" ? "minecraft:milk_bucket" : id));
 const CAKE_GRID: Array<string | undefined> = [

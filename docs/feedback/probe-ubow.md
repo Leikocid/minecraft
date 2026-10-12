@@ -22,7 +22,7 @@
   | `items/probe_ubow_shooter.json` | кастомный shooter «как лук»: без `charge_on_draw`, `max_draw_duration` 1.0 с, `scale_power_by_draw_duration`, `enchantable` slot `bow` |
   | `entities/probe_ubow_arrow.json` | рантайм `minecraft:arrow`; блок `minecraft:projectile` ванильной стрелы 1.26.50 (урон = ⌈скорость × 2.0⌉) + `liquid_inertia` 0.99, без ванильного `hurt_on_condition` (лава 4/тик) |
   | `items/probe_ubow_token.json` | токен-результат рецепта лука |
-  | `recipes/probe_ubow_buckets.json` | ` R / WBW / S ` → токен (громоотвод, ведро воды, лук, песок) — рецепт спеки §1 |
+  | `recipes/probe_ubow_buckets.json` | ` W / RBS / W ` → токен (громоотвод, ведро воды, лук, песок) — рецепт спеки §1, транспонированный (ниже) |
   | `recipes/probe_ubow_rocket.json` | ` P / S / S ` → 3 `minecraft:firework_rocket`: блок результата как в спеке §3, форма своя (см. п. 8) |
 
   Блок снаряда ванильной стрелы взят из `behavior_packs/vanilla_1.26.50/__brarchive/entities.brarchive` сервера:
@@ -298,6 +298,11 @@
 ## 7. Два пустых ведра по пути `craftReturn` (C-34, L0-trdt-adrf)
 
 **Команда.** `--only andrew:probe_ubow_buckets` (прогоны 1 и 2 совпали).
+
+**Форма рецепта.** Числа ниже сняты на сетке спеки ` R / WBW / S `. С UBOW-ITEM-01 эту сетку несёт рецепт
+`andrew:underwater_bow` пакета поведения. GameTest-пак грузится рядом с ним, а из двух рецептов с одинаковой сеткой
+Крафтер крафтит один: на этой сетке выходил пробный токен, и сценарии лука его не получали. Пробный рецепт теперь
+транспонирован: ` W / RBS / W `, ингредиенты и 2 ведра воды те же. Повтор прав `tests/recipe-collisions.test.mjs`.
 
 - Крафтер (`south_up`), сетка заполняется `replaceitem block … slot.container N`, крафт запускает импульс редстоуна.
 - Результат подбирает SimulatedPlayer. Считается его инвентарь плюс предметы на земле в радиусе 8.

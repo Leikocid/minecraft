@@ -203,6 +203,14 @@ const EXPECTED_TESTS = [
   'andrew:trident_blocked_restart_seed',
   'andrew:trident_blocked_restart_check',
   'andrew:trident_creative_and_commands_spend_nothing',
+  // UBOW-ITEM-01-AA — src/gametest/legendary-craftgate.ts
+  'andrew:legendary_give_then_craft_underwater_bow',
+  'andrew:legendary_underwater_bow_other_flags_untouched',
+  'andrew:ubow_craft_two_empty_buckets',
+  'andrew:ubow_craft_full_inventory',
+  'andrew:ubow_blocked_restart_seed',
+  'andrew:ubow_blocked_restart_check',
+  'andrew:ubow_creative_and_commands_spend_nothing',
   // TRDT-THROW-01 — src/gametest/trident-throw.ts (L0-trdt-a004, R-trdt-001)
   'andrew:trident_throw_wall_return',
   'andrew:trident_throw_zombie_return',
@@ -602,6 +610,7 @@ const RESTART_AFTER = new Map([
   ['andrew:ufo_restart_seed', 'andrew:ufo_restart_check'],
   ['andrew:probe_trident_restart_seed', 'andrew:probe_trident_restart_check'],
   ['andrew:trident_blocked_restart_seed', 'andrew:trident_blocked_restart_check'],
+  ['andrew:ubow_blocked_restart_seed', 'andrew:ubow_blocked_restart_check'],
   ['andrew:trident_throw_restart_seed', 'andrew:trident_throw_restart_check'],
 ]);
 

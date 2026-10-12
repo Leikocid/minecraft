@@ -69,6 +69,7 @@ const {
   SCULK_CROSSBOW,
   STORM_BLADE,
   TRIDENT,
+  UNDERWATER_BOW,
   hasAbility,
   heldLegendaries,
   genLedgerKey,
@@ -108,7 +109,7 @@ test('registry', async (t) => {
     assert.strictEqual(defForAbility('nope'), undefined);
   });
 
-  await t.test('the seven shipped defs, in order, all but the Sculk Crossbow and the Trident active (L0-lgnd-ac26)', () => {
+  await t.test('the eight shipped defs, in order, all but the Sculk Crossbow and the Trident active (L0-lgnd-ac26)', () => {
     assert.deepStrictEqual(
       LEGENDARIES.map((def) => def.itemId),
       [
@@ -119,10 +120,11 @@ test('registry', async (t) => {
         'andrew:sculk_crossbow',
         'andrew:storm_blade',
         'andrew:above_water_trident',
+        'andrew:underwater_bow',
       ]
     );
     assert.deepStrictEqual(LEGENDARIES.filter((def) => !hasAbility(def)), [SCULK_CROSSBOW, TRIDENT]);
-    for (const def of [WEB_SWORD, SCYTHE_OF_CALAMITY, ORBITAL_CANNON, DRAGON_KATANA, STORM_BLADE]) {
+    for (const def of [WEB_SWORD, SCYTHE_OF_CALAMITY, ORBITAL_CANNON, DRAGON_KATANA, STORM_BLADE, UNDERWATER_BOW]) {
       assert.strictEqual(hasAbility(def), true, `${def.itemId} lost its ability`);
       assert.strictEqual(defForAbility(def.abilityKey), def);
       assert.strictEqual(def.cooldownTicks, 600);
@@ -143,7 +145,7 @@ test('registry', async (t) => {
     ]);
   });
 
-  await t.test('item ids, prefixes, tokens, commands and text prefixes are unique across all seven defs', () => {
+  await t.test('item ids, prefixes, tokens, commands and text prefixes are unique across all eight defs', () => {
     for (const field of ['itemId', 'keyPrefix', 'command', 'craftTokenId', 'textPrefix']) {
       const values = LEGENDARIES.map((def) => def[field]);
       assert.strictEqual(new Set(values).size, values.length, `duplicate ${field}`);
@@ -256,7 +258,7 @@ test('registry', async (t) => {
   await t.test('its prefix is none of the six taken before it', () => {
     const taken = ['ws', 'sc', 'oc', 'dk', 'sk', 'sb'];
     assert.deepStrictEqual(
-      LEGENDARIES.filter((def) => def !== TRIDENT).map((def) => def.keyPrefix),
+      LEGENDARIES.slice(0, LEGENDARIES.indexOf(TRIDENT)).map((def) => def.keyPrefix),
       taken
     );
     assert.ok(!taken.includes(TRIDENT.keyPrefix));
@@ -273,16 +275,64 @@ test('registry', async (t) => {
     for (const [id] of TRIDENT.craftReturn) assert.ok(!refundIds.has(id), `${id} is in both lists`);
   });
 
-  await t.test('only the Trident returns containers: defs #1–#6 have no craftReturn', () => {
-    for (const def of LEGENDARIES.filter((d) => d !== TRIDENT)) {
-      assert.strictEqual(def.craftReturn, undefined, `${def.itemId} got a craftReturn`);
-    }
+  await t.test('only the Trident and the Underwater Bow return containers: defs #1–#6 have no craftReturn', () => {
+    assert.deepStrictEqual(LEGENDARIES.filter((d) => d.craftReturn !== undefined), [TRIDENT, UNDERWATER_BOW]);
   });
 
   await t.test('isLegendaryStack is true for the Trident item and its token, false for the vanilla trident', () => {
     assert.strictEqual(isLegendaryStack({ typeId: 'andrew:above_water_trident' }), true);
     assert.strictEqual(isLegendaryStack({ typeId: 'andrew:above_water_trident_crafted' }), true);
     assert.strictEqual(isLegendaryStack({ typeId: 'minecraft:trident' }), false);
+  });
+
+  await t.test('the Underwater Bow is def #8: ub prefix, an ability on a 600-tick cooldown, command andrew:ubow (L0-uwbw-eitm)', () => {
+    assert.strictEqual(LEGENDARIES[7], UNDERWATER_BOW);
+    assert.strictEqual(LEGENDARIES.length, 8);
+    assert.strictEqual(UNDERWATER_BOW.itemId, 'andrew:underwater_bow');
+    assert.strictEqual(UNDERWATER_BOW.keyPrefix, 'ub');
+    assert.strictEqual(UNDERWATER_BOW.nameKey, 'item.andrew:underwater_bow');
+    assert.strictEqual(UNDERWATER_BOW.craftGate, true);
+    assert.strictEqual(UNDERWATER_BOW.craftTokenId, 'andrew:underwater_bow_crafted');
+    assert.strictEqual(UNDERWATER_BOW.textPrefix, 'andrew.underwater_bow');
+    assert.strictEqual(UNDERWATER_BOW.command, 'andrew:ubow');
+    assert.strictEqual(hasAbility(UNDERWATER_BOW), true);
+    assert.strictEqual(UNDERWATER_BOW.abilityKey, 'underwater_bow');
+    assert.strictEqual(defForAbility('underwater_bow'), UNDERWATER_BOW);
+    assert.strictEqual(UNDERWATER_BOW.cooldownTicks, 600);
+    assert.deepStrictEqual(UNDERWATER_BOW.hudKeys, {
+      ready: 'andrew.underwater_bow.hud_ready',
+      armed: 'andrew.underwater_bow.hud_armed',
+      cooldown: 'andrew.underwater_bow.hud_cooldown',
+    });
+    assert.strictEqual(defFor('andrew:underwater_bow'), UNDERWATER_BOW);
+    assert.strictEqual(defFor('minecraft:bow'), undefined, 'the vanilla bow is an ingredient, not a legendary');
+  });
+
+  await t.test('the eighth keyPrefix is none of the seven taken before it', () => {
+    const taken = ['ws', 'sc', 'oc', 'dk', 'sk', 'sb', 'tr'];
+    assert.deepStrictEqual(
+      LEGENDARIES.slice(0, LEGENDARIES.indexOf(UNDERWATER_BOW)).map((def) => def.keyPrefix),
+      taken
+    );
+    assert.ok(!taken.includes(UNDERWATER_BOW.keyPrefix));
+  });
+
+  await t.test('a blocked Underwater Bow craft hands back the rod, the bow, the sand and 2 WATER buckets; a kept one gets 2 empty buckets — never both kinds', () => {
+    assert.deepStrictEqual(UNDERWATER_BOW.refund, [
+      ['minecraft:lightning_rod', 1],
+      ['minecraft:bow', 1],
+      ['minecraft:sand', 1],
+      ['minecraft:water_bucket', 2],
+    ]);
+    assert.deepStrictEqual(UNDERWATER_BOW.craftReturn, [['minecraft:bucket', 2]]);
+    const refundIds = new Set(UNDERWATER_BOW.refund.map(([id]) => id));
+    for (const [id] of UNDERWATER_BOW.craftReturn) assert.ok(!refundIds.has(id), `${id} is in both lists`);
+  });
+
+  await t.test('isLegendaryStack is true for the Underwater Bow and its token, false for the vanilla bow', () => {
+    assert.strictEqual(isLegendaryStack({ typeId: 'andrew:underwater_bow' }), true);
+    assert.strictEqual(isLegendaryStack({ typeId: 'andrew:underwater_bow_crafted' }), true);
+    assert.strictEqual(isLegendaryStack({ typeId: 'minecraft:bow' }), false);
   });
 });
 
@@ -372,6 +422,28 @@ test('keys from keyPrefix', async (t) => {
     assert.strictEqual(genLedgerKey(TRIDENT, 'i-1'), 'andrew:tr_gen:i-1');
     const others = new Set(LEGENDARIES.filter((def) => def !== TRIDENT).flatMap((def) => Object.values(keysFor(def))));
     for (const key of Object.values(keysFor(TRIDENT))) {
+      assert.ok(!others.has(key), `${key} collides with another def's key`);
+    }
+  });
+
+  await t.test('Underwater Bow keys live under andrew:ub_*, and collide with no other def\'s', () => {
+    assert.deepStrictEqual(keysFor(UNDERWATER_BOW), {
+      origin: 'andrew:ub_origin',
+      owner: 'andrew:ub_owner',
+      id: 'andrew:ub_id',
+      ownerName: 'andrew:ub_owner_name',
+      crafted: 'andrew:ub_crafted',
+      craftedBy: 'andrew:ub_crafted_by',
+      pending: 'andrew:ub_pending',
+      gen: 'andrew:ub_gen',
+      owed: 'andrew:ub_owed',
+      holder: 'andrew:ub_holder',
+      holderName: 'andrew:ub_holder_name',
+    });
+    assert.strictEqual(genLedgerKey(UNDERWATER_BOW, 'i-1'), 'andrew:ub_gen:i-1');
+    assert.strictEqual(cooldownKey(UNDERWATER_BOW.abilityKey), 'andrew:cd_underwater_bow');
+    const others = new Set(LEGENDARIES.filter((def) => def !== UNDERWATER_BOW).flatMap((def) => Object.values(keysFor(def))));
+    for (const key of Object.values(keysFor(UNDERWATER_BOW))) {
       assert.ok(!others.has(key), `${key} collides with another def's key`);
     }
   });
@@ -583,6 +655,39 @@ test('lang: the Trident\'s name and its five messages, in both languages (L0-trd
   }
 });
 
+test('lang: the Underwater Bow\'s name, its five messages and its three HUD states, in both languages (L0-uwbw-eitm, C-8)', () => {
+  const en = langEntries('en_US.lang');
+  const ru = langEntries('ru_RU.lang');
+  const hud = UNDERWATER_BOW.hudKeys;
+  const keys = [
+    `${UNDERWATER_BOW.nameKey}.name`,
+    ...['first_craft', 'craft_blocked', 'returned', 'admin_given', 'reset'].map((suffix) => `${UNDERWATER_BOW.textPrefix}.${suffix}`),
+    hud.ready,
+    hud.armed,
+    hud.cooldown,
+  ];
+  assert.deepStrictEqual([...en.keys()].sort(), [...ru.keys()].sort(), 'en_US and ru_RU carry different key sets');
+  for (const key of keys) {
+    assert.ok(en.get(key)?.trim(), `en_US ${key} is empty`);
+    assert.ok(ru.get(key)?.trim(), `ru_RU ${key} is empty`);
+    assert.notStrictEqual(ru.get(key), en.get(key), `ru_RU ${key} is the English text`);
+    assert.match(ru.get(key), /[А-Яа-яЁё]/, `ru_RU ${key} has no Cyrillic`);
+  }
+  assert.strictEqual(en.get(`${UNDERWATER_BOW.nameKey}.name`), 'Underwater Bow');
+  assert.strictEqual(ru.get(`${UNDERWATER_BOW.nameKey}.name`), 'Подводный лук');
+  const args = (lang, key) => (lang.get(key).match(/%s/g) ?? []).length;
+  for (const lang of [en, ru]) {
+    assert.strictEqual(args(lang, `${UNDERWATER_BOW.textPrefix}.first_craft`), 2, 'first_craft names the crafter and the weapon');
+    assert.strictEqual(args(lang, `${UNDERWATER_BOW.textPrefix}.admin_given`), 1, 'admin_given names the player');
+    // The shared HUD's arguments (hud.ts): the name, and the seconds left on cooldown.
+    assert.strictEqual(args(lang, hud.ready), 1);
+    assert.strictEqual(args(lang, hud.armed), 1);
+    assert.strictEqual(args(lang, hud.cooldown), 2);
+  }
+  assert.ok(new Set([en.get(hud.ready), en.get(hud.armed), en.get(hud.cooldown)]).size === 3, 'the three states read alike in en_US');
+  assert.ok(new Set([ru.get(hud.ready), ru.get(hud.armed), ru.get(hud.cooldown)]).size === 3, 'the three states read alike in ru_RU');
+});
+
 test('hudMessage: shared keys unless the def names its own (L0-adr-oded §1)', async (t) => {
   const unmarked = (typeId) => ({ typeId, getDynamicProperty: () => undefined });
   const sword = unmarked(WEB_SWORD.itemId);
@@ -639,6 +744,19 @@ test('hudMessage: shared keys unless the def names its own (L0-adr-oded §1)', a
         { text: '   ' },
         { translate: 'andrew.legendary.ready', with: { rawtext: [{ translate: 'item.andrew:web_sword.name' }] } },
       ],
+    });
+  });
+
+  await t.test('the Underwater Bow renders its own ready and cooldown keys', () => {
+    const bow = unmarked(UNDERWATER_BOW.itemId);
+    const name = { translate: 'item.andrew:underwater_bow.name' };
+    globalThis.__nowMs = 7_000_000;
+    const player = makePlayer(bow, undefined);
+    assert.deepStrictEqual(hudMessage(player), { rawtext: [{ translate: 'andrew.underwater_bow.hud_ready', with: { rawtext: [name] } }] });
+    startCooldown(player, UNDERWATER_BOW.abilityKey);
+    globalThis.__nowMs = 7_000_000 + 1_000;
+    assert.deepStrictEqual(hudMessage(player), {
+      rawtext: [{ translate: 'andrew.underwater_bow.hud_cooldown', with: { rawtext: [name, { text: '29' }] } }],
     });
   });
 });
