@@ -39,6 +39,7 @@ import { registerTrap } from "./websword/trap";
 import { registerStormPassive } from "./storm/passive";
 import { registerTridentDamage } from "./trident/damage";
 import { registerTridentMovement } from "./trident/movement";
+import { registerUnderwaterBowFire } from "./ubow/fire";
 
 registerAutoSmelt();
 registerCraftGate();
@@ -55,6 +56,7 @@ registerTridentThrow();
 registerDragonKatana();
 registerSculkCrossbow();
 registerTridentMovement();
+registerUnderwaterBowFire();
 // Must come after every other legendary's input: see registerStormActive().
 registerStormActive();
 // Must run at script load: custom commands can only be registered during the
