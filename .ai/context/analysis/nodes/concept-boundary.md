@@ -2,7 +2,7 @@
 type: "concept-boundary"
 node_id: "L0"
 source_channel: "rollout"
-analysis_version: 10
+analysis_version: 11
 title: "System Boundaries (v9)"
 aliases: ["L0"]
 is_a: ["boundary"]

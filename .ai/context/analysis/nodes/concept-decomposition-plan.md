@@ -2,80 +2,78 @@
 type: "concept-decomposition-plan"
 node_id: "L0"
 source_channel: "rollout"
-analysis_version: 10
-title: "L0 Decomposition Plan (v10)"
+analysis_version: 11
+level: 0
+title: "L0 Decomposition Plan (v11)"
 aliases: ["L0"]
 is_a: ["decomposition-plan"]
-priority: 640
-size_chars: 8700
-tags: ["v10", "underwater-bow", "enchanting", "supersedes:L0-plan@v9"]
-level: 0
+priority: 650
+size_chars: 8182
+tags: ["v11", "pearl-rod", "teleport", "supersedes:L0-plan@v10"]
 ---
 ---
-title: "L0 Decomposition Plan (v10)"
+title: "L0 Decomposition Plan (v11)"
 aliases: ["L0-plan", "Decomposition Plan"]
 is_a: ["plan"]
 part_of: ["L0"]
-relates_to: ["L0", "L0-uwbw", "L0-ench", "L0-lgnd", "L0-sclk", "L0-strm", "L0-trdt", "L0-adr-ubfl", "L0-adr-enrl", "L0-xcx32", "L0-xcx33", "L0-xq11", "L0-xasm38", "L0-xasm39"]
-see_also: ["underwaterbowmacefireworksenchantingspecv2ruen-part-1", "underwaterbowmacefireworksenchantingspecv2ruen-part-2", "underwaterbowmacefireworksenchantingspecv2ruen-part-3"]
-supersedes: ["L0-plan@v9"]
+relates_to: ["L0", "L0-pear", "L0-uwbw", "L0-ench", "L0-lgnd", "L0-strc", "L0-adr-prbd", "L0-xcx34", "L0-xq12", "L0-xasm41", "L0-xasm42", "L0-xasm43", "L0-xasm44"]
+see_also: ["underwaterbowfinalspecv3ruen-part-3", "underwaterbowfinalspecv3ruen-part-4", "underwaterbowfinalspecv3ruen-part-5"]
+supersedes: ["L0-plan@v10"]
 ---
-# L0 Decomposition Plan (v10)
+# L0 Decomposition Plan (v11)
 
 ## Survey
-- **Volume.** 41 raw fragments (about 163 KB). The v10 delta is **one new spec**, "Underwater Bow / Mace / Fireworks / Enchanting v2" (priority 640). It is 3 fragments, about 12.7 K characters. The EN half mirrors the RU half and part 3 overlaps part 2, so about 6 K is unique. It has 5 sections and 7 acceptance bullets. No other raw changed. The code is at 1.10.0, and the trident has shipped and been accepted. "v2" is the document's own label; there is no v1 in `docs/` or the KV, and version labels do not drive supersession.
-- **Diversity.** High. There are four unrelated areas:
-  1. a legendary weapon, which is script-heavy;
-  2. and 3. two vanilla-output recipes, which are data only;
-  4. a global rework of a native engine system, which is feasibility-gated.
-- **Coherence.** Split.
-  - §1–§3 talk to the add-on's own framework (`lgnd`, `sclk` arrows, `strm` strikes, the trident's bucket return).
-  - §4 talks to the engine. It applies to *every* enchantable item. It has its own risk profile: it may end as a "not possible" report, and its build is blocked on `xq11`.
-- **Dependencies.** No pipeline. The only seam between the two halves is that the bow must take "compatible bow enchantments". That is satisfied by `minecraft:enchantable` slot `bow`, whatever `ench` turns out to be. `ench` must also honour the per-def forbidden lists (C-37, `FORBIDDEN_ENCHANTMENTS`, `src/sculk/enchant.ts`).
-- **Blocking contradictions?** `xcx32` blocks the **`ench` build**, not the analysis or the probe. `xcx33` has a shippable default (`xasm38`).
+- **Volume.** There are 46 raw fragments (about 184 KB). The v11 delta is **one new spec**, "Underwater Bow FINAL Specification v3" (priority 650, 5 fragments, about 32 K characters).
+  - **§1–§5 are word-for-word v2.** A line diff of v2 against v3 shows no change outside the header and §6–§8. The `uwbw` and `ench` analyses (v10) therefore stand unchanged.
+  - **§6–§8 are new.** They describe the **Pearl Rod** («Перовый сокровятель»), about 6 K characters unique (RU + EN, with part 5 overlapping part 4). It has 3 sections and 6 acceptance bullets.
+  - The closing note, "Preserve all v2 … rules above", confirms v3 as a strict superset.
+  - The code is at 1.10.0. 1.11.0 (the bow, the recipes and the `ench` probe) is not built yet.
+- **Diversity.** There is one new topic. It is a **non-legendary utility item** whose core is a **teleport**. It shares no mechanics with the bow or the enchanting table.
+- **Coherence.** The Pearl Rod is self-contained. It touches three existing seams:
+  - **the token-swap path** from `src/legendary/craftgate.ts`, without the gate;
+  - **the ticking-area pool** owned by `src/structures/spawn-search.ts`, which the preload must share;
+  - **the shared interval** rule (no `runJob`; one `runInterval`).
+- **Dependencies.** No pipeline. Its only ordering constraint is to probe first, because four of its rules depend on engine facts nobody has measured yet:
+  - whether a hook is detectable on a plate;
+  - whether the hook's owner is readable;
+  - whether removing the hook resets the rod on the client;
+  - whether the preload works across dimensions.
+- **Blocking contradictions?** None block. `xcx34` (a same-type replacement plate is indistinguishable from the original) has a shippable default (`xasm42`). `xq12` (ender pearl vs "ender feather") is self-flagged by the spec and defaults to the Ender Pearl.
 
 ## Decomposition strategy: diversity
-There are two children. The bow follows the one-node-per-weapon precedent (`webs` … `trdt`). Following v8's `strm` (Storm Blade + Elytra/Totem), the two vanilla recipes ride with the weapon node: they are about 40 lines of JSON plus collision checks and do not justify a node. The enchanting table gets its own node, because its outcome, risk and verification channel all differ.
+There is **one new child**. It follows the one-node-per-item precedent (`webs` … `uwbw`).
 
-**`lgnd`, `sclk`, `strm` and `trdt` are not re-run.** `uwbw` names the exact `lgnd` touch points (the armed state and the HUD's third state; startCooldown on hit). If they go beyond a def field plus one HUD key set, reduce schedules `lgnd` at v11, as it did with `xcx30`.
+**`uwbw` and `ench` are not re-run.** Their source text is unchanged, so only their `see_also` gains the v3 fragments at rollout. **`lgnd` is not touched.** The Pearl Rod is explicitly *not* legendary: it has no craft gate, no retention, no Void recovery and no protection. It must not be registered as a def.
 
 | id_suffix | label | prompt | model_hint |
 |-----------|-------|--------|------------|
-| uwbw | **The Underwater Bow (`andrew:underwater_bow`), def #8 (Active), plus the Mace and Firework Rocket recipes.**<br>**Probe first, on checks (19136):**<br>• the `sclk` entitySpawn swap for a custom-shooter bow;<br>• `liquid_inertia` 0.99 (the `trident_in_flight` precedent) and survival in lava;<br>• vanilla bow damage on the swapped arrow, with Power, Punch, Flame and Infinity;<br>• `setOnFire` in water vs a scripted `fireTick` burn;<br>• an arrow raised to 14 through `strm` `raiseHit` with `causes: projectile` (`cause projectile + damagingEntity throws`, so use the before-event rewrite);<br>• a shield-blocked arrow;<br>• bucket return for the token recipe (the `trdt` `craftReturn` path);<br>• the plain `minecraft:firework_rocket` recipe output's flight duration and Elytra boost (`xasm39`).<br>**Item:** custom shooter, bow draw/pull, `allow_off_hand` (if the shooter allows it), no durability, enchantable slot `bow`, RU/EN lang, a Creative entry, and RP textures.<br>**Recipe:** ` R / BWB / S ` → token, with exactly 2 buckets back (C-34).<br>**Flight:** C-42.<br>**Normal hit:** vanilla damage plus 2 s of fire, using the longer of that and Flame's (`xasm38`).<br>**Ability:**<br>• arm on sneak + Use (`xcx33`, `xasm38`);<br>• the charge persists;<br>• a hit on a living entity → 14 pre-armour (C-29 exact), one `playStrikes`, Super Fire 5 s (C-43), and startCooldown(600);<br>• a miss → nothing (C-41);<br>• HUD: ready / armed / cooldown.<br>**Legendary:** every `lgnd` rule through def #8 (once per world, Creative free, retention, Void, recovery, persistence).<br>**Mace:** ` I / Z ` → `minecraft:mace`.<br>**Rockets:** ` P / S ` → 3 `minecraft:firework_rocket`.<br>Both are checked against every vanilla and `packs/behavior/recipes/*` shape (C-40).<br>**GameTests (`bds`) for each acceptance bullet in §5** that touches §1–§3, plus a negative control for each.<br>**iPad (`ipad`):** draw feel, HUD, lightning, underwater fire, icon, recipe book, rocket boost. | component-deep-dive | |
-| ench | **The enchanting table (§4): feasibility first.**<br>**First deliverable: a probe and a written verdict** on 1.26.51 / stable 2.10.0 (C-38). The probe asks:<br>• is there any event or component that sees table offers or the applied enchant? (`beforeEvents`, `playerInventoryItemChange` with before/after enchantments, an XP level drop of 1–3, `enchantable` slot data);<br>• can a SimulatedPlayer operate a table at all?;<br>• which treasure enchantments are already table-reachable on Bedrock (the Mace and Wind Burst, spear Lunge)?;<br>• can the result be told apart from an anvil, a command or a loot result?<br>**Feed `xq11`** with the verdict and the option table (`L0-adr-enrl`). **No engine hook is built before Andrey answers.**<br>**Always built:** a pure roller `src/enchanting/roll.ts` with an injectable RNG. It holds:<br>• the eligibility table per item, derived from vanilla data;<br>• the curse exclusion;<br>• the vanilla conflict groups;<br>• the 20 % rare stage, then 70/40/20 independent level rolls for Wind Burst and Unbreaking, highest wins, fallback I, capped by context max;<br>• exclusion of each def's FORBIDDEN list.<br>Tests: ≥ 1000-sample statistics (C-39), plus a conflict and curse fuzz.<br>**If a hook is approved:** wire it, prove it on `bds` where a SimulatedPlayer can reach it and on `ipad` otherwise, and keep the C-37 scrubs running after it. | component-deep-dive | |
+| pear | **The Pearl Rod («Перовый сокровятель»): a non-legendary fishing rod that binds to a pressure plate and teleports its binder there (spec v3 §6–§8).**<br>**Probe first, on checks (19136):**<br>• whether `minecraft:fishing_hook` raises `projectileHitBlock` and what block it reports on a plate (a plate has no collision, so the hook may report the support block);<br>• the hook's resting location on each plate type;<br>• whether the owner is readable (the projectile component) or must be correlated through `itemUse` plus `entitySpawn` +0;<br>• whether `hook.remove()` resets the rod's cast pose on the client;<br>• whether a cancelled `beforeEvents.itemUse` on a vanilla rod casts nothing;<br>• whether `durability.damage` can be written back to 0 after a reel;<br>• whether ItemStack dynamic properties survive a reel, an anvil rename, a chest, a drop and a restart;<br>• whether `/tickingarea` preloads at 10 K / 100 K / 1 M blocks and in the Nether and the End (per `probe_tickingarea_load`), and the area cap shared with `spawn-search`;<br>• whether a cross-dimension `teleport` works with `dimension`;<br>• whether a 3×3 recipe pattern with blanks (`" P "," R ","   "`) enforces fixed positions (it must not craft when shifted, nor in the 2×2 grid).<br>**Item (`L0-adr-prbd`):** a **marked vanilla `minecraft:fishing_rod`**:<br>• the recipe outputs `andrew:pearl_rod_token`, which is swapped after the fact (the craftgate's swap with no gate);<br>• name «Перовый сокровятель», an EN lore line and a rod id in a dynamic property;<br>• durability held at 0 damage;<br>• unlimited crafting, droppable, normal death drops.<br>**Recipe:** Ender Pearl top-middle, Fishing Rod centre, all other cells empty (`xq12`). It is checked against every vanilla and add-on shape (C-40).<br>**Binding:** the hook enters a plate cell (`xasm41`) → store {dimension, x, y, z, plate typeId, owner id, owner life epoch, plate generation} on the rod, then remove the hook.<br>**Bound use:**<br>• the owner, alive and with a matching epoch: cancel the cast, preload the destination, re-validate the plate, find a safe spot at or beside it, teleport, read the arrival back, then clear the binding;<br>• any other player: a normal cast (`xasm42`).<br>**Failure:** report it and never fake success (C-44). A missing plate clears the binding; a load timeout keeps it.<br>**Death:** bump the owner's life epoch, which invalidates every binding of theirs wherever the rods are (C-45).<br>**Persistence:** the binding and the epoch survive a restart.<br>**GameTests (`bds`):** one for each §8 bullet, every plate type from `BlockTypes` (`*pressure_plate`), and a negative control for each.<br>**iPad (`ipad`):** the cast pose after retract, the name, lore and icon, the recipe book, the arrival feel, and the failure messages. | component-deep-dive | |
 
 ## Reduce plan
 - **Cite, do not restate.**
-  - `uwbw` cites `lgnd` for the gate, token, refund, retention, Void, Creative and persistence.
-  - It cites `trdt-adrf` for bucket return.
-  - It cites `sclk` for the arrow swap and the `remove_on_hit` grace.
-  - It cites `strm` for `raiseHit` and `playStrikes`.
-- **The `lgnd` widening.** Reduce accepts `uwbw`'s list of `lgnd` touch points: a deferred cooldown start and a third HUD state (`hudKeys.armed`). It records them as an ADR if they stay within def fields and one HUD key. Otherwise it emits a v11 `lgnd` re-run.
-- **`ench` closes in one of two ways:**
-  - **(a) approved:** the hook is built per `xq11`, with the deviation from the preview UI documented;
-  - **(b) not approved or impossible:** a reported limitation (C-16, C-38), the roller kept dormant and tested, and §4's acceptance bullets marked "not deliverable on stable Bedrock" in the acceptance sheet. `xcx32` closes on Andrey's answer.
-- **AC routing.**
-  - §5 bullet 1 → `uwbw` (recipes).
-  - Bullets 2, 3 and 7 → `uwbw`.
-  - Bullets 4, 5 and 6 → `ench`. These are statistical, and they reach the engine only via an approved hook.
-  - Every AC is split into the `bds` and `ipad` channels.
+  - `pear` cites `lgnd` craftgate for the token swap pattern, and states that it does **not** use its gate, refund or retention.
+  - It cites `spawn-search` for the ticking-area pool.
+  - It cites the `trdt` and `uwbw` probes for the `entitySpawn` +0 correlation and the shared interval.
+- **Seams re-checked at reduce:**
+  - the Pearl Rod recipe vs carrot-on-a-stick and warped-fungus-on-a-stick, and vs every `packs/behavior/recipes/*` shape;
+  - the fixed-position rule (`xasm43`) also applies to the v10 Mace ` I / Z ` and Rocket ` P / S ` patterns, because the spec draws them at fixed cells too. Reduce tells `uwbw` whether to switch to full 3×3 patterns (it is not re-run for this; the change is a pattern string);
+  - the preload must allocate from the same ticking-area pool as `spawn-search`, so a structure search and a teleport never evict each other. If the pool cannot be shared without editing `spawn-search`, that edit is a refactor that keeps the structures scenarios green;
+  - a marked rod must never satisfy `lgnd` `defForToken` or `defForItem`;
+  - the `ench` roller's eligibility table treats the Pearl Rod as a `minecraft:fishing_rod` (Luck of the Sea, Lure, Mending, Unbreaking). Unbreaking is harmless on an unbreakable rod.
+- **AC routing.** All six §8 bullets go to `pear`. Each is split into the `bds` and `ipad` channels. "Very distant / unloaded" gets two `bds` scenarios:
+  - a far plate preloaded and reached;
+  - a forced preload failure (the pool exhausted, or a timeout injected) with no teleport and an error message.
 - **Roll-up.**
-  - The two child overviews go into the L0 diagram.
-  - New constraints are de-duplicated against C-1 … C-43.
-  - Seams re-checked at reduce:
-    - the bow recipe ` R / BWB / S ` is distinct from ` G / BTB / G ` (the trident) and every other add-on recipe;
-    - `raiseHit`'s projectile cause is opt-in only (the Storm Blade does not move);
-    - the roller's pool excludes `FORBIDDEN_ENCHANTMENTS` (trident) and the crossbow's Piercing;
-    - the magnet's legendary scenarios include def #8.
-- **Stage-11 order:**
-  1. The `uwbw` probe and the `ench` probe, in parallel on checks, as distinct criterion sets.
-  2. Mace and Rocket recipes (small, independent).
-  3. Def #8, item, token, bucket recipe, RP and lang.
-  4. Arrow swap and liquid flight.
-  5. Normal fire.
-  6. Armed charge, 14 HP, strike, Super Fire, cooldown and HUD.
-  7. Roller (pure).
-  8. `ench` hook, only after `xq11`.
+  - `pear`'s overview joins the L0 diagram.
+  - New constraints are de-duplicated against C-1 … C-45.
+  - `xcx34` closes on the `pear` deep-dive's choice of plate-generation sources.
+  - `xq12` closes on Andrey's answer, defaulting to the Ender Pearl.
+- **Stage order (1.11.x):**
+  1. The `pear` probe on checks. It runs in parallel with the `uwbw` and `ench` probes as distinct criterion sets.
+  2. The token, the recipe and the marked rod (name, lore, durability hold).
+  3. The binding.
+  4. The bound use with preload, validation, safe spot and teleport.
+  5. Death and epoch, transfer, and persistence.
 
-  Gate each merge by blast radius plus the `lgnd`/`sclk`/`strm`/`magn` scenarios. Reopen the `ipad` criteria after each epic merge. The add-on goes to 1.11.0.
-- **Not in this run:** `xcx12` (the structure reconcile) and the Orbital v1.4.4 reconcile. Both are still queued separately.
+  Gate each merge by blast radius plus the `lgnd` craftgate and `structures` spawn-search scenarios. Reopen the `ipad` criteria after each epic merge.
+- **Not in this run:** `xcx12` (the structure reconcile) and the Orbital v1.4.4 reconcile, both still queued.

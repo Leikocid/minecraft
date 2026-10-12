@@ -1,7 +1,7 @@
 ---
-current_analysis_version: 10
+current_analysis_version: 11
 current_versions_by_node:
-  L0: 10
+  L0: 11
   L0-lgnd: 7
   L0-pick: 2
   L0-infr: 2
@@ -25,21 +25,22 @@ current_versions_by_node:
   L0-trdt: 9
   L0-uwbw: 10
   L0-ench: 10
+  L0-pear: 11
 pending_revisions: []
 last_run:
-  started_at: '2026-10-12T17:54:52.481Z'
-  completed_at: '2026-10-12T18:07:51.565Z'
+  started_at: '2026-10-12T18:08:33.026Z'
+  completed_at: '2026-10-12T18:21:32.251Z'
   duration_seconds: 779
-  total_artifacts_current: 92
-  total_size_kb: 307
-  open_contradictions: 6
-  llm_calls: 4
+  total_artifacts_current: 68
+  total_size_kb: 391
+  open_contradictions: 5
+  llm_calls: 3
   llm_budget_used_pct: 2
-  input_hash: 9aeec190a93fdcf48db1bcb4d29932d6da64e3a592462cd81c9fe5570bfbbd3e
-  run_priority: 640
+  input_hash: 11b7a73e1c7bff639bceacaa8fdacd4383726efc1d220af304a05f32b06a514a
+  run_priority: 650
   run_scope:
-    recorded_at: '2026-10-12T17:54:52.503Z'
-    rule: 'partial: the queue (pending_revisions ∪ in-flight) plus the ancestors needed to reach it; every other node carrying a version is skipped as done and carried forward. Children named by a plan at runtime that have no version join the run as they are discovered.'
+    recorded_at: '2026-10-12T18:08:33.056Z'
+    rule: 'full: every node the decomposition plans name, from L0 down.'
     nodes:
       - L0
     reasons:
@@ -165,23 +166,28 @@ last_run:
       done: 3
     - stage: rollout
       entered_at: '2026-10-12T18:07:51.589Z'
+    - stage: nodes
+      entered_at: '2026-10-12T18:08:33.075Z'
+      done: 2
+    - stage: rollout
+      entered_at: '2026-10-12T18:21:49.769Z'
   digest_review:
-    analysis_version: 10
-    through: '2026-10-12T18:07:51.575Z'
-    reviewed_at: '2026-10-12T18:07:51.575Z'
+    analysis_version: 11
+    through: '2026-10-12T18:21:49.754Z'
+    reviewed_at: '2026-10-12T18:21:49.754Z'
 last_rollout_hashes:
-  project-knowledge/glossary.md: 29ff5af226048da6
-  project-knowledge/business-rules.md: afc6045cde3fb26b
+  project-knowledge/glossary.md: 5b836568c0e2e79d
+  project-knowledge/business-rules.md: 39c89bbe453049b5
   project-knowledge/boundaries.md: 52130c6cd83d1194
-  project-knowledge/intent.md: 3725425c27fd1b31
-  project-knowledge/domain-model.md: 69ae82d6bd8480a2
-  project-knowledge/architecture.md: 3604b3c9efa1af7b
-  assumptions.md: 5def951730e275fc
-  contradictions.md: 94300c11626d49ab
-  client-questions.md: 3d9e82703c46c79e
-  summary.md: b647176dbdecbd6c
-  scope.md: 88c51500b4ae178d
-  risks.md: 4b755ad4afa81c89
+  project-knowledge/intent.md: cd488f0730d03d85
+  project-knowledge/domain-model.md: 4e771cf2a28c43ac
+  project-knowledge/architecture.md: ee277ea2b5ddf492
+  assumptions.md: 6ca6504d554ce68f
+  contradictions.md: a6caf113aa6318a5
+  client-questions.md: 41a72a9fee2fa518
+  summary.md: 45232d38801d0456
+  scope.md: 7c245f5b93875b9a
+  risks.md: c02169a6d3d5f4d7
   decisions.md: 3d8b017fc5cecbf7
 runtime_vocabulary:
   concept-boundary:
@@ -284,6 +290,8 @@ slug_mappings:
   : L0-uwbw
   ? '**The enchanting table (§4): feasibility first.**<br>**First deliverable: a probe and a written verdict** on 1.26.51 / stable 2.10.0 (C-38). The probe asks:<br>• is there any event or component that sees table offers or the applied enchant? (`beforeEvents`, `playerInventoryItemChange` with before/after enchantments, an XP level drop of 1–3, `enchantable` slot data);<br>• can a SimulatedPlayer operate a table at all?;<br>• which treasure enchantments are already table-reachable on Bedrock (the Mace and Wind Burst, spear Lunge)?;<br>• can the result be told apart from an anvil, a command or a loot result?<br>**Feed `xq11`** with the verdict and the option table (`L0-adr-enrl`). **No engine hook is built before Andrey answers.**<br>**Always built:** a pure roller `src/enchanting/roll.ts` with an injectable RNG. It holds:<br>• the eligibility table per item, derived from vanilla data;<br>• the curse exclusion;<br>• the vanilla conflict groups;<br>• the 20 % rare stage, then 70/40/20 independent level rolls for Wind Burst and Unbreaking, highest wins, fallback I, capped by context max;<br>• exclusion of each def''s FORBIDDEN list.<br>Tests: ≥ 1000-sample statistics (C-39), plus a conflict and curse fuzz.<br>**If a hook is approved:** wire it, prove it on `bds` where a SimulatedPlayer can reach it and on `ipad` otherwise, and keep the C-37 scrubs running after it.'
   : L0-ench
+  ? '**The Pearl Rod («Перовый сокровятель»): a non-legendary fishing rod that binds to a pressure plate and teleports its binder there (spec v3 §6–§8).**<br>**Probe first, on checks (19136):**<br>• whether `minecraft:fishing_hook` raises `projectileHitBlock` and what block it reports on a plate (a plate has no collision, so the hook may report the support block);<br>• the hook''s resting location on each plate type;<br>• whether the owner is readable (the projectile component) or must be correlated through `itemUse` plus `entitySpawn` +0;<br>• whether `hook.remove()` resets the rod''s cast pose on the client;<br>• whether a cancelled `beforeEvents.itemUse` on a vanilla rod casts nothing;<br>• whether `durability.damage` can be written back to 0 after a reel;<br>• whether ItemStack dynamic properties survive a reel, an anvil rename, a chest, a drop and a restart;<br>• whether `/tickingarea` preloads at 10 K / 100 K / 1 M blocks and in the Nether and the End (per `probe_tickingarea_load`), and the area cap shared with `spawn-search`;<br>• whether a cross-dimension `teleport` works with `dimension`;<br>• whether a 3×3 recipe pattern with blanks (`" P "," R ","   "`) enforces fixed positions (it must not craft when shifted, nor in the 2×2 grid).<br>**Item (`L0-adr-prbd`):** a **marked vanilla `minecraft:fishing_rod`**:<br>• the recipe outputs `andrew:pearl_rod_token`, which is swapped after the fact (the craftgate''s swap with no gate);<br>• name «Перовый сокровятель», an EN lore line and a rod id in a dynamic property;<br>• durability held at 0 damage;<br>• unlimited crafting, droppable, normal death drops.<br>**Recipe:** Ender Pearl top-middle, Fishing Rod centre, all other cells empty (`xq12`). It is checked against every vanilla and add-on shape (C-40).<br>**Binding:** the hook enters a plate cell (`xasm41`) → store {dimension, x, y, z, plate typeId, owner id, owner life epoch, plate generation} on the rod, then remove the hook.<br>**Bound use:**<br>• the owner, alive and with a matching epoch: cancel the cast, preload the destination, re-validate the plate, find a safe spot at or beside it, teleport, read the arrival back, then clear the binding;<br>• any other player: a normal cast (`xasm42`).<br>**Failure:** report it and never fake success (C-44). A missing plate clears the binding; a load timeout keeps it.<br>**Death:** bump the owner''s life epoch, which invalidates every binding of theirs wherever the rods are (C-45).<br>**Persistence:** the binding and the epoch survive a restart.<br>**GameTests (`bds`):** one for each §8 bullet, every plate type from `BlockTypes` (`*pressure_plate`), and a negative control for each.<br>**iPad (`ipad`):** the cast pose after retract, the name, lore and icon, the recipe book, the arrival feel, and the failure messages.'
+  : L0-pear
 tags:
   - analysis
   - registry
@@ -298,7 +306,7 @@ Runtime state for the analyst pipeline (analyse runs, vocabulary, slug map, roll
 
 | Node | Version |
 |------|---------|
-| L0 | 10 |
+| L0 | 11 |
 | L0-airs | 2 |
 | L0-bast | 2 |
 | L0-ench | 10 |
@@ -308,6 +316,7 @@ Runtime state for the analyst pipeline (analyse runs, vocabulary, slug map, roll
 | L0-loot | 2 |
 | L0-magn | 5 |
 | L0-orbc | 3 |
+| L0-pear | 11 |
 | L0-pick | 2 |
 | L0-pntr | 3 |
 | L0-ring | 3 |
@@ -325,12 +334,12 @@ Runtime state for the analyst pipeline (analyse runs, vocabulary, slug map, roll
 
 ## Last Run
 
-- Started: 2026-10-12T17:54:52.481Z
-- Completed: 2026-10-12T18:07:51.565Z
+- Started: 2026-10-12T18:08:33.026Z
+- Completed: 2026-10-12T18:21:32.251Z
 - Duration: 779s
-- Current artifacts: 92 (307 KB total)
-- LLM calls: 4 (2% budget)
-- Open contradictions: 6
+- Current artifacts: 68 (391 KB total)
+- LLM calls: 3 (2% budget)
+- Open contradictions: 5
 
 ## Changelog
 

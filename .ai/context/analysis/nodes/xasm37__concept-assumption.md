@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-xasm37"
 source_channel: "rollout"
-analysis_version: 10
+analysis_version: 11
 title: "ASM-L0-37 · Speed targets"
 aliases: ["L0-xasm37"]
 is_a: ["assumption"]

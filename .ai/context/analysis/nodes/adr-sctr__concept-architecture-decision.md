@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-adr-sctr"
 source_channel: "rollout"
-analysis_version: 10
+analysis_version: 11
 level: 1
 title: "ADR-L0-sctr · Crater and sculk (status: proposed)"
 aliases: ["L0-adr-sctr"]

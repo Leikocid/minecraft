@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-xasm32"
 source_channel: "rollout"
-analysis_version: 10
+analysis_version: 11
 level: 1
 title: "ASM-L0-32 · The Storm Blade's def"
 aliases: ["L0-xasm32"]

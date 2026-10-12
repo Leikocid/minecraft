@@ -1,13 +1,13 @@
 ---
 title: Assumptions
 type: analysis
-generated_at: "2026-10-12T18:07:51.649Z"
+generated_at: "2026-10-12T18:21:49.815Z"
 source_channel: rollout
 node_id: rollout-assumptions
 aliases: ["rollout-assumptions","assumptions"]
 is_a: ["rollout","assumptions"]
-relates_to: ["L0-ench-asm1","L0-trdt-as01","L0-uwbw-as01","L0-xasm23","L0-xasm24","L0-xasm25","L0-xasm26","L0-xasm27","L0-xasm28","L0-xasm29","L0-xasm30","L0-xasm31","L0-xasm32","L0-xasm33","L0-xasm34","L0-xasm35","L0-xasm36","L0-xasm37","L0-xasm38","L0-xasm39","L0-xasm40"]
-priority: 640
+relates_to: ["L0-ench-asm1","L0-pear-as01","L0-trdt-as01","L0-uwbw-as01","L0-xasm23","L0-xasm24","L0-xasm25","L0-xasm26","L0-xasm27","L0-xasm28","L0-xasm29","L0-xasm30","L0-xasm31","L0-xasm32","L0-xasm33","L0-xasm34","L0-xasm35","L0-xasm36","L0-xasm37","L0-xasm38","L0-xasm39","L0-xasm40","L0-xasm41","L0-xasm42","L0-xasm43","L0-xasm44","L0-xasm45"]
+priority: 650
 ---
 
 # Assumptions (CAN_ASSUME)
@@ -35,6 +35,33 @@ priority: 640
 - **Lunge counted as rare (5):** one entry moves from `S` to `TREASURE`.
 - **A SimulatedPlayer that can use the table (6):** `ac06`'s hook proof moves to `bds`, which is cheaper.
 - **Tier ≠ level drop (7):** the cap in the adapter changes; the roller does not.
+
+
+
+
+
+
+### ASM-pear-01 · Defaults filled in by the deep-dive (L0-pear-as01)
+
+# ASM-pear-01 · Defaults filled in by the deep-dive
+
+**Is a:** assumption (CAN_ASSUME). **Part of:** L0-pear. **Relates to:** L0-xasm42, L0-pear-pr01, L0-pear-pr02, L0-pear-pr03, L0-pear-ent2.
+
+1. **The rod must still be in the user's inventory when the teleport fires**, found by rod id. If it was dropped or stored mid-wait, there is no teleport and the binding stays on that rod.
+   - *Impact if wrong:* if Andrey wants the trip to go ahead anyway, the binding clear would target a rod we cannot reach. The trip would then be repeatable, which breaks "teleports once".
+2. **A hook binds only to the rod it was cast from** (by rod id), and only if that rod is still in the caster's inventory at bind time.
+   - *Impact if wrong:* none visible. Vanilla removes the hook when the rod leaves the hand.
+3. **Plate-generation entries are never deleted**, and only watched cells are recorded.
+   - *Impact if wrong:* world dynamic-property growth of a few dozen bytes per distinct bound plate, which is negligible against the measured budget.
+4. **A token that never reaches a player inventory** (crafter, hopper) stays a token. It is not a usable rod.
+   - *Impact if wrong:* a crafter-made rod needs a manual pick-up, after which the swap fires. A cosmetic issue.
+5. **Arrival feedback:** the actionbar shows "Arrived", plus `mob.endermen.portal` at the destination. No particles. That is an iPad taste item.
+6. **Messages are sent as `rawtext` translate keys**, defined in the RP `texts/*.lang` for `en_US` and `ru_RU`, so they follow the iPad's language. Only the rod's nameTag is a fixed string (`xq12` item 2).
+   - *Impact if wrong:* if translate keys do not resolve on the actionbar, the fallback is a bilingual fixed string. Only the wording changes.
+7. **The preload area is 3×3 blocks around the plate**, which touches 1–4 chunks. The poll covers the 9 candidate cells.
+   - *Impact if wrong:* a neighbour cell in an unloaded chunk reads as unsafe. Prevented by polling all 9.
+8. **Hand-check cadence is 20 ticks** for the durability hold.
+   - *Impact if wrong:* none. The worst-case loss between checks is far below 64.
 
 
 
@@ -607,6 +634,213 @@ relates_to: ["L0-uwbw", "L0-ench", "L0-xq11", "L0-xcx32", "L0-xcx33", "L0-adr-en
 **Impact if wrong.**
 - **Andrey wants one release with the table:** 1.11.0 waits on `xq11` plus the adapter. The bow's work is unchanged.
 - **The probes must be serial:** stage 11 loses some parallelism; nothing else changes.
+
+
+
+
+
+
+### ASM-L0-41 · "The bobber strikes a pressure plate" = the hook comes to rest in a plate cell (L0-xasm41)
+
+---
+title: "ASM-L0-41 · \"The bobber strikes a pressure plate\" = the hook comes to rest in a plate cell"
+aliases: ["L0-xasm41", "Bobber strike definition"]
+is_a: ["assumption"]
+part_of: ["L0"]
+relates_to: ["L0-pear", "L0-adr-prbd"]
+see_also: ["underwaterbowfinalspecv3ruen-part-2", "underwaterbowfinalspecv3ruen-part-4"]
+---
+# ASM-L0-41 · "The bobber strikes a pressure plate" = the hook comes to rest in a plate cell
+
+**Class:** CAN_ASSUME.
+
+**Gap.**
+- The spec says "когда поплавок попадает именно в существующую нажимную плиту" (when the bobber lands precisely in an existing pressure plate), and "Только плиты, в которые действительно попал поплавок" (only plates the bobber actually hit).
+- A plate is 1/16 of a block tall and has no collision box, so the hook cannot strictly "hit" it. The hook falls into the plate's cell and rests on the support block.
+
+**Assumption.** The hook strikes the plate when **both** of these hold:
+- its location is inside the cell of a block whose typeId ends in `pressure_plate`;
+- its height above that cell's floor is ≤ 0.25, or it is on the ground or has stopped (|velocity| < 0.05).
+
+The check runs every tick while the hook exists. These do not bind:
+- a hook flying through a plate cell higher up;
+- a hook on a block next to a plate;
+- a hook stuck in an entity.
+
+The binding records the **plate's** cell, not the support block.
+
+**Hook ownership.** Only a hook cast from a marked rod can bind. It is identified either:
+- by its projectile owner, if the probe shows it is readable; or
+- by an `itemUse` from a marked-rod holder in the same tick as the hook's `entitySpawn`, matched to the nearest hook within 3 blocks of that player.
+
+**Impact if wrong.**
+- If the hook rests above the threshold, plates never bind. The probe measures the resting height per plate type.
+- If vanilla hooks bounce off or pass through, a fast cast that skims a plate may bind. Lowering the threshold is a one-constant change.
+
+
+
+
+
+
+### ASM-L0-42 · Pearl Rod outcome table (L0-xasm42)
+
+---
+title: "ASM-L0-42 · Pearl Rod outcome table: what clears the binding, what keeps it, who may use it"
+aliases: ["L0-xasm42", "Pearl Rod outcomes"]
+is_a: ["assumption"]
+part_of: ["L0"]
+relates_to: ["L0-pear", "L0-adr-prbd", "L0-xcx34", "L0-xq12"]
+see_also: ["underwaterbowfinalspecv3ruen-part-4", "underwaterbowfinalspecv3ruen-part-5"]
+---
+# ASM-L0-42 · Pearl Rod outcome table
+
+**Class:** CAN_ASSUME.
+
+**Gap.** The spec defines only three outcomes: success (clear), a broken or replaced plate (invalid), and a failed load or no safe spot (fail safely and report). It is silent on whether a failed use also casts, on non-owners, on riders, and on re-binding.
+
+**Assumption.**
+
+| Situation on use of a bound rod | Cast? | Teleport? | Binding after | Message |
+|---|---|---|---|---|
+| The owner, with the same epoch, and everything valid | no | yes | **cleared** | arrival line |
+| The owner, but the plate is missing, another type, or has a bumped generation (`xcx34`) | no | no | **cleared** | "plate gone, bind again" |
+| The owner, but the preload timed out, the pool is full, or the dimension is refused | no | no | **kept** | the specific reason, "try again" |
+| The owner, but there is no safe spot at the plate or its 8 neighbours | no | no | **kept** | "destination unsafe" |
+| The owner, with a teleport already pending | no | no | unchanged | "already travelling" |
+| The owner dies, or dies while the teleport is pending | — | aborted | void (epoch) | none |
+| A non-owner, or the owner after death (epoch mismatch) | **yes (vanilla cast)** | no | unchanged until their own hook binds, which **overwrites** it | none |
+| The owner is riding | no | yes, after dismounting (`xq12` item 4) | cleared | arrival line |
+
+- **One binding per rod.** Binding again overwrites. Bindings on different rods are independent.
+- **Timeout.** The preload timeout is 10 s (200 ticks).
+- **Lore.** The lore shows "bound: <dimension> x y z" or "unbound". It never shows the owner's name.
+
+**Impact if wrong.**
+- If Andrey wants a failed load to clear the binding, or a failed use to cast, each is a one-cell change in the table and in the scenario expectations.
+- If a non-owner should be blocked from even casting a rod that someone else bound, the cancel branch widens. The spec only forbids *using the binding*.
+
+
+
+
+
+
+### ASM-L0-43 · Recipe positions and "infinite durability" (L0-xasm43)
+
+---
+title: "ASM-L0-43 · \"Fixed positions\" = a full 3×3 pattern with blanks; infinite durability = damage held at 0"
+aliases: ["L0-xasm43", "Pearl Rod recipe and durability"]
+is_a: ["assumption"]
+part_of: ["L0"]
+relates_to: ["L0-pear", "L0-uwbw", "L0-adr-prbd", "L0-xq12"]
+see_also: ["underwaterbowfinalspecv3ruen-part-3", "underwaterbowfinalspecv3ruen-part-4"]
+---
+# ASM-L0-43 · Recipe positions and "infinite durability"
+
+**Class:** CAN_ASSUME.
+
+**Gap 1: positions.**
+- The spec says "Позиции фиксированы, прочие клетки пустые" (positions are fixed; the other cells are empty) and "Верстак 3×3" (a 3×3 crafting table).
+- A Bedrock shaped recipe with a 1×2 pattern (`["P","R"]`) matches in any column and row, including the 2×2 inventory grid.
+
+**Assumption 1.**
+- The recipe is written as a full 3×3 pattern: `[" P ", " R ", "   "]`, with P = `minecraft:ender_pearl` and R = `minecraft:fishing_rod`.
+- On the assumption that Bedrock does not trim blank rows and columns, this matches only at top-middle and centre, and only on a crafting table.
+- The probe confirms it: a shifted layout and the 2×2 grid must produce nothing. If Bedrock trims, the limitation is reported and the 1×2 pattern ships.
+- **Seam for reduce:** the spec draws the v10 Mace and Rocket recipes at fixed cells too (centre and bottom-centre), so the same rule is offered to `uwbw`.
+
+**Gap 2: durability.** "Бесконечная прочность" (infinite durability) on a vanilla rod, which has 64 durability and no stable "Unbreakable" flag.
+
+**Assumption 2.**
+- `durability.damage` is written back to 0 after every reel and release of a marked rod, and on the shared interval's hand check.
+- The bar may flicker for a tick on the iPad. The rod never breaks.
+- Mending and Unbreaking stay legal; they are harmless.
+
+**Gap 3: input rod.** The spec does not say what happens to an enchanted or damaged input rod.
+
+**Assumption 3.** The output is always a fresh rod with no enchantments. The input's enchantments are lost; the token cannot carry them, the same limitation as craftgate's refund.
+
+**Impact if wrong.**
+- If fixed positions cannot be enforced, players can craft the rod with shifted ingredients. That is cosmetic and gets reported.
+- If damage cannot be written, the fallback is to swap in a fresh marked rod that keeps the binding and the enchantments, which the probe checks.
+- If the input's enchantments must carry over, the swap would read the consumed rod. That is impossible after the craft (C-16).
+
+
+
+
+
+
+### ASM-L0-44 · Release scope across v10 and v11 (L0-xasm44)
+
+---
+title: "ASM-L0-44 · v3 supersedes v2 by content only; the Pearl Rod ships in 1.11.x independently of the bow and xq11"
+aliases: ["L0-xasm44", "v11 release scope"]
+is_a: ["assumption"]
+part_of: ["L0"]
+relates_to: ["L0-pear", "L0-uwbw", "L0-ench", "L0-xasm40", "L0-xq11"]
+see_also: ["underwaterbowfinalspecv3ruen-part-1", "underwaterbowfinalspecv3ruen-part-5", "underwaterbowmacefireworksenchantingspecv2ruen-part-1"]
+---
+# ASM-L0-44 · Release scope across v10 and v11
+
+**Class:** CAN_ASSUME.
+
+**Gap.**
+- The new document calls itself "FINAL Specification v3". It repeats v2 §1–§5 verbatim and says "Preserve all v2 … rules above".
+- Both documents are now in the KV, with priorities 640 and 650.
+- The spec does not say whether the Pearl Rod belongs to the same release as the bow.
+
+**Assumption.**
+- **v3 is the governing text for §1–§8.** v2 is retained as an identical earlier copy, not a conflicting source. Version labels do not drive supersession here, but the content is the same, so nothing in `uwbw` or `ench` changes. Their `see_also` gains the v3 fragments at rollout.
+- **The Pearl Rod is its own epic.** It shares no code path with the bow beyond the recipe-collision test, and none with `ench` beyond eligibility data.
+  - It ships in the first 1.11.x build where its criteria are closed.
+  - It neither waits for nor blocks the bow, and it never waits for `xq11` (`xasm40` carries).
+  - It does not wait for `xq12`, which has defaults.
+- **The probe order is distinct criterion sets on checks (19136)**, run in parallel with the `uwbw` and `ench` probes. It must never be run against production (19132).
+
+**Impact if wrong.**
+- If Andrey wants one bundled 1.11.0, the release simply waits for the slower epic. The work does not change.
+- If v3 was meant to *change* a v2 rule, it did not say which. A diff found none, so a re-run of `uwbw` or `ench` would be needed only on a new document.
+
+
+
+
+
+
+### ASM-L0-45 · A marked Pearl Rod is a plain fishing rod to every recipe (L0-xasm45)
+
+---
+title: "ASM-L0-45 · A marked Pearl Rod is a plain fishing rod to every recipe, the Orbital Cannon's included"
+aliases: ["L0-xasm45"]
+is_a: ["assumption"]
+part_of: ["L0"]
+relates_to: ["L0-pear", "L0-lgnd", "L0-orbc", "L0-ench", "L0-pear-pr01", "L0-pear-ru04", "L0-pear-ent1"]
+see_also: ["L0-adr-prbd", "L0-xasm43"]
+---
+# ASM-L0-45 · A marked Pearl Rod is a plain fishing rod to every recipe
+
+**Is a:** assumption (CAN_ASSUME). This interaction spans components and is visible only at L0.
+
+**Observation (reduce, 2026-10-12).**
+- The Pearl Rod is a marked vanilla `minecraft:fishing_rod` (`L0-adr-prbd`).
+- Recipes match by item type, and the craftgate's refunds return plain stacks.
+- As read during reduce:
+  - `packs/behavior/recipes/orbital_cannon.json` takes `minecraft:fishing_rod` in its centre (TNT on the four sides);
+  - `ORBITAL_CANNON.refund` in `src/legendary/registry.ts` returns `["minecraft:fishing_rod", 1]`.
+- Vanilla carrot-on-a-stick and warped-fungus-on-a-stick also take any fishing rod. So does the Pearl Rod's own recipe (`L0-pear-pr01`).
+
+**Assumption.** This is accepted, not prevented:
+- A Pearl Rod used as an ingredient is consumed, along with its id, its binding and its enchantments.
+- If the craftgate refunds a duplicate Orbital Cannon, the player gets a **plain** fishing rod back, not the Pearl Rod.
+- A Pearl Rod used in its own recipe yields a fresh unbound Pearl Rod.
+- The Pearl Rod's crafting is unlimited (C-46), so the loss is one Ender Pearl at most. Nothing is duplicated.
+- `ench` treats the rod as `minecraft:fishing_rod` with no adapter.
+
+**Why not prevent it.** Stable recipes cannot exclude an item stack by its dynamic properties. Preventing it would need a craftgate-style rejection on *vanilla* outputs, which C-46 rules out for this item.
+
+**Obligations.**
+- `pear` lists "using the rod as a crafting ingredient consumes it as a plain rod" among its reported limitations (C-16).
+- The C-40 collision test in `L0-pear-ac01` keeps the Orbital Cannon recipe in its shape set (it already covers every `packs/behavior/recipes/*` file).
+
+**Impact if wrong:** if Andrey wants the rod protected from recipes, it becomes a craft-time rejection plus refund for `orbital_cannon`, carrot-on-a-stick and warped-fungus-on-a-stick. That means a new `lgnd` touchpoint.
 
 
 

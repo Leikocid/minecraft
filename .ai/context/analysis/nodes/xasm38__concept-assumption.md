@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-xasm38"
 source_channel: "rollout"
-analysis_version: 10
+analysis_version: 11
 title: "ASM-L0-38 · Underwater Bow semantics"
 aliases: ["L0-xasm38"]
 is_a: ["assumption"]

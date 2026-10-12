@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-adr-twrp"
 source_channel: "rollout"
-analysis_version: 10
+analysis_version: 11
 title: "ADR-L0-twrp · Movement: dash, landing, swimming"
 aliases: ["L0-adr-twrp"]
 is_a: ["architecture-decision"]

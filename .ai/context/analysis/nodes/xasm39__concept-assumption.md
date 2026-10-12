@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-xasm39"
 source_channel: "rollout"
-analysis_version: 10
+analysis_version: 11
 title: "ASM-L0-39 · Recipes and enchanting semantics"
 aliases: ["L0-xasm39"]
 is_a: ["assumption"]

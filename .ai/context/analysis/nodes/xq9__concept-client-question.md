@@ -2,7 +2,7 @@
 type: "concept-client-question"
 node_id: "L0-xq9"
 source_channel: "rollout"
-analysis_version: 10
+analysis_version: 11
 title: "Q-L0-9 · Throw or dash: which gesture?"
 aliases: ["L0-xq9"]
 is_a: ["client-question"]

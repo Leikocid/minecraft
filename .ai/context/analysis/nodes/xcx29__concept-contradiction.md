@@ -2,7 +2,7 @@
 type: "concept-contradiction"
 node_id: "L0-xcx29"
 source_channel: "rollout"
-analysis_version: 10
+analysis_version: 11
 title: "CX-L0-29 · Real lightning vs \"spectacle never deals damage\""
 aliases: ["L0-xcx29"]
 is_a: ["contradiction"]

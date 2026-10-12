@@ -2,7 +2,7 @@
 type: "concept-contradiction"
 node_id: "L0-xcx24"
 source_channel: "rollout"
-analysis_version: 10
+analysis_version: 11
 level: 1
 title: "CX-L0-24 · A legendary with no ability"
 aliases: ["L0-xcx24"]

@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-adr-enrl"
 source_channel: "rollout"
-analysis_version: 10
+analysis_version: 11
 title: "ADR-L0-enrl · Enchanting: a pure roller, with the hook gated"
 aliases: ["L0-adr-enrl"]
 is_a: ["architecture-decision"]

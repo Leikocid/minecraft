@@ -2,7 +2,7 @@
 type: "concept-contradiction"
 node_id: "L0-xcx26"
 source_channel: "rollout"
-analysis_version: 10
+analysis_version: 11
 level: 1
 title: "CX-L0-26 · The passive bonus vs the hurt window"
 aliases: ["L0-xcx26"]

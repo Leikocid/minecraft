@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-adr-scpi"
 source_channel: "rollout"
-analysis_version: 10
+analysis_version: 11
 level: 1
 title: "ADR-L0-scpi · Piercing on the Sculk Crossbow (status: accepted, probe-gated; resolves `L0-sclk-cx01`)"
 aliases: ["L0-adr-scpi"]

@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-xasm27"
 source_channel: "rollout"
-analysis_version: 10
+analysis_version: 11
 level: 1
 title: "ASM-L0-27 · Ammunition and the bolt's life"
 aliases: ["L0-xasm27"]

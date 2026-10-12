@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-adr-sckp"
 source_channel: "rollout"
-analysis_version: 10
+analysis_version: 11
 level: 1
 title: "ADR-L0-sckp · The Sculk Crossbow's key prefix is `sk` (status: accepted, resolves `L0-lgnd-cx15`)"
 aliases: ["L0-adr-sckp"]

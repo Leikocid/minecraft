@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-xasm36"
 source_channel: "rollout"
-analysis_version: 10
+analysis_version: 11
 title: "ASM-L0-36 · Timings the spec leaves open"
 aliases: ["L0-xasm36"]
 is_a: ["assumption"]

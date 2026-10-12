@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-adr-ubfl"
 source_channel: "rollout"
-analysis_version: 10
+analysis_version: 11
 title: "ADR-L0-ubfl · Underwater Bow design"
 aliases: ["L0-adr-ubfl"]
 is_a: ["architecture-decision"]

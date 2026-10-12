@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-adr-lgwd"
 source_channel: "rollout"
-analysis_version: 10
+analysis_version: 11
 level: 1
 title: "ADR-L0-lgwd · Widening `lgnd` and `strm` for the Underwater Bow"
 aliases: ["L0-adr-lgwd"]

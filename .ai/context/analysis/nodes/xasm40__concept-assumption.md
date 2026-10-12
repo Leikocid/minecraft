@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-xasm40"
 source_channel: "rollout"
-analysis_version: 10
+analysis_version: 11
 level: 1
 title: "ASM-L0-40 · Release scope across `uwbw` and `ench`"
 aliases: ["L0-xasm40"]

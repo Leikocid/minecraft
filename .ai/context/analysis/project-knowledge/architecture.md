@@ -1,13 +1,13 @@
 ---
 title: Architecture
 type: project-knowledge
-generated_at: "2026-10-12T18:07:51.645Z"
+generated_at: "2026-10-12T18:21:49.809Z"
 source_channel: rollout
 node_id: rollout-architecture
 aliases: ["rollout-architecture","architecture","project-knowledge/architecture"]
 is_a: ["rollout","architecture"]
-relates_to: ["L0-adr-hldb","L0-adr-lgwd","L0-adr-sbdm","L0-adr-sblt","L0-adr-sbvr","L0-adr-scbs","L0-adr-scdm","L0-adr-scfc","L0-adr-sckp","L0-adr-scpi","L0-adr-sctr","L0-adr-trlg","L0-ench","L0-trdt","L0-uwbw"]
-priority: 640
+relates_to: ["L0-adr-hldb","L0-adr-lgwd","L0-adr-prbd","L0-adr-prcn","L0-adr-prta","L0-adr-sbdm","L0-adr-sblt","L0-adr-sbvr","L0-adr-scbs","L0-adr-scdm","L0-adr-scfc","L0-adr-sckp","L0-adr-scpi","L0-adr-sctr","L0-adr-trlg","L0-ench","L0-pear","L0-trdt","L0-uwbw"]
+priority: 650
 ---
 
 # Architecture
@@ -90,6 +90,65 @@ Stable 2.10.0 has no table hook (`xcx32`). So this component owns three things, 
 ## Closing paths (from the plan)
 - **(a)/(b) approved:** the hook is built and the preview deviation is documented.
 - **(c) or no answer:** the roller stays dormant and tested, and the limitation is reported. `xcx32` closes on Andrey's answer.
+
+
+
+
+
+
+
+### Pearl Rod («Перовый сокровятель») — component (L0-pear)
+
+# Pearl Rod («Перовый сокровятель») — component
+
+**Is a:** component. **Part of:** L0. **Relates to:** L0-adr-prbd, L0-xasm41, L0-xasm42, L0-xasm43, L0-xasm44, L0-xcx34, L0-xq12, L0-lgnd (craftgate swap only), L0-strc (ticking areas), L0-uwbw (recipe collisions, fixed-cell patterns), L0-ench (fishing-rod eligibility).
+**Sources:** spec v3 §6–§8 (`underwaterbowfinalspecv3ruen-part-3` … `part-5`); constraints C-16, C-40, C-44, C-45, C-46.
+
+## Responsibility
+A **non-legendary** utility item (C-46). It looks and fishes like a vanilla fishing rod. When its bobber lands in a pressure plate it is bound to that plate. The binder's next use teleports them to a safe spot at or beside the plate, once, and only after the destination has been checked (C-44).
+
+## Shape (per `L0-adr-prbd`)
+- **Item:** a marked vanilla `minecraft:fishing_rod` (entity `L0-pear-ent1`). It is crafted as `andrew:pearl_rod_token` and swapped after the craft (process `L0-pear-pr01`).
+- **Binding:** item-borne dynamic properties (`L0-pear-ent1`), detected by polling the hook in the shared interval (process `L0-pear-pr02`, `xasm41`).
+- **Validity:** owner id + owner life epoch (C-45) + plate typeId + plate generation (`L0-pear-ent2`, rule `L0-pear-ru03`).
+- **Bound use:** cancel first, then preload, validate, find a safe spot, teleport and read back (process `L0-pear-pr03`, rules `L0-pear-ru01` and `L0-pear-ru02`).
+
+## Inputs
+- Player events: `itemUse` (before and after), `entitySpawn` of `minecraft:fishing_hook`, `playerInventoryItemChange` (token swap), `entityDie` (epoch), and `playerBreakBlock` / `playerPlaceBlock` / `blockExplode` / `pistonActivate` (plate generation).
+- The world: block reads at the hook cell and at the destination; `isChunkLoaded`; ticking areas from the world-wide budget (`L0-pear-ad01`, adopted at L0 as `L0-adr-prta`).
+
+## Outputs
+- Rod dynamic properties and lore; the player property `andrew:life_epoch`; world properties for plate generations.
+- A teleport (with `dimension`) and an actionbar or chat message for every outcome.
+
+## Seams
+- `src/legendary/craftgate.ts`: a token-swap helper is extracted from it. There is no gate, refund, world flag or retention, and `lgnd` scenarios stay green.
+- **Ticking areas:** **world-wide cap of 10**, already drawn on by `spawn-search` (`andrew_find_`, pool 5) and `search-ring` (`andrew_ring_<d>`, 4 per dimension). See `L0-pear-cx01` and `L0-pear-ad01`.
+- **Shared `runInterval`:** no `runJob`, and no per-rod interval.
+
+## Probe first (checks BDS, 19136; never 19132)
+Run distinct criterion set `probe_pearl_*` (AC `L0-pear-ac07`):
+- the hook's events and its resting height per plate type;
+- whether the hook's owner is readable;
+- whether `hook.remove()` resets the client's cast pose (iPad);
+- **whether a cancelled `beforeEvents.itemUse` casts nothing** (`L0-pear-cx02`);
+- whether durability can be written back to 0;
+- whether dynamic properties survive a reel, a rename, a chest, a drop and a restart;
+- ticking-area loads at 10 K, 100 K and 1 M blocks, plus the Nether and the End (`probe_tickingarea_load`);
+- whether a cross-dimension teleport works;
+- whether the fixed 3×3 recipe pattern is enforced.
+
+Four rules depend on these results (decomposition plan).
+
+## Acceptance
+Six §8 bullets, each with a `bds` scenario and a negative control (`L0-pear-ac01` … `ac06`), plus the probe (`ac07`). The `ipad` checks are the cast pose after a retract; the name, lore and icon; the recipe book; how the arrival feels; and the failure messages.
+
+## Reported limitations (C-16)
+- A same-type plate replaced through an unobserved path (commands, structures, liquids, other add-ons) still teleports (`xcx34`, `L0-pear-ru03`).
+- The input rod's enchantments are lost at the craft (`xasm43`).
+- An anvil rename or combine may drop the mark (to be confirmed by the probe).
+- The name is one fixed string and does not follow the client's language (`xq12` item 2).
+- Used as a crafting ingredient (Orbital Cannon, carrot-on-a-stick, warped-fungus-on-a-stick, its own recipe), it is consumed as a plain rod. A craftgate refund returns a plain fishing rod (`L0-xasm45`).
 
 
 
@@ -313,6 +372,163 @@ governs_files: ["src/legendary/registry.ts", "src/legendary/cooldown.ts", "src/l
 - **A v11 `lgnd` re-run.** The change is smaller than the threshold the plan set.
 - **Letting `resolveActivation` claim Use for the bow.** Use is the draw; the bow could not shoot (`xcx33`).
 - **Changing `raiseHit` to accept projectile causes.** That moves the Storm Blade's contract and still adds rather than replaces (`L0-uwbw-cx01`).
+
+
+
+
+
+
+
+### ADR-L0-prbd · Pearl Rod design (status: proposed; `pear` deep-dive and probe refine it) (L0-adr-prbd)
+
+---
+title: "ADR-L0-prbd · Pearl Rod: a marked vanilla rod, item-borne binding with a life epoch, cancel-then-validate teleport"
+aliases: ["L0-adr-prbd", "Pearl Rod design"]
+is_a: ["architecture-decision"]
+part_of: ["L0"]
+relates_to: ["L0", "L0-pear", "L0-xasm41", "L0-xasm42", "L0-xasm43", "L0-xcx34"]
+see_also: ["underwaterbowfinalspecv3ruen-part-3", "underwaterbowfinalspecv3ruen-part-4", "underwaterbowfinalspecv3ruen-part-5"]
+governs_files: ["src/pearlrod/", "src/legendary/craftgate.ts", "src/structures/spawn-search.ts"]
+---
+# ADR-L0-prbd · Pearl Rod design (status: proposed; `pear` deep-dive and probe refine it)
+
+**Context.**
+- Spec v3 §6–§8 ask for an item that "внешне и при обычной рыбалке работает как удочка" (looks and fishes like a fishing rod), with infinite durability and unlimited crafting.
+- Its bobber binds it to a pressure plate. The binder's next use teleports them there, safely and once.
+- The binding is voided by the binder's death and by transfer. It must survive a restart.
+- The platform is stable `@minecraft/server` 2.10.0 on BDS 1.26.51.
+
+**Decision.**
+1. **The item is a marked vanilla `minecraft:fishing_rod`.**
+   - The shaped recipe (`xasm43`) outputs `andrew:pearl_rod_token`.
+   - A swap reuses the craftgate's settle-per-tick pattern from `playerInventoryItemChange`, with **no gate, no world flag and no refund** (C-46).
+   - The swap replaces the token with a fishing rod carrying:
+     - `nameTag` «Перовый сокровятель»;
+     - a lore line "Pearl Rod", plus the binding status;
+     - a dynamic property `andrew:pearl_rod` = a fresh rod id.
+   - Real fishing is then free: the loot, Lure, Luck of the Sea and Mending all apply.
+   - **Durability:** after each reel or release, and on a slow hand check in the shared interval, the rod's `durability.damage` is written back to 0. A reel costs at most 5, so a 64-durability rod can never break between checks.
+2. **Binding detection is a poll, not an event.**
+   - A plate has no collision box, so `projectileHitBlock` is expected to report the support block, or nothing at all (the probe decides).
+   - A cast is correlated through `itemUse` (a holder of a marked rod) and the `minecraft:fishing_hook` `entitySpawn` in the same tick (the `trdt`/`uwbw` precedent), or through the hook's projectile owner if the probe shows it is readable.
+   - While a tracked hook exists, the one shared interval checks the block at the hook's cell. A `*pressure_plate` there, with the hook within 0.25 of the cell floor (`xasm41`), triggers the binding.
+3. **The binding lives on the rod.** It is stored as rod dynamic properties: `{dim, x, y, z, plateType, owner: player.id, epoch}`. After writing them the script calls `hook.remove()` and refreshes the lore. A new binding by anyone overwrites the old one.
+4. **Owner life epoch (C-45).**
+   - `andrew:life_epoch` is a player dynamic property, incremented in `entityDie` for players.
+   - A binding is honoured only when `owner === user.id` and `epoch === user.epoch`.
+   - So death and transfer need no item search. That matters because rods can sit in chests, drops or unloaded chunks.
+5. **Bound use: cancel first, validate after.**
+   - When owner and epoch match (a synchronous, cheap check), the cast is cancelled in `beforeEvents.itemUse`, or the hook is removed at `entitySpawn` +0. The probe picks which (`L0-adr-prcn`).
+   - `system.run` then starts the async teleport of C-44:
+     - preload, through the **world-wide ticking-area allocator** (`L0-adr-prta`; it also serves `spawn-search` and `search-ring`);
+     - re-check the plate typeId;
+     - re-check the plate generation (`xcx34`);
+     - find a safe spot;
+     - `teleport` with `dimension`;
+     - read the arrival back.
+   - On success it clears the binding. On "plate missing or changed" it clears the binding. On a load failure, a full pool or no safe spot, it keeps the binding and reports (`xasm42`).
+   - A second use while a teleport is pending is cancelled with a message rather than queued.
+
+**Rejected alternatives.**
+- **A custom item `andrew:pearl_rod` with its own bobber entity.** Stable item components have no fishing behaviour, so "normal fishing" would mean re-implementing loot tables, bite timing, Lure and Luck of the Sea, and hooking entities. That is a large, lossy imitation, which C-16 forbids when a vanilla path exists. It is reconsidered only if the probe shows a marked vanilla rod loses its dynamic properties in normal use.
+- **Bindings in a world registry keyed by rod id.** It still needs the epoch for death, it duplicates state that has to follow the item through chests and drops, and it leaks entries for rods that despawn. The item-borne record dies with the item.
+- **Clearing bindings by scanning inventories on death.** It cannot reach chests, drops or unloaded chunks, which breaks "даже если предмет позже поднимет другой игрок" (even if another player picks the item up later).
+- **Teleporting first and checking after**, or relying on the player's own chunk load. That breaks "перед перемещением убедиться" (check before moving) and can land the player in an unloaded void or a block.
+- **`runJob` for the preload wait.** `runJob` start stalls the next tick by 15–30 ms (engine fact), so the shared `runInterval` is used.
+
+**Consequences.**
+- `craftgate.ts` gives up a token-swap helper, refactored with the `lgnd` scenarios kept green.
+- `spawn-search.ts` and `search-ring` give up their ticking-area pools to one world-wide allocator (`L0-adr-prta`), with the structures scenarios kept green.
+- The recipe book shows the token's icon. The RP gives the token the Pearl Rod's look (iPad check).
+- Anvil renames or combines may drop the mark. The probe records this, and any loss is a reported limitation.
+
+
+
+
+
+
+
+### ADR-L0-prcn · Bound use: cancel or remove, chosen by the probe (L0-adr-prcn)
+
+---
+title: "ADR-L0-prcn · Bound use starts by cancelling OR by removing the hook; the probe picks the branch"
+aliases: ["L0-adr-prcn"]
+is_a: ["architecture-decision"]
+part_of: ["L0"]
+relates_to: ["L0-pear", "L0-pear-cx02", "L0-pear-pr03", "L0-pear-ac07", "L0-adr-prbd", "L0-xcx13", "L0-orbc"]
+requires: ["L0-pear-ac07"]
+see_also: ["L0-pear-ru01"]
+governs_files: ["src/pearlrod/"]
+---
+# ADR-L0-prcn · Bound use: cancel or remove, chosen by the probe
+
+**Status:** accepted at reduce (v11). Resolves `L0-pear-cx02`, a gap in the design. The probe result is still owed and picks the branch.
+
+**Context.**
+- `L0-adr-prbd` §5 assumed that cancelling `beforeEvents.itemUse` on a vanilla `minecraft:fishing_rod` stops the cast.
+- The Orbital Cannon's deviation record (`L0-xcx13`, `src/orbital/README.md` item 1) says stable API "cannot switch fishing off" on a real rod. That claim was about turning fishing off permanently. No one has probed a one-use cancel.
+- Nothing else in the run depends on the answer. The binding path and the non-owner path never cancel.
+
+**Decision.**
+- The bound-use pipeline (`L0-pear-pr03`) has one entry, `start(player, rod)`, and two triggers.
+- The probe in `L0-pear-ac07` item 5 fixes which trigger ships. The choice is a build-time constant, not a runtime fallback.
+  1. **Cancel branch.** The probe shows the cancelled use spawns no `minecraft:fishing_hook`. Then `beforeEvents.itemUse` cancels, and `system.run` calls `start`.
+  2. **Remove branch.** A hook still spawns. Then the use is allowed, the hook is removed at `entitySpawn` +0, and `start` is called. Ownership comes from the `itemUse` correlation (the `trdt`/`uwbw` precedent).
+- Either way, the owner/epoch test runs before the trigger. A non-owner always gets a plain vanilla cast.
+- If the iPad shows a line flicker, it is a listed iPad item. It does not block the build.
+
+**Why this closes the contradiction.** The design no longer depends on the unproven claim, and both outcomes have a fixed, tested path. Leaving `L0-pear-cx02` open would block nothing. The probe's verdict goes into `src/pearlrod/README.md` alongside the `xcx13` note.
+
+**Consequences.**
+- `L0-pear-ac02` and `L0-pear-ac03` assert "no hook survives a bound use", not "no hook ever spawns". That makes them true under both branches.
+- If the cancel branch ships, `src/orbital/README.md` item 1 should be reworded to "cannot switch fishing off permanently", so the next reader does not inherit the over-broad claim.
+
+
+
+
+
+
+
+### ADR-L0-prta · Ticking areas: one world-wide allocator with a reserved Pearl Rod slot (L0-adr-prta)
+
+---
+title: "ADR-L0-prta · Ticking areas: one world-wide allocator with a reserved Pearl Rod slot (adopts L0-pear-ad01)"
+aliases: ["L0-adr-prta"]
+is_a: ["architecture-decision"]
+part_of: ["L0"]
+relates_to: ["L0-pear", "L0-pear-ad01", "L0-pear-cx01", "L0-adr-prbd", "L0-strc", "L0-airs-cx01", "L0-pear-ac05", "L0-pear-ac07"]
+requires: ["L0-pear-ad01"]
+see_also: ["L0-pear-pr03"]
+governs_files: ["src/structures/spawn-search.ts", "src/structures/search-ring.ts", "src/structures/runtime.ts", "src/main.ts", "src/pearlrod/"]
+---
+# ADR-L0-prta · Ticking areas: one world-wide allocator with a reserved Pearl Rod slot
+
+**Status:** accepted at reduce (v11). Resolves `L0-pear-cx01`. Amends `L0-adr-prbd` §5.
+
+**Context.**
+- The plan's invariant: the Pearl Rod preload must allocate from the same pool as `spawn-search`, "so a structure search and a teleport never evict each other". If sharing needs an edit to `spawn-search`, that edit is a refactor that keeps the structures scenarios green.
+- The deep-dive found that `spawn-search` owns only one of **two** script pools. The other belongs to the ring loaders (`L0-pear-cx01`). Both pools draw on an engine cap of **10 ticking areas per world**.
+  - Observed during reduce on 2026-10-12: the cap comment is at `src/structures/search-ring.ts:179`; the `andrew_find_` pool is 5 at `src/main.ts:85-87`; `RING_AREA_POOL = 4` is at `src/structures/runtime.ts:291`.
+- The engine does not evict areas. It refuses the add, so the real hazard is starvation.
+
+**Decision.** Adopt `L0-pear-ad01` unchanged:
+- one `areas.ts` allocator, the only code that runs `tickingarea add/remove`, with a world budget of 10;
+- its clients are `spawn-search`, `search-ring` and the Pearl Rod;
+- one slot is reserved for the Pearl Rod, and structure clients share the other 9;
+- the Pearl Rod may also borrow a free unreserved slot;
+- when no slot is free, the trip ends with "server busy" and the binding is kept (`L0-pear-ru01` §4).
+
+**Invariant check.**
+- *Same pool as `spawn-search`:* met, and the scope is wider. Every product area now comes from one budget.
+- *Never evict each other:* met. The reserved slot means a structure search cannot starve a teleport. Because the Pearl Rod only borrows free slots, a teleport never takes a slot a search holds.
+- *Refactor keeps structures green:* this is a gate on the change. Before merge, run the broad tier plus every `find`/`ring` scenario. The blast radius is two structures modules, so the full ~50-min suite is not required.
+
+**Text change to `L0-adr-prbd` §5.** "a ticking-area allocator shared with `spawn-search`" now reads "the world-wide ticking-area allocator (`L0-adr-prta`)".
+
+**Consequences.**
+- The `pear` build depends on a `strc` refactor and must be sequenced after it in the same epic. The board rejects cross-epic dependencies.
+- `L0-pear-ac05` "budget exhausted" fills slots through the allocator, never with raw `/tickingarea`.
+- GameTest site areas stay outside the allocator (`L0-pear-ad01`). On checks they still count against the engine cap of 10. `L0-pear-ac07` records the cap that is actually observed.
 
 
 

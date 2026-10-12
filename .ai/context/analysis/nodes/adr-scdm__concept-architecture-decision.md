@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-adr-scdm"
 source_channel: "rollout"
-analysis_version: 10
+analysis_version: 11
 level: 1
 title: "ADR-L0-scdm · How a bolt hits (status: proposed, probe-gated)"
 aliases: ["L0-adr-scdm"]

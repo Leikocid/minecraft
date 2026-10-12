@@ -1,49 +1,44 @@
 ---
 title: Business Rules
 type: project-knowledge
-generated_at: "2026-10-12T18:07:51.632Z"
+generated_at: "2026-10-12T18:21:49.794Z"
 source_channel: rollout
 node_id: rollout-business-rules
 aliases: ["rollout-business-rules","business-rules","project-knowledge/business-rules"]
 is_a: ["rollout","business-rules"]
-relates_to: ["L0","L0-ench-r001","L0-ench-r002","L0-ench-r003","L0-ench-r004","L0-ench-r005","L0-trdt-cons","L0-trdt-r001","L0-trdt-r002","L0-trdt-r003","L0-uwbw-cons","L0-uwbw-r001","L0-uwbw-r002","L0-uwbw-r003","L0-uwbw-r004"]
-priority: 640
+relates_to: ["L0","L0-ench-r001","L0-ench-r002","L0-ench-r003","L0-ench-r004","L0-ench-r005","L0-pear-ru01","L0-pear-ru02","L0-pear-ru03","L0-pear-ru04","L0-trdt-cons","L0-trdt-r001","L0-trdt-r002","L0-trdt-r003","L0-uwbw-cons","L0-uwbw-r001","L0-uwbw-r002","L0-uwbw-r003","L0-uwbw-r004"]
+priority: 650
 ---
 
 # Business Rules
 
 > Автогенерация из Knowledge Vault. Ручное редактирование — установи `status: manual` в frontmatter.
 
-### Global Constraints (v10) (L0)
+### Global Constraints (v11) (L0)
 
 ---
-title: "Global Constraints (v10)"
+title: "Global Constraints (v11)"
 aliases: ["L0-constraint", "Constraints"]
 is_a: ["constraint"]
 part_of: ["L0"]
-relates_to: ["L0"]
-see_also: ["underwaterbowmacefireworksenchantingspecv2ruen-part-1", "underwaterbowmacefireworksenchantingspecv2ruen-part-2", "constraints"]
+relates_to: ["L0", "L0-pear", "L0-uwbw", "L0-ench", "L0-adr-prbd"]
+see_also: ["underwaterbowfinalspecv3ruen-part-4", "underwaterbowfinalspecv3ruen-part-5", "constraints"]
+supersedes: ["L0-constraint@v10"]
 ---
-# Global Constraints (v10)
+# Global Constraints (v11)
 
-**Carried unchanged:** C-1 … C-29, C-30′, C-31 … C-37, C-5a′, C-5d, C-5e, C-5f, C-7″, C-12′, C-20⁗, C-20⁵. All of them bind v10. The ones it leans on most:
-- C-2: stable 2.10.0, no Experiments. The spec repeats this: "без экспериментов, если возможно".
-- C-7: no duplication. It covers the bow craft, the bucket return and the new recipes.
-- C-16: the closest stable equivalent, with the limitation *reported*.
-- C-29: exact, non-stacking bonus damage. It covers the 14 HP hit.
-- C-30′: spectacle deals no damage. It covers the bow's lightning.
-- C-34: exact bucket return.
-- C-37: built-in enchantment exclusions. These still win over the table.
+**Carried unchanged:** C-1 … C-29, C-30′, C-31 … C-43, C-5a′, C-5d, C-5e, C-5f, C-7″, C-12′, C-20⁗, C-20⁵, C-20⁶. Spec v3 §1–§5 equal v2, so C-38 … C-43 and C-20⁶ are unchanged. The ones v11 leans on most:
+- **C-2:** stable 2.10.0, no Experiments.
+- **C-16:** the closest stable equivalent, with the limitation *reported*. v3's closing note extends this explicitly to "distant chunk loading".
+- **C-38:** native systems are verified before anything is claimed. It now covers the fishing hook and chunk preloading as well as the enchanting table.
+- **C-40:** recipe shape collisions. The Pearl Rod's ` P / R ` shape is checked against carrot-on-a-stick, warped-fungus-on-a-stick and every add-on recipe.
 
 | ID | Constraint | Source |
 |---|---|---|
-| C-38 | *(new)* **Native systems: verify, then claim.** A requirement that changes a native engine system (the enchanting table, its UI or algorithm) needs a recorded probe on 1.26.51 before any build. If the engine cannot be intercepted, the release notes and the acceptance sheet say so in plain words. A custom block, UI, trade or exchange substitute is built **only after Andrey's written approval** (`xq11`). A partial hook (for example, rewriting the result after the fact) counts as an alternative and also needs approval. | spec v2 §4 "Техническое ограничение" |
-| C-39 | *(new)* **Probabilities are proven statistically.** Every stated chance (20 % rare, 70/40/20 levels, 0 % curses) lives in a pure module with an injectable RNG. Each is tested on ≥ 1000 samples, with a tolerance of ± 3 σ of the binomial, and 0 occurrences for the "never" rates. The rates are tested with a fixed seed *and* unseeded. A unit run is `in_process` and cannot close an e2e criterion, so the engine hook needs its own `bds` or `ipad` proof. | spec v2 §4, §5 |
-| C-40 | *(new)* **Additive vanilla recipes.** A recipe whose output is a vanilla item yields the real vanilla id (no `andrew:` look-alike), with vanilla stats, durability and enchantability. Crafting it is unlimited. Every vanilla recipe for that item keeps working. Its shape must not collide with any vanilla or add-on recipe. | spec v2 §2, §3, §5 |
-| C-41 | *(new)* **Armed abilities are spent only by success.** An armed charge is consumed, and its cooldown started, only when a qualifying hit lands on a living entity and deals damage. A miss, a block hit, a shield block, a non-living target, or a despawned or removed arrow keeps the charge (`xasm38`). The armed state survives logout and restart. The HUD shows three states: ready, armed, and cooldown with the seconds left. | spec v2 §1 |
-| C-42 | *(new)* **Liquid-neutral projectiles.** A projectile declared liquid-neutral keeps its air velocity and gravity in water and lava, within ± 10 % of the air path over the same distance. It is not destroyed by lava contact before its hit. | spec v2 §1, §5 |
-| C-43 | *(new)* **Persistent fire is scripted, bounded and block-safe.** A "cannot be extinguished" burn lasts exactly its stated duration. It deals vanilla burning damage (1 HP/s, the `fireTick` cause, marked as scripted) whether or not the target is in water. Fire-immune targets take none. It places no fire block, and it ends early only on death or removal. | spec v2 §1 |
-| C-20⁶ | *(extended)* v10 acceptance needs:<br>• both recipes for the Mace and the Rocket, with the output id asserted vanilla;<br>• the bow recipe with 2 buckets back and a full inventory;<br>• arrow speed in air vs water vs lava, measured by the same SimulatedPlayer at the same distance;<br>• a normal hit's fire put out by water, against Super Fire persisting underwater for 5 s;<br>• a charged miss with no cooldown, then a hit with a 30 s cooldown;<br>• a restart that keeps the craft flag, recovery and the armed state;<br>• ≥ 1000-roll statistics for the roller. | spec v2 §5 |
+| C-44 | *(new)* **A teleport is verified, never faked.** A scripted teleport to a stored location runs these steps in order:<br>1. Make the destination chunk loaded and ticking (a pooled ticking area, polled with `isChunkLoaded`, with a bounded timeout).<br>2. Re-read the target block and compare its typeId with the record.<br>3. Find a safe spot: two passable, non-harmful cells over a solid floor, with no lava, fire, magma, cactus, powder snow or sweet berry bush in the feet or head cell. Try the plate cell first, then its 8 horizontal neighbours.<br>4. Teleport.<br>5. Read the player's dimension and location back.<br>Only a matching read-back counts as success and clears the binding. Every other outcome sends the player a specific message and changes nothing else: the timeout, a pool exhausted, the plate missing or changed, no safe spot, a dimension refused, or the player dead or offline at the end. No distance cap is applied beyond the world border. Every ticking area is released on every path. | spec v3 §7, §8 |
+| C-45 | *(new)* **Personal state is bound to a player's life, not to an item.** State the spec grants to "the player who did X", such as the Pearl Rod's binding, records the player id **and a life epoch** read from that player's persistent dynamic property. Each player death increments the epoch. The state is honoured only for the same id with the same epoch, so a death voids every copy everywhere, in an inventory, a chest, a drop or a stranger's hand, with no search. For any other holder the item behaves as unbound. Item-borne state survives a restart, logout, a chest and a drop, and stays valid only while its owner's epoch is unchanged. | spec v3 §7 |
+| C-46 | *(new)* **A non-legendary scripted item never enters the legendary machinery.** Its token, mark and dynamic properties must not match `lgnd` `defForToken` or `defForItem`, or any retention, Void or recovery hook. It drops, despawns, burns and breaks under vanilla world rules. A shared token-swap helper extracted from `craftgate.ts` must leave the legendary gate's behaviour and scenarios unchanged. | spec v3 §6, §7 |
+| C-20⁷ | *(extended)* v11 acceptance needs:<br>• the craft at fixed 3×3 positions, failing when shifted or in the 2×2 grid, and repeatable;<br>• durability damage 0 after N reels, including a hooked mob;<br>• a binding on **each** vanilla plate type, enumerated at runtime from `BlockTypes` (`*pressure_plate`), not hard-coded;<br>• one teleport, then the binding is cleared and the next use casts;<br>• a broken plate gives no teleport, and so does one replaced by another type;<br>• the owner's death voids the binding, including a rod picked up by a second SimulatedPlayer, and a transferred rod casts normally for its new holder;<br>• a far plate (≥ 10 K blocks) is reached through the preload;<br>• a forced preload failure gives no teleport and an error message;<br>• a restart keeps the binding and the epoch;<br>• unbound fishing still works.<br>Each bullet has a negative control (C-20). | spec v3 §8 |
 
 
 
@@ -195,6 +190,136 @@ The I-roll does not change the output distribution, so the test **also** checks 
 
 
 - **node**: L0-ench-r005
+
+### Rule: a binding is honoured only for its living binder, and is cleared only by success or a dead plate (L0-pear-ru01)
+
+# Rule: a binding is honoured only for its living binder, and is cleared only by success or a dead plate
+
+**Is a:** rule. **Part of:** L0-pear. **Relates to:** L0-xasm42, C-44, C-45, L0-pear-pr03.
+
+1. **Who may use the binding.** It is honoured only when `pr_owner === user.id` **and** `pr_epoch === user's current andrew:life_epoch`. For any other holder the rod is unbound, and a use is a vanilla cast, which may then bind it afresh and overwrite the record. Spec: «Передача/выбрасывание не дают другому игроку права…».
+2. **Death.** Every player death increments the epoch, so every binding that player made is void wherever the rod is. That holds even if the same player picks the rod up again after respawning. Spec: «При смерти привязавшего игрока все его активные привязки… сбрасываются».
+3. **Clears the binding:**
+   - a successful teleport with a matching read-back;
+   - the plate typeId differs from the record, or is no longer a plate;
+   - the plate generation differs;
+   - a new binding (overwrite).
+4. **Keeps the binding (and reports):**
+   - the preload timed out (200 ticks);
+   - the ticking-area budget is exhausted;
+   - another dimension was refused;
+   - no safe spot;
+   - the read-back mismatched;
+   - the rod left the inventory mid-wait.
+5. **One trip per binding.** After a success, the next use is a vanilla cast (§8).
+6. **No queueing.** A use while a teleport is pending is cancelled with a message.
+7. **Every outcome sends the player a specific message**, except death. No outcome reports success without the read-back (C-44).
+
+**Rationale:** spec §7 and §8; outcome table `xasm42`; C-44 and C-45. Negative controls in `L0-pear-ac03` and `L0-pear-ac04`.
+
+
+
+
+- **node**: L0-pear-ru01
+
+### Rule: safe arrival spot (L0-pear-ru02)
+
+# Rule: safe arrival spot
+
+**Is a:** rule. **Part of:** L0-pear. **Relates to:** C-44, L0-pear-pr03.
+
+**Candidates, in order:**
+1. the plate cell P (feet in P, standing on the support);
+2. then P's 8 horizontal neighbours in a fixed order: N, E, S, W, NE, SE, SW, NW. The order is fixed so tests are deterministic.
+
+No vertical search: the spec says "над ней или рядом" (above it or beside it).
+
+**A candidate cell F is safe when all of these hold:**
+- **Feet F and head F+1 are passable:** air, a plate, carpet, a sign, a torch, a button, snow layers ≤ 1, flowers or grass. Determined by `block.isAir || block.isLiquid === false && block in the passable table`. No runtime `isSolid` exists in 2.10.0 (engine fact), so a typeId allow-list is kept in `safe-spot.ts`.
+- **Neither F nor F+1 contains** lava, fire or soul fire, magma, cactus, powder snow, sweet berry bush, wither rose, or water deeper than F.
+- **The floor F−1 is a full solid block,** by a typeId deny-list of non-solid or harmful floors: air, liquids, magma, campfire, cactus, powder snow, scaffolding.
+  - For P itself the floor is the plate's support, which is solid by construction. A plate cannot sit on air.
+- **F lies inside the dimension's height range,** and F+1 < `heightRange.max`.
+
+**Arrival point:** `(F.x + 0.5, F.y, F.z + 0.5)`. The facing is unchanged.
+
+**No candidate safe** → no teleport, the binding is kept, and the player sees "destination unsafe" (`xasm42`).
+
+**Limitations:**
+- Mobs standing at the spot are not considered.
+- Liquids flowing in after the check, within the same tick, are not considered.
+
+
+
+
+- **node**: L0-pear-ru02
+
+### Rule: plate identity = typeId + observed-path generation (proposed close of `xcx34`) (L0-pear-ru03)
+
+# Rule: plate identity = typeId + observed-path generation (proposed close of `xcx34`)
+
+**Is a:** rule. **Part of:** L0-pear. **Relates to:** L0-xcx34, L0-pear-ent2.
+
+A binding names a plate by `{dim, cell, typeId, generation}`. At teleport time the plate counts as **the same plate** only if:
+- the cell's typeId equals the recorded typeId (the permutation is ignored, because `redstone_signal` changes on every press); **and**
+- the world generation at that cell equals the recorded one.
+
+**Generation bump sources.** Each bump is applied only to watched cells (`andrew:pg_watch`) and only in the plate's own dimension.
+
+| Path | Event | Cells checked |
+|---|---|---|
+| A player breaks the plate or its support | `world.afterEvents.playerBreakBlock` | the broken cell and the cell above it |
+| A player places a block at a watched cell (re-placing a plate) | `world.afterEvents.playerPlaceBlock` | the placed cell |
+| An explosion | `world.afterEvents.blockExplode` | the exploded cell and the cell above it |
+| A piston | `world.afterEvents.pistonActivate`, over `getAttachedBlocksLocations()` and the arm cell | each moved cell and the cell above it |
+
+**Not observed** (a same-type re-place still teleports; reported limitation):
+- `/setblock`, `/fill`, `/clone`;
+- structure or template loads;
+- other add-ons' `setType`;
+- liquid flow;
+- game rules that clear blocks.
+
+**A different-type or missing plate on any path** is always caught by the typeId check.
+
+**Scenario proof:**
+- a player break and re-place of the same type → no teleport, binding cleared (positive);
+- TNT next to a plate, then the same type re-placed → no teleport;
+- `/setblock` to a different plate type → no teleport;
+- **negative control:** an untouched plate, pressed by a mob walking over it → teleport succeeds. This proves the permutation is ignored.
+
+**Closes `xcx34`** once Andrey accepts the limitation in the acceptance sheet.
+
+
+
+
+- **node**: L0-pear-ru03
+
+### Rule: item invariants (durability, crafting, non-legendary) (L0-pear-ru04)
+
+# Rule: item invariants (durability, crafting, non-legendary)
+
+**Is a:** rule. **Part of:** L0-pear. **Relates to:** L0-xasm43, C-46, L0-lgnd, L0-ench.
+
+1. **Infinite durability = damage held at 0.** A marked rod's `durability.damage` is written back to 0:
+   - when a tracked hook ends (reel or release);
+   - on bind;
+   - on the shared interval's hand check, every 20 ticks for holders of a marked rod.
+
+   A reel costs at most 5 durability (or 2 on a block hook), and the rod has 64, so it can never break between checks.
+   - **Fallback** if the probe shows damage cannot be written back: re-issue a fresh marked rod carrying the same dynamic properties, enchantments and nameTag.
+2. **Unlimited crafting.** There is no world flag and no counter, and the recipe never locks.
+3. **Not legendary (C-46).**
+   - The token and the marked rod return undefined from `defForToken`, `defForStack` and `isLegendaryStack` (the plan's "`defForItem`"; names as read in `src/legendary/registry.ts` during reduce v11).
+   - No retention, Void recovery, despawn protection, refund or gate applies.
+   - Death drops are vanilla, and keepInventory is honoured as vanilla.
+4. **Enchanting.** The rod is a `minecraft:fishing_rod` for the `ench` roller: Lure, Luck of the Sea, Mending, Unbreaking. Enchanting must keep the mark, nameTag and binding; the `ench` result writes back the same stack with its properties intact.
+5. **Transfer is free.** The rod can be dropped, traded, stored or given. A transfer never transfers the use of a binding (`L0-pear-ru01`).
+
+
+
+
+- **node**: L0-pear-ru04
 
 ### Constraints and probe plan (run on checks BDS 19136 before building) (L0-trdt-cons)
 

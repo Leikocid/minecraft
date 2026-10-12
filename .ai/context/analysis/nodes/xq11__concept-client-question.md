@@ -2,7 +2,7 @@
 type: "concept-client-question"
 node_id: "L0-xq11"
 source_channel: "rollout"
-analysis_version: 10
+analysis_version: 11
 title: "Q-L0-11 · Enchanting table: which alternative do you approve?"
 aliases: ["L0-xq11"]
 is_a: ["client-question"]

@@ -2,7 +2,7 @@
 type: "concept-contradiction"
 node_id: "L0-xcx30"
 source_channel: "rollout"
-analysis_version: 10
+analysis_version: 11
 level: 1
 title: "CX-L0-30 · An in-flight legendary vs the framework invariant"
 aliases: ["L0-xcx30"]

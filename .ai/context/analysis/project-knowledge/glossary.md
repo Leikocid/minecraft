@@ -1,13 +1,13 @@
 ---
 title: Glossary
 type: project-knowledge
-generated_at: "2026-10-12T18:07:51.621Z"
+generated_at: "2026-10-12T18:21:49.783Z"
 source_channel: rollout
 node_id: rollout-glossary
 aliases: ["rollout-glossary","glossary","project-knowledge/glossary"]
 is_a: ["rollout","glossary"]
-relates_to: ["L0-ench-ac01","L0-ench-ac02","L0-ench-ac03","L0-ench-ac04","L0-ench-ac05","L0-ench-ac06","L0-ench-gl01","L0-ench-gl02","L0-ench-gl03","L0-trdt-a001","L0-trdt-a002","L0-trdt-a003","L0-trdt-a004","L0-trdt-a005","L0-trdt-a006","L0-trdt-g001","L0-trdt-g002","L0-trdt-g003","L0-uwbw-a001","L0-uwbw-a002","L0-uwbw-a003","L0-uwbw-a004","L0-uwbw-a005","L0-uwbw-a006","L0-uwbw-a007","L0-uwbw-a008","L0-uwbw-g001","L0-uwbw-g002","L0-uwbw-g003","L0-uwbw-g004"]
-priority: 640
+relates_to: ["L0-ench-ac01","L0-ench-ac02","L0-ench-ac03","L0-ench-ac04","L0-ench-ac05","L0-ench-ac06","L0-ench-gl01","L0-ench-gl02","L0-ench-gl03","L0-pear-ac01","L0-pear-ac02","L0-pear-ac03","L0-pear-ac04","L0-pear-ac05","L0-pear-ac06","L0-pear-ac07","L0-pear-gl01","L0-pear-gl02","L0-pear-gl03","L0-pear-gl04","L0-pear-gl05","L0-trdt-a001","L0-trdt-a002","L0-trdt-a003","L0-trdt-a004","L0-trdt-a005","L0-trdt-a006","L0-trdt-g001","L0-trdt-g002","L0-trdt-g003","L0-uwbw-a001","L0-uwbw-a002","L0-uwbw-a003","L0-uwbw-a004","L0-uwbw-a005","L0-uwbw-a006","L0-uwbw-a007","L0-uwbw-a008","L0-uwbw-g001","L0-uwbw-g002","L0-uwbw-g003","L0-uwbw-g004"]
+priority: 650
 ---
 
 # Glossary
@@ -177,6 +177,222 @@ The Wind Burst/Unbreaking level rule is applied first and then capped. If the ro
 
 
 - **node**: L0-ench-gl03
+
+### AC-pear-01 · Unlimited craft, correct grid, no durability loss (§8 bullet 1) (L0-pear-ac01)
+
+# AC-pear-01 · Unlimited craft, correct grid, no durability loss (§8 bullet 1)
+
+**Relates to:** L0-pear-pr01, L0-pear-ru04, L0-xasm43, C-40.
+
+**`bds` (GameTest; crafter-loaded via `/replaceitem`, which performs a real recipe craft):**
+- GIVEN a crafter with an Ender Pearl at top-middle and a Fishing Rod at centre, WHEN it crafts 3 times in a row, THEN 3 tokens come out. A token picked up by a sim player becomes a `minecraft:fishing_rod` with `andrew:pearl_rod`, nameTag «Перовый сокровятель», lore "Pearl Rod"/"unbound", and damage 0.
+- **Negative controls:** the same two items shifted (pearl top-left over rod middle-left), and the pearl below the rod → nothing crafts. If the probe shows Bedrock trims blank rows and columns, this becomes a recorded deviation.
+- **C-40:** the recipe set has no other shape that matches pearl + rod, and carrot-on-a-stick and warped-fungus-on-a-stick still craft (unit test over `packs/behavior/recipes/*` plus vanilla shapes).
+- GIVEN a marked rod reeled 30 times from a block hook, THEN damage reads 0 after each reel. **Negative control:** a plain rod's damage rises over the same sequence.
+- A token and a marked rod return undefined from `defForToken`, `defForStack` and `isLegendaryStack` (the plan's "`defForItem`"; names as read in `src/legendary/registry.ts` during reduce v11) (unit test).
+
+**`ipad`:**
+- the recipe book shows the Pearl Rod icon;
+- the 2×2 inventory grid does not offer it;
+- the crafted rod shows the name and lore;
+- the durability bar never visibly drops.
+
+
+- **node**: L0-pear-ac01
+
+### AC-pear-02 · Every vanilla plate binds; the next use teleports once and clears (§8 bullet 2) (L0-pear-ac02)
+
+# AC-pear-02 · Every vanilla plate binds; the next use teleports once and clears (§8 bullet 2)
+
+**Relates to:** L0-pear-pr02, L0-pear-pr03, L0-xasm41.
+
+**`bds`:** one scenario per typeId from `BlockTypes.getAll()` matching `/pressure_plate$/`. The list is printed in the log; it is expected to be 15 or more, including both weighted plates and polished blackstone.
+- GIVEN a sim player with a marked rod, standing 6 blocks from plate X, WHEN they cast so that the hook lands in X's cell, THEN within 60 ticks:
+  - the rod's record holds X's dimension, cell, typeId, the player's id and epoch;
+  - the hook is gone;
+  - the lore reads "bound: overworld x y z".
+- WHEN the player walks 50 blocks away and uses the rod, THEN no hook survives the use (`L0-adr-prcn`: none spawns on the cancel branch, it is removed at +0 on the remove branch), and the player stands at X's cell (or a neighbour) with a dimension and location read-back within 0.5. The record is cleared.
+- **Negative controls:**
+  - a hook resting on a stone block next to X → no binding;
+  - a hook landing in water above X's level → no binding;
+  - an unmarked vanilla rod cast into X → no binding and no properties written.
+
+**`ipad`:**
+- after a bind, the rod returns to the idle pose with no lingering line;
+- the arrival feels instant: no fall damage, no suffocation, the sound plays.
+
+
+- **node**: L0-pear-ac02
+
+### AC-pear-03 · Destroyed or replaced plates do not teleport; the use after a trip is a normal cast (§8 bullet 3) (L0-pear-ac03)
+
+# AC-pear-03 · Destroyed or replaced plates do not teleport; the use after a trip is a normal cast (§8 bullet 3)
+
+**Relates to:** L0-pear-ru01, L0-pear-ru03, L0-xcx34.
+
+**`bds`:** each case starts with a bound rod.
+- **Destroyed:** the plate is broken by the sim player → the use teleports nobody, the record is cleared, the message is "plate gone or replaced", and no hook survives the use (`L0-adr-prcn`).
+- **Replaced, same type, observed:** the plate is broken and re-placed by a player → the same result.
+- **Replaced by explosion:** TNT is detonated next to the plate, then the plate is re-placed → the same result.
+- **Replaced, different type:** `/setblock` stone plate → oak plate → the same result.
+- **After success:** a successful trip, then a second use → a vanilla hook spawns (the cast is not cancelled) and there is no teleport.
+- **Negative control** (the permutation is ignored): a zombie stands on the plate (redstone_signal > 0) at use time → the teleport succeeds.
+- **Recorded limitation** (scenario asserts the documented behaviour): `/setblock` to the **same** type → the teleport succeeds, marked as the `xcx34` limitation.
+
+**`ipad`:** the failure messages read clearly in both languages.
+
+
+- **node**: L0-pear-ac03
+
+### AC-pear-04 · Owner death resets the binding; others cannot exploit a transferred bound rod (§8 bullet 4) (L0-pear-ac04)
+
+# AC-pear-04 · Owner death resets the binding; others cannot exploit a transferred bound rod (§8 bullet 4)
+
+**Relates to:** L0-pear-ru01, L0-pear-ent2, C-45.
+
+**`bds`:** two sim players A and B, with a plate bound by A.
+- **Transfer:** A drops the rod and B picks it up and uses it → a vanilla hook spawns for B, with no teleport. If B's hook lands in a plate, the record is overwritten with B as owner.
+- **Death:** A dies, which bumps `andrew:life_epoch` by 1. The dropped rod is picked up by B → B's use is a vanilla cast. A, respawned, picks the rod back up → A's use is also a vanilla cast. The epoch is checked, not just the id.
+- **Death in a chest:** A's rod is in a chest when A dies → after the respawn A takes it out → a vanilla cast. The binding was voided with no inventory search.
+- **Death while pending:** A uses the rod and is killed before the preload ends → no teleport, the area is released, and the ticking-area count is back to its baseline.
+- **Negative control:** A bound, A alive, the rod round-tripped through a chest and a ground drop → A's use teleports.
+- **Note:** the dead sim player stays in `getAllPlayers` (engine fact), so tests read the epoch, not presence. Sim players regenerate, so kills use `kill` or lethal `applyDamage`.
+
+
+- **node**: L0-pear-ac04
+
+### AC-pear-05 · Distant and unloaded destinations: no range cap, no unsafe teleport (§8 bullet 5) (L0-pear-ac05)
+
+# AC-pear-05 · Distant and unloaded destinations: no range cap, no unsafe teleport (§8 bullet 5)
+
+**Relates to:** L0-pear-pr03, L0-pear-ru02, L0-pear-ad01, C-44.
+
+**`bds`:**
+- **Far plate reached:**
+  - a plate at +10 000 blocks is placed through a ticking area, then the area is released and the chunk is confirmed unloaded;
+  - the binding is written directly (registry stand-in);
+  - the player uses the rod → they arrive within 0.5 and the area count returns to baseline.
+  - Repeat at 100 K and 1 M if the probe passes; otherwise those distances are recorded deviations.
+- **Cross-dimension:** an overworld player with a binding to a Nether plate → arrives in the Nether, if the probe passes; otherwise "other dimensions unsupported" and the binding is kept.
+- **Forced preload failure:**
+  - all budget slots are held by a test fixture → "server busy", no teleport, binding kept;
+  - an injected 1-tick timeout → "destination did not load", no teleport, binding kept, area released.
+- **Unsafe destination:** lava poured over the plate and its 8 neighbours, or a block placed at the head height of all 9 → "destination unsafe", no teleport, binding kept.
+- **Negative control:** the same far plate with a pre-loaded chunk → success. This proves the failure scenarios fail because of their fault and not the setup.
+- The scenarios run BDS-only (checks 19136, private instance), never production.
+
+
+- **node**: L0-pear-ac05
+
+### AC-pear-06 · Unbound fishing works; items and state survive a reload (§8 bullet 6) (L0-pear-ac06)
+
+# AC-pear-06 · Unbound fishing works; items and state survive a reload (§8 bullet 6)
+
+**Relates to:** L0-pear-ent1, L0-pear-ent2, L0-pear-ru04.
+
+**`bds`:**
+- **Fishing:** an unbound marked rod cast into water → a hook spawns and stays. After a bite window the reel yields a vanilla fishing loot item, the damage is 0, and no binding is written.
+  - **Negative control:** the same with a plain rod → loot, damage > 0.
+- **Restart:** a rod bound by A, in A's inventory, plus a second bound rod in a chest. Restart BDS (scenario pair before and after, as in the existing restart scenarios). Then:
+  - both records are intact;
+  - A's epoch is unchanged;
+  - plate generations are unchanged;
+  - A's use teleports;
+  - no `andrew_pearl_*` area is left over.
+  - Sim players do not survive a restart, so the after half re-spawns A with the same id or uses the registry stand-in. The method is fixed by the probe.
+- **Persistence probes** (ac07): the properties survive a reel, a chest, a drop and an anvil rename. A rename that drops the mark is a reported limitation.
+
+**`ipad`:** fishing with the Pearl Rod looks and feels like vanilla; after a world reload the name, lore and binding are unchanged.
+
+
+- **node**: L0-pear-ac06
+
+### AC-pear-07 · Probe recorded before the build (checks 19136) (L0-pear-ac07)
+
+# AC-pear-07 · Probe recorded before the build (checks 19136)
+
+**Relates to:** L0-pear, L0-pear-cx02, L0-pear-ad01, L0-xasm41, L0-xasm43.
+
+A `probe_pearl_*` criterion set logs one line per question, and each answer is copied into the KV (engine facts) before stage 2. It must state, with measured values:
+1. **Hook events:** `projectileHitBlock` on `minecraft:fishing_hook` — fires or not, and which block it reports on a plate.
+2. **Resting height:** the hook's rest height per plate typeId, which calibrates the 0.25 threshold.
+3. **Owner:** the hook's projectile owner — readable or undefined.
+4. **Cancelled cast:** a cancelled `beforeEvents.itemUse` on a vanilla rod — a hook spawns, yes or no (`cx02`).
+5. **Durability:** `durability.damage = 0` written after a reel holds on the next read.
+6. **Dynamic properties** after a reel, a chest, a drop, an anvil rename and a restart.
+7. **`/tickingarea` load** at 10 K / 100 K / 1 M blocks and in the Nether and the End: ticks to `isChunkLoaded`, plus the world cap observed (`probe_tickingarea_load`).
+8. **Cross-dimension** `teleport({dimension})` of a sim player, with a read-back.
+9. **Recipe:** the 3×3 pattern with blanks — a shifted layout crafts or not (crafter).
+
+**`ipad`** (only the iPad can see these): whether `hook.remove()` resets the cast pose, and whether a cancelled cast flickers a line.
+
+**Pass:** every line is present and the KV is updated. Any "no" re-routes to the fallback named in the owning artifact.
+
+
+- **node**: L0-pear-ac07
+
+### Pear gl01 concept glossary term (L0-pear-gl01)
+
+**Pearl Rod («Перовый сокровятель»)**
+
+A vanilla `minecraft:fishing_rod` carrying the dynamic property `andrew:pearl_rod` (the rod id), the nameTag «Перовый сокровятель» and the lore "Pearl Rod".
+- It is crafted from an Ender Pearl above a Fishing Rod, as `andrew:pearl_rod_token`, which is swapped into the rod.
+- It is non-legendary (C-46).
+
+**Synonyms:** Pearl Rod, marked rod, Перовый сокровятель. The spoken name "эндер перо" ("ender feather") means the Ender Pearl ingredient (`xq12`).
+
+**Not to be confused with:** the Orbital Cannon, a custom item with a fishing-rod icon that is not a rod.
+
+
+- **node**: L0-pear-gl01
+
+### Pear gl02 concept glossary term (L0-pear-gl02)
+
+**Binding (привязка)**
+
+The record on a Pearl Rod: `{dim, plate cell, plate typeId, owner id, owner life epoch, plate generation}`.
+- It is created when the rod's hook comes to rest in a pressure-plate cell.
+- It is **honoured** only for the same owner with the same epoch.
+- It is **cleared** by a successful teleport or a missing or replaced plate.
+- It is **void** (ignored, then overwritten) after the owner's death.
+
+**States:** unbound / bound / honoured (bound + the owner's matching epoch).
+
+
+- **node**: L0-pear-gl02
+
+### Pear gl03 concept glossary term (L0-pear-gl03)
+
+**Life epoch**
+
+The player dynamic property `andrew:life_epoch`, incremented on each death of that player. State tied to "the player who did X" stores the id plus the epoch, so one death voids every copy everywhere without a search (C-45).
+
+**Synonyms:** owner epoch, life counter.
+
+
+- **node**: L0-pear-gl03
+
+### Pear gl04 concept glossary term (L0-pear-gl04)
+
+**Plate generation**
+
+A per-cell counter in a world dynamic property (`andrew:pg:<dim>:<x>:<y>:<z>`). It is bumped whenever an observed path (player break or place, explosion, piston) touches a watched plate cell or its support. It stands in for block identity, which Bedrock blocks do not have (`xcx34`). A mismatch at teleport time means the plate was replaced.
+
+**Related term:** watched cell (`andrew:pg_watch`): a plate cell that some rod is bound to.
+
+
+- **node**: L0-pear-gl04
+
+### Pear gl05 concept glossary term (L0-pear-gl05)
+
+**Ticking-area budget**
+
+The engine's world-wide cap of 10 ticking areas. It is shared by `spawn-search` (`andrew_find_*`), the structure ring loaders (`andrew_ring_*`) and the Pearl Rod preload (`andrew_pearl_*`), and handed out by a single allocator with one slot reserved for the Pearl Rod (`L0-pear-ad01`).
+
+**Synonyms:** area pool, preload slot.
+
+
+- **node**: L0-pear-gl05
 
 ### AC-trdt-001 (bds) · Recipe, buckets, one craft per world, Creative copy (L0-trdt-a001)
 

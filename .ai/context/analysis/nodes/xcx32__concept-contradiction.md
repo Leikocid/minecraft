@@ -2,7 +2,7 @@
 type: "concept-contradiction"
 node_id: "L0-xcx32"
 source_channel: "rollout"
-analysis_version: 10
+analysis_version: 11
 title: "CX-L0-32 · The enchanting goal vs what the stable API can do"
 aliases: ["L0-xcx32"]
 is_a: ["contradiction"]

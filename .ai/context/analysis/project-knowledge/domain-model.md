@@ -1,13 +1,13 @@
 ---
 title: Domain Model
 type: project-knowledge
-generated_at: "2026-10-12T18:07:51.641Z"
+generated_at: "2026-10-12T18:21:49.804Z"
 source_channel: rollout
 node_id: rollout-domain-model
 aliases: ["rollout-domain-model","domain-model","project-knowledge/domain-model"]
 is_a: ["rollout","domain-model"]
-relates_to: ["L0-ench","L0-ench-ent1","L0-trdt","L0-trdt-ecus","L0-uwbw","L0-uwbw-earm","L0-uwbw-eitm","L0-uwbw-esfr"]
-priority: 640
+relates_to: ["L0-ench","L0-ench-ent1","L0-pear","L0-pear-ent1","L0-pear-ent2","L0-trdt","L0-trdt-ecus","L0-uwbw","L0-uwbw-earm","L0-uwbw-eitm","L0-uwbw-esfr"]
+priority: 650
 ---
 
 # Domain Model
@@ -55,6 +55,82 @@ priority: 640
 | q4Signature | The source × signal matrix and its ambiguous rows. |
 | options | The option table (a)/(b)/(c) with costs. |
 | claim | The exact sentence used in the release notes / acceptance sheet. |
+
+
+
+
+
+### Pearl Rod item and its binding record (L0-pear-ent1)
+
+# Pearl Rod item and its binding record
+
+**Is a:** entity. **Part of:** L0-pear. **Relates to:** L0-adr-prbd, L0-xasm42, L0-pear-ent2, L0-pear-ru03.
+
+## The item
+- **Type:** `minecraft:fishing_rod`, a real vanilla rod (C-16: real fishing, loot, Lure, Luck of the Sea and Mending are kept). Max stack 1, so ItemStack dynamic properties are allowed.
+- **Mark:** dynamic property `andrew:pearl_rod` = a rod id (a fresh random string at the swap). A rod with this property is a Pearl Rod; nothing else is.
+- **Name:** `nameTag` = «Перовый сокровятель» (default per `xq12` item 2).
+- **Lore:**
+  - line 1: `Pearl Rod`;
+  - line 2: `bound: <overworld|nether|the_end> x y z` or `unbound`. The owner's name is never shown (`xasm42`).
+- **Durability:** `durability.damage` is held at 0 (rule `L0-pear-ru04`).
+- **World rules:** it drops on death and despawns, burns and breaks like any vanilla item. It never matches `lgnd` `defForToken`, `defForStack` or `isLegendaryStack` or any retention or Void hook (C-46).
+
+## The binding record (rod dynamic properties)
+| Property | Type | Meaning |
+|---|---|---|
+| `andrew:pr_dim` | string | dimension id of the plate |
+| `andrew:pr_pos` | Vector3 | the plate's block cell (integer x, y, z), **not** the support block |
+| `andrew:pr_type` | string | the plate typeId at bind time (any `*pressure_plate`) |
+| `andrew:pr_owner` | string | `player.id` of the binder |
+| `andrew:pr_epoch` | number | the binder's `andrew:life_epoch` at bind time (C-45) |
+| `andrew:pr_gen` | number | the plate generation at that cell at bind time (`L0-pear-ent2`) |
+
+- **States:** *unbound* (none of these set) and *bound* (all set). A partial record reads as unbound and is cleared at the next write.
+- **Transitions:**
+  - unbound → bound: the hook enters a plate cell (`L0-pear-pr02`);
+  - bound → bound: anyone's hook from this rod binds again, which **overwrites** the record;
+  - bound → unbound: a successful teleport, or the plate is missing, changed, or its generation was bumped (`L0-pear-ru01`);
+  - bound → stays bound: a timeout, a full area pool, no safe spot, or a dimension refused.
+- **Epoch void:** an epoch mismatch does not erase the record. The record is simply not honoured. It is overwritten by the next binding.
+
+## Persistence
+- Item dynamic properties travel with the stack through inventories, chests, drops and a restart.
+- Survival of an anvil rename or combine, and of a reel, is a probe question (`L0-pear-ac07`). If one of them drops the mark, that is a reported limitation.
+
+## Runtime-only state (not persisted)
+- Tracked hooks: `hookId → {playerId, rodId, castTick}`.
+- Pending teleports: `playerId → {rodId, areaSlot, deadlineTick}`. These are lost on a restart, which is safe because the binding is cleared only on success.
+
+
+
+
+
+### Owner life epoch and plate generation (L0-pear-ent2)
+
+# Owner life epoch and plate generation
+
+**Is a:** entity. **Part of:** L0-pear. **Relates to:** L0-pear-ent1, L0-xcx34, L0-pear-ru03.
+
+## Owner life epoch (C-45)
+- **Where it lives:** player dynamic property `andrew:life_epoch` (number, default 0). It persists across logout and restart.
+- **Bump:** `world.afterEvents.entityDie` where `deadEntity.typeId === "minecraft:player"`.
+  - Death drops precede `entityDie` (engine fact), but a stranger cannot use the dropped rod anyway (owner mismatch). So the order is harmless.
+  - The bump also aborts any pending teleport for that player.
+  - The handler guards against an undefined or removed entity (engine fact: after-events can carry one).
+- **Who reads it:**
+  - binding writes the current epoch into the rod;
+  - `beforeEvents.itemUse` compares the rod's `pr_epoch` with the user's current epoch.
+- **Why it exists:** it voids every copy of the binding everywhere (chest, drop, an unloaded chunk, a stranger's hand) with no search.
+- **Shared?** It is generic. Other "personal state" features may read it, but only Pearl Rod writes are in scope here.
+
+## Plate generation (`xcx34`)
+- **Where it lives:** world dynamic property `andrew:pg:<dim>:<x>:<y>:<z>` (number). A missing key means 0.
+- **Bumped by the observed paths only** (rule `L0-pear-ru03`): a player breaks or places a block at the cell; an explosion destroys the cell or its support; a piston moves or breaks the support or the cell; the support cell under the plate is broken.
+- **Lifetime:** an entry is written only for a cell that some rod is bound to. Bind time records the cell in a small world set `andrew:pg_watch`, and the generation listeners touch only watched cells. That keeps the dynamic-property budget bounded.
+  - Entries are never deleted. Rods can sit forever in chests, so there is no safe deletion point.
+  - The growth is one key per distinct bound plate, which is negligible against the measured budget (`probe_dynamic_property_budget`).
+- **Comparison:** at teleport time, `world gen(cell) !== rod.pr_gen` means the plate was replaced. The binding is cleared and there is no teleport.
 
 
 
@@ -275,6 +351,63 @@ Stable 2.10.0 has no table hook (`xcx32`). So this component owns three things, 
 ## Closing paths (from the plan)
 - **(a)/(b) approved:** the hook is built and the preview deviation is documented.
 - **(c) or no answer:** the roller stays dormant and tested, and the limitation is reported. `xcx32` closes on Andrey's answer.
+
+
+
+
+
+### Pearl Rod («Перовый сокровятель») — component (L0-pear)
+
+# Pearl Rod («Перовый сокровятель») — component
+
+**Is a:** component. **Part of:** L0. **Relates to:** L0-adr-prbd, L0-xasm41, L0-xasm42, L0-xasm43, L0-xasm44, L0-xcx34, L0-xq12, L0-lgnd (craftgate swap only), L0-strc (ticking areas), L0-uwbw (recipe collisions, fixed-cell patterns), L0-ench (fishing-rod eligibility).
+**Sources:** spec v3 §6–§8 (`underwaterbowfinalspecv3ruen-part-3` … `part-5`); constraints C-16, C-40, C-44, C-45, C-46.
+
+## Responsibility
+A **non-legendary** utility item (C-46). It looks and fishes like a vanilla fishing rod. When its bobber lands in a pressure plate it is bound to that plate. The binder's next use teleports them to a safe spot at or beside the plate, once, and only after the destination has been checked (C-44).
+
+## Shape (per `L0-adr-prbd`)
+- **Item:** a marked vanilla `minecraft:fishing_rod` (entity `L0-pear-ent1`). It is crafted as `andrew:pearl_rod_token` and swapped after the craft (process `L0-pear-pr01`).
+- **Binding:** item-borne dynamic properties (`L0-pear-ent1`), detected by polling the hook in the shared interval (process `L0-pear-pr02`, `xasm41`).
+- **Validity:** owner id + owner life epoch (C-45) + plate typeId + plate generation (`L0-pear-ent2`, rule `L0-pear-ru03`).
+- **Bound use:** cancel first, then preload, validate, find a safe spot, teleport and read back (process `L0-pear-pr03`, rules `L0-pear-ru01` and `L0-pear-ru02`).
+
+## Inputs
+- Player events: `itemUse` (before and after), `entitySpawn` of `minecraft:fishing_hook`, `playerInventoryItemChange` (token swap), `entityDie` (epoch), and `playerBreakBlock` / `playerPlaceBlock` / `blockExplode` / `pistonActivate` (plate generation).
+- The world: block reads at the hook cell and at the destination; `isChunkLoaded`; ticking areas from the world-wide budget (`L0-pear-ad01`, adopted at L0 as `L0-adr-prta`).
+
+## Outputs
+- Rod dynamic properties and lore; the player property `andrew:life_epoch`; world properties for plate generations.
+- A teleport (with `dimension`) and an actionbar or chat message for every outcome.
+
+## Seams
+- `src/legendary/craftgate.ts`: a token-swap helper is extracted from it. There is no gate, refund, world flag or retention, and `lgnd` scenarios stay green.
+- **Ticking areas:** **world-wide cap of 10**, already drawn on by `spawn-search` (`andrew_find_`, pool 5) and `search-ring` (`andrew_ring_<d>`, 4 per dimension). See `L0-pear-cx01` and `L0-pear-ad01`.
+- **Shared `runInterval`:** no `runJob`, and no per-rod interval.
+
+## Probe first (checks BDS, 19136; never 19132)
+Run distinct criterion set `probe_pearl_*` (AC `L0-pear-ac07`):
+- the hook's events and its resting height per plate type;
+- whether the hook's owner is readable;
+- whether `hook.remove()` resets the client's cast pose (iPad);
+- **whether a cancelled `beforeEvents.itemUse` casts nothing** (`L0-pear-cx02`);
+- whether durability can be written back to 0;
+- whether dynamic properties survive a reel, a rename, a chest, a drop and a restart;
+- ticking-area loads at 10 K, 100 K and 1 M blocks, plus the Nether and the End (`probe_tickingarea_load`);
+- whether a cross-dimension teleport works;
+- whether the fixed 3×3 recipe pattern is enforced.
+
+Four rules depend on these results (decomposition plan).
+
+## Acceptance
+Six §8 bullets, each with a `bds` scenario and a negative control (`L0-pear-ac01` … `ac06`), plus the probe (`ac07`). The `ipad` checks are the cast pose after a retract; the name, lore and icon; the recipe book; how the arrival feels; and the failure messages.
+
+## Reported limitations (C-16)
+- A same-type plate replaced through an unobserved path (commands, structures, liquids, other add-ons) still teleports (`xcx34`, `L0-pear-ru03`).
+- The input rod's enchantments are lost at the craft (`xasm43`).
+- An anvil rename or combine may drop the mark (to be confirmed by the probe).
+- The name is one fixed string and does not follow the client's language (`xq12` item 2).
+- Used as a crafting ingredient (Orbital Cannon, carrot-on-a-stick, warped-fungus-on-a-stick, its own recipe), it is consumed as a plain rod. A craftgate refund returns a plain fishing rod (`L0-xasm45`).
 
 
 
