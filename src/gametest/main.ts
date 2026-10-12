@@ -105,6 +105,7 @@ import "./sculk-enchant";
 import "./sculk-look";
 import "./trident-throw";
 import "./trident-probe";
+import "./pear-probe";
 import "./trident-damage";
 import "./trident-legendary";
 import "./trident-movement";

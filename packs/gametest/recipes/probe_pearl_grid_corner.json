@@ -1,0 +1,31 @@
+{
+  "format_version": "1.21.0",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "andrew:probe_pearl_grid_corner"
+    },
+    "tags": ["crafting_table"],
+    "pattern": [
+      "   ",
+      "  C",
+      "  D"
+    ],
+    "key": {
+      "C": {
+        "item": "minecraft:prismarine_crystals"
+      },
+      "D": {
+        "item": "minecraft:rabbit_hide"
+      }
+    },
+    "result": {
+      "item": "minecraft:lapis_lazuli",
+      "count": 1
+    },
+    "unlock": [
+      {
+        "item": "minecraft:prismarine_crystals"
+      }
+    ]
+  }
+}
