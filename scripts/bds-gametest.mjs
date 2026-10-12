@@ -561,6 +561,15 @@ const EXPECTED_TESTS = [
   'andrew:trident_dash_dimensions',
   'andrew:trident_dash_fall_once',
   'andrew:trident_swim_boost',
+  // PEAR-PROBE-01 — src/gametest/pear-probe.ts (L0-pear-ac07): docs/feedback/probe-pearl.md
+  'andrew:probe_pearl_hook_plates',
+  'andrew:probe_pearl_hook_owner',
+  'andrew:probe_pearl_cast_cancel',
+  'andrew:probe_pearl_durability',
+  'andrew:probe_pearl_area_load',
+  'andrew:probe_pearl_area_budget',
+  'andrew:probe_pearl_dimension_trip',
+  'andrew:probe_pearl_recipe_grid',
   // ENCH-PROBE-01 — src/gametest/ench-probe.ts (spec v3 §4, L0-ench-prob): docs/feedback/probe-enchanting.md
   'andrew:probe_ench_surface',
   'andrew:probe_ench_result_signals',
