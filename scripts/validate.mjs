@@ -166,8 +166,11 @@ function checkEntities({ behaviorDir, resourceDir, parsed, errors }) {
  * lacks moves nothing; a controller asking for a Texture/Geometry/Material key
  * the attachable does not define draws nothing. BDS loads none of this.
  * Only `andrew.`-namespaced ids and `andrew_` texture files are resolved.
+ *
+ * An id in `beforeItem` may ship its attachable ahead of the item; once the item
+ * ships, the listing is the error, so it cannot outlive the wait.
  */
-function checkAttachables({ behaviorDir, resourceDir, parsed, errors }) {
+function checkAttachables({ behaviorDir, resourceDir, parsed, errors, beforeItem }) {
   const items = new Set();
   for (const [, json] of parsedUnder(parsed, join(behaviorDir, 'items'))) {
     const id = json?.['minecraft:item']?.description?.identifier;
@@ -200,7 +203,9 @@ function checkAttachables({ behaviorDir, resourceDir, parsed, errors }) {
       errors.push(new ValidationError(file, 'minecraft:attachable.description.identifier', 'missing attachable identifier'));
       continue;
     }
-    if (id.startsWith('andrew:') && !items.has(id)) {
+    if (beforeItem.has(id) && items.has(id)) {
+      errors.push(new ValidationError(file, 'minecraft:attachable.description.identifier', `${id} ships now: drop it from ATTACHABLE_BEFORE_ITEM in scripts/validate.mjs`));
+    } else if (id.startsWith('andrew:') && !items.has(id) && !beforeItem.has(id)) {
       errors.push(new ValidationError(file, 'minecraft:attachable.description.identifier', `${id} has no behavior-pack item under items/`));
     }
 
@@ -274,6 +279,9 @@ function checkAttachables({ behaviorDir, resourceDir, parsed, errors }) {
   }
 }
 
+/** Attachables drawn before their item exists. */
+export const ATTACHABLE_BEFORE_ITEM = new Set();
+
 /**
  * Validate the behavior pack and resource pack directories.
  *
@@ -282,9 +290,11 @@ function checkAttachables({ behaviorDir, resourceDir, parsed, errors }) {
  * @param {string} opts.resourceDir - path to packs/resource
  * @param {boolean} [opts.requireScriptEntry] - also check that the compiled
  *   script entry file exists (only true once, after `npm run build` bundled it)
+ * @param {Set<string>} [opts.attachableBeforeItem] - attachable ids allowed to
+ *   ship ahead of their item
  * @returns {ValidationError[]} empty array when everything is valid
  */
-export function validatePacks({ behaviorDir, resourceDir, requireScriptEntry = false }) {
+export function validatePacks({ behaviorDir, resourceDir, requireScriptEntry = false, attachableBeforeItem = ATTACHABLE_BEFORE_ITEM }) {
   const errors = [];
 
   // 1. Every JSON file under both packs must parse.
@@ -394,7 +404,7 @@ export function validatePacks({ behaviorDir, resourceDir, requireScriptEntry = f
   }
 
   checkEntities({ behaviorDir, resourceDir, parsed, errors });
-  checkAttachables({ behaviorDir, resourceDir, parsed, errors });
+  checkAttachables({ behaviorDir, resourceDir, parsed, errors, beforeItem: attachableBeforeItem });
 
   // After build, the script module's entry file must exist.
   if (requireScriptEntry) {

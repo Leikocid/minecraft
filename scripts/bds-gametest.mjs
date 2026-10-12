@@ -203,6 +203,14 @@ const EXPECTED_TESTS = [
   'andrew:trident_blocked_restart_seed',
   'andrew:trident_blocked_restart_check',
   'andrew:trident_creative_and_commands_spend_nothing',
+  // UBOW-ITEM-01-AA — src/gametest/legendary-craftgate.ts
+  'andrew:legendary_give_then_craft_underwater_bow',
+  'andrew:legendary_underwater_bow_other_flags_untouched',
+  'andrew:ubow_craft_two_empty_buckets',
+  'andrew:ubow_craft_full_inventory',
+  'andrew:ubow_blocked_restart_seed',
+  'andrew:ubow_blocked_restart_check',
+  'andrew:ubow_creative_and_commands_spend_nothing',
   // TRDT-THROW-01 — src/gametest/trident-throw.ts (L0-trdt-a004, R-trdt-001)
   'andrew:trident_throw_wall_return',
   'andrew:trident_throw_zombie_return',
@@ -535,6 +543,23 @@ const EXPECTED_TESTS = [
   'andrew:probe_trident_return',
   'andrew:probe_trident_restart_seed',
   'andrew:probe_trident_restart_check',
+  // UBOW-PROBE-01 — src/gametest/ubow-probe.ts (L0-uwbw-pprb rows 1–8): docs/feedback/probe-ubow.md
+  'andrew:probe_ubow_bow',
+  'andrew:probe_ubow_media',
+  'andrew:probe_ubow_fire',
+  'andrew:probe_ubow_rewrite',
+  'andrew:probe_ubow_shield',
+  'andrew:probe_ubow_buckets',
+  'andrew:probe_ubow_rocket',
+ // UBOW-FIRE-01 — src/gametest/ubow-fire.ts (L0-uwbw-r002, L0-uwbw-esfr, L0-xasm38)
+  'andrew:ubow_fire_normal_hit',
+  'andrew:ubow_fire_water',
+  'andrew:ubow_fire_super',
+  // UBOW-FLIGHT-01 — src/gametest/ubow-flight.ts (L0-uwbw-a003, C-42)
+  'andrew:ubow_flight_water',
+  'andrew:ubow_flight_lava',
+  'andrew:ubow_flight_damage',
+  'andrew:ubow_infinity_no_pickup',
 // TRDT-DMG-01 — src/gametest/trident-damage.ts (L0-trdt-r002, L0-trdt-a002, L0-adr-twlt)
   'andrew:trident_damage_melee',
   'andrew:trident_damage_thrown',
@@ -556,6 +581,32 @@ const EXPECTED_TESTS = [
   'andrew:trident_custody_fallback',
   'andrew:trident_chest_destroyed',
   'andrew:trident_magnet_legendary',
+  // UBOW-LGND-01 — the Underwater Bow under the legendary rules (spec v3 §1, L0-uwbw responsibility 3):
+  // src/gametest/ubow-legendary.ts; the hazard grid in legendary-fireproof.ts runs it with every other def
+  'andrew:legendary_ubow_death_kill',
+  'andrew:legendary_ubow_death_lava',
+  'andrew:legendary_ubow_death_offhand',
+  'andrew:legendary_ubow_in_a_chest_stays_there',
+  'andrew:legendary_ubow_void_thrown',
+  'andrew:legendary_ubow_hold_void_after_transfer',
+  'andrew:legendary_ubow_hold_void_holder_offline',
+  'andrew:legendary_ubow_hold_void_holder_dead_redeemed',
+  'andrew:legendary_ubow_holder_chest_minecart',
+  'andrew:ubow_death_keeps_every_copy',
+  'andrew:ubow_stand_void_last_holder',
+  'andrew:ubow_someones_tnt_returns',
+  'andrew:ubow_enchant_kept',
+  'andrew:ubow_magnet_not_swallowed',
+  'andrew:ubow_restart_seed',
+  'andrew:ubow_restart_check',
+  // UBOW-ABIL-01 — the armed charge (spec v3 §1, L0-xcx33, R-uwbw-001, R-uwbw-003): src/gametest/ubow-ability.ts
+  'andrew:ubow_ability_arm',
+  'andrew:ubow_ability_miss',
+  'andrew:ubow_ability_exact',
+  'andrew:ubow_ability_mob',
+  'andrew:ubow_ability_hud',
+  'andrew:ubow_ability_restart_seed',
+  'andrew:ubow_ability_restart_check',
   // TRDT-MOVE-01 — src/gametest/trident-movement.ts (L0-trdt-a003)
   'andrew:trident_dash_distance',
   'andrew:trident_dash_dimensions',
@@ -569,6 +620,15 @@ const EXPECTED_TESTS = [
   'andrew:probe_ench_table_pool',
   // ENCH-DATA-01 — src/gametest/ench-data.ts (L0-ench-ac06): the live engine against src/enchanting/eligibility.ts
   'andrew:ench_data_parity',
+  // RCPE-VNLA-01 — src/gametest/recipes-vanilla.ts (spec v3 §2-3, R-uwbw-004, ADR-uwbw-rc, xasm43)
+  'andrew:vanilla_recipe_mace_new_and_old',
+  'andrew:vanilla_recipe_rocket_new_and_old',
+  'andrew:vanilla_recipe_mace_rocket_negative_controls',
+  'andrew:vanilla_recipe_fixed_position_probe',
+  'andrew:vanilla_recipe_rocket_boosts_elytra',
+  // RCPE-ROCKET-02 — src/gametest/recipes-rocket.ts (spec v3 §3, ADR-uwbw-rc, C-16): docs/feedback/rocket-duration.md
+  'andrew:rocket_duration_paths',
+  'andrew:rocket_duration_swap',
 ];
 
 // A renamed scenario would otherwise drop out of the release gate silently.
@@ -588,6 +648,9 @@ const RESTART_AFTER = new Map([
   ['andrew:ufo_restart_seed', 'andrew:ufo_restart_check'],
   ['andrew:probe_trident_restart_seed', 'andrew:probe_trident_restart_check'],
   ['andrew:trident_blocked_restart_seed', 'andrew:trident_blocked_restart_check'],
+  ['andrew:ubow_blocked_restart_seed', 'andrew:ubow_blocked_restart_check'],
+  ['andrew:ubow_restart_seed', 'andrew:ubow_restart_check'],
+  ['andrew:ubow_ability_restart_seed', 'andrew:ubow_ability_restart_check'],
   ['andrew:trident_throw_restart_seed', 'andrew:trident_throw_restart_check'],
 ]);
 

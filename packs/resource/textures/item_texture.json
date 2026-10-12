@@ -25,6 +25,9 @@
     },
     "andrew_above_water_trident": {
       "textures": "textures/items/andrew_above_water_trident"
+    },
+    "andrew_underwater_bow": {
+      "textures": "textures/items/andrew_underwater_bow"
     }
   }
 }

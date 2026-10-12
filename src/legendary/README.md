@@ -1,12 +1,13 @@
 # legendary
 
-Everything shared by the seven legendary weapons — the Web Sword, the Scythe of
+Everything shared by the eight legendary weapons — the Web Sword, the Scythe of
 Calamity, the Orbital Cannon, the Dragon Katana, the Sculk Crossbow, the Storm
-Blade and the Above-Water Trident. `LEGENDARIES` in `registry.ts` is the list;
-the Miner's Pickaxe is **not** on it and keeps vanilla behaviour in every way. A
-weapon joins by adding its def: the Katana, the Crossbow and the Storm Blade
-bring no recovery, retention or protection code of their own (`L0-adr-ktgr`,
-`L0-lgnd-ac27`, `L0-strm-acr`).
+Blade, the Above-Water Trident and the Underwater Bow. `LEGENDARIES` in
+`registry.ts` is the list; the Miner's Pickaxe is **not** on it and keeps
+vanilla behaviour in every way. A weapon joins by adding its def: the Katana,
+the Crossbow, the Storm Blade and the Underwater Bow bring no recovery, retention
+or protection code of their own (`L0-adr-ktgr`, `L0-lgnd-ac27`, `L0-strm-acr`,
+`L0-uwbw` responsibility 3).
 
 ## One survival craft per world
 
@@ -21,19 +22,22 @@ A def whose recipe consumes a container lists it in **`craftReturn`**. An add-on
 recipe hands no container back, while vanilla cake does
 (`docs/feedback/probe-trident.md` §1), so the gate gives it with every craft it
 keeps — the claim and the Creative unwrap — and never with a refund, which hands
-the full ingredient back instead. The Trident is the only def with one: 2 empty
-buckets with a kept craft, 2 water buckets with a refund, never both kinds
-(`L0-trdt-adrf`, C-34). It is the probe's branch of `L0-adr-trlg` §2: with no
-engine return there is nothing to exchange, so `refundExchange` is not added.
+the full ingredient back instead. The Trident and the Underwater Bow are the
+defs with one, and the same one: 2 empty buckets with a kept craft, 2 water
+buckets with a refund, never both kinds (`L0-trdt-adrf`, C-34;
+`docs/feedback/probe-ubow.md` §7 measured the bow's recipe). It is the probe's
+branch of `L0-adr-trlg` §2: with no engine return there is nothing to exchange,
+so `refundExchange` is not added.
 
 Refund and return stacks are split by the item's max stack size before they are
 added: `new ItemStack(id, n)` clamps `n` to it without a word, so one stack of
 2 water buckets is 1 bucket. What does not fit drops at the player's feet.
 Scenarios: `websword_first_claim`, `websword_second_refund`,
 `legendary_give_then_craft_*`, `legendary_*_other_flags_untouched`,
-`trident_craft_two_empty_buckets`, `trident_craft_full_inventory`,
-`trident_blocked_restart_seed` / `_check` (across a restart),
-`trident_creative_and_commands_spend_nothing`; units in
+and, from one generator per bucket def (`trident_*`, `ubow_*`),
+`_craft_two_empty_buckets`, `_craft_full_inventory`,
+`_blocked_restart_seed` / `_check` (across a restart) and
+`_creative_and_commands_spend_nothing`; units in
 `tests/legendary-craftgate.test.mjs`.
 
 ## A legendary cannot be destroyed
@@ -54,24 +58,26 @@ its edge and fails that read. `legendary_katana_*`, `legendary_sculk_crossbow_*`
 and `legendary_storm_blade_*` are the Katana's, the Crossbow's and the Storm
 Blade's own instances of the rest (`L0-lgnd-ac24`, `ac27`, `L0-strm-acr`);
 `legendary_trident_*` and `trident_*` in `src/gametest/trident-legendary.ts`
-are the Above-Water Trident's (`L0-trdt-a005`).
+are the Above-Water Trident's (`L0-trdt-a005`); `legendary_ubow_*` and `ubow_*`
+in `src/gametest/ubow-legendary.ts` are the Underwater Bow's.
 
 | Path | Held by | Scenario |
 |---|---|---|
 | Fire | `minecraft:fire_resistant` on the item: the entity never dies, and after 10 s it still lies in its cell with the same id and generation | `legendary_survives_fire` |
 | Lava | the same component | `legendary_survives_lava` |
-| A vanilla TNT, anyone's | return | `legendary_returns_from_tnt` |
+| A vanilla TNT, anyone's | return | `legendary_returns_from_tnt`, `ubow_someones_tnt_returns` (another player lights it beside the holder's bow) |
 | Cactus | return. Measured: a cactus eats only what rests on its **top face** — an item inside its cell or against its side survives (`probe_cactus_items`) | `legendary_returns_from_cactus` |
 | Despawn after five minutes | return. The scenario models it with `remove()`: to this module a despawn is an entity that is simply gone, and 6000 ticks is past any scenario budget | `legendary_returns_when_it_vanishes` |
-| The Void | return, prescribed by §5 itself, to the last holder (below) | `legendary_returns_from_void`, `legendary_katana_void_thrown`, `legendary_sculk_crossbow_void_thrown`, `legendary_storm_blade_void_thrown`, `legendary_trident_void_thrown` (enchanted, named, with lore) |
-| The Void, after a hand-over | return to whoever held it last, never to its crafter; an offline or dead holder is owed it and paid on their next spawn (`L0-lgnd-ad11`). A SimulatedPlayer cannot reconnect with the same id, so on the engine the payment is proven on respawn, the same `playerSpawn` handler; the join itself (`initialSpawn: true`) is a node test | `legendary_hold_void_*`, `legendary_storm_blade_hold_void_after_transfer`, `_holder_offline`, `_holder_dead_redeemed`, the same three `legendary_trident_hold_void_*`, `legendary-recovery` units |
-| The owner's death, whatever killed them | retention: the stack comes back with the **same** id and generation, and the same look (below); it never reads the damage cause | `legendary_offhand_death_returns`, `legendary_ufo_fall_death_keeps` (a fall from the UFO's hover height), `legendary_katana_death_kill`, `legendary_katana_death_lava`, `legendary_katana_death_after_jump` (killed in the jump's own tick), `legendary_katana_death_lava_after_jump`, `legendary_sculk_crossbow_death_kill`, `_lava`, `_offhand` (Quick Charge, Multishot, a name and lore), `legendary_storm_blade_death_kill`, `_lava`, `_offhand` (Sharpness, Looting, a name and lore), `legendary_trident_death_kill`, `_lava`, `_offhand` (Unbreaking, Impaling, a name and lore), `legendary-retention` units |
-| The owner's death while it lies in a chest | nothing to do: retention reads the dying player's slots only, and the chest keeps the instance at the same generation | `legendary_in_a_chest_stays_there`, `legendary_storm_blade_in_a_chest_stays_there`, `legendary_trident_in_a_chest_stays_there` |
+| The Void | return, prescribed by §5 itself, to the last holder (below) | `legendary_returns_from_void`, `legendary_katana_void_thrown`, `legendary_sculk_crossbow_void_thrown`, `legendary_storm_blade_void_thrown`, `legendary_trident_void_thrown`, `legendary_ubow_void_thrown` (enchanted, named, with lore) |
+| The Void, after a hand-over | return to whoever held it last, never to its crafter; an offline or dead holder is owed it and paid on their next spawn (`L0-lgnd-ad11`). A SimulatedPlayer cannot reconnect with the same id, so on the engine the payment is proven on respawn, the same `playerSpawn` handler; the join itself (`initialSpawn: true`) is a node test | `legendary_hold_void_*`, `legendary_storm_blade_hold_void_after_transfer`, `_holder_offline`, `_holder_dead_redeemed`, the same three `legendary_trident_hold_void_*` and `legendary_ubow_hold_void_*`, `legendary-recovery` and `ubow-legendary` units |
+| The owner's death, whatever killed them | retention: the stack comes back with the **same** id and generation, and the same look (below); it never reads the damage cause | `legendary_offhand_death_returns`, `legendary_ufo_fall_death_keeps` (a fall from the UFO's hover height), `legendary_katana_death_kill`, `legendary_katana_death_lava`, `legendary_katana_death_after_jump` (killed in the jump's own tick), `legendary_katana_death_lava_after_jump`, `legendary_sculk_crossbow_death_kill`, `_lava`, `_offhand` (Quick Charge, Multishot, a name and lore), `legendary_storm_blade_death_kill`, `_lava`, `_offhand` (Sharpness, Looting, a name and lore), `legendary_trident_death_kill`, `_lava`, `_offhand` (Unbreaking, Impaling, a name and lore), `legendary_ubow_death_kill`, `_lava`, `_offhand` (Power, Punch, Flame, Infinity or Mending, Unbreaking, a name and lore), `ubow_death_keeps_every_copy` (two marked bows, each with its own look, and a plain copy left to the engine), `legendary-retention` units |
+| The owner's death while it lies in a chest | nothing to do: retention reads the dying player's slots only, and the chest keeps the instance at the same generation | `legendary_in_a_chest_stays_there`, `legendary_storm_blade_in_a_chest_stays_there`, `legendary_trident_in_a_chest_stays_there`, `legendary_ubow_in_a_chest_stays_there` |
 | The chest it lies in is destroyed | broken: the chest spills, the instance lies on the ground at the same generation and is watched. Someone's TNT: whatever the blast does to the spill, exactly one live copy is left, on the ground or back with its holder | `trident_chest_destroyed` |
-| A minecart or armour stand holding it is destroyed | return: the holder spills its contents as item entities, which recovery watches like any other — also after the holder was teleported away and back | `legendary_ufo_holder_chest_minecart`, `legendary_ufo_holder_hopper_minecart`, `legendary_ufo_holder_armor_stand`, `legendary_trident_holder_chest_minecart` |
-| A minecart or armour stand holding it falls into the Void | return: the engine removes the holder below the floor with no spill. Recovery reads a minecart's inventory as it is removed, and kills a stand that holds a legendary while it is below the floor, so the stand spills it (below) | `legendary_holder_void_chest_minecart`, `legendary_holder_void_hopper_minecart`, `legendary_katana_void_chest_minecart`, `legendary_stand_void_hands` |
+| A minecart or armour stand holding it is destroyed | return: the holder spills its contents as item entities, which recovery watches like any other — also after the holder was teleported away and back | `legendary_ufo_holder_chest_minecart`, `legendary_ufo_holder_hopper_minecart`, `legendary_ufo_holder_armor_stand`, `legendary_trident_holder_chest_minecart`, `legendary_ubow_holder_chest_minecart` |
+| A minecart or armour stand holding it falls into the Void | return: the engine removes the holder below the floor with no spill. Recovery reads a minecart's inventory as it is removed, and kills a stand that holds a legendary while it is below the floor, so the stand spills it (below) | `legendary_holder_void_chest_minecart`, `legendary_holder_void_hopper_minecart`, `legendary_katana_void_chest_minecart`, `legendary_stand_void_hands`, `ubow_stand_void_last_holder` (the bow handed to a second player, who gives it to the stand: it returns to them, not to its crafter) |
 | Our own ring blasts and the penetrator | the instance is moved out of the volume **before** the explosions, item frames broken open for it; same id and generation, nothing owed | `legendary_protect_ground_item`, `legendary_protect_framed`, `legendary_survives_orbital_column` (every def and a vanilla control in one chest inside an LMB column: the control is gone, each def lies outside the footprint once), `pntr_legendary_two_columns` (a Web Sword and a Katana in chests inside the two columns), `ring_legendaries_survive` (a Web Sword in a chest, a Scythe and a Katana on the ground) |
 | A Katana jump (`L0-lgnd-r017`) | nothing to do: `player.teleport` spawns no item entity, changes no slot, raises no `DropItem` swing and removes no minecart, so no loss trigger fires. A watched item whose chunk unloads behind the jumper is logged as unloaded and watched again through `entityLoad` | `legendary_katana_jump_keeps_recovery` |
+| A server restart | nothing to do: the craft flag, the generation ledger and the owed list are world properties, and an item entity saved with its chunk comes back through `entityLoad` and is watched again | `ubow_blocked_restart_seed` / `_check`, `ubow_restart_seed` / `_check` (a debt keeps its generation and look; a bow reloaded with its floor is one copy, and its despawn after the restart is returned), `ubow-legendary` units |
 | An entity destroyed in the same tick it appeared | the departure ledger below — `watch()` never sees it, so the entity is not what is tracked | `legendary_pickup_sighting_not_consumed` |
 
 ## A returned copy is the same item
@@ -155,13 +161,22 @@ on the ground, in a chest and in a stand's off hand beside the other weapons.
 `trident_magnet_legendary` does the same for the Above-Water Trident — on the
 ground beside a Storm Blade, in a chest, in a zombie's main hand and a stand's
 off hand — with custody entities in the zone that are never taken (below).
+Taken is not swallowed: `ubow_magnet_not_swallowed` runs a whole magnet phase —
+selection, hold and release — over a bow on the ground, a bow in a chest and a
+stand holding one, and after the fall each bow is still one copy at its
+generation with its look, nothing owed and no loss line, and the stand still
+holds its bow.
 
 ## Enchantments a legendary never keeps
 
 `enchant.ts` takes an enchantment off a weapon whose own behaviour already does
 what it does: `FORBIDDEN_ENCHANTMENTS` lists Loyalty and Riptide for the
 Above-Water Trident (R-trdt-003); every other enchantment the item admits stays —
-Unbreaking, Impaling, Channeling, Mending. The list, and the Sculk Crossbow's
+Unbreaking, Impaling, Channeling, Mending. The Underwater Bow has no entry, so
+nothing comes off it: Power, Punch, Flame, Infinity, Mending and Unbreaking all
+stay, and the one vanilla conflict among them, Infinity beside Mending, is the
+engine's own refusal on the API and on `/enchant` (`ubow_enchant_kept`, with a
+trident scrubbed in the same run as the control; `tests/ubow-legendary.test.mjs`). The list, and the Sculk Crossbow's
 `PIERCING`, live in the engine-free `enchant-rules.ts`; its `forbiddenFor()` is
 what the enchanting roller (`src/enchanting/roll-rules.ts`) reads, so a table
 never offers what a strip takes off (L0-ench-r003). The scrub is the Sculk

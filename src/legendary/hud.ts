@@ -1,5 +1,6 @@
 // Action Bar state of every held legendary with an ability: the cooldown
-// countdown, or "Ready" continuously while the item is in either hand
+// countdown, a charge for a def that has one (registerArmedState), or "Ready"
+// continuously while the item is in either hand
 // [src: decision-legendary-ready-hud]. A passive legendary draws nothing
 // (R-lgnd-018).
 
@@ -11,6 +12,25 @@ import { hasAbility } from "./registry";
 const HUD_INTERVAL_TICKS = 10;
 
 const SHARED_KEYS = { ready: "andrew.legendary.ready", cooldown: "andrew.legendary.cooldown" };
+
+type ArmedProbe = (player: Player) => boolean;
+const armedProbes = new Map<string, ArmedProbe>();
+
+/**
+ * The third HUD state (L0-uwbw-earm): a def with `hudKeys.armed` draws it while off cooldown and `probe` says the
+ * player holds a charge. The owner of the charge registers here, so this module imports no weapon.
+ */
+export function registerArmedState(abilityKey: string, probe: ArmedProbe): void {
+  armedProbes.set(abilityKey, probe);
+}
+
+function isArmed(abilityKey: string, player: Player): boolean {
+  try {
+    return armedProbes.get(abilityKey)?.(player) === true;
+  } catch {
+    return false;
+  }
+}
 
 export function registerLegendaryHud(): void {
   system.runInterval(() => {
@@ -44,19 +64,21 @@ export function hudMessage(player: Player): RawMessage | undefined {
     seen.add(def.abilityKey);
 
     const name: RawMessage = { translate: `${def.nameKey}.name` };
-    const keys = def.hudKeys ?? SHARED_KEYS;
+    const keys: { ready: string; cooldown: string; armed?: string } = def.hudKeys ?? SHARED_KEYS;
     const remaining = remainingMs(player, def.abilityKey);
     if (parts.length > 0) {
       parts.push({ text: "   " });
     }
-    parts.push(
-      remaining > 0
-        ? {
-            translate: keys.cooldown,
-            with: { rawtext: [name, { text: String(Math.ceil(remaining / 1000)) }] },
-          }
-        : { translate: keys.ready, with: { rawtext: [name] } }
-    );
+    if (remaining > 0) {
+      parts.push({
+        translate: keys.cooldown,
+        with: { rawtext: [name, { text: String(Math.ceil(remaining / 1000)) }] },
+      });
+    } else if (keys.armed !== undefined && isArmed(def.abilityKey, player)) {
+      parts.push({ translate: keys.armed, with: { rawtext: [name] } });
+    } else {
+      parts.push({ translate: keys.ready, with: { rawtext: [name] } });
+    }
   }
   return parts.length === 0 ? undefined : { rawtext: parts };
 }

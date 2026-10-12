@@ -1,0 +1,31 @@
+{
+  "format_version": "1.21.0",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "andrew:vanilla_mace"
+    },
+    "tags": ["crafting_table"],
+    "pattern": [
+      "   ",
+      " I ",
+      " Z "
+    ],
+    "key": {
+      "I": {
+        "item": "minecraft:iron_block"
+      },
+      "Z": {
+        "item": "minecraft:breeze_rod"
+      }
+    },
+    "result": {
+      "item": "minecraft:mace",
+      "count": 1
+    },
+    "unlock": [
+      {
+        "item": "minecraft:iron_block"
+      }
+    ]
+  }
+}

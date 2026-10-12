@@ -1,4 +1,5 @@
-// The Storm Blade's damage arithmetic (spec §02, §05; L0-strm-rdmg, L0-adr-sbdm R and C), with no engine import:
+// The Storm Blade's damage arithmetic (spec §02, §05; L0-strm-rdmg, L0-adr-sbdm R and C) and the replace mode another
+// legendary sets a hit with (L0-uwbw-adex), with no engine import:
 // tests/storm-damage.test.mjs runs it under node. The formula is the one diagnose-CNTR-X26 fitted to ten armoured
 // hits to 0.01; the Resistance factor is probe-storm P2.
 
@@ -14,6 +15,12 @@ export const HURT_WINDOW_TICKS = 10;
 /** Raw damage added to hp on the lethal path: through 20 armour, Protection IV ×4 and Resistance IV it still deals > 60. */
 export const OVERKILL = 1000;
 
+/**
+ * EPF per level of Projectile Protection against a projectile hit; Protection gives 1. probe-ubow row 5: diamond with
+ * Projectile Protection IV ×4 read 0.312 = f(6) × 0.2, the EPF cap, which Protection IV ×4 (16) does not reach.
+ */
+export const PROJECTILE_PROTECTION_EPF = 2;
+
 const MAX_ARMOUR_POINTS = 20;
 const MAX_PROTECTION_EPF = 20;
 const RESISTANCE_PER_LEVEL = 0.2;
@@ -26,7 +33,7 @@ export interface Defence {
   armor: number;
   /** `equippable.totalToughness`. */
   toughness: number;
-  /** Sum of the Protection levels on the four armour slots (EPF). */
+  /** EPF on the four armour slots: the Protection levels, plus PROJECTILE_PROTECTION_EPF per Projectile Protection level against a projectile. */
   protection: number;
   /** Resistance level, `amplifier + 1`; 0 without the effect. */
   resistance: number;
@@ -75,6 +82,22 @@ export function planRaise(read: number, hpLeft: number, bonus: number, absorbing
     if (bonus >= hpLeft) return { kind: "lethal" };
   }
   return { kind: "raise", damage: read + bonus };
+}
+
+/**
+ * The replace-mode rewrite (L0-uwbw-adex): the hit becomes `goal` = f(D) whatever the engine read, a stronger hit
+ * included. The health before the hit is `hpLeft + read`, so that is what `goal` is lethal against.
+ * - `set`: set the hit to `damage` = goal;
+ * - `lethal`: goal would kill: the hit is set to 0 and an overkill applyDamage follows right after the event (a rewrite
+ *   that makes the hit lethal eats a totem and still kills, probe-storm P3);
+ * - `kills-alone`: the engine's hit and goal both kill: the hit is left alone, so its own cause, credit and totem stand.
+ * With an absorption effect the health check means nothing, so the set is taken, as in planRaise.
+ */
+export type SetPlan = { kind: "set"; damage: number } | { kind: "lethal" } | { kind: "kills-alone" };
+
+export function planSet(read: number, hpLeft: number, goal: number, absorbing: boolean): SetPlan {
+  if (!absorbing && goal >= hpLeft + read) return hpLeft <= 0 ? { kind: "kills-alone" } : { kind: "lethal" };
+  return { kind: "set", damage: goal };
 }
 
 /**
