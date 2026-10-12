@@ -567,6 +567,8 @@ const EXPECTED_TESTS = [
   'andrew:probe_ench_simplayer_table',
   'andrew:probe_ench_separators',
   'andrew:probe_ench_table_pool',
+  // ENCH-DATA-01 — src/gametest/ench-data.ts (L0-ench-ac06): the live engine against src/enchanting/eligibility.ts
+  'andrew:ench_data_parity',
 ];
 
 // A renamed scenario would otherwise drop out of the release gate silently.
