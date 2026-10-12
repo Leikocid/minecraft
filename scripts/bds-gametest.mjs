@@ -581,6 +581,24 @@ const EXPECTED_TESTS = [
   'andrew:trident_custody_fallback',
   'andrew:trident_chest_destroyed',
   'andrew:trident_magnet_legendary',
+  // UBOW-LGND-01 — the Underwater Bow under the legendary rules (spec v3 §1, L0-uwbw responsibility 3):
+  // src/gametest/ubow-legendary.ts; the hazard grid in legendary-fireproof.ts runs it with every other def
+  'andrew:legendary_ubow_death_kill',
+  'andrew:legendary_ubow_death_lava',
+  'andrew:legendary_ubow_death_offhand',
+  'andrew:legendary_ubow_in_a_chest_stays_there',
+  'andrew:legendary_ubow_void_thrown',
+  'andrew:legendary_ubow_hold_void_after_transfer',
+  'andrew:legendary_ubow_hold_void_holder_offline',
+  'andrew:legendary_ubow_hold_void_holder_dead_redeemed',
+  'andrew:legendary_ubow_holder_chest_minecart',
+  'andrew:ubow_death_keeps_every_copy',
+  'andrew:ubow_stand_void_last_holder',
+  'andrew:ubow_someones_tnt_returns',
+  'andrew:ubow_enchant_kept',
+  'andrew:ubow_magnet_not_swallowed',
+  'andrew:ubow_restart_seed',
+  'andrew:ubow_restart_check',
   // TRDT-MOVE-01 — src/gametest/trident-movement.ts (L0-trdt-a003)
   'andrew:trident_dash_distance',
   'andrew:trident_dash_dimensions',
@@ -620,6 +638,7 @@ const RESTART_AFTER = new Map([
   ['andrew:probe_trident_restart_seed', 'andrew:probe_trident_restart_check'],
   ['andrew:trident_blocked_restart_seed', 'andrew:trident_blocked_restart_check'],
   ['andrew:ubow_blocked_restart_seed', 'andrew:ubow_blocked_restart_check'],
+  ['andrew:ubow_restart_seed', 'andrew:ubow_restart_check'],
   ['andrew:trident_throw_restart_seed', 'andrew:trident_throw_restart_check'],
 ]);
 
