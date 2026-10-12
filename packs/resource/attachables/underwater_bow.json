@@ -1,0 +1,33 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:attachable": {
+    "description": {
+      "identifier": "andrew:underwater_bow",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/entity/andrew_underwater_bow_standby",
+        "pulling_0": "textures/entity/andrew_underwater_bow_pulling_0",
+        "pulling_1": "textures/entity/andrew_underwater_bow_pulling_1",
+        "pulling_2": "textures/entity/andrew_underwater_bow_pulling_2"
+      },
+      "geometry": {
+        "default": "geometry.andrew.underwater_bow"
+      },
+      "animations": {
+        "hold_first_person": "animation.andrew.underwater_bow.hold_first_person"
+      },
+      "scripts": {
+        "pre_animation": [
+          "v.drawn = (q.main_hand_item_use_duration > 0) ? (q.main_hand_item_max_duration - q.main_hand_item_use_duration) : -1;",
+          "v.frame = (v.drawn < 0) ? 0 : ((v.drawn < 10) ? 1 : ((v.drawn < 20) ? 2 : 3));"
+        ],
+        "animate": [
+          { "hold_first_person": "c.is_first_person" }
+        ]
+      },
+      "render_controllers": ["controller.render.andrew.underwater_bow"]
+    }
+  }
+}

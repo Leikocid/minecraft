@@ -229,6 +229,32 @@ test('an attachable for an item that does not exist is rejected', () => {
   assert.ok(errors.some((e) => e.field === 'minecraft:attachable.description.identifier' && /andrew:no_such_item has no behavior-pack item/.test(e.message)));
 });
 
+test('an attachable listed as drawn before its item passes without the item, and only that one', () => {
+  const fx = entityFixture({
+    'resource/attachables/held.json': attachable({ id: 'andrew:awaited_item' }),
+    'resource/attachables/other.json': attachable({ id: 'andrew:no_such_item' }),
+    ...heldAssets(),
+  });
+  try {
+    const errors = validatePacks({ ...fx, attachableBeforeItem: new Set(['andrew:awaited_item']) });
+    assert.equal(errors.length, 1, errors.map((e) => e.message).join('\n'));
+    assert.match(errors[0].message, /andrew:no_such_item has no behavior-pack item under items\//);
+  } finally {
+    fx.cleanup();
+  }
+});
+
+test('once the awaited item ships, its listing is the error', () => {
+  const fx = entityFixture({ 'resource/attachables/held.json': attachable(), ...heldAssets() });
+  try {
+    const errors = validatePacks({ ...fx, attachableBeforeItem: new Set(['andrew:fixture_item']) });
+    assert.equal(errors.length, 1, errors.map((e) => e.message).join('\n'));
+    assert.match(errors[0].message, /andrew:fixture_item ships now: drop it from ATTACHABLE_BEFORE_ITEM in scripts\/validate\.mjs/);
+  } finally {
+    fx.cleanup();
+  }
+});
+
 test('an attachable naming a missing geometry, animation, controller or texture is rejected', () => {
   const errors = validateEntities({
     'resource/attachables/held.json': attachable({

@@ -1,0 +1,19 @@
+{
+  "format_version": "1.8.0",
+  "render_controllers": {
+    "controller.render.andrew.underwater_bow": {
+      "arrays": {
+        "textures": {
+          "Array.pull_frames": ["Texture.default", "Texture.pulling_0", "Texture.pulling_1", "Texture.pulling_2"]
+        }
+      },
+      "geometry": "Geometry.default",
+      "materials": [
+        { "*": "Material.default" }
+      ],
+      "textures": [
+        "Array.pull_frames[v.frame]"
+      ]
+    }
+  }
+}
