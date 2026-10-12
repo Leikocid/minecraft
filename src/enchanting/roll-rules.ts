@@ -1,6 +1,6 @@
 // What spec §4 lets the enchanting table offer, as data, with no engine import (L0-ench-adr1, r001–r005, asm1,
-// xasm39). The eligibility table is the expected Bedrock 1.26.51 set; ENCH-DATA's BDS parity scenario checks it against
-// canAddEnchantment, and the probe settles which treasure the vanilla table already offers (L0-ench-gl01).
+// xasm39). tests/enchanting-eligibility.test.mjs holds every table here to the engine's, measured on BDS in
+// eligibility.ts: items, enchantments, max levels, conflicts and treasure (L0-ench-gl01).
 
 import { forbiddenFor } from "../legendary/enchant-rules";
 
@@ -100,7 +100,8 @@ export type GearClass =
   | "trident"
   | "spear"
   | "mace"
-  | "fishing_rod";
+  | "fishing_rod"
+  | "on_a_stick";
 
 const DURABLE = ["unbreaking", "mending", "vanishing"];
 const ARMOR = ["protection", "fire_protection", "blast_protection", "projectile_protection", "thorns", "binding", ...DURABLE];
@@ -125,6 +126,7 @@ export const CLASS_ENCHANTMENTS: ReadonlyMap<GearClass, readonly string[]> = new
   ["spear", ["lunge", ...MELEE]],
   ["mace", ["density", "breach", "wind_burst", "smite", "bane_of_arthropods", "fire_aspect", ...DURABLE]],
   ["fishing_rod", ["luck_of_the_sea", "lure", ...DURABLE]],
+  ["on_a_stick", DURABLE],
 ]);
 
 /** An add-on item's `minecraft:enchantable` slot → its class. Slot `spear` is the trident's, `melee_spear` the spear's. */
@@ -173,6 +175,8 @@ function vanillaItems(): [string, GearClass][] {
   }
   items.push(["minecraft:turtle_helmet", "helmet"]);
   for (const kind of ["bow", "crossbow", "trident", "mace", "fishing_rod"] as const) items.push([`minecraft:${kind}`, kind]);
+  // The engine's table generator enchants both sticks (Unbreaking); shears, elytra and shield it never does.
+  items.push(["minecraft:carrot_on_a_stick", "on_a_stick"], ["minecraft:warped_fungus_on_a_stick", "on_a_stick"]);
   return items;
 }
 
