@@ -2,7 +2,7 @@
 type: "concept-client-question"
 node_id: "L0-xq8"
 source_channel: "rollout"
-analysis_version: 9
+analysis_version: 10
 level: 1
 title: "Q-L0-8 · Should a shield stop the beam?"
 aliases: ["L0-xq8"]

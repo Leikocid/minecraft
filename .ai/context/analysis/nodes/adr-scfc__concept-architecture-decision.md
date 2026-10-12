@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-adr-scfc"
 source_channel: "rollout"
-analysis_version: 9
+analysis_version: 10
 level: 1
 title: "ADR-L0-scfc · Full-charge gate (status: accepted, probe-gated; resolves `L0-sclk-cx02`)"
 aliases: ["L0-adr-scfc"]

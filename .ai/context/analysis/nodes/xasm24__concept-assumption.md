@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-xasm24"
 source_channel: "rollout"
-analysis_version: 9
+analysis_version: 10
 level: 1
 title: "ASM-L0-24 · Entity-hit scope and patch placement"
 aliases: ["L0-xasm24"]

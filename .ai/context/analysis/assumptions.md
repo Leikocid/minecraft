@@ -1,18 +1,45 @@
 ---
 title: Assumptions
 type: analysis
-generated_at: "2026-10-11T18:49:56.592Z"
+generated_at: "2026-10-12T18:07:51.649Z"
 source_channel: rollout
 node_id: rollout-assumptions
 aliases: ["rollout-assumptions","assumptions"]
 is_a: ["rollout","assumptions"]
-relates_to: ["L0-trdt-as01","L0-xasm23","L0-xasm24","L0-xasm25","L0-xasm26","L0-xasm27","L0-xasm28","L0-xasm29","L0-xasm30","L0-xasm31","L0-xasm32","L0-xasm33","L0-xasm34","L0-xasm35","L0-xasm36","L0-xasm37"]
-priority: 630
+relates_to: ["L0-ench-asm1","L0-trdt-as01","L0-uwbw-as01","L0-xasm23","L0-xasm24","L0-xasm25","L0-xasm26","L0-xasm27","L0-xasm28","L0-xasm29","L0-xasm30","L0-xasm31","L0-xasm32","L0-xasm33","L0-xasm34","L0-xasm35","L0-xasm36","L0-xasm37","L0-xasm38","L0-xasm39","L0-xasm40"]
+priority: 640
 ---
 
 # Assumptions (CAN_ASSUME)
 
 > Автогенерация из Knowledge Vault. Ручное редактирование — установи `status: manual` в frontmatter.
+
+### ASM-ench-1 · Roller details the spec leaves open (L0-ench-asm1)
+
+# ASM-ench-1 · Roller details the spec leaves open
+
+**is_a:** assumption · **part_of:** L0-ench · **relates_to:** L0-xasm39, L0-ench-roll, L0-ench-r005
+
+**Assumptions (CAN_ASSUME).**
+1. **The size of the standard pool.** A result has 1 enchantment plus up to 2 extras. Each extra is added with p = 0.3 · tier / 3, stopping at the first failure. This mirrors vanilla, where a higher cost means more enchantments, without the bookshelf cost, which is not observable after the fact.
+2. **Other levels.** Enchantments other than Wind Burst and Unbreaking take a level uniform in `1..min(vanillaMax, tierCap)`. The spec sets a distribution only for those two.
+3. **The guaranteed rare** is picked uniformly from `R`, and it is picked first, so a later pick can never displace it.
+4. **No usefulness filter.** Mending and Unbreaking stay eligible on items without durability (legendaries) if their slot admits them.
+5. **Spear Lunge.** If the probe finds Lunge already offered, it stays in the standard pool, keeps its vanilla level and is never treated as rare. If it is not offered, it is treated as rare like any treasure enchantment.
+6. **SimulatedPlayer and the table.** We take as given that a SimulatedPlayer cannot use a table (`src/gametest/sculk-enchant.ts:1-2`). The probe confirms this, and the hook's end-to-end channel is then `ipad`.
+7. **Tier inference** (only for option (a)): a level drop of 1, 2 or 3 maps to tier 1, 2 or 3.
+
+**Impact if wrong.**
+- **Different count or level shapes (1, 2):** only those tests' expected bands change. The §5 bullets are unaffected, because they constrain only the rare stage, curses, conflicts and the Wind Burst/Unbreaking levels.
+- **A usefulness filter required (4):** the rare set for def #8 shrinks, possibly to `none`.
+- **Lunge counted as rare (5):** one entry moves from `S` to `TREASURE`.
+- **A SimulatedPlayer that can use the table (6):** `ac06`'s hook proof moves to `bds`, which is cheaper.
+- **Tier ≠ level drop (7):** the cap in the adapter changes; the roller does not.
+
+
+
+
+
 
 ### ASM-trdt-01 · Engine behaviour the custody and damage design leans on (L0-trdt-as01)
 
@@ -27,6 +54,33 @@ priority: 630
 4. **Drops.** A player rarely presses Drop within `DROP_SWING_WINDOW_TICKS` of a throw. If they do, lgnd's departure watch may `lost()` the instance. The generation bump then makes the custody mark stale: the return inserts nothing and exactly one copy remains. Impact: a harmless "recovered" message.
 5. **Unmarked Creative copies** thrown while the thrower is offline are dropped at the last position rather than owed. If wrong: Andrey wants Creative copies owed too, which needs lgnd owed support for unmarked stacks.
 6. **Entity hit return speed.** It is 10 b/s, the same as a miss (`xasm36`).
+
+
+
+
+
+
+### ASM-uwbw-01 · Bow-specific defaults the spec leaves open (L0-uwbw-as01)
+
+# ASM-uwbw-01 · Bow-specific defaults the spec leaves open
+
+**Links.** relates_to: L0-xasm38, L0-uwbw-adfl, L0-uwbw-pprb.
+
+**Assumed (CAN_ASSUME).**
+1. **A swap costs engine damage.** A custom-projectile swap loses vanilla arrow damage and enchantment effects. Flight therefore defaults to the tagged vanilla arrow (`adfl` B).
+2. **The draw.** A custom shooter without `charge_on_draw` draws and releases like a bow, with `max_draw_duration` 1.0 s. A custom shooter cannot fire the bow's pull textures through vanilla Molang, so the RP attachable animates the pull from the use duration.
+3. **The off hand.** It is enabled only if probe row 9 shows the shooter drawing from it. Otherwise the bow is main-hand only, and the README says so.
+4. **Infinity.** It follows vanilla on the kept arrow: it does not consume a plain arrow, and that arrow cannot be picked up.
+5. **Flame.** Its duration on a Bedrock arrow is read in probe row 3. "Longer of 2 s and Flame" uses that measured value.
+6. **The HUD.** It uses the existing legendary action-bar loop, shown only while the bow is in either hand.
+7. **Arrows in flight at restart.** An armed arrow that is in flight when the server restarts is a miss, and the charge is kept.
+
+**Impact if wrong.**
+- **(1):** if the swap does keep damage, A is cheaper per tick; this is a swap of variants, and the tests are unchanged.
+- **(2):** an iPad re-look at the RP only.
+- **(3):** the off hand is a one-line component change.
+- **(5):** a different fire constant.
+- **(7):** none for players; it is only a corner case on the acceptance sheet.
 
 
 
@@ -440,6 +494,119 @@ see_also: ["abovewatertridentspecv1ruen-part-1", "abovewatertridentspecv1ruen-pa
 - **Dash rate.** No cooldown. The rate is limited only by the vanilla charge minimum (10 ticks), which the use-duration component keeps.
 
 **Impact if wrong.** Only the calibration constants change. The iPad sheet can ask Andrey to tune them.
+
+
+
+
+
+
+### ASM-L0-38 · Underwater Bow semantics (L0-xasm38)
+
+---
+title: "ASM-L0-38 · Underwater Bow semantics: def identity, arming gesture, what counts as a hit, fire overlap, the 14 HP"
+aliases: ["L0-xasm38", "Underwater Bow semantics"]
+is_a: ["assumption"]
+part_of: ["L0"]
+relates_to: ["L0-uwbw", "L0-xcx33", "L0-adr-ubfl", "L0-lgnd"]
+see_also: ["underwaterbowmacefireworksenchantingspecv2ruen-part-1", "underwaterbowmacefireworksenchantingspecv2ruen-part-2"]
+---
+# ASM-L0-38 · Underwater Bow semantics
+
+**Assumption (CAN_ASSUME).** The spec leaves these gaps:
+
+- **Identity.** The item is `andrew:underwater_bow`. It is def #8, an `ActiveLegendaryDef` with prefix `ub`, token `andrew:underwater_bow_crafted`, command `andrew:bow`, `cooldownTicks` 600 and its own `hudKeys`, including `armed`.
+- **Arming.** Sneak + the start of Use arms the charge (`xcx33`). One charge is held at a time. It survives logout, restart, death (it is a player flag) and changing which bow is held.
+- **Successful hit.** The arrow lands on a **living entity** (a player or a mob, but not an armour stand, boat, minecart or item frame), and the hurt before-event recorded damage > 0. Each of these is a **miss** that keeps the charge:
+  - a block;
+  - a shield block;
+  - a target in invulnerability frames whose damage the window swallowed;
+  - an arrow that despawned;
+  - a hit on the shooter.
+
+  An arrow shot before arming is never charged. Only the first arrow fired after arming carries the charge.
+- **14 HP.** It **replaces** vanilla arrow damage: exactly 14 before armour, ignoring Power and crit (C-29). Armour, Protection and Resistance then apply as vanilla. Punch knockback still applies.
+- **Normal fire.** Fire lasts 2 s, or Flame's duration if that is longer; the two never add. A target in water is put out as vanilla.
+- **Super Fire.** It refreshes on a second charged hit; it does not stack. Fire Resistance and fire-immune mobs take no burn damage. The visual runs underwater as particles.
+- **Lava.** "Speed in lava as in air" applies to the arrow only. Contact with lava does not destroy the arrow before it hits.
+- **Ammunition.** The bow uses vanilla arrows: plain, tipped and spectral, with their effects kept. Infinity follows vanilla.
+
+**Impact if wrong.**
+- **A different gesture:** a change to the input handler only.
+- **14 *added* to vanilla damage:** the armed hit calls `raiseHit` (opted into projectiles) in place of the replace-mode `setHit` (`L0-uwbw-adex`, amended at reduce v10).
+- **Armour stands counting as targets:** the hit filter changes.
+- **Super Fire that must stack or spread:** C-43 has to be reopened.
+
+
+
+
+
+
+### ASM-L0-39 · Recipes and enchanting semantics (L0-xasm39)
+
+---
+title: "ASM-L0-39 · Recipes and enchanting semantics: rocket flight, recipe shapes, the rare-stage unit, the 'context max', the Mace at the table"
+aliases: ["L0-xasm39", "Recipes and enchanting semantics"]
+is_a: ["assumption"]
+part_of: ["L0"]
+relates_to: ["L0-uwbw", "L0-ench", "L0-adr-enrl", "L0-xcx32"]
+see_also: ["underwaterbowmacefireworksenchantingspecv2ruen-part-2", "underwaterbowmacefireworksenchantingspecv2ruen-part-3"]
+---
+# ASM-L0-39 · Recipes and enchanting semantics
+
+**Assumption (CAN_ASSUME).**
+
+**Recipes**
+- **The recipe shapes.**
+  - **The Mace** is a 1×2 shaped recipe: Iron Block over Breeze Rod, anywhere in the 2×2 or 3×3 grid.
+  - **The rockets** are a 1×2 shaped recipe: Paper over String.
+
+  Neither collides with a vanilla recipe. Vanilla mace is Heavy Core over Breeze Rod; vanilla rockets are shapeless Paper + Gunpowder.
+- **"Flight Duration 1".** Bedrock recipe JSON cannot attach firework NBT. **We assume a plain `minecraft:firework_rocket` result boosts an Elytra at flight 1**, as a Creative rocket with no data does. The `uwbw` probe verifies this. If it does not, the result is reported as a limitation (C-16), with no script workaround, because the script cannot write firework NBT in 2.10.0.
+
+**Enchanting**
+- **The unit of the 20 % stage** is one enchanting *result*: the enchantment set applied by one table use. It is not each of the three preview slots, because only the result is observable (`xcx32`). For a 1000+ test, a sample is a "valid generation" with at least one eligible rare enchantment for the item.
+- **"Formerly table-inaccessible"** means the vanilla treasure set for the item's slot on 1.26.51: Mending, Frost Walker, Soul Speed, Swift Sneak, Wind Burst and any others, minus curses. The `ench` probe produces the exact list for that version.
+- **"Context max"** means the vanilla maximum for the enchantment, further capped by the table tier: tier 1 ≤ I, tier 2 ≤ II, tier 3 = the vanilla max. Bookshelf counts are not observable after the fact.
+- **The Mace at the table.** If 1.26.51 does not offer the Mace at the table (enchant slot `mace` not table-enchantable), Wind Burst via the table needs the hook itself. The probe records which.
+- **Spear Lunge** is left as vanilla if the probe finds it is already offered.
+
+**Impact if wrong.**
+- **Rockets that land at flight 0 or 3:** the acceptance bullet is downgraded to a reported limitation.
+- **A per-slot rare stage:** the roller's sampling unit changes. That is a small change, but the statistical test is rewritten.
+- **A tier cap that must be the bookshelf-based vanilla cost:** that is not reachable after the fact, so it becomes a deviation.
+
+
+
+
+
+
+### ASM-L0-40 · Release scope across `uwbw` and `ench` (L0-xasm40)
+
+---
+title: "ASM-L0-40 · 1.11.0 ships the bow and the recipes without waiting for xq11; the two probes share the checks server but not criteria"
+aliases: ["L0-xasm40", "v10 release scope"]
+is_a: ["assumption"]
+part_of: ["L0"]
+relates_to: ["L0-uwbw", "L0-ench", "L0-xq11", "L0-xcx32", "L0-xcx33", "L0-adr-enrl", "L0-uwbw-pprb", "L0-ench-prob"]
+---
+# ASM-L0-40 · Release scope across `uwbw` and `ench`
+
+**Assumed (CAN_ASSUME).**
+1. **There is no build dependency between the halves.**
+   - The bow needs only `minecraft:enchantable` slot `bow`.
+   - The roller sees def #8 through that slot.
+   - Neither component waits on the other's probe.
+2. **1.11.0 does not wait for `xq11`.** It ships:
+   - the bow, the Mace and Rocket recipes;
+   - the `ench` verdict and the dormant, tested roller.
+
+   If `xq11` has no answer by then, the ending is (c): the acceptance sheet and the release notes mark §5 bullets 4–6 "not deliverable on stable Bedrock" (C-38). An approved adapter goes in a later minor version.
+3. **The probes share one server.** Both run on checks (19136) in parallel, as distinct criterion sets, each on its own private BDS copy named after its full task id. Neither runs the full suite.
+4. **`xcx33` rides on `xq11`** as a non-blocking sub-question. With no answer, the `xasm38` gesture ships, with a note on the acceptance sheet.
+
+**Impact if wrong.**
+- **Andrey wants one release with the table:** 1.11.0 waits on `xq11` plus the adapter. The bow's work is unchanged.
+- **The probes must be serial:** stage 11 loses some parallelism; nothing else changes.
 
 
 

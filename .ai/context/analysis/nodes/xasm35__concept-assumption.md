@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-xasm35"
 source_channel: "rollout"
-analysis_version: 9
+analysis_version: 10
 title: "ASM-L0-35 · How \"disallow Loyalty and Riptide\" is met"
 aliases: ["L0-xasm35"]
 is_a: ["assumption"]

@@ -2,7 +2,7 @@
 type: "concept-contradiction"
 node_id: "L0-xcx28"
 source_channel: "rollout"
-analysis_version: 9
+analysis_version: 10
 title: "CX-L0-28 · Throw vs dash on the same input"
 aliases: ["L0-xcx28"]
 is_a: ["contradiction"]

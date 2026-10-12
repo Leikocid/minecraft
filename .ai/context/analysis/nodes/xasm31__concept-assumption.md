@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-xasm31"
 source_channel: "rollout"
-analysis_version: 9
+analysis_version: 10
 level: 1
 title: "ASM-L0-31 · What counts as a valid activation"
 aliases: ["L0-xasm31"]

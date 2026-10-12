@@ -2,7 +2,7 @@
 type: "concept-client-question"
 node_id: "L0-xq10"
 source_channel: "rollout"
-analysis_version: 9
+analysis_version: 10
 title: "Q-L0-10 · Real or visual lightning?"
 aliases: ["L0-xq10"]
 is_a: ["client-question"]

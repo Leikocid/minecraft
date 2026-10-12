@@ -2,44 +2,40 @@
 type: "concept-constraint"
 node_id: "L0"
 source_channel: "rollout"
-analysis_version: 9
-title: "Global Constraints (v9)"
+analysis_version: 10
+title: "Global Constraints (v10)"
 aliases: ["L0"]
 is_a: ["constraint"]
-part_of: ["L0"]
-relates_to: ["L0"]
-priority: 630
-size_chars: 3295
-tags: ["v9", "above-water-trident"]
+priority: 640
+size_chars: 4079
+tags: ["v10", "underwater-bow", "enchanting"]
 level: 0
 ---
 ---
-title: "Global Constraints"
+title: "Global Constraints (v10)"
 aliases: ["L0-constraint", "Constraints"]
 is_a: ["constraint"]
 part_of: ["L0"]
-relates_to: ["L0", "L0-trdt", "L0-adr-twlt", "L0-adr-twth", "L0-adr-twrp"]
-see_also: ["constraints", "abovewatertridentspecv1ruen-part-1", "abovewatertridentspecv1ruen-part-2"]
-supersedes: ["L0-constraint@v8"]
+relates_to: ["L0"]
+see_also: ["underwaterbowmacefireworksenchantingspecv2ruen-part-1", "underwaterbowmacefireworksenchantingspecv2ruen-part-2", "constraints"]
 ---
-# Global Constraints (v9)
+# Global Constraints (v10)
 
-**Carried unchanged:** C-1 … C-29, C-31, C-32, C-5a′, C-5d, C-5e, C-5f, C-7″, C-12′, C-20⁗. All of them bind the trident. The ones it leans on most:
-- C-2: stable 2.10.0, no Experiments.
-- C-7: no duplication. For the trident this covers the craft, the bucket return, and throw/return.
+**Carried unchanged:** C-1 … C-29, C-30′, C-31 … C-37, C-5a′, C-5d, C-5e, C-5f, C-7″, C-12′, C-20⁗, C-20⁵. All of them bind v10. The ones it leans on most:
+- C-2: stable 2.10.0, no Experiments. The spec repeats this: "без экспериментов, если возможно".
+- C-7: no duplication. It covers the bow craft, the bucket return and the new recipes.
 - C-16: the closest stable equivalent, with the limitation *reported*.
-- C-22: filter out `undefined` players.
-- C-26: the outcome is decided once, on the server.
-- C-29: exact, non-stacking bonus damage. It applies to the +2 (`xasm34`).
-
-**C-30 is amended (C-30′).** See the table.
+- C-29: exact, non-stacking bonus damage. It covers the 14 HP hit.
+- C-30′: spectacle deals no damage. It covers the bow's lightning.
+- C-34: exact bucket return.
+- C-37: built-in enchantment exclusions. These still win over the table.
 
 | ID | Constraint | Source |
 |---|---|---|
-| C-30′ | *(amended)* **Spectacle never deals damage.** A weapon's lightning, wind or electric visual causes no damage, fire, knockback, mob conversion or block change. **The exception:** a spec that explicitly asks for a *real* lightning entity may get one, but only after the client answers (`xq10`). Even then the bolt deals no damage beyond the spec's stated bonus. | storm §02/§05; trident §02 (`xcx29`) |
-| C-33 | *(new)* **One weapon, one place.** At any tick a legendary copy is in exactly one of these places: an inventory or container slot, a dropped item entity, **in custody** (a projectile, a return entity, or a pending delivery), or nowhere because its world flag is unset. A held copy and an in-flight copy never coexist, and a returned copy is inserted exactly once. | trident §02, §03 |
-| C-34 | *(new)* **Ingredient returns are exact.** A craft that returns container items (empty buckets) returns exactly the count consumed. That holds with a full inventory, through shift-craft, and through a blocked-craft refund. The refund never yields both the filled and the empty bucket. | trident §01, §03 |
-| C-35 | *(new)* **Movement abilities are free and safe.** The dash has no cooldown and no input other than the weapon's own Use. Each dash grants exactly one fall-damage cancel, on the next landing, and an unused grant expires (`xasm36`). | trident §02 |
-| C-36 | *(new)* **Held-only buffs.** A buff tied to holding a weapon applies only to its holder, only while it is in the main or off hand, and is gone within 1 tick of switching away, dropping it, or throwing it. | trident §02 |
-| C-37 | *(new)* **Built-in enchantments are excluded.** If a weapon builds an enchantment in, that enchantment can never stay on the item. Wherever data cannot block it (anvil, enchanting table, `/enchant`), the script removes it on the next inventory observation and reports this as a limitation. Other enchantments in the slot are kept. | trident §02 |
-| C-20⁵ | *(extended)* Trident acceptance needs:<br>• a melee hit and a thrown hit against an armoured SimulatedPlayer, compared with a vanilla trident;<br>• a dash from a dry platform with no rain;<br>• a measured landing;<br>• a measured return speed from a block hit at ≥ 20 blocks;<br>• a re-throw attempted mid-return;<br>• a full-inventory craft. | trident §04 |
+| C-38 | *(new)* **Native systems: verify, then claim.** A requirement that changes a native engine system (the enchanting table, its UI or algorithm) needs a recorded probe on 1.26.51 before any build. If the engine cannot be intercepted, the release notes and the acceptance sheet say so in plain words. A custom block, UI, trade or exchange substitute is built **only after Andrey's written approval** (`xq11`). A partial hook (for example, rewriting the result after the fact) counts as an alternative and also needs approval. | spec v2 §4 "Техническое ограничение" |
+| C-39 | *(new)* **Probabilities are proven statistically.** Every stated chance (20 % rare, 70/40/20 levels, 0 % curses) lives in a pure module with an injectable RNG. Each is tested on ≥ 1000 samples, with a tolerance of ± 3 σ of the binomial, and 0 occurrences for the "never" rates. The rates are tested with a fixed seed *and* unseeded. A unit run is `in_process` and cannot close an e2e criterion, so the engine hook needs its own `bds` or `ipad` proof. | spec v2 §4, §5 |
+| C-40 | *(new)* **Additive vanilla recipes.** A recipe whose output is a vanilla item yields the real vanilla id (no `andrew:` look-alike), with vanilla stats, durability and enchantability. Crafting it is unlimited. Every vanilla recipe for that item keeps working. Its shape must not collide with any vanilla or add-on recipe. | spec v2 §2, §3, §5 |
+| C-41 | *(new)* **Armed abilities are spent only by success.** An armed charge is consumed, and its cooldown started, only when a qualifying hit lands on a living entity and deals damage. A miss, a block hit, a shield block, a non-living target, or a despawned or removed arrow keeps the charge (`xasm38`). The armed state survives logout and restart. The HUD shows three states: ready, armed, and cooldown with the seconds left. | spec v2 §1 |
+| C-42 | *(new)* **Liquid-neutral projectiles.** A projectile declared liquid-neutral keeps its air velocity and gravity in water and lava, within ± 10 % of the air path over the same distance. It is not destroyed by lava contact before its hit. | spec v2 §1, §5 |
+| C-43 | *(new)* **Persistent fire is scripted, bounded and block-safe.** A "cannot be extinguished" burn lasts exactly its stated duration. It deals vanilla burning damage (1 HP/s, the `fireTick` cause, marked as scripted) whether or not the target is in water. Fire-immune targets take none. It places no fire block, and it ends early only on death or removal. | spec v2 §1 |
+| C-20⁶ | *(extended)* v10 acceptance needs:<br>• both recipes for the Mace and the Rocket, with the output id asserted vanilla;<br>• the bow recipe with 2 buckets back and a full inventory;<br>• arrow speed in air vs water vs lava, measured by the same SimulatedPlayer at the same distance;<br>• a normal hit's fire put out by water, against Super Fire persisting underwater for 5 s;<br>• a charged miss with no cooldown, then a hit with a 30 s cooldown;<br>• a restart that keeps the craft flag, recovery and the armed state;<br>• ≥ 1000-roll statistics for the roller. | spec v2 §5 |

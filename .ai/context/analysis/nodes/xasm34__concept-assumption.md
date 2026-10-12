@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-xasm34"
 source_channel: "rollout"
-analysis_version: 9
+analysis_version: 10
 title: "ASM-L0-34 · Damage numbers"
 aliases: ["L0-xasm34"]
 is_a: ["assumption"]

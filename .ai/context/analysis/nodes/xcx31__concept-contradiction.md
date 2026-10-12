@@ -2,7 +2,7 @@
 type: "concept-contradiction"
 node_id: "L0-xcx31"
 source_channel: "rollout"
-analysis_version: 9
+analysis_version: 10
 level: 1
 title: "CX-L0-31 · The planned `L0-trdt` deep-dive (resolved)"
 aliases: ["L0-xcx31"]

@@ -2,7 +2,7 @@
 type: "concept-assumption"
 node_id: "L0-xasm28"
 source_channel: "rollout"
-analysis_version: 9
+analysis_version: 10
 level: 1
 title: "ASM-L0-28 · A sculk bolt is invisible to every legendary and magnet predicate"
 aliases: ["L0-xasm28"]

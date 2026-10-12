@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-adr-twlt"
 source_channel: "rollout"
-analysis_version: 9
+analysis_version: 10
 level: 2
 title: "ADR-L0-twlt · Trident lightning and +2 HP"
 aliases: ["L0-adr-twlt"]

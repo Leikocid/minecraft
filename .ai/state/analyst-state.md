@@ -1,7 +1,7 @@
 ---
-current_analysis_version: 9
+current_analysis_version: 10
 current_versions_by_node:
-  L0: 9
+  L0: 10
   L0-lgnd: 7
   L0-pick: 2
   L0-infr: 2
@@ -23,28 +23,27 @@ current_versions_by_node:
   L0-sclk: 7
   L0-strm: 8
   L0-trdt: 9
-pending_revisions:
-  - L0
+  L0-uwbw: 10
+  L0-ench: 10
+pending_revisions: []
 last_run:
-  started_at: '2026-10-11T18:40:34.444Z'
-  completed_at: '2026-10-11T18:49:04.322Z'
-  duration_seconds: 510
-  total_artifacts_current: 54
-  total_size_kb: 763
-  open_contradictions: 2
-  llm_calls: 2
-  llm_budget_used_pct: 1
-  input_hash: c82d8072f963e2ab41918378911777e6bb90f3e38b9d1a078eca939fdf2716bc
-  run_priority: 630
+  started_at: '2026-10-12T17:54:52.481Z'
+  completed_at: '2026-10-12T18:07:51.565Z'
+  duration_seconds: 779
+  total_artifacts_current: 92
+  total_size_kb: 307
+  open_contradictions: 6
+  llm_calls: 4
+  llm_budget_used_pct: 2
+  input_hash: 9aeec190a93fdcf48db1bcb4d29932d6da64e3a592462cd81c9fe5570bfbbd3e
+  run_priority: 640
   run_scope:
-    recorded_at: '2026-10-11T18:40:34.460Z'
+    recorded_at: '2026-10-12T17:54:52.503Z'
     rule: 'partial: the queue (pending_revisions ∪ in-flight) plus the ancestors needed to reach it; every other node carrying a version is skipped as done and carried forward. Children named by a plan at runtime that have no version join the run as they are discovered.'
     nodes:
       - L0
-      - L0-trdt
     reasons:
       L0: root — every run enters the tree here
-      L0-trdt: left in flight by the previous run
   stages:
     - stage: nodes
       entered_at: '2026-09-24T19:23:43.218Z'
@@ -161,23 +160,28 @@ last_run:
       done: 2
     - stage: rollout
       entered_at: '2026-10-11T18:49:56.551Z'
+    - stage: nodes
+      entered_at: '2026-10-12T17:54:52.525Z'
+      done: 3
+    - stage: rollout
+      entered_at: '2026-10-12T18:07:51.589Z'
   digest_review:
-    analysis_version: 9
-    through: '2026-10-11T18:49:56.538Z'
-    reviewed_at: '2026-10-11T18:49:56.538Z'
+    analysis_version: 10
+    through: '2026-10-12T18:07:51.575Z'
+    reviewed_at: '2026-10-12T18:07:51.575Z'
 last_rollout_hashes:
-  project-knowledge/glossary.md: c3b9ad0071630020
-  project-knowledge/business-rules.md: 8c5b1c54289c5fcf
+  project-knowledge/glossary.md: 29ff5af226048da6
+  project-knowledge/business-rules.md: afc6045cde3fb26b
   project-knowledge/boundaries.md: 52130c6cd83d1194
-  project-knowledge/intent.md: 7829911732e648a7
-  project-knowledge/domain-model.md: 40f76707e67e6a11
-  project-knowledge/architecture.md: 0da4c729ec1ab8d3
-  assumptions.md: 4edf569609a22162
-  contradictions.md: 046bc083c999792e
-  client-questions.md: b42cd921027e3fb1
-  summary.md: 14279e0591312191
-  scope.md: d894e1cd4fb8f48a
-  risks.md: 3d57d6e55e31f021
+  project-knowledge/intent.md: 3725425c27fd1b31
+  project-knowledge/domain-model.md: 69ae82d6bd8480a2
+  project-knowledge/architecture.md: 3604b3c9efa1af7b
+  assumptions.md: 5def951730e275fc
+  contradictions.md: 94300c11626d49ab
+  client-questions.md: 3d9e82703c46c79e
+  summary.md: b647176dbdecbd6c
+  scope.md: 88c51500b4ae178d
+  risks.md: 4b755ad4afa81c89
   decisions.md: 3d8b017fc5cecbf7
 runtime_vocabulary:
   concept-boundary:
@@ -276,6 +280,10 @@ slug_mappings:
   : L0-strm
   ? '**The Above-Water Trident (`andrew:above_water_trident`), def #7.**<br>**First deliverable: settle `xcx30`.** Design the custody ledger (`L0-adr-twth` §2/§5) and list every `lgnd` touch point: delivery to the last holder, death and offline handling, the stale entity on `entityLoad`, and the magnet ignoring the return entity.<br>**Probe, on checks (19136):**<br>• the engine bucket return for a token recipe, including a full inventory (`xasm33`);<br>• vanilla trident melee and thrown damage, and Impaling on a custom item (`xasm34`);<br>• `itemReleaseUse` and the charge on iPad touch, and `isSneaking` at release;<br>• vanilla Riptide III launch distance, and its `applyKnockback` calibration (`xasm37`);<br>• the fall cancel via the hurt before-event (with the katana teleport as fallback);<br>• vanilla swim speed with a sprint-swim baseline;<br>• vanilla throw speed and gravity;<br>• the return at 0.5 b/tick through blocks;<br>• a stale projectile on restart.<br>**Item:** custom trident: charge, no throwable, no durability, trident enchant slot, `allow_off_hand`; RU/EN lang; a Creative "Equipment" entry; RP icon and in-flight model (trident geometry).<br>**Recipe:** ` G / BTB / G ` → token. Exact bucket return and refund (C-34).<br>**Damage:** vanilla trident base for melee and thrown hits; +2 pre-armour through the shared `native / window / lethal` helper (extracted from or imported from `src/storm/damage.ts`); one strike visual per hit (`adr-twlt`); idempotent per hit event.<br>**Movement:** a sneak-release dash, with no cooldown, anywhere; a one-shot fall grant (`xasm36`); a held-only swim boost (C-36).<br>**Throw:** the ledger, then remove from hand, then spawn and launch; hit → damage → return; miss/block → visible 10 b/s return; re-insert exactly once; fallbacks (offline, death, dimension, unloaded, 30 s cap).<br>**Enchant:** scrub Loyalty and Riptide (C-37, `xasm35`).<br>**GameTests (`bds`)** for every acceptance bullet:<br>• recipe plus 2 buckets, full inventory;<br>• second craft blocked across a restart; Creative copy free;<br>• melee and thrown = vanilla + 2 against armour, with an in-window negative control; exactly one strike and no `lightning_bolt` entity;<br>• a dash on a dry platform with no rain, in the Nether and the End;<br>• no damage on the next landing, then normal damage on the one after;<br>• swim speed with and without the trident, in either hand;<br>• return speed 10 b/s ± 5 % from a block hit; re-throw refused mid-return; no duplicate at any tick;<br>• thrower dies, logs off or switches dimension mid-flight; Void, chest, fire, lava, explosion (through the `lgnd` scenarios with def #7);<br>• Loyalty and Riptide stripped, Unbreaking kept.<br>The magnet''s legendary scenarios include def #7.<br>**iPad (`ipad`):** dash feel, swim feel, the visible flight and return, the strike reads as lightning, icon, Creative entry, recipe in the recipe book, the sneak gesture.'
   : L0-trdt
+  ? '**The Underwater Bow (`andrew:underwater_bow`), def #8 (Active), plus the Mace and Firework Rocket recipes.**<br>**Probe first, on checks (19136):**<br>• the `sclk` entitySpawn swap for a custom-shooter bow;<br>• `liquid_inertia` 0.99 (the `trident_in_flight` precedent) and survival in lava;<br>• vanilla bow damage on the swapped arrow, with Power, Punch, Flame and Infinity;<br>• `setOnFire` in water vs a scripted `fireTick` burn;<br>• an arrow raised to 14 through `strm` `raiseHit` with `causes: projectile` (`cause projectile + damagingEntity throws`, so use the before-event rewrite);<br>• a shield-blocked arrow;<br>• bucket return for the token recipe (the `trdt` `craftReturn` path);<br>• the plain `minecraft:firework_rocket` recipe output''s flight duration and Elytra boost (`xasm39`).<br>**Item:** custom shooter, bow draw/pull, `allow_off_hand` (if the shooter allows it), no durability, enchantable slot `bow`, RU/EN lang, a Creative entry, and RP textures.<br>**Recipe:** ` R / BWB / S ` → token, with exactly 2 buckets back (C-34).<br>**Flight:** C-42.<br>**Normal hit:** vanilla damage plus 2 s of fire, using the longer of that and Flame''s (`xasm38`).<br>**Ability:**<br>• arm on sneak + Use (`xcx33`, `xasm38`);<br>• the charge persists;<br>• a hit on a living entity → 14 pre-armour (C-29 exact), one `playStrikes`, Super Fire 5 s (C-43), and startCooldown(600);<br>• a miss → nothing (C-41);<br>• HUD: ready / armed / cooldown.<br>**Legendary:** every `lgnd` rule through def #8 (once per world, Creative free, retention, Void, recovery, persistence).<br>**Mace:** ` I / Z ` → `minecraft:mace`.<br>**Rockets:** ` P / S ` → 3 `minecraft:firework_rocket`.<br>Both are checked against every vanilla and `packs/behavior/recipes/*` shape (C-40).<br>**GameTests (`bds`) for each acceptance bullet in §5** that touches §1–§3, plus a negative control for each.<br>**iPad (`ipad`):** draw feel, HUD, lightning, underwater fire, icon, recipe book, rocket boost.'
+  : L0-uwbw
+  ? '**The enchanting table (§4): feasibility first.**<br>**First deliverable: a probe and a written verdict** on 1.26.51 / stable 2.10.0 (C-38). The probe asks:<br>• is there any event or component that sees table offers or the applied enchant? (`beforeEvents`, `playerInventoryItemChange` with before/after enchantments, an XP level drop of 1–3, `enchantable` slot data);<br>• can a SimulatedPlayer operate a table at all?;<br>• which treasure enchantments are already table-reachable on Bedrock (the Mace and Wind Burst, spear Lunge)?;<br>• can the result be told apart from an anvil, a command or a loot result?<br>**Feed `xq11`** with the verdict and the option table (`L0-adr-enrl`). **No engine hook is built before Andrey answers.**<br>**Always built:** a pure roller `src/enchanting/roll.ts` with an injectable RNG. It holds:<br>• the eligibility table per item, derived from vanilla data;<br>• the curse exclusion;<br>• the vanilla conflict groups;<br>• the 20 % rare stage, then 70/40/20 independent level rolls for Wind Burst and Unbreaking, highest wins, fallback I, capped by context max;<br>• exclusion of each def''s FORBIDDEN list.<br>Tests: ≥ 1000-sample statistics (C-39), plus a conflict and curse fuzz.<br>**If a hook is approved:** wire it, prove it on `bds` where a SimulatedPlayer can reach it and on `ipad` otherwise, and keep the C-37 scrubs running after it.'
+  : L0-ench
 tags:
   - analysis
   - registry
@@ -290,9 +298,10 @@ Runtime state for the analyst pipeline (analyse runs, vocabulary, slug map, roll
 
 | Node | Version |
 |------|---------|
-| L0 | 9 |
+| L0 | 10 |
 | L0-airs | 2 |
 | L0-bast | 2 |
+| L0-ench | 10 |
 | L0-infr | 2 |
 | L0-katn | 6 |
 | L0-lgnd | 7 |
@@ -309,25 +318,23 @@ Runtime state for the analyst pipeline (analyse runs, vocabulary, slug map, roll
 | L0-strm | 8 |
 | L0-trdt | 9 |
 | L0-ufoc | 5 |
+| L0-uwbw | 10 |
 | L0-webs | 2 |
 | L0-wind | 2 |
 | L0-wrdn | 2 |
 
 ## Last Run
 
-- Started: 2026-10-11T18:40:34.444Z
-- Completed: 2026-10-11T18:49:04.322Z
-- Duration: 510s
-- Current artifacts: 54 (763 KB total)
-- LLM calls: 2 (1% budget)
-- Open contradictions: 2
-
-## Pending Revisions
-
-- L0
+- Started: 2026-10-12T17:54:52.481Z
+- Completed: 2026-10-12T18:07:51.565Z
+- Duration: 779s
+- Current artifacts: 92 (307 KB total)
+- LLM calls: 4 (2% budget)
+- Open contradictions: 6
 
 ## Changelog
 
+- 2026-10-12 18:07 — promoted L0 (v9 → v10) — auto-promoted after refine-driven re-analysis
 - 2026-10-02 19:11 — promoted L0-ufoc (v3 → v5) — auto-promoted after refine-driven re-analysis
 - 2026-10-02 18:58 — promoted L0-lgnd (v3 → v4) — auto-promoted after refine-driven re-analysis
 - 2026-10-02 18:58 — promoted L0 (v3 → v4) — auto-promoted after refine-driven re-analysis — incomplete: 3 of 4 planned children have artifacts at v4; never analysed: L0-ufoc

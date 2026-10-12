@@ -2,7 +2,7 @@
 type: "concept-contradiction"
 node_id: "L0-xcx27"
 source_channel: "rollout"
-analysis_version: 9
+analysis_version: 10
 level: 1
 title: "CX-L0-27 · The shield vs the beam"
 aliases: ["L0-xcx27"]

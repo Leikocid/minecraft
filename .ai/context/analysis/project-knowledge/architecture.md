@@ -1,13 +1,13 @@
 ---
 title: Architecture
 type: project-knowledge
-generated_at: "2026-10-11T18:49:56.587Z"
+generated_at: "2026-10-12T18:07:51.645Z"
 source_channel: rollout
 node_id: rollout-architecture
 aliases: ["rollout-architecture","architecture","project-knowledge/architecture"]
 is_a: ["rollout","architecture"]
-relates_to: ["L0-adr-hldb","L0-adr-sbdm","L0-adr-sblt","L0-adr-sbvr","L0-adr-scbs","L0-adr-scdm","L0-adr-scfc","L0-adr-sckp","L0-adr-scpi","L0-adr-sctr","L0-adr-trlg","L0-trdt"]
-priority: 630
+relates_to: ["L0-adr-hldb","L0-adr-lgwd","L0-adr-sbdm","L0-adr-sblt","L0-adr-sbvr","L0-adr-scbs","L0-adr-scdm","L0-adr-scfc","L0-adr-sckp","L0-adr-scpi","L0-adr-sctr","L0-adr-trlg","L0-ench","L0-trdt","L0-uwbw"]
+priority: 640
 ---
 
 # Architecture
@@ -15,6 +15,87 @@ priority: 630
 > Автогенерация из Knowledge Vault. Ручное редактирование — установи `status: manual` в frontmatter.
 
 ## Components
+
+### L0-ench · The enchanting table (§4): feasibility first (L0-ench)
+
+# L0-ench · The enchanting table (§4): feasibility first
+
+**is_a:** component · **part_of:** L0 · **relates_to:** L0-adr-enrl, L0-xcx32, L0-xq11, L0-xasm39, L0-trdt, L0-sclk, L0-uwbw, L0-lgnd
+
+**Source:** spec v2 §4 and §5 bullets 4–6 (`underwaterbowmacefireworksenchantingspecv2ruen-part-1/2/3`). **Constraints:** C-2, C-16, C-37, C-38, C-39, C-20⁶.
+
+## Responsibility
+The spec asks that the vanilla table offer every item-compatible vanilla enchantment, treasure ones included, with these rules:
+- curses: never;
+- the 20 % rare stage;
+- the 70/40/20 level rule for Wind Burst and Unbreaking;
+- vanilla maximum levels and conflicts.
+
+Stable 2.10.0 has no table hook (`xcx32`). So this component owns three things, and only the first two are always built:
+1. **The feasibility probe and its written verdict** (C-38). It runs on checks (19136), plus one iPad observation, and answers four questions:
+   - Can anything observe the offers or the applied result?
+   - Can a SimulatedPlayer operate a table?
+   - Which treasure enchantments can 1.26.51 already reach at the table (the Mace and Wind Burst, spear Lunge)?
+   - Can a table result be told apart from an anvil, command or loot result?
+
+   The verdict feeds `L0-xq11` together with the option table from `L0-adr-enrl`.
+2. **The pure roller `src/enchanting/roll.ts`.** It has no `@minecraft/server` import and takes an injectable RNG. It holds:
+   - the eligibility table (vanilla data, minus curses, minus each def's forbidden list);
+   - the conflict groups;
+   - the rare stage;
+   - the level rule.
+
+   Its proof is statistical, through unit tests (C-39). Those are `in_process`, so they close only the unit criteria.
+3. **The engine adapter, only if Andrey approves it in `xq11`.** It is (a) a post-hoc re-roll or (b) a custom station; (c) means no adapter. It is proven on `bds` where a SimulatedPlayer can reach it and on `ipad` otherwise. The C-37 scrubs (`src/legendary/enchant.ts`, `src/sculk/enchant.ts`) keep running after it.
+
+## Inputs
+- **Vanilla 1.26.51 enchantment data:** slot → enchantments, max levels, treasure flags and conflicts. It is checked against the engine's own `enchantable` answers on BDS.
+- **Per-def forbidden lists:**
+  - `FORBIDDEN_ENCHANTMENTS` in `src/legendary/enchant.ts:10` (trident: loyalty, riptide);
+  - `PIERCING` for `SCULK_CROSSBOW` in `src/sculk/enchant.ts:7`.
+- **A roll request:** `{itemId, tier 1|2|3, rng}`.
+- **The answer to `xq11`.**
+
+## Outputs
+- A feasibility verdict document (the `src/enchanting/README.md` "Verdict" section), with evidence for each question.
+- `rollEnchantments()` → an `EnchantRoll` with a trace (`L0-ench-ent1`).
+- A unit suite: statistics, plus the conflict and curse fuzz.
+- One of two endings:
+  - an approved adapter with its deviation note;
+  - no adapter, with a limitation report: §5 bullets 4–6 are marked "not deliverable on stable Bedrock" in the acceptance sheet and the release notes (C-38).
+
+## Not in scope
+- Anvils, books, villager trades and loot tables stay vanilla.
+- Lunge stays unchanged if it is already offered.
+- No Experiments, beta APIs or Molang UI overrides (C-2).
+- The bow's own enchantability belongs to `uwbw` (`minecraft:enchantable` slot `bow`).
+
+## Seams
+| With | What |
+|---|---|
+| `trdt` / `lgnd` | `FORBIDDEN_ENCHANTMENTS` is read, never copied (`L0-ench-r003`). |
+| `sclk` | Piercing is excluded for the Sculk Crossbow. Today it is a separate constant, so the roller reads both sources. |
+| `uwbw` | Def #8 is a custom item with slot `bow`. It is eligible through the slot data, and nothing extra is needed. |
+
+## Children
+- **Processes:** `prob` (the probe), `roll` (the roller).
+- **Rules:** `r001`–`r005`.
+- **Entity:** `ent1`.
+- **ACs:** `ac01`–`ac06`.
+- **ADR:** `adr1`.
+- **Assumption:** `asm1`.
+- **Contradiction:** `cx01`.
+- **Glossary:** `gl01`–`gl03`.
+
+## Closing paths (from the plan)
+- **(a)/(b) approved:** the hook is built and the preview deviation is documented.
+- **(c) or no answer:** the roller stays dormant and tested, and the limitation is reported. `xcx32` closes on Andrey's answer.
+
+
+
+
+
+
 
 ### L0-trdt · The Above-Water Trident (`andrew:above_water_trident`), def #7 (L0-trdt)
 
@@ -96,6 +177,79 @@ A one-per-world passive legendary (`PassiveLegendaryDef`, prefix `tr`, token `an
 
 
 
+### L0-uwbw · The Underwater Bow (`andrew:underwater_bow`), def #8, plus the Mace and Firework Rocket recipes (L0-uwbw)
+
+# L0-uwbw · The Underwater Bow (`andrew:underwater_bow`), def #8, plus the Mace and Firework Rocket recipes
+
+**Links.** relates_to: L0-lgnd, L0-sclk, L0-strm, L0-trdt, L0-trdt-adrf, L0-ench, L0-adr-ubfl, L0-xasm38, L0-xasm39, L0-xcx33. Source: spec v2 §1–§3, §5 bullets 1–3 and 7 (`underwaterbowmacefireworksenchantingspecv2ruen-part-1/2`).
+
+## Responsibility
+1. **The bow.** It is a legendary Active weapon (def #8, prefix `ub`, token `andrew:underwater_bow_crafted`, `cooldownTicks` 600). It fires vanilla arrows that fly in water and lava as they do in air (C-42). A normal hit does vanilla bow damage plus 2 s of fire. An **armed** hit on a living entity deals exactly 14 HP before armour (C-29), plays one zero-damage strike visual (C-30′) and applies 5 s of **Super Fire** that water cannot put out (C-43). Only that hit starts the 30 s cooldown (C-41).
+2. **Two additive vanilla recipes (C-40).**
+   - ` I / Z ` (Iron Block over Breeze Rod) → 1 `minecraft:mace`.
+   - ` P / S ` (Paper over String) → 3 `minecraft:firework_rocket`.
+3. **The legendary rules through def #8.** These are cited from `lgnd`, not restated: once per world, Creative free, retention, the Void, recovery, persistence and the refund exchange.
+
+## Not in scope
+- **The enchanting table (§4) belongs to `L0-ench`.** The bow only declares `minecraft:enchantable` slot `bow`. Its compatible enchantments and conflicts come from vanilla data.
+
+## Inputs
+- **Player actions:** Use (draw and release), sneak + Use (arm), crafting-table and crafter crafts.
+- **Engine events:**
+  - `entitySpawn` (the arrow from this bow);
+  - `projectileHitEntity` / `projectileHitBlock`;
+  - `beforeEvents.entityHurt` and `afterEvents.entityHurt`;
+  - `playerInventoryItemChange` (the token);
+  - logout, restart and death.
+
+## Outputs
+- **The arrow** (swapped or tagged), with the `ub:armedShot` mark.
+- **Damage:**
+  - the vanilla hit;
+  - the exact-14 rewrite, or a lethal follow-through by `applyDamage`;
+  - scripted `fireTick` ticks marked in `scripted-damage.ts`.
+- **Fire:** `setOnFire` for the normal hit, and the Super Fire status.
+- **Visual:** one `playStrikes` per hit key.
+- **Player state:** the `ub:armed` dynamic property, the cooldown timer and the HUD line (ready / armed / Ns).
+- **Crafting:** 2 empty buckets back on every bow craft, the craft flag, and vanilla Maces and rockets.
+
+## Structure (planned files)
+- `packs/behavior/items/underwater_bow.json` and `underwater_bow_crafted.json`;
+- `packs/behavior/recipes/underwater_bow.json`, `mace_iron.json` and `firework_rocket_paper.json`;
+- `packs/behavior/entities/underwater_arrow.json` (only if the swap wins the probe, `L0-uwbw-adfl`);
+- `src/underwater/{index,arrow,arm,hit,superfire}.ts`;
+- RP: textures for the icon and the pull stages, `attachables`, and RU/EN lang;
+- GameTests under `src/gametest/underwater*.ts`.
+
+## Order (stage 11)
+1. The probe (`L0-uwbw-pprb`) on checks (19136), as its own criterion set.
+2. The recipes.
+3. The def, item, token, bucket recipe, RP and lang.
+4. Flight.
+5. Normal fire.
+6. Armed charge, 14 HP, strike, Super Fire, cooldown and HUD.
+
+Version 1.11.0.
+
+## `lgnd` touch points (for reduce)
+- **The HUD.** `hudKeys` widens from `{ready, cooldown}` to an optional `armed` (`src/legendary/registry.ts:45`).
+- **The cooldown start.** It is deferred from activation to the hit, through a def flag such as `cooldownOn: "hit"`. Otherwise the bow calls `startCooldown` (`src/legendary/cooldown.ts:47`) itself and does not claim Use through `resolveActivation`.
+- **The magnet.** The `magn` legendary scenarios add def #8.
+
+These stay within def fields plus one HUD key. Reduce can record them as an ADR without a `lgnd` re-run.
+
+## Open items
+- `L0-uwbw-cx01`: `raiseHit` cannot produce exactly 14.
+- `L0-uwbw-as01`: what a swapped arrow costs.
+- `xcx33`: the arming gesture (has a default).
+- `xasm39`: rocket flight duration.
+
+
+
+
+
+
+
 ## Architecture Decisions
 
 ### ADR-L0-hldb · Holder: decided, unbuilt, one seam (status: accepted, resolves `L0-lgnd-cx16`) (L0-adr-hldb)
@@ -119,6 +273,46 @@ governs_files: ["src/legendary/state.ts", "src/legendary/recovery.ts"]
 3. Until it ships, every weapon's T20/Void test (the crossbow's `sclk-ac20` included) resolves the expected recipient through a single `returnTarget(mark)` test helper that returns `mark.owner` (`lgnd-ad17`). `LGND-HOLD` changes that helper and the holder clauses of `lgnd-ac08`/`ac09`/`ac24`/`ac27`, and no per-weapon test.
 
 **Consequence.** The crossbow ships with the same documented deviation as the Katana: Void and loss go to the crafter or `/give` target. That remains true only until `LGND-HOLD` lands.
+
+
+
+
+
+
+
+### ADR-L0-lgwd · Widening `lgnd` and `strm` for the Underwater Bow (L0-adr-lgwd)
+
+---
+title: "ADR-L0-lgwd · The legendary framework widens for an armed ability without a lgnd re-run"
+aliases: ["L0-adr-lgwd", "lgnd widening for armed abilities"]
+is_a: ["architecture-decision"]
+part_of: ["L0"]
+relates_to: ["L0-lgnd", "L0-uwbw", "L0-strm", "L0-magn", "L0-sclk", "L0-adr-ubfl", "L0-uwbw-adex", "L0-uwbw-cons", "L0-xcx33", "L0-xasm38"]
+requires: ["L0-lgnd"]
+governs_files: ["src/legendary/registry.ts", "src/legendary/cooldown.ts", "src/legendary/hands.ts", "src/storm/damage.ts"]
+---
+# ADR-L0-lgwd · Widening `lgnd` and `strm` for the Underwater Bow
+
+**Context.** The plan's reduce rule said: record the bow's `lgnd` touch points as an ADR if they stay within def fields plus one HUD key; otherwise schedule a v11 `lgnd` re-run. `L0-uwbw` lists the touch points, and `L0-uwbw-adex` adds a `strm` touch point that the plan did not foresee. As read during reduce at v10:
+- `hudKeys` is `{ ready: string; cooldown: string }` (`src/legendary/registry.ts:45`);
+- `raiseHit` handles `entityAttack` only and adds to the hit (`src/storm/damage.ts`).
+
+**Decision (accepted at reduce).**
+1. **The HUD.** `hudKeys` gains an optional `armed?: string`. The seven shipped defs do not set it and render as before.
+2. **The cooldown start.** Def #8 does **not** claim Use through `resolveActivation`. The bow's own module arms on sneak + the start of Use and calls the existing `startCooldown` from the armed hit's after-event. **No new def flag**: a `cooldownOn: "hit"` field is unnecessary while only one def needs it.
+3. **The damage.** `src/storm/damage.ts` gains `setHit` beside `raiseHit`. They share an internal core, and `raiseHit`'s signature and behaviour are frozen.
+4. **Gates.** Every merge touching (1)–(3) runs these scenarios as distinct criterion sets on the checks server:
+   - the `lgnd` legendary scenarios;
+   - the `magn` legendary scenarios, now including def #8;
+   - the `sclk` legendary scenarios;
+   - the Storm Blade scenarios.
+
+**Consequence.** These are one optional field, one call site and one sibling function. **`lgnd` is not re-run at v11.** A second armed legendary would revisit (2) as a def field.
+
+**Rejected.**
+- **A v11 `lgnd` re-run.** The change is smaller than the threshold the plan set.
+- **Letting `resolveActivation` claim Use for the bow.** Use is the draw; the bow could not shoot (`xcx33`).
+- **Changing `raiseHit` to accept projectile causes.** That moves the Storm Blade's contract and still adds rather than replaces (`L0-uwbw-cx01`).
 
 
 

@@ -2,7 +2,7 @@
 type: "concept-contradiction"
 node_id: "L0-xcx22"
 source_channel: "rollout"
-analysis_version: 9
+analysis_version: 10
 level: 1
 title: "CX-L0-22 · T17 vs invulnerability frames"
 aliases: ["L0-xcx22"]

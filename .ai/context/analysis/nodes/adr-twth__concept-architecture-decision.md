@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-adr-twth"
 source_channel: "rollout"
-analysis_version: 9
+analysis_version: 10
 level: 2
 title: "ADR-L0-twth · How the trident is thrown and comes back"
 aliases: ["L0-adr-twth"]

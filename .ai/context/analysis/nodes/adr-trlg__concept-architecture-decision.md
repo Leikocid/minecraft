@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-adr-trlg"
 source_channel: "rollout"
-analysis_version: 9
+analysis_version: 10
 level: 1
 title: "ADR-L0-trlg · The trident widens `lgnd` by two generic hooks"
 aliases: ["L0-adr-trlg"]

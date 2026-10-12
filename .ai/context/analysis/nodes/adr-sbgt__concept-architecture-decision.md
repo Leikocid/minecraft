@@ -2,7 +2,7 @@
 type: "concept-architecture-decision"
 node_id: "L0-adr-sbgt"
 source_channel: "rollout"
-analysis_version: 9
+analysis_version: 10
 title: "ADR-L0-sbgt · The Storm Blade's merge gate"
 aliases: ["L0-adr-sbgt"]
 is_a: ["architecture-decision"]
