@@ -21,6 +21,7 @@ import { registerLegendaryHud } from "./legendary/hud";
 import { protectLegendariesIn, registerRecovery } from "./legendary/recovery";
 import { registerRetention } from "./legendary/retention";
 import { registerOrbitalCannon } from "./orbital";
+import { registerRocketFlight } from "./rocket-flight";
 import { registerInterceptor } from "./orbital/flight";
 import { registerScytheVolley } from "./scythe/volley";
 import { registerSculkCrossbow } from "./sculk";
@@ -44,6 +45,7 @@ import { registerUnderwaterBowFire } from "./ubow/fire";
 import { registerUbowFlight } from "./ubow/flight";
 
 registerAutoSmelt();
+registerRocketFlight();
 registerCraftGate();
 registerRetention();
 registerRecovery();
