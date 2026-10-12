@@ -27,6 +27,17 @@ Resistance II. The plan (`planRaise`):
 Inside `beforeEvents.entityHurt` the target's health already reads `hp − event.damage`, so the lethal checks use the
 health left.
 
+**Replace mode — `setHit(event, D, { causes })`** (`L0-uwbw-adex`, the Underwater Bow's armed hit: 14 before armour).
+Same path as the raise — health left, defence read, f(D), absorption, the lethal follow-through, the report — but the
+hit **becomes** f(D) instead of growing by it: a vanilla arrow of 9 on a bare target turns into 14, not 23, and one
+stronger than f(D) is lowered. Only a hit whose cause is in `causes` is touched (the bow passes `[projectile]`); no
+damaging entity is required. `raiseHit` is unchanged: `entityAttack` with a source only, additive. The plan
+(`planSet`), against the health before the hit (`hp left + read`):
+- `set` — `event.damage = f(D)`;
+- `lethal` — f(D) would kill: the hit is set to 0 and the overkill `applyDamage` follows through `system.run`, as for
+  the raise (a lethal rewrite eats the totem and still kills);
+- `kills-alone` — the engine's hit and f(D) both kill: the hit is left alone, its own cause and credit stand.
+
 **Active — `stormDamage(target, 10, wielder)`** (`planStrike`):
 - `native` — no known window: `applyDamage(10, entityAttack, wielder)` alone is exact and lethal natively;
 - `window` — `applyDamage(10)`, then the health write to `hp_before − f(10)` when the window swallowed part of it:
@@ -38,7 +49,8 @@ health left.
 written, in or out of a window. From 90° on the hit lands with armour. `applyDamage` returning `true` proves nothing: a
 swallowed hit returns it too; the reports carry the health read before and after.
 
-`observeStorm(fn)` hands every raise and strike report to its observers.
+`observeStorm(fn)` hands every raise, set and strike report to its observers (a set's lethal overkill is a strike
+`from: "set"`).
 
 Scenarios: `src/gametest/storm-damage.ts` (`storm_damage_passive`, `_active`, `_shield`, `_lethal`), each with its
 negative controls in the same test: plain `applyDamage(6)` in the melee tick takes 0.00 and returns true; a flat +6
@@ -58,6 +70,13 @@ a window write to 0 loses the credit.
 3. **A window opened by someone else before the blade's melee.** The raise grows the melee, and the engine compares the
    grown hit with the window's last one: where another hit stronger after armour landed within 10 ticks, the bonus is
    swallowed in part or whole with the melee.
+4. **A lethal `setHit` dies of `entityAttack`, not `projectile`.** `applyDamage` with cause `projectile` and a damaging
+   entity throws, so the overkill that keeps the totem and the credit is an `entityAttack` from the shooter: the death
+   message and any cause check read a melee. A hit that kills by itself (`kills-alone`) keeps its own cause.
+5. **`setHit`'s health-left reading is measured on melee only.** "Health already reads `hp − read`" comes from
+   `entityAttack` hits (STRM-DMG-01); for `projectile` it is assumed until the `uwbw` probe's row 5 reads it on BDS. If
+   the engine does not subtract first there, an f(D) that kills by less than the arrow's own read is judged `set`, and
+   that lethal rewrite then kills through a held totem.
 
 ## `active.ts` — the Use (`L0-strm-pact`, `L0-strm-rcd`, `L0-xasm31`)
 
