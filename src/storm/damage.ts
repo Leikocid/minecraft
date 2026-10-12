@@ -1,6 +1,7 @@
 // Storm Blade damage: the only place the blade deals its 10 (active) and +6 (passive) HP before armour (spec §02,
 // §05; L0-strm-rdmg, L0-adr-sbdm R and C, L0-xcx26). Every path here is one that diagnose-CNTR-X26 and probe-storm
-// P2–P3 measured on BDS 1.26.51.1. Deviations: README.md next to this file.
+// P2–P3 measured on BDS 1.26.51.1. setHit, the replace mode beside the passive's raise, is the Underwater Bow's
+// (L0-uwbw-adex). Deviations: README.md next to this file.
 
 import {
   type Entity,
@@ -24,10 +25,12 @@ import {
   OVERKILL,
   PASSIVE_DAMAGE,
   type RaisePlan,
+  type SetPlan,
   type StrikePath,
   afterArmour,
   inHurtWindow,
   planRaise,
+  planSet,
   planStrike,
   windowWrite,
 } from "./damage-rules";
@@ -40,6 +43,7 @@ export {
   OVERKILL,
   PASSIVE_DAMAGE,
   type RaisePlan,
+  type SetPlan,
   type StrikePath,
   afterArmour,
 } from "./damage-rules";
@@ -48,11 +52,11 @@ const ARMOUR_SLOTS = [EquipmentSlot.Head, EquipmentSlot.Chest, EquipmentSlot.Leg
 /** Landed-hit entries older than the window are swept once the map grows past this. */
 const LANDED_SWEEP_AT = 256;
 
-/** One applyDamage call: the active's hit, or the overkill that finishes a passive whose raise would be lethal. */
+/** One applyDamage call: the active's hit, or the overkill that finishes a raise or a set that would be lethal. */
 export interface StrikeReport {
   type: "strike";
-  /** `passive` only for the deferred lethal of `raiseHit`. */
-  from: "active" | "passive";
+  /** `passive` and `set`: the deferred lethal of `raiseHit` and of `setHit`. */
+  from: "active" | "passive" | "set";
   targetId: string;
   targetType: string;
   wielderId: string | undefined;
@@ -93,7 +97,34 @@ export interface RaiseReport {
   tick: number;
 }
 
-export type StormReport = StrikeReport | RaiseReport;
+/** setHit's replacement of a hit, decided inside beforeEvents.entityHurt. */
+export interface SetReport {
+  type: "set";
+  targetId: string;
+  targetType: string;
+  wielderId: string | undefined;
+  /** D, before armour. */
+  damage: number;
+  /** f(D): what the hit is set to after armour. */
+  goal: number;
+  /** The hit's damage as the event read it: already after armour and Resistance. */
+  read: number;
+  /** Health as read inside the event: already less the hit's read. */
+  hpLeft: number | undefined;
+  defence: Defence;
+  /** `none`: not a living target's hit of one of the given causes, or already cancelled. */
+  plan: SetPlan["kind"] | "none";
+  /** What the event's damage was set to; undefined when it was left alone. */
+  set: number | undefined;
+  tick: number;
+}
+
+export interface SetHitOptions {
+  /** The damage causes whose hits are set; a hit of any other cause is left alone. */
+  causes: readonly EntityDamageCause[];
+}
+
+export type StormReport = StrikeReport | RaiseReport | SetReport;
 export type StormObserver = (report: StormReport) => void;
 
 /** Entity id → the tick of the last hit on it that landed, from any source. */
@@ -284,10 +315,17 @@ export function stormDamage(target: Entity, damage: number, wielder: Entity | un
   return finish(report);
 }
 
-/** The overkill after a raise that would have been lethal: the totem, death message and credit stay native. */
-function finishLethal(target: Entity, wielder: Entity | undefined, damage: number, bonus: number, defence: Defence): void {
-  const report = blankStrike("passive", target, damage, wielder);
-  Object.assign(report, { dPrime: bonus, defence, path: "lethal", inWindow: true });
+/** The overkill after a raise or a set that would have been lethal: the totem, death message and credit stay native. */
+function finishLethal(
+  from: StrikeReport["from"],
+  target: Entity,
+  wielder: Entity | undefined,
+  damage: number,
+  dPrime: number,
+  defence: Defence
+): void {
+  const report = blankStrike(from, target, damage, wielder);
+  Object.assign(report, { dPrime, defence, path: "lethal", inWindow: true });
   try {
     const health = target.isValid ? healthOf(target) : undefined;
     const hp = health === undefined ? undefined : hpOf(health);
@@ -300,9 +338,54 @@ function finishLethal(target: Entity, wielder: Entity | undefined, damage: numbe
     report.applied = applyScriptedDamage(target, hp + OVERKILL, attackOptions(wielder));
     report.hpAfter = hpOf(health);
   } catch (err) {
-    log(`lethal passive on ${report.targetType} ${report.targetId} refused: ${errText(err)}`);
+    log(`lethal ${from} on ${report.targetType} ${report.targetId} refused: ${errText(err)}`);
   }
   finish(report);
+}
+
+type HitReport = RaiseReport | SetReport;
+
+/**
+ * The before-event path raiseHit and setHit share: the health left, the gate, the defence read, the plan, the write and
+ * the overkill that follows a lethal plan. `plan` gets f(report.damage) for this target. A lethal plan sets the hit to
+ * `lethalWrite`, or leaves it alone when that is undefined. Returns false when the gate turned the hit away.
+ */
+function rewriteHit(
+  event: EntityHurtBeforeEvent,
+  report: HitReport,
+  admits: (cause: EntityDamageCause, wielder: Entity | undefined) => boolean,
+  plan: (after: number, hpLeft: number, absorbs: boolean) => RaisePlan | SetPlan,
+  lethalWrite: number | undefined
+): boolean {
+  const target = event.hurtEntity;
+  const wielder = event.damageSource.damagingEntity;
+  try {
+    report.targetId = target.id;
+    report.targetType = target.typeId;
+    report.wielderId = wielder?.id;
+    const health = healthOf(target, false);
+    report.hpLeft = health === undefined ? undefined : hpOf(health);
+    if (event.cancel || !admits(event.damageSource.cause, wielder) || report.hpLeft === undefined) return false;
+    report.defence = defenceOf(target);
+    const after = afterArmour(report.damage, report.defence);
+    const decided = plan(after, report.hpLeft, absorbing(target));
+    if (decided.kind === "raise" || decided.kind === "set") {
+      event.damage = decided.damage;
+      report.set = decided.damage;
+    } else if (decided.kind === "lethal") {
+      if (lethalWrite !== undefined) {
+        event.damage = lethalWrite;
+        report.set = lethalWrite;
+      }
+      const { damage, defence } = report;
+      const from = report.type === "raise" ? "passive" : "set";
+      // Before-events may not apply damage; system.run lands the overkill after this hit.
+      system.run(() => finishLethal(from, target, wielder, damage, after, defence));
+    }
+  } catch (err) {
+    log(`${report.type} on ${report.targetType} ${report.targetId} refused: ${errText(err)}`);
+  }
+  return true;
 }
 
 /**
@@ -313,8 +396,6 @@ function finishLethal(target: Entity, wielder: Entity | undefined, damage: numbe
  * - A raise that would make the hit lethal is not written; an overkill applyDamage follows through system.run.
  */
 export function raiseHit(event: EntityHurtBeforeEvent, damage: number = PASSIVE_DAMAGE): RaiseReport {
-  const target = event.hurtEntity;
-  const wielder = event.damageSource.damagingEntity;
   const report: RaiseReport = {
     type: "raise",
     targetId: "?",
@@ -329,35 +410,68 @@ export function raiseHit(event: EntityHurtBeforeEvent, damage: number = PASSIVE_
     set: undefined,
     tick: system.currentTick,
   };
-  try {
-    report.targetId = target.id;
-    report.targetType = target.typeId;
-    report.wielderId = wielder?.id;
-    const health = healthOf(target, false);
-    report.hpLeft = health === undefined ? undefined : hpOf(health);
-    if (event.cancel || event.damageSource.cause !== EntityDamageCause.entityAttack || wielder === undefined || report.hpLeft === undefined) {
-      emit(report);
-      return report;
-    }
-    report.defence = defenceOf(target);
-    report.bonus = afterArmour(damage, report.defence);
-    const plan = planRaise(event.damage, report.hpLeft, report.bonus, absorbing(target));
-    report.plan = plan.kind;
-    if (plan.kind === "raise") {
-      event.damage = plan.damage;
-      report.set = plan.damage;
-    } else if (plan.kind === "lethal") {
-      const { bonus, defence } = report;
-      // Before-events may not apply damage; system.run lands the overkill after this hit.
-      system.run(() => finishLethal(target, wielder, damage, bonus, defence));
-    }
-  } catch (err) {
-    log(`raise on ${report.targetType} ${report.targetId} refused: ${errText(err)}`);
-  }
-  log(
-    `passive ${report.plan} on ${report.targetType} ${report.targetId}: read ${f2(report.read)} + f(${damage}) ${f2(report.bonus)} (${defText(report.defence)}) ` +
-      `hp left ${f2(report.hpLeft)}${report.set === undefined ? "" : ` -> hit ${f2(report.set)}`}`
+  const admitted = rewriteHit(
+    event,
+    report,
+    (cause, wielder) => cause === EntityDamageCause.entityAttack && wielder !== undefined,
+    (bonus, hpLeft, absorbs) => {
+      report.bonus = bonus;
+      const plan = planRaise(event.damage, hpLeft, bonus, absorbs);
+      report.plan = plan.kind;
+      return plan;
+    },
+    undefined
   );
+  if (admitted) {
+    log(
+      `passive ${report.plan} on ${report.targetType} ${report.targetId}: read ${f2(report.read)} + f(${damage}) ${f2(report.bonus)} (${defText(report.defence)}) ` +
+        `hp left ${f2(report.hpLeft)}${report.set === undefined ? "" : ` -> hit ${f2(report.set)}`}`
+    );
+  }
+  emit(report);
+  return report;
+}
+
+/**
+ * Sets the hit to `preArmour` before armour, called from a beforeEvents.entityHurt handler (L0-uwbw-adex): the event's
+ * damage becomes f(preArmour) as the absolute post-armour hit, replacing what the engine read rather than adding to it.
+ * - Only a hit whose cause is in `opts.causes` is set; the caller decides it is its own.
+ * - A set that would be lethal writes 0; an overkill entityAttack from the hit's damaging entity follows through
+ *   system.run, so the totem and the credit stay native (README: the death's cause is entityAttack).
+ */
+export function setHit(event: EntityHurtBeforeEvent, preArmour: number, opts: SetHitOptions): SetReport {
+  const report: SetReport = {
+    type: "set",
+    targetId: "?",
+    targetType: "?",
+    wielderId: undefined,
+    damage: preArmour,
+    goal: 0,
+    read: event.damage,
+    hpLeft: undefined,
+    defence: NO_DEFENCE,
+    plan: "none",
+    set: undefined,
+    tick: system.currentTick,
+  };
+  const admitted = rewriteHit(
+    event,
+    report,
+    (cause) => opts.causes.includes(cause),
+    (goal, hpLeft, absorbs) => {
+      report.goal = goal;
+      const plan = planSet(event.damage, hpLeft, goal, absorbs);
+      report.plan = plan.kind;
+      return plan;
+    },
+    0
+  );
+  if (admitted) {
+    log(
+      `set ${report.plan} on ${report.targetType} ${report.targetId}: read ${f2(report.read)} -> f(${preArmour}) ${f2(report.goal)} (${defText(report.defence)}) ` +
+        `hp left ${f2(report.hpLeft)}${report.set === undefined ? "" : ` -> hit ${f2(report.set)}`}`
+    );
+  }
   emit(report);
   return report;
 }
