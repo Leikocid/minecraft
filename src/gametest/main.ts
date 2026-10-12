@@ -106,6 +106,7 @@ import "./sculk-look";
 import "./trident-throw";
 import "./trident-probe";
 import "./pear-probe";
+import "./pear-generation";
 import "./pear-item";
 import "./pear-bind";
 import "./trident-damage";

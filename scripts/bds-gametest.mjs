@@ -575,6 +575,12 @@ const EXPECTED_TESTS = [
   'andrew:pear_item_grid_shifted',
   'andrew:pear_item_hundred_casts',
   'andrew:pear_item_fishes_unbound',
+  // PEAR-GEN-01 — src/gametest/pear-generation.ts (spec v3 §7–§8, L0-xcx34, L0-pear-ru03): replaced plates do not travel
+  'andrew:pear_gen_player_replace',
+  'andrew:pear_gen_setblock_other_type',
+  'andrew:pear_gen_explosion_support_piston',
+  'andrew:pear_gen_hundred_presses',
+  'andrew:pear_gen_store_pruned',
   // PEAR-BIND-01 — src/gametest/pear-bind.ts (spec v3 §7, L0-xasm41, L0-pear-pr02): the hook binds the rod to a plate
   'andrew:pear_bind_every_plate',
   'andrew:pear_bind_negatives',

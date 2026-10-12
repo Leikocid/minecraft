@@ -142,8 +142,8 @@ in the same inventory or anyone else's — is not touched: the record lives on t
 
 **What it reads but does not own.**
 - The life epoch: player dynamic property `andrew:life_epoch`, missing = 0. PEAR-OWNER-01 bumps it on death.
-- The plate generation: world dynamic property `andrew:pg:<overworld|nether|the_end>:<x>:<y>:<z>`, missing = 0
-  (`L0-pear-ent2`). PEAR-GEN-01 owns the bumps and the watch set of bound cells; until then every cell reads 0.
+- The plate generation: world dynamic property `andrew:pg:<overworld|nether|the_end>:<x>:<y>:<z>` (`L0-pear-ent2`). The
+  binding does not read it, it claims it: `claimGeneration()` in `generation.ts` (below) hands out the number.
 - Honouring a binding on use is PEAR-TP-01. Until it lands, a bound rod still casts on use, and its next hit overwrites.
 
 ### Measured on BDS 1.26.51.1 (private copy of the checks instance, 2026-10-13)
@@ -155,8 +155,8 @@ in the same inventory or anyone else's — is not touched: the record lives on t
   - the rod write (`playerInventoryItemChange`) and the hook's `entityRemove` both land at **+3**, the same tick. The
     scenario sees the rod bound and the hook gone together at +4, because a GameTest continuation runs before the
     interval. No sample ever saw the rod bound with its hook still out;
-  - record: the plate cell rel 3,2,3, the plate's type, `overworld`, the caster's id, epoch 0, generation 0. The block at
-    the recorded cell is the plate; `projectileHitBlock` names the support, `stone` at rel 3,1,3, the cell below;
+  - record: the plate cell rel 3,2,3, the plate's type, `overworld`, the caster's id, epoch 0, the cell's generation. The
+    block at the recorded cell is the plate; `projectileHitBlock` names the support, `stone` at rel 3,1,3, the cell below;
   - no hook of the caster left in the world 1 and 20 ticks later; damage 0; lore `Pearl Rod|bound: overworld 3 -58 6`.
 
   Control: the bare floor. The hook rests at +2 in the air cell rel 3,2,3 and the rod stays unbound.
@@ -198,3 +198,132 @@ in the same inventory or anyone else's — is not touched: the record lives on t
   device shows it.
 - **The actionbar line** «Удочка привязана к плите» / "Rod bound to plate" follows the client language. The lore line
   `bound: overworld x y z` is a literal string and does not.
+
+## `generation.ts`: a replaced plate does not take the rod there (`L0-xcx34`, `L0-pear-ru03`, `L0-pear-ent2`)
+
+Spec v3 §7: «Если плита сломана/заменена — привязка недействительна, телепортации нет» (if the plate is broken or
+replaced, the binding is void and there is no teleport); §8: "Destroyed/replaced plates do not teleport". A block has no
+identity of its own: an oak plate broken and put back as an oak plate reads exactly like the first one, and its
+permutation changes on every press (`redstone_signal`). So the module watches the ways a plate can go that a script
+sees, and gives every bound plate a generation those ways end. The decisions live in `generation-rules.ts`, which has
+no engine import; `tests/pearl-generation.test.mjs` runs it under node, and runs `generation.ts` and `bind.ts` against a
+stand-in engine. `registerPearlGeneration()` runs at script load; `src/main.ts` arms one copy and the GameTest pack
+(`src/gametest/pear-generation.ts`) arms its own. It and `registerPearlBind()` arm once per pack: a second binding
+interval would confirm a hook's hit within one tick (seen in development, `pear_bind_hook_in_mob` failed).
+
+**The check.** `plateCheck(binding)` reads the cell's block and its generation:
+
+| Verdict | When | Trip |
+|---|---|---|
+| `same` | the recorded plate type stands there and the cell's generation is the recorded one | yes |
+| `other-type` | another plate type stands there (`/setblock` to oak) | no |
+| `missing` | no plate at all | no |
+| `replaced` | the generation is not the recorded one: an observed path took the plate, or the cell was pruned or evicted | no |
+| `unloaded` | the cell is not loaded; the teleport loads it before it asks | — |
+
+The trip itself is PEAR-TP-01's. Its comparison `plateGeneration(dim, pos) === binding.gen` (`bind.ts`) reads the same
+property, so it agrees with `plateCheck` on every binding made through `claimGeneration()`.
+
+**A generation is a stamp, not a count.** The first binding to a cell writes `andrew:pg:<dim>:<x>:<y>:<z>` = the next
+number from the world counter `andrew:pg_seq`; a second rod on the same plate records the same number. An observed
+replacement deletes the property. A missing property reads 0 and no binding records 0, so every binding to the old
+plate is void for good: the next binding to that cell gets a number no cell ever had. This differs from `L0-pear-ent2`
+("a counter, missing = 0, entries never deleted"). With a count from 0, deleting an entry would make old bindings match
+again; with stamps, deleting one can only refuse a trip, which is what lets the store be pruned.
+
+**The observed paths.**
+
+| Event | Cells it ends (when watched) | What it catches |
+|---|---|---|
+| `playerBreakBlock` | the broken cell and the one above | the plate itself; its support, which takes the plate with it |
+| `playerPlaceBlock` | the placed cell | a plate put back by hand after something unobserved removed the first one |
+| `blockExplode` | the exploded cell and the one above | TNT, creepers, beds, anchors, crystals: the plate or its support |
+| `pistonActivate` | watched cells within one block of the piston and everything it moves (one more layer up), `PISTON_SETTLE_TICKS` = 4 ticks later, **only those whose plate is gone** | a plate crushed by a pushed block or the arm, or knocked off a moved support |
+
+A piston cannot move a plate, only destroy it, so a plate still standing after the move is left alone: no false
+refusal. `getAttachedBlocksLocations()` threw "Failed to call function" on one retraction in two runs; then the box is
+two blocks around the piston instead.
+
+**The store and its pruning.** Each watched cell has a second property `andrew:pgw:<cell>`: JSON
+`{rods: {rodId: [binder id, order]}, last, pinned}`. A rod leaves its cell when
+- its binding is cleared or changed in its slot: `playerInventoryItemChange` with the bound rod as `beforeItemStack`
+  and the same rod id without that binding as `itemStack`. That is how the teleport's clearing reaches the store,
+  with no call between the two modules. A rod moved to another slot, another item, or a durability write is not;
+- the same rod is bound elsewhere: `claimGeneration()` releases its previous cell in the tick it binds;
+- its binder dies (`entityDie`, players only): every binding of theirs is void (C-45).
+
+The last rod out deletes both properties. Two bounds hold even when nothing is released:
+- `MAX_CELLS` = 512. A binding to a new cell past it evicts the cell bound longest ago; that cell's bindings then
+  read `replaced`.
+- `MAX_RODS_PER_CELL` = 64. Past it the cell is *pinned*: rods are no longer tracked, and only a replacement or
+  eviction removes it.
+
+### Measured on BDS 1.26.51.1 (private copy of the checks instance, 2026-10-13)
+
+Every scenario binds by a real cast from rel 3,2,0 into a field of plates, then clears every other plate cell; the bound
+plate is at rel 3,2,3 on a stone support.
+
+- **`pear_gen_player_replace`.** The player breaks the stone plate with a pickaxe (air after 3 ticks; the
+  `playerBreakBlock` after-event lands one tick later and ends the generation), then places a stone plate from their hand
+  on the same support. The cell reads `stone_pressure_plate` again, the rod still says generation 1, the world says 0:
+  `replaced -> NO TRIP`. The rod binds the new plate with a later generation (`same -> TRIP`), and the first record stays
+  refused. Place path alone: `/setblock … air` ends nothing (`missing`, generation kept), then the player places a stone
+  plate into the watched cell: `replaced`.
+- **`pear_gen_setblock_other_type`.** From a bound stone plate, `/setblock` to the oak plate and to the heavy weighted
+  plate reads `other-type`; to stone and to air, `missing`. No command moves the generation: the type check is what
+  refuses these. **The limitation, measured:** `/setblock` air then `/setblock` stone plate in one tick reads
+  `same -> TRIP`.
+- **`pear_gen_explosion_support_piston`.**
+  - TNT 2.5 blocks from the plate goes off after 81 ticks: one `blockExplode` for the plate cell, the support survives,
+    the generation ends. The plate put back by `setType` (seen by nothing) reads `replaced`.
+  - The player breaks the stone support under an oak plate (7 ticks); the plate pops off, the generation ends; support and
+    plate put back read `replaced`.
+  - A piston facing up under the support, powered by a redstone block: the plate cell reads `moving_block` 3–4 ticks
+    after the power and `stone` (the support, pushed in) from 5–6; the check 4 ticks after the event ends the
+    generation. Put back: `replaced`.
+- **`pear_gen_hundred_presses`.** A second player steps on and off the bound stone plate 100 times: signal 1 within a tick
+  of each step, 0 again 20 ticks after leaving. No observed event fires, the generation and the rod's record stay, and
+  the plate reads `same -> TRIP`.
+- **`pear_gen_store_pruned`.** Two rods of one player on one plate share its generation. Clearing rod 1 in its slot, the
+  way the teleport does, releases it (the plate is still held by rod 2); clearing rod 2 prunes the plate and leaves only
+  `andrew:pg_seq`. Rod 1 bound again and then overwritten onto an oak plate a cell nearer: the first plate is pruned.
+  The binder dies (`kill()`): their last plate is pruned within a tick.
+
+### Limitations (C-16)
+
+- **A plate swapped for one of the same type without a player, an explosion or a piston is not noticed.** `/setblock`,
+  `/fill`, `/clone`, a structure load and another add-on's `setType` raise no event a script sees; whatever else removes
+  a plate that way (liquids, game rules) is in the same group. Such a rod still takes its player there. Wording for
+  Andrey is below.
+- **Pistons moving more than two blocks are judged by the moved-block list.** When the list cannot be read, only the
+  two blocks around the piston are checked.
+- **A bound rod destroyed where nobody sees it** (lava, despawn, used as an ingredient) never releases its plate. The
+  plate's entry stays until the binder dies, the plate is replaced, or it is evicted past 512 cells.
+- **Eviction refuses a good binding.** The 513th plate bound while none of the 512 before it was released refuses the
+  trip of the plate bound longest ago (`replaced`): bind it again.
+- **A rod bound by a build before this module records generation 0** and is not watched: against a cell with no entry
+  it reads `same` whatever happened to the plate. Only epic builds before this one bind that way; none was released.
+
+### For Andrey: the acceptance sheet (`PEAR-IPAD-01-AA`) and the release notes
+
+**RU.** Удочка запоминает плиту по месту и по типу. Если плиту сломать — руками, взрывом, поршнем или сломав блок
+под ней — и поставить на то же место точно такую же, удочка это заметит и не перенесёт: скажет, что плита пропала или
+заменена, и попросит привязаться заново. Если на место плиты поставить плиту другого вида (была каменная, стала
+дубовая), тоже не перенесёт.
+
+Есть один случай, который игра различить не даёт. Если плиту заменить на точно такую же **командой** (`/setblock`,
+`/fill`, `/clone`), **загрузкой постройки** или **другим аддоном**, игра никому об этом не сообщает. У блока в
+Minecraft нет своего «паспорта»: новая каменная плита на том же месте ничем не отличается от старой. Поэтому такая
+удочка **перенесёт** игрока к новой плите, как к старой. Обычной игрой этого не сделать — только командами
+оператора или другими аддонами. Просим принять это ограничение явно.
+
+**EN.** The rod remembers a plate by its place and its type. Break the plate — by hand, with an explosion, with a piston,
+or by breaking the block under it — and put the very same kind back: the rod notices and does not teleport; it says the
+plate is gone or replaced and asks you to bind again. Put a different kind of plate there (stone becomes oak) and it does
+not teleport either.
+
+One case the game does not let us tell apart. If the plate is swapped for an identical one **by a command** (`/setblock`,
+`/fill`, `/clone`), **by loading a structure**, or **by another add-on**, the game tells nobody. A Minecraft block has no
+identity of its own: a new stone plate in the same spot is indistinguishable from the old one. Such a rod **will**
+teleport you to the new plate as if it were the old one. Normal play cannot do this — only operator commands or other
+add-ons can. Please accept this limitation explicitly.
