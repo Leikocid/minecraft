@@ -141,7 +141,7 @@ A removed hook leaves no cast behind; the next use casts afresh (probe Q4).
 in the same inventory or anyone else's — is not touched: the record lives on the item, found by its id.
 
 **What it reads but does not own.**
-- The life epoch: player dynamic property `andrew:life_epoch`, missing = 0. PEAR-OWNER-01 bumps it on death.
+- The life epoch: player dynamic property `andrew:life_epoch`, missing = 0. `owner.ts` (below) bumps it on death.
 - The plate generation: world dynamic property `andrew:pg:<overworld|nether|the_end>:<x>:<y>:<z>` (`L0-pear-ent2`). The
   binding does not read it, it claims it: `claimGeneration()` in `generation.ts` (below) hands out the number.
 - Honouring a binding on use is `teleport.ts` (below). The binder's own use of a bound rod is a trip, not a cast, so the
@@ -483,3 +483,92 @@ the engine refuses, then removing them. **Every check of every scenario read 9 o
 - **Every actionbar line**, in both languages: arrived, plate gone, not loaded, busy, dimension, unsafe, already
   travelling, rod left, failed.
 - **Riding**: using the rod while on a horse or in a boat leaves the mount behind (`xq12` item 4).
+
+## `owner.ts`: the binding belongs to a living player (`C-45`, `L0-pear-ru01`, `L0-pear-ent2`, `L0-pear-ac04`)
+
+Spec v3 §7: when the binder dies, all their active bindings of this item reset, «даже если предмет позже поднимет другой
+игрок» (even if another player picks the item up later). Handing the rod over or dropping it gives nobody else the right
+to use the binding; they have to bind it themselves. The decisions live in `owner-rules.ts`, which has no engine import;
+`tests/pearl-owner.test.mjs` runs it under node, and runs `owner.ts` with `bind.ts` against a stand-in engine.
+`registerPearlOwner()` runs at script load, once per pack; `src/main.ts` arms one copy and the GameTest pack
+(`src/gametest/pear-owner.ts`) arms its own.
+
+**The life epoch.** Player dynamic property `andrew:life_epoch`, missing = 0. `world.afterEvents.entityDie` of a player
+writes one more; it survives a logout and a restart like any player property. A binding carries its binder's id and the
+epoch at bind time (`bind.ts`), and the use gate (`teleport.ts` `useVerdict` → `isHonoured`) honours it only for the same
+id in the same epoch:
+
+| who uses the rod | `honourOf` | the use |
+|---|---|---|
+| the binder, same epoch | `honoured` | a trip |
+| the binder after a death | `past-life` | a vanilla cast |
+| anybody else | `foreign` | a vanilla cast |
+| a rod without a whole record | `unbound` | a vanilla cast |
+
+Nobody is stopped from casting: the spec forbids using somebody else's *binding*, not their rod (`xasm42`). The caster's
+own hook in a plate then binds the rod to the caster (one binding per rod, `bind.ts`).
+
+**No search.** A death writes one number on the player and touches no rod. A rod in a chest, on the ground, in an unloaded
+chunk or in a stranger's hand goes void because the epoch it carries is no longer its binder's.
+
+**Erasing a dead record.** A void record can never be honoured again, since an epoch only grows, but it would keep the
+lore `bound: …`. It is erased, with the lore set back to `unbound`, when the rod turns up while its binder is online in a
+later life:
+- a Pearl Rod carrying a record arrives in a player's inventory (`playerInventoryItemChange`: a pick-up, a chest take, a
+  hand-over). The rod is found by its id, because `event.slot` does not say which container slot it names;
+- a player spawns (`playerSpawn`): their whole inventory is swept, which covers rods kept through a death by
+  `keepInventory` and rods whose binder died while the holder was away.
+
+The erase is a `setItem` with the record gone, so `generation.ts` sees the release in the same inventory event.
+
+**A death in the middle of a trip.** A trip reads a death three ways (`teleport.ts`): health 0, `entityDie`, a moved
+epoch. Health is the one that counts in the tick of the death. Measured on BDS 1.26.51.1 with a scratch probe (`kill()`,
+a lethal `applyDamage`, a Void death): the order in a tick is GameTest continuation → `runInterval` → `system.run` jobs →
+after-events. Health reads 0 at once, but `entityDie` (and with it the epoch bump) arrives after that tick's interval.
+For a Void death the continuation and the interval already read 0 in the death tick.
+
+### Measured on BDS 1.26.51.1 (private copy of the checks instance, 2026-10-13)
+
+- **`pear_owner_death_voids`.** A binds three rods to one stone plate in life 0. One stays in A's inventory, one goes to a
+  chest, one to B by a throw and a pick-up.
+  - Before the death: all three `honoured` for A, `foreign` for B. Control: a fourth rod bound alike takes A to the plate
+    (`trip arrived after 1 ticks`).
+  - `kill()`: one `entityDie` (cause `selfDestruct`), epoch 0 → 1. The rod in A's inventory spills on its own (C-46). All
+    three rods read `past-life` for A, and B's copy is still `foreign` for B. **No rod was rewritten**: all three still
+    carry the record of life 0.
+  - B's use of A's rod after the death: a plain cast. B throws it and picks it up again: the record is erased, lore
+    `Pearl Rod|unbound` (`cleared+1`).
+  - A respawns and gets the spilled rod back from the ground and the other from the chest: both read `unbound`, lore
+    `Pearl Rod|unbound`, and both uses are plain casts. A's own hook in a plate binds the rod again with epoch 1, and A's
+    next use arrives on the plate.
+- **`pear_owner_stranger`.** A binds a rod to an acacia plate and throws it; B picks it up: `foreign` for B, `honoured`
+  for A.
+  - B's use: a plain cast (hook out, gate trips +0, B moved 0.00); the record on the rod is still A's.
+  - B's own hook in a heavy weighted plate: the record now names B, in B's epoch. B is `honoured`, A `foreign`, and B's
+    next use arrives on B's plate.
+  - Control: A's own rod, through a chest and a ground drop, is still `honoured`, and A's use arrives on A's plate.
+- **`pear_owner_death_mid_trip`.** A near plate; the control trip arrives one tick after the use. A is then killed three
+  ways:
+  - `taken`: in the tick the gate takes the use, before the trip's first step → `died (health 0)` at use+0;
+  - `ready`: in the first tick the trip holds its area with the plate loaded → `died (health 0)` at use+1;
+  - `ready_keep`: the same with `keepInventory` on, the rod staying in the dead hand → `died (health 0)` at use+1.
+
+  In all three: moved 0.00, no actionbar line, no arrival counted, no trip and no area left, epoch +1. The rod kept in the
+  dead hand still carries its record (void by epoch). Back in the new life, the rod reads `Pearl Rod|unbound` and casts.
+  Before the trip's health check existed, `ready` ended `rod-left` with `andrew.pearl_rod.rod_left` («Удочки нет в
+  инвентаре…») sent to the dead player, and `ready_keep` ended **`arrived`**: the dead player was moved 3 blocks onto the plate, told "arrived", and the
+  binding was cleared (`5.red.json`).
+
+### Limitations
+
+- **The lore cannot follow the holder.** It belongs to the item, not to the viewer. A live binding of A reads `bound: …` in
+  B's hand too, although for B the rod casts.
+- **A dead record waits for its binder to be online.** Whether a binder has died since is known only from the binder's
+  own epoch, readable while they are online. A rod in a chest whose binder has left the game keeps `bound: …` until the
+  binder is back and the rod moves. It is void all the same; only the lore lags.
+- **Death is the only reset.** A binder who logs out keeps their bindings: the spec resets them on death only.
+
+### For the iPad sheet (`PEAR-IPAD-01-AA`)
+
+- **Death resets the binding.** Bind a rod, die, pick the rod up: the lore reads `unbound`, and the use casts.
+- **A friend cannot ride your binding.** Hand a bound rod to a second player: their use casts a line, and nobody moves.
