@@ -23,7 +23,13 @@ test('every broad scenario exists in the suite', () => {
 });
 
 test('the broad set stays small and has no repeats', () => {
-  assert.ok(BROAD_TESTS.length >= 10 && BROAD_TESTS.length <= 20, `${BROAD_TESTS.length} scenarios`);
+  // The ceiling tracks the shipped systems, not a round number: it was 20 for
+  // seven legendaries and rises as products land (the Underwater Bow, the two
+  // vanilla recipes and the Pearl Rod took it to 26 on 2026-10-13). What the
+  // operator asked for is a gate of minutes, not of scenarios — so the real
+  // guard is the measured run, and this one only stops the set drifting back
+  // into the deep suite it was split from.
+  assert.ok(BROAD_TESTS.length >= 10 && BROAD_TESTS.length <= 28, `${BROAD_TESTS.length} scenarios`);
   assert.equal(new Set(BROAD_TESTS).size, BROAD_TESTS.length);
 });
 

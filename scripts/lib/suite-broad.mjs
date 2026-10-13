@@ -30,4 +30,10 @@ export const BROAD_TESTS = [
   'andrew:trident_craft_two_empty_buckets', // the refund an addon recipe cannot do by data
   'andrew:trident_dash_distance',
   'andrew:trident_throw_wall_return', // throw, block, visible return — the first legendary that leaves the inventory
+  'andrew:vanilla_recipe_mace_new_and_old', // the new Mace recipe, beside the Heavy Core one it must not replace
+  'andrew:ubow_craft_two_empty_buckets', // the bow's craft and the two buckets an addon recipe cannot hand back by data
+  'andrew:ubow_flight_water', // what the bow is for: an arrow that keeps its air speed under water
+  'andrew:ubow_ability_exact', // the armed shot whole: exactly 14 before armour, one spectacle, Super Fire, the cooldown
+  'andrew:pear_item_craft_unlimited', // the Pearl Rod exists and crafts without a limit
+  'andrew:pear_tp_near_clears', // bind, travel, and the binding is spent — the rod's whole point in one scenario
 ];
