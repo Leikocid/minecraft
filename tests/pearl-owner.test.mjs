@@ -123,6 +123,8 @@ const stubPlugin = {
           getAbsoluteTime: () => 99,
           getAllPlayers: () => [],
           getDynamicProperty: (k) => H.worldDp.get(k),
+          setDynamicProperty: (k, v) => (v === undefined ? H.worldDp.delete(k) : H.worldDp.set(k, v)),
+          getDynamicPropertyIds: () => [...H.worldDp.keys()],
           getEntity: (id) => H.players.get(id),
           afterEvents: {
             playerInventoryItemChange: { subscribe(cb) { H.invChange.push(cb); return cb; } },
