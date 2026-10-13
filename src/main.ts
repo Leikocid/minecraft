@@ -22,6 +22,7 @@ import { protectLegendariesIn, registerRecovery } from "./legendary/recovery";
 import { registerRetention } from "./legendary/retention";
 import { registerOrbitalCannon } from "./orbital";
 import { registerRocketFlight } from "./rocket-flight";
+import { isRolledOut } from "./rollout";
 import { registerInterceptor } from "./orbital/flight";
 import { worldAreas } from "./pearl/area-pool";
 import { registerPearlBind } from "./pearl/bind";
@@ -51,18 +52,22 @@ import { registerUbowFlight } from "./ubow/flight";
 import { registerPearlOwner } from "./pearl/owner";
 
 registerAutoSmelt();
-registerRocketFlight();
+// Withheld products keep their code and lose their way in (rollout.json): the rockets' flight-1
+// rewrite reaches every data-less rocket, not only the ones this pack's recipe made.
+if (isRolledOut("vanilla_rocket_recipe")) registerRocketFlight();
 registerCraftGate();
 registerRetention();
 registerRecovery();
 registerEnchantScrub();
 registerLegendaryHud();
-registerPearlGeneration();
-registerPearlItem();
-registerPearlBind();
-// One area budget for the world: the spawn search, /andrew:find and the ring loaders below take structure slots
-// from it, and the Pearl Rod keeps its reserved one (L0-adr-prta).
-registerPearlTeleport({ areas: worldAreas });
+if (isRolledOut("pearl_rod")) {
+  registerPearlGeneration();
+  registerPearlItem();
+  registerPearlBind();
+  // One area budget for the world: the spawn search, /andrew:find and the ring loaders below take structure slots
+  // from it, and the Pearl Rod keeps its reserved one (L0-adr-prta) — which the budget keeps while it is withheld.
+  registerPearlTeleport({ areas: worldAreas });
+}
 registerTrap();
 registerStormPassive();
 registerTridentDamage();
@@ -76,7 +81,7 @@ registerTridentMovement();
 registerUbowAbility();
 registerUnderwaterBowFire();
 registerUbowFlight();
-registerPearlOwner();
+if (isRolledOut("pearl_rod")) registerPearlOwner();
 // Must come after every other legendary's input: see registerStormActive().
 registerStormActive();
 // Must run at script load: custom commands can only be registered during the
