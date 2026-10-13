@@ -5,10 +5,11 @@
 
 import { type Container, type Dimension, type ItemStack, type Player, system, world } from "@minecraft/server";
 import { type AreaBudget, type AreaLease, WORLD_AREA_CAP, worldAreas } from "./area-pool";
-import { bindingOf, lifeEpochOf, plateGeneration } from "./bind";
+import { bindingOf, plateGeneration } from "./bind";
 import { BINDING_KEYS, type Binding, type Vec3, dimensionName } from "./bind-rules";
 import { isPearlRodStack } from "./item";
 import { MARK_KEY, ROD_ID, unboundLore } from "./item-rules";
+import { lifeEpochOf, playerKey } from "./store";
 import {
   ARRIVAL_SOUND,
   type CellRead,
@@ -334,7 +335,7 @@ export function registerPearlTeleport(options: TeleportOptions = {}): void {
     if (player === undefined || stack.typeId !== ROD_ID || !isPearlRodStack(stack)) return;
     const binding = bindingOf(stack);
     const epoch = lifeEpochOf(player);
-    const verdict = useVerdict(binding, { id: player.id, epoch }, trips.has(player.id));
+    const verdict = useVerdict(binding, { id: playerKey(player), epoch }, trips.has(player.id));
     if (verdict === "vanilla" || binding === undefined) return;
     // A cancelled use throws no hook and raises no after-event (probe Q4).
     event.cancel = true;

@@ -2,7 +2,7 @@
 // replacement paths end it, and a binding whose generation is gone does not take its rod anywhere. The decisions are
 // in generation-rules.ts; this module is the engine half — world events in, world dynamic properties out.
 
-import { type ItemStack, type PistonActivateAfterEvent, type PlayerInventoryItemChangeAfterEvent, system, world } from "@minecraft/server";
+import { type ItemStack, type PistonActivateAfterEvent, type Player, type PlayerInventoryItemChangeAfterEvent, system, world } from "@minecraft/server";
 import { type Binding, type Vec3, isPlateType, readBinding } from "./bind-rules";
 import {
   type ClaimResult,
@@ -22,6 +22,7 @@ import {
 } from "./generation-rules";
 import { MARK_KEY } from "./item-rules";
 import { isPearlRodStack } from "./item";
+import { playerKey } from "./store";
 
 /** Counters a GameTest reads to tell which path ended a generation. */
 export const genStats = { claims: 0, created: 0, evicted: 0, bumps: 0, releases: 0, pruned: 0, ownerPrunes: 0, pistonChecks: 0, errors: 0 };
@@ -143,9 +144,9 @@ export function registerPearlGeneration(): void {
   a.entityDie.subscribe(
     guard("the death check", (e) => {
       // After-events can carry an entity that is already gone; its id is still the binder's.
-      const id = e.deadEntity?.id;
-      if (id === undefined) return;
-      const r = forgetOwner(store, id);
+      const dead: Player | undefined = e.deadEntity as Player | undefined;
+      if (dead === undefined) return;
+      const r = forgetOwner(store, playerKey(dead));
       genStats.releases += r.released;
       genStats.ownerPrunes += r.pruned;
     }),

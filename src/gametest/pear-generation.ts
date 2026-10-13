@@ -17,7 +17,7 @@ import {
 } from "@minecraft/server";
 import { LookDuration, type SimulatedPlayer, type Test, registerAsync } from "@minecraft/server-gametest";
 import { bindStats, bindingOf } from "../pearl/bind";
-import { BINDING_KEYS, type Binding, isPlateType } from "../pearl/bind-rules";
+import { BINDING_KEYS, type Binding, HOOK_ID, isPlateType } from "../pearl/bind-rules";
 import { PISTON_SETTLE_TICKS, genStats, plateCheck, plateGenerationNow, registerPearlGeneration, watchedNow } from "../pearl/generation";
 import { honours } from "../pearl/generation-rules";
 import { makePearlRod } from "../pearl/item";
@@ -111,19 +111,27 @@ async function bindOnField(test: Test, p: SimulatedPlayer, plateType: string, sl
   fill(test, FIELD_MIN, FIELD_MAX, plateType);
   p.setItem(rod, slot, true);
   await test.idle(2);
-  p.lookAtLocation(AIM, LookDuration.Instant);
-  await test.idle(2);
   // The rod may still carry an earlier binding: only a bind counted after this cast is this cast's.
   const binds0 = bindStats.binds;
+  const missed: string[] = [];
   let b: Binding | undefined;
   for (let tries = 0; tries < CAST_TRIES && b === undefined; tries++) {
+    // A SimulatedPlayer's Instant look drifts level within ~28 ticks, and a use the binder makes of a rod still bound
+    // is a trip that throws no hook: aim again before every use, and take back a hook that did not bind, so the next
+    // use casts instead of reeling.
+    p.lookAtLocation(AIM, LookDuration.Instant);
+    await test.idle(2);
     p.useItemInSlot(slot);
     for (let t = 0; t < BIND_WAIT_TICKS && b === undefined; t++) {
       await test.idle(1);
       if (bindStats.binds > binds0) b = bindingOf(rodOf(p, rodId));
     }
+    if (b !== undefined) break;
+    const hooks = test.getDimension().getEntities({ type: HOOK_ID }).filter((h) => h.getComponent("minecraft:projectile")?.owner?.id === p.id);
+    missed.push(hooks.length === 0 ? "no hook" : hooks.map((h) => `hook@rel${rel(test, h.location)}`).join("+"));
+    for (const h of hooks) h.remove();
   }
-  if (b === undefined) throw new Error(`${p.name}: no binding after ${CAST_TRIES} casts onto ${short(plateType)}`);
+  if (b === undefined) throw new Error(`${p.name}: no binding after ${CAST_TRIES} casts onto ${short(plateType)}: [${missed.join(", ")}]`);
   const dim = test.getDimension();
   for (let x = FIELD_MIN.x; x <= FIELD_MAX.x; x++) {
     for (let z = FIELD_MIN.z; z <= FIELD_MAX.z; z++) {

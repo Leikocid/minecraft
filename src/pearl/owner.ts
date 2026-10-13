@@ -1,20 +1,22 @@
 // The binding belongs to a living player (spec v3 §7; C-45, L0-pear-ent2): a player's death bumps their life epoch,
 // which voids every binding they made wherever the rod is, with no search. A dead record is erased later, when the rod
-// turns up in a player's inventory with its binder online. The decisions are in owner-rules.ts; this module is the
-// engine half — deaths in, the epoch out. The use gate and a trip in progress read the epoch (teleport.ts).
+// turns up in a player's inventory and its binder's epoch is known to have moved on. The decisions are in
+// owner-rules.ts; the epoch is kept by store.ts; this module is the engine half — deaths in, the epoch out. The use
+// gate and a trip in progress read the epoch (teleport.ts).
 
 import { type Container, type Entity, type ItemStack, Player, world } from "@minecraft/server";
-import { bindingOf, lifeEpochOf } from "./bind";
-import { BINDING_KEYS, type Binding, LIFE_EPOCH_KEY } from "./bind-rules";
+import { bindingOf } from "./bind";
+import { BINDING_KEYS, type Binding } from "./bind-rules";
 import { isPearlRodStack } from "./item";
 import { MARK_KEY, unboundLore } from "./item-rules";
-import { type Holder, type Honour, honourOf, isDeadRecord, nextLifeEpoch } from "./owner-rules";
+import { type Holder, type Honour, honourOf, isDeadRecord } from "./owner-rules";
+import { endLife as bumpEpoch, lifeEpochOf, playerKey, storedEpoch } from "./store";
 
 /** Counters a GameTest reads to tell what the module did. */
 export const ownerStats = { deaths: 0, cleared: 0, errors: 0 };
 
 export function holderOf(player: Player): Holder {
-  return { id: player.id, epoch: lifeEpochOf(player) };
+  return { id: playerKey(player), epoch: lifeEpochOf(player) };
 }
 
 export function honourFor(player: Player, stack: ItemStack | undefined): Honour {
@@ -28,15 +30,23 @@ export function honouredBindingOf(player: Player, stack: ItemStack | undefined):
 }
 
 function endLife(player: Player): void {
-  player.setDynamicProperty(LIFE_EPOCH_KEY, nextLifeEpoch(player.getDynamicProperty(LIFE_EPOCH_KEY)));
+  bumpEpoch(player);
   ownerStats.deaths++;
 }
 
-/** The binder's epoch now, read off `holder` when it is the binder; undefined while the binder is offline. */
+/**
+ * The binder's epoch now: read off `holder` when it is the binder, off the binder when online, else the world copy.
+ * Undefined for a binder offline since before the world copy existed.
+ */
 function binderEpoch(owner: string, holder: Player): number | undefined {
-  if (owner === holder.id) return lifeEpochOf(holder);
-  const binder = world.getEntity(owner);
-  return binder instanceof Player && binder.isValid ? lifeEpochOf(binder) : undefined;
+  if (owner === playerKey(holder)) return lifeEpochOf(holder);
+  let binder: Entity | undefined;
+  try {
+    binder = world.getEntity(owner);
+  } catch {
+    binder = undefined;
+  }
+  return binder instanceof Player && binder.isValid ? lifeEpochOf(binder) : storedEpoch(owner);
 }
 
 /** Erases a dead record from the rod in `slot`, with the lore back to "unbound"; true when it did. */

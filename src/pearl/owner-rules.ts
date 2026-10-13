@@ -5,7 +5,7 @@
 
 import { type Binding, counterOf } from "./bind-rules";
 
-/** The player using a rod: `Player.id` and the life epoch read from `andrew:life_epoch` (missing = 0). */
+/** The player using a rod: their key (`Player.id`, store.ts `playerKey`) and their life epoch (store.ts). */
 export interface Holder {
   id: string;
   epoch: number;
@@ -33,8 +33,8 @@ export function isHonoured(binding: Binding | undefined, holder: Holder): boolea
 
 /**
  * A record that can never be honoured again: its binder has died since binding (an epoch only grows), so erasing it
- * loses nothing and puts the "unbound" lore back. `binderEpochNow` is undefined while the binder is offline — unknown,
- * so the record stays.
+ * loses nothing and puts the "unbound" lore back. `binderEpochNow` is undefined when no copy of the binder's epoch can
+ * be read — unknown, so the record stays.
  */
 export function isDeadRecord(binding: Binding | undefined, binderEpochNow: number | undefined): boolean {
   return binding !== undefined && binderEpochNow !== undefined && binderEpochNow > binding.epoch;
