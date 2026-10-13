@@ -215,6 +215,8 @@ const stubPlugin = {
           getAbsoluteTime: () => 99,
           getAllPlayers: () => [],
           getDynamicProperty: (k) => H.worldDp.get(k),
+          setDynamicProperty: (k, v) => (v === undefined ? H.worldDp.delete(k) : H.worldDp.set(k, v)),
+          getDynamicPropertyIds: () => [...H.worldDp.keys()],
           afterEvents: {
             playerInventoryItemChange: { subscribe(cb) { return cb; } },
             itemUse: { subscribe(cb) { return cb; } },

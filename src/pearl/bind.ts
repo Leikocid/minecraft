@@ -21,6 +21,7 @@ import {
   readBinding,
   type Vec3,
 } from "./bind-rules";
+import { claimGeneration } from "./generation";
 import { MARK_KEY } from "./item-rules";
 import { isPearlRodStack } from "./item";
 
@@ -75,15 +76,15 @@ function bind(t: Tracked, cell: Vec3, plateType: string): boolean {
     return false;
   }
   const dim = t.hook.dimension.id;
+  const { container, slot, stack } = found;
   const record: Binding = {
     dim,
     pos: cell,
     type: plateType,
     owner: t.player.id,
     epoch: lifeEpochOf(t.player),
-    gen: plateGeneration(dim, cell),
+    gen: claimGeneration(dim, cell, t.rodId, t.player.id, bindingOf(stack)),
   };
-  const { container, slot, stack } = found;
   for (const [key, value] of bindingEntries(record)) stack.setDynamicProperty(key, value);
   stack.setLore(boundLore(record));
   const durability = stack.getComponent("minecraft:durability");
@@ -132,7 +133,12 @@ function checkAll(): void {
   }
 }
 
+let armed = false;
+
+/** Arms the binding once per pack: a second set of subscriptions would run the check twice a tick. */
 export function registerPearlBind(): void {
+  if (armed) return;
+  armed = true;
   world.afterEvents.entitySpawn.subscribe((event) => {
     const hook = event.entity;
     if (hook.typeId !== HOOK_ID || !hook.isValid) return;
