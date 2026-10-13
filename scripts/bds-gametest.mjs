@@ -29,6 +29,8 @@
 //   npm run bds:gametest -- --no-build --timeout 5400
 //   npm run bds:gametest -- --keep-up      # leave the server running to inspect
 //   npm run bds:gametest -- --only andrew:probe_fire_resistance_noon   # one test, for iteration
+//   npm run bds:gametest -- --release-pack --only andrew:rollout_withheld_recipes
+//                                                      # the archive as it ships, nothing restored
 
 import { execFileSync, spawnSync } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
@@ -668,6 +670,10 @@ const EXPECTED_TESTS = [
   // RCPE-ROCKET-02 — src/gametest/recipes-rocket.ts (spec v3 §3, ADR-uwbw-rc, C-16): docs/feedback/rocket-duration.md
   'andrew:rocket_duration_paths',
   'andrew:rocket_duration_swap',
+
+  // ROLL-01 — src/gametest/rollout.ts: judges the release pack, not the code.
+  // Runs only under --release-pack; see RELEASE_PACK_TESTS below.
+  'andrew:rollout_withheld_recipes',
 ];
 
 // A renamed scenario would otherwise drop out of the release gate silently.
@@ -675,6 +681,17 @@ const notInSuite = BROAD_TESTS.filter((name) => !EXPECTED_TESTS.includes(name));
 if (notInSuite.length > 0) {
   throw new Error(`BROAD_TESTS names scenarios missing from EXPECTED_TESTS: ${notInSuite.join(' ')}`);
 }
+
+/**
+ * Scenarios that judge the RELEASE pack rather than the code: they prove a withheld
+ * product has no way into the world (rollout.json, docs/dev/rollout.md), so they need
+ * the archive exactly as it ships. Every other run restores the withheld files first —
+ * which is what keeps the whole code under test — and under that install these would
+ * fail by design. Hence they sit outside the gate and outside --all, and run as
+ *
+ *   npm run bds:gametest -- --release-pack --only andrew:rollout_withheld_recipes
+ */
+const RELEASE_PACK_TESTS = ['andrew:rollout_withheld_recipes'];
 
 /**
  * A test that ends in a server restart: once it reports, BDS is stopped (the
@@ -708,12 +725,13 @@ const env = {
 function parseArgs(argv) {
   // The zombie-villager cure alone waits up to 5.5 minutes of game time, and the
   // whole suite runs 32–48 minutes under Rosetta, past a 30-minute deadline.
-  const opts = { build: true, timeoutSec: 5400, keepUp: false, only: [], all: false };
+  const opts = { build: true, timeoutSec: 5400, keepUp: false, only: [], all: false, releasePack: false };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === '--no-build') opts.build = false;
     else if (arg === '--all') opts.all = true;
     else if (arg === '--keep-up') opts.keepUp = true;
+    else if (arg === '--release-pack') opts.releasePack = true;
     else if (arg === '--only') opts.only.push(argv[++i]);
     else if (arg === '--timeout') opts.timeoutSec = Number(argv[++i]);
     else throw new Error(`unknown argument: ${arg}`);
@@ -723,6 +741,18 @@ function parseArgs(argv) {
   }
   const unknown = opts.only.filter((n) => !EXPECTED_TESTS.includes(n));
   if (unknown.length > 0) throw new Error(`--only: not in EXPECTED_TESTS: ${unknown.join(' ')}`);
+  // The two installs judge different things, and a scenario run under the wrong one
+  // fails for a reason that has nothing to do with the product.
+  const releaseOnly = opts.only.filter((n) => RELEASE_PACK_TESTS.includes(n));
+  if (opts.releasePack) {
+    if (opts.all) throw new Error('--release-pack runs the release-pack scenarios only, not --all');
+    const strays = opts.only.filter((n) => !RELEASE_PACK_TESTS.includes(n));
+    if (opts.only.length === 0 || strays.length > 0) {
+      throw new Error(`--release-pack takes only ${RELEASE_PACK_TESTS.join(' ')} via --only${strays.length > 0 ? `; not ${strays.join(' ')}` : ''}`);
+    }
+  } else if (releaseOnly.length > 0) {
+    throw new Error(`${releaseOnly.join(' ')} judges the release pack — add --release-pack (see docs/dev/rollout.md)`);
+  }
   for (const [before, after] of RESTART_AFTER) {
     const i = opts.only.indexOf(before);
     const j = opts.only.indexOf(after);
@@ -1045,7 +1075,9 @@ function main() {
   refuseProduction('a GameTest run');
   const opts = parseArgs(process.argv.slice(2));
   // A partial run is for iteration; only the full list proves the suite.
-  const selected = opts.only.length > 0 ? opts.only : opts.all ? EXPECTED_TESTS : BROAD_TESTS;
+  const selected = opts.only.length > 0
+    ? opts.only
+    : (opts.all ? EXPECTED_TESTS : BROAD_TESTS).filter((name) => !RELEASE_PACK_TESTS.includes(name));
 
   assertComposePinsVersion();
   assertDockerRunning();
@@ -1057,7 +1089,7 @@ function main() {
   // PLATFORM_SIZE in src/gametest/legendary-fireproof.ts lays one cell per legendary on this floor.
   writeStructure({ sx: 7, sy: 5, sz: 7 });
 
-  const packs = unpackAddon(null);
+  const packs = unpackAddon(null, { restoreWithheld: !opts.releasePack });
   let text = '';
   try {
     const deadline = Date.now() + opts.timeoutSec * 1000;

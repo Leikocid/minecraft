@@ -7,7 +7,9 @@
 //   3. compile src/structures/templates -> packs/behavior/structures/andrew/,
 //      except the probe templates, which go to the dev-only gametest and selftest packs
 //   4. validate both release packs and the selftest pack
-//   5. zip packs/behavior and packs/resource into dist/andrew.mcaddon
+//   5. zip packs/behavior and packs/resource into dist/andrew.mcaddon, minus the
+//      files rollout.json withholds (docs/dev/rollout.md): a product that is not
+//      rolled out keeps its code and its tests and loses its way into the world
 //
 // packs/selftest is built but deliberately NOT zipped: it is a dev-only
 // behavior pack that scripts/bds-check.mjs installs on the server alongside the
@@ -19,6 +21,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, rmSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, join } from 'node:path';
+import { loadRollout, missingFiles, packageArgs, withheldBy } from './lib/rollout.mjs';
 import { validatePacks, validateSelfTestPack } from './validate.mjs';
 import { buildPackStructures } from './build-structures.mjs';
 
@@ -113,6 +116,25 @@ function build() {
     }
   });
 
+  const rollout = loadRollout();
+  const withheld = withheldBy(rollout);
+
+  step('apply the rollout list', () => {
+    // A path that matches nothing withholds nothing and reads as success: a renamed
+    // recipe is how a withheld product comes back without anybody deciding to.
+    const missing = missingFiles(rollout);
+    if (missing.length > 0) {
+      throw new Error(`rollout.json names file(s) that are not under packs/: ${missing.join(' ')}`);
+    }
+    if (withheld.size === 0) {
+      process.stdout.write('  every product is rolled out — nothing withheld\n');
+      return;
+    }
+    for (const [file, product] of withheld) {
+      process.stdout.write(`  withheld: ${file} (${product})\n`);
+    }
+  });
+
   step('package .mcaddon', () => {
     mkdirSync(distDir, { recursive: true });
     if (existsSync(archivePath)) {
@@ -121,7 +143,7 @@ function build() {
     // Only "behavior" and "resource" — "selftest" is dev-only and never ships.
     execFileSync(
       'zip',
-      ['-r', '-X', archivePath, 'behavior', 'resource', '-x', '*.DS_Store'],
+      packageArgs(archivePath, rollout),
       { stdio: 'inherit', cwd: packsDir }
     );
   });

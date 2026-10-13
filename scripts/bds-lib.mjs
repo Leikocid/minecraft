@@ -11,6 +11,7 @@ import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, 
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { loadRollout, packsDir, withheldFiles } from './lib/rollout.mjs';
 import { BDS_VERSION } from './targets.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -133,9 +134,21 @@ function classifyPack(manifest) {
  * The overlay is applied *before* the manifests are read, so that a fixture
  * which rewrites a manifest is reflected in world_*_packs.json as well.
  */
-export function unpackAddon(overlayDir) {
+export function unpackAddon(overlayDir, { restoreWithheld = false } = {}) {
   const tmp = mkdtempSync(join(tmpdir(), 'andrew-bds-'));
   execFileSync('unzip', ['-q', '-o', addonPath, '-d', tmp]);
+
+  // The rollout list withholds a product's way into the world from the archive, not
+  // from the code (docs/dev/rollout.md). A test run puts those files back, so the
+  // suite goes on proving the whole pack; the opt-in is explicit and off by default,
+  // so a deploy can never restore a door by forgetting a flag.
+  if (restoreWithheld) {
+    const files = withheldFiles(loadRollout());
+    for (const rel of files) {
+      cpSync(join(packsDir, rel), join(tmp, rel), { force: true });
+    }
+    if (files.length > 0) log(`▶ restored ${files.length} withheld file(s) for this run: ${files.join(' ')}`);
+  }
 
   if (overlayDir) {
     const abs = join(root, overlayDir);
