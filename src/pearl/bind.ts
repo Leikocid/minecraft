@@ -8,7 +8,6 @@ import {
   BOUND_MESSAGE_KEY,
   HOOK_ID,
   type HitWatch,
-  LIFE_EPOCH_KEY,
   NO_HIT,
   bindingEntries,
   boundLore,
@@ -24,6 +23,9 @@ import {
 import { claimGeneration } from "./generation";
 import { MARK_KEY } from "./item-rules";
 import { isPearlRodStack } from "./item";
+import { lifeEpochOf, playerKey } from "./store";
+
+export { lifeEpochOf };
 
 /** Counters a GameTest reads to tell what the module did. */
 export const bindStats = { tracked: 0, binds: 0, entityHits: 0, rodMissing: 0, errors: 0 };
@@ -60,10 +62,6 @@ export function bindingOf(stack: ItemStack | undefined): Binding | undefined {
   return readBinding((key) => stack.getDynamicProperty(key));
 }
 
-export function lifeEpochOf(player: Player): number {
-  return counterOf(player.getDynamicProperty(LIFE_EPOCH_KEY));
-}
-
 export function plateGeneration(dim: string, cell: Vec3): number {
   return counterOf(world.getDynamicProperty(generationKey(dim, cell)));
 }
@@ -81,9 +79,9 @@ function bind(t: Tracked, cell: Vec3, plateType: string): boolean {
     dim,
     pos: cell,
     type: plateType,
-    owner: t.player.id,
+    owner: playerKey(t.player),
     epoch: lifeEpochOf(t.player),
-    gen: claimGeneration(dim, cell, t.rodId, t.player.id, bindingOf(stack)),
+    gen: claimGeneration(dim, cell, t.rodId, playerKey(t.player), bindingOf(stack)),
   };
   for (const [key, value] of bindingEntries(record)) stack.setDynamicProperty(key, value);
   stack.setLore(boundLore(record));

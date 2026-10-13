@@ -141,7 +141,8 @@ A removed hook leaves no cast behind; the next use casts afresh (probe Q4).
 in the same inventory or anyone else's — is not touched: the record lives on the item, found by its id.
 
 **What it reads but does not own.**
-- The life epoch: player dynamic property `andrew:life_epoch`, missing = 0. `owner.ts` (below) bumps it on death.
+- The life epoch, kept by `store.ts` (below), missing = 0. `owner.ts` (below) bumps it on death. The binder is named by
+  `playerKey()`, which is `Player.id`.
 - The plate generation: world dynamic property `andrew:pg:<overworld|nether|the_end>:<x>:<y>:<z>` (`L0-pear-ent2`). The
   binding does not read it, it claims it: `claimGeneration()` in `generation.ts` (below) hands out the number.
 - Honouring a binding on use is `teleport.ts` (below). The binder's own use of a bound rod is a trip, not a cast, so the
@@ -493,10 +494,9 @@ to use the binding; they have to bind it themselves. The decisions live in `owne
 `registerPearlOwner()` runs at script load, once per pack; `src/main.ts` arms one copy and the GameTest pack
 (`src/gametest/pear-owner.ts`) arms its own.
 
-**The life epoch.** Player dynamic property `andrew:life_epoch`, missing = 0. `world.afterEvents.entityDie` of a player
-writes one more; it survives a logout and a restart like any player property. A binding carries its binder's id and the
-epoch at bind time (`bind.ts`), and the use gate (`teleport.ts` `useVerdict` → `isHonoured`) honours it only for the same
-id in the same epoch:
+**The life epoch.** Kept by `store.ts` (below) in two copies, missing = 0. `world.afterEvents.entityDie` of a player
+writes one more. A binding carries its binder's key (`Player.id`) and the epoch at bind time (`bind.ts`), and the use gate
+(`teleport.ts` `useVerdict` → `isHonoured`) honours it only for the same key in the same epoch:
 
 | who uses the rod | `honourOf` | the use |
 |---|---|---|
@@ -512,8 +512,8 @@ own hook in a plate then binds the rod to the caster (one binding per rod, `bind
 chunk or in a stranger's hand goes void because the epoch it carries is no longer its binder's.
 
 **Erasing a dead record.** A void record can never be honoured again, since an epoch only grows, but it would keep the
-lore `bound: …`. It is erased, with the lore set back to `unbound`, when the rod turns up while its binder is online in a
-later life:
+lore `bound: …`. It is erased, with the lore set back to `unbound`, when the rod turns up and its binder's epoch reads
+later than the record's: off the binder when they are online, otherwise off the world copy (`store.ts`):
 - a Pearl Rod carrying a record arrives in a player's inventory (`playerInventoryItemChange`: a pick-up, a chest take, a
   hand-over). The rod is found by its id, because `event.slot` does not say which container slot it names;
 - a player spawns (`playerSpawn`): their whole inventory is swept, which covers rods kept through a death by
@@ -563,12 +563,101 @@ For a Void death the continuation and the interval already read 0 in the death t
 
 - **The lore cannot follow the holder.** It belongs to the item, not to the viewer. A live binding of A reads `bound: …` in
   B's hand too, although for B the rod casts.
-- **A dead record waits for its binder to be online.** Whether a binder has died since is known only from the binder's
-  own epoch, readable while they are online. A rod in a chest whose binder has left the game keeps `bound: …` until the
-  binder is back and the rod moves. It is void all the same; only the lore lags.
+- **A dead record waits until a rod moves.** No death searches rods, so a rod lying in a chest keeps `bound: …` until it
+  reaches an inventory. It is void all the same; only the lore lags. A death recorded before the world copy of the epoch
+  existed is readable only off the binder, so such a record waits for its binder to be online.
 - **Death is the only reset.** A binder who logs out keeps their bindings: the spec resets them on death only.
 
 ### For the iPad sheet (`PEAR-IPAD-01-AA`)
 
 - **Death resets the binding.** Bind a rod, die, pick the rod up: the lore reads `unbound`, and the use casts.
 - **A friend cannot ride your binding.** Hand a bound rod to a second player: their use casts a line, and nobody moves.
+
+## `store.ts`: the binding across a restart (`L0-pear-ac06`, `L0-pear-ent2`)
+
+Spec v3 §7: «Успешная привязка должна сохраняться при перезапуске мира, если игрок жив и плита существует; техническую
+реализуемость стабильным API проверить» (a binding must survive a world restart while the player lives and the plate
+stands; check that the stable API can do it). §8: "Unbound fishing works; saved items and state survive reload without
+corruption". `tests/pearl-store.test.mjs` runs `store.ts` against a stand-in engine and replays a restart by loading the
+module again over the saved properties.
+
+**Where each piece lives.**
+
+| State | Where | Across a restart |
+|---|---|---|
+| the mark and the binding record (`bind.ts`) | the rod: item dynamic properties | saved with the stack, in a chest, on the ground or in an inventory |
+| the plate generations and their watch store (`generation.ts`) | world dynamic properties of the pack | saved with the world |
+| the life epoch | two copies: player property `andrew:life_epoch` and world property `andrew:le:<player key>` | saved with the player and with the world |
+| the player key | `Player.id` | "intended to be consistent across loads of a world instance" (`Entity.id`, 2.10.0) |
+| tracked hooks, trips under way, the area budget's counts | memory | dropped; each copy's startup sweep removes its trip areas |
+
+**The epoch, in two copies.** A read takes the larger of the two; a copy that is not a whole number from 0 up counts as no
+value. A death writes one past it to both. So a copy that is lost or garbled never lowers the epoch, and a dead binding
+cannot come back. The world copy is readable while its player is offline, so a dead record that reaches someone else's
+inventory is erased even when its binder is away (`owner.ts`). The player copy is the one worlds saved by earlier builds
+of this epic hold, and a read still takes it.
+
+**The key.** `playerKey(player)` is `Player.id`. Only the GameTest pack overrides it, and only for players named `pps_*`,
+whose key is `gt-persist:<name>`: a SimulatedPlayer comes back from a restart as a new entity with a new id and no
+dynamic properties (below), where a client keeps both. Every other player, and the whole release pack, goes by the id.
+
+### Measured on BDS 1.26.51.1 (private copy of the checks instance, 2026-10-13)
+
+`pear_persist_seed`, then BDS stopped (the world is saved on stop) and started on the same world, then
+`pear_persist_check` (`RESTART_AFTER` in `scripts/bds-gametest.mjs`).
+
+**The seed**, on a pad floating at −43 210, 98, 43 210 and held loaded by a ticking area:
+- A binds rod *dead* by a real cast in life 0 and puts it in a chest. A dies: epoch 0 → 1 in both copies, so *dead* is a
+  record of a past life. A respawns and binds rod *bound* in life 1 onto the same stone plate. It goes to the chest too.
+- Also in the chest: *unbound*, a Pearl Rod with Lure III; *plain*, a vanilla rod named `pps control` at damage 37/384;
+  and *far*, a rod carrying a record at 29 999 999, 100, −20 000 001. The *ground* rod, a copy of *bound*'s record, lies on
+  the pad as an item entity.
+- The area name `andrew_gt_pearl_7`, one of the GameTest pack's trip names, is added and held over the stop, standing in for
+  a trip that is waiting when the server stops. A SimulatedPlayer's own trip cannot be held: GameTest removes the player
+  with its test.
+- The pad's area is removed; the chunk reads unloaded 1 tick later.
+
+**The check**, about 10 s later on the clock. Two runs, alone and after 18 other Pearl Rod scenarios, read the same:
+- **The world store**: every key unchanged — 4 alone (`andrew:le:gt-persist:pps_a=1`, the plate's generation, its watch
+  record, `andrew:pg_seq`), 8 after the others (their players' epochs too). The engine accepts 9 areas, as at the seed's
+  start; `andrew_gt_pearl_7` is gone, swept at startup.
+- **The player.** `pps_a` comes back with a new id (−8589934591 → −12884901887); the old id resolves to nothing; the player
+  copy of the epoch reads `undefined`; the world copy reads 1, so the epoch reads 1.
+- **The rods.** 6 of 6 unchanged in typeId, name, lore, damage, enchantments and every dynamic property. The ground rod
+  is back as an item entity once the pad loads (2 ticks).
+- **Honour** for A: *bound* and *ground* `honoured`, *dead* `past-life`; for a second player B, *bound* is `foreign`; the
+  plate reads `same`. **Controls**, the same records against what a restart could lose: with the epoch from the player
+  copy alone (0), *dead* would read `honoured` and *bound* `past-life`; keyed by the new entity id, *bound* reads `foreign`.
+- **B's use** of *bound*: a plain cast; the record unchanged.
+- *bound*, *dead*, *unbound* and *ground* reach A's inventory: *dead*'s record is erased on arrival, lore `Pearl Rod|unbound`.
+- **AC 1.** The pad unloads (1 tick). A's use of *bound*, from the platform 61 108 blocks away: `arrived` after 2 ticks, on
+  the plate cell −43 207, 100, 43 213, read-back offset 0.000; the binding is cleared, lore `Pearl Rod|unbound`.
+- **AC 2.** A binds a fresh rod by a cast on the platform: epoch 1, read from the world copy. Then A dies: epoch 1 → 2 in
+  both copies; *ground* (bound before the restart) and the fresh rod read `past-life`; both are erased on their way back
+  to A; the fresh rod's use is a plain cast.
+- **AC 3.** *unbound* fishes beside *plain*: salmon on its 2nd cast after 117 and 224 ticks (Lure III), damage 0, look
+  unchanged; *plain* caught a salmon and a saddle (damage 37 → 40).
+
+### Limitations (C-16)
+
+- **A client's key is not measured on BDS.** A binding names `Player.id`, and nothing on BDS can stand for a client that
+  leaves and comes back: a SimulatedPlayer does not keep its id. The engine documents the id as consistent across loads of
+  a world. The restart on the iPad is the check (below).
+- **A Vector3 property holds 32-bit floats.** The plate cell is a Vector3 (`andrew:pr_pos`). Written as 29 999 999, 100,
+  −20 000 001 it reads 30 000 000, 100, −20 000 000 at once, on the stack, in a chest and in the world, and the same after
+  the restart; 16 777 215 reads back exact, and so does 29 999 999 as a number property. Every cell within 16 777 216
+  blocks is stored exactly. Past it the engine keeps entity positions to the same 2-block step (a player teleported to
+  20 000 001.5, 200, −20 000 001.5 reads 20 000 002, 200, −20 000 002), so a hook there names an even cell, which the record holds exactly; a plate on an odd
+  column out there never binds. Not measured with a real cast that far out.
+- **What a restart drops**, all held in memory: a hook still in flight binds nothing (the cast stays a plain one); a trip
+  still waiting ends with no move and no message, its binding kept and its area swept at startup; a piston check due within
+  4 ticks of the stop never runs, so a plate that piston destroyed is seen only as `missing`, and one put back there unseen
+  (by a command) reads `same`, as in the `generation.ts` limitations.
+- **A garbled record is not cleaned up.** A record that does not read whole is unbound for everyone and travels nowhere,
+  but keeps its lore until the rod is bound again.
+
+### For the iPad sheet (`PEAR-IPAD-01-AA`)
+
+- **Restart with a bound rod.** Bind a rod, stop and start the server (or leave the world and come back), use the rod: it
+  takes you to the plate. The rod keeps its name, lore and full durability after the reload.
+- **Die after the restart.** Bind, restart, die, pick the rod up: the lore reads `unbound`, and the use casts.

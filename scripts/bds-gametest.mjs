@@ -597,6 +597,9 @@ const EXPECTED_TESTS = [
   'andrew:pear_tp_outcomes_no_leak',
   'andrew:pear_tp_pool_reserve',
   'andrew:pear_tp_cross_dimension',
+  // PEAR-PERSIST-01 — src/gametest/pear-persist.ts (spec v3 §7–§8, L0-pear-ac06): bindings, epochs and rods across a restart
+  'andrew:pear_persist_seed',
+  'andrew:pear_persist_check',
   // ENCH-PROBE-01 — src/gametest/ench-probe.ts (spec v3 §4, L0-ench-prob): docs/feedback/probe-enchanting.md
   'andrew:probe_ench_surface',
   'andrew:probe_ench_result_signals',
@@ -625,6 +628,7 @@ const RESTART_AFTER = new Map([
   ['andrew:probe_trident_restart_seed', 'andrew:probe_trident_restart_check'],
   ['andrew:trident_blocked_restart_seed', 'andrew:trident_blocked_restart_check'],
   ['andrew:trident_throw_restart_seed', 'andrew:trident_throw_restart_check'],
+  ['andrew:pear_persist_seed', 'andrew:pear_persist_check'],
 ]);
 
 // FLAT is not cosmetic: see the LEVEL_TYPE comment in docker/bds/compose.yaml.

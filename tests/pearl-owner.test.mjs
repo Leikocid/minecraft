@@ -329,7 +329,7 @@ test('a dead record is erased when the rod reaches an inventory: the binder\'s o
   assert.equal(O.ownerStats.cleared - live0, 2);
 });
 
-test('a dead record is kept while the binder is offline, and a live foreign one is never touched', () => {
+test('a dead record is erased while the binder is offline, from the world copy of their epoch; a live foreign one is never touched', () => {
   blocks.clear();
   const a = fakePlayer('away');
   const b = fakePlayer('keeper');
@@ -341,11 +341,36 @@ test('a dead record is kept while the binder is offline, and a live foreign one 
   arrived(b, 0);
   assert.equal(O.honourFor(b, b.items[0]), 'foreign');
   assert.deepEqual(recordKeysOn(b.items[0]), RECORD_KEYS, 'the binder is alive: their binding stays theirs');
+  H.players.delete(a.id);
+  arrived(b, 0);
+  assert.deepEqual(recordKeysOn(b.items[0]), RECORD_KEYS, 'the binder is offline and has not died: the record stays');
+  H.players.set(a.id, a);
   die(a);
   H.players.delete(a.id);
   arrived(b, 0);
-  assert.deepEqual(recordKeysOn(b.items[0]), RECORD_KEYS, 'the binder is offline: nobody can tell, the record stays');
-  assert.equal(O.ownerStats.cleared, cleared0);
+  assert.deepEqual(recordKeysOn(b.items[0]), [], 'the binder died, then left: the world copy of the epoch says so');
+  assert.equal(O.ownerStats.cleared - cleared0, 1);
+});
+
+test('a dead record is kept while no copy of the binder\'s epoch can be read: offline, and dead only on the player copy', () => {
+  blocks.clear();
+  const a = fakePlayer('legacy');
+  const b = fakePlayer('holder');
+  a.items[0] = O.makePearlRod();
+  bindInto(a, { x: 7, y: 2, z: 7 });
+  b.items[0] = a.items[0];
+  a.items[0] = undefined;
+  // A death recorded the way worlds saved before the world copy hold it: on the player only.
+  a.dp.set('andrew:life_epoch', 1);
+  assert.equal(O.honourFor(a, b.items[0]), 'past-life');
+  H.players.delete(a.id);
+  const cleared0 = O.ownerStats.cleared;
+  arrived(b, 0);
+  assert.deepEqual(recordKeysOn(b.items[0]), RECORD_KEYS, 'nobody can tell: the record stays (it is void all the same)');
+  H.players.set(a.id, a);
+  arrived(b, 0);
+  assert.deepEqual(recordKeysOn(b.items[0]), [], 'the binder is back online: the player copy says so');
+  assert.equal(O.ownerStats.cleared - cleared0, 1);
 });
 
 test('a spawn sweeps the player\'s own inventory: rods kept through a death lose their dead records, live ones stay', () => {
