@@ -612,6 +612,45 @@ const EXPECTED_TESTS = [
   'andrew:trident_dash_dimensions',
   'andrew:trident_dash_fall_once',
   'andrew:trident_swim_boost',
+  // PEAR-OWNER-01 — src/gametest/pear-owner.ts (spec v3 §7, C-45, L0-pear-ac04): the binding belongs to the binder's life
+  'andrew:pear_owner_death_voids',
+  'andrew:pear_owner_stranger',
+  'andrew:pear_owner_death_mid_trip',
+  // PEAR-PROBE-01 — src/gametest/pear-probe.ts (L0-pear-ac07): docs/feedback/probe-pearl.md
+  'andrew:probe_pearl_hook_plates',
+  'andrew:probe_pearl_hook_owner',
+  'andrew:probe_pearl_cast_cancel',
+  'andrew:probe_pearl_durability',
+  'andrew:probe_pearl_area_load',
+  'andrew:probe_pearl_area_budget',
+  'andrew:probe_pearl_dimension_trip',
+  'andrew:probe_pearl_recipe_grid',
+  // PEAR-ITEM-01 — src/gametest/pear-item.ts (spec v3 §6, L0-pear-ac01): the craft, the grid, durability, fishing
+  'andrew:pear_item_craft_unlimited',
+  'andrew:pear_item_grid_shifted',
+  'andrew:pear_item_hundred_casts',
+  'andrew:pear_item_fishes_unbound',
+  // PEAR-GEN-01 — src/gametest/pear-generation.ts (spec v3 §7–§8, L0-xcx34, L0-pear-ru03): replaced plates do not travel
+  'andrew:pear_gen_player_replace',
+  'andrew:pear_gen_setblock_other_type',
+  'andrew:pear_gen_explosion_support_piston',
+  'andrew:pear_gen_hundred_presses',
+  'andrew:pear_gen_store_pruned',
+  // PEAR-BIND-01 — src/gametest/pear-bind.ts (spec v3 §7, L0-xasm41, L0-pear-pr02): the hook binds the rod to a plate
+  'andrew:pear_bind_every_plate',
+  'andrew:pear_bind_negatives',
+  'andrew:pear_bind_hook_in_mob',
+  'andrew:pear_bind_overwrite_two_rods',
+  // PEAR-TP-01 — src/gametest/pear-teleport.ts (spec v3 §7, L0-xasm42, L0-pear-pr03, L0-adr-prta): the trip to the plate
+  'andrew:pear_tp_near_clears',
+  'andrew:pear_tp_far_unloaded',
+  'andrew:pear_tp_unsafe_keeps',
+  'andrew:pear_tp_outcomes_no_leak',
+  'andrew:pear_tp_pool_reserve',
+  'andrew:pear_tp_cross_dimension',
+  // PEAR-PERSIST-01 — src/gametest/pear-persist.ts (spec v3 §7–§8, L0-pear-ac06): bindings, epochs and rods across a restart
+  'andrew:pear_persist_seed',
+  'andrew:pear_persist_check',
   // ENCH-PROBE-01 — src/gametest/ench-probe.ts (spec v3 §4, L0-ench-prob): docs/feedback/probe-enchanting.md
   'andrew:probe_ench_surface',
   'andrew:probe_ench_result_signals',
@@ -652,6 +691,7 @@ const RESTART_AFTER = new Map([
   ['andrew:ubow_restart_seed', 'andrew:ubow_restart_check'],
   ['andrew:ubow_ability_restart_seed', 'andrew:ubow_ability_restart_check'],
   ['andrew:trident_throw_restart_seed', 'andrew:trident_throw_restart_check'],
+  ['andrew:pear_persist_seed', 'andrew:pear_persist_check'],
 ]);
 
 // FLAT is not cosmetic: see the LEVEL_TYPE comment in docker/bds/compose.yaml.
