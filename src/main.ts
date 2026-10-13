@@ -22,9 +22,11 @@ import { protectLegendariesIn, registerRecovery } from "./legendary/recovery";
 import { registerRetention } from "./legendary/retention";
 import { registerOrbitalCannon } from "./orbital";
 import { registerInterceptor } from "./orbital/flight";
+import { worldAreas } from "./pearl/area-pool";
 import { registerPearlBind } from "./pearl/bind";
 import { registerPearlGeneration } from "./pearl/generation";
 import { registerPearlItem } from "./pearl/item";
+import { registerPearlTeleport } from "./pearl/teleport";
 import { registerScytheVolley } from "./scythe/volley";
 import { registerSculkCrossbow } from "./sculk";
 import { registerStormActive } from "./storm/active";
@@ -52,6 +54,9 @@ registerLegendaryHud();
 registerPearlGeneration();
 registerPearlItem();
 registerPearlBind();
+// One area budget for the world: the spawn search, /andrew:find and the ring loaders below take structure slots
+// from it, and the Pearl Rod keeps its reserved one (L0-adr-prta).
+registerPearlTeleport({ areas: worldAreas });
 registerTrap();
 registerStormPassive();
 registerTridentDamage();
@@ -91,6 +96,7 @@ registerStructureCommands(
       engineSpawnHost(world.getDimension(d === "n" ? "nether" : "overworld"), system, { BlockVolume, BlockTypes }, () => world.getDefaultSpawnLocation(), undefined, {
         prefix: "andrew_find_",
         pool: 5,
+        budget: worldAreas,
       }),
   }
 );
@@ -108,7 +114,7 @@ world.afterEvents.worldLoad.subscribe(() => {
   const store = new DynamicPropertyStore(world);
   strf = new StrfRuntime(
     store,
-    engineStrf({ world, BlockVolume, BlockTypes, StructureRotation, ItemStack, EnchantmentType, system, protectLegendaries: protectLegendariesIn }),
+    engineStrf({ world, BlockVolume, BlockTypes, StructureRotation, ItemStack, EnchantmentType, system, protectLegendaries: protectLegendariesIn, areaBudget: worldAreas }),
     { log: strfLog, enabled: new EnabledTypes(store) }
   );
   console.warn(`[andrew] ${strf.registry.statsLine()}`);
@@ -123,7 +129,8 @@ world.afterEvents.worldLoad.subscribe(() => {
       system,
       { BlockVolume, BlockTypes },
       () => world.getDefaultSpawnLocation(),
-      (state) => system.sendScriptEvent(SPAWN_STATE_EVENT, JSON.stringify(state))
+      (state) => system.sendScriptEvent(SPAWN_STATE_EVENT, JSON.stringify(state)),
+      { budget: worldAreas }
     ),
     { log: strfLog }
   );
