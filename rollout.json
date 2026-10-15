@@ -1,26 +1,30 @@
 {
-  "note": "What the built pack lets a player reach. A product with \"enabled\": false keeps its code in src/, its data in packs/ and every one of its tests and scenarios — only the files listed here are left out of dist/andrew.mcaddon, so the servers do not offer it. Turning it on is one word in this file. docs/dev/rollout.md.",
+  "note": "What the built pack lets a player reach. `stage` is the part of the rollout a product belongs to — 0 went out with the release itself, then one part at a time by complexity (operator, 15.10). A product with \"enabled\": false keeps its code in src/, its data in packs/ and every one of its tests and scenarios — only the files listed here are left out of dist/andrew.mcaddon, so the servers do not offer it. Turning it on is one word in this file. docs/dev/rollout.md.",
   "products": {
     "underwater_bow": {
       "enabled": true,
+      "stage": 0,
       "note": "Legendary #8, spec v3 §1. Listed with its recipe only: the item, the token and the texture ship either way, so that a stack already in a chest never meets a pack that has forgotten its id.",
       "files": ["behavior/recipes/underwater_bow.json"],
       "registrations": []
     },
     "vanilla_mace_recipe": {
-      "enabled": false,
+      "enabled": true,
+      "stage": 1,
       "note": "spec v3 §2: the Mace out of an iron block and a breeze rod. Pure data — the result is a vanilla item and no script runs, so withholding the recipe withholds the whole product.",
       "files": ["behavior/recipes/vanilla_mace.json"],
       "registrations": []
     },
     "vanilla_rocket_recipe": {
-      "enabled": false,
+      "enabled": true,
+      "stage": 2,
       "note": "spec v3 §3: rockets out of paper and string. The recipe is not the whole product — registerRocketFlight rewrites EVERY firework rocket that carries no data, whatever made it, so the registration goes too.",
       "files": ["behavior/recipes/vanilla_firework_rocket.json"],
       "registrations": ["registerRocketFlight"]
     },
     "pearl_rod": {
       "enabled": false,
+      "stage": 3,
       "note": "spec v3 §6-§8, the Pearl Rod. The recipe is its only door: there is no give command, and the craft token is menu_category none, so Creative does not show it either. Its five registrations go too — registerPearlTeleport holds a reserved ticking-area slot out of the world's budget (L0-adr-prta), which returns to the structures pool while the product is off.",
       "files": ["behavior/recipes/pearl_rod.json"],
       "registrations": [
