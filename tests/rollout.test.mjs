@@ -25,13 +25,44 @@ const listing = (archive) => execFileSync('unzip', ['-Z1', archive], { encoding:
 
 // ------------------------------------------------------------------ the list
 
-test('every product declares enabled, note, files and registrations', () => {
+test('every product declares enabled, stage, note, files and registrations', () => {
   assert.ok(products.length > 0, 'rollout.json has no products');
   for (const [id, product] of products) {
     assert.equal(typeof product.enabled, 'boolean', `${id}.enabled`);
+    // The queue the operator set on 15.10 — 0 went out with the release, then one
+    // part at a time. In the file rather than in a chat message, which evaporates.
+    assert.ok(Number.isInteger(product.stage) && product.stage >= 0, `${id}.stage is not a part number`);
     assert.ok(typeof product.note === 'string' && product.note.length > 20, `${id}.note explains nothing`);
     assert.ok(Array.isArray(product.files), `${id}.files`);
     assert.ok(Array.isArray(product.registrations), `${id}.registrations`);
+  }
+});
+
+// A later stage must not quietly precede an earlier one: that is the operator's order,
+// not an implementation detail.
+test('the rolled-out stages are a prefix of the queue', () => {
+  const byStage = new Map();
+  for (const [, product] of products) {
+    const seen = byStage.get(product.stage);
+    assert.ok(seen === undefined || seen === product.enabled, `stage ${product.stage} is half rolled out`);
+    byStage.set(product.stage, product.enabled);
+  }
+  const stages = [...byStage.keys()].sort((a, b) => a - b);
+  let closed = false;
+  for (const stage of stages) {
+    if (!byStage.get(stage)) closed = true;
+    else assert.ok(!closed, `stage ${stage} is rolled out while an earlier stage is still withheld`);
+  }
+});
+
+// The release-pack scenario decides what to expect from the list itself; a product the
+// list knows and the scenario does not would never be crafted, and its zero would be
+// read as proof.
+test('the release-pack scenario covers every product in the list', () => {
+  const scenario = readFileSync(join(root, 'src', 'gametest', 'rollout.ts'), 'utf-8');
+  assert.match(scenario, /import \{[^}]*isRolledOut[^}]*\} from "\.\.\/rollout"/, 'the scenario does not ask the list');
+  for (const [id] of products) {
+    assert.ok(scenario.includes(`id: "${id}"`), `${id} is in rollout.json but not in the scenario's PRODUCTS`);
   }
 });
 
@@ -142,20 +173,24 @@ test('dist/andrew.mcaddon holds every rolled-out file and none of the withheld o
   assert.ok(files.includes('behavior/scripts/main.js') && files.includes('behavior/manifest.json'), 'the behavior pack');
 });
 
-test('the packaging withholds, and keeps the same file when the product is on', () => {
+test('the packaging withholds, and keeps the same file when the product is on', (t) => {
+  // Whatever is withheld right now — naming a product here would turn the control into
+  // a thing to repair on the day that product is rolled out.
+  const target = withheldFiles(rollout)[0];
+  if (target === undefined) {
+    t.skip('the whole list is rolled out — nothing to withhold');
+    return;
+  }
   const dir = mkdtempSync(join(tmpdir(), 'andrew-rollout-'));
   try {
-    const mace = 'behavior/recipes/vanilla_mace.json';
-    assert.ok(withheldFiles(rollout).includes(mace), 'this control assumes the Mace recipe is withheld');
-
     const withheldZip = join(dir, 'withheld.zip');
     execFileSync('zip', ['-q', ...packageArgs(withheldZip, rollout)], { cwd: packsDir });
-    assert.ok(!listing(withheldZip).includes(mace), `${mace} survived the real rollout list`);
+    assert.ok(!listing(withheldZip).includes(target), `${target} survived the real rollout list`);
 
     const allOn = { products: Object.fromEntries(products.map(([id, p]) => [id, { ...p, enabled: true }])) };
     const fullZip = join(dir, 'full.zip');
     execFileSync('zip', ['-q', ...packageArgs(fullZip, allOn)], { cwd: packsDir });
-    assert.ok(listing(fullZip).includes(mace), `${mace} is absent even with its product on — the exclusion is not what removed it`);
+    assert.ok(listing(fullZip).includes(target), `${target} is absent even with its product on — the exclusion is not what removed it`);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

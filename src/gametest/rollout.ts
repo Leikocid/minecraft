@@ -8,14 +8,18 @@
 // Every other run restores the withheld files before installing, so this scenario is
 // out of the gate and out of --all; under that install it fails by design.
 //
-// The Underwater Bow goes first and is the control: three zeros prove nothing until
-// something in the same Crafter proves the harness crafts at all. Counted as the token
-// AND the finished bow together: src/gametest/main.ts arms its own craft gate, and that
-// copy — unlike the release pack's, which cannot see a SimulatedPlayer — swaps the token
-// for the bow on the tick it arrives.
+// The scenario asks `isRolledOut` instead of naming what it expects to fail: rolling
+// the next part out then needs no edit here, and a mistake in the list is visible
+// from both sides at once. A product that is rolled out is also the control — four
+// zeros would otherwise prove only that the stand is broken.
+//
+// The Underwater Bow is counted as its craft token AND the finished bow together:
+// src/gametest/main.ts arms its own craft gate, and that copy — unlike the release
+// pack's, which cannot see a SimulatedPlayer — swaps the token on the tick it arrives.
 
 import { BlockPermutation, EntityComponentTypes, GameMode, type Player, type Vector3 } from "@minecraft/server";
 import { type Test, registerAsync } from "@minecraft/server-gametest";
+import { type ProductId, isRolledOut } from "../rollout";
 
 const STRUCTURE = "andrew:platform";
 const STAND: Vector3 = { x: 3, y: 2, z: 5 };
@@ -28,14 +32,49 @@ const log = (msg: string): void => console.warn(`[gametest] rollout ${msg}`);
 /** Row-major, 9 slots; `undefined` is an empty slot. Bedrock does not trim a blank row, so the rows are as written. */
 type Grid = ReadonlyArray<string | undefined>;
 
-// " R " / "WBW" / " S "
-const UBOW: Grid = [undefined, "minecraft:lightning_rod", undefined, "minecraft:water_bucket", "minecraft:bow", "minecraft:water_bucket", undefined, "minecraft:sand", undefined];
-// "   " / " I " / " Z "
-const MACE: Grid = [undefined, undefined, undefined, undefined, "minecraft:iron_block", undefined, undefined, "minecraft:breeze_rod", undefined];
-// "   " / " P " / " S "
-const ROCKET: Grid = [undefined, undefined, undefined, undefined, "minecraft:paper", undefined, undefined, "minecraft:string", undefined];
-// " P " / " R " / "   "
-const PEARL_ROD: Grid = [undefined, "minecraft:ender_pearl", undefined, undefined, "minecraft:fishing_rod", undefined, undefined, undefined, undefined];
+interface Product {
+  readonly id: ProductId;
+  readonly label: string;
+  readonly grid: Grid;
+  /** What one craft leaves in the player's inventory, counted together: no two products share a type. */
+  readonly results: ReadonlyArray<string>;
+  readonly amount: number;
+}
+
+const PRODUCTS: ReadonlyArray<Product> = [
+  {
+    id: "underwater_bow",
+    label: "the Underwater Bow",
+    // " R " / "WBW" / " S "
+    grid: [undefined, "minecraft:lightning_rod", undefined, "minecraft:water_bucket", "minecraft:bow", "minecraft:water_bucket", undefined, "minecraft:sand", undefined],
+    results: ["andrew:underwater_bow_crafted", "andrew:underwater_bow"],
+    amount: 1,
+  },
+  {
+    id: "vanilla_mace_recipe",
+    label: "the Mace recipe",
+    // "   " / " I " / " Z "
+    grid: [undefined, undefined, undefined, undefined, "minecraft:iron_block", undefined, undefined, "minecraft:breeze_rod", undefined],
+    results: ["minecraft:mace"],
+    amount: 1,
+  },
+  {
+    id: "vanilla_rocket_recipe",
+    label: "the Firework Rocket recipe",
+    // "   " / " P " / " S "
+    grid: [undefined, undefined, undefined, undefined, "minecraft:paper", undefined, undefined, "minecraft:string", undefined],
+    results: ["minecraft:firework_rocket"],
+    amount: 3,
+  },
+  {
+    id: "pearl_rod",
+    label: "the Pearl Rod recipe",
+    // " P " / " R " / "   " — the token, or the marked vanilla rod the swap leaves instead
+    grid: [undefined, "minecraft:ender_pearl", undefined, undefined, "minecraft:fishing_rod", undefined, undefined, undefined, undefined],
+    results: ["andrew:pearl_rod_token", "minecraft:fishing_rod"],
+    amount: 1,
+  },
+];
 
 function inventoryOf(player: Player) {
   const container = player.getComponent(EntityComponentTypes.Inventory)?.container;
@@ -43,12 +82,12 @@ function inventoryOf(player: Player) {
   return container;
 }
 
-function countOf(player: Player, typeId: string): number {
+function countOf(player: Player, typeIds: ReadonlyArray<string>): number {
   const container = inventoryOf(player);
   let total = 0;
   for (let slot = 0; slot < container.size; slot++) {
     const stack = container.getItem(slot);
-    if (stack?.typeId === typeId) total += stack.amount;
+    if (stack !== undefined && typeIds.includes(stack.typeId)) total += stack.amount;
   }
   return total;
 }
@@ -74,31 +113,33 @@ registerAsync("andrew", "rollout_withheld_recipes", async (test: Test): Promise<
   const player = test.spawnSimulatedPlayer(STAND, "rollout", GameMode.Survival);
   await test.idle(4);
 
-  await craft(test, UBOW, "the Underwater Bow (rolled out)");
-  const token = countOf(player, "andrew:underwater_bow_crafted");
-  const bow = countOf(player, "andrew:underwater_bow");
-  log(`control: andrew:underwater_bow_crafted = ${token}, andrew:underwater_bow = ${bow}`);
   test.assert(
-    token + bow === 1,
-    `the control craft produced ${token} token(s) and ${bow} bow(s), not one of the two — the harness or the ` +
-      "release pack is broken, and the three zeros below would mean nothing"
+    PRODUCTS.some((p) => isRolledOut(p.id)),
+    "every product in the list is withheld, so nothing here can tell a shut door from a broken stand"
   );
 
-  await craft(test, MACE, "the Mace recipe (withheld)");
-  await craft(test, ROCKET, "the Firework Rocket recipe (withheld)");
-  await craft(test, PEARL_ROD, "the Pearl Rod recipe (withheld)");
+  const got = new Map<ProductId, number>();
+  for (const product of PRODUCTS) {
+    const out = isRolledOut(product.id);
+    await craft(test, product.grid, `${product.label} (${out ? "rolled out" : "withheld"})`);
+    got.set(product.id, countOf(player, product.results));
+    log(`${product.label}: ${product.results.join(" + ")} = ${String(got.get(product.id))}, expected ${out ? product.amount : 0}`);
+  }
 
-  const mace = countOf(player, "minecraft:mace");
-  const rocket = countOf(player, "minecraft:firework_rocket");
-  const rod = countOf(player, "andrew:pearl_rod_token");
-  log(`withheld: minecraft:mace = ${mace}, minecraft:firework_rocket = ${rocket}, andrew:pearl_rod_token = ${rod}`);
-
-  test.assert(mace === 0, `the withheld Mace recipe crafted ${mace} mace(s) — its file is in the archive`);
-  test.assert(rocket === 0, `the withheld Rocket recipe crafted ${rocket} rocket(s) — its file is in the archive`);
-  test.assert(rod === 0, `the withheld Pearl Rod recipe crafted ${rod} token(s) — its file is in the archive`);
-  log("RESULT the release pack crafts the Underwater Bow and offers no way to the Mace, the rockets or the Pearl Rod");
+  for (const product of PRODUCTS) {
+    const out = isRolledOut(product.id);
+    const want = out ? product.amount : 0;
+    const have = got.get(product.id) ?? -1;
+    test.assert(
+      have === want,
+      out
+        ? `${product.label} is rolled out but crafted ${have} of ${product.amount} — its file is missing from the archive`
+        : `${product.label} is withheld but crafted ${have} — its file is in the archive`
+    );
+  }
+  log(`RESULT the release pack offers exactly what the list rolls out: ${PRODUCTS.filter((p) => isRolledOut(p.id)).map((p) => p.id).join(", ")}`);
   test.succeed();
 })
   .structureName(STRUCTURE)
-  .maxTicks(700)
+  .maxTicks(900)
   .tag("andrew");
