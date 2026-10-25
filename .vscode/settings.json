@@ -1,6 +1,16 @@
 {
   "foam.files.ignore": [
     "**/.work/**",
-    "**/.ai/temp/**"
+    "**/.ai/temp/**",
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/.ai/chronicle/**",
+    "**/.ai/tasks/archive/**",
+    "**/.ai/video/**",
+    "**/.ai/benchmark/**",
+    "**/.ai/help/**",
+    "**/.ai/logs/**",
+    "**/.ai/verify/**",
+    "**/.ai/state/**"
   ]
 }
