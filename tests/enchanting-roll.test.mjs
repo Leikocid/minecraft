@@ -467,13 +467,20 @@ test('AC4: the scrubs strip from the same lists the roller reads — one source,
   assert.doesNotMatch(read('src/enchanting/roll.ts'), /FORBIDDEN_ENCHANTMENTS|PIERCING/, 'the roller reads forbiddenFor() only');
 });
 
-// ---------------------------------------------------------------- AC5, AC6: a pure module, no hook (AC-ench-04, AC-ench-05)
+// ---------------------------------------------------------------- AC5, AC6: the pure half stays pure (AC-ench-04, AC-ench-05)
 
 /** Source without comments, so a rule may be named in prose. */
 const code = (rel) => read(rel).replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+/**
+ * The engine half of §4, by name: everything else under src/enchanting must stay pure. Andrey chose option a′ on
+ * 25.10, so the roller is no longer dormant — hook.ts subscribes, polls and writes items on purpose, and
+ * tests/enchanting-hook.test.mjs holds it to its own rules. A new impure file lands in this list or fails below.
+ */
+const ENGINE_HALF = ['src/enchanting/hook.ts'];
 const enchantingFiles = readdirSync(join(projectRoot, 'src', 'enchanting'))
   .filter((f) => f.endsWith('.ts'))
-  .map((f) => `src/enchanting/${f}`);
+  .map((f) => `src/enchanting/${f}`)
+  .filter((f) => !ENGINE_HALF.includes(f));
 
 test('AC5: roll.ts and every module it imports never reach @minecraft/server; the random source is injected', async () => {
   assert.deepEqual(engineReached, []);
@@ -495,8 +502,8 @@ test('AC5: roll.ts and every module it imports never reach @minecraft/server; th
   }
 });
 
-test('AC6: no event subscription, no item write, and nothing in the game imports the roller', () => {
-  assert.deepEqual(enchantingFiles.sort(), ['src/enchanting/eligibility.ts', 'src/enchanting/roll-rules.ts', 'src/enchanting/roll.ts']);
+test('AC6: the pure half subscribes to nothing and writes nothing; only the engine half reaches the game', () => {
+  assert.deepEqual(enchantingFiles.sort(), ['src/enchanting/eligibility.ts', 'src/enchanting/hook-rules.ts', 'src/enchanting/roll-rules.ts', 'src/enchanting/roll.ts']);
   for (const file of enchantingFiles) {
     assert.doesNotMatch(
       code(file),
@@ -510,5 +517,13 @@ test('AC6: no event subscription, no item write, and nothing in the game imports
     .filter((f) => f.endsWith('.ts') && !f.includes(`${join('src', 'enchanting')}`) && !f.includes(`${join('src', 'gametest')}`))
     .filter((f) => /from\s+["'][^"']*enchanting\//.test(readFileSync(f, 'utf-8')))
     .map((f) => relative(projectRoot, f));
-  assert.deepEqual(importers, [], 'roll.ts is imported only by tests until xq11 approves an adapter');
+  // One importer, and it is the entry point: the roller reaches the world through hook.ts and nothing else. Before
+  // 25.10 this list was empty, because xq11 forbade an engine hook at all.
+  assert.deepEqual(importers, ['src/main.ts'], 'something other than the entry point reaches into src/enchanting');
+  assert.match(read('src/main.ts'), /isRolledOut\("enchanting_add"\)\) registerEnchantAdd\(\)/, 'the hook is not behind its rollout switch');
+  // The engine half keeps the one purity rule that still applies to it: the random source is a parameter.
+  for (const file of ENGINE_HALF) {
+    assert.match(code(file), /rng = Math\.random/, `${file} must take its random source as an injectable parameter`);
+    assert.doesNotMatch(code(file).replace(/rng = Math\.random/g, ''), /Math\.random|Date\.now|crypto|performance/, `${file} draws randomness outside rng`);
+  }
 });

@@ -671,6 +671,11 @@ const EXPECTED_TESTS = [
   'andrew:rocket_duration_paths',
   'andrew:rocket_duration_swap',
 
+  // ENCH-HOOK-01 — src/gametest/ench-hook.ts (spec v3 §4, option a′): the two signals
+  // the vanilla table leaves, fed by hand, because a SimulatedPlayer opens no table.
+  'andrew:ench_add_rare_on_top',
+  'andrew:ench_add_negative_controls',
+
   // ROLL-01 — src/gametest/rollout.ts: judges the release pack, not the code.
   // Runs only under --release-pack; see RELEASE_PACK_TESTS below.
   'andrew:rollout_withheld_recipes',
