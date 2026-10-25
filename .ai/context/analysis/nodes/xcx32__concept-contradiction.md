@@ -10,9 +10,13 @@ part_of: ["L0"]
 relates_to: ["L0"]
 priority: 640
 size_chars: 2794
-tags: ["v10", "enchanting", "status:open", "feasibility", "blocking:ench-build"]
+tags: ["v10","enchanting","status:open","feasibility","blocking:ench-build","resolved"]
 level: 1
+closed_at: 2026-10-25
+closed_reason: resolved_by_decision
+closed_by_ref: decision-resolve-l0-xcx32
 ---
+
 ---
 title: "CX-L0-32 · An enchanting table that offers treasure enchantments vs a stable API with no table hook"
 aliases: ["L0-xcx32", "Enchanting table feasibility"]

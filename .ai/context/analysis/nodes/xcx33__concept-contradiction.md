@@ -10,9 +10,13 @@ part_of: ["L0"]
 relates_to: ["L0"]
 priority: 640
 size_chars: 2064
-tags: ["v10", "underwater-bow", "status:open", "input-conflict", "has-default"]
+tags: ["v10","underwater-bow","status:open","input-conflict","has-default","resolved"]
 level: 1
+closed_at: 2026-10-25
+closed_reason: resolved_by_decision
+closed_by_ref: decision-resolve-l0-xcx33
 ---
+
 ---
 title: "CX-L0-33 · The bow's ability is \"switched on\", but Use already draws the bow"
 aliases: ["L0-xcx33", "Bow arming gesture"]
