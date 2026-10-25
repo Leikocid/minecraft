@@ -23,7 +23,7 @@
       "registrations": ["registerRocketFlight"]
     },
     "pearl_rod": {
-      "enabled": false,
+      "enabled": true,
       "stage": 3,
       "note": "spec v3 §6-§8, the Pearl Rod. The recipe is its only door: there is no give command, and the craft token is menu_category none, so Creative does not show it either. Its five registrations go too — registerPearlTeleport holds a reserved ticking-area slot out of the world's budget (L0-adr-prta), which returns to the structures pool while the product is off.",
       "files": ["behavior/recipes/pearl_rod.json"],
