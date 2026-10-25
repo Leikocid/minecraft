@@ -183,11 +183,11 @@ last_rollout_hashes:
   project-knowledge/domain-model.md: 4e771cf2a28c43ac
   project-knowledge/architecture.md: ee277ea2b5ddf492
   assumptions.md: ff743e729557fa9c
-  contradictions.md: eedda3f9591a978d
+  contradictions.md: 046bc083c999792e
   client-questions.md: 41a72a9fee2fa518
   summary.md: 45232d38801d0456
   scope.md: 7c245f5b93875b9a
-  risks.md: 529620053ae3c48a
+  risks.md: 3d57d6e55e31f021
   decisions.md: 46863890ef57b4a1
 runtime_vocabulary:
   concept-boundary:

@@ -11,8 +11,12 @@ part_of: ["L0"]
 relates_to: ["L0"]
 priority: 650
 size_chars: 2591
-tags: ["v11", "pearl-rod", "spec-vs-engine", "status:open"]
+tags: ["v11","pearl-rod","spec-vs-engine","status:open","resolved"]
+closed_at: 2026-10-25
+closed_reason: resolved_by_decision
+closed_by_ref: decision-resolve-l0-xcx34
 ---
+
 ---
 title: "CX-L0-34 · A \"replaced\" plate must not teleport, but blocks have no identity"
 aliases: ["L0-xcx34", "Plate identity"]
