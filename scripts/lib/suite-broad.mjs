@@ -23,6 +23,7 @@ export const BROAD_TESTS = [
   'andrew:sculk_hit_fixed_damage',
   'andrew:storm_active_range',
   'andrew:storm_passive_damage',
+  'andrew:ench_add_rare_on_top', // the §4 hook: the one scenario that fails if nothing reaches the player
   'andrew:vanilla_recipe_elytra_unlimited',
   'andrew:vanilla_recipe_totem_unlimited',
   'andrew:vanilla_recipe_rocket_boosts_elytra', // craft + the recipe's whole point: it must actually boost an Elytra

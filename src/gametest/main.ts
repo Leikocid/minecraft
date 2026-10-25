@@ -58,6 +58,7 @@ import "./probe-loot";
 import "./probe-give";
 import "./legendary-craftgate";
 import "./vanilla-recipes";
+import "./ench-hook";
 import "./recipes-vanilla";
 import "./rollout";
 import "./recipes-rocket";

@@ -15,6 +15,7 @@ import { registerAutoSmelt } from "./autosmelt";
 import { registerDragonKatana } from "./katana";
 import { registerLegendaryCommands } from "./legendary/commands";
 import { registerCraftGate } from "./legendary/craftgate";
+import { registerEnchantAdd } from "./enchanting/hook";
 import { registerEnchantScrub } from "./legendary/enchant";
 import { registerHideCommand } from "./legendary/hidden";
 import { registerLegendaryHud } from "./legendary/hud";
@@ -59,6 +60,9 @@ registerCraftGate();
 registerRetention();
 registerRecovery();
 registerEnchantScrub();
+// After the scrub: it strips what a legendary never keeps, and the roller never offers those, so the order only
+// matters if the two ever disagree — then the scrub wins, as it must (spec v3 §4 vs C-37).
+if (isRolledOut("enchanting_add")) registerEnchantAdd();
 registerLegendaryHud();
 if (isRolledOut("pearl_rod")) {
   registerPearlGeneration();

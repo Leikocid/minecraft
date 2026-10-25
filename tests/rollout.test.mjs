@@ -57,12 +57,22 @@ test('the rolled-out stages are a prefix of the queue', () => {
 
 // The release-pack scenario decides what to expect from the list itself; a product the
 // list knows and the scenario does not would never be crafted, and its zero would be
-// read as proof.
-test('the release-pack scenario covers every product in the list', () => {
+// read as proof. Only a product with files has a door to craft: a script-only product
+// is withheld by its registration alone, which the gate test above holds.
+test('the release-pack scenario covers every product that has files', () => {
   const scenario = readFileSync(join(root, 'src', 'gametest', 'rollout.ts'), 'utf-8');
   assert.match(scenario, /import \{[^}]*isRolledOut[^}]*\} from "\.\.\/rollout"/, 'the scenario does not ask the list');
-  for (const [id] of products) {
+  for (const [id, product] of products) {
+    if (product.files.length === 0) continue;
     assert.ok(scenario.includes(`id: "${id}"`), `${id} is in rollout.json but not in the scenario's PRODUCTS`);
+  }
+});
+
+// Otherwise the entry gates nothing at all and only looks like a switch.
+test('a product with no files gates at least one registration', () => {
+  for (const [id, product] of products) {
+    if (product.files.length > 0) continue;
+    assert.ok(product.registrations.length > 0, `${id} withholds no file and no registration`);
   }
 });
 
