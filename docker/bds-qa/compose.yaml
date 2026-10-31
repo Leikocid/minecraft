@@ -16,6 +16,9 @@
 services:
   bds:
     image: itzg/minecraft-bedrock-server:latest
+    # Without it a Docker Desktop bounce leaves the server down, and a stopped container is
+    # indistinguishable from one somebody stopped on purpose — nothing reports the difference.
+    restart: unless-stopped
     # BDS ships x86_64 only; on Apple Silicon this runs through Rosetta.
     # [src: concept-constraint C-5]
     platform: linux/amd64
